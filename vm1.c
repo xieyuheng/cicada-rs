@@ -95,51 +95,31 @@ memory_allocate
   return return_address;
 }
 
-typedef cell stack[1024 * 4];
+typedef void (*primitive)();
 
+typedef cell name;
 
-stack as;
-cell as_pointer = 0;
+typedef struct {
+  cell size;
+  name *array;
+} jojo;
 
-void
-as_push
-(cell value) {
-  as[as_pointer] = value;
-  as_pointer = as_pointer + cell_size;
-}
-
-cell
-as_pop
-() {
-  as_pointer = as_pointer - cell_size;
-  return as[as_pointer];
-}
-
-
-stack rs;
-cell rs_pointer = 0;
-
-void
-rs_push
-(cell value) {
-  rs[rs_pointer] = value;
-  rs_pointer = rs_pointer + cell_size;
-}
-
-cell
-rs_pop
-() {
-  rs_pointer = rs_pointer - cell_size;
-  return rs[rs_pointer];
-}
+typedef union {
+  cell cell;
+  primitive primitive;
+  jojo jojo;
+} bind;
 
 typedef struct {
   cell index;
   string key;
-  cell value;
+  name type;
+  bind value;
   cell orbit_length;
   cell orbiton;
 } nametable_entry;
+
+name k2n (string str);
 
 nametable_entry
 new_nametable_entry
@@ -147,7 +127,8 @@ new_nametable_entry
   nametable_entry e = {
     .index = index,
     .key = 0,
-    .value = 0,
+    .type = k2n("none"),
+    .value.cell = 0,
     .orbit_length = 0,
     .orbiton = 0
   };
@@ -163,7 +144,7 @@ nametable_entry_occured
 bool
 nametable_entry_used
 (nametable_entry e) {
-  return e.value != 0;
+  return e.type != k2n("none");
 }
 
 bool
@@ -176,16 +157,6 @@ nametable_entry_no_collision
 #define nametable_size 997
 nametable_entry nametable[nametable_size];
 cell nametable_counter = 0;
-
-void
-init_nametable
-() {
-  cell i = 0;
-  while (i < nametable_size) {
-    nametable[i] = new_nametable_entry(i);
-    i = i + 1;
-  }
-}
 
 cell
 string_to_sum
@@ -259,6 +230,28 @@ nametable_search
   }
 }
 
+string n2k (cell index);
+
+void nametable_entry_print
+(nametable_entry entry) {
+  printf("%s : ", n2k(entry.type));
+  if (entry.type == k2n("cell")) {
+    printf("%d", entry.value.cell);
+  }
+  else if (entry.type == k2n("primitive")) {
+    printf("%d", entry.value.primitive);
+  }
+  else if (entry.type == k2n("jojo")) {
+    printf("%d ", entry.value.jojo.size);
+    printf("[ ", entry.value.jojo.size);
+    cell i;
+    for (i=0; i < entry.value.jojo.size; i=i+1) {
+      printf("%d ", entry.value.jojo.array[i]);
+    }
+    printf("]", entry.value.jojo.size);
+  }
+}
+
 void
 nametable_report_orbit
 (cell index, cell counter) {
@@ -267,6 +260,11 @@ nametable_report_orbit
     cell next_index = nametable_hash(key, counter);
     if (index == nametable[next_index].orbiton) {
       printf("  - %d %s\n", next_index, nametable[next_index].key);
+    }
+    if (nametable_entry_used(nametable[next_index])) {
+      printf("    = ");
+      nametable_entry_print(nametable[next_index]);
+      printf("\n");
     }
     counter = 1 + counter;
   }
@@ -277,6 +275,7 @@ nametable_report
 () {
   printf("\n");
   printf("- nametable_report\n");
+  printf("  : <index> <key> // <orbit-length>\n");
   cell index = 0;
   while (index < nametable_size) {
     if (nametable_entry_occured(nametable[index]) &&
@@ -284,12 +283,15 @@ nametable_report
       printf("  - %d %s // %d\n",
              index, nametable[index].key, nametable[index].orbit_length);
       if (nametable_entry_used(nametable[index])) {
-        printf("      %d\n", nametable[index].value);
+        printf("    = ");
+        nametable_entry_print(nametable[index]);
+        printf("\n");
       }
       nametable_report_orbit(index, 1);
     }
     index = 1 + index;
   }
+  printf("  : <index> <key> // <orbit-length>\n");
   printf("\n");
   printf("- used : %d\n", nametable_counter);
   printf("- free : %d\n", nametable_size - nametable_counter);
@@ -302,7 +304,7 @@ nametable_print
   printf("- nametable_print\n");
   cell index = 0;
   while (index < nametable_size) {
-    printf("  - %d %d %d // %d\n",
+    printf("  - %d %s %d // %d\n",
            index,
            nametable[index].key,
            nametable[index].value,
@@ -314,102 +316,141 @@ nametable_print
   printf("- free : %d\n", nametable_size - nametable_counter);
 }
 
-void
-nametable_set
-(cell index, cell value) {
-  nametable[index].value = value;
-}
-
-cell
-nametable_get
-(cell index) {
-  return nametable[index].value;
-}
-
-cell
 name
+k2n
 (string str) {
   return nametable_insert(str);
 }
 
 string
-name_to_key
+n2k
 (cell index) {
   return nametable[index].key;
 }
 
 void
-nametable_test
+init_nametable
 () {
-  printf("%d\n", name("testkey0"));
-  printf("%d\n", name("testkey1"));
-  printf("%d\n", name("testkey2"));
-  printf("%d\n", name("testkey3"));
-  printf("%d\n", name("testkey4"));
-
-  printf("%d\n", name("testkey0"));
-  printf("%d\n", name("testkey1"));
-  printf("%d\n", name("testkey2"));
-  printf("%d\n", name("testkey3"));
-  printf("%d\n", name("testkey4"));
-
-  printf("%d\n", name("testtestkey0"));
-  printf("%d\n", name("testtestkey1"));
-  printf("%d\n", name("testtestkey2"));
-  printf("%d\n", name("testtestkey3"));
-  printf("%d\n", name("testtestkey4"));
-
-  printf("%d\n", name("testtesttestkey0"));
-  printf("%d\n", name("testtesttestkey1"));
-  printf("%d\n", name("testtesttestkey2"));
-  printf("%d\n", name("testtesttestkey3"));
-  printf("%d\n", name("testtesttestkey4"));
-
-  printf("%d\n", name("testtesttesttestkey0"));
-  printf("%d\n", name("testtesttesttestkey1"));
-  printf("%d\n", name("testtesttesttestkey2"));
-  printf("%d\n", name("testtesttesttestkey3"));
-  printf("%d\n", name("testtesttesttestkey4"));
-
-  printf("%d\n", nametable_get(name("k1")));
-  nametable_set(name("k1"), 1);
-  printf("%d\n", nametable_get(name("k1")));
-  nametable_set(name("k1"), 0);
-  printf("%d\n", nametable_get(name("k1")));
-  nametable_set(name("k1"), 1);
-
-  nametable_report();
-  // nametable_print();
+  cell i = 0;
+  while (i < nametable_size) {
+    nametable[i] = new_nametable_entry(i);
+    i = i + 1;
+  }
 }
 
-typedef void (*primitive)();
+name jojo_area[1024 * 1024];
+cell jojo_area_counter = 0;
 
-typedef primitive primitive_record_t[1024];
-
-primitive_record_t primitive_record;
-cell primitive_record_counter = 0;
-
-primitive
-primitive_record_get
-(cell index) {
-  return primitive_record[index];
+void
+nametable_set_cell
+(cell index, cell cell) {
+  nametable[index].type = k2n("cell");
+  nametable[index].value.cell = cell;
 }
 
 void
-primitive_record_set
-(cell index, primitive fun) {
-  primitive_record[index] = fun;
+nametable_set_primitive
+(cell index, primitive primitive) {
+  nametable[index].type = k2n("primitive");
+  nametable[index].value.primitive = primitive;
 }
 
 cell
-create_primitive
-(primitive fun) {
-  cell return_address = primitive_record_counter;
-  primitive_record_set
-    (primitive_record_counter, fun);
-  primitive_record_counter =
-    primitive_record_counter + 1;
-  return return_address;
+nametable_get_cell
+(cell index) {
+  return nametable[index].value.cell;
+}
+
+primitive
+nametable_get_primitive
+(cell index) {
+  return nametable[index].value.primitive;
+}
+
+jojo
+nametable_get_jojo
+(cell index) {
+  return nametable[index].value.jojo;
+}
+
+void
+nametable_test
+() {
+  k2n("testkey0");
+  k2n("testkey1");
+  k2n("testkey2");
+  k2n("testkey3");
+  k2n("testkey4");
+
+  k2n("testkey0");
+  k2n("testkey1");
+  k2n("testkey2");
+  k2n("testkey3");
+  k2n("testkey4");
+
+  k2n("testtestkey0");
+  k2n("testtestkey1");
+  k2n("testtestkey2");
+  k2n("testtestkey3");
+  k2n("testtestkey4");
+
+  k2n("testtesttestkey0");
+  k2n("testtesttestkey1");
+  k2n("testtesttestkey2");
+  k2n("testtesttestkey3");
+  k2n("testtesttestkey4");
+
+  k2n("testtesttesttestkey0");
+  k2n("testtesttesttestkey1");
+  k2n("testtesttesttestkey2");
+  k2n("testtesttesttestkey3");
+  k2n("testtesttesttestkey4");
+
+  nametable_set_cell(k2n("k1"), 1);
+  nametable_report();
+
+  nametable_set_cell(k2n("k1"), 0);
+  nametable_report();
+
+  // nametable_print();
+}
+
+typedef cell argument_stack[1024 * 4];
+
+argument_stack as;
+cell as_pointer = 0;
+
+void
+as_push
+(cell value) {
+  as[as_pointer] = value;
+  as_pointer = as_pointer + cell_size;
+}
+
+cell
+as_pop
+() {
+  as_pointer = as_pointer - cell_size;
+  return as[as_pointer];
+}
+
+typedef name* return_stack[1024 * 4];
+
+return_stack rs;
+cell rs_pointer = 0;
+
+void
+rs_push
+(name* value) {
+  rs[rs_pointer] = value;
+  rs_pointer = rs_pointer + cell_size;
+}
+
+name*
+rs_pop
+() {
+  rs_pointer = rs_pointer - cell_size;
+  return rs[rs_pointer];
 }
 
 cell address_after_explainer = 0;
@@ -430,148 +471,54 @@ interpreter
   }
   else {
     while (true) {
-      addr function_body = rs_pop();
-      addr explainer = memory_get(memory_get(function_body));
-      rs_push(function_body + cell_size);
-      address_after_explainer =
-        memory_get(function_body) + cell_size;
-      primitive explainer_function =
-        primitive_record_get(explainer);
-      explainer_function();
+      name* function_body = rs_pop();
+      addr name = *(cell*)function_body;
+      rs_push(function_body + 1);
+      cell type_name = nametable[name].type;
+      if (type_name == k2n("primitive")) {
+        primitive primitive = nametable_get_primitive(name);
+        primitive();
+      }
+      else if (type_name == k2n("jojo")) {
+        jojo jojo = nametable_get_jojo(name);
+        rs_push(jojo.array);
+      }
+      else if (type_name == k2n("cell")) {
+        cell cell = nametable_get_cell(name);
+        as_push(cell);
+      }
     }
   }
 }
-
-typedef struct {
-  string string;
-  addr address;
-} tag_record_entry;
-
-typedef tag_record_entry tag_record_t[1024];
-
-tag_record_t tag_record;
-cell tag_record_counter = 0;
-
-addr
-tag_record_get
-(string string) {
-  cell i;
-  bool match_p;
-  for (i=0; i < tag_record_counter; i=i+1) {
-    match_p = (string_equal
-               (string,
-                (tag_record[i].string)));
-    if (match_p) {
-      return (tag_record[i].address);
-    }
-  }
-}
-
-byte tag_record_string_buffer[1024 * 1024];
-cell tag_record_string_buffer_counter = 0;
-
-void
-tag_record_set
-(string string, addr address) {
-  strcpy((tag_record_string_buffer +
-          tag_record_string_buffer_counter),
-         string);
-  tag_record
-    [tag_record_counter]
-    .string = (tag_record_string_buffer +
-               tag_record_string_buffer_counter);
-  tag_record_string_buffer_counter =
-    tag_record_string_buffer_counter +
-    strlen(string) + 1;
-  tag_record
-    [tag_record_counter]
-    .address = address;
-  tag_record_counter =
-    tag_record_counter + 1;
-}
-
-void
-data
-(cell value) {
-  memory_set(memory_cursor, value);
-  memory_cursor =
-    memory_cursor + cell_size;
-}
-
-void
-mark
-(string tag_string) {
-  tag_record_set
-    (tag_string,
-     memory_cursor);
-}
-
-cell link = 0;
-
-void
-p_primitive_explainer
-() {
-  primitive primitive =
-    (primitive_record_get
-     (memory_get
-      (address_after_explainer)));
-  primitive();
-}
-
-cell primitive_explainer = 0;
 
 void
 define_primitive
-(string tag_string, primitive fun) {
-  cell function_index = create_primitive(fun);
-  data(link);
-  link = memory_cursor - cell_size;
-  mark(tag_string);
-  data(primitive_explainer);
-  data(function_index);
+(string str, primitive fun) {
+  name index = k2n(str);
+  nametable_set_primitive(index, fun);
 }
-
-void
-p_function_explainer
-() {
-  rs_push(address_after_explainer);
-}
-
-cell function_explainer = 1;
 
 void
 define_function
-(string tag_string,
- cell length,
- string *function_tag_string_array) {
-  data(link);
-  link = memory_cursor - cell_size;
-  mark(tag_string);
-  data(function_explainer);
+(string str, cell size, string *str_array) {
+  name index = k2n(str);
   cell i;
-  for (i=0; i < length; i=i+1) {
-    data(tag_record_get
-         (function_tag_string_array[i]));
+  cell *array;
+  array = (jojo_area + jojo_area_counter);
+  jojo_area_counter = size + jojo_area_counter;
+  for (i=0; i < size; i=i+1) {
+    array[i] = k2n(str_array[i]);
   }
+  nametable[index].type = k2n("jojo");
+  nametable[index].value.jojo.size = size;
+  nametable[index].value.jojo.array = array;
 }
-
-void
-p_variable_explainer
-() {
-  as_push
-    (memory_get(address_after_explainer));
-}
-
-cell variable_explainer = 2;
 
 void
 define_variable
-(string tag_string, cell value) {
-  data(link);
-  link = memory_cursor - cell_size;
-  mark(tag_string);
-  data(variable_explainer);
-  data(value);
+(string str, cell cell) {
+  name index = k2n(str);
+  nametable_set_cell(index, cell);
 }
 
 void
@@ -620,10 +567,6 @@ vm1
 
   init_nametable();
 
-  create_primitive(p_primitive_explainer);
-  create_primitive(p_function_explainer);
-  create_primitive(p_variable_explainer);
-
   define_primitive("end", p_end);
   define_primitive("bye", p_bye);
   define_primitive("dup", p_dup);
@@ -653,8 +596,10 @@ vm1
   };
   define_function("first-function", 2, p_first_function);
 
-  rs_push
-    (tag_record_get("first-function") + cell_size);
+  jojo first_jojo = nametable_get_jojo(k2n("first-function"));
+  rs_push(first_jojo.array);
+
+  // nametable_report();
   interpreter();
 
 }
@@ -663,6 +608,6 @@ int
 main
 (int argc, string* argv) {
   vm1();
-  nametable_test();
+  // nametable_test();
   return 0;
 }
