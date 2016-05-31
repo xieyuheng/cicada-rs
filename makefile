@@ -1,10 +1,10 @@
 .ONESHELL:
 
 build:
-	cc vm1.c -o vm1
+	cc jojo.c -o jojo
 
 run:
-	./vm1
+	./jojo
 
 dev:
 	make clean
@@ -15,5 +15,5 @@ clean:
 	echo -e "\e[33;1m"
 	echo "* clean"
 	echo -e "\e[0m"
-	rm vm1
+	rm jojo
 	rm -f *~ */*~ */*/*~ */*/*/*~ */*/*/*/*~  */*/*/*/*/*~
