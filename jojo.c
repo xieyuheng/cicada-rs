@@ -53,8 +53,6 @@ string_equal
   }
 }
 
-typedef uint8_t byte;
-
 typedef void (*primitive)();
 
 typedef int name;
@@ -454,6 +452,10 @@ rs_pop
 void
 apply
 (name jo) {
+  if (!nametable_entry_used(nametable[jo])) {
+    printf("undefined name : %s\n", n2k(jo));
+    return;
+  }
   int jo_type = nametable[jo].type;
   if (jo_type == k2n("primitive")) {
     primitive primitive = nametable_get_primitive(jo);
@@ -550,6 +552,21 @@ define_variable
 }
 
 void
+p_dup
+() {
+  // (int int -> int)
+  int a = as_pop();
+  as_push(a);
+  as_push(a);
+}
+
+void
+export_stack_operation
+() {
+  define_primitive("dup", p_dup);
+}
+
+void
 p_end
 () {
   // (rs: addr ->)
@@ -565,12 +582,10 @@ p_bye
 }
 
 void
-p_dup
+export_ending
 () {
-  // (int int -> int)
-  int a = as_pop();
-  as_push(a);
-  as_push(a);
+  define_primitive("end", p_end);
+  define_primitive("bye", p_bye);
 }
 
 void
@@ -590,6 +605,47 @@ p_jump_over
 }
 
 void
+i_lit
+() {
+  // ([rs] -> int)
+  name* function_body = rs_pop();
+  rs_push(function_body + 1);
+  int jo = *(int*)function_body;
+  as_push(jo);
+}
+
+void
+i_tail_call
+() {
+  // ([rs] -> int)
+  name* function_body = rs_pop();
+  int jo = *(int*)function_body;
+  apply(jo);
+}
+
+void
+p_jump_if_false
+() {
+  // (bool addr -> [rs])
+  name* a = as_pop();
+  int b = as_pop();
+  if (b == 0) {
+    rs_pop();
+    rs_push(a);
+  }
+}
+
+void
+export_control
+() {
+  define_primitive("jump-back", p_jump_back);
+  define_primitive("jump-over", p_jump_over);
+  define_primitive("i/lit", i_lit);
+  define_primitive("i/tail-call", i_tail_call);
+  define_primitive("jump-if-false", p_jump_if_false);
+}
+
+void
 p_mul
 () {
   // (integer integer -> integer)
@@ -597,6 +653,14 @@ p_mul
   int b = as_pop();
   as_push(a * b);
 }
+
+void
+export_int
+() {
+  define_primitive("mul", p_mul);
+}
+
+typedef uint8_t byte;
 
 name
 read_symbol
@@ -652,23 +716,11 @@ p_simple_wirte
 }
 
 void
-do_nothing
+export_io
 () {
-}
-
-void
-p_comment
-() {
-  // ([io] ->)
-  while (true) {
-    name s = read_symbol();
-    if (s == k2n("(")) {
-      p_comment();
-    }
-    if (s == k2n(")")) {
-      break;
-    }
-  }
+  define_primitive("read-symbol", p_read_symbol);
+  define_primitive("simple-wirte", p_simple_wirte);
+  define_primitive(".", p_simple_wirte);
 }
 
 void
@@ -684,13 +736,25 @@ p_false
 }
 
 void
-p_lit
+export_bool
 () {
-  // ([rs] -> int)
-  name* function_body = rs_pop();
-  rs_push(function_body + 1);
-  int jo = *(int*)function_body;
-  as_push(jo);
+  define_primitive("true", p_true);
+  define_primitive("false", p_false);
+}
+
+void
+k_comment
+() {
+  // ([io] ->)
+  while (true) {
+    name s = read_symbol();
+    if (s == k2n("(")) {
+      k_comment();
+    }
+    if (s == k2n(")")) {
+      break;
+    }
+  }
 }
 
 void
@@ -712,22 +776,10 @@ compile_question
 }
 
 void
-p_jump_if_false
-() {
-  // (bool addr -> [rs])
-  name* a = as_pop();
-  int b = as_pop();
-  if (b == 0) {
-    rs_pop();
-    rs_push(a);
-  }
-}
-
-void
 compile_answer
 () {
   // ([io] -> [jojo_area])
-  here(k2n("lit"));
+  here(k2n("i/lit"));
   int* offset_place = (jojo_area + jojo_area_counter);
   jojo_area_counter++;
   here(k2n("jump-if-false"));
@@ -747,11 +799,30 @@ compile_answer
 }
 
 void
-p_if
+k_if
 () {
   // ([io] -> [jojo_area])
   compile_question();
   compile_answer();
+}
+
+void
+k_tail_call
+() {
+  // ([io] -> [jojo_area])
+  here(k2n("i/tail-call"));
+  name s = read_symbol();
+  here(s);
+  k_comment();
+
+}
+
+void
+export_keyword
+() {
+  define_primitive(":", k_comment);
+  define_primitive("if", k_if);
+  define_primitive("taca", k_tail_call);
 }
 
 void
@@ -780,41 +851,41 @@ p_define_function
 }
 
 void
+export_top_level_keyword
+() {
+  define_primitive("define-function", p_define_function);
+  define_primitive("~", p_define_function);
+}
+
+void
+do_nothing
+() {
+}
+
+void
+export_mise
+() {
+  define_primitive("(", do_nothing);
+  define_primitive("apply", p_apply);
+}
+
+void
 the_story_begins
 () {
 
   init_nametable();
 
-  define_primitive("end", p_end);
-  define_primitive("bye", p_bye);
-
-  define_primitive("dup", p_dup);
-
-  define_primitive("mul", p_mul);
-
-  define_primitive("(", do_nothing);
-  define_primitive("define-function", p_define_function);
-  define_primitive("~", p_define_function);
-
-  define_primitive("read-symbol", p_read_symbol);
-  define_primitive("apply", p_apply);
-  define_primitive("jump-back", p_jump_back);
-  define_primitive("jump-over", p_jump_over);
-
-  define_primitive("simple-wirte", p_simple_wirte);
-  define_primitive(".", p_simple_wirte);
-
-  define_primitive(":", p_comment);
-
-  define_primitive("true", p_true);
-  define_primitive("false", p_false);
-
-  define_primitive("lit", p_lit);
-  define_primitive("jump-if-false", p_jump_if_false);
-  define_primitive("if", p_if);
+  export_stack_operation();
+  export_ending();
+  export_control();
+  export_int();
+  export_io();
+  export_bool();
+  export_keyword();
+  export_top_level_keyword();
+  export_mise();
 
   define_variable("little-test-number", 4);
-
   // basic-repl can not be defined as primitive
   string p_basic_repl[] = {
     "read-symbol",
@@ -829,7 +900,6 @@ the_story_begins
 
   // nametable_report();
   eval();
-
 }
 
 int

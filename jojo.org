@@ -1,6 +1,6 @@
 #+HTML_HEAD: <link rel="stylesheet" href="http://xieyuheng.github.io/asset/css/page.css" type="text/css" media="screen" />
-#+TITLE:  jojo
 #+PROPERTY: tangle jojo.c
+#+TITLE:  jojo
 
 ---------
 
@@ -10,7 +10,12 @@
 
 * todo
 
-  - fix undefined
+  - safe stack
+  - stack_repl
+  - string
+  - number
+  - vector
+  - fix jump
 
 * helper
 
@@ -88,12 +93,6 @@
       }
     }
     #+end_src
-
-* byte
-
-  #+begin_src c
-  typedef uint8_t byte;
-  #+end_src
 
 * hashtable
 
@@ -563,64 +562,70 @@
     }
     #+end_src
 
-* as
+* as & rs
 
-  #+begin_src c
-  typedef int argument_stack[1024 * 4];
+*** as
 
-  argument_stack as;
-  int as_pointer = 0;
+    #+begin_src c
+    typedef int argument_stack[1024 * 4];
 
-  void
-  as_push
-  (int value) {
-    as[as_pointer] = value;
-    as_pointer = as_pointer + sizeof(int);
-  }
+    argument_stack as;
+    int as_pointer = 0;
 
-  int
-  as_pop
-  () {
-    as_pointer = as_pointer - sizeof(int);
-    return as[as_pointer];
-  }
-  #+end_src
+    void
+    as_push
+    (int value) {
+      as[as_pointer] = value;
+      as_pointer = as_pointer + sizeof(int);
+    }
 
-* rs
+    int
+    as_pop
+    () {
+      as_pointer = as_pointer - sizeof(int);
+      return as[as_pointer];
+    }
+    #+end_src
 
-  #+begin_src c
-  typedef name* return_stack[1024 * 4];
+*** rs
 
-  return_stack rs;
-  int rs_pointer = 0;
+    #+begin_src c
+    typedef name* return_stack[1024 * 4];
 
-  void
-  rs_push
-  (name* value) {
-    rs[rs_pointer] = value;
-    rs_pointer = rs_pointer + sizeof(int);
-  }
+    return_stack rs;
+    int rs_pointer = 0;
 
-  name*
-  rs_pop
-  () {
-    rs_pointer = rs_pointer - sizeof(int);
-    return rs[rs_pointer];
-  }
-  #+end_src
+    void
+    rs_push
+    (name* value) {
+      rs[rs_pointer] = value;
+      rs_pointer = rs_pointer + sizeof(int);
+    }
 
-* apply & eval
+    name*
+    rs_pop
+    () {
+      rs_pointer = rs_pointer - sizeof(int);
+      return rs[rs_pointer];
+    }
+    #+end_src
+
+* apply
 
 *** apply
 
-    - this function should not be called by primitive
+    - be careful when calling this function in primitive
       because after rs_push a jojo
-      one exit current primitive to run the jojo
+      one need to exit current primitive to run the jojo
 
     #+begin_src c
     void
     apply
     (name jo) {
+      if (!nametable_entry_used(nametable[jo])) {
+        printf("undefined name : %s\n", n2k(jo));
+        return;
+      }
       int jo_type = nametable[jo].type;
       if (jo_type == k2n("primitive")) {
         primitive primitive = nametable_get_primitive(jo);
@@ -646,6 +651,8 @@
       apply(as_pop());
     }
     #+end_src
+
+* eval
 
 *** eval
 
@@ -743,30 +750,7 @@
     }
     #+end_src
 
-* p_end
-
-  #+begin_src c
-  void
-  p_end
-  () {
-    // (rs: addr ->)
-    rs_pop();
-  }
-  #+end_src
-
-* p_bye
-
-  #+begin_src c
-  void
-  p_bye
-  () {
-    // (-> [exit])
-    printf("bye bye ^-^/\n");
-    exit_eval();
-  }
-  #+end_src
-
-* stack operation
+* *stack_operation*
 
 *** p_dup
 
@@ -781,7 +765,53 @@
     }
     #+end_src
 
-* control
+*** export_stack_operation
+
+    #+begin_src c
+    void
+    export_stack_operation
+    () {
+      define_primitive("dup", p_dup);
+    }
+    #+end_src
+
+* *ending*
+
+*** p_end
+
+    #+begin_src c
+    void
+    p_end
+    () {
+      // (rs: addr ->)
+      rs_pop();
+    }
+    #+end_src
+
+*** p_bye
+
+    #+begin_src c
+    void
+    p_bye
+    () {
+      // (-> [exit])
+      printf("bye bye ^-^/\n");
+      exit_eval();
+    }
+    #+end_src
+
+*** export_ending
+
+    #+begin_src c
+    void
+    export_ending
+    () {
+      define_primitive("end", p_end);
+      define_primitive("bye", p_bye);
+    }
+    #+end_src
+
+* *control*
 
 *** p_jump_back
 
@@ -807,7 +837,64 @@
     }
     #+end_src
 
-* integer
+*** i_lit
+
+    #+begin_src c
+    void
+    i_lit
+    () {
+      // ([rs] -> int)
+      name* function_body = rs_pop();
+      rs_push(function_body + 1);
+      int jo = *(int*)function_body;
+      as_push(jo);
+    }
+    #+end_src
+
+*** i_tail_call
+
+    #+begin_src c
+    void
+    i_tail_call
+    () {
+      // ([rs] -> int)
+      name* function_body = rs_pop();
+      int jo = *(int*)function_body;
+      apply(jo);
+    }
+    #+end_src
+
+*** p_jump_if_false
+
+    #+begin_src c
+    void
+    p_jump_if_false
+    () {
+      // (bool addr -> [rs])
+      name* a = as_pop();
+      int b = as_pop();
+      if (b == 0) {
+        rs_pop();
+        rs_push(a);
+      }
+    }
+    #+end_src
+
+*** export_control
+
+    #+begin_src c
+    void
+    export_control
+    () {
+      define_primitive("jump-back", p_jump_back);
+      define_primitive("jump-over", p_jump_over);
+      define_primitive("i/lit", i_lit);
+      define_primitive("i/tail-call", i_tail_call);
+      define_primitive("jump-if-false", p_jump_if_false);
+    }
+    #+end_src
+
+* *int*
 
 *** p_mul
 
@@ -822,7 +909,23 @@
     }
     #+end_src
 
-* io
+*** export_int
+
+    #+begin_src c
+    void
+    export_int
+    () {
+      define_primitive("mul", p_mul);
+    }
+    #+end_src
+
+* >< *byte*
+
+  #+begin_src c
+  typedef uint8_t byte;
+  #+end_src
+
+* *io*
 
 *** read_symbol
 
@@ -889,37 +992,19 @@
     }
     #+end_src
 
-* misc
-
-*** do_nothing
+*** export_io
 
     #+begin_src c
     void
-    do_nothing
+    export_io
     () {
+      define_primitive("read-symbol", p_read_symbol);
+      define_primitive("simple-wirte", p_simple_wirte);
+      define_primitive(".", p_simple_wirte);
     }
     #+end_src
 
-* p_comment
-
-  #+begin_src c
-  void
-  p_comment
-  () {
-    // ([io] ->)
-    while (true) {
-      name s = read_symbol();
-      if (s == k2n("(")) {
-        p_comment();
-      }
-      if (s == k2n(")")) {
-        break;
-      }
-    }
-  }
-  #+end_src
-
-* bool
+* *bool*
 
 *** p_true
 
@@ -941,82 +1026,151 @@
     }
     #+end_src
 
-* p_if
-
-*** note
-
-    - (if a b p? -> c d)
-      a b p?
-      [jump] jump_if_false
-      c d
-      :jump
-
-    - because the use of as_snapshot
-      bar can not be nested in antecedent
-
-*** p_lit
+*** export_bool
 
     #+begin_src c
     void
-    p_lit
+    export_bool
     () {
-      // ([rs] -> int)
-      name* function_body = rs_pop();
-      rs_push(function_body + 1);
-      int jo = *(int*)function_body;
-      as_push(jo);
+      define_primitive("true", p_true);
+      define_primitive("false", p_false);
     }
     #+end_src
 
-*** compile_question
+* *keyword*
+
+*** k_comment
 
     #+begin_src c
     void
-    compile_question
+    k_comment
     () {
-      // ([io] -> [jojo_area])
+      // ([io] ->)
       while (true) {
         name s = read_symbol();
         if (s == k2n("(")) {
-          eval_jo(read_symbol());
+          k_comment();
         }
-        else if (s == k2n("->")) {
+        if (s == k2n(")")) {
           break;
         }
-        else {
-          here(s);
+      }
+    }
+    #+end_src
+
+*** k_if
+
+***** note
+
+      - (if a b p? -> c d)
+        a b p?
+        [jump] jumk_if_false
+        c d
+        :jump
+
+      - because the use of as_snapshot
+        bar can not be nested in antecedent
+
+***** compile_question
+
+      #+begin_src c
+      void
+      compile_question
+      () {
+        // ([io] -> [jojo_area])
+        while (true) {
+          name s = read_symbol();
+          if (s == k2n("(")) {
+            eval_jo(read_symbol());
+          }
+          else if (s == k2n("->")) {
+            break;
+          }
+          else {
+            here(s);
+          }
         }
       }
-    }
-    #+end_src
+      #+end_src
 
-*** p_jump_if_false
+***** compile_answer
 
-    #+begin_src c
-    void
-    p_jump_if_false
-    () {
-      // (bool addr -> [rs])
-      name* a = as_pop();
-      int b = as_pop();
-      if (b == 0) {
-        rs_pop();
-        rs_push(a);
+      #+begin_src c
+      void
+      compile_answer
+      () {
+        // ([io] -> [jojo_area])
+        here(k2n("i/lit"));
+        int* offset_place = (jojo_area + jojo_area_counter);
+        jojo_area_counter++;
+        here(k2n("jump-if-false"));
+        while (true) {
+          name s = read_symbol();
+          if (s == k2n("(")) {
+            eval_jo(read_symbol());
+          }
+          else if (s == k2n(")")) {
+            break;
+          }
+          else {
+            here(s);
+          }
+        }
+        offset_place[0] = (jojo_area + jojo_area_counter);
       }
-    }
-    #+end_src
+      #+end_src
 
-*** compile_answer
+***** k_if
+
+      #+begin_src c
+      void
+      k_if
+      () {
+        // ([io] -> [jojo_area])
+        compile_question();
+        compile_answer();
+      }
+      #+end_src
+
+*** k_tail_call
 
     #+begin_src c
     void
-    compile_answer
+    k_tail_call
     () {
       // ([io] -> [jojo_area])
-      here(k2n("lit"));
-      int* offset_place = (jojo_area + jojo_area_counter);
-      jojo_area_counter++;
-      here(k2n("jump-if-false"));
+      here(k2n("i/tail-call"));
+      name s = read_symbol();
+      here(s);
+      k_comment();
+    }
+    #+end_src
+
+*** export_keyword
+
+    #+begin_src c
+    void
+    export_keyword
+    () {
+      define_primitive(":", k_comment);
+      define_primitive("if", k_if);
+      define_primitive("taca", k_tail_call);
+    }
+    #+end_src
+
+* *top_level_keyword*
+
+*** p_define_function
+
+    #+begin_src c
+    void
+    p_define_function
+    () {
+      // ([io] -> [nametable])
+      name index;
+      index = read_symbol();
+      int old_jojo_area_counter = jojo_area_counter;
+      name* array = jojo_area + jojo_area_counter;
       while (true) {
         name s = read_symbol();
         if (s == k2n("(")) {
@@ -1029,52 +1183,46 @@
           here(s);
         }
       }
-      offset_place[0] = (jojo_area + jojo_area_counter);
+      nametable[index].type = k2n("jojo");
+      nametable[index].value.jojo.size = jojo_area_counter - old_jojo_area_counter;
+      nametable[index].value.jojo.array = array;
     }
     #+end_src
 
-*** p_if
+*** export_top_level_keyword
 
     #+begin_src c
     void
-    p_if
+    export_top_level_keyword
     () {
-      // ([io] -> [jojo_area])
-      compile_question();
-      compile_answer();
+      define_primitive("define-function", p_define_function);
+      define_primitive("~", p_define_function);
     }
     #+end_src
 
-* p_define_function
+* *misc*
 
-  #+begin_src c
-  void
-  p_define_function
-  () {
-    // ([io] -> [nametable])
-    name index;
-    index = read_symbol();
-    int old_jojo_area_counter = jojo_area_counter;
-    name* array = jojo_area + jojo_area_counter;
-    while (true) {
-      name s = read_symbol();
-      if (s == k2n("(")) {
-        eval_jo(read_symbol());
-      }
-      else if (s == k2n(")")) {
-        break;
-      }
-      else {
-        here(s);
-      }
+*** do_nothing
+
+    #+begin_src c
+    void
+    do_nothing
+    () {
     }
-    nametable[index].type = k2n("jojo");
-    nametable[index].value.jojo.size = jojo_area_counter - old_jojo_area_counter;
-    nametable[index].value.jojo.array = array;
-  }
-  #+end_src
+    #+end_src
 
-* play
+*** export_mise
+
+    #+begin_src c
+    void
+    export_mise
+    () {
+      define_primitive("(", do_nothing);
+      define_primitive("apply", p_apply);
+    }
+    #+end_src
+
+* the_story_begins
 
 *** the_story_begins
 
@@ -1085,36 +1233,17 @@
 
       init_nametable();
 
-      define_primitive("end", p_end);
-      define_primitive("bye", p_bye);
-
-      define_primitive("dup", p_dup);
-
-      define_primitive("mul", p_mul);
-
-      define_primitive("(", do_nothing);
-      define_primitive("define-function", p_define_function);
-      define_primitive("~", p_define_function);
-
-      define_primitive("read-symbol", p_read_symbol);
-      define_primitive("apply", p_apply);
-      define_primitive("jump-back", p_jump_back);
-      define_primitive("jump-over", p_jump_over);
-
-      define_primitive("simple-wirte", p_simple_wirte);
-      define_primitive(".", p_simple_wirte);
-
-      define_primitive(":", p_comment);
-
-      define_primitive("true", p_true);
-      define_primitive("false", p_false);
-
-      define_primitive("lit", p_lit);
-      define_primitive("jump-if-false", p_jump_if_false);
-      define_primitive("if", p_if);
+      export_stack_operation();
+      export_ending();
+      export_control();
+      export_int();
+      export_io();
+      export_bool();
+      export_keyword();
+      export_top_level_keyword();
+      export_mise();
 
       define_variable("little-test-number", 4);
-
       // basic-repl can not be defined as primitive
       string p_basic_repl[] = {
         "read-symbol",
@@ -1129,7 +1258,6 @@
 
       // nametable_report();
       eval();
-
     }
     #+end_src
 
