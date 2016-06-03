@@ -3,7 +3,7 @@
 "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en">
 <head>
-<!-- 2016-06-03 Fri 19:24 -->
+<!-- 2016-06-03 Fri 19:42 -->
 <meta http-equiv="Content-Type" content="text/html;charset=utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>example code of jojo</title>
@@ -67,9 +67,10 @@ for the JavaScript code in this tag.
 <h2>overview</h2>
 <div id="text-table-of-contents">
 <ul>
-<li><a href="#orgb75608e">stack-repl</a></li>
-<li><a href="#org109e225">if</a></li>
-<li><a href="#org61c5dd2">int</a></li>
+<li><a href="#orgcd08a0f">define function</a></li>
+<li><a href="#org63f8d61">loop explicit tail-call</a></li>
+<li><a href="#orgf2be75">branching by if</a></li>
+<li><a href="#org9523dd1">receive function</a></li>
 </ul>
 </div>
 </div>
@@ -80,15 +81,32 @@ for the JavaScript code in this tag.
 
 <hr  />
 
-<div id="outline-container-orgb75608e" class="outline-2">
-<h2 id="orgb75608e">stack-repl</h2>
-<div class="outline-text-2" id="text-orgb75608e">
+<div id="outline-container-orgcd08a0f" class="outline-2">
+<h2 id="orgcd08a0f">define function</h2>
+<div class="outline-text-2" id="text-orgcd08a0f">
+<div class="org-src-container">
+
+<pre class="src src-scheme"><span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">~</span> square <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">:</span> int int <span style="color: #66d9ef; font-weight: bold;">-&gt;</span> int<span style="color: #696969;">)</span>
+   dup mul end<span style="color: #696969;">)</span>
+
+<span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">~</span> t <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">:</span> <span style="color: #66d9ef; font-weight: bold;">-&gt;</span><span style="color: #696969;">)</span>
+   <span style="color: #696969;">(</span># 11<span style="color: #696969;">)</span> square .
+   end<span style="color: #696969;">)</span>
+t
+</pre>
+</div>
+</div>
+</div>
+
+<div id="outline-container-org63f8d61" class="outline-2">
+<h2 id="org63f8d61">loop explicit tail-call</h2>
+<div class="outline-text-2" id="text-org63f8d61">
 <div class="org-src-container">
 
 <pre class="src src-scheme"><span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">~</span> stack-repl <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">:</span> <span style="color: #797979;">[</span>io<span style="color: #797979;">]</span> <span style="color: #66d9ef; font-weight: bold;">-&gt;</span> *<span style="color: #696969;">)</span>
    read-symbol apply
    print-stack
-   <span style="color: #696969;">(</span>taca stack-repl<span style="color: #696969;">))</span>
+   <span style="color: #696969;">(</span>tail-call stack-repl<span style="color: #696969;">))</span>
 
 stack-repl
 </pre>
@@ -96,40 +114,30 @@ stack-repl
 </div>
 </div>
 
-<div id="outline-container-org109e225" class="outline-2">
-<h2 id="org109e225">if</h2>
-<div class="outline-text-2" id="text-org109e225">
+<div id="outline-container-orgf2be75" class="outline-2">
+<h2 id="orgf2be75">branching by if</h2>
+<div class="outline-text-2" id="text-orgf2be75">
 <div class="org-src-container">
 
-<pre class="src src-scheme"><span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">~</span> t2 <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">:</span> <span style="color: #66d9ef; font-weight: bold;">-&gt;</span><span style="color: #696969;">)</span>
-   <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">if</span> true <span style="color: #66d9ef; font-weight: bold;">-&gt;</span> little-test-number square simple-wirte<span style="color: #696969;">)</span>
-   <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">if</span> false <span style="color: #66d9ef; font-weight: bold;">-&gt;</span> little-test-number simple-wirte<span style="color: #696969;">)</span>
-   end<span style="color: #696969;">)</span>
-t2
-
-<span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">~</span> t3 <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">:</span> <span style="color: #66d9ef; font-weight: bold;">-&gt;</span><span style="color: #696969;">)</span>
-   <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">if</span> true <span style="color: #66d9ef; font-weight: bold;">-&gt;</span> little-test-number square simple-wirte end<span style="color: #696969;">)</span>
-   <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">if</span> false <span style="color: #66d9ef; font-weight: bold;">-&gt;</span> little-test-number simple-wirte end<span style="color: #696969;">))</span>
-t3
+<pre class="src src-scheme"><span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">~</span> t <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">:</span> <span style="color: #66d9ef; font-weight: bold;">-&gt;</span><span style="color: #696969;">)</span>
+   <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">if</span> true <span style="color: #66d9ef; font-weight: bold;">-&gt;</span> true . end<span style="color: #696969;">)</span>
+   <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">if</span> false <span style="color: #66d9ef; font-weight: bold;">-&gt;</span> false . end<span style="color: #696969;">))</span>
+t
 </pre>
 </div>
 </div>
 </div>
 
-<div id="outline-container-org61c5dd2" class="outline-2">
-<h2 id="org61c5dd2">int</h2>
-<div class="outline-text-2" id="text-org61c5dd2">
+<div id="outline-container-org9523dd1" class="outline-2">
+<h2 id="org9523dd1">receive function</h2>
+<div class="outline-text-2" id="text-org9523dd1">
 <div class="org-src-container">
 
-<pre class="src src-scheme"><span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">~</span> square <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">:</span> int int <span style="color: #66d9ef; font-weight: bold;">-&gt;</span> int<span style="color: #696969;">)</span>
-   dup mul end<span style="color: #696969;">)</span>
-
-<span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">~</span> factorial <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">:</span> int <span style="color: #66d9ef; font-weight: bold;">-&gt;</span> int<span style="color: #696969;">)</span>
+<pre class="src src-scheme"><span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">~</span> factorial <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">:</span> int <span style="color: #66d9ef; font-weight: bold;">-&gt;</span> int<span style="color: #696969;">)</span>
    <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">if</span> dup <span style="color: #696969;">(</span># 1<span style="color: #696969;">)</span> lteq? <span style="color: #66d9ef; font-weight: bold;">-&gt;</span> drop <span style="color: #696969;">(</span># 1<span style="color: #696969;">)</span> end<span style="color: #696969;">)</span>
    dup <span style="color: #696969;">(</span># 1<span style="color: #696969;">)</span> sub factorial mul end<span style="color: #696969;">)</span>
 
 <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">~</span> t <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">:</span> <span style="color: #66d9ef; font-weight: bold;">-&gt;</span><span style="color: #696969;">)</span>
-   <span style="color: #696969;">(</span># 123 -321<span style="color: #696969;">)</span> dup square . . .
    <span style="color: #696969;">(</span># 0<span style="color: #696969;">)</span> factorial .
    <span style="color: #696969;">(</span># 1<span style="color: #696969;">)</span> factorial .
    <span style="color: #696969;">(</span># 2<span style="color: #696969;">)</span> factorial .

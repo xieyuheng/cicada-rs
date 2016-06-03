@@ -1037,7 +1037,7 @@ export_keyword
 () {
   define_primitive(":", k_comment);
   define_primitive("if", k_if);
-  define_primitive("taca", k_tail_call);
+  define_primitive("tail-call", k_tail_call);
 }
 
 void

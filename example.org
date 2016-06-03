@@ -8,44 +8,46 @@
 
 ---------
 
-* stack-repl
-
-  #+begin_src scheme
-  (~ stack-repl (: [io] -> *)
-     read-symbol apply
-     print-stack
-     (taca stack-repl))
-
-  stack-repl
-  #+end_src
-
-* if
-
-  #+begin_src scheme
-  (~ t2 (: ->)
-     (if true -> little-test-number square simple-wirte)
-     (if false -> little-test-number simple-wirte)
-     end)
-  t2
-
-  (~ t3 (: ->)
-     (if true -> little-test-number square simple-wirte end)
-     (if false -> little-test-number simple-wirte end))
-  t3
-  #+end_src
-
-* int
+* define function
 
   #+begin_src scheme
   (~ square (: int int -> int)
      dup mul end)
 
+  (~ t (: ->)
+     (# 11) square .
+     end)
+  t
+  #+end_src
+
+* loop explicit tail-call
+
+  #+begin_src scheme
+  (~ stack-repl (: [io] -> *)
+     read-symbol apply
+     print-stack
+     (tail-call stack-repl))
+
+  stack-repl
+  #+end_src
+
+* branching by if
+
+  #+begin_src scheme
+  (~ t (: ->)
+     (if true -> true . end)
+     (if false -> false . end))
+  t
+  #+end_src
+
+* receive function
+
+  #+begin_src scheme
   (~ factorial (: int -> int)
      (if dup (# 1) lteq? -> drop (# 1) end)
      dup (# 1) sub factorial mul end)
 
   (~ t (: ->)
-     (# 123 -321) dup square . . .
      (# 0) factorial .
      (# 1) factorial .
      (# 2) factorial .
