@@ -54,41 +54,36 @@ string_equal
 }
 
 typedef uint8_t byte;
-typedef uint32_t cell;
-typedef cell addr;
-
-#define cell_SIZE 4;
-cell cell_size = 4;
 
 typedef void (*primitive)();
 
-typedef cell name;
+typedef int name;
 
 typedef struct {
-  cell size;
+  int size;
   name *array;
 } jojo;
 
 typedef union {
-  cell cell;
+  int cell;
   primitive primitive;
   jojo jojo;
 } bind;
 
 typedef struct {
-  cell index;
+  int index;
   string key;
   name type;
   bind value;
-  cell orbit_length;
-  cell orbiton;
+  int orbit_length;
+  int orbiton;
 } nametable_entry;
 
 name k2n (string str);
 
 nametable_entry
 new_nametable_entry
-(cell index) {
+(int index) {
   nametable_entry e = {
     .index = index,
     .key = 0,
@@ -127,14 +122,14 @@ nametable_entry_no_collision
 //   997
 #define nametable_size 100003
 nametable_entry nametable[nametable_size];
-cell nametable_counter = 0;
+int nametable_counter = 0;
 
-cell
+int
 string_to_sum
 (string str) {
-  cell sum = 0;
-  cell max_step = 10;
-  cell i = 0;
+  int sum = 0;
+  int max_step = 10;
+  int i = 0;
   while (i < strlen(str)) {
     sum = sum + str[i] * (2 << min(i, max_step));
     i++;
@@ -148,14 +143,14 @@ nametable_keyeq
   return string_equal(k1, k2);
 }
 
-cell
+int
 nametable_hash
-(string key, cell counter) {
+(string key, int counter) {
   return (counter + string_to_sum(key)) % nametable_size;
 }
 
 char string_area[4 * 1024 * 1024];
-cell string_area_counter = 0;
+int string_area_counter = 0;
 
 string
 copy_to_string_area
@@ -181,10 +176,10 @@ copy_to_string_area
 int // -1 denotes the hash_table is filled
 nametable_insert
 (string key) {
-  cell orbit_index = nametable_hash(key, 0);
-  cell counter = 0;
+  int orbit_index = nametable_hash(key, 0);
+  int counter = 0;
   while (true) {
-    cell index = nametable_hash(key, counter);
+    int index = nametable_hash(key, counter);
     if (!nametable_entry_occured(nametable[index])) {
       key = copy_to_string_area(key);
       nametable[index].key = key;
@@ -208,9 +203,9 @@ nametable_insert
 int // -1 denotes key not occured
 nametable_search
 (string key) {
-  cell counter = 0;
+  int counter = 0;
   while (true) {
-    cell index = nametable_hash(key, counter);
+    int index = nametable_hash(key, counter);
     if (!nametable_entry_occured(nametable[index])) {
       return -1;
     }
@@ -226,7 +221,7 @@ nametable_search
   }
 }
 
-string n2k (cell index);
+string n2k (int index);
 
 void nametable_entry_print
 (nametable_entry entry) {
@@ -240,7 +235,7 @@ void nametable_entry_print
   else if (entry.type == k2n("jojo")) {
     printf("%d ", entry.value.jojo.size);
     printf("[ ", entry.value.jojo.size);
-    cell i;
+    int i;
     for (i=0; i < entry.value.jojo.size; i=i+1) {
       printf("%d ", entry.value.jojo.array[i]);
     }
@@ -250,10 +245,10 @@ void nametable_entry_print
 
 void
 nametable_report_orbit
-(cell index, cell counter) {
+(int index, int counter) {
   while (counter < nametable[index].orbit_length) {
     string key = nametable[index].key;
-    cell next_index = nametable_hash(key, counter);
+    int next_index = nametable_hash(key, counter);
     if (index == nametable[next_index].orbiton) {
       printf("  - %d %s\n", next_index, nametable[next_index].key);
     }
@@ -272,7 +267,7 @@ nametable_report
   printf("\n");
   printf("- nametable_report\n");
   printf("  : <index> <key> // <orbit-length>\n");
-  cell index = 0;
+  int index = 0;
   while (index < nametable_size) {
     if (nametable_entry_occured(nametable[index]) &&
         nametable_entry_no_collision(nametable[index])) {
@@ -298,7 +293,7 @@ nametable_print
 () {
   printf("\n");
   printf("- nametable_print\n");
-  cell index = 0;
+  int index = 0;
   while (index < nametable_size) {
     printf("  - %d %s %d // %d\n",
            index,
@@ -320,14 +315,14 @@ k2n
 
 string
 n2k
-(cell index) {
+(int index) {
   return nametable[index].key;
 }
 
 void
 init_nametable
 () {
-  cell i = 0;
+  int i = 0;
   while (i < nametable_size) {
     nametable[i] = new_nametable_entry(i);
     i++;
@@ -335,44 +330,44 @@ init_nametable
 }
 
 name jojo_area[1024 * 1024];
-cell jojo_area_counter = 0;
+int jojo_area_counter = 0;
 
 void
 here
-(cell n) {
+(int n) {
   jojo_area[jojo_area_counter] = n;
   jojo_area_counter++;
 }
 
 void
 nametable_set_cell
-(cell index, cell cell) {
+(int index, int cell) {
   nametable[index].type = k2n("cell");
   nametable[index].value.cell = cell;
 }
 
 void
 nametable_set_primitive
-(cell index, primitive primitive) {
+(int index, primitive primitive) {
   nametable[index].type = k2n("primitive");
   nametable[index].value.primitive = primitive;
 }
 
-cell
+int
 nametable_get_cell
-(cell index) {
+(int index) {
   return nametable[index].value.cell;
 }
 
 primitive
 nametable_get_primitive
-(cell index) {
+(int index) {
   return nametable[index].value.primitive;
 }
 
 jojo
 nametable_get_jojo
-(cell index) {
+(int index) {
   return nametable[index].value.jojo;
 }
 
@@ -418,48 +413,48 @@ nametable_test
   // nametable_print();
 }
 
-typedef cell argument_stack[1024 * 4];
+typedef int argument_stack[1024 * 4];
 
 argument_stack as;
-cell as_pointer = 0;
+int as_pointer = 0;
 
 void
 as_push
-(cell value) {
+(int value) {
   as[as_pointer] = value;
-  as_pointer = as_pointer + cell_size;
+  as_pointer = as_pointer + sizeof(int);
 }
 
-cell
+int
 as_pop
 () {
-  as_pointer = as_pointer - cell_size;
+  as_pointer = as_pointer - sizeof(int);
   return as[as_pointer];
 }
 
 typedef name* return_stack[1024 * 4];
 
 return_stack rs;
-cell rs_pointer = 0;
+int rs_pointer = 0;
 
 void
 rs_push
 (name* value) {
   rs[rs_pointer] = value;
-  rs_pointer = rs_pointer + cell_size;
+  rs_pointer = rs_pointer + sizeof(int);
 }
 
 name*
 rs_pop
 () {
-  rs_pointer = rs_pointer - cell_size;
+  rs_pointer = rs_pointer - sizeof(int);
   return rs[rs_pointer];
 }
 
 void
 apply
 (name jo) {
-  cell jo_type = nametable[jo].type;
+  int jo_type = nametable[jo].type;
   if (jo_type == k2n("primitive")) {
     primitive primitive = nametable_get_primitive(jo);
     primitive();
@@ -469,7 +464,7 @@ apply
     rs_push(jojo.array);
   }
   else if (jo_type == k2n("cell")) {
-    cell cell = nametable_get_cell(jo);
+    int cell = nametable_get_cell(jo);
     as_push(cell);
   }
 }
@@ -495,11 +490,11 @@ eval
     return;
   }
   else {
-    cell rs_base = rs_pointer;
+    int rs_base = rs_pointer;
     while (rs_pointer >= rs_base) {
       name* function_body = rs_pop();
       rs_push(function_body + 1);
-      addr jo = *(cell*)function_body;
+      int jo = *(int*)function_body;
       apply(jo);
     }
   }
@@ -508,7 +503,7 @@ eval
 void
 eval_jo
 (name jo) {
-  cell jo_type = nametable[jo].type;
+  int jo_type = nametable[jo].type;
   if (jo_type == k2n("primitive")) {
     primitive primitive = nametable_get_primitive(jo);
     primitive();
@@ -519,7 +514,7 @@ eval_jo
     eval();
   }
   else if (jo_type == k2n("cell")) {
-    cell cell = nametable_get_cell(jo);
+    int cell = nametable_get_cell(jo);
     as_push(cell);
   }
 }
@@ -533,7 +528,7 @@ define_primitive
 
 void
 define_function
-(string str, cell size, string *str_array) {
+(string str, int size, string *str_array) {
   name index = k2n(str);
   int i;
   name *array;
@@ -549,7 +544,7 @@ define_function
 
 void
 define_variable
-(string str, cell cell) {
+(string str, int cell) {
   name index = k2n(str);
   nametable_set_cell(index, cell);
 }
@@ -572,8 +567,8 @@ p_bye
 void
 p_dup
 () {
-  // (cell cell -> cell)
-  cell a = as_pop();
+  // (int int -> int)
+  int a = as_pop();
   as_push(a);
   as_push(a);
 }
@@ -598,8 +593,8 @@ void
 p_mul
 () {
   // (integer integer -> integer)
-  cell a = as_pop();
-  cell b = as_pop();
+  int a = as_pop();
+  int b = as_pop();
   as_push(a * b);
 }
 
@@ -694,7 +689,7 @@ p_lit
   // ([rs] -> int)
   name* function_body = rs_pop();
   rs_push(function_body + 1);
-  addr jo = *(cell*)function_body;
+  int jo = *(int*)function_body;
   as_push(jo);
 }
 
@@ -733,7 +728,7 @@ compile_answer
 () {
   // ([io] -> [jojo_area])
   here(k2n("lit"));
-  cell* offset_place = (jojo_area + jojo_area_counter);
+  int* offset_place = (jojo_area + jojo_area_counter);
   jojo_area_counter++;
   here(k2n("jump-if-false"));
   while (true) {
@@ -765,7 +760,7 @@ p_define_function
   // ([io] -> [nametable])
   name index;
   index = read_symbol();
-  cell old_jojo_area_counter = jojo_area_counter;
+  int old_jojo_area_counter = jojo_area_counter;
   name* array = jojo_area + jojo_area_counter;
   while (true) {
     name s = read_symbol();
@@ -792,6 +787,7 @@ the_story_begins
 
   define_primitive("end", p_end);
   define_primitive("bye", p_bye);
+
   define_primitive("dup", p_dup);
 
   define_primitive("mul", p_mul);
