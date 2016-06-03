@@ -3,7 +3,7 @@
 "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en">
 <head>
-<!-- 2016-06-03 Fri 18:44 -->
+<!-- 2016-06-03 Fri 19:24 -->
 <meta http-equiv="Content-Type" content="text/html;charset=utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>example code of jojo</title>
@@ -67,9 +67,9 @@ for the JavaScript code in this tag.
 <h2>overview</h2>
 <div id="text-table-of-contents">
 <ul>
-<li><a href="#org4864ed4">int</a></li>
-<li><a href="#org911da87">if</a></li>
-<li><a href="#orgf906b69">stack-repl</a></li>
+<li><a href="#orgb75608e">stack-repl</a></li>
+<li><a href="#org109e225">if</a></li>
+<li><a href="#org61c5dd2">int</a></li>
 </ul>
 </div>
 </div>
@@ -80,25 +80,25 @@ for the JavaScript code in this tag.
 
 <hr  />
 
-<div id="outline-container-org4864ed4" class="outline-2">
-<h2 id="org4864ed4">int</h2>
-<div class="outline-text-2" id="text-org4864ed4">
+<div id="outline-container-orgb75608e" class="outline-2">
+<h2 id="orgb75608e">stack-repl</h2>
+<div class="outline-text-2" id="text-orgb75608e">
 <div class="org-src-container">
 
-<pre class="src src-scheme"><span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">~</span> square <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">:</span> int int <span style="color: #66d9ef; font-weight: bold;">-&gt;</span> int<span style="color: #696969;">)</span>
-   dup mul end<span style="color: #696969;">)</span>
+<pre class="src src-scheme"><span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">~</span> stack-repl <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">:</span> <span style="color: #797979;">[</span>io<span style="color: #797979;">]</span> <span style="color: #66d9ef; font-weight: bold;">-&gt;</span> *<span style="color: #696969;">)</span>
+   read-symbol apply
+   print-stack
+   <span style="color: #696969;">(</span>taca stack-repl<span style="color: #696969;">))</span>
 
-<span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">~</span> t <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">:</span> <span style="color: #66d9ef; font-weight: bold;">-&gt;</span><span style="color: #696969;">)</span>
-   <span style="color: #696969;">(</span># 123 -321<span style="color: #696969;">)</span> dup square . . .<span style="color: #696969;">)</span>
-t
+stack-repl
 </pre>
 </div>
 </div>
 </div>
 
-<div id="outline-container-org911da87" class="outline-2">
-<h2 id="org911da87">if</h2>
-<div class="outline-text-2" id="text-org911da87">
+<div id="outline-container-org109e225" class="outline-2">
+<h2 id="org109e225">if</h2>
+<div class="outline-text-2" id="text-org109e225">
 <div class="org-src-container">
 
 <pre class="src src-scheme"><span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">~</span> t2 <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">:</span> <span style="color: #66d9ef; font-weight: bold;">-&gt;</span><span style="color: #696969;">)</span>
@@ -116,17 +116,27 @@ t3
 </div>
 </div>
 
-<div id="outline-container-orgf906b69" class="outline-2">
-<h2 id="orgf906b69">stack-repl</h2>
-<div class="outline-text-2" id="text-orgf906b69">
+<div id="outline-container-org61c5dd2" class="outline-2">
+<h2 id="org61c5dd2">int</h2>
+<div class="outline-text-2" id="text-org61c5dd2">
 <div class="org-src-container">
 
-<pre class="src src-scheme"><span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">~</span> stack-repl <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">:</span> <span style="color: #797979;">[</span>io<span style="color: #797979;">]</span> <span style="color: #66d9ef; font-weight: bold;">-&gt;</span> *<span style="color: #696969;">)</span>
-   read-symbol apply
-   print-stack
-   <span style="color: #696969;">(</span>taca stack-repl<span style="color: #696969;">))</span>
+<pre class="src src-scheme"><span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">~</span> square <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">:</span> int int <span style="color: #66d9ef; font-weight: bold;">-&gt;</span> int<span style="color: #696969;">)</span>
+   dup mul end<span style="color: #696969;">)</span>
 
-stack-repl
+<span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">~</span> factorial <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">:</span> int <span style="color: #66d9ef; font-weight: bold;">-&gt;</span> int<span style="color: #696969;">)</span>
+   <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">if</span> dup <span style="color: #696969;">(</span># 1<span style="color: #696969;">)</span> lteq? <span style="color: #66d9ef; font-weight: bold;">-&gt;</span> drop <span style="color: #696969;">(</span># 1<span style="color: #696969;">)</span> end<span style="color: #696969;">)</span>
+   dup <span style="color: #696969;">(</span># 1<span style="color: #696969;">)</span> sub factorial mul end<span style="color: #696969;">)</span>
+
+<span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">~</span> t <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">:</span> <span style="color: #66d9ef; font-weight: bold;">-&gt;</span><span style="color: #696969;">)</span>
+   <span style="color: #696969;">(</span># 123 -321<span style="color: #696969;">)</span> dup square . . .
+   <span style="color: #696969;">(</span># 0<span style="color: #696969;">)</span> factorial .
+   <span style="color: #696969;">(</span># 1<span style="color: #696969;">)</span> factorial .
+   <span style="color: #696969;">(</span># 2<span style="color: #696969;">)</span> factorial .
+   <span style="color: #696969;">(</span># 3<span style="color: #696969;">)</span> factorial .
+   <span style="color: #696969;">(</span># 4<span style="color: #696969;">)</span> factorial .
+   end<span style="color: #696969;">)</span>
+t
 </pre>
 </div>
 </div>

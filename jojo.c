@@ -579,11 +579,50 @@ eval_jo
 }
 
 void
+p_drop
+() {
+  // (a ->)
+  as_pop();
+}
+
+void
 p_dup
 () {
-  // (int int -> int)
+  // (a a -> a)
   int a = as_pop();
   as_push(a);
+  as_push(a);
+}
+
+void
+p_over
+() {
+  // (a b -> a b a)
+  int b = as_pop();
+  int a = as_pop();
+  as_push(a);
+  as_push(b);
+  as_push(a);
+}
+
+void
+p_tuck
+() {
+  // (a b -> b a b)
+  int b = as_pop();
+  int a = as_pop();
+  as_push(b);
+  as_push(a);
+  as_push(b);
+}
+
+void
+p_swap
+() {
+  // (a b -> b a)
+  int b = as_pop();
+  int a = as_pop();
+  as_push(b);
   as_push(a);
 }
 
@@ -610,7 +649,11 @@ p_print_stack
 void
 export_stack_operation
 () {
+  define_primitive("drop", p_drop);
   define_primitive("dup", p_dup);
+  define_primitive("over", p_over);
+  define_primitive("tuck", p_tuck);
+  define_primitive("swap", p_swap);
   define_primitive("print-stack", p_print_stack);
 }
 
@@ -694,12 +737,76 @@ export_control
 }
 
 void
+p_true
+() {
+  as_push(1);
+}
+
+void
+p_false
+() {
+  as_push(0);
+}
+
+void
+p_not
+() {
+  // (bool -> bool)
+  int a = as_pop();
+  as_push(!a);
+}
+
+void
+export_bool
+() {
+  define_primitive("true", p_true);
+  define_primitive("false", p_false);
+  define_primitive("not", p_not);
+}
+
+void
+p_add
+() {
+  // (int int -> int)
+  int b = as_pop();
+  int a = as_pop();
+  as_push(a + b);
+}
+
+void
+p_sub
+() {
+  // (int int -> int)
+  int b = as_pop();
+  int a = as_pop();
+  as_push(a - b);
+}
+
+void
 p_mul
 () {
-  // (integer integer -> integer)
-  int a = as_pop();
+  // (int int -> int)
   int b = as_pop();
+  int a = as_pop();
   as_push(a * b);
+}
+
+void
+p_div
+() {
+  // (int int -> int)
+  int b = as_pop();
+  int a = as_pop();
+  as_push(a / b);
+}
+
+void
+p_mod
+() {
+  // (int int -> int)
+  int b = as_pop();
+  int a = as_pop();
+  as_push(a % b);
 }
 
 void
@@ -723,9 +830,68 @@ k_int
 }
 
 void
+p_eq_p
+() {
+  // (int int -> bool)
+  int b = as_pop();
+  int a = as_pop();
+  as_push(a == b);
+}
+
+void
+p_gt_p
+() {
+  // (int int -> bool)
+  int b = as_pop();
+  int a = as_pop();
+  as_push(a > b);
+}
+
+void
+p_lt_p
+() {
+  // (int int -> bool)
+  int b = as_pop();
+  int a = as_pop();
+  as_push(a < b);
+}
+
+void
+p_gteq_p
+() {
+  // (int int -> bool)
+  int b = as_pop();
+  int a = as_pop();
+  as_push(a >= b);
+}
+
+void
+p_lteq_p
+() {
+  // (int int -> bool)
+  int b = as_pop();
+  int a = as_pop();
+  as_push(a <= b);
+}
+
+void
 export_int
 () {
+  define_primitive("add", p_add);
+  define_primitive("sub", p_sub);
+
   define_primitive("mul", p_mul);
+  define_primitive("div", p_div);
+  define_primitive("mod", p_mod);
+
+  define_primitive("neg", p_not);
+
+  define_primitive("eq?", p_eq_p);
+  define_primitive("gt?", p_gt_p);
+  define_primitive("lt?", p_lt_p);
+  define_primitive("gteq?", p_gteq_p);
+  define_primitive("lteq?", p_lteq_p);
+
   define_primitive("#", k_int);
 }
 
@@ -780,7 +946,7 @@ p_read_symbol
 void
 p_simple_wirte
 () {
-  // (integer -> [io])
+  // (int -> [io])
   printf("%d\n", as_pop());
 }
 
@@ -790,25 +956,6 @@ export_io
   define_primitive("read-symbol", p_read_symbol);
   define_primitive("simple-wirte", p_simple_wirte);
   define_primitive(".", p_simple_wirte);
-}
-
-void
-p_true
-() {
-  as_push(1);
-}
-
-void
-p_false
-() {
-  as_push(0);
-}
-
-void
-export_bool
-() {
-  define_primitive("true", p_true);
-  define_primitive("false", p_false);
 }
 
 void

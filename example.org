@@ -8,15 +8,15 @@
 
 ---------
 
-* int
+* stack-repl
 
   #+begin_src scheme
-  (~ square (: int int -> int)
-     dup mul end)
+  (~ stack-repl (: [io] -> *)
+     read-symbol apply
+     print-stack
+     (taca stack-repl))
 
-  (~ t (: ->)
-     (# 123 -321) dup square . . .)
-  t
+  stack-repl
   #+end_src
 
 * if
@@ -34,13 +34,23 @@
   t3
   #+end_src
 
-* stack-repl
+* int
 
   #+begin_src scheme
-  (~ stack-repl (: [io] -> *)
-     read-symbol apply
-     print-stack
-     (taca stack-repl))
+  (~ square (: int int -> int)
+     dup mul end)
 
-  stack-repl
+  (~ factorial (: int -> int)
+     (if dup (# 1) lteq? -> drop (# 1) end)
+     dup (# 1) sub factorial mul end)
+
+  (~ t (: ->)
+     (# 123 -321) dup square . . .
+     (# 0) factorial .
+     (# 1) factorial .
+     (# 2) factorial .
+     (# 3) factorial .
+     (# 4) factorial .
+     end)
+  t
   #+end_src
