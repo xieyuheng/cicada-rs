@@ -60,54 +60,6 @@ typedef cell addr;
 #define cell_SIZE 4;
 cell cell_size = 4;
 
-cell memory_size = 1024 * 1024;
-byte memory[1024 * 1024];
-addr memory_cursor = 0;
-
-
-byte
-memory_get_byte
-(cell index) {
-  return (byte) memory[index];
-}
-
-void
-memory_set_byte
-(cell index, byte value) {
-  memory[index] = value;
-}
-
-cell
-memory_get
-(cell index) {
-    cell sum = 0;
-    cell i;
-    cell base = 1;
-    for (i=0; i < cell_size; i=i+1) {
-      sum = sum + (memory_get_byte(index + i) * base);
-      base = base * 256;
-    }
-    return sum;
-}
-
-void
-memory_set
-(cell index, cell value) {
-  cell i;
-  for (i=0; i < cell_size; i=i+1) {
-    memory_set_byte(index + i, value % 256);
-    value = value >> 8;
-  }
-}
-
-cell
-memory_allocate
-(cell size) {
-  cell return_address = memory_cursor;
-  memory_cursor = return_address + size;
-  return return_address;
-}
-
 typedef void (*primitive)();
 
 typedef cell name;
@@ -386,6 +338,13 @@ name jojo_area[1024 * 1024];
 cell jojo_area_counter = 0;
 
 void
+here
+(cell n) {
+  jojo_area[jojo_area_counter] = n;
+  jojo_area_counter++;
+}
+
+void
 nametable_set_cell
 (cell index, cell cell) {
   nametable[index].type = k2n("cell");
@@ -498,50 +457,70 @@ rs_pop
 }
 
 void
-execute_name
-(name name) {
-  cell type_name = nametable[name].type;
-  if (type_name == k2n("primitive")) {
-    primitive primitive = nametable_get_primitive(name);
+apply
+(name jo) {
+  cell jo_type = nametable[jo].type;
+  if (jo_type == k2n("primitive")) {
+    primitive primitive = nametable_get_primitive(jo);
     primitive();
   }
-  else if (type_name == k2n("jojo")) {
-    jojo jojo = nametable_get_jojo(name);
+  else if (jo_type == k2n("jojo")) {
+    jojo jojo = nametable_get_jojo(jo);
     rs_push(jojo.array);
   }
-  else if (type_name == k2n("cell")) {
-    cell cell = nametable_get_cell(name);
+  else if (jo_type == k2n("cell")) {
+    cell cell = nametable_get_cell(jo);
     as_push(cell);
   }
 }
 
 void
-p_execute_name
+p_apply
 () {
-  execute_name(as_pop());
+  apply(as_pop());
 }
 
 jmp_buf jmp_buffer;
 
 bool
-exit_interpreter
+exit_eval
 () {
   longjmp(jmp_buffer, 666);
 }
 
 void
-interpreter
+eval
 () {
   if (666 == setjmp(jmp_buffer)) {
     return;
   }
   else {
-    while (true) {
+    cell rs_base = rs_pointer;
+    while (rs_pointer >= rs_base) {
       name* function_body = rs_pop();
       rs_push(function_body + 1);
-      addr name = *(cell*)function_body;
-      execute_name(name);
+      addr jo = *(cell*)function_body;
+      apply(jo);
     }
+  }
+}
+
+void
+eval_jo
+(name jo) {
+  cell jo_type = nametable[jo].type;
+  if (jo_type == k2n("primitive")) {
+    primitive primitive = nametable_get_primitive(jo);
+    primitive();
+  }
+  else if (jo_type == k2n("jojo")) {
+    jojo jojo = nametable_get_jojo(jo);
+    rs_push(jojo.array);
+    eval();
+  }
+  else if (jo_type == k2n("cell")) {
+    cell cell = nametable_get_cell(jo);
+    as_push(cell);
   }
 }
 
@@ -587,7 +566,7 @@ p_bye
 () {
   // (-> [exit])
   printf("bye bye ^-^/\n");
-  exit_interpreter();
+  exit_eval();
 }
 
 void
@@ -600,11 +579,19 @@ p_dup
 }
 
 void
-p_branch_back
+p_jump_back
 () {
   // (offset -> [rs])
   name* function_body = rs_pop();
   rs_push(function_body - as_pop());
+}
+
+void
+p_jump_over
+() {
+  // (offset -> [rs])
+  name* function_body = rs_pop();
+  rs_push(function_body + as_pop());
 }
 
 void
@@ -675,27 +662,125 @@ do_nothing
 }
 
 void
+p_comment
+() {
+  // ([io] ->)
+  while (true) {
+    name s = read_symbol();
+    if (s == k2n("(")) {
+      p_comment();
+    }
+    if (s == k2n(")")) {
+      break;
+    }
+  }
+}
+
+void
+p_true
+() {
+  as_push(1);
+}
+
+void
+p_false
+() {
+  as_push(0);
+}
+
+void
+p_lit
+() {
+  // ([rs] -> int)
+  name* function_body = rs_pop();
+  rs_push(function_body + 1);
+  addr jo = *(cell*)function_body;
+  as_push(jo);
+}
+
+void
+compile_question
+() {
+  // ([io] -> [jojo_area])
+  while (true) {
+    name s = read_symbol();
+    if (s == k2n("(")) {
+      eval_jo(read_symbol());
+    }
+    else if (s == k2n("->")) {
+      break;
+    }
+    else {
+      here(s);
+    }
+  }
+}
+
+void
+p_jump_if_false
+() {
+  // (bool addr -> [rs])
+  name* a = as_pop();
+  int b = as_pop();
+  if (b == 0) {
+    rs_pop();
+    rs_push(a);
+  }
+}
+
+void
+compile_answer
+() {
+  // ([io] -> [jojo_area])
+  here(k2n("lit"));
+  cell* offset_place = (jojo_area + jojo_area_counter);
+  jojo_area_counter++;
+  here(k2n("jump-if-false"));
+  while (true) {
+    name s = read_symbol();
+    if (s == k2n("(")) {
+      eval_jo(read_symbol());
+    }
+    else if (s == k2n(")")) {
+      break;
+    }
+    else {
+      here(s);
+    }
+  }
+  offset_place[0] = (jojo_area + jojo_area_counter);
+}
+
+void
+p_if
+() {
+  // ([io] -> [jojo_area])
+  compile_question();
+  compile_answer();
+}
+
+void
 p_define_function
 () {
   // ([io] -> [nametable])
   name index;
   index = read_symbol();
-  int i = 0;
-  name *array;
-  array = (jojo_area + jojo_area_counter);
+  cell old_jojo_area_counter = jojo_area_counter;
+  name* array = jojo_area + jojo_area_counter;
   while (true) {
     name s = read_symbol();
-    if (s == k2n(")")) {
+    if (s == k2n("(")) {
+      eval_jo(read_symbol());
+    }
+    else if (s == k2n(")")) {
       break;
     }
     else {
-      array[i] = s;
-      i++;
+      here(s);
     }
   }
-  jojo_area_counter = i + jojo_area_counter;
   nametable[index].type = k2n("jojo");
-  nametable[index].value.jojo.size = i;
+  nametable[index].value.jojo.size = jojo_area_counter - old_jojo_area_counter;
   nametable[index].value.jojo.array = array;
 }
 
@@ -716,30 +801,38 @@ the_story_begins
   define_primitive("~", p_define_function);
 
   define_primitive("read-symbol", p_read_symbol);
-  define_primitive("execute-name", p_execute_name);
-  define_primitive("branch-back", p_branch_back);
+  define_primitive("apply", p_apply);
+  define_primitive("jump-back", p_jump_back);
+  define_primitive("jump-over", p_jump_over);
 
   define_primitive("simple-wirte", p_simple_wirte);
   define_primitive(".", p_simple_wirte);
 
+  define_primitive(":", p_comment);
+
+  define_primitive("true", p_true);
+  define_primitive("false", p_false);
+
+  define_primitive("lit", p_lit);
+  define_primitive("jump-if-false", p_jump_if_false);
+  define_primitive("if", p_if);
+
   define_variable("little-test-number", 4);
 
-  // basic-repl can not be define as primitive
+  // basic-repl can not be defined as primitive
   string p_basic_repl[] = {
     "read-symbol",
-    "execute-name",
+    "apply",
     "little-test-number",
-    "branch-back"
+    "jump-back"
   };
   define_function("basic-repl", 4, p_basic_repl);
-
-
 
   jojo first_jojo = nametable_get_jojo(k2n("basic-repl"));
   rs_push(first_jojo.array);
 
   // nametable_report();
-  interpreter();
+  eval();
 
 }
 
