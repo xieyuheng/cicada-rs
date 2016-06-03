@@ -1,0 +1,46 @@
+#+HTML_HEAD: <link rel="stylesheet" href="http://xieyuheng.github.io/asset/css/page.css" type="text/css" media="screen" />
+#+PROPERTY: tangle example.jo
+#+title: example code of jojo
+
+---------
+
+- simple example code ([[https://github.com/xieyuheng/sequent1][source]])
+
+---------
+
+* int
+
+  #+begin_src scheme
+  (~ square (: int int -> int)
+     dup mul end)
+
+  (~ t (: ->)
+     (# 123 -321) dup square . . .)
+  t
+  #+end_src
+
+* if
+
+  #+begin_src scheme
+  (~ t2 (: ->)
+     (if true -> little-test-number square simple-wirte)
+     (if false -> little-test-number simple-wirte)
+     end)
+  t2
+
+  (~ t3 (: ->)
+     (if true -> little-test-number square simple-wirte end)
+     (if false -> little-test-number simple-wirte end))
+  t3
+  #+end_src
+
+* stack-repl
+
+  #+begin_src scheme
+  (~ stack-repl (: [io] -> *)
+     read-symbol apply
+     print-stack
+     (taca stack-repl))
+
+  stack-repl
+  #+end_src
