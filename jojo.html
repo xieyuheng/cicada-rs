@@ -1,0 +1,1679 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+"http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en">
+<head>
+<!-- 2016-06-03 Fri 13:11 -->
+<meta http-equiv="Content-Type" content="text/html;charset=utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>jojo</title>
+<meta name="generator" content="Org-mode" />
+<meta name="author" content="XIE Yuheng" />
+<link rel="stylesheet" href="http://xieyuheng.github.io/asset/css/page.css" type="text/css" media="screen" />
+<script type="text/javascript">
+/*
+@licstart  The following is the entire license notice for the
+JavaScript code in this tag.
+
+Copyright (C) 2012-2013 Free Software Foundation, Inc.
+
+The JavaScript code in this tag is free software: you can
+redistribute it and/or modify it under the terms of the GNU
+General Public License (GNU GPL) as published by the Free Software
+Foundation, either version 3 of the License, or (at your option)
+any later version.  The code is distributed WITHOUT ANY WARRANTY;
+without even the implied warranty of MERCHANTABILITY or FITNESS
+FOR A PARTICULAR PURPOSE.  See the GNU GPL for more details.
+
+As additional permission under GNU GPL version 3 section 7, you
+may distribute non-source (e.g., minimized or compacted) forms of
+that code without the copy of the GNU GPL normally required by
+section 4, provided you include this license notice and a URL
+through which recipients can access the Corresponding Source.
+
+
+@licend  The above is the entire license notice
+for the JavaScript code in this tag.
+*/
+<!--/*--><![CDATA[/*><!--*/
+ function CodeHighlightOn(elem, id)
+ {
+   var target = document.getElementById(id);
+   if(null != target) {
+     elem.cacheClassElem = elem.className;
+     elem.cacheClassTarget = target.className;
+     target.className = "code-highlighted";
+     elem.className   = "code-highlighted";
+   }
+ }
+ function CodeHighlightOff(elem, id)
+ {
+   var target = document.getElementById(id);
+   if(elem.cacheClassElem)
+     elem.className = elem.cacheClassElem;
+   if(elem.cacheClassTarget)
+     target.className = elem.cacheClassTarget;
+ }
+/*]]>*///-->
+</script>
+</head>
+<body>
+<div id="preamble" class="status">
+喪以不執 所執者喪 執喪相比 方死方生
+</div>
+<div id="content">
+<h1 class="title">jojo</h1>
+<div id="table-of-contents">
+<h2>overview</h2>
+<div id="text-table-of-contents">
+<ul>
+<li><a href="#orgdbd9974"><span class="done todo">todo</span> </a></li>
+<li><a href="#org85e17d4">helper</a>
+<ul>
+<li><a href="#org3385749">header</a></li>
+<li><a href="#orgd91c39">bool</a></li>
+<li><a href="#orgee1d4b7">number</a></li>
+<li><a href="#org3151df6">char</a></li>
+<li><a href="#orge313b79">string</a></li>
+</ul>
+</li>
+<li><a href="#org298be44">cell</a></li>
+<li><a href="#org621266a">hashtable</a>
+<ul>
+<li><a href="#org213120e">primitive</a></li>
+<li><a href="#org69ebbfb">name &amp; jojo</a></li>
+<li><a href="#org9a408ca">bind &amp; nametable<sub>entry</sub></a></li>
+<li><a href="#org230b622">new<sub>nametable</sub><sub>entry</sub></a></li>
+<li><a href="#org54341ee">nametable<sub>entry</sub>_[occured|entry<sub>used</sub>|no<sub>collision</sub>]</a></li>
+<li><a href="#org874fc50">nametable</a></li>
+<li><a href="#org6844c65">string<sub>to</sub><sub>sum</sub></a></li>
+<li><a href="#org2e0c8bb">nametable<sub>keyeq</sub></a></li>
+<li><a href="#org1b57565">nametable<sub>hash</sub></a></li>
+<li><a href="#org7cad670">string<sub>area</sub></a></li>
+<li><a href="#orga13e749">copy<sub>to</sub><sub>string</sub><sub>area</sub></a></li>
+<li><a href="#org18a35c7">nametable<sub>insert</sub></a></li>
+<li><a href="#orge7d0cf">nametable<sub>search</sub></a></li>
+<li><a href="#org1915e8">nametable<sub>entry</sub><sub>print</sub></a></li>
+<li><a href="#orgc1335e3">nametable<sub>report</sub><sub>orbit</sub></a></li>
+<li><a href="#orgc6085b8">nametable<sub>report</sub></a></li>
+<li><a href="#orgc5b54ef">nametable<sub>print</sub></a></li>
+<li><a href="#orgfaf4bcc">k2n &amp; n2k</a></li>
+<li><a href="#org89b1e92">init<sub>nametable</sub></a></li>
+<li><a href="#orgb93a381">jojo<sub>area</sub></a></li>
+<li><a href="#org844818e">here</a></li>
+<li><a href="#org43a2abb">nametable<sub>set</sub><sub>cell</sub></a></li>
+<li><a href="#org1d6b54">nametable<sub>set</sub><sub>primitive</sub></a></li>
+<li><a href="#org2cb908d">nametable<sub>get</sub><sub>cell</sub></a></li>
+<li><a href="#org730dc81">nametable<sub>get</sub><sub>primitive</sub></a></li>
+<li><a href="#org2f40363">nametable<sub>get</sub><sub>jojo</sub></a></li>
+<li><a href="#org2243faf"><span class="done test">test</span> </a></li>
+</ul>
+</li>
+<li><a href="#org30f5338">as</a></li>
+<li><a href="#org9929dfa">rs</a></li>
+<li><a href="#org6be7eab">apply &amp; eval</a>
+<ul>
+<li><a href="#org4b8b2b6">apply</a></li>
+<li><a href="#org5442d21">p<sub>apply</sub></a></li>
+<li><a href="#orga48c587">eval</a></li>
+<li><a href="#org59921ed">eval<sub>jo</sub></a></li>
+</ul>
+</li>
+<li><a href="#orgc68d889">define</a>
+<ul>
+<li><a href="#org2d7a53d">define<sub>primitive</sub></a></li>
+<li><a href="#orgbe59619">define<sub>function</sub></a></li>
+<li><a href="#orgdef7914">define<sub>variable</sub></a></li>
+</ul>
+</li>
+<li><a href="#orgaca4775">p<sub>end</sub></a></li>
+<li><a href="#org26bde4a">p<sub>bye</sub></a></li>
+<li><a href="#orgaece328">stack operation</a>
+<ul>
+<li><a href="#orgdff2d77">p<sub>dup</sub></a></li>
+</ul>
+</li>
+<li><a href="#orgd4bf074">control</a>
+<ul>
+<li><a href="#orgdc0b6dd">p<sub>jump</sub><sub>back</sub></a></li>
+<li><a href="#org50698e">p<sub>jump</sub><sub>over</sub></a></li>
+</ul>
+</li>
+<li><a href="#orgece33ce">integer</a>
+<ul>
+<li><a href="#org244daeb">p<sub>mul</sub></a></li>
+</ul>
+</li>
+<li><a href="#org27ef7f6">io</a>
+<ul>
+<li><a href="#org65ae08a">read<sub>symbol</sub></a></li>
+<li><a href="#org7a1f8ef">p<sub>read</sub><sub>symbol</sub></a></li>
+<li><a href="#org5971bfa">p<sub>simple</sub><sub>wirte</sub></a></li>
+</ul>
+</li>
+<li><a href="#orgbd15ddf">misc</a>
+<ul>
+<li><a href="#orgbeca5c4">do<sub>nothing</sub></a></li>
+</ul>
+</li>
+<li><a href="#org8d11560">p<sub>comment</sub></a></li>
+<li><a href="#org79a91b4">bool</a>
+<ul>
+<li><a href="#orgb1c7bd5">p<sub>true</sub></a></li>
+<li><a href="#orgf0ac889">p<sub>false</sub></a></li>
+</ul>
+</li>
+<li><a href="#orgff02b41">p<sub>if</sub></a>
+<ul>
+<li><a href="#org7fdfc9d"><span class="todo note">note</span> </a></li>
+<li><a href="#orgfb8be81">p<sub>lit</sub></a></li>
+<li><a href="#org1a899f5">compile<sub>question</sub></a></li>
+<li><a href="#org7936837">p<sub>jump</sub><sub>if</sub><sub>false</sub></a></li>
+<li><a href="#org26e08b">compile<sub>answer</sub></a></li>
+<li><a href="#org13ff943">p<sub>if</sub></a></li>
+</ul>
+</li>
+<li><a href="#orga38d90e">p<sub>define</sub><sub>function</sub></a></li>
+<li><a href="#org9204feb">play</a>
+<ul>
+<li><a href="#org6d3b6b6">the<sub>story</sub><sub>begins</sub></a></li>
+<li><a href="#orge30d826">main</a></li>
+</ul>
+</li>
+</ul>
+</div>
+</div>
+<hr  />
+
+<ul class="org-ul">
+<li><p>the implementation of the interpreter (<a href="https://github.com/xieyuheng/jojo">source</a>)</p></li></ul>
+
+<hr  />
+
+<div id="outline-container-orgdbd9974" class="outline-2">
+<h2 id="orgdbd9974"><span class="done todo">todo</span> </h2>
+<div class="outline-text-2" id="text-orgdbd9974">
+<ul class="org-ul">
+<li><p>int v.s. cell</p></li></ul>
+</div>
+</div>
+
+<div id="outline-container-org85e17d4" class="outline-2">
+<h2 id="org85e17d4">helper</h2>
+<div class="outline-text-2" id="text-org85e17d4">
+</div><div id="outline-container-org3385749" class="outline-3">
+<h3 id="org3385749">header</h3>
+<div class="outline-text-3" id="text-org3385749">
+<div class="org-src-container">
+
+<pre class="src src-c"><span style="color: #a6e22e;">#include</span> <span style="color: #e6db74;">&lt;stdio.h&gt;</span>
+<span style="color: #a6e22e;">#include</span> <span style="color: #e6db74;">&lt;ctype.h&gt;</span>
+<span style="color: #a6e22e;">#include</span> <span style="color: #e6db74;">&lt;stdlib.h&gt;</span>
+<span style="color: #a6e22e;">#include</span> <span style="color: #e6db74;">&lt;stdint.h&gt;</span>
+<span style="color: #a6e22e;">#include</span> <span style="color: #e6db74;">&lt;setjmp.h&gt;</span>
+<span style="color: #a6e22e;">#include</span> <span style="color: #e6db74;">&lt;string.h&gt;</span>
+</pre>
+</div>
+</div>
+</div>
+
+<div id="outline-container-orgd91c39" class="outline-3">
+<h3 id="orgd91c39">bool</h3>
+<div class="outline-text-3" id="text-orgd91c39">
+<div class="org-src-container">
+
+<pre class="src src-c"><span style="color: #f92672; font-weight: bold;">typedef</span> <span style="color: #f92672; font-weight: bold;">enum</span> { <span style="color: #ae81ff;">false</span>, <span style="color: #ae81ff;">true</span> } <span style="color: #66d9ef; font-weight: bold;">bool</span>;
+</pre>
+</div>
+</div>
+</div>
+
+<div id="outline-container-orgee1d4b7" class="outline-3">
+<h3 id="orgee1d4b7">number</h3>
+<div class="outline-text-3" id="text-orgee1d4b7">
+<div class="org-src-container">
+
+<pre class="src src-c"><span style="color: #66d9ef; font-weight: bold;">int</span>
+<span style="color: #a6e22e;">max</span>
+(<span style="color: #66d9ef; font-weight: bold;">int</span> <span style="color: #fd971f;">a</span>, <span style="color: #66d9ef; font-weight: bold;">int</span> <span style="color: #fd971f;">b</span>) {
+  <span style="color: #f92672; font-weight: bold;">if</span> (a &lt; b) {
+    <span style="color: #f92672; font-weight: bold;">return</span> b;
+  }
+  <span style="color: #f92672; font-weight: bold;">else</span> {
+    <span style="color: #f92672; font-weight: bold;">return</span> a;
+  }
+}
+
+<span style="color: #66d9ef; font-weight: bold;">int</span>
+<span style="color: #a6e22e;">min</span>
+(<span style="color: #66d9ef; font-weight: bold;">int</span> <span style="color: #fd971f;">a</span>, <span style="color: #66d9ef; font-weight: bold;">int</span> <span style="color: #fd971f;">b</span>) {
+  <span style="color: #f92672; font-weight: bold;">if</span> (a &gt; b) {
+    <span style="color: #f92672; font-weight: bold;">return</span> b;
+  }
+  <span style="color: #f92672; font-weight: bold;">else</span> {
+    <span style="color: #f92672; font-weight: bold;">return</span> a;
+  }
+}
+</pre>
+</div>
+</div>
+</div>
+
+<div id="outline-container-org3151df6" class="outline-3">
+<h3 id="org3151df6">char</h3>
+<div class="outline-text-3" id="text-org3151df6">
+<div class="org-src-container">
+
+<pre class="src src-c"><span style="color: #66d9ef; font-weight: bold;">bool</span>
+<span style="color: #a6e22e;">isbarcket</span>
+(<span style="color: #66d9ef; font-weight: bold;">char</span> <span style="color: #fd971f;">c</span>) {
+  <span style="color: #f92672; font-weight: bold;">return</span> (c == <span style="color: #e6db74;">'('</span> ||
+          c == <span style="color: #e6db74;">')'</span> ||
+          c == <span style="color: #e6db74;">'['</span> ||
+          c == <span style="color: #e6db74;">']'</span> ||
+          c == <span style="color: #e6db74;">'{'</span> ||
+          c == <span style="color: #e6db74;">'}'</span>);
+}
+</pre>
+</div>
+</div>
+</div>
+
+<div id="outline-container-orge313b79" class="outline-3">
+<h3 id="orge313b79">string</h3>
+<div class="outline-text-3" id="text-orge313b79">
+<div class="org-src-container">
+
+<pre class="src src-c"><span style="color: #f92672; font-weight: bold;">typedef</span> <span style="color: #66d9ef; font-weight: bold;">char</span>* <span style="color: #66d9ef; font-weight: bold;">string</span>;
+
+<span style="color: #66d9ef; font-weight: bold;">bool</span>
+<span style="color: #a6e22e;">string_equal</span>
+(<span style="color: #66d9ef; font-weight: bold;">string</span> <span style="color: #fd971f;">s1</span>, <span style="color: #66d9ef; font-weight: bold;">string</span> <span style="color: #fd971f;">s2</span>) {
+  <span style="color: #f92672; font-weight: bold;">if</span> (strcmp(s1, s2) == 0) {
+    <span style="color: #f92672; font-weight: bold;">return</span> <span style="color: #ae81ff;">true</span>;
+  }
+  <span style="color: #f92672; font-weight: bold;">else</span> {
+    <span style="color: #f92672; font-weight: bold;">return</span> <span style="color: #ae81ff;">false</span>;
+  }
+}
+</pre>
+</div>
+</div>
+</div>
+</div>
+
+<div id="outline-container-org298be44" class="outline-2">
+<h2 id="org298be44">cell</h2>
+<div class="outline-text-2" id="text-org298be44">
+<div class="org-src-container">
+
+<pre class="src src-c"><span style="color: #f92672; font-weight: bold;">typedef</span> <span style="color: #66d9ef; font-weight: bold;">uint8_t</span> <span style="color: #66d9ef; font-weight: bold;">byte</span>;
+<span style="color: #f92672; font-weight: bold;">typedef</span> <span style="color: #66d9ef; font-weight: bold;">uint32_t</span> <span style="color: #66d9ef; font-weight: bold;">cell</span>;
+<span style="color: #f92672; font-weight: bold;">typedef</span> <span style="color: #66d9ef; font-weight: bold;">cell</span> <span style="color: #66d9ef; font-weight: bold;">addr</span>;
+
+<span style="color: #a6e22e;">#define</span> <span style="color: #fd971f;">cell_SIZE</span> 4;
+<span style="color: #66d9ef; font-weight: bold;">cell</span> <span style="color: #fd971f;">cell_size</span> = 4;
+</pre>
+</div>
+</div>
+</div>
+
+<div id="outline-container-org621266a" class="outline-2">
+<h2 id="org621266a">hashtable</h2>
+<div class="outline-text-2" id="text-org621266a">
+</div><div id="outline-container-org213120e" class="outline-3">
+<h3 id="org213120e">primitive</h3>
+<div class="outline-text-3" id="text-org213120e">
+<div class="org-src-container">
+
+<pre class="src src-c"><span style="color: #f92672; font-weight: bold;">typedef</span> <span style="color: #66d9ef; font-weight: bold;">void</span> (*<span style="color: #66d9ef; font-weight: bold;">primitive</span>)();
+</pre>
+</div>
+</div>
+</div>
+
+<div id="outline-container-org69ebbfb" class="outline-3">
+<h3 id="org69ebbfb">name &amp; jojo</h3>
+<div class="outline-text-3" id="text-org69ebbfb">
+<div class="org-src-container">
+
+<pre class="src src-c"><span style="color: #f92672; font-weight: bold;">typedef</span> <span style="color: #66d9ef; font-weight: bold;">cell</span> <span style="color: #66d9ef; font-weight: bold;">name</span>;
+
+<span style="color: #f92672; font-weight: bold;">typedef</span> <span style="color: #f92672; font-weight: bold;">struct</span> {
+  <span style="color: #66d9ef; font-weight: bold;">cell</span> <span style="color: #fd971f;">size</span>;
+  <span style="color: #66d9ef; font-weight: bold;">name</span> *<span style="color: #fd971f;">array</span>;
+} <span style="color: #66d9ef; font-weight: bold;">jojo</span>;
+</pre>
+</div>
+</div>
+</div>
+
+<div id="outline-container-org9a408ca" class="outline-3">
+<h3 id="org9a408ca">bind &amp; nametable<sub>entry</sub></h3>
+<div class="outline-text-3" id="text-org9a408ca">
+<div class="org-src-container">
+
+<pre class="src src-c"><span style="color: #f92672; font-weight: bold;">typedef</span> <span style="color: #f92672; font-weight: bold;">union</span> {
+  <span style="color: #66d9ef; font-weight: bold;">cell</span> <span style="color: #fd971f;">cell</span>;
+  <span style="color: #66d9ef; font-weight: bold;">primitive</span> <span style="color: #fd971f;">primitive</span>;
+  <span style="color: #66d9ef; font-weight: bold;">jojo</span> <span style="color: #fd971f;">jojo</span>;
+} <span style="color: #66d9ef; font-weight: bold;">bind</span>;
+
+<span style="color: #f92672; font-weight: bold;">typedef</span> <span style="color: #f92672; font-weight: bold;">struct</span> {
+  <span style="color: #66d9ef; font-weight: bold;">cell</span> <span style="color: #fd971f;">index</span>;
+  <span style="color: #66d9ef; font-weight: bold;">string</span> <span style="color: #fd971f;">key</span>;
+  <span style="color: #66d9ef; font-weight: bold;">name</span> <span style="color: #fd971f;">type</span>;
+  <span style="color: #66d9ef; font-weight: bold;">bind</span> <span style="color: #fd971f;">value</span>;
+  <span style="color: #66d9ef; font-weight: bold;">cell</span> <span style="color: #fd971f;">orbit_length</span>;
+  <span style="color: #66d9ef; font-weight: bold;">cell</span> <span style="color: #fd971f;">orbiton</span>;
+} <span style="color: #66d9ef; font-weight: bold;">nametable_entry</span>;
+</pre>
+</div>
+</div>
+</div>
+
+<div id="outline-container-org230b622" class="outline-3">
+<h3 id="org230b622">new<sub>nametable</sub><sub>entry</sub></h3>
+<div class="outline-text-3" id="text-org230b622">
+<div class="org-src-container">
+
+<pre class="src src-c"><span style="color: #66d9ef; font-weight: bold;">name</span> <span style="color: #a6e22e;">k2n</span> (<span style="color: #66d9ef; font-weight: bold;">string</span> <span style="color: #fd971f;">str</span>);
+
+<span style="color: #66d9ef; font-weight: bold;">nametable_entry</span>
+<span style="color: #a6e22e;">new_nametable_entry</span>
+(<span style="color: #66d9ef; font-weight: bold;">cell</span> <span style="color: #fd971f;">index</span>) {
+  <span style="color: #66d9ef; font-weight: bold;">nametable_entry</span> <span style="color: #fd971f;">e</span> = {
+    .index = index,
+    .key = 0,
+    .type = k2n(<span style="color: #e6db74;">"none"</span>),
+    .value.cell = 0,
+    .orbit_length = 0,
+    .orbiton = 0
+  };
+  <span style="color: #f92672; font-weight: bold;">return</span> e;
+}
+</pre>
+</div>
+</div>
+</div>
+
+<div id="outline-container-org54341ee" class="outline-3">
+<h3 id="org54341ee">nametable<sub>entry</sub>_[occured|entry<sub>used</sub>|no<sub>collision</sub>]</h3>
+<div class="outline-text-3" id="text-org54341ee">
+<div class="org-src-container">
+
+<pre class="src src-c"><span style="color: #66d9ef; font-weight: bold;">bool</span>
+<span style="color: #a6e22e;">nametable_entry_occured</span>
+(<span style="color: #66d9ef; font-weight: bold;">nametable_entry</span> <span style="color: #fd971f;">e</span>) {
+  <span style="color: #f92672; font-weight: bold;">return</span> e.key != 0;
+}
+
+<span style="color: #66d9ef; font-weight: bold;">bool</span>
+<span style="color: #a6e22e;">nametable_entry_used</span>
+(<span style="color: #66d9ef; font-weight: bold;">nametable_entry</span> <span style="color: #fd971f;">e</span>) {
+  <span style="color: #f92672; font-weight: bold;">return</span> e.type != k2n(<span style="color: #e6db74;">"none"</span>);
+}
+
+<span style="color: #66d9ef; font-weight: bold;">bool</span>
+<span style="color: #a6e22e;">nametable_entry_no_collision</span>
+(<span style="color: #66d9ef; font-weight: bold;">nametable_entry</span> <span style="color: #fd971f;">e</span>) {
+  <span style="color: #f92672; font-weight: bold;">return</span> e.index == e.orbiton;
+}
+</pre>
+</div>
+</div>
+</div>
+
+<div id="outline-container-org874fc50" class="outline-3">
+<h3 id="org874fc50">nametable</h3>
+<div class="outline-text-3" id="text-org874fc50">
+<div class="org-src-container">
+
+<pre class="src src-c"><span style="color: #FF8888;">// </span><span style="color: #FF8888;">prime table size</span>
+<span style="color: #FF8888;">//   </span><span style="color: #FF8888;">1000003   about 976 k</span>
+<span style="color: #FF8888;">//   </span><span style="color: #FF8888;">1000033</span>
+<span style="color: #FF8888;">//   </span><span style="color: #FF8888;">1000333</span>
+<span style="color: #FF8888;">//   </span><span style="color: #FF8888;">100003    about 97 k</span>
+<span style="color: #FF8888;">//   </span><span style="color: #FF8888;">100333</span>
+<span style="color: #FF8888;">//   </span><span style="color: #FF8888;">997</span>
+<span style="color: #a6e22e;">#define</span> <span style="color: #fd971f;">nametable_size</span> 100003
+<span style="color: #66d9ef; font-weight: bold;">nametable_entry</span> <span style="color: #fd971f;">nametable</span>[nametable_size];
+<span style="color: #66d9ef; font-weight: bold;">cell</span> <span style="color: #fd971f;">nametable_counter</span> = 0;
+</pre>
+</div>
+</div>
+</div>
+
+<div id="outline-container-org6844c65" class="outline-3">
+<h3 id="org6844c65">string<sub>to</sub><sub>sum</sub></h3>
+<div class="outline-text-3" id="text-org6844c65">
+<div class="org-src-container">
+
+<pre class="src src-c"><span style="color: #66d9ef; font-weight: bold;">cell</span>
+<span style="color: #a6e22e;">string_to_sum</span>
+(<span style="color: #66d9ef; font-weight: bold;">string</span> <span style="color: #fd971f;">str</span>) {
+  <span style="color: #66d9ef; font-weight: bold;">cell</span> <span style="color: #fd971f;">sum</span> = 0;
+  <span style="color: #66d9ef; font-weight: bold;">cell</span> <span style="color: #fd971f;">max_step</span> = 10;
+  <span style="color: #66d9ef; font-weight: bold;">cell</span> <span style="color: #fd971f;">i</span> = 0;
+  <span style="color: #f92672; font-weight: bold;">while</span> (i &lt; strlen(str)) {
+    sum = sum + str[i] * (2 &lt;&lt; min(i, max_step));
+    i++;
+  }
+  <span style="color: #f92672; font-weight: bold;">return</span> sum;
+}
+</pre>
+</div>
+</div>
+</div>
+
+<div id="outline-container-org2e0c8bb" class="outline-3">
+<h3 id="org2e0c8bb">nametable<sub>keyeq</sub></h3>
+<div class="outline-text-3" id="text-org2e0c8bb">
+<div class="org-src-container">
+
+<pre class="src src-c"><span style="color: #66d9ef; font-weight: bold;">bool</span>
+<span style="color: #a6e22e;">nametable_keyeq</span>
+(<span style="color: #66d9ef; font-weight: bold;">string</span> <span style="color: #fd971f;">k1</span>, <span style="color: #66d9ef; font-weight: bold;">string</span> <span style="color: #fd971f;">k2</span>) {
+  <span style="color: #f92672; font-weight: bold;">return</span> string_equal(k1, k2);
+}
+</pre>
+</div>
+</div>
+</div>
+
+<div id="outline-container-org1b57565" class="outline-3">
+<h3 id="org1b57565">nametable<sub>hash</sub></h3>
+<div class="outline-text-3" id="text-org1b57565">
+<div class="org-src-container">
+
+<pre class="src src-c"><span style="color: #66d9ef; font-weight: bold;">cell</span>
+<span style="color: #a6e22e;">nametable_hash</span>
+(<span style="color: #66d9ef; font-weight: bold;">string</span> <span style="color: #fd971f;">key</span>, <span style="color: #66d9ef; font-weight: bold;">cell</span> <span style="color: #fd971f;">counter</span>) {
+  <span style="color: #f92672; font-weight: bold;">return</span> (counter + string_to_sum(key)) % nametable_size;
+}
+</pre>
+</div>
+</div>
+</div>
+
+<div id="outline-container-org7cad670" class="outline-3">
+<h3 id="org7cad670">string<sub>area</sub></h3>
+<div class="outline-text-3" id="text-org7cad670">
+<div class="org-src-container">
+
+<pre class="src src-c"><span style="color: #66d9ef; font-weight: bold;">char</span> <span style="color: #fd971f;">string_area</span>[4 * 1024 * 1024];
+<span style="color: #66d9ef; font-weight: bold;">cell</span> <span style="color: #fd971f;">string_area_counter</span> = 0;
+</pre>
+</div>
+</div>
+</div>
+
+<div id="outline-container-orga13e749" class="outline-3">
+<h3 id="orga13e749">copy<sub>to</sub><sub>string</sub><sub>area</sub></h3>
+<div class="outline-text-3" id="text-orga13e749">
+<div class="org-src-container">
+
+<pre class="src src-c"><span style="color: #66d9ef; font-weight: bold;">string</span>
+<span style="color: #a6e22e;">copy_to_string_area</span>
+(<span style="color: #66d9ef; font-weight: bold;">string</span> <span style="color: #fd971f;">str</span>) {
+  <span style="color: #66d9ef; font-weight: bold;">char</span> *<span style="color: #fd971f;">str1</span>;
+  <span style="color: #66d9ef; font-weight: bold;">int</span> <span style="color: #fd971f;">i</span> = 0;
+  str1 = (string_area + string_area_counter);
+  <span style="color: #f92672; font-weight: bold;">while</span> (<span style="color: #ae81ff;">true</span>) {
+    <span style="color: #f92672; font-weight: bold;">if</span> (str[i] == 0) {
+      str1[i] = str[i];
+      i++;
+      <span style="color: #f92672; font-weight: bold;">break</span>;
+    }
+    <span style="color: #f92672; font-weight: bold;">else</span> {
+      str1[i] = str[i];
+      i++;
+    }
+  }
+  string_area_counter = i + string_area_counter;
+  <span style="color: #f92672; font-weight: bold;">return</span> str1;
+}
+</pre>
+</div>
+</div>
+</div>
+
+<div id="outline-container-org18a35c7" class="outline-3">
+<h3 id="org18a35c7">nametable<sub>insert</sub></h3>
+<div class="outline-text-3" id="text-org18a35c7">
+<div class="org-src-container">
+
+<pre class="src src-c"><span style="color: #66d9ef; font-weight: bold;">int</span> <span style="color: #FF8888;">// </span><span style="color: #FF8888;">-1 denotes the hash_table is filled</span>
+<span style="color: #a6e22e;">nametable_insert</span>
+(<span style="color: #66d9ef; font-weight: bold;">string</span> <span style="color: #fd971f;">key</span>) {
+  <span style="color: #66d9ef; font-weight: bold;">cell</span> <span style="color: #fd971f;">orbit_index</span> = nametable_hash(key, 0);
+  <span style="color: #66d9ef; font-weight: bold;">cell</span> <span style="color: #fd971f;">counter</span> = 0;
+  <span style="color: #f92672; font-weight: bold;">while</span> (<span style="color: #ae81ff;">true</span>) {
+    <span style="color: #66d9ef; font-weight: bold;">cell</span> <span style="color: #fd971f;">index</span> = nametable_hash(key, counter);
+    <span style="color: #f92672; font-weight: bold;">if</span> (<span style="color: #960050;">!</span>nametable_entry_occured(nametable[index])) {
+      key = copy_to_string_area(key);
+      nametable[index].key = key;
+      nametable[index].orbiton = orbit_index;
+      nametable[orbit_index].orbit_length = 1 + counter;
+      nametable_counter = 1 + nametable_counter;
+      <span style="color: #f92672; font-weight: bold;">return</span> index;
+    }
+    <span style="color: #f92672; font-weight: bold;">else</span> <span style="color: #f92672; font-weight: bold;">if</span> (nametable_keyeq(key, nametable[index].key)) {
+      <span style="color: #f92672; font-weight: bold;">return</span> index;
+    }
+    <span style="color: #f92672; font-weight: bold;">else</span> <span style="color: #f92672; font-weight: bold;">if</span> (counter == nametable_size) {
+      <span style="color: #f92672; font-weight: bold;">return</span> -1;
+    }
+    <span style="color: #f92672; font-weight: bold;">else</span> {
+      counter = 1 + counter;
+    }
+  }
+}
+</pre>
+</div>
+</div>
+</div>
+
+<div id="outline-container-orge7d0cf" class="outline-3">
+<h3 id="orge7d0cf">nametable<sub>search</sub></h3>
+<div class="outline-text-3" id="text-orge7d0cf">
+<div class="org-src-container">
+
+<pre class="src src-c"><span style="color: #66d9ef; font-weight: bold;">int</span> <span style="color: #FF8888;">// </span><span style="color: #FF8888;">-1 denotes key not occured</span>
+<span style="color: #a6e22e;">nametable_search</span>
+(<span style="color: #66d9ef; font-weight: bold;">string</span> <span style="color: #fd971f;">key</span>) {
+  <span style="color: #66d9ef; font-weight: bold;">cell</span> <span style="color: #fd971f;">counter</span> = 0;
+  <span style="color: #f92672; font-weight: bold;">while</span> (<span style="color: #ae81ff;">true</span>) {
+    <span style="color: #66d9ef; font-weight: bold;">cell</span> <span style="color: #fd971f;">index</span> = nametable_hash(key, counter);
+    <span style="color: #f92672; font-weight: bold;">if</span> (<span style="color: #960050;">!</span>nametable_entry_occured(nametable[index])) {
+      <span style="color: #f92672; font-weight: bold;">return</span> -1;
+    }
+    <span style="color: #f92672; font-weight: bold;">else</span> <span style="color: #f92672; font-weight: bold;">if</span> (nametable_keyeq(key, nametable[index].key)) {
+      <span style="color: #f92672; font-weight: bold;">return</span> index;
+    }
+    <span style="color: #f92672; font-weight: bold;">else</span> <span style="color: #f92672; font-weight: bold;">if</span> (counter == nametable_size) {
+      <span style="color: #f92672; font-weight: bold;">return</span> -1;
+    }
+    <span style="color: #f92672; font-weight: bold;">else</span> {
+      counter = 1 + counter;
+    }
+  }
+}
+</pre>
+</div>
+</div>
+</div>
+
+<div id="outline-container-org1915e8" class="outline-3">
+<h3 id="org1915e8">nametable<sub>entry</sub><sub>print</sub></h3>
+<div class="outline-text-3" id="text-org1915e8">
+<div class="org-src-container">
+
+<pre class="src src-c"><span style="color: #66d9ef; font-weight: bold;">string</span> <span style="color: #a6e22e;">n2k</span> (<span style="color: #66d9ef; font-weight: bold;">cell</span> <span style="color: #fd971f;">index</span>);
+
+<span style="color: #66d9ef; font-weight: bold;">void</span> <span style="color: #a6e22e;">nametable_entry_print</span>
+(<span style="color: #66d9ef; font-weight: bold;">nametable_entry</span> <span style="color: #fd971f;">entry</span>) {
+  printf(<span style="color: #e6db74;">"%s : "</span>, n2k(entry.type));
+  <span style="color: #f92672; font-weight: bold;">if</span> (entry.type == k2n(<span style="color: #e6db74;">"cell"</span>)) {
+    printf(<span style="color: #e6db74;">"%d"</span>, entry.value.cell);
+  }
+  <span style="color: #f92672; font-weight: bold;">else</span> <span style="color: #f92672; font-weight: bold;">if</span> (entry.type == k2n(<span style="color: #e6db74;">"primitive"</span>)) {
+    printf(<span style="color: #e6db74;">"%d"</span>, entry.value.primitive);
+  }
+  <span style="color: #f92672; font-weight: bold;">else</span> <span style="color: #f92672; font-weight: bold;">if</span> (entry.type == k2n(<span style="color: #e6db74;">"jojo"</span>)) {
+    printf(<span style="color: #e6db74;">"%d "</span>, entry.value.jojo.size);
+    printf(<span style="color: #e6db74;">"[ "</span>, entry.value.jojo.size);
+    <span style="color: #66d9ef; font-weight: bold;">cell</span> <span style="color: #fd971f;">i</span>;
+    <span style="color: #f92672; font-weight: bold;">for</span> (i=0; i &lt; entry.value.jojo.size; i=i+1) {
+      printf(<span style="color: #e6db74;">"%d "</span>, entry.value.jojo.array[i]);
+    }
+    printf(<span style="color: #e6db74;">"]"</span>, entry.value.jojo.size);
+  }
+}
+</pre>
+</div>
+</div>
+</div>
+
+<div id="outline-container-orgc1335e3" class="outline-3">
+<h3 id="orgc1335e3">nametable<sub>report</sub><sub>orbit</sub></h3>
+<div class="outline-text-3" id="text-orgc1335e3">
+<div class="org-src-container">
+
+<pre class="src src-c"><span style="color: #66d9ef; font-weight: bold;">void</span>
+<span style="color: #a6e22e;">nametable_report_orbit</span>
+(<span style="color: #66d9ef; font-weight: bold;">cell</span> <span style="color: #fd971f;">index</span>, <span style="color: #66d9ef; font-weight: bold;">cell</span> <span style="color: #fd971f;">counter</span>) {
+  <span style="color: #f92672; font-weight: bold;">while</span> (counter &lt; nametable[index].orbit_length) {
+    <span style="color: #66d9ef; font-weight: bold;">string</span> <span style="color: #fd971f;">key</span> = nametable[index].key;
+    <span style="color: #66d9ef; font-weight: bold;">cell</span> <span style="color: #fd971f;">next_index</span> = nametable_hash(key, counter);
+    <span style="color: #f92672; font-weight: bold;">if</span> (index == nametable[next_index].orbiton) {
+      printf(<span style="color: #e6db74;">"  - %d %s\n"</span>, next_index, nametable[next_index].key);
+    }
+    <span style="color: #f92672; font-weight: bold;">if</span> (nametable_entry_used(nametable[next_index])) {
+      printf(<span style="color: #e6db74;">"    = "</span>);
+      nametable_entry_print(nametable[next_index]);
+      printf(<span style="color: #e6db74;">"\n"</span>);
+    }
+    counter = 1 + counter;
+  }
+}
+</pre>
+</div>
+</div>
+</div>
+
+<div id="outline-container-orgc6085b8" class="outline-3">
+<h3 id="orgc6085b8">nametable<sub>report</sub></h3>
+<div class="outline-text-3" id="text-orgc6085b8">
+<div class="org-src-container">
+
+<pre class="src src-c"><span style="color: #66d9ef; font-weight: bold;">void</span>
+<span style="color: #a6e22e;">nametable_report</span>
+() {
+  printf(<span style="color: #e6db74;">"\n"</span>);
+  printf(<span style="color: #e6db74;">"- nametable_report\n"</span>);
+  printf(<span style="color: #e6db74;">"  : &lt;index&gt; &lt;key&gt; // &lt;orbit-length&gt;\n"</span>);
+  <span style="color: #66d9ef; font-weight: bold;">cell</span> <span style="color: #fd971f;">index</span> = 0;
+  <span style="color: #f92672; font-weight: bold;">while</span> (index &lt; nametable_size) {
+    <span style="color: #f92672; font-weight: bold;">if</span> (nametable_entry_occured(nametable[index]) &amp;&amp;
+        nametable_entry_no_collision(nametable[index])) {
+      printf(<span style="color: #e6db74;">"  - %d %s // %d\n"</span>,
+             index, nametable[index].key, nametable[index].orbit_length);
+      <span style="color: #f92672; font-weight: bold;">if</span> (nametable_entry_used(nametable[index])) {
+        printf(<span style="color: #e6db74;">"    = "</span>);
+        nametable_entry_print(nametable[index]);
+        printf(<span style="color: #e6db74;">"\n"</span>);
+      }
+      nametable_report_orbit(index, 1);
+    }
+    index = 1 + index;
+  }
+  printf(<span style="color: #e6db74;">"  : &lt;index&gt; &lt;key&gt; // &lt;orbit-length&gt;\n"</span>);
+  printf(<span style="color: #e6db74;">"\n"</span>);
+  printf(<span style="color: #e6db74;">"- used : %d\n"</span>, nametable_counter);
+  printf(<span style="color: #e6db74;">"- free : %d\n"</span>, nametable_size - nametable_counter);
+}
+</pre>
+</div>
+</div>
+</div>
+
+<div id="outline-container-orgc5b54ef" class="outline-3">
+<h3 id="orgc5b54ef">nametable<sub>print</sub></h3>
+<div class="outline-text-3" id="text-orgc5b54ef">
+<div class="org-src-container">
+
+<pre class="src src-c"><span style="color: #66d9ef; font-weight: bold;">void</span>
+<span style="color: #a6e22e;">nametable_print</span>
+() {
+  printf(<span style="color: #e6db74;">"\n"</span>);
+  printf(<span style="color: #e6db74;">"- nametable_print\n"</span>);
+  <span style="color: #66d9ef; font-weight: bold;">cell</span> <span style="color: #fd971f;">index</span> = 0;
+  <span style="color: #f92672; font-weight: bold;">while</span> (index &lt; nametable_size) {
+    printf(<span style="color: #e6db74;">"  - %d %s %d // %d\n"</span>,
+           index,
+           nametable[index].key,
+           nametable[index].value,
+           nametable[index].orbit_length);
+    index = 1 + index;
+  }
+  printf(<span style="color: #e6db74;">"\n"</span>);
+  printf(<span style="color: #e6db74;">"- used : %d\n"</span>, nametable_counter);
+  printf(<span style="color: #e6db74;">"- free : %d\n"</span>, nametable_size - nametable_counter);
+}
+</pre>
+</div>
+</div>
+</div>
+
+<div id="outline-container-orgfaf4bcc" class="outline-3">
+<h3 id="orgfaf4bcc">k2n &amp; n2k</h3>
+<div class="outline-text-3" id="text-orgfaf4bcc">
+<div class="org-src-container">
+
+<pre class="src src-c"><span style="color: #66d9ef; font-weight: bold;">name</span>
+<span style="color: #a6e22e;">k2n</span>
+(<span style="color: #66d9ef; font-weight: bold;">string</span> <span style="color: #fd971f;">str</span>) {
+  <span style="color: #f92672; font-weight: bold;">return</span> nametable_insert(str);
+}
+
+<span style="color: #66d9ef; font-weight: bold;">string</span>
+<span style="color: #a6e22e;">n2k</span>
+(<span style="color: #66d9ef; font-weight: bold;">cell</span> <span style="color: #fd971f;">index</span>) {
+  <span style="color: #f92672; font-weight: bold;">return</span> nametable[index].key;
+}
+</pre>
+</div>
+</div>
+</div>
+
+<div id="outline-container-org89b1e92" class="outline-3">
+<h3 id="org89b1e92">init<sub>nametable</sub></h3>
+<div class="outline-text-3" id="text-org89b1e92">
+<div class="org-src-container">
+
+<pre class="src src-c"><span style="color: #66d9ef; font-weight: bold;">void</span>
+<span style="color: #a6e22e;">init_nametable</span>
+() {
+  <span style="color: #66d9ef; font-weight: bold;">cell</span> <span style="color: #fd971f;">i</span> = 0;
+  <span style="color: #f92672; font-weight: bold;">while</span> (i &lt; nametable_size) {
+    nametable[i] = new_nametable_entry(i);
+    i++;
+  }
+}
+</pre>
+</div>
+</div>
+</div>
+
+<div id="outline-container-orgb93a381" class="outline-3">
+<h3 id="orgb93a381">jojo<sub>area</sub></h3>
+<div class="outline-text-3" id="text-orgb93a381">
+<div class="org-src-container">
+
+<pre class="src src-c"><span style="color: #66d9ef; font-weight: bold;">name</span> <span style="color: #fd971f;">jojo_area</span>[1024 * 1024];
+<span style="color: #66d9ef; font-weight: bold;">cell</span> <span style="color: #fd971f;">jojo_area_counter</span> = 0;
+</pre>
+</div>
+</div>
+</div>
+
+<div id="outline-container-org844818e" class="outline-3">
+<h3 id="org844818e">here</h3>
+<div class="outline-text-3" id="text-org844818e">
+<div class="org-src-container">
+
+<pre class="src src-c"><span style="color: #66d9ef; font-weight: bold;">void</span>
+<span style="color: #a6e22e;">here</span>
+(<span style="color: #66d9ef; font-weight: bold;">cell</span> <span style="color: #fd971f;">n</span>) {
+  jojo_area[jojo_area_counter] = n;
+  jojo_area_counter++;
+}
+</pre>
+</div>
+</div>
+</div>
+
+<div id="outline-container-org43a2abb" class="outline-3">
+<h3 id="org43a2abb">nametable<sub>set</sub><sub>cell</sub></h3>
+<div class="outline-text-3" id="text-org43a2abb">
+<div class="org-src-container">
+
+<pre class="src src-c"><span style="color: #66d9ef; font-weight: bold;">void</span>
+<span style="color: #a6e22e;">nametable_set_cell</span>
+(<span style="color: #66d9ef; font-weight: bold;">cell</span> <span style="color: #fd971f;">index</span>, <span style="color: #66d9ef; font-weight: bold;">cell</span> <span style="color: #fd971f;">cell</span>) {
+  nametable[index].type = k2n(<span style="color: #e6db74;">"cell"</span>);
+  nametable[index].value.cell = cell;
+}
+</pre>
+</div>
+</div>
+</div>
+
+<div id="outline-container-org1d6b54" class="outline-3">
+<h3 id="org1d6b54">nametable<sub>set</sub><sub>primitive</sub></h3>
+<div class="outline-text-3" id="text-org1d6b54">
+<div class="org-src-container">
+
+<pre class="src src-c"><span style="color: #66d9ef; font-weight: bold;">void</span>
+<span style="color: #a6e22e;">nametable_set_primitive</span>
+(<span style="color: #66d9ef; font-weight: bold;">cell</span> <span style="color: #fd971f;">index</span>, <span style="color: #66d9ef; font-weight: bold;">primitive</span> <span style="color: #fd971f;">primitive</span>) {
+  nametable[index].type = k2n(<span style="color: #e6db74;">"primitive"</span>);
+  nametable[index].value.primitive = primitive;
+}
+</pre>
+</div>
+</div>
+</div>
+
+<div id="outline-container-org2cb908d" class="outline-3">
+<h3 id="org2cb908d">nametable<sub>get</sub><sub>cell</sub></h3>
+<div class="outline-text-3" id="text-org2cb908d">
+<div class="org-src-container">
+
+<pre class="src src-c"><span style="color: #66d9ef; font-weight: bold;">cell</span>
+<span style="color: #a6e22e;">nametable_get_cell</span>
+(<span style="color: #66d9ef; font-weight: bold;">cell</span> <span style="color: #fd971f;">index</span>) {
+  <span style="color: #f92672; font-weight: bold;">return</span> nametable[index].value.cell;
+}
+</pre>
+</div>
+</div>
+</div>
+
+<div id="outline-container-org730dc81" class="outline-3">
+<h3 id="org730dc81">nametable<sub>get</sub><sub>primitive</sub></h3>
+<div class="outline-text-3" id="text-org730dc81">
+<div class="org-src-container">
+
+<pre class="src src-c"><span style="color: #66d9ef; font-weight: bold;">primitive</span>
+<span style="color: #a6e22e;">nametable_get_primitive</span>
+(<span style="color: #66d9ef; font-weight: bold;">cell</span> <span style="color: #fd971f;">index</span>) {
+  <span style="color: #f92672; font-weight: bold;">return</span> nametable[index].value.primitive;
+}
+</pre>
+</div>
+</div>
+</div>
+
+<div id="outline-container-org2f40363" class="outline-3">
+<h3 id="org2f40363">nametable<sub>get</sub><sub>jojo</sub></h3>
+<div class="outline-text-3" id="text-org2f40363">
+<div class="org-src-container">
+
+<pre class="src src-c"><span style="color: #66d9ef; font-weight: bold;">jojo</span>
+<span style="color: #a6e22e;">nametable_get_jojo</span>
+(<span style="color: #66d9ef; font-weight: bold;">cell</span> <span style="color: #fd971f;">index</span>) {
+  <span style="color: #f92672; font-weight: bold;">return</span> nametable[index].value.jojo;
+}
+</pre>
+</div>
+</div>
+</div>
+
+<div id="outline-container-org2243faf" class="outline-3">
+<h3 id="org2243faf"><span class="done test">test</span> </h3>
+<div class="outline-text-3" id="text-org2243faf">
+<div class="org-src-container">
+
+<pre class="src src-c"><span style="color: #66d9ef; font-weight: bold;">void</span>
+<span style="color: #a6e22e;">nametable_test</span>
+() {
+  k2n(<span style="color: #e6db74;">"testkey0"</span>);
+  k2n(<span style="color: #e6db74;">"testkey1"</span>);
+  k2n(<span style="color: #e6db74;">"testkey2"</span>);
+  k2n(<span style="color: #e6db74;">"testkey3"</span>);
+  k2n(<span style="color: #e6db74;">"testkey4"</span>);
+
+  k2n(<span style="color: #e6db74;">"testkey0"</span>);
+  k2n(<span style="color: #e6db74;">"testkey1"</span>);
+  k2n(<span style="color: #e6db74;">"testkey2"</span>);
+  k2n(<span style="color: #e6db74;">"testkey3"</span>);
+  k2n(<span style="color: #e6db74;">"testkey4"</span>);
+
+  k2n(<span style="color: #e6db74;">"testtestkey0"</span>);
+  k2n(<span style="color: #e6db74;">"testtestkey1"</span>);
+  k2n(<span style="color: #e6db74;">"testtestkey2"</span>);
+  k2n(<span style="color: #e6db74;">"testtestkey3"</span>);
+  k2n(<span style="color: #e6db74;">"testtestkey4"</span>);
+
+  k2n(<span style="color: #e6db74;">"testtesttestkey0"</span>);
+  k2n(<span style="color: #e6db74;">"testtesttestkey1"</span>);
+  k2n(<span style="color: #e6db74;">"testtesttestkey2"</span>);
+  k2n(<span style="color: #e6db74;">"testtesttestkey3"</span>);
+  k2n(<span style="color: #e6db74;">"testtesttestkey4"</span>);
+
+  k2n(<span style="color: #e6db74;">"testtesttesttestkey0"</span>);
+  k2n(<span style="color: #e6db74;">"testtesttesttestkey1"</span>);
+  k2n(<span style="color: #e6db74;">"testtesttesttestkey2"</span>);
+  k2n(<span style="color: #e6db74;">"testtesttesttestkey3"</span>);
+  k2n(<span style="color: #e6db74;">"testtesttesttestkey4"</span>);
+
+  nametable_set_cell(k2n(<span style="color: #e6db74;">"k1"</span>), 1);
+  nametable_report();
+
+  nametable_set_cell(k2n(<span style="color: #e6db74;">"k1"</span>), 0);
+  nametable_report();
+
+  <span style="color: #FF8888;">// </span><span style="color: #FF8888;">nametable_print();</span>
+}
+</pre>
+</div>
+</div>
+</div>
+</div>
+
+<div id="outline-container-org30f5338" class="outline-2">
+<h2 id="org30f5338">as</h2>
+<div class="outline-text-2" id="text-org30f5338">
+<div class="org-src-container">
+
+<pre class="src src-c"><span style="color: #f92672; font-weight: bold;">typedef</span> <span style="color: #66d9ef; font-weight: bold;">cell</span> <span style="color: #66d9ef; font-weight: bold;">argument_stack</span>[1024 * 4];
+
+<span style="color: #66d9ef; font-weight: bold;">argument_stack</span> <span style="color: #fd971f;">as</span>;
+<span style="color: #66d9ef; font-weight: bold;">cell</span> <span style="color: #fd971f;">as_pointer</span> = 0;
+
+<span style="color: #66d9ef; font-weight: bold;">void</span>
+<span style="color: #a6e22e;">as_push</span>
+(<span style="color: #66d9ef; font-weight: bold;">cell</span> <span style="color: #fd971f;">value</span>) {
+  as[as_pointer] = value;
+  as_pointer = as_pointer + cell_size;
+}
+
+<span style="color: #66d9ef; font-weight: bold;">cell</span>
+<span style="color: #a6e22e;">as_pop</span>
+() {
+  as_pointer = as_pointer - cell_size;
+  <span style="color: #f92672; font-weight: bold;">return</span> as[as_pointer];
+}
+</pre>
+</div>
+</div>
+</div>
+
+<div id="outline-container-org9929dfa" class="outline-2">
+<h2 id="org9929dfa">rs</h2>
+<div class="outline-text-2" id="text-org9929dfa">
+<div class="org-src-container">
+
+<pre class="src src-c"><span style="color: #f92672; font-weight: bold;">typedef</span> <span style="color: #66d9ef; font-weight: bold;">name</span>* <span style="color: #66d9ef; font-weight: bold;">return_stack</span>[1024 * 4];
+
+<span style="color: #66d9ef; font-weight: bold;">return_stack</span> <span style="color: #fd971f;">rs</span>;
+<span style="color: #66d9ef; font-weight: bold;">cell</span> <span style="color: #fd971f;">rs_pointer</span> = 0;
+
+<span style="color: #66d9ef; font-weight: bold;">void</span>
+<span style="color: #a6e22e;">rs_push</span>
+(<span style="color: #66d9ef; font-weight: bold;">name</span>* <span style="color: #fd971f;">value</span>) {
+  rs[rs_pointer] = value;
+  rs_pointer = rs_pointer + cell_size;
+}
+
+<span style="color: #66d9ef; font-weight: bold;">name</span>*
+<span style="color: #a6e22e;">rs_pop</span>
+() {
+  rs_pointer = rs_pointer - cell_size;
+  <span style="color: #f92672; font-weight: bold;">return</span> rs[rs_pointer];
+}
+</pre>
+</div>
+</div>
+</div>
+
+<div id="outline-container-org6be7eab" class="outline-2">
+<h2 id="org6be7eab">apply &amp; eval</h2>
+<div class="outline-text-2" id="text-org6be7eab">
+</div><div id="outline-container-org4b8b2b6" class="outline-3">
+<h3 id="org4b8b2b6">apply</h3>
+<div class="outline-text-3" id="text-org4b8b2b6">
+<ul class="org-ul">
+<li><p>this function should not be called by primitive</p><p>because after rs<sub>push</sub> a jojo</p><p>one exit current primitive to run the jojo</p></li></ul>
+
+<div class="org-src-container">
+
+<pre class="src src-c"><span style="color: #66d9ef; font-weight: bold;">void</span>
+<span style="color: #a6e22e;">apply</span>
+(<span style="color: #66d9ef; font-weight: bold;">name</span> <span style="color: #fd971f;">jo</span>) {
+  <span style="color: #66d9ef; font-weight: bold;">cell</span> <span style="color: #fd971f;">jo_type</span> = nametable[jo].type;
+  <span style="color: #f92672; font-weight: bold;">if</span> (jo_type == k2n(<span style="color: #e6db74;">"primitive"</span>)) {
+    <span style="color: #66d9ef; font-weight: bold;">primitive</span> <span style="color: #fd971f;">primitive</span> = nametable_get_primitive(jo);
+    primitive();
+  }
+  <span style="color: #f92672; font-weight: bold;">else</span> <span style="color: #f92672; font-weight: bold;">if</span> (jo_type == k2n(<span style="color: #e6db74;">"jojo"</span>)) {
+    <span style="color: #66d9ef; font-weight: bold;">jojo</span> <span style="color: #fd971f;">jojo</span> = nametable_get_jojo(jo);
+    rs_push(jojo.array);
+  }
+  <span style="color: #f92672; font-weight: bold;">else</span> <span style="color: #f92672; font-weight: bold;">if</span> (jo_type == k2n(<span style="color: #e6db74;">"cell"</span>)) {
+    <span style="color: #66d9ef; font-weight: bold;">cell</span> <span style="color: #fd971f;">cell</span> = nametable_get_cell(jo);
+    as_push(cell);
+  }
+}
+</pre>
+</div>
+</div>
+</div>
+
+<div id="outline-container-org5442d21" class="outline-3">
+<h3 id="org5442d21">p<sub>apply</sub></h3>
+<div class="outline-text-3" id="text-org5442d21">
+<div class="org-src-container">
+
+<pre class="src src-c"><span style="color: #66d9ef; font-weight: bold;">void</span>
+<span style="color: #a6e22e;">p_apply</span>
+() {
+  apply(as_pop());
+}
+</pre>
+</div>
+</div>
+</div>
+
+<div id="outline-container-orga48c587" class="outline-3">
+<h3 id="orga48c587">eval</h3>
+<div class="outline-text-3" id="text-orga48c587">
+<div class="org-src-container">
+
+<pre class="src src-c"><span style="color: #66d9ef; font-weight: bold;">jmp_buf</span> <span style="color: #fd971f;">jmp_buffer</span>;
+
+<span style="color: #66d9ef; font-weight: bold;">bool</span>
+<span style="color: #a6e22e;">exit_eval</span>
+() {
+  longjmp(jmp_buffer, 666);
+}
+
+<span style="color: #66d9ef; font-weight: bold;">void</span>
+<span style="color: #a6e22e;">eval</span>
+() {
+  <span style="color: #f92672; font-weight: bold;">if</span> (666 == setjmp(jmp_buffer)) {
+    <span style="color: #f92672; font-weight: bold;">return</span>;
+  }
+  <span style="color: #f92672; font-weight: bold;">else</span> {
+    <span style="color: #66d9ef; font-weight: bold;">cell</span> <span style="color: #fd971f;">rs_base</span> = rs_pointer;
+    <span style="color: #f92672; font-weight: bold;">while</span> (rs_pointer &gt;= rs_base) {
+      <span style="color: #66d9ef; font-weight: bold;">name</span>* <span style="color: #fd971f;">function_body</span> = rs_pop();
+      rs_push(function_body + 1);
+      <span style="color: #66d9ef; font-weight: bold;">addr</span> <span style="color: #fd971f;">jo</span> = *(<span style="color: #66d9ef; font-weight: bold;">cell</span>*)function_body;
+      apply(jo);
+    }
+  }
+}
+</pre>
+</div>
+</div>
+</div>
+
+<div id="outline-container-org59921ed" class="outline-3">
+<h3 id="org59921ed">eval<sub>jo</sub></h3>
+<div class="outline-text-3" id="text-org59921ed">
+<div class="org-src-container">
+
+<pre class="src src-c"><span style="color: #66d9ef; font-weight: bold;">void</span>
+<span style="color: #a6e22e;">eval_jo</span>
+(<span style="color: #66d9ef; font-weight: bold;">name</span> <span style="color: #fd971f;">jo</span>) {
+  <span style="color: #66d9ef; font-weight: bold;">cell</span> <span style="color: #fd971f;">jo_type</span> = nametable[jo].type;
+  <span style="color: #f92672; font-weight: bold;">if</span> (jo_type == k2n(<span style="color: #e6db74;">"primitive"</span>)) {
+    <span style="color: #66d9ef; font-weight: bold;">primitive</span> <span style="color: #fd971f;">primitive</span> = nametable_get_primitive(jo);
+    primitive();
+  }
+  <span style="color: #f92672; font-weight: bold;">else</span> <span style="color: #f92672; font-weight: bold;">if</span> (jo_type == k2n(<span style="color: #e6db74;">"jojo"</span>)) {
+    <span style="color: #66d9ef; font-weight: bold;">jojo</span> <span style="color: #fd971f;">jojo</span> = nametable_get_jojo(jo);
+    rs_push(jojo.array);
+    eval();
+  }
+  <span style="color: #f92672; font-weight: bold;">else</span> <span style="color: #f92672; font-weight: bold;">if</span> (jo_type == k2n(<span style="color: #e6db74;">"cell"</span>)) {
+    <span style="color: #66d9ef; font-weight: bold;">cell</span> <span style="color: #fd971f;">cell</span> = nametable_get_cell(jo);
+    as_push(cell);
+  }
+}
+</pre>
+</div>
+</div>
+</div>
+</div>
+
+<div id="outline-container-orgc68d889" class="outline-2">
+<h2 id="orgc68d889">define</h2>
+<div class="outline-text-2" id="text-orgc68d889">
+</div><div id="outline-container-org2d7a53d" class="outline-3">
+<h3 id="org2d7a53d">define<sub>primitive</sub></h3>
+<div class="outline-text-3" id="text-org2d7a53d">
+<div class="org-src-container">
+
+<pre class="src src-c"><span style="color: #66d9ef; font-weight: bold;">void</span>
+<span style="color: #a6e22e;">define_primitive</span>
+(<span style="color: #66d9ef; font-weight: bold;">string</span> <span style="color: #fd971f;">str</span>, <span style="color: #66d9ef; font-weight: bold;">primitive</span> <span style="color: #fd971f;">fun</span>) {
+  <span style="color: #66d9ef; font-weight: bold;">name</span> <span style="color: #fd971f;">index</span> = k2n(str);
+  nametable_set_primitive(index, fun);
+}
+</pre>
+</div>
+</div>
+</div>
+
+<div id="outline-container-orgbe59619" class="outline-3">
+<h3 id="orgbe59619">define<sub>function</sub></h3>
+<div class="outline-text-3" id="text-orgbe59619">
+<div class="org-src-container">
+
+<pre class="src src-c"><span style="color: #66d9ef; font-weight: bold;">void</span>
+<span style="color: #a6e22e;">define_function</span>
+(<span style="color: #66d9ef; font-weight: bold;">string</span> <span style="color: #fd971f;">str</span>, <span style="color: #66d9ef; font-weight: bold;">cell</span> <span style="color: #fd971f;">size</span>, <span style="color: #66d9ef; font-weight: bold;">string</span> *<span style="color: #fd971f;">str_array</span>) {
+  <span style="color: #66d9ef; font-weight: bold;">name</span> <span style="color: #fd971f;">index</span> = k2n(str);
+  <span style="color: #66d9ef; font-weight: bold;">int</span> <span style="color: #fd971f;">i</span>;
+  <span style="color: #66d9ef; font-weight: bold;">name</span> *<span style="color: #fd971f;">array</span>;
+  array = (jojo_area + jojo_area_counter);
+  <span style="color: #f92672; font-weight: bold;">for</span> (i=0; i &lt; size; i=i+1) {
+    array[i] = k2n(str_array[i]);
+  }
+  jojo_area_counter = size + jojo_area_counter;
+  nametable[index].type = k2n(<span style="color: #e6db74;">"jojo"</span>);
+  nametable[index].value.jojo.size = size;
+  nametable[index].value.jojo.array = array;
+}
+</pre>
+</div>
+</div>
+</div>
+
+<div id="outline-container-orgdef7914" class="outline-3">
+<h3 id="orgdef7914">define<sub>variable</sub></h3>
+<div class="outline-text-3" id="text-orgdef7914">
+<div class="org-src-container">
+
+<pre class="src src-c"><span style="color: #66d9ef; font-weight: bold;">void</span>
+<span style="color: #a6e22e;">define_variable</span>
+(<span style="color: #66d9ef; font-weight: bold;">string</span> <span style="color: #fd971f;">str</span>, <span style="color: #66d9ef; font-weight: bold;">cell</span> <span style="color: #fd971f;">cell</span>) {
+  <span style="color: #66d9ef; font-weight: bold;">name</span> <span style="color: #fd971f;">index</span> = k2n(str);
+  nametable_set_cell(index, cell);
+}
+</pre>
+</div>
+</div>
+</div>
+</div>
+
+<div id="outline-container-orgaca4775" class="outline-2">
+<h2 id="orgaca4775">p<sub>end</sub></h2>
+<div class="outline-text-2" id="text-orgaca4775">
+<div class="org-src-container">
+
+<pre class="src src-c"><span style="color: #66d9ef; font-weight: bold;">void</span>
+<span style="color: #a6e22e;">p_end</span>
+() {
+  <span style="color: #FF8888;">// </span><span style="color: #FF8888;">(rs: addr -&gt;)</span>
+  rs_pop();
+}
+</pre>
+</div>
+</div>
+</div>
+
+<div id="outline-container-org26bde4a" class="outline-2">
+<h2 id="org26bde4a">p<sub>bye</sub></h2>
+<div class="outline-text-2" id="text-org26bde4a">
+<div class="org-src-container">
+
+<pre class="src src-c"><span style="color: #66d9ef; font-weight: bold;">void</span>
+<span style="color: #a6e22e;">p_bye</span>
+() {
+  <span style="color: #FF8888;">// </span><span style="color: #FF8888;">(-&gt; [exit])</span>
+  printf(<span style="color: #e6db74;">"bye bye ^-^/\n"</span>);
+  exit_eval();
+}
+</pre>
+</div>
+</div>
+</div>
+
+<div id="outline-container-orgaece328" class="outline-2">
+<h2 id="orgaece328">stack operation</h2>
+<div class="outline-text-2" id="text-orgaece328">
+</div><div id="outline-container-orgdff2d77" class="outline-3">
+<h3 id="orgdff2d77">p<sub>dup</sub></h3>
+<div class="outline-text-3" id="text-orgdff2d77">
+<div class="org-src-container">
+
+<pre class="src src-c"><span style="color: #66d9ef; font-weight: bold;">void</span>
+<span style="color: #a6e22e;">p_dup</span>
+() {
+  <span style="color: #FF8888;">// </span><span style="color: #FF8888;">(cell cell -&gt; cell)</span>
+  <span style="color: #66d9ef; font-weight: bold;">cell</span> <span style="color: #fd971f;">a</span> = as_pop();
+  as_push(a);
+  as_push(a);
+}
+</pre>
+</div>
+</div>
+</div>
+</div>
+
+<div id="outline-container-orgd4bf074" class="outline-2">
+<h2 id="orgd4bf074">control</h2>
+<div class="outline-text-2" id="text-orgd4bf074">
+</div><div id="outline-container-orgdc0b6dd" class="outline-3">
+<h3 id="orgdc0b6dd">p<sub>jump</sub><sub>back</sub></h3>
+<div class="outline-text-3" id="text-orgdc0b6dd">
+<div class="org-src-container">
+
+<pre class="src src-c"><span style="color: #66d9ef; font-weight: bold;">void</span>
+<span style="color: #a6e22e;">p_jump_back</span>
+() {
+  <span style="color: #FF8888;">// </span><span style="color: #FF8888;">(offset -&gt; [rs])</span>
+  <span style="color: #66d9ef; font-weight: bold;">name</span>* <span style="color: #fd971f;">function_body</span> = rs_pop();
+  rs_push(function_body - as_pop());
+}
+</pre>
+</div>
+</div>
+</div>
+
+<div id="outline-container-org50698e" class="outline-3">
+<h3 id="org50698e">p<sub>jump</sub><sub>over</sub></h3>
+<div class="outline-text-3" id="text-org50698e">
+<div class="org-src-container">
+
+<pre class="src src-c"><span style="color: #66d9ef; font-weight: bold;">void</span>
+<span style="color: #a6e22e;">p_jump_over</span>
+() {
+  <span style="color: #FF8888;">// </span><span style="color: #FF8888;">(offset -&gt; [rs])</span>
+  <span style="color: #66d9ef; font-weight: bold;">name</span>* <span style="color: #fd971f;">function_body</span> = rs_pop();
+  rs_push(function_body + as_pop());
+}
+</pre>
+</div>
+</div>
+</div>
+</div>
+
+<div id="outline-container-orgece33ce" class="outline-2">
+<h2 id="orgece33ce">integer</h2>
+<div class="outline-text-2" id="text-orgece33ce">
+</div><div id="outline-container-org244daeb" class="outline-3">
+<h3 id="org244daeb">p<sub>mul</sub></h3>
+<div class="outline-text-3" id="text-org244daeb">
+<div class="org-src-container">
+
+<pre class="src src-c"><span style="color: #66d9ef; font-weight: bold;">void</span>
+<span style="color: #a6e22e;">p_mul</span>
+() {
+  <span style="color: #FF8888;">// </span><span style="color: #FF8888;">(integer integer -&gt; integer)</span>
+  <span style="color: #66d9ef; font-weight: bold;">cell</span> <span style="color: #fd971f;">a</span> = as_pop();
+  <span style="color: #66d9ef; font-weight: bold;">cell</span> <span style="color: #fd971f;">b</span> = as_pop();
+  as_push(a * b);
+}
+</pre>
+</div>
+</div>
+</div>
+</div>
+
+<div id="outline-container-org27ef7f6" class="outline-2">
+<h2 id="org27ef7f6">io</h2>
+<div class="outline-text-2" id="text-org27ef7f6">
+</div><div id="outline-container-org65ae08a" class="outline-3">
+<h3 id="org65ae08a">read<sub>symbol</sub></h3>
+<div class="outline-text-3" id="text-org65ae08a">
+<div class="org-src-container">
+
+<pre class="src src-c"><span style="color: #66d9ef; font-weight: bold;">name</span>
+<span style="color: #a6e22e;">read_symbol</span>
+() {
+  <span style="color: #FF8888;">// </span><span style="color: #FF8888;">([io] -&gt; symbol)</span>
+  <span style="color: #66d9ef; font-weight: bold;">char</span> <span style="color: #fd971f;">buf</span>[1024];
+  <span style="color: #66d9ef; font-weight: bold;">int</span> <span style="color: #fd971f;">cur</span> = 0;
+  <span style="color: #66d9ef; font-weight: bold;">int</span> <span style="color: #fd971f;">collecting</span> = <span style="color: #ae81ff;">false</span>;
+  <span style="color: #66d9ef; font-weight: bold;">char</span> <span style="color: #fd971f;">c</span>;
+  <span style="color: #66d9ef; font-weight: bold;">char</span> <span style="color: #fd971f;">go</span> = <span style="color: #ae81ff;">true</span>;
+  <span style="color: #f92672; font-weight: bold;">while</span> (go) {
+    c = getchar();
+    <span style="color: #f92672; font-weight: bold;">if</span> (<span style="color: #960050;">!</span>collecting) {
+      <span style="color: #f92672; font-weight: bold;">if</span> (isspace(c)) {
+        <span style="color: #FF8888;">// </span><span style="color: #FF8888;">do nothing</span>
+      }
+      <span style="color: #f92672; font-weight: bold;">else</span> {
+        collecting = <span style="color: #ae81ff;">true</span>;
+        buf[cur] = c;
+        cur++;
+        <span style="color: #f92672; font-weight: bold;">if</span> (isbarcket(c)) {
+          go = <span style="color: #ae81ff;">false</span>;
+        }
+      }
+    }
+    <span style="color: #f92672; font-weight: bold;">else</span> {
+      <span style="color: #f92672; font-weight: bold;">if</span> (isbarcket(c) ||
+          isspace(c)) {
+        ungetc(c, stdin);
+        go = <span style="color: #ae81ff;">false</span>;
+      }
+      <span style="color: #f92672; font-weight: bold;">else</span> {
+        buf[cur] = c;
+        cur++;
+      }
+    }
+  }
+  buf[cur] = 0;
+  <span style="color: #f92672; font-weight: bold;">return</span> k2n(buf);
+}
+</pre>
+</div>
+</div>
+</div>
+
+<div id="outline-container-org7a1f8ef" class="outline-3">
+<h3 id="org7a1f8ef">p<sub>read</sub><sub>symbol</sub></h3>
+<div class="outline-text-3" id="text-org7a1f8ef">
+<div class="org-src-container">
+
+<pre class="src src-c"><span style="color: #66d9ef; font-weight: bold;">void</span>
+<span style="color: #a6e22e;">p_read_symbol</span>
+() {
+  as_push(read_symbol());
+}
+</pre>
+</div>
+</div>
+</div>
+
+<div id="outline-container-org5971bfa" class="outline-3">
+<h3 id="org5971bfa">p<sub>simple</sub><sub>wirte</sub></h3>
+<div class="outline-text-3" id="text-org5971bfa">
+<div class="org-src-container">
+
+<pre class="src src-c"><span style="color: #66d9ef; font-weight: bold;">void</span>
+<span style="color: #a6e22e;">p_simple_wirte</span>
+() {
+  <span style="color: #FF8888;">// </span><span style="color: #FF8888;">(integer -&gt; [io])</span>
+  printf(<span style="color: #e6db74;">"%d\n"</span>, as_pop());
+}
+</pre>
+</div>
+</div>
+</div>
+</div>
+
+<div id="outline-container-orgbd15ddf" class="outline-2">
+<h2 id="orgbd15ddf">misc</h2>
+<div class="outline-text-2" id="text-orgbd15ddf">
+</div><div id="outline-container-orgbeca5c4" class="outline-3">
+<h3 id="orgbeca5c4">do<sub>nothing</sub></h3>
+<div class="outline-text-3" id="text-orgbeca5c4">
+<div class="org-src-container">
+
+<pre class="src src-c"><span style="color: #66d9ef; font-weight: bold;">void</span>
+<span style="color: #a6e22e;">do_nothing</span>
+() {
+}
+</pre>
+</div>
+</div>
+</div>
+</div>
+
+<div id="outline-container-org8d11560" class="outline-2">
+<h2 id="org8d11560">p<sub>comment</sub></h2>
+<div class="outline-text-2" id="text-org8d11560">
+<div class="org-src-container">
+
+<pre class="src src-c"><span style="color: #66d9ef; font-weight: bold;">void</span>
+<span style="color: #a6e22e;">p_comment</span>
+() {
+  <span style="color: #FF8888;">// </span><span style="color: #FF8888;">([io] -&gt;)</span>
+  <span style="color: #f92672; font-weight: bold;">while</span> (<span style="color: #ae81ff;">true</span>) {
+    <span style="color: #66d9ef; font-weight: bold;">name</span> <span style="color: #fd971f;">s</span> = read_symbol();
+    <span style="color: #f92672; font-weight: bold;">if</span> (s == k2n(<span style="color: #e6db74;">"("</span>)) {
+      p_comment();
+    }
+    <span style="color: #f92672; font-weight: bold;">if</span> (s == k2n(<span style="color: #e6db74;">")"</span>)) {
+      <span style="color: #f92672; font-weight: bold;">break</span>;
+    }
+  }
+}
+</pre>
+</div>
+</div>
+</div>
+
+<div id="outline-container-org79a91b4" class="outline-2">
+<h2 id="org79a91b4">bool</h2>
+<div class="outline-text-2" id="text-org79a91b4">
+</div><div id="outline-container-orgb1c7bd5" class="outline-3">
+<h3 id="orgb1c7bd5">p<sub>true</sub></h3>
+<div class="outline-text-3" id="text-orgb1c7bd5">
+<div class="org-src-container">
+
+<pre class="src src-c"><span style="color: #66d9ef; font-weight: bold;">void</span>
+<span style="color: #a6e22e;">p_true</span>
+() {
+  as_push(1);
+}
+</pre>
+</div>
+</div>
+</div>
+
+<div id="outline-container-orgf0ac889" class="outline-3">
+<h3 id="orgf0ac889">p<sub>false</sub></h3>
+<div class="outline-text-3" id="text-orgf0ac889">
+<div class="org-src-container">
+
+<pre class="src src-c"><span style="color: #66d9ef; font-weight: bold;">void</span>
+<span style="color: #a6e22e;">p_false</span>
+() {
+  as_push(0);
+}
+</pre>
+</div>
+</div>
+</div>
+</div>
+
+<div id="outline-container-orgff02b41" class="outline-2">
+<h2 id="orgff02b41">p<sub>if</sub></h2>
+<div class="outline-text-2" id="text-orgff02b41">
+</div><div id="outline-container-org7fdfc9d" class="outline-3">
+<h3 id="org7fdfc9d"><span class="todo note">note</span> </h3>
+<div class="outline-text-3" id="text-org7fdfc9d">
+<ul class="org-ul">
+<li><p><p></p><p>(if a b p? -&gt; c d)</p><p></p></p><p></p><p><p></p><p>a b p?</p><p>__ jump<sub>if</sub><sub>false</sub></p><p>c d</p><p>[jump to]</p><p></p></p></li>
+
+<li><p>because the use of as<sub>snapshot</sub></p><p>bar can not be nested in antecedent</p></li></ul>
+</div>
+</div>
+
+<div id="outline-container-orgfb8be81" class="outline-3">
+<h3 id="orgfb8be81">p<sub>lit</sub></h3>
+<div class="outline-text-3" id="text-orgfb8be81">
+<div class="org-src-container">
+
+<pre class="src src-c"><span style="color: #66d9ef; font-weight: bold;">void</span>
+<span style="color: #a6e22e;">p_lit</span>
+() {
+  <span style="color: #FF8888;">// </span><span style="color: #FF8888;">([rs] -&gt; int)</span>
+  <span style="color: #66d9ef; font-weight: bold;">name</span>* <span style="color: #fd971f;">function_body</span> = rs_pop();
+  rs_push(function_body + 1);
+  <span style="color: #66d9ef; font-weight: bold;">addr</span> <span style="color: #fd971f;">jo</span> = *(<span style="color: #66d9ef; font-weight: bold;">cell</span>*)function_body;
+  as_push(jo);
+}
+</pre>
+</div>
+</div>
+</div>
+
+<div id="outline-container-org1a899f5" class="outline-3">
+<h3 id="org1a899f5">compile<sub>question</sub></h3>
+<div class="outline-text-3" id="text-org1a899f5">
+<div class="org-src-container">
+
+<pre class="src src-c"><span style="color: #66d9ef; font-weight: bold;">void</span>
+<span style="color: #a6e22e;">compile_question</span>
+() {
+  <span style="color: #FF8888;">// </span><span style="color: #FF8888;">([io] -&gt; [jojo_area])</span>
+  <span style="color: #f92672; font-weight: bold;">while</span> (<span style="color: #ae81ff;">true</span>) {
+    <span style="color: #66d9ef; font-weight: bold;">name</span> <span style="color: #fd971f;">s</span> = read_symbol();
+    <span style="color: #f92672; font-weight: bold;">if</span> (s == k2n(<span style="color: #e6db74;">"("</span>)) {
+      eval_jo(read_symbol());
+    }
+    <span style="color: #f92672; font-weight: bold;">else</span> <span style="color: #f92672; font-weight: bold;">if</span> (s == k2n(<span style="color: #e6db74;">"-&gt;"</span>)) {
+      <span style="color: #f92672; font-weight: bold;">break</span>;
+    }
+    <span style="color: #f92672; font-weight: bold;">else</span> {
+      here(s);
+    }
+  }
+}
+</pre>
+</div>
+</div>
+</div>
+
+<div id="outline-container-org7936837" class="outline-3">
+<h3 id="org7936837">p<sub>jump</sub><sub>if</sub><sub>false</sub></h3>
+<div class="outline-text-3" id="text-org7936837">
+<div class="org-src-container">
+
+<pre class="src src-c"><span style="color: #66d9ef; font-weight: bold;">void</span>
+<span style="color: #a6e22e;">p_jump_if_false</span>
+() {
+  <span style="color: #FF8888;">// </span><span style="color: #FF8888;">(bool addr -&gt; [rs])</span>
+  <span style="color: #66d9ef; font-weight: bold;">name</span>* <span style="color: #fd971f;">a</span> = as_pop();
+  <span style="color: #66d9ef; font-weight: bold;">int</span> <span style="color: #fd971f;">b</span> = as_pop();
+  <span style="color: #f92672; font-weight: bold;">if</span> (b == 0) {
+    rs_pop();
+    rs_push(a);
+  }
+}
+</pre>
+</div>
+</div>
+</div>
+
+<div id="outline-container-org26e08b" class="outline-3">
+<h3 id="org26e08b">compile<sub>answer</sub></h3>
+<div class="outline-text-3" id="text-org26e08b">
+<div class="org-src-container">
+
+<pre class="src src-c"><span style="color: #66d9ef; font-weight: bold;">void</span>
+<span style="color: #a6e22e;">compile_answer</span>
+() {
+  <span style="color: #FF8888;">// </span><span style="color: #FF8888;">([io] -&gt; [jojo_area])</span>
+  here(k2n(<span style="color: #e6db74;">"lit"</span>));
+  <span style="color: #66d9ef; font-weight: bold;">cell</span>* <span style="color: #fd971f;">offset_place</span> = (jojo_area + jojo_area_counter);
+  jojo_area_counter++;
+  here(k2n(<span style="color: #e6db74;">"jump-if-false"</span>));
+  <span style="color: #f92672; font-weight: bold;">while</span> (<span style="color: #ae81ff;">true</span>) {
+    <span style="color: #66d9ef; font-weight: bold;">name</span> <span style="color: #fd971f;">s</span> = read_symbol();
+    <span style="color: #f92672; font-weight: bold;">if</span> (s == k2n(<span style="color: #e6db74;">"("</span>)) {
+      eval_jo(read_symbol());
+    }
+    <span style="color: #f92672; font-weight: bold;">else</span> <span style="color: #f92672; font-weight: bold;">if</span> (s == k2n(<span style="color: #e6db74;">")"</span>)) {
+      <span style="color: #f92672; font-weight: bold;">break</span>;
+    }
+    <span style="color: #f92672; font-weight: bold;">else</span> {
+      here(s);
+    }
+  }
+  offset_place[0] = (jojo_area + jojo_area_counter);
+}
+</pre>
+</div>
+</div>
+</div>
+
+<div id="outline-container-org13ff943" class="outline-3">
+<h3 id="org13ff943">p<sub>if</sub></h3>
+<div class="outline-text-3" id="text-org13ff943">
+<div class="org-src-container">
+
+<pre class="src src-c"><span style="color: #66d9ef; font-weight: bold;">void</span>
+<span style="color: #a6e22e;">p_if</span>
+() {
+  <span style="color: #FF8888;">// </span><span style="color: #FF8888;">([io] -&gt; [jojo_area])</span>
+  compile_question();
+  compile_answer();
+}
+</pre>
+</div>
+</div>
+</div>
+</div>
+
+<div id="outline-container-orga38d90e" class="outline-2">
+<h2 id="orga38d90e">p<sub>define</sub><sub>function</sub></h2>
+<div class="outline-text-2" id="text-orga38d90e">
+<div class="org-src-container">
+
+<pre class="src src-c"><span style="color: #66d9ef; font-weight: bold;">void</span>
+<span style="color: #a6e22e;">p_define_function</span>
+() {
+  <span style="color: #FF8888;">// </span><span style="color: #FF8888;">([io] -&gt; [nametable])</span>
+  <span style="color: #66d9ef; font-weight: bold;">name</span> <span style="color: #fd971f;">index</span>;
+  index = read_symbol();
+  <span style="color: #66d9ef; font-weight: bold;">cell</span> <span style="color: #fd971f;">old_jojo_area_counter</span> = jojo_area_counter;
+  <span style="color: #66d9ef; font-weight: bold;">name</span>* <span style="color: #fd971f;">array</span> = jojo_area + jojo_area_counter;
+  <span style="color: #f92672; font-weight: bold;">while</span> (<span style="color: #ae81ff;">true</span>) {
+    <span style="color: #66d9ef; font-weight: bold;">name</span> <span style="color: #fd971f;">s</span> = read_symbol();
+    <span style="color: #f92672; font-weight: bold;">if</span> (s == k2n(<span style="color: #e6db74;">"("</span>)) {
+      eval_jo(read_symbol());
+    }
+    <span style="color: #f92672; font-weight: bold;">else</span> <span style="color: #f92672; font-weight: bold;">if</span> (s == k2n(<span style="color: #e6db74;">")"</span>)) {
+      <span style="color: #f92672; font-weight: bold;">break</span>;
+    }
+    <span style="color: #f92672; font-weight: bold;">else</span> {
+      here(s);
+    }
+  }
+  nametable[index].type = k2n(<span style="color: #e6db74;">"jojo"</span>);
+  nametable[index].value.jojo.size = jojo_area_counter - old_jojo_area_counter;
+  nametable[index].value.jojo.array = array;
+}
+</pre>
+</div>
+</div>
+</div>
+
+<div id="outline-container-org9204feb" class="outline-2">
+<h2 id="org9204feb">play</h2>
+<div class="outline-text-2" id="text-org9204feb">
+</div><div id="outline-container-org6d3b6b6" class="outline-3">
+<h3 id="org6d3b6b6">the<sub>story</sub><sub>begins</sub></h3>
+<div class="outline-text-3" id="text-org6d3b6b6">
+<div class="org-src-container">
+
+<pre class="src src-c"><span style="color: #66d9ef; font-weight: bold;">void</span>
+<span style="color: #a6e22e;">the_story_begins</span>
+() {
+
+  init_nametable();
+
+  define_primitive(<span style="color: #e6db74;">"end"</span>, p_end);
+  define_primitive(<span style="color: #e6db74;">"bye"</span>, p_bye);
+  define_primitive(<span style="color: #e6db74;">"dup"</span>, p_dup);
+
+  define_primitive(<span style="color: #e6db74;">"mul"</span>, p_mul);
+
+  define_primitive(<span style="color: #e6db74;">"("</span>, do_nothing);
+  define_primitive(<span style="color: #e6db74;">"define-function"</span>, p_define_function);
+  define_primitive(<span style="color: #e6db74;">"~"</span>, p_define_function);
+
+  define_primitive(<span style="color: #e6db74;">"read-symbol"</span>, p_read_symbol);
+  define_primitive(<span style="color: #e6db74;">"apply"</span>, p_apply);
+  define_primitive(<span style="color: #e6db74;">"jump-back"</span>, p_jump_back);
+  define_primitive(<span style="color: #e6db74;">"jump-over"</span>, p_jump_over);
+
+  define_primitive(<span style="color: #e6db74;">"simple-wirte"</span>, p_simple_wirte);
+  define_primitive(<span style="color: #e6db74;">"."</span>, p_simple_wirte);
+
+  define_primitive(<span style="color: #e6db74;">":"</span>, p_comment);
+
+  define_primitive(<span style="color: #e6db74;">"true"</span>, p_true);
+  define_primitive(<span style="color: #e6db74;">"false"</span>, p_false);
+
+  define_primitive(<span style="color: #e6db74;">"lit"</span>, p_lit);
+  define_primitive(<span style="color: #e6db74;">"jump-if-false"</span>, p_jump_if_false);
+  define_primitive(<span style="color: #e6db74;">"if"</span>, p_if);
+
+  define_variable(<span style="color: #e6db74;">"little-test-number"</span>, 4);
+
+  <span style="color: #FF8888;">// </span><span style="color: #FF8888;">basic-repl can not be defined as primitive</span>
+  <span style="color: #66d9ef; font-weight: bold;">string</span> <span style="color: #fd971f;">p_basic_repl</span>[] = {
+    <span style="color: #e6db74;">"read-symbol"</span>,
+    <span style="color: #e6db74;">"apply"</span>,
+    <span style="color: #e6db74;">"little-test-number"</span>,
+    <span style="color: #e6db74;">"jump-back"</span>
+  };
+  define_function(<span style="color: #e6db74;">"basic-repl"</span>, 4, p_basic_repl);
+
+  <span style="color: #66d9ef; font-weight: bold;">jojo</span> <span style="color: #fd971f;">first_jojo</span> = nametable_get_jojo(k2n(<span style="color: #e6db74;">"basic-repl"</span>));
+  rs_push(first_jojo.array);
+
+  <span style="color: #FF8888;">// </span><span style="color: #FF8888;">nametable_report();</span>
+  eval();
+
+}
+</pre>
+</div>
+</div>
+</div>
+
+<div id="outline-container-orge30d826" class="outline-3">
+<h3 id="orge30d826">main</h3>
+<div class="outline-text-3" id="text-orge30d826">
+<div class="org-src-container">
+
+<pre class="src src-c"><span style="color: #66d9ef; font-weight: bold;">int</span>
+<span style="color: #a6e22e;">main</span>
+(<span style="color: #66d9ef; font-weight: bold;">int</span> <span style="color: #fd971f;">argc</span>, <span style="color: #66d9ef; font-weight: bold;">string</span>* <span style="color: #fd971f;">argv</span>) {
+  the_story_begins();
+  <span style="color: #FF8888;">// </span><span style="color: #FF8888;">nametable_test();</span>
+  <span style="color: #f92672; font-weight: bold;">return</span> 0;
+}
+</pre>
+</div>
+</div>
+</div>
+</div>
+</div>
+<div id="postamble" class="status">
+喪以不執 所執者喪 執喪相比 方死方生
+</div>
+</body>
+</html>
