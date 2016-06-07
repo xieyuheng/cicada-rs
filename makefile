@@ -1,7 +1,9 @@
 .ONESHELL:
+CC = gcc
+# CC = clang
 
 build:
-	cc jojo.c -o jojo
+	$(CC) -ldl jojo.c -o jojo -rdynamic
 
 run:
 	./jojo

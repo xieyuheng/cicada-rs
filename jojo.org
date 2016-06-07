@@ -10,6 +10,7 @@
 
 * todo
 
+  - module system
   - string
   - vector
   - fix jump
@@ -25,6 +26,7 @@
     #include <stdint.h>
     #include <setjmp.h>
     #include <string.h>
+    #include <dlfcn.h>
     #+end_src
 
 *** bool
@@ -36,9 +38,7 @@
 *** number
 
     #+begin_src c
-    int
-    max
-    (int a, int b) {
+    int max(int a, int b) {
       if (a < b) {
         return b;
       }
@@ -47,9 +47,7 @@
       }
     }
 
-    int
-    min
-    (int a, int b) {
+    int min(int a, int b) {
       if (a > b) {
         return b;
       }
@@ -62,9 +60,7 @@
 *** char
 
     #+begin_src c
-    bool
-    isbarcket
-    (char c) {
+    bool isbarcket(char c) {
       return (c == '(' ||
               c == ')' ||
               c == '[' ||
@@ -85,9 +81,7 @@
 ***** string_equal
 
       #+begin_src c
-      bool
-      string_equal
-      (string s1, string s2) {
+      bool string_equal(string s1, string s2) {
         if (strcmp(s1, s2) == 0) {
           return true;
         }
@@ -100,9 +94,7 @@
 ***** nat_string_p
 
       #+begin_src c
-      bool
-      nat_string_p
-      (string str) {
+      bool nat_string_p(string str) {
         int i = 0;
         while (str[i] != 0) {
           if (!isdigit(str[i])) {
@@ -117,9 +109,7 @@
 ***** int_string_p
 
       #+begin_src c
-      bool
-      int_string_p
-      (string str) {
+      bool int_string_p(string str) {
         if (str[0] == '-' ||
             str[0] == '+') {
           return nat_string_p(str + 1);
@@ -173,9 +163,7 @@
     #+begin_src c
     name k2n (string str);
 
-    nametable_entry
-    new_nametable_entry
-    (int index) {
+    nametable_entry new_nametable_entry(int index) {
       nametable_entry e = {
         .index = index,
         .key = 0,
@@ -191,21 +179,15 @@
 *** nametable_entry_[occured|entry_used|no_collision]
 
     #+begin_src c
-    bool
-    nametable_entry_occured
-    (nametable_entry e) {
+    bool nametable_entry_occured(nametable_entry e) {
       return e.key != 0;
     }
 
-    bool
-    nametable_entry_used
-    (nametable_entry e) {
+    bool nametable_entry_used(nametable_entry e) {
       return e.type != k2n("none");
     }
 
-    bool
-    nametable_entry_no_collision
-    (nametable_entry e) {
+    bool nametable_entry_no_collision(nametable_entry e) {
       return e.index == e.orbiton;
     }
     #+end_src
@@ -228,9 +210,7 @@
 *** string_to_sum
 
     #+begin_src c
-    int
-    string_to_sum
-    (string str) {
+    int string_to_sum(string str) {
       int sum = 0;
       int max_step = 10;
       int i = 0;
@@ -245,9 +225,7 @@
 *** nametable_keyeq
 
     #+begin_src c
-    bool
-    nametable_keyeq
-    (string k1, string k2) {
+    bool nametable_keyeq(string k1, string k2) {
       return string_equal(k1, k2);
     }
     #+end_src
@@ -255,9 +233,7 @@
 *** nametable_hash
 
     #+begin_src c
-    int
-    nametable_hash
-    (string key, int counter) {
+    int nametable_hash(string key, int counter) {
       return (counter + string_to_sum(key)) % nametable_size;
     }
     #+end_src
@@ -272,9 +248,7 @@
 *** copy_to_string_area
 
     #+begin_src c
-    string
-    copy_to_string_area
-    (string str) {
+    string copy_to_string_area(string str) {
       char *str1;
       int i = 0;
       str1 = (string_area + string_area_counter);
@@ -297,9 +271,8 @@
 *** nametable_insert
 
     #+begin_src c
-    int // -1 denotes the hash_table is filled
-    nametable_insert
-    (string key) {
+    // -1 denotes the hash_table is filled
+    int nametable_insert(string key) {
       int orbit_index = nametable_hash(key, 0);
       int counter = 0;
       while (true) {
@@ -328,9 +301,8 @@
 *** nametable_search
 
     #+begin_src c
-    int // -1 denotes key not occured
-    nametable_search
-    (string key) {
+    // -1 denotes key not occured
+    int nametable_search(string key) {
       int counter = 0;
       while (true) {
         int index = nametable_hash(key, counter);
@@ -355,8 +327,7 @@
     #+begin_src c
     string n2k (int index);
 
-    void nametable_entry_print
-    (nametable_entry entry) {
+    void nametable_entry_print(nametable_entry entry) {
       printf("%s : ", n2k(entry.type));
       if (entry.type == k2n("cell")) {
         printf("%d", entry.value.cell);
@@ -379,9 +350,7 @@
 *** nametable_report_orbit
 
     #+begin_src c
-    void
-    nametable_report_orbit
-    (int index, int counter) {
+    void nametable_report_orbit(int index, int counter) {
       while (counter < nametable[index].orbit_length) {
         string key = nametable[index].key;
         int next_index = nametable_hash(key, counter);
@@ -401,9 +370,7 @@
 *** nametable_report
 
     #+begin_src c
-    void
-    nametable_report
-    () {
+    void nametable_report() {
       printf("\n");
       printf("- nametable_report\n");
       printf("  : <index> <key> // <orbit-length>\n");
@@ -432,9 +399,7 @@
 *** nametable_print
 
     #+begin_src c
-    void
-    nametable_print
-    () {
+    void nametable_print() {
       printf("\n");
       printf("- nametable_print\n");
       int index = 0;
@@ -455,15 +420,11 @@
 *** k2n & n2k
 
     #+begin_src c
-    name
-    k2n
-    (string str) {
+    name k2n(string str) {
       return nametable_insert(str);
     }
 
-    string
-    n2k
-    (int index) {
+    string n2k(int index) {
       return nametable[index].key;
     }
     #+end_src
@@ -471,9 +432,7 @@
 *** init_nametable
 
     #+begin_src c
-    void
-    init_nametable
-    () {
+    void init_nametable() {
       int i = 0;
       while (i < nametable_size) {
         nametable[i] = new_nametable_entry(i);
@@ -492,9 +451,7 @@
 *** here
 
     #+begin_src c
-    void
-    here
-    (int n) {
+    void here(int n) {
       jojo_area[jojo_area_counter] = n;
       jojo_area_counter++;
     }
@@ -503,9 +460,7 @@
 *** nametable_set_cell
 
     #+begin_src c
-    void
-    nametable_set_cell
-    (int index, int cell) {
+    void nametable_set_cell(int index, int cell) {
       nametable[index].type = k2n("cell");
       nametable[index].value.cell = cell;
     }
@@ -514,9 +469,7 @@
 *** nametable_set_primitive
 
     #+begin_src c
-    void
-    nametable_set_primitive
-    (int index, primitive primitive) {
+    void nametable_set_primitive(int index, primitive primitive) {
       nametable[index].type = k2n("primitive");
       nametable[index].value.primitive = primitive;
     }
@@ -525,9 +478,7 @@
 *** nametable_get_cell
 
     #+begin_src c
-    int
-    nametable_get_cell
-    (int index) {
+    int nametable_get_cell(int index) {
       return nametable[index].value.cell;
     }
     #+end_src
@@ -535,9 +486,7 @@
 *** nametable_get_primitive
 
     #+begin_src c
-    primitive
-    nametable_get_primitive
-    (int index) {
+    primitive nametable_get_primitive(int index) {
       return nametable[index].value.primitive;
     }
     #+end_src
@@ -545,9 +494,7 @@
 *** nametable_get_jojo
 
     #+begin_src c
-    jojo
-    nametable_get_jojo
-    (int index) {
+    jojo nametable_get_jojo(int index) {
       return nametable[index].value.jojo;
     }
     #+end_src
@@ -555,9 +502,7 @@
 *** test
 
     #+begin_src c
-    void
-    nametable_test
-    () {
+    void nametable_test() {
       k2n("testkey0");
       k2n("testkey1");
       k2n("testkey2");
@@ -609,16 +554,12 @@
     int as_base = 64;
     int as_pointer = 64;
 
-    void
-    as_push
-    (int value) {
+    void as_push(int value) {
       as[as_pointer] = value;
       as_pointer++;
     }
 
-    int
-    as_pop
-    () {
+    int as_pop() {
       as_pointer--;
       return as[as_pointer];
     }
@@ -633,16 +574,12 @@
     int rs_base = 64;
     int rs_pointer = 64;
 
-    void
-    rs_push
-    (name* value) {
+    void rs_push(name* value) {
       rs[rs_pointer] = value;
       rs_pointer++;
     }
 
-    name*
-    rs_pop
-    () {
+    name* rs_pop() {
       rs_pointer--;
       return rs[rs_pointer];
     }
@@ -653,9 +590,7 @@
 *** define_primitive
 
     #+begin_src c
-    void
-    define_primitive
-    (string str, primitive fun) {
+    void define_primitive(string str, primitive fun) {
       name index = k2n(str);
       nametable_set_primitive(index, fun);
     }
@@ -664,9 +599,7 @@
 *** define_function
 
     #+begin_src c
-    void
-    define_function
-    (string str, int size, string *str_array) {
+    void define_function(string str, int size, string *str_array) {
       name index = k2n(str);
       int i;
       name *array;
@@ -684,9 +617,7 @@
 *** define_variable
 
     #+begin_src c
-    void
-    define_variable
-    (string str, int cell) {
+    void define_variable(string str, int cell) {
       name index = k2n(str);
       nametable_set_cell(index, cell);
     }
@@ -701,9 +632,7 @@
       one need to exit current primitive to run the jojo
 
     #+begin_src c
-    void
-    apply
-    (name jo) {
+    void apply(name jo) {
       if (!nametable_entry_used(nametable[jo])) {
         printf("undefined name : %s\n", n2k(jo));
         return;
@@ -727,9 +656,7 @@
 *** p_apply
 
     #+begin_src c
-    void
-    p_apply
-    () {
+    void p_apply() {
       apply(as_pop());
     }
     #+end_src
@@ -741,15 +668,11 @@
     #+begin_src c
     jmp_buf jmp_buffer;
 
-    bool
-    exit_eval
-    () {
+    bool exit_eval() {
       longjmp(jmp_buffer, 666);
     }
 
-    void
-    eval
-    () {
+    void eval() {
       if (666 == setjmp(jmp_buffer)) {
         return;
       }
@@ -768,9 +691,7 @@
 *** eval_jo
 
     #+begin_src c
-    void
-    eval_jo
-    (name jo) {
+    void eval_jo(name jo) {
       int jo_type = nametable[jo].type;
       if (jo_type == k2n("primitive")) {
         primitive primitive = nametable_get_primitive(jo);
@@ -793,9 +714,7 @@
 *** p_drop
 
     #+begin_src c
-    void
-    p_drop
-    () {
+    void p_drop() {
       // (a ->)
       as_pop();
     }
@@ -804,9 +723,7 @@
 *** p_dup
 
     #+begin_src c
-    void
-    p_dup
-    () {
+    void p_dup() {
       // (a a -> a)
       int a = as_pop();
       as_push(a);
@@ -817,9 +734,7 @@
 *** p_over
 
     #+begin_src c
-    void
-    p_over
-    () {
+    void p_over() {
       // (a b -> a b a)
       int b = as_pop();
       int a = as_pop();
@@ -832,9 +747,7 @@
 *** p_tuck
 
     #+begin_src c
-    void
-    p_tuck
-    () {
+    void p_tuck() {
       // (a b -> b a b)
       int b = as_pop();
       int a = as_pop();
@@ -847,9 +760,7 @@
 *** p_swap
 
     #+begin_src c
-    void
-    p_swap
-    () {
+    void p_swap() {
       // (a b -> b a)
       int b = as_pop();
       int a = as_pop();
@@ -861,9 +772,7 @@
 *** p_print_stack
 
     #+begin_src c
-    void
-    p_print_stack
-    () {
+    void p_print_stack() {
       // ([io] ->)
       if (as_pointer < as_base) {
         printf("  * %d *  ", (as_pointer - as_base));
@@ -885,9 +794,7 @@
 *** export_stack_operation
 
     #+begin_src c
-    void
-    export_stack_operation
-    () {
+    void export_stack_operation() {
       define_primitive("drop", p_drop);
       define_primitive("dup", p_dup);
       define_primitive("over", p_over);
@@ -902,9 +809,7 @@
 *** p_end
 
     #+begin_src c
-    void
-    p_end
-    () {
+    void p_end() {
       // (rs: addr ->)
       rs_pop();
     }
@@ -913,9 +818,7 @@
 *** p_bye
 
     #+begin_src c
-    void
-    p_bye
-    () {
+    void p_bye() {
       // (-> [exit])
       printf("bye bye ^-^/\n");
       exit_eval();
@@ -925,9 +828,7 @@
 *** export_ending
 
     #+begin_src c
-    void
-    export_ending
-    () {
+    void export_ending() {
       define_primitive("end", p_end);
       define_primitive("bye", p_bye);
     }
@@ -938,9 +839,7 @@
 *** p_jump_back
 
     #+begin_src c
-    void
-    p_jump_back
-    () {
+    void p_jump_back() {
       // (offset -> [rs])
       name* function_body = rs_pop();
       rs_push(function_body - as_pop());
@@ -950,9 +849,7 @@
 *** p_jump_over
 
     #+begin_src c
-    void
-    p_jump_over
-    () {
+    void p_jump_over() {
       // (offset -> [rs])
       name* function_body = rs_pop();
       rs_push(function_body + as_pop());
@@ -962,9 +859,7 @@
 *** i_lit
 
     #+begin_src c
-    void
-    i_lit
-    () {
+    void i_lit() {
       // ([rs] -> int)
       name* function_body = rs_pop();
       rs_push(function_body + 1);
@@ -976,9 +871,7 @@
 *** i_tail_call
 
     #+begin_src c
-    void
-    i_tail_call
-    () {
+    void i_tail_call() {
       // ([rs] -> int)
       name* function_body = rs_pop();
       int jo = *(int*)function_body;
@@ -989,9 +882,7 @@
 *** p_jump_if_false
 
     #+begin_src c
-    void
-    p_jump_if_false
-    () {
+    void p_jump_if_false() {
       // (bool addr -> [rs])
       name* a = as_pop();
       int b = as_pop();
@@ -1005,9 +896,7 @@
 *** export_control
 
     #+begin_src c
-    void
-    export_control
-    () {
+    void export_control() {
       define_primitive("jump-back", p_jump_back);
       define_primitive("jump-over", p_jump_over);
       define_primitive("i/lit", i_lit);
@@ -1021,9 +910,7 @@
 *** p_true
 
     #+begin_src c
-    void
-    p_true
-    () {
+    void p_true() {
       as_push(1);
     }
     #+end_src
@@ -1031,9 +918,7 @@
 *** p_false
 
     #+begin_src c
-    void
-    p_false
-    () {
+    void p_false() {
       as_push(0);
     }
     #+end_src
@@ -1041,9 +926,7 @@
 *** p_not
 
     #+begin_src c
-    void
-    p_not
-    () {
+    void p_not() {
       // (bool -> bool)
       int a = as_pop();
       as_push(!a);
@@ -1053,9 +936,7 @@
 *** export_bool
 
     #+begin_src c
-    void
-    export_bool
-    () {
+    void export_bool() {
       define_primitive("true", p_true);
       define_primitive("false", p_false);
       define_primitive("not", p_not);
@@ -1067,9 +948,7 @@
 *** p_add
 
     #+begin_src c
-    void
-    p_add
-    () {
+    void p_add() {
       // (int int -> int)
       int b = as_pop();
       int a = as_pop();
@@ -1080,9 +959,7 @@
 *** p_sub
 
     #+begin_src c
-    void
-    p_sub
-    () {
+    void p_sub() {
       // (int int -> int)
       int b = as_pop();
       int a = as_pop();
@@ -1093,9 +970,7 @@
 *** p_mul
 
     #+begin_src c
-    void
-    p_mul
-    () {
+    void p_mul() {
       // (int int -> int)
       int b = as_pop();
       int a = as_pop();
@@ -1106,9 +981,7 @@
 *** p_div
 
     #+begin_src c
-    void
-    p_div
-    () {
+    void p_div() {
       // (int int -> int)
       int b = as_pop();
       int a = as_pop();
@@ -1119,9 +992,7 @@
 *** p_mod
 
     #+begin_src c
-    void
-    p_mod
-    () {
+    void p_mod() {
       // (int int -> int)
       int b = as_pop();
       int a = as_pop();
@@ -1132,9 +1003,7 @@
 *** k_int
 
     #+begin_src c
-    void
-    k_int
-    () {
+    void k_int() {
       // ([io] -> [jojo_area])
       while (true) {
         name s = read_symbol();
@@ -1156,9 +1025,7 @@
 *** p_eq_p
 
     #+begin_src c
-    void
-    p_eq_p
-    () {
+    void p_eq_p() {
       // (int int -> bool)
       int b = as_pop();
       int a = as_pop();
@@ -1169,9 +1036,7 @@
 *** p_gt_p
 
     #+begin_src c
-    void
-    p_gt_p
-    () {
+    void p_gt_p() {
       // (int int -> bool)
       int b = as_pop();
       int a = as_pop();
@@ -1182,9 +1047,7 @@
 *** p_lt_p
 
     #+begin_src c
-    void
-    p_lt_p
-    () {
+    void p_lt_p() {
       // (int int -> bool)
       int b = as_pop();
       int a = as_pop();
@@ -1195,9 +1058,7 @@
 *** p_gteq_p
 
     #+begin_src c
-    void
-    p_gteq_p
-    () {
+    void p_gteq_p() {
       // (int int -> bool)
       int b = as_pop();
       int a = as_pop();
@@ -1208,9 +1069,7 @@
 *** p_lteq_p
 
     #+begin_src c
-    void
-    p_lteq_p
-    () {
+    void p_lteq_p() {
       // (int int -> bool)
       int b = as_pop();
       int a = as_pop();
@@ -1221,9 +1080,7 @@
 *** export_int
 
     #+begin_src c
-    void
-    export_int
-    () {
+    void export_int() {
       define_primitive("add", p_add);
       define_primitive("sub", p_sub);
 
@@ -1254,9 +1111,7 @@
 *** read_symbol
 
     #+begin_src c
-    name
-    read_symbol
-    () {
+    name read_symbol() {
       // ([io] -> symbol)
       char buf[1024];
       int cur = 0;
@@ -1298,9 +1153,7 @@
 *** p_read_symbol
 
     #+begin_src c
-    void
-    p_read_symbol
-    () {
+    void p_read_symbol() {
       as_push(read_symbol());
     }
     #+end_src
@@ -1308,9 +1161,7 @@
 *** p_simple_wirte
 
     #+begin_src c
-    void
-    p_simple_wirte
-    () {
+    void p_simple_wirte() {
       // (int -> [io])
       printf("%d\n", as_pop());
     }
@@ -1319,9 +1170,7 @@
 *** export_io
 
     #+begin_src c
-    void
-    export_io
-    () {
+    void export_io() {
       define_primitive("read-symbol", p_read_symbol);
       define_primitive("simple-wirte", p_simple_wirte);
       define_primitive(".", p_simple_wirte);
@@ -1333,9 +1182,7 @@
 *** k_comment
 
     #+begin_src c
-    void
-    k_comment
-    () {
+    void k_comment() {
       // ([io] ->)
       while (true) {
         name s = read_symbol();
@@ -1365,9 +1212,7 @@
 ***** compile_question
 
       #+begin_src c
-      void
-      compile_question
-      () {
+      void compile_question() {
         // ([io] -> [jojo_area])
         while (true) {
           name s = read_symbol();
@@ -1387,9 +1232,7 @@
 ***** compile_answer
 
       #+begin_src c
-      void
-      compile_answer
-      () {
+      void compile_answer() {
         // ([io] -> [jojo_area])
         here(k2n("i/lit"));
         int* offset_place = (jojo_area + jojo_area_counter);
@@ -1414,9 +1257,7 @@
 ***** k_if
 
       #+begin_src c
-      void
-      k_if
-      () {
+      void k_if() {
         // ([io] -> [jojo_area])
         compile_question();
         compile_answer();
@@ -1426,9 +1267,7 @@
 *** k_tail_call
 
     #+begin_src c
-    void
-    k_tail_call
-    () {
+    void k_tail_call() {
       // ([io] -> [jojo_area])
       here(k2n("i/tail-call"));
       name s = read_symbol();
@@ -1440,9 +1279,7 @@
 *** export_keyword
 
     #+begin_src c
-    void
-    export_keyword
-    () {
+    void export_keyword() {
       define_primitive(":", k_comment);
       define_primitive("if", k_if);
       define_primitive("tail-call", k_tail_call);
@@ -1454,9 +1291,7 @@
 *** p_define_function
 
     #+begin_src c
-    void
-    p_define_function
-    () {
+    void p_define_function() {
       // ([io] -> [nametable])
       name index;
       index = read_symbol();
@@ -1484,9 +1319,7 @@
 *** export_top_level_keyword
 
     #+begin_src c
-    void
-    export_top_level_keyword
-    () {
+    void export_top_level_keyword() {
       define_primitive("~", p_define_function);
     }
     #+end_src
@@ -1496,43 +1329,69 @@
 *** do_nothing
 
     #+begin_src c
-    void
-    do_nothing
-    () {
+    void do_nothing() {
     }
     #+end_src
 
 *** export_mise
 
     #+begin_src c
-    void
-    export_mise
-    () {
+    void export_mise() {
       define_primitive("(", do_nothing);
       define_primitive("apply", p_apply);
       define_primitive("nametable-report", nametable_report);
     }
     #+end_src
 
+* dl
+
 * *play*
 
 *** k1
 
     #+begin_src c
-    void
-    k1
-    () {
+    void k1() {
       as_push(atoi("12345"));
+    }
+    #+end_src
+
+*** k3
+
+    - cc -fPIC -c k2.c -o libk2.o
+      cc -shared libk2.o -o libk2.so
+      cc -shared -fPIC -c k2.c -o libk2.so
+
+    #+begin_src c
+    void k3() {
+      string lib_file = "./play/libk2.so";
+      string func_to_run = "k2";
+      void* lib = dlopen(lib_file, RTLD_LAZY);
+      if (lib == NULL) {
+        printf("Failed to open the library %s: %s\n",
+               lib_file, dlerror());
+      };
+
+      primitive func = dlsym(lib, func_to_run);
+      if (func == NULL) {
+        printf("Did not find %s function in the library %s: %s\n",
+               func_to_run, lib_file, dlerror());
+      };
+
+      func();
+
+      int rc = dlclose(lib);
+      if (rc != 0) {
+        printf("Failed to close %s\n", lib_file);
+      };
     }
     #+end_src
 
 *** export_play
 
     #+begin_src c
-    void
-    export_play
-    () {
+    void export_play() {
       define_primitive("k1", k1);
+      define_primitive("k3", k3);
     }
     #+end_src
 
@@ -1541,9 +1400,7 @@
 *** export_repl
 
     #+begin_src c
-    void
-    export_repl
-    () {
+    void export_repl() {
       define_variable("little-test-number", 4);
       // basic-repl can not be defined as primitive
       string p_basic_repl[] = {
@@ -1561,9 +1418,7 @@
 *** the_story_begins
 
     #+begin_src c
-    void
-    the_story_begins
-    () {
+    void the_story_begins() {
 
       init_nametable();
 
@@ -1588,9 +1443,7 @@
 *** main
 
     #+begin_src c
-    int
-    main
-    (int argc, string* argv) {
+    int main(int argc, string* argv) {
       the_story_begins();
       return 0;
     }

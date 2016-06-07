@@ -4,12 +4,11 @@
 #include <stdint.h>
 #include <setjmp.h>
 #include <string.h>
+#include <dlfcn.h>
 
 typedef enum { false, true } bool;
 
-int
-max
-(int a, int b) {
+int max(int a, int b) {
   if (a < b) {
     return b;
   }
@@ -18,9 +17,7 @@ max
   }
 }
 
-int
-min
-(int a, int b) {
+int min(int a, int b) {
   if (a > b) {
     return b;
   }
@@ -29,9 +26,7 @@ min
   }
 }
 
-bool
-isbarcket
-(char c) {
+bool isbarcket(char c) {
   return (c == '(' ||
           c == ')' ||
           c == '[' ||
@@ -42,9 +37,7 @@ isbarcket
 
 typedef char* string;
 
-bool
-string_equal
-(string s1, string s2) {
+bool string_equal(string s1, string s2) {
   if (strcmp(s1, s2) == 0) {
     return true;
   }
@@ -53,9 +46,7 @@ string_equal
   }
 }
 
-bool
-nat_string_p
-(string str) {
+bool nat_string_p(string str) {
   int i = 0;
   while (str[i] != 0) {
     if (!isdigit(str[i])) {
@@ -66,9 +57,7 @@ nat_string_p
   return true;
 }
 
-bool
-int_string_p
-(string str) {
+bool int_string_p(string str) {
   if (str[0] == '-' ||
       str[0] == '+') {
     return nat_string_p(str + 1);
@@ -104,9 +93,7 @@ typedef struct {
 
 name k2n (string str);
 
-nametable_entry
-new_nametable_entry
-(int index) {
+nametable_entry new_nametable_entry(int index) {
   nametable_entry e = {
     .index = index,
     .key = 0,
@@ -118,21 +105,15 @@ new_nametable_entry
   return e;
 }
 
-bool
-nametable_entry_occured
-(nametable_entry e) {
+bool nametable_entry_occured(nametable_entry e) {
   return e.key != 0;
 }
 
-bool
-nametable_entry_used
-(nametable_entry e) {
+bool nametable_entry_used(nametable_entry e) {
   return e.type != k2n("none");
 }
 
-bool
-nametable_entry_no_collision
-(nametable_entry e) {
+bool nametable_entry_no_collision(nametable_entry e) {
   return e.index == e.orbiton;
 }
 
@@ -147,9 +128,7 @@ nametable_entry_no_collision
 nametable_entry nametable[nametable_size];
 int nametable_counter = 0;
 
-int
-string_to_sum
-(string str) {
+int string_to_sum(string str) {
   int sum = 0;
   int max_step = 10;
   int i = 0;
@@ -160,24 +139,18 @@ string_to_sum
   return sum;
 }
 
-bool
-nametable_keyeq
-(string k1, string k2) {
+bool nametable_keyeq(string k1, string k2) {
   return string_equal(k1, k2);
 }
 
-int
-nametable_hash
-(string key, int counter) {
+int nametable_hash(string key, int counter) {
   return (counter + string_to_sum(key)) % nametable_size;
 }
 
 char string_area[4 * 1024 * 1024];
 int string_area_counter = 0;
 
-string
-copy_to_string_area
-(string str) {
+string copy_to_string_area(string str) {
   char *str1;
   int i = 0;
   str1 = (string_area + string_area_counter);
@@ -196,9 +169,8 @@ copy_to_string_area
   return str1;
 }
 
-int // -1 denotes the hash_table is filled
-nametable_insert
-(string key) {
+// -1 denotes the hash_table is filled
+int nametable_insert(string key) {
   int orbit_index = nametable_hash(key, 0);
   int counter = 0;
   while (true) {
@@ -223,9 +195,8 @@ nametable_insert
   }
 }
 
-int // -1 denotes key not occured
-nametable_search
-(string key) {
+// -1 denotes key not occured
+int nametable_search(string key) {
   int counter = 0;
   while (true) {
     int index = nametable_hash(key, counter);
@@ -246,8 +217,7 @@ nametable_search
 
 string n2k (int index);
 
-void nametable_entry_print
-(nametable_entry entry) {
+void nametable_entry_print(nametable_entry entry) {
   printf("%s : ", n2k(entry.type));
   if (entry.type == k2n("cell")) {
     printf("%d", entry.value.cell);
@@ -266,9 +236,7 @@ void nametable_entry_print
   }
 }
 
-void
-nametable_report_orbit
-(int index, int counter) {
+void nametable_report_orbit(int index, int counter) {
   while (counter < nametable[index].orbit_length) {
     string key = nametable[index].key;
     int next_index = nametable_hash(key, counter);
@@ -284,9 +252,7 @@ nametable_report_orbit
   }
 }
 
-void
-nametable_report
-() {
+void nametable_report() {
   printf("\n");
   printf("- nametable_report\n");
   printf("  : <index> <key> // <orbit-length>\n");
@@ -311,9 +277,7 @@ nametable_report
   printf("- free : %d\n", nametable_size - nametable_counter);
 }
 
-void
-nametable_print
-() {
+void nametable_print() {
   printf("\n");
   printf("- nametable_print\n");
   int index = 0;
@@ -330,21 +294,15 @@ nametable_print
   printf("- free : %d\n", nametable_size - nametable_counter);
 }
 
-name
-k2n
-(string str) {
+name k2n(string str) {
   return nametable_insert(str);
 }
 
-string
-n2k
-(int index) {
+string n2k(int index) {
   return nametable[index].key;
 }
 
-void
-init_nametable
-() {
+void init_nametable() {
   int i = 0;
   while (i < nametable_size) {
     nametable[i] = new_nametable_entry(i);
@@ -355,48 +313,34 @@ init_nametable
 name jojo_area[1024 * 1024];
 int jojo_area_counter = 0;
 
-void
-here
-(int n) {
+void here(int n) {
   jojo_area[jojo_area_counter] = n;
   jojo_area_counter++;
 }
 
-void
-nametable_set_cell
-(int index, int cell) {
+void nametable_set_cell(int index, int cell) {
   nametable[index].type = k2n("cell");
   nametable[index].value.cell = cell;
 }
 
-void
-nametable_set_primitive
-(int index, primitive primitive) {
+void nametable_set_primitive(int index, primitive primitive) {
   nametable[index].type = k2n("primitive");
   nametable[index].value.primitive = primitive;
 }
 
-int
-nametable_get_cell
-(int index) {
+int nametable_get_cell(int index) {
   return nametable[index].value.cell;
 }
 
-primitive
-nametable_get_primitive
-(int index) {
+primitive nametable_get_primitive(int index) {
   return nametable[index].value.primitive;
 }
 
-jojo
-nametable_get_jojo
-(int index) {
+jojo nametable_get_jojo(int index) {
   return nametable[index].value.jojo;
 }
 
-void
-nametable_test
-() {
+void nametable_test() {
   k2n("testkey0");
   k2n("testkey1");
   k2n("testkey2");
@@ -442,16 +386,12 @@ argument_stack as;
 int as_base = 64;
 int as_pointer = 64;
 
-void
-as_push
-(int value) {
+void as_push(int value) {
   as[as_pointer] = value;
   as_pointer++;
 }
 
-int
-as_pop
-() {
+int as_pop() {
   as_pointer--;
   return as[as_pointer];
 }
@@ -462,30 +402,22 @@ return_stack rs;
 int rs_base = 64;
 int rs_pointer = 64;
 
-void
-rs_push
-(name* value) {
+void rs_push(name* value) {
   rs[rs_pointer] = value;
   rs_pointer++;
 }
 
-name*
-rs_pop
-() {
+name* rs_pop() {
   rs_pointer--;
   return rs[rs_pointer];
 }
 
-void
-define_primitive
-(string str, primitive fun) {
+void define_primitive(string str, primitive fun) {
   name index = k2n(str);
   nametable_set_primitive(index, fun);
 }
 
-void
-define_function
-(string str, int size, string *str_array) {
+void define_function(string str, int size, string *str_array) {
   name index = k2n(str);
   int i;
   name *array;
@@ -499,16 +431,12 @@ define_function
   nametable[index].value.jojo.array = array;
 }
 
-void
-define_variable
-(string str, int cell) {
+void define_variable(string str, int cell) {
   name index = k2n(str);
   nametable_set_cell(index, cell);
 }
 
-void
-apply
-(name jo) {
+void apply(name jo) {
   if (!nametable_entry_used(nametable[jo])) {
     printf("undefined name : %s\n", n2k(jo));
     return;
@@ -528,23 +456,17 @@ apply
   }
 }
 
-void
-p_apply
-() {
+void p_apply() {
   apply(as_pop());
 }
 
 jmp_buf jmp_buffer;
 
-bool
-exit_eval
-() {
+bool exit_eval() {
   longjmp(jmp_buffer, 666);
 }
 
-void
-eval
-() {
+void eval() {
   if (666 == setjmp(jmp_buffer)) {
     return;
   }
@@ -559,9 +481,7 @@ eval
   }
 }
 
-void
-eval_jo
-(name jo) {
+void eval_jo(name jo) {
   int jo_type = nametable[jo].type;
   if (jo_type == k2n("primitive")) {
     primitive primitive = nametable_get_primitive(jo);
@@ -578,25 +498,19 @@ eval_jo
   }
 }
 
-void
-p_drop
-() {
+void p_drop() {
   // (a ->)
   as_pop();
 }
 
-void
-p_dup
-() {
+void p_dup() {
   // (a a -> a)
   int a = as_pop();
   as_push(a);
   as_push(a);
 }
 
-void
-p_over
-() {
+void p_over() {
   // (a b -> a b a)
   int b = as_pop();
   int a = as_pop();
@@ -605,9 +519,7 @@ p_over
   as_push(a);
 }
 
-void
-p_tuck
-() {
+void p_tuck() {
   // (a b -> b a b)
   int b = as_pop();
   int a = as_pop();
@@ -616,9 +528,7 @@ p_tuck
   as_push(b);
 }
 
-void
-p_swap
-() {
+void p_swap() {
   // (a b -> b a)
   int b = as_pop();
   int a = as_pop();
@@ -626,9 +536,7 @@ p_swap
   as_push(a);
 }
 
-void
-p_print_stack
-() {
+void p_print_stack() {
   // ([io] ->)
   if (as_pointer < as_base) {
     printf("  * %d *  ", (as_pointer - as_base));
@@ -646,9 +554,7 @@ p_print_stack
   }
 }
 
-void
-export_stack_operation
-() {
+void export_stack_operation() {
   define_primitive("drop", p_drop);
   define_primitive("dup", p_dup);
   define_primitive("over", p_over);
@@ -657,47 +563,35 @@ export_stack_operation
   define_primitive("print-stack", p_print_stack);
 }
 
-void
-p_end
-() {
+void p_end() {
   // (rs: addr ->)
   rs_pop();
 }
 
-void
-p_bye
-() {
+void p_bye() {
   // (-> [exit])
   printf("bye bye ^-^/\n");
   exit_eval();
 }
 
-void
-export_ending
-() {
+void export_ending() {
   define_primitive("end", p_end);
   define_primitive("bye", p_bye);
 }
 
-void
-p_jump_back
-() {
+void p_jump_back() {
   // (offset -> [rs])
   name* function_body = rs_pop();
   rs_push(function_body - as_pop());
 }
 
-void
-p_jump_over
-() {
+void p_jump_over() {
   // (offset -> [rs])
   name* function_body = rs_pop();
   rs_push(function_body + as_pop());
 }
 
-void
-i_lit
-() {
+void i_lit() {
   // ([rs] -> int)
   name* function_body = rs_pop();
   rs_push(function_body + 1);
@@ -705,18 +599,14 @@ i_lit
   as_push(jo);
 }
 
-void
-i_tail_call
-() {
+void i_tail_call() {
   // ([rs] -> int)
   name* function_body = rs_pop();
   int jo = *(int*)function_body;
   apply(jo);
 }
 
-void
-p_jump_if_false
-() {
+void p_jump_if_false() {
   // (bool addr -> [rs])
   name* a = as_pop();
   int b = as_pop();
@@ -726,9 +616,7 @@ p_jump_if_false
   }
 }
 
-void
-export_control
-() {
+void export_control() {
   define_primitive("jump-back", p_jump_back);
   define_primitive("jump-over", p_jump_over);
   define_primitive("i/lit", i_lit);
@@ -736,82 +624,62 @@ export_control
   define_primitive("jump-if-false", p_jump_if_false);
 }
 
-void
-p_true
-() {
+void p_true() {
   as_push(1);
 }
 
-void
-p_false
-() {
+void p_false() {
   as_push(0);
 }
 
-void
-p_not
-() {
+void p_not() {
   // (bool -> bool)
   int a = as_pop();
   as_push(!a);
 }
 
-void
-export_bool
-() {
+void export_bool() {
   define_primitive("true", p_true);
   define_primitive("false", p_false);
   define_primitive("not", p_not);
 }
 
-void
-p_add
-() {
+void p_add() {
   // (int int -> int)
   int b = as_pop();
   int a = as_pop();
   as_push(a + b);
 }
 
-void
-p_sub
-() {
+void p_sub() {
   // (int int -> int)
   int b = as_pop();
   int a = as_pop();
   as_push(a - b);
 }
 
-void
-p_mul
-() {
+void p_mul() {
   // (int int -> int)
   int b = as_pop();
   int a = as_pop();
   as_push(a * b);
 }
 
-void
-p_div
-() {
+void p_div() {
   // (int int -> int)
   int b = as_pop();
   int a = as_pop();
   as_push(a / b);
 }
 
-void
-p_mod
-() {
+void p_mod() {
   // (int int -> int)
   int b = as_pop();
   int a = as_pop();
   as_push(a % b);
 }
 
-void
-k_int
-() {
+void k_int() {
   // ([io] -> [jojo_area])
   while (true) {
     name s = read_symbol();
@@ -829,54 +697,42 @@ k_int
   }
 }
 
-void
-p_eq_p
-() {
+void p_eq_p() {
   // (int int -> bool)
   int b = as_pop();
   int a = as_pop();
   as_push(a == b);
 }
 
-void
-p_gt_p
-() {
+void p_gt_p() {
   // (int int -> bool)
   int b = as_pop();
   int a = as_pop();
   as_push(a > b);
 }
 
-void
-p_lt_p
-() {
+void p_lt_p() {
   // (int int -> bool)
   int b = as_pop();
   int a = as_pop();
   as_push(a < b);
 }
 
-void
-p_gteq_p
-() {
+void p_gteq_p() {
   // (int int -> bool)
   int b = as_pop();
   int a = as_pop();
   as_push(a >= b);
 }
 
-void
-p_lteq_p
-() {
+void p_lteq_p() {
   // (int int -> bool)
   int b = as_pop();
   int a = as_pop();
   as_push(a <= b);
 }
 
-void
-export_int
-() {
+void export_int() {
   define_primitive("add", p_add);
   define_primitive("sub", p_sub);
 
@@ -897,9 +753,7 @@ export_int
 
 typedef uint8_t byte;
 
-name
-read_symbol
-() {
+name read_symbol() {
   // ([io] -> symbol)
   char buf[1024];
   int cur = 0;
@@ -937,30 +791,22 @@ read_symbol
   return k2n(buf);
 }
 
-void
-p_read_symbol
-() {
+void p_read_symbol() {
   as_push(read_symbol());
 }
 
-void
-p_simple_wirte
-() {
+void p_simple_wirte() {
   // (int -> [io])
   printf("%d\n", as_pop());
 }
 
-void
-export_io
-() {
+void export_io() {
   define_primitive("read-symbol", p_read_symbol);
   define_primitive("simple-wirte", p_simple_wirte);
   define_primitive(".", p_simple_wirte);
 }
 
-void
-k_comment
-() {
+void k_comment() {
   // ([io] ->)
   while (true) {
     name s = read_symbol();
@@ -973,9 +819,7 @@ k_comment
   }
 }
 
-void
-compile_question
-() {
+void compile_question() {
   // ([io] -> [jojo_area])
   while (true) {
     name s = read_symbol();
@@ -991,9 +835,7 @@ compile_question
   }
 }
 
-void
-compile_answer
-() {
+void compile_answer() {
   // ([io] -> [jojo_area])
   here(k2n("i/lit"));
   int* offset_place = (jojo_area + jojo_area_counter);
@@ -1014,17 +856,13 @@ compile_answer
   offset_place[0] = (jojo_area + jojo_area_counter);
 }
 
-void
-k_if
-() {
+void k_if() {
   // ([io] -> [jojo_area])
   compile_question();
   compile_answer();
 }
 
-void
-k_tail_call
-() {
+void k_tail_call() {
   // ([io] -> [jojo_area])
   here(k2n("i/tail-call"));
   name s = read_symbol();
@@ -1032,17 +870,13 @@ k_tail_call
   k_comment();
 }
 
-void
-export_keyword
-() {
+void export_keyword() {
   define_primitive(":", k_comment);
   define_primitive("if", k_if);
   define_primitive("tail-call", k_tail_call);
 }
 
-void
-p_define_function
-() {
+void p_define_function() {
   // ([io] -> [nametable])
   name index;
   index = read_symbol();
@@ -1066,40 +900,52 @@ p_define_function
   nametable[index].value.jojo.array = array;
 }
 
-void
-export_top_level_keyword
-() {
+void export_top_level_keyword() {
   define_primitive("~", p_define_function);
 }
 
-void
-do_nothing
-() {
+void do_nothing() {
 }
 
-void
-export_mise
-() {
+void export_mise() {
   define_primitive("(", do_nothing);
   define_primitive("apply", p_apply);
   define_primitive("nametable-report", nametable_report);
 }
 
-void
-k1
-() {
+void k1() {
   as_push(atoi("12345"));
 }
 
-void
-export_play
-() {
-  define_primitive("k1", k1);
+void k3() {
+  string lib_file = "./play/libk2.so";
+  string func_to_run = "k2";
+  void* lib = dlopen(lib_file, RTLD_LAZY);
+  if (lib == NULL) {
+    printf("Failed to open the library %s: %s\n",
+           lib_file, dlerror());
+  };
+
+  primitive func = dlsym(lib, func_to_run);
+  if (func == NULL) {
+    printf("Did not find %s function in the library %s: %s\n",
+           func_to_run, lib_file, dlerror());
+  };
+
+  func();
+
+  int rc = dlclose(lib);
+  if (rc != 0) {
+    printf("Failed to close %s\n", lib_file);
+  };
 }
 
-void
-export_repl
-() {
+void export_play() {
+  define_primitive("k1", k1);
+  define_primitive("k3", k3);
+}
+
+void export_repl() {
   define_variable("little-test-number", 4);
   // basic-repl can not be defined as primitive
   string p_basic_repl[] = {
@@ -1111,9 +957,7 @@ export_repl
   define_function("basic-repl", 4, p_basic_repl);
 }
 
-void
-the_story_begins
-() {
+void the_story_begins() {
 
   init_nametable();
 
@@ -1134,9 +978,7 @@ the_story_begins
   eval();
 }
 
-int
-main
-(int argc, string* argv) {
+int main(int argc, string* argv) {
   the_story_begins();
   return 0;
 }
