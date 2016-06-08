@@ -3,7 +3,7 @@
 "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en">
 <head>
-<!-- 2016-06-03 Fri 19:47 -->
+<!-- 2016-06-09 Thu 03:19 -->
 <meta http-equiv="Content-Type" content="text/html;charset=utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>jojo</title>
@@ -59,7 +59,7 @@ for the JavaScript code in this tag.
 </head>
 <body>
 <div id="preamble" class="status">
-喪以不執 所執者喪 執喪相比 方死方生
+長悲嘆而掩面兮 憐其獨於夢睹
 </div>
 <div id="content">
 <h1 class="title">jojo</h1>
@@ -67,182 +67,205 @@ for the JavaScript code in this tag.
 <h2>overview</h2>
 <div id="text-table-of-contents">
 <ul>
-<li><a href="#org931716d"><span class="done todo">todo</span> </a></li>
-<li><a href="#org13d32d9">helper</a>
+<li><a href="#org5c6f777"><span class="done todo">todo</span> </a></li>
+<li><a href="#org686a22">helper</a>
 <ul>
-<li><a href="#orgd32c8ab">header</a></li>
-<li><a href="#orgfc67de">bool</a></li>
-<li><a href="#org3456a91">number</a></li>
-<li><a href="#org5e002ee">char</a></li>
-<li><a href="#org4481d58">string</a>
+<li><a href="#org93c5ef5">header</a></li>
+<li><a href="#org970ab6e">bool</a></li>
+<li><a href="#org231145c">cell</a></li>
+<li><a href="#orgb350a93">number</a></li>
+<li><a href="#org15813e7">char</a></li>
+<li><a href="#org506dcec">string</a>
 <ul>
-<li><a href="#orgbeea394">string</a></li>
-<li><a href="#org2b02016">string_equal</a></li>
-<li><a href="#orga04b99c">nat_string_p</a></li>
-<li><a href="#org597fe49">int_string_p</a></li>
+<li><a href="#org9c5b52">string</a></li>
+<li><a href="#org71c9192">string_equal</a></li>
+<li><a href="#org57ba274">nat_string_p</a></li>
+<li><a href="#org22bb59">int_string_p</a></li>
 </ul>
 </li>
 </ul>
 </li>
-<li><a href="#org3f874bf">hashtable</a>
+<li><a href="#org48c2658">hashtable</a>
 <ul>
-<li><a href="#org142e855">primitive</a></li>
-<li><a href="#org2ce0e49">name &amp; jojo</a></li>
-<li><a href="#org6b5fd66">bind &amp; nametable_entry</a></li>
-<li><a href="#org945d104">new_nametable_entry</a></li>
-<li><a href="#org292fb93">nametable_entry_[occured|entry_used|no_collision]</a></li>
-<li><a href="#orgb6a6f06">nametable</a></li>
-<li><a href="#org19543f6">string_to_sum</a></li>
-<li><a href="#org57c7b98">nametable_keyeq</a></li>
-<li><a href="#orga786b20">nametable_hash</a></li>
-<li><a href="#org3b524eb">string_area</a></li>
-<li><a href="#org56f88e7">copy_to_string_area</a></li>
-<li><a href="#orgb2d1ade">nametable_insert</a></li>
-<li><a href="#org15f17b6">nametable_search</a></li>
-<li><a href="#orgc62f942">nametable_entry_print</a></li>
-<li><a href="#org1e13904">nametable_report_orbit</a></li>
-<li><a href="#org8a56997">nametable_report</a></li>
-<li><a href="#orge239a07">nametable_print</a></li>
-<li><a href="#org37ae24">k2n &amp; n2k</a></li>
-<li><a href="#org1a884db">init_nametable</a></li>
-<li><a href="#orge96c8fc">jojo_area</a></li>
-<li><a href="#org9586f36">here</a></li>
-<li><a href="#orgf2feb58">nametable_set_cell</a></li>
-<li><a href="#org8bf3b2e">nametable_set_primitive</a></li>
-<li><a href="#org91d52b8">nametable_get_cell</a></li>
-<li><a href="#org53dc6ae">nametable_get_primitive</a></li>
-<li><a href="#orgdb5e1f1">nametable_get_jojo</a></li>
-<li><a href="#org416a2c"><span class="done test">test</span> </a></li>
+<li><a href="#org70976e9">primitive</a></li>
+<li><a href="#orgd288dbd">name &amp; jojo</a></li>
+<li><a href="#org59dc46a">bind &amp; nametable_entry</a></li>
+<li><a href="#orgd81d02d">new_nametable_entry</a></li>
+<li><a href="#orga938d1">nametable_entry_[occured|entry_used|no_collision]</a></li>
+<li><a href="#org28f2b8a">nametable</a></li>
+<li><a href="#org8aea793">string_to_sum</a></li>
+<li><a href="#org5201caa">nametable_keyeq</a></li>
+<li><a href="#orgd889d9c">nametable_hash</a></li>
+<li><a href="#orgbc690f">string_area</a></li>
+<li><a href="#orgd54f362">copy_to_string_area</a></li>
+<li><a href="#org59af795">nametable_insert</a></li>
+<li><a href="#org373e36f">nametable_search</a></li>
+<li><a href="#orgb77c270">nametable_entry_print</a></li>
+<li><a href="#org2535d0">nametable_report_orbit</a></li>
+<li><a href="#org281d1c0">nametable_report</a></li>
+<li><a href="#orga50598b">nametable_print</a></li>
+<li><a href="#org137a10a">k2n &amp; n2k</a></li>
+<li><a href="#orga4ae009">init_nametable</a></li>
+<li><a href="#org4a22c28">jojo_area</a></li>
+<li><a href="#org31f8d76">here</a></li>
+<li><a href="#org66d3604">nametable_set_cell</a></li>
+<li><a href="#orgfd6c17a">nametable_set_primitive</a></li>
+<li><a href="#org9f7461e">nametable_get_cell</a></li>
+<li><a href="#org9f4e358">nametable_get_primitive</a></li>
+<li><a href="#orgc36859d">nametable_get_jojo</a></li>
+<li><a href="#org493229c"><span class="done test">test</span> </a></li>
 </ul>
 </li>
-<li><a href="#orgbe0d5a0">as &amp; rs</a>
+<li><a href="#org9381008">as &amp; rs</a>
 <ul>
-<li><a href="#org326c132">as</a></li>
-<li><a href="#org6a2c298">rs</a></li>
+<li><a href="#orgf59f64f">as</a></li>
+<li><a href="#orgd0c330b">rs</a></li>
 </ul>
 </li>
-<li><a href="#org5dce66d">define</a>
+<li><a href="#orgb1f943b">define</a>
 <ul>
-<li><a href="#org4a67916">define_primitive</a></li>
-<li><a href="#orgf12930c">define_function</a></li>
-<li><a href="#orgf2ec10">define_variable</a></li>
+<li><a href="#org81a22fe">define_primitive</a></li>
+<li><a href="#org913422e">define_function</a></li>
+<li><a href="#org4e9f4">define_variable</a></li>
 </ul>
 </li>
-<li><a href="#org1c89bf6">apply</a>
+<li><a href="#orgda95115">apply</a>
 <ul>
-<li><a href="#org1d155fd">apply</a></li>
-<li><a href="#orgd3fc93">p_apply</a></li>
+<li><a href="#orgd2e6a83">apply</a></li>
+<li><a href="#org8c438bd">p_apply</a></li>
 </ul>
 </li>
-<li><a href="#org7d16f14">eval</a>
+<li><a href="#orgaff0c17">eval</a>
 <ul>
-<li><a href="#orgaeda6ed">eval</a></li>
-<li><a href="#org92d9478">eval_jo</a></li>
+<li><a href="#org280c73e">eval</a></li>
+<li><a href="#org6a30754">eval_jo</a></li>
 </ul>
 </li>
-<li><a href="#orge63f657"><b>stack_operation</b></a>
+<li><a href="#orgd81864e"><b>stack_operation</b></a>
 <ul>
-<li><a href="#org1d1a217">p_drop</a></li>
-<li><a href="#org717476b">p_dup</a></li>
-<li><a href="#orgd0b9e96">p_over</a></li>
-<li><a href="#orga47c0a5">p_tuck</a></li>
-<li><a href="#org712b6fe">p_swap</a></li>
-<li><a href="#org9a03c50">p_print_stack</a></li>
-<li><a href="#org16065ef">export_stack_operation</a></li>
+<li><a href="#org415f189">p_drop</a></li>
+<li><a href="#org89653fb">p_dup</a></li>
+<li><a href="#orgb521293">p_over</a></li>
+<li><a href="#org66fe118">p_tuck</a></li>
+<li><a href="#org7682aa1">p_swap</a></li>
+<li><a href="#org3fdd842">p_print_stack</a></li>
+<li><a href="#org67a18e0">export_stack_operation</a></li>
 </ul>
 </li>
-<li><a href="#orge096c0"><b>ending</b></a>
+<li><a href="#org32e0b1d"><b>ending</b></a>
 <ul>
-<li><a href="#orgc6c4f83">p_end</a></li>
-<li><a href="#orgdb28e87">p_bye</a></li>
-<li><a href="#org35048f8">export_ending</a></li>
+<li><a href="#orgd93240b">p_end</a></li>
+<li><a href="#org681b3e1">p_bye</a></li>
+<li><a href="#org7a1234e">export_ending</a></li>
 </ul>
 </li>
-<li><a href="#org28bcccf"><b>control</b></a>
+<li><a href="#orgba45265"><b>control</b></a>
 <ul>
-<li><a href="#orgea543df">p_jump_back</a></li>
-<li><a href="#org9b6ec46">p_jump_over</a></li>
-<li><a href="#org651022">i_lit</a></li>
-<li><a href="#org94308e9">i_tail_call</a></li>
-<li><a href="#org535843">p_jump_if_false</a></li>
-<li><a href="#org1d6399c">export_control</a></li>
+<li><a href="#org4b183e7">p_jump_back</a></li>
+<li><a href="#org6c44edb">p_jump_over</a></li>
+<li><a href="#orgb12e63a">i_lit</a></li>
+<li><a href="#orgd7b0e92">i_tail_call</a></li>
+<li><a href="#org7e74408">p_jump_if_false</a></li>
+<li><a href="#org3ef2320">export_control</a></li>
 </ul>
 </li>
-<li><a href="#org688ae30"><b>bool</b></a>
+<li><a href="#orgbb8d9f5"><b>bool</b></a>
 <ul>
-<li><a href="#org9b90641">p_true</a></li>
-<li><a href="#org8ea64b4">p_false</a></li>
-<li><a href="#org8099ff5">p_not</a></li>
-<li><a href="#orgecb38af">export_bool</a></li>
+<li><a href="#org11b3e27">p_true</a></li>
+<li><a href="#orgf485128">p_false</a></li>
+<li><a href="#org50e29d2">p_not</a></li>
+<li><a href="#orgfcac0ce">export_bool</a></li>
 </ul>
 </li>
-<li><a href="#org228b4d8"><b>int</b></a>
+<li><a href="#org9299b70"><b>integer</b></a>
 <ul>
-<li><a href="#orgf0c9426">p_add</a></li>
-<li><a href="#org3a54850">p_sub</a></li>
-<li><a href="#org4650180">p_mul</a></li>
-<li><a href="#org47ca883">p_div</a></li>
-<li><a href="#org641d5b4">p_mod</a></li>
-<li><a href="#orga5817e6">k_int</a></li>
-<li><a href="#orgedfc207">p_eq_p</a></li>
-<li><a href="#orgeb74c8a">p_gt_p</a></li>
-<li><a href="#orga5d42a8">p_lt_p</a></li>
-<li><a href="#orgbead409">p_gteq_p</a></li>
-<li><a href="#orgfe8cc2b">p_lteq_p</a></li>
-<li><a href="#org667db73">export_int</a></li>
+<li><a href="#org11e6f0d">p_add</a></li>
+<li><a href="#orgf02f7cf">p_sub</a></li>
+<li><a href="#org248c69e">p_mul</a></li>
+<li><a href="#org5c518b6">p_div</a></li>
+<li><a href="#orgd420728">p_mod</a></li>
+<li><a href="#org4c5793a">p_eq_p</a></li>
+<li><a href="#org26cd968">p_gt_p</a></li>
+<li><a href="#orgfadd6d5">p_lt_p</a></li>
+<li><a href="#org61c8397">p_gteq_p</a></li>
+<li><a href="#orge277399">p_lteq_p</a></li>
+<li><a href="#org1197194">k_integer</a></li>
+<li><a href="#org8a7ce9a">p_print_integer</a></li>
+<li><a href="#orgfecc28f">p_dot</a></li>
+<li><a href="#orgb30665">export_integer</a></li>
 </ul>
 </li>
-<li><a href="#org4b7a8af"><span class="todo _gt__lt_">&gt;&lt;</span> <b>byte</b></a></li>
-<li><a href="#orgf12042"><b>io</b></a>
+<li><a href="#org7b81e9e"><b>memory</b></a>
 <ul>
-<li><a href="#org4d79bf6">read_symbol</a></li>
-<li><a href="#org2ae7da2">p_read_symbol</a></li>
-<li><a href="#org6f41a18">p_simple_wirte</a></li>
-<li><a href="#orgc9efe0a">export_io</a></li>
+<li><a href="#orge8a621e">p_allocate</a></li>
+<li><a href="#org526a178">p_free</a></li>
+<li><a href="#orgc2528f3">export_memory</a></li>
 </ul>
 </li>
-<li><a href="#orgbae5b31"><b>keyword</b></a>
+<li><a href="#orgfc0c710"><b>symbol</b></a>
 <ul>
-<li><a href="#org55adbd1">k_comment</a></li>
-<li><a href="#orgee82697">k_if</a>
-<ul>
-<li><a href="#org26493ce"><span class="todo note">note</span> </a></li>
-<li><a href="#orgc556d1c">compile_question</a></li>
-<li><a href="#orgb79cac1">compile_answer</a></li>
-<li><a href="#org52b2498">k_if</a></li>
+<li><a href="#org7e374b7">read_symbol</a></li>
+<li><a href="#org6a6eaaf">p_read_symbol</a></li>
+<li><a href="#org77627f8">export_symbol</a></li>
 </ul>
 </li>
-<li><a href="#orgb2e00fa">k_tail_call</a></li>
-<li><a href="#orgb10beca">export_keyword</a></li>
+<li><a href="#org4f07ff"><b>string</b></a>
+<ul>
+<li><a href="#orgbb0796d">k_string</a></li>
+<li><a href="#orgce5bad2">p_print_string</a></li>
+<li><a href="#orga273432">export_string</a></li>
 </ul>
 </li>
-<li><a href="#org4c1a45e"><b>top_level_keyword</b></a>
+<li><a href="#orge42dd62"><b>file</b></a>
 <ul>
-<li><a href="#orgced3d86">p_define_function</a></li>
-<li><a href="#orgeece5e8">export_top_level_keyword</a></li>
+<li><a href="#orgecb7f26">p_read_file</a></li>
+<li><a href="#org9d1bbb3">export_file</a></li>
 </ul>
 </li>
-<li><a href="#orgd7a48af"><b>misc</b></a>
+<li><a href="#orgf2c5cf7"><b>keyword</b></a>
 <ul>
-<li><a href="#orgd896cb0">do_nothing</a></li>
-<li><a href="#orgdf56acd">export_mise</a></li>
+<li><a href="#org88e87cd">k_comment</a></li>
+<li><a href="#org9eb55d7">k_if</a>
+<ul>
+<li><a href="#orga93e18b"><span class="todo note">note</span> </a></li>
+<li><a href="#orgbd55e96">compile_question</a></li>
+<li><a href="#org5b809f1">compile_answer</a></li>
+<li><a href="#org7181bb8">k_if</a></li>
 </ul>
 </li>
-<li><a href="#org870a8e8"><b>play</b></a>
-<ul>
-<li><a href="#orgb02106">k1</a></li>
-<li><a href="#orgd7da89c">export_play</a></li>
+<li><a href="#orga316eb6">k_tail_call</a></li>
+<li><a href="#org67bad4a">export_keyword</a></li>
 </ul>
 </li>
-<li><a href="#orgb919b6e"><b>repl</b></a>
+<li><a href="#org4d150c6"><b>top_level_keyword</b></a>
 <ul>
-<li><a href="#orgadec3bf">export_repl</a></li>
+<li><a href="#org2bfb306">p_define_function</a></li>
+<li><a href="#org1e5c63c">export_top_level_keyword</a></li>
 </ul>
 </li>
-<li><a href="#org1281eb2">the_story_begins</a>
+<li><a href="#org650095f"><b>misc</b></a>
 <ul>
-<li><a href="#org8cfcc4">the_story_begins</a></li>
-<li><a href="#org58f48ae">main</a></li>
+<li><a href="#orgda67260">do_nothing</a></li>
+<li><a href="#orgec7836b">export_mise</a></li>
+</ul>
+</li>
+<li><a href="#orge8a0a1d"><b>play</b></a>
+<ul>
+<li><a href="#org32c9e73">p1</a></li>
+<li><a href="#orgcdcaaf2">p2</a></li>
+<li><a href="#org603a7bd">p3</a></li>
+<li><a href="#org234ed75">export_play</a></li>
+</ul>
+</li>
+<li><a href="#org6c630aa"><b>repl</b></a>
+<ul>
+<li><a href="#orgaffa741">export_repl</a></li>
+</ul>
+</li>
+<li><a href="#org423c0a2">the_story_begins</a>
+<ul>
+<li><a href="#orgcd28526">the_story_begins</a></li>
+<li><a href="#org1773d85">main</a></li>
 </ul>
 </li>
 </ul>
@@ -255,22 +278,25 @@ for the JavaScript code in this tag.
 
 <hr  />
 
-<div id="outline-container-org931716d" class="outline-2">
-<h2 id="org931716d"><span class="done todo">todo</span> </h2>
-<div class="outline-text-2" id="text-org931716d">
+<div id="outline-container-org5c6f777" class="outline-2">
+<h2 id="org5c6f777"><span class="done todo">todo</span> </h2>
+<div class="outline-text-2" id="text-org5c6f777">
 <ul class="org-ul">
+<li><p>no redefine</p></li>
+<li><p>file</p></li>
+<li><p>maybe more fields in nametable_entry</p></li>
 <li><p>string</p></li>
 <li><p>vector</p></li>
 <li><p>fix jump</p></li></ul>
 </div>
 </div>
 
-<div id="outline-container-org13d32d9" class="outline-2">
-<h2 id="org13d32d9">helper</h2>
-<div class="outline-text-2" id="text-org13d32d9">
-</div><div id="outline-container-orgd32c8ab" class="outline-3">
-<h3 id="orgd32c8ab">header</h3>
-<div class="outline-text-3" id="text-orgd32c8ab">
+<div id="outline-container-org686a22" class="outline-2">
+<h2 id="org686a22">helper</h2>
+<div class="outline-text-2" id="text-org686a22">
+</div><div id="outline-container-org93c5ef5" class="outline-3">
+<h3 id="org93c5ef5">header</h3>
+<div class="outline-text-3" id="text-org93c5ef5">
 <div class="org-src-container">
 
 <pre class="src src-c"><span style="color: #a6e22e;">#include</span> <span style="color: #e6db74;">&lt;stdio.h&gt;</span>
@@ -279,14 +305,15 @@ for the JavaScript code in this tag.
 <span style="color: #a6e22e;">#include</span> <span style="color: #e6db74;">&lt;stdint.h&gt;</span>
 <span style="color: #a6e22e;">#include</span> <span style="color: #e6db74;">&lt;setjmp.h&gt;</span>
 <span style="color: #a6e22e;">#include</span> <span style="color: #e6db74;">&lt;string.h&gt;</span>
+<span style="color: #a6e22e;">#include</span> <span style="color: #e6db74;">&lt;dlfcn.h&gt;</span>
 </pre>
 </div>
 </div>
 </div>
 
-<div id="outline-container-orgfc67de" class="outline-3">
-<h3 id="orgfc67de">bool</h3>
-<div class="outline-text-3" id="text-orgfc67de">
+<div id="outline-container-org970ab6e" class="outline-3">
+<h3 id="org970ab6e">bool</h3>
+<div class="outline-text-3" id="text-org970ab6e">
 <div class="org-src-container">
 
 <pre class="src src-c"><span style="color: #f92672; font-weight: bold;">typedef</span> <span style="color: #f92672; font-weight: bold;">enum</span> { <span style="color: #ae81ff;">false</span>, <span style="color: #ae81ff;">true</span> } <span style="color: #66d9ef; font-weight: bold;">bool</span>;
@@ -295,14 +322,23 @@ for the JavaScript code in this tag.
 </div>
 </div>
 
-<div id="outline-container-org3456a91" class="outline-3">
-<h3 id="org3456a91">number</h3>
-<div class="outline-text-3" id="text-org3456a91">
+<div id="outline-container-org231145c" class="outline-3">
+<h3 id="org231145c">cell</h3>
+<div class="outline-text-3" id="text-org231145c">
 <div class="org-src-container">
 
-<pre class="src src-c"><span style="color: #66d9ef; font-weight: bold;">int</span>
-<span style="color: #a6e22e;">max</span>
-(<span style="color: #66d9ef; font-weight: bold;">int</span> <span style="color: #fd971f;">a</span>, <span style="color: #66d9ef; font-weight: bold;">int</span> <span style="color: #fd971f;">b</span>) {
+<pre class="src src-c"><span style="color: #f92672; font-weight: bold;">typedef</span> <span style="color: #66d9ef; font-weight: bold;">intptr_t</span> <span style="color: #66d9ef; font-weight: bold;">cell</span>;
+</pre>
+</div>
+</div>
+</div>
+
+<div id="outline-container-orgb350a93" class="outline-3">
+<h3 id="orgb350a93">number</h3>
+<div class="outline-text-3" id="text-orgb350a93">
+<div class="org-src-container">
+
+<pre class="src src-c"><span style="color: #66d9ef; font-weight: bold;">cell</span> <span style="color: #a6e22e;">max</span>(<span style="color: #66d9ef; font-weight: bold;">cell</span> <span style="color: #fd971f;">a</span>, <span style="color: #66d9ef; font-weight: bold;">cell</span> <span style="color: #fd971f;">b</span>) {
   <span style="color: #f92672; font-weight: bold;">if</span> (a &lt; b) {
     <span style="color: #f92672; font-weight: bold;">return</span> b;
   }
@@ -311,9 +347,7 @@ for the JavaScript code in this tag.
   }
 }
 
-<span style="color: #66d9ef; font-weight: bold;">int</span>
-<span style="color: #a6e22e;">min</span>
-(<span style="color: #66d9ef; font-weight: bold;">int</span> <span style="color: #fd971f;">a</span>, <span style="color: #66d9ef; font-weight: bold;">int</span> <span style="color: #fd971f;">b</span>) {
+<span style="color: #66d9ef; font-weight: bold;">cell</span> <span style="color: #a6e22e;">min</span>(<span style="color: #66d9ef; font-weight: bold;">cell</span> <span style="color: #fd971f;">a</span>, <span style="color: #66d9ef; font-weight: bold;">cell</span> <span style="color: #fd971f;">b</span>) {
   <span style="color: #f92672; font-weight: bold;">if</span> (a &gt; b) {
     <span style="color: #f92672; font-weight: bold;">return</span> b;
   }
@@ -326,14 +360,12 @@ for the JavaScript code in this tag.
 </div>
 </div>
 
-<div id="outline-container-org5e002ee" class="outline-3">
-<h3 id="org5e002ee">char</h3>
-<div class="outline-text-3" id="text-org5e002ee">
+<div id="outline-container-org15813e7" class="outline-3">
+<h3 id="org15813e7">char</h3>
+<div class="outline-text-3" id="text-org15813e7">
 <div class="org-src-container">
 
-<pre class="src src-c"><span style="color: #66d9ef; font-weight: bold;">bool</span>
-<span style="color: #a6e22e;">isbarcket</span>
-(<span style="color: #66d9ef; font-weight: bold;">char</span> <span style="color: #fd971f;">c</span>) {
+<pre class="src src-c"><span style="color: #66d9ef; font-weight: bold;">bool</span> <span style="color: #a6e22e;">isbarcket</span>(<span style="color: #66d9ef; font-weight: bold;">char</span> <span style="color: #fd971f;">c</span>) {
   <span style="color: #f92672; font-weight: bold;">return</span> (c == <span style="color: #e6db74;">'('</span> ||
           c == <span style="color: #e6db74;">')'</span> ||
           c == <span style="color: #e6db74;">'['</span> ||
@@ -346,12 +378,12 @@ for the JavaScript code in this tag.
 </div>
 </div>
 
-<div id="outline-container-org4481d58" class="outline-3">
-<h3 id="org4481d58">string</h3>
-<div class="outline-text-3" id="text-org4481d58">
-</div><div id="outline-container-orgbeea394" class="outline-4">
-<h4 id="orgbeea394">string</h4>
-<div class="outline-text-4" id="text-orgbeea394">
+<div id="outline-container-org506dcec" class="outline-3">
+<h3 id="org506dcec">string</h3>
+<div class="outline-text-3" id="text-org506dcec">
+</div><div id="outline-container-org9c5b52" class="outline-4">
+<h4 id="org9c5b52">string</h4>
+<div class="outline-text-4" id="text-org9c5b52">
 <div class="org-src-container">
 
 <pre class="src src-c"><span style="color: #f92672; font-weight: bold;">typedef</span> <span style="color: #66d9ef; font-weight: bold;">char</span>* <span style="color: #66d9ef; font-weight: bold;">string</span>;
@@ -360,14 +392,12 @@ for the JavaScript code in this tag.
 </div>
 </div>
 
-<div id="outline-container-org2b02016" class="outline-4">
-<h4 id="org2b02016">string_equal</h4>
-<div class="outline-text-4" id="text-org2b02016">
+<div id="outline-container-org71c9192" class="outline-4">
+<h4 id="org71c9192">string_equal</h4>
+<div class="outline-text-4" id="text-org71c9192">
 <div class="org-src-container">
 
-<pre class="src src-c"><span style="color: #66d9ef; font-weight: bold;">bool</span>
-<span style="color: #a6e22e;">string_equal</span>
-(<span style="color: #66d9ef; font-weight: bold;">string</span> <span style="color: #fd971f;">s1</span>, <span style="color: #66d9ef; font-weight: bold;">string</span> <span style="color: #fd971f;">s2</span>) {
+<pre class="src src-c"><span style="color: #66d9ef; font-weight: bold;">bool</span> <span style="color: #a6e22e;">string_equal</span>(<span style="color: #66d9ef; font-weight: bold;">string</span> <span style="color: #fd971f;">s1</span>, <span style="color: #66d9ef; font-weight: bold;">string</span> <span style="color: #fd971f;">s2</span>) {
   <span style="color: #f92672; font-weight: bold;">if</span> (strcmp(s1, s2) == 0) {
     <span style="color: #f92672; font-weight: bold;">return</span> <span style="color: #ae81ff;">true</span>;
   }
@@ -380,15 +410,13 @@ for the JavaScript code in this tag.
 </div>
 </div>
 
-<div id="outline-container-orga04b99c" class="outline-4">
-<h4 id="orga04b99c">nat_string_p</h4>
-<div class="outline-text-4" id="text-orga04b99c">
+<div id="outline-container-org57ba274" class="outline-4">
+<h4 id="org57ba274">nat_string_p</h4>
+<div class="outline-text-4" id="text-org57ba274">
 <div class="org-src-container">
 
-<pre class="src src-c"><span style="color: #66d9ef; font-weight: bold;">bool</span>
-<span style="color: #a6e22e;">nat_string_p</span>
-(<span style="color: #66d9ef; font-weight: bold;">string</span> <span style="color: #fd971f;">str</span>) {
-  <span style="color: #66d9ef; font-weight: bold;">int</span> <span style="color: #fd971f;">i</span> = 0;
+<pre class="src src-c"><span style="color: #66d9ef; font-weight: bold;">bool</span> <span style="color: #a6e22e;">nat_string_p</span>(<span style="color: #66d9ef; font-weight: bold;">string</span> <span style="color: #fd971f;">str</span>) {
+  <span style="color: #66d9ef; font-weight: bold;">cell</span> <span style="color: #fd971f;">i</span> = 0;
   <span style="color: #f92672; font-weight: bold;">while</span> (str[i] != 0) {
     <span style="color: #f92672; font-weight: bold;">if</span> (<span style="color: #960050;">!</span>isdigit(str[i])) {
       <span style="color: #f92672; font-weight: bold;">return</span> <span style="color: #ae81ff;">false</span>;
@@ -402,14 +430,12 @@ for the JavaScript code in this tag.
 </div>
 </div>
 
-<div id="outline-container-org597fe49" class="outline-4">
-<h4 id="org597fe49">int_string_p</h4>
-<div class="outline-text-4" id="text-org597fe49">
+<div id="outline-container-org22bb59" class="outline-4">
+<h4 id="org22bb59">int_string_p</h4>
+<div class="outline-text-4" id="text-org22bb59">
 <div class="org-src-container">
 
-<pre class="src src-c"><span style="color: #66d9ef; font-weight: bold;">bool</span>
-<span style="color: #a6e22e;">int_string_p</span>
-(<span style="color: #66d9ef; font-weight: bold;">string</span> <span style="color: #fd971f;">str</span>) {
+<pre class="src src-c"><span style="color: #66d9ef; font-weight: bold;">bool</span> <span style="color: #a6e22e;">int_string_p</span>(<span style="color: #66d9ef; font-weight: bold;">string</span> <span style="color: #fd971f;">str</span>) {
   <span style="color: #f92672; font-weight: bold;">if</span> (str[0] == <span style="color: #e6db74;">'-'</span> ||
       str[0] == <span style="color: #e6db74;">'+'</span>) {
     <span style="color: #f92672; font-weight: bold;">return</span> nat_string_p(str + 1);
@@ -425,12 +451,12 @@ for the JavaScript code in this tag.
 </div>
 </div>
 
-<div id="outline-container-org3f874bf" class="outline-2">
-<h2 id="org3f874bf">hashtable</h2>
-<div class="outline-text-2" id="text-org3f874bf">
-</div><div id="outline-container-org142e855" class="outline-3">
-<h3 id="org142e855">primitive</h3>
-<div class="outline-text-3" id="text-org142e855">
+<div id="outline-container-org48c2658" class="outline-2">
+<h2 id="org48c2658">hashtable</h2>
+<div class="outline-text-2" id="text-org48c2658">
+</div><div id="outline-container-org70976e9" class="outline-3">
+<h3 id="org70976e9">primitive</h3>
+<div class="outline-text-3" id="text-org70976e9">
 <div class="org-src-container">
 
 <pre class="src src-c"><span style="color: #f92672; font-weight: bold;">typedef</span> <span style="color: #66d9ef; font-weight: bold;">void</span> (*<span style="color: #66d9ef; font-weight: bold;">primitive</span>)();
@@ -439,15 +465,15 @@ for the JavaScript code in this tag.
 </div>
 </div>
 
-<div id="outline-container-org2ce0e49" class="outline-3">
-<h3 id="org2ce0e49">name &amp; jojo</h3>
-<div class="outline-text-3" id="text-org2ce0e49">
+<div id="outline-container-orgd288dbd" class="outline-3">
+<h3 id="orgd288dbd">name &amp; jojo</h3>
+<div class="outline-text-3" id="text-orgd288dbd">
 <div class="org-src-container">
 
-<pre class="src src-c"><span style="color: #f92672; font-weight: bold;">typedef</span> <span style="color: #66d9ef; font-weight: bold;">int</span> <span style="color: #66d9ef; font-weight: bold;">name</span>;
+<pre class="src src-c"><span style="color: #f92672; font-weight: bold;">typedef</span> <span style="color: #66d9ef; font-weight: bold;">cell</span> <span style="color: #66d9ef; font-weight: bold;">name</span>;
 
 <span style="color: #f92672; font-weight: bold;">typedef</span> <span style="color: #f92672; font-weight: bold;">struct</span> {
-  <span style="color: #66d9ef; font-weight: bold;">int</span> <span style="color: #fd971f;">size</span>;
+  <span style="color: #66d9ef; font-weight: bold;">cell</span> <span style="color: #fd971f;">size</span>;
   <span style="color: #66d9ef; font-weight: bold;">name</span> *<span style="color: #fd971f;">array</span>;
 } <span style="color: #66d9ef; font-weight: bold;">jojo</span>;
 </pre>
@@ -455,40 +481,38 @@ for the JavaScript code in this tag.
 </div>
 </div>
 
-<div id="outline-container-org6b5fd66" class="outline-3">
-<h3 id="org6b5fd66">bind &amp; nametable_entry</h3>
-<div class="outline-text-3" id="text-org6b5fd66">
+<div id="outline-container-org59dc46a" class="outline-3">
+<h3 id="org59dc46a">bind &amp; nametable_entry</h3>
+<div class="outline-text-3" id="text-org59dc46a">
 <div class="org-src-container">
 
 <pre class="src src-c"><span style="color: #f92672; font-weight: bold;">typedef</span> <span style="color: #f92672; font-weight: bold;">union</span> {
-  <span style="color: #66d9ef; font-weight: bold;">int</span> <span style="color: #fd971f;">cell</span>;
+  <span style="color: #66d9ef; font-weight: bold;">cell</span> <span style="color: #fd971f;">cell</span>;
   <span style="color: #66d9ef; font-weight: bold;">primitive</span> <span style="color: #fd971f;">primitive</span>;
   <span style="color: #66d9ef; font-weight: bold;">jojo</span> <span style="color: #fd971f;">jojo</span>;
 } <span style="color: #66d9ef; font-weight: bold;">bind</span>;
 
 <span style="color: #f92672; font-weight: bold;">typedef</span> <span style="color: #f92672; font-weight: bold;">struct</span> {
-  <span style="color: #66d9ef; font-weight: bold;">int</span> <span style="color: #fd971f;">index</span>;
+  <span style="color: #66d9ef; font-weight: bold;">cell</span> <span style="color: #fd971f;">index</span>;
   <span style="color: #66d9ef; font-weight: bold;">string</span> <span style="color: #fd971f;">key</span>;
   <span style="color: #66d9ef; font-weight: bold;">name</span> <span style="color: #fd971f;">type</span>;
   <span style="color: #66d9ef; font-weight: bold;">bind</span> <span style="color: #fd971f;">value</span>;
-  <span style="color: #66d9ef; font-weight: bold;">int</span> <span style="color: #fd971f;">orbit_length</span>;
-  <span style="color: #66d9ef; font-weight: bold;">int</span> <span style="color: #fd971f;">orbiton</span>;
+  <span style="color: #66d9ef; font-weight: bold;">cell</span> <span style="color: #fd971f;">orbit_length</span>;
+  <span style="color: #66d9ef; font-weight: bold;">cell</span> <span style="color: #fd971f;">orbiton</span>;
 } <span style="color: #66d9ef; font-weight: bold;">nametable_entry</span>;
 </pre>
 </div>
 </div>
 </div>
 
-<div id="outline-container-org945d104" class="outline-3">
-<h3 id="org945d104">new_nametable_entry</h3>
-<div class="outline-text-3" id="text-org945d104">
+<div id="outline-container-orgd81d02d" class="outline-3">
+<h3 id="orgd81d02d">new_nametable_entry</h3>
+<div class="outline-text-3" id="text-orgd81d02d">
 <div class="org-src-container">
 
 <pre class="src src-c"><span style="color: #66d9ef; font-weight: bold;">name</span> <span style="color: #a6e22e;">k2n</span> (<span style="color: #66d9ef; font-weight: bold;">string</span> <span style="color: #fd971f;">str</span>);
 
-<span style="color: #66d9ef; font-weight: bold;">nametable_entry</span>
-<span style="color: #a6e22e;">new_nametable_entry</span>
-(<span style="color: #66d9ef; font-weight: bold;">int</span> <span style="color: #fd971f;">index</span>) {
+<span style="color: #66d9ef; font-weight: bold;">nametable_entry</span> <span style="color: #a6e22e;">new_nametable_entry</span>(<span style="color: #66d9ef; font-weight: bold;">cell</span> <span style="color: #fd971f;">index</span>) {
   <span style="color: #66d9ef; font-weight: bold;">nametable_entry</span> <span style="color: #fd971f;">e</span> = {
     .index = index,
     .key = 0,
@@ -504,26 +528,20 @@ for the JavaScript code in this tag.
 </div>
 </div>
 
-<div id="outline-container-org292fb93" class="outline-3">
-<h3 id="org292fb93">nametable_entry_[occured|entry_used|no_collision]</h3>
-<div class="outline-text-3" id="text-org292fb93">
+<div id="outline-container-orga938d1" class="outline-3">
+<h3 id="orga938d1">nametable_entry_[occured|entry_used|no_collision]</h3>
+<div class="outline-text-3" id="text-orga938d1">
 <div class="org-src-container">
 
-<pre class="src src-c"><span style="color: #66d9ef; font-weight: bold;">bool</span>
-<span style="color: #a6e22e;">nametable_entry_occured</span>
-(<span style="color: #66d9ef; font-weight: bold;">nametable_entry</span> <span style="color: #fd971f;">e</span>) {
+<pre class="src src-c"><span style="color: #66d9ef; font-weight: bold;">bool</span> <span style="color: #a6e22e;">nametable_entry_occured</span>(<span style="color: #66d9ef; font-weight: bold;">nametable_entry</span> <span style="color: #fd971f;">e</span>) {
   <span style="color: #f92672; font-weight: bold;">return</span> e.key != 0;
 }
 
-<span style="color: #66d9ef; font-weight: bold;">bool</span>
-<span style="color: #a6e22e;">nametable_entry_used</span>
-(<span style="color: #66d9ef; font-weight: bold;">nametable_entry</span> <span style="color: #fd971f;">e</span>) {
+<span style="color: #66d9ef; font-weight: bold;">bool</span> <span style="color: #a6e22e;">nametable_entry_used</span>(<span style="color: #66d9ef; font-weight: bold;">nametable_entry</span> <span style="color: #fd971f;">e</span>) {
   <span style="color: #f92672; font-weight: bold;">return</span> e.type != k2n(<span style="color: #e6db74;">"none"</span>);
 }
 
-<span style="color: #66d9ef; font-weight: bold;">bool</span>
-<span style="color: #a6e22e;">nametable_entry_no_collision</span>
-(<span style="color: #66d9ef; font-weight: bold;">nametable_entry</span> <span style="color: #fd971f;">e</span>) {
+<span style="color: #66d9ef; font-weight: bold;">bool</span> <span style="color: #a6e22e;">nametable_entry_no_collision</span>(<span style="color: #66d9ef; font-weight: bold;">nametable_entry</span> <span style="color: #fd971f;">e</span>) {
   <span style="color: #f92672; font-weight: bold;">return</span> e.index == e.orbiton;
 }
 </pre>
@@ -531,9 +549,9 @@ for the JavaScript code in this tag.
 </div>
 </div>
 
-<div id="outline-container-orgb6a6f06" class="outline-3">
-<h3 id="orgb6a6f06">nametable</h3>
-<div class="outline-text-3" id="text-orgb6a6f06">
+<div id="outline-container-org28f2b8a" class="outline-3">
+<h3 id="org28f2b8a">nametable</h3>
+<div class="outline-text-3" id="text-org28f2b8a">
 <div class="org-src-container">
 
 <pre class="src src-c"><span style="color: #FF8888;">// </span><span style="color: #FF8888;">prime table size</span>
@@ -545,23 +563,21 @@ for the JavaScript code in this tag.
 <span style="color: #FF8888;">//   </span><span style="color: #FF8888;">997</span>
 <span style="color: #a6e22e;">#define</span> <span style="color: #fd971f;">nametable_size</span> 100003
 <span style="color: #66d9ef; font-weight: bold;">nametable_entry</span> <span style="color: #fd971f;">nametable</span>[nametable_size];
-<span style="color: #66d9ef; font-weight: bold;">int</span> <span style="color: #fd971f;">nametable_counter</span> = 0;
+<span style="color: #66d9ef; font-weight: bold;">cell</span> <span style="color: #fd971f;">nametable_counter</span> = 0;
 </pre>
 </div>
 </div>
 </div>
 
-<div id="outline-container-org19543f6" class="outline-3">
-<h3 id="org19543f6">string_to_sum</h3>
-<div class="outline-text-3" id="text-org19543f6">
+<div id="outline-container-org8aea793" class="outline-3">
+<h3 id="org8aea793">string_to_sum</h3>
+<div class="outline-text-3" id="text-org8aea793">
 <div class="org-src-container">
 
-<pre class="src src-c"><span style="color: #66d9ef; font-weight: bold;">int</span>
-<span style="color: #a6e22e;">string_to_sum</span>
-(<span style="color: #66d9ef; font-weight: bold;">string</span> <span style="color: #fd971f;">str</span>) {
-  <span style="color: #66d9ef; font-weight: bold;">int</span> <span style="color: #fd971f;">sum</span> = 0;
-  <span style="color: #66d9ef; font-weight: bold;">int</span> <span style="color: #fd971f;">max_step</span> = 10;
-  <span style="color: #66d9ef; font-weight: bold;">int</span> <span style="color: #fd971f;">i</span> = 0;
+<pre class="src src-c"><span style="color: #66d9ef; font-weight: bold;">cell</span> <span style="color: #a6e22e;">string_to_sum</span>(<span style="color: #66d9ef; font-weight: bold;">string</span> <span style="color: #fd971f;">str</span>) {
+  <span style="color: #66d9ef; font-weight: bold;">cell</span> <span style="color: #fd971f;">sum</span> = 0;
+  <span style="color: #66d9ef; font-weight: bold;">cell</span> <span style="color: #fd971f;">max_step</span> = 10;
+  <span style="color: #66d9ef; font-weight: bold;">cell</span> <span style="color: #fd971f;">i</span> = 0;
   <span style="color: #f92672; font-weight: bold;">while</span> (i &lt; strlen(str)) {
     sum = sum + str[i] * (2 &lt;&lt; min(i, max_step));
     i++;
@@ -573,14 +589,12 @@ for the JavaScript code in this tag.
 </div>
 </div>
 
-<div id="outline-container-org57c7b98" class="outline-3">
-<h3 id="org57c7b98">nametable_keyeq</h3>
-<div class="outline-text-3" id="text-org57c7b98">
+<div id="outline-container-org5201caa" class="outline-3">
+<h3 id="org5201caa">nametable_keyeq</h3>
+<div class="outline-text-3" id="text-org5201caa">
 <div class="org-src-container">
 
-<pre class="src src-c"><span style="color: #66d9ef; font-weight: bold;">bool</span>
-<span style="color: #a6e22e;">nametable_keyeq</span>
-(<span style="color: #66d9ef; font-weight: bold;">string</span> <span style="color: #fd971f;">k1</span>, <span style="color: #66d9ef; font-weight: bold;">string</span> <span style="color: #fd971f;">k2</span>) {
+<pre class="src src-c"><span style="color: #66d9ef; font-weight: bold;">bool</span> <span style="color: #a6e22e;">nametable_keyeq</span>(<span style="color: #66d9ef; font-weight: bold;">string</span> <span style="color: #fd971f;">k1</span>, <span style="color: #66d9ef; font-weight: bold;">string</span> <span style="color: #fd971f;">k2</span>) {
   <span style="color: #f92672; font-weight: bold;">return</span> string_equal(k1, k2);
 }
 </pre>
@@ -588,14 +602,12 @@ for the JavaScript code in this tag.
 </div>
 </div>
 
-<div id="outline-container-orga786b20" class="outline-3">
-<h3 id="orga786b20">nametable_hash</h3>
-<div class="outline-text-3" id="text-orga786b20">
+<div id="outline-container-orgd889d9c" class="outline-3">
+<h3 id="orgd889d9c">nametable_hash</h3>
+<div class="outline-text-3" id="text-orgd889d9c">
 <div class="org-src-container">
 
-<pre class="src src-c"><span style="color: #66d9ef; font-weight: bold;">int</span>
-<span style="color: #a6e22e;">nametable_hash</span>
-(<span style="color: #66d9ef; font-weight: bold;">string</span> <span style="color: #fd971f;">key</span>, <span style="color: #66d9ef; font-weight: bold;">int</span> <span style="color: #fd971f;">counter</span>) {
+<pre class="src src-c"><span style="color: #66d9ef; font-weight: bold;">cell</span> <span style="color: #a6e22e;">nametable_hash</span>(<span style="color: #66d9ef; font-weight: bold;">string</span> <span style="color: #fd971f;">key</span>, <span style="color: #66d9ef; font-weight: bold;">cell</span> <span style="color: #fd971f;">counter</span>) {
   <span style="color: #f92672; font-weight: bold;">return</span> (counter + string_to_sum(key)) % nametable_size;
 }
 </pre>
@@ -603,28 +615,26 @@ for the JavaScript code in this tag.
 </div>
 </div>
 
-<div id="outline-container-org3b524eb" class="outline-3">
-<h3 id="org3b524eb">string_area</h3>
-<div class="outline-text-3" id="text-org3b524eb">
+<div id="outline-container-orgbc690f" class="outline-3">
+<h3 id="orgbc690f">string_area</h3>
+<div class="outline-text-3" id="text-orgbc690f">
 <div class="org-src-container">
 
 <pre class="src src-c"><span style="color: #66d9ef; font-weight: bold;">char</span> <span style="color: #fd971f;">string_area</span>[4 * 1024 * 1024];
-<span style="color: #66d9ef; font-weight: bold;">int</span> <span style="color: #fd971f;">string_area_counter</span> = 0;
+<span style="color: #66d9ef; font-weight: bold;">cell</span> <span style="color: #fd971f;">string_area_counter</span> = 0;
 </pre>
 </div>
 </div>
 </div>
 
-<div id="outline-container-org56f88e7" class="outline-3">
-<h3 id="org56f88e7">copy_to_string_area</h3>
-<div class="outline-text-3" id="text-org56f88e7">
+<div id="outline-container-orgd54f362" class="outline-3">
+<h3 id="orgd54f362">copy_to_string_area</h3>
+<div class="outline-text-3" id="text-orgd54f362">
 <div class="org-src-container">
 
-<pre class="src src-c"><span style="color: #66d9ef; font-weight: bold;">string</span>
-<span style="color: #a6e22e;">copy_to_string_area</span>
-(<span style="color: #66d9ef; font-weight: bold;">string</span> <span style="color: #fd971f;">str</span>) {
+<pre class="src src-c"><span style="color: #66d9ef; font-weight: bold;">string</span> <span style="color: #a6e22e;">copy_to_string_area</span>(<span style="color: #66d9ef; font-weight: bold;">string</span> <span style="color: #fd971f;">str</span>) {
   <span style="color: #66d9ef; font-weight: bold;">char</span> *<span style="color: #fd971f;">str1</span>;
-  <span style="color: #66d9ef; font-weight: bold;">int</span> <span style="color: #fd971f;">i</span> = 0;
+  <span style="color: #66d9ef; font-weight: bold;">cell</span> <span style="color: #fd971f;">i</span> = 0;
   str1 = (string_area + string_area_counter);
   <span style="color: #f92672; font-weight: bold;">while</span> (<span style="color: #ae81ff;">true</span>) {
     <span style="color: #f92672; font-weight: bold;">if</span> (str[i] == 0) {
@@ -645,18 +655,17 @@ for the JavaScript code in this tag.
 </div>
 </div>
 
-<div id="outline-container-orgb2d1ade" class="outline-3">
-<h3 id="orgb2d1ade">nametable_insert</h3>
-<div class="outline-text-3" id="text-orgb2d1ade">
+<div id="outline-container-org59af795" class="outline-3">
+<h3 id="org59af795">nametable_insert</h3>
+<div class="outline-text-3" id="text-org59af795">
 <div class="org-src-container">
 
-<pre class="src src-c"><span style="color: #66d9ef; font-weight: bold;">int</span> <span style="color: #FF8888;">// </span><span style="color: #FF8888;">-1 denotes the hash_table is filled</span>
-<span style="color: #a6e22e;">nametable_insert</span>
-(<span style="color: #66d9ef; font-weight: bold;">string</span> <span style="color: #fd971f;">key</span>) {
-  <span style="color: #66d9ef; font-weight: bold;">int</span> <span style="color: #fd971f;">orbit_index</span> = nametable_hash(key, 0);
-  <span style="color: #66d9ef; font-weight: bold;">int</span> <span style="color: #fd971f;">counter</span> = 0;
+<pre class="src src-c"><span style="color: #FF8888;">// </span><span style="color: #FF8888;">-1 denotes the hash_table is filled</span>
+<span style="color: #66d9ef; font-weight: bold;">cell</span> <span style="color: #a6e22e;">nametable_insert</span>(<span style="color: #66d9ef; font-weight: bold;">string</span> <span style="color: #fd971f;">key</span>) {
+  <span style="color: #66d9ef; font-weight: bold;">cell</span> <span style="color: #fd971f;">orbit_index</span> = nametable_hash(key, 0);
+  <span style="color: #66d9ef; font-weight: bold;">cell</span> <span style="color: #fd971f;">counter</span> = 0;
   <span style="color: #f92672; font-weight: bold;">while</span> (<span style="color: #ae81ff;">true</span>) {
-    <span style="color: #66d9ef; font-weight: bold;">int</span> <span style="color: #fd971f;">index</span> = nametable_hash(key, counter);
+    <span style="color: #66d9ef; font-weight: bold;">cell</span> <span style="color: #fd971f;">index</span> = nametable_hash(key, counter);
     <span style="color: #f92672; font-weight: bold;">if</span> (<span style="color: #960050;">!</span>nametable_entry_occured(nametable[index])) {
       key = copy_to_string_area(key);
       nametable[index].key = key;
@@ -681,17 +690,16 @@ for the JavaScript code in this tag.
 </div>
 </div>
 
-<div id="outline-container-org15f17b6" class="outline-3">
-<h3 id="org15f17b6">nametable_search</h3>
-<div class="outline-text-3" id="text-org15f17b6">
+<div id="outline-container-org373e36f" class="outline-3">
+<h3 id="org373e36f">nametable_search</h3>
+<div class="outline-text-3" id="text-org373e36f">
 <div class="org-src-container">
 
-<pre class="src src-c"><span style="color: #66d9ef; font-weight: bold;">int</span> <span style="color: #FF8888;">// </span><span style="color: #FF8888;">-1 denotes key not occured</span>
-<span style="color: #a6e22e;">nametable_search</span>
-(<span style="color: #66d9ef; font-weight: bold;">string</span> <span style="color: #fd971f;">key</span>) {
-  <span style="color: #66d9ef; font-weight: bold;">int</span> <span style="color: #fd971f;">counter</span> = 0;
+<pre class="src src-c"><span style="color: #FF8888;">// </span><span style="color: #FF8888;">-1 denotes key not occured</span>
+<span style="color: #66d9ef; font-weight: bold;">cell</span> <span style="color: #a6e22e;">nametable_search</span>(<span style="color: #66d9ef; font-weight: bold;">string</span> <span style="color: #fd971f;">key</span>) {
+  <span style="color: #66d9ef; font-weight: bold;">cell</span> <span style="color: #fd971f;">counter</span> = 0;
   <span style="color: #f92672; font-weight: bold;">while</span> (<span style="color: #ae81ff;">true</span>) {
-    <span style="color: #66d9ef; font-weight: bold;">int</span> <span style="color: #fd971f;">index</span> = nametable_hash(key, counter);
+    <span style="color: #66d9ef; font-weight: bold;">cell</span> <span style="color: #fd971f;">index</span> = nametable_hash(key, counter);
     <span style="color: #f92672; font-weight: bold;">if</span> (<span style="color: #960050;">!</span>nametable_entry_occured(nametable[index])) {
       <span style="color: #f92672; font-weight: bold;">return</span> -1;
     }
@@ -711,28 +719,27 @@ for the JavaScript code in this tag.
 </div>
 </div>
 
-<div id="outline-container-orgc62f942" class="outline-3">
-<h3 id="orgc62f942">nametable_entry_print</h3>
-<div class="outline-text-3" id="text-orgc62f942">
+<div id="outline-container-orgb77c270" class="outline-3">
+<h3 id="orgb77c270">nametable_entry_print</h3>
+<div class="outline-text-3" id="text-orgb77c270">
 <div class="org-src-container">
 
-<pre class="src src-c"><span style="color: #66d9ef; font-weight: bold;">string</span> <span style="color: #a6e22e;">n2k</span> (<span style="color: #66d9ef; font-weight: bold;">int</span> <span style="color: #fd971f;">index</span>);
+<pre class="src src-c"><span style="color: #66d9ef; font-weight: bold;">string</span> <span style="color: #a6e22e;">n2k</span> (<span style="color: #66d9ef; font-weight: bold;">cell</span> <span style="color: #fd971f;">index</span>);
 
-<span style="color: #66d9ef; font-weight: bold;">void</span> <span style="color: #a6e22e;">nametable_entry_print</span>
-(<span style="color: #66d9ef; font-weight: bold;">nametable_entry</span> <span style="color: #fd971f;">entry</span>) {
+<span style="color: #66d9ef; font-weight: bold;">void</span> <span style="color: #a6e22e;">nametable_entry_print</span>(<span style="color: #66d9ef; font-weight: bold;">nametable_entry</span> <span style="color: #fd971f;">entry</span>) {
   printf(<span style="color: #e6db74;">"%s : "</span>, n2k(entry.type));
   <span style="color: #f92672; font-weight: bold;">if</span> (entry.type == k2n(<span style="color: #e6db74;">"cell"</span>)) {
-    printf(<span style="color: #e6db74;">"%d"</span>, entry.value.cell);
+    printf(<span style="color: #e6db74;">"%ld"</span>, entry.value.cell);
   }
   <span style="color: #f92672; font-weight: bold;">else</span> <span style="color: #f92672; font-weight: bold;">if</span> (entry.type == k2n(<span style="color: #e6db74;">"primitive"</span>)) {
-    printf(<span style="color: #e6db74;">"%d"</span>, entry.value.primitive);
+    printf(<span style="color: #e6db74;">"%ld"</span>, entry.value.primitive);
   }
   <span style="color: #f92672; font-weight: bold;">else</span> <span style="color: #f92672; font-weight: bold;">if</span> (entry.type == k2n(<span style="color: #e6db74;">"jojo"</span>)) {
-    printf(<span style="color: #e6db74;">"%d "</span>, entry.value.jojo.size);
+    printf(<span style="color: #e6db74;">"%ld "</span>, entry.value.jojo.size);
     printf(<span style="color: #e6db74;">"[ "</span>, entry.value.jojo.size);
-    <span style="color: #66d9ef; font-weight: bold;">int</span> <span style="color: #fd971f;">i</span>;
+    <span style="color: #66d9ef; font-weight: bold;">cell</span> <span style="color: #fd971f;">i</span>;
     <span style="color: #f92672; font-weight: bold;">for</span> (i=0; i &lt; entry.value.jojo.size; i=i+1) {
-      printf(<span style="color: #e6db74;">"%d "</span>, entry.value.jojo.array[i]);
+      printf(<span style="color: #e6db74;">"%ld "</span>, entry.value.jojo.array[i]);
     }
     printf(<span style="color: #e6db74;">"]"</span>, entry.value.jojo.size);
   }
@@ -742,19 +749,17 @@ for the JavaScript code in this tag.
 </div>
 </div>
 
-<div id="outline-container-org1e13904" class="outline-3">
-<h3 id="org1e13904">nametable_report_orbit</h3>
-<div class="outline-text-3" id="text-org1e13904">
+<div id="outline-container-org2535d0" class="outline-3">
+<h3 id="org2535d0">nametable_report_orbit</h3>
+<div class="outline-text-3" id="text-org2535d0">
 <div class="org-src-container">
 
-<pre class="src src-c"><span style="color: #66d9ef; font-weight: bold;">void</span>
-<span style="color: #a6e22e;">nametable_report_orbit</span>
-(<span style="color: #66d9ef; font-weight: bold;">int</span> <span style="color: #fd971f;">index</span>, <span style="color: #66d9ef; font-weight: bold;">int</span> <span style="color: #fd971f;">counter</span>) {
+<pre class="src src-c"><span style="color: #66d9ef; font-weight: bold;">void</span> <span style="color: #a6e22e;">nametable_report_orbit</span>(<span style="color: #66d9ef; font-weight: bold;">cell</span> <span style="color: #fd971f;">index</span>, <span style="color: #66d9ef; font-weight: bold;">cell</span> <span style="color: #fd971f;">counter</span>) {
   <span style="color: #f92672; font-weight: bold;">while</span> (counter &lt; nametable[index].orbit_length) {
     <span style="color: #66d9ef; font-weight: bold;">string</span> <span style="color: #fd971f;">key</span> = nametable[index].key;
-    <span style="color: #66d9ef; font-weight: bold;">int</span> <span style="color: #fd971f;">next_index</span> = nametable_hash(key, counter);
+    <span style="color: #66d9ef; font-weight: bold;">cell</span> <span style="color: #fd971f;">next_index</span> = nametable_hash(key, counter);
     <span style="color: #f92672; font-weight: bold;">if</span> (index == nametable[next_index].orbiton) {
-      printf(<span style="color: #e6db74;">"  - %d %s\n"</span>, next_index, nametable[next_index].key);
+      printf(<span style="color: #e6db74;">"  - %ld %s\n"</span>, next_index, nametable[next_index].key);
     }
     <span style="color: #f92672; font-weight: bold;">if</span> (nametable_entry_used(nametable[next_index])) {
       printf(<span style="color: #e6db74;">"    = "</span>);
@@ -769,22 +774,20 @@ for the JavaScript code in this tag.
 </div>
 </div>
 
-<div id="outline-container-org8a56997" class="outline-3">
-<h3 id="org8a56997">nametable_report</h3>
-<div class="outline-text-3" id="text-org8a56997">
+<div id="outline-container-org281d1c0" class="outline-3">
+<h3 id="org281d1c0">nametable_report</h3>
+<div class="outline-text-3" id="text-org281d1c0">
 <div class="org-src-container">
 
-<pre class="src src-c"><span style="color: #66d9ef; font-weight: bold;">void</span>
-<span style="color: #a6e22e;">nametable_report</span>
-() {
+<pre class="src src-c"><span style="color: #66d9ef; font-weight: bold;">void</span> <span style="color: #a6e22e;">nametable_report</span>() {
   printf(<span style="color: #e6db74;">"\n"</span>);
   printf(<span style="color: #e6db74;">"- nametable_report\n"</span>);
   printf(<span style="color: #e6db74;">"  : &lt;index&gt; &lt;key&gt; // &lt;orbit-length&gt;\n"</span>);
-  <span style="color: #66d9ef; font-weight: bold;">int</span> <span style="color: #fd971f;">index</span> = 0;
+  <span style="color: #66d9ef; font-weight: bold;">cell</span> <span style="color: #fd971f;">index</span> = 0;
   <span style="color: #f92672; font-weight: bold;">while</span> (index &lt; nametable_size) {
     <span style="color: #f92672; font-weight: bold;">if</span> (nametable_entry_occured(nametable[index]) &amp;&amp;
         nametable_entry_no_collision(nametable[index])) {
-      printf(<span style="color: #e6db74;">"  - %d %s // %d\n"</span>,
+      printf(<span style="color: #e6db74;">"  - %ld %s // %ld\n"</span>,
              index, nametable[index].key, nametable[index].orbit_length);
       <span style="color: #f92672; font-weight: bold;">if</span> (nametable_entry_used(nametable[index])) {
         printf(<span style="color: #e6db74;">"    = "</span>);
@@ -797,27 +800,25 @@ for the JavaScript code in this tag.
   }
   printf(<span style="color: #e6db74;">"  : &lt;index&gt; &lt;key&gt; // &lt;orbit-length&gt;\n"</span>);
   printf(<span style="color: #e6db74;">"\n"</span>);
-  printf(<span style="color: #e6db74;">"- used : %d\n"</span>, nametable_counter);
-  printf(<span style="color: #e6db74;">"- free : %d\n"</span>, nametable_size - nametable_counter);
+  printf(<span style="color: #e6db74;">"- used : %ld\n"</span>, nametable_counter);
+  printf(<span style="color: #e6db74;">"- free : %ld\n"</span>, nametable_size - nametable_counter);
 }
 </pre>
 </div>
 </div>
 </div>
 
-<div id="outline-container-orge239a07" class="outline-3">
-<h3 id="orge239a07">nametable_print</h3>
-<div class="outline-text-3" id="text-orge239a07">
+<div id="outline-container-orga50598b" class="outline-3">
+<h3 id="orga50598b">nametable_print</h3>
+<div class="outline-text-3" id="text-orga50598b">
 <div class="org-src-container">
 
-<pre class="src src-c"><span style="color: #66d9ef; font-weight: bold;">void</span>
-<span style="color: #a6e22e;">nametable_print</span>
-() {
+<pre class="src src-c"><span style="color: #66d9ef; font-weight: bold;">void</span> <span style="color: #a6e22e;">nametable_print</span>() {
   printf(<span style="color: #e6db74;">"\n"</span>);
   printf(<span style="color: #e6db74;">"- nametable_print\n"</span>);
-  <span style="color: #66d9ef; font-weight: bold;">int</span> <span style="color: #fd971f;">index</span> = 0;
+  <span style="color: #66d9ef; font-weight: bold;">cell</span> <span style="color: #fd971f;">index</span> = 0;
   <span style="color: #f92672; font-weight: bold;">while</span> (index &lt; nametable_size) {
-    printf(<span style="color: #e6db74;">"  - %d %s %d // %d\n"</span>,
+    printf(<span style="color: #e6db74;">"  - %ld %s %ld // %ld\n"</span>,
            index,
            nametable[index].key,
            nametable[index].value,
@@ -825,28 +826,24 @@ for the JavaScript code in this tag.
     index = 1 + index;
   }
   printf(<span style="color: #e6db74;">"\n"</span>);
-  printf(<span style="color: #e6db74;">"- used : %d\n"</span>, nametable_counter);
-  printf(<span style="color: #e6db74;">"- free : %d\n"</span>, nametable_size - nametable_counter);
+  printf(<span style="color: #e6db74;">"- used : %ld\n"</span>, nametable_counter);
+  printf(<span style="color: #e6db74;">"- free : %ld\n"</span>, nametable_size - nametable_counter);
 }
 </pre>
 </div>
 </div>
 </div>
 
-<div id="outline-container-org37ae24" class="outline-3">
-<h3 id="org37ae24">k2n &amp; n2k</h3>
-<div class="outline-text-3" id="text-org37ae24">
+<div id="outline-container-org137a10a" class="outline-3">
+<h3 id="org137a10a">k2n &amp; n2k</h3>
+<div class="outline-text-3" id="text-org137a10a">
 <div class="org-src-container">
 
-<pre class="src src-c"><span style="color: #66d9ef; font-weight: bold;">name</span>
-<span style="color: #a6e22e;">k2n</span>
-(<span style="color: #66d9ef; font-weight: bold;">string</span> <span style="color: #fd971f;">str</span>) {
+<pre class="src src-c"><span style="color: #66d9ef; font-weight: bold;">name</span> <span style="color: #a6e22e;">k2n</span>(<span style="color: #66d9ef; font-weight: bold;">string</span> <span style="color: #fd971f;">str</span>) {
   <span style="color: #f92672; font-weight: bold;">return</span> nametable_insert(str);
 }
 
-<span style="color: #66d9ef; font-weight: bold;">string</span>
-<span style="color: #a6e22e;">n2k</span>
-(<span style="color: #66d9ef; font-weight: bold;">int</span> <span style="color: #fd971f;">index</span>) {
+<span style="color: #66d9ef; font-weight: bold;">string</span> <span style="color: #a6e22e;">n2k</span>(<span style="color: #66d9ef; font-weight: bold;">cell</span> <span style="color: #fd971f;">index</span>) {
   <span style="color: #f92672; font-weight: bold;">return</span> nametable[index].key;
 }
 </pre>
@@ -854,15 +851,13 @@ for the JavaScript code in this tag.
 </div>
 </div>
 
-<div id="outline-container-org1a884db" class="outline-3">
-<h3 id="org1a884db">init_nametable</h3>
-<div class="outline-text-3" id="text-org1a884db">
+<div id="outline-container-orga4ae009" class="outline-3">
+<h3 id="orga4ae009">init_nametable</h3>
+<div class="outline-text-3" id="text-orga4ae009">
 <div class="org-src-container">
 
-<pre class="src src-c"><span style="color: #66d9ef; font-weight: bold;">void</span>
-<span style="color: #a6e22e;">init_nametable</span>
-() {
-  <span style="color: #66d9ef; font-weight: bold;">int</span> <span style="color: #fd971f;">i</span> = 0;
+<pre class="src src-c"><span style="color: #66d9ef; font-weight: bold;">void</span> <span style="color: #a6e22e;">init_nametable</span>() {
+  <span style="color: #66d9ef; font-weight: bold;">cell</span> <span style="color: #fd971f;">i</span> = 0;
   <span style="color: #f92672; font-weight: bold;">while</span> (i &lt; nametable_size) {
     nametable[i] = new_nametable_entry(i);
     i++;
@@ -873,26 +868,24 @@ for the JavaScript code in this tag.
 </div>
 </div>
 
-<div id="outline-container-orge96c8fc" class="outline-3">
-<h3 id="orge96c8fc">jojo_area</h3>
-<div class="outline-text-3" id="text-orge96c8fc">
+<div id="outline-container-org4a22c28" class="outline-3">
+<h3 id="org4a22c28">jojo_area</h3>
+<div class="outline-text-3" id="text-org4a22c28">
 <div class="org-src-container">
 
 <pre class="src src-c"><span style="color: #66d9ef; font-weight: bold;">name</span> <span style="color: #fd971f;">jojo_area</span>[1024 * 1024];
-<span style="color: #66d9ef; font-weight: bold;">int</span> <span style="color: #fd971f;">jojo_area_counter</span> = 0;
+<span style="color: #66d9ef; font-weight: bold;">cell</span> <span style="color: #fd971f;">jojo_area_counter</span> = 0;
 </pre>
 </div>
 </div>
 </div>
 
-<div id="outline-container-org9586f36" class="outline-3">
-<h3 id="org9586f36">here</h3>
-<div class="outline-text-3" id="text-org9586f36">
+<div id="outline-container-org31f8d76" class="outline-3">
+<h3 id="org31f8d76">here</h3>
+<div class="outline-text-3" id="text-org31f8d76">
 <div class="org-src-container">
 
-<pre class="src src-c"><span style="color: #66d9ef; font-weight: bold;">void</span>
-<span style="color: #a6e22e;">here</span>
-(<span style="color: #66d9ef; font-weight: bold;">int</span> <span style="color: #fd971f;">n</span>) {
+<pre class="src src-c"><span style="color: #66d9ef; font-weight: bold;">void</span> <span style="color: #a6e22e;">here</span>(<span style="color: #66d9ef; font-weight: bold;">cell</span> <span style="color: #fd971f;">n</span>) {
   jojo_area[jojo_area_counter] = n;
   jojo_area_counter++;
 }
@@ -901,14 +894,12 @@ for the JavaScript code in this tag.
 </div>
 </div>
 
-<div id="outline-container-orgf2feb58" class="outline-3">
-<h3 id="orgf2feb58">nametable_set_cell</h3>
-<div class="outline-text-3" id="text-orgf2feb58">
+<div id="outline-container-org66d3604" class="outline-3">
+<h3 id="org66d3604">nametable_set_cell</h3>
+<div class="outline-text-3" id="text-org66d3604">
 <div class="org-src-container">
 
-<pre class="src src-c"><span style="color: #66d9ef; font-weight: bold;">void</span>
-<span style="color: #a6e22e;">nametable_set_cell</span>
-(<span style="color: #66d9ef; font-weight: bold;">int</span> <span style="color: #fd971f;">index</span>, <span style="color: #66d9ef; font-weight: bold;">int</span> <span style="color: #fd971f;">cell</span>) {
+<pre class="src src-c"><span style="color: #66d9ef; font-weight: bold;">void</span> <span style="color: #a6e22e;">nametable_set_cell</span>(<span style="color: #66d9ef; font-weight: bold;">cell</span> <span style="color: #fd971f;">index</span>, <span style="color: #66d9ef; font-weight: bold;">cell</span> <span style="color: #fd971f;">cell</span>) {
   nametable[index].type = k2n(<span style="color: #e6db74;">"cell"</span>);
   nametable[index].value.cell = cell;
 }
@@ -917,14 +908,12 @@ for the JavaScript code in this tag.
 </div>
 </div>
 
-<div id="outline-container-org8bf3b2e" class="outline-3">
-<h3 id="org8bf3b2e">nametable_set_primitive</h3>
-<div class="outline-text-3" id="text-org8bf3b2e">
+<div id="outline-container-orgfd6c17a" class="outline-3">
+<h3 id="orgfd6c17a">nametable_set_primitive</h3>
+<div class="outline-text-3" id="text-orgfd6c17a">
 <div class="org-src-container">
 
-<pre class="src src-c"><span style="color: #66d9ef; font-weight: bold;">void</span>
-<span style="color: #a6e22e;">nametable_set_primitive</span>
-(<span style="color: #66d9ef; font-weight: bold;">int</span> <span style="color: #fd971f;">index</span>, <span style="color: #66d9ef; font-weight: bold;">primitive</span> <span style="color: #fd971f;">primitive</span>) {
+<pre class="src src-c"><span style="color: #66d9ef; font-weight: bold;">void</span> <span style="color: #a6e22e;">nametable_set_primitive</span>(<span style="color: #66d9ef; font-weight: bold;">cell</span> <span style="color: #fd971f;">index</span>, <span style="color: #66d9ef; font-weight: bold;">primitive</span> <span style="color: #fd971f;">primitive</span>) {
   nametable[index].type = k2n(<span style="color: #e6db74;">"primitive"</span>);
   nametable[index].value.primitive = primitive;
 }
@@ -933,14 +922,12 @@ for the JavaScript code in this tag.
 </div>
 </div>
 
-<div id="outline-container-org91d52b8" class="outline-3">
-<h3 id="org91d52b8">nametable_get_cell</h3>
-<div class="outline-text-3" id="text-org91d52b8">
+<div id="outline-container-org9f7461e" class="outline-3">
+<h3 id="org9f7461e">nametable_get_cell</h3>
+<div class="outline-text-3" id="text-org9f7461e">
 <div class="org-src-container">
 
-<pre class="src src-c"><span style="color: #66d9ef; font-weight: bold;">int</span>
-<span style="color: #a6e22e;">nametable_get_cell</span>
-(<span style="color: #66d9ef; font-weight: bold;">int</span> <span style="color: #fd971f;">index</span>) {
+<pre class="src src-c"><span style="color: #66d9ef; font-weight: bold;">cell</span> <span style="color: #a6e22e;">nametable_get_cell</span>(<span style="color: #66d9ef; font-weight: bold;">cell</span> <span style="color: #fd971f;">index</span>) {
   <span style="color: #f92672; font-weight: bold;">return</span> nametable[index].value.cell;
 }
 </pre>
@@ -948,14 +935,12 @@ for the JavaScript code in this tag.
 </div>
 </div>
 
-<div id="outline-container-org53dc6ae" class="outline-3">
-<h3 id="org53dc6ae">nametable_get_primitive</h3>
-<div class="outline-text-3" id="text-org53dc6ae">
+<div id="outline-container-org9f4e358" class="outline-3">
+<h3 id="org9f4e358">nametable_get_primitive</h3>
+<div class="outline-text-3" id="text-org9f4e358">
 <div class="org-src-container">
 
-<pre class="src src-c"><span style="color: #66d9ef; font-weight: bold;">primitive</span>
-<span style="color: #a6e22e;">nametable_get_primitive</span>
-(<span style="color: #66d9ef; font-weight: bold;">int</span> <span style="color: #fd971f;">index</span>) {
+<pre class="src src-c"><span style="color: #66d9ef; font-weight: bold;">primitive</span> <span style="color: #a6e22e;">nametable_get_primitive</span>(<span style="color: #66d9ef; font-weight: bold;">cell</span> <span style="color: #fd971f;">index</span>) {
   <span style="color: #f92672; font-weight: bold;">return</span> nametable[index].value.primitive;
 }
 </pre>
@@ -963,14 +948,12 @@ for the JavaScript code in this tag.
 </div>
 </div>
 
-<div id="outline-container-orgdb5e1f1" class="outline-3">
-<h3 id="orgdb5e1f1">nametable_get_jojo</h3>
-<div class="outline-text-3" id="text-orgdb5e1f1">
+<div id="outline-container-orgc36859d" class="outline-3">
+<h3 id="orgc36859d">nametable_get_jojo</h3>
+<div class="outline-text-3" id="text-orgc36859d">
 <div class="org-src-container">
 
-<pre class="src src-c"><span style="color: #66d9ef; font-weight: bold;">jojo</span>
-<span style="color: #a6e22e;">nametable_get_jojo</span>
-(<span style="color: #66d9ef; font-weight: bold;">int</span> <span style="color: #fd971f;">index</span>) {
+<pre class="src src-c"><span style="color: #66d9ef; font-weight: bold;">jojo</span> <span style="color: #a6e22e;">nametable_get_jojo</span>(<span style="color: #66d9ef; font-weight: bold;">cell</span> <span style="color: #fd971f;">index</span>) {
   <span style="color: #f92672; font-weight: bold;">return</span> nametable[index].value.jojo;
 }
 </pre>
@@ -978,14 +961,12 @@ for the JavaScript code in this tag.
 </div>
 </div>
 
-<div id="outline-container-org416a2c" class="outline-3">
-<h3 id="org416a2c"><span class="done test">test</span> </h3>
-<div class="outline-text-3" id="text-org416a2c">
+<div id="outline-container-org493229c" class="outline-3">
+<h3 id="org493229c"><span class="done test">test</span> </h3>
+<div class="outline-text-3" id="text-org493229c">
 <div class="org-src-container">
 
-<pre class="src src-c"><span style="color: #66d9ef; font-weight: bold;">void</span>
-<span style="color: #a6e22e;">nametable_test</span>
-() {
+<pre class="src src-c"><span style="color: #66d9ef; font-weight: bold;">void</span> <span style="color: #a6e22e;">nametable_test</span>() {
   k2n(<span style="color: #e6db74;">"testkey0"</span>);
   k2n(<span style="color: #e6db74;">"testkey1"</span>);
   k2n(<span style="color: #e6db74;">"testkey2"</span>);
@@ -1030,30 +1011,26 @@ for the JavaScript code in this tag.
 </div>
 </div>
 
-<div id="outline-container-orgbe0d5a0" class="outline-2">
-<h2 id="orgbe0d5a0">as &amp; rs</h2>
-<div class="outline-text-2" id="text-orgbe0d5a0">
-</div><div id="outline-container-org326c132" class="outline-3">
-<h3 id="org326c132">as</h3>
-<div class="outline-text-3" id="text-org326c132">
+<div id="outline-container-org9381008" class="outline-2">
+<h2 id="org9381008">as &amp; rs</h2>
+<div class="outline-text-2" id="text-org9381008">
+</div><div id="outline-container-orgf59f64f" class="outline-3">
+<h3 id="orgf59f64f">as</h3>
+<div class="outline-text-3" id="text-orgf59f64f">
 <div class="org-src-container">
 
-<pre class="src src-c"><span style="color: #f92672; font-weight: bold;">typedef</span> <span style="color: #66d9ef; font-weight: bold;">int</span> <span style="color: #66d9ef; font-weight: bold;">argument_stack</span>[1024 * 4];
+<pre class="src src-c"><span style="color: #f92672; font-weight: bold;">typedef</span> <span style="color: #66d9ef; font-weight: bold;">cell</span> <span style="color: #66d9ef; font-weight: bold;">argument_stack</span>[1024 * 4];
 
 <span style="color: #66d9ef; font-weight: bold;">argument_stack</span> <span style="color: #fd971f;">as</span>;
-<span style="color: #66d9ef; font-weight: bold;">int</span> <span style="color: #fd971f;">as_base</span> = 64;
-<span style="color: #66d9ef; font-weight: bold;">int</span> <span style="color: #fd971f;">as_pointer</span> = 64;
+<span style="color: #66d9ef; font-weight: bold;">cell</span> <span style="color: #fd971f;">as_base</span> = 64;
+<span style="color: #66d9ef; font-weight: bold;">cell</span> <span style="color: #fd971f;">as_pointer</span> = 64;
 
-<span style="color: #66d9ef; font-weight: bold;">void</span>
-<span style="color: #a6e22e;">as_push</span>
-(<span style="color: #66d9ef; font-weight: bold;">int</span> <span style="color: #fd971f;">value</span>) {
+<span style="color: #66d9ef; font-weight: bold;">void</span> <span style="color: #a6e22e;">as_push</span>(<span style="color: #66d9ef; font-weight: bold;">cell</span> <span style="color: #fd971f;">value</span>) {
   as[as_pointer] = value;
   as_pointer++;
 }
 
-<span style="color: #66d9ef; font-weight: bold;">int</span>
-<span style="color: #a6e22e;">as_pop</span>
-() {
+<span style="color: #66d9ef; font-weight: bold;">cell</span> <span style="color: #a6e22e;">as_pop</span>() {
   as_pointer--;
   <span style="color: #f92672; font-weight: bold;">return</span> as[as_pointer];
 }
@@ -1062,27 +1039,23 @@ for the JavaScript code in this tag.
 </div>
 </div>
 
-<div id="outline-container-org6a2c298" class="outline-3">
-<h3 id="org6a2c298">rs</h3>
-<div class="outline-text-3" id="text-org6a2c298">
+<div id="outline-container-orgd0c330b" class="outline-3">
+<h3 id="orgd0c330b">rs</h3>
+<div class="outline-text-3" id="text-orgd0c330b">
 <div class="org-src-container">
 
 <pre class="src src-c"><span style="color: #f92672; font-weight: bold;">typedef</span> <span style="color: #66d9ef; font-weight: bold;">name</span>* <span style="color: #66d9ef; font-weight: bold;">return_stack</span>[1024 * 4];
 
 <span style="color: #66d9ef; font-weight: bold;">return_stack</span> <span style="color: #fd971f;">rs</span>;
-<span style="color: #66d9ef; font-weight: bold;">int</span> <span style="color: #fd971f;">rs_base</span> = 64;
-<span style="color: #66d9ef; font-weight: bold;">int</span> <span style="color: #fd971f;">rs_pointer</span> = 64;
+<span style="color: #66d9ef; font-weight: bold;">cell</span> <span style="color: #fd971f;">rs_base</span> = 64;
+<span style="color: #66d9ef; font-weight: bold;">cell</span> <span style="color: #fd971f;">rs_pointer</span> = 64;
 
-<span style="color: #66d9ef; font-weight: bold;">void</span>
-<span style="color: #a6e22e;">rs_push</span>
-(<span style="color: #66d9ef; font-weight: bold;">name</span>* <span style="color: #fd971f;">value</span>) {
+<span style="color: #66d9ef; font-weight: bold;">void</span> <span style="color: #a6e22e;">rs_push</span>(<span style="color: #66d9ef; font-weight: bold;">name</span>* <span style="color: #fd971f;">value</span>) {
   rs[rs_pointer] = value;
   rs_pointer++;
 }
 
-<span style="color: #66d9ef; font-weight: bold;">name</span>*
-<span style="color: #a6e22e;">rs_pop</span>
-() {
+<span style="color: #66d9ef; font-weight: bold;">name</span>* <span style="color: #a6e22e;">rs_pop</span>() {
   rs_pointer--;
   <span style="color: #f92672; font-weight: bold;">return</span> rs[rs_pointer];
 }
@@ -1092,17 +1065,15 @@ for the JavaScript code in this tag.
 </div>
 </div>
 
-<div id="outline-container-org5dce66d" class="outline-2">
-<h2 id="org5dce66d">define</h2>
-<div class="outline-text-2" id="text-org5dce66d">
-</div><div id="outline-container-org4a67916" class="outline-3">
-<h3 id="org4a67916">define_primitive</h3>
-<div class="outline-text-3" id="text-org4a67916">
+<div id="outline-container-orgb1f943b" class="outline-2">
+<h2 id="orgb1f943b">define</h2>
+<div class="outline-text-2" id="text-orgb1f943b">
+</div><div id="outline-container-org81a22fe" class="outline-3">
+<h3 id="org81a22fe">define_primitive</h3>
+<div class="outline-text-3" id="text-org81a22fe">
 <div class="org-src-container">
 
-<pre class="src src-c"><span style="color: #66d9ef; font-weight: bold;">void</span>
-<span style="color: #a6e22e;">define_primitive</span>
-(<span style="color: #66d9ef; font-weight: bold;">string</span> <span style="color: #fd971f;">str</span>, <span style="color: #66d9ef; font-weight: bold;">primitive</span> <span style="color: #fd971f;">fun</span>) {
+<pre class="src src-c"><span style="color: #66d9ef; font-weight: bold;">void</span> <span style="color: #a6e22e;">define_primitive</span>(<span style="color: #66d9ef; font-weight: bold;">string</span> <span style="color: #fd971f;">str</span>, <span style="color: #66d9ef; font-weight: bold;">primitive</span> <span style="color: #fd971f;">fun</span>) {
   <span style="color: #66d9ef; font-weight: bold;">name</span> <span style="color: #fd971f;">index</span> = k2n(str);
   nametable_set_primitive(index, fun);
 }
@@ -1111,16 +1082,14 @@ for the JavaScript code in this tag.
 </div>
 </div>
 
-<div id="outline-container-orgf12930c" class="outline-3">
-<h3 id="orgf12930c">define_function</h3>
-<div class="outline-text-3" id="text-orgf12930c">
+<div id="outline-container-org913422e" class="outline-3">
+<h3 id="org913422e">define_function</h3>
+<div class="outline-text-3" id="text-org913422e">
 <div class="org-src-container">
 
-<pre class="src src-c"><span style="color: #66d9ef; font-weight: bold;">void</span>
-<span style="color: #a6e22e;">define_function</span>
-(<span style="color: #66d9ef; font-weight: bold;">string</span> <span style="color: #fd971f;">str</span>, <span style="color: #66d9ef; font-weight: bold;">int</span> <span style="color: #fd971f;">size</span>, <span style="color: #66d9ef; font-weight: bold;">string</span> *<span style="color: #fd971f;">str_array</span>) {
+<pre class="src src-c"><span style="color: #66d9ef; font-weight: bold;">void</span> <span style="color: #a6e22e;">define_function</span>(<span style="color: #66d9ef; font-weight: bold;">string</span> <span style="color: #fd971f;">str</span>, <span style="color: #66d9ef; font-weight: bold;">cell</span> <span style="color: #fd971f;">size</span>, <span style="color: #66d9ef; font-weight: bold;">string</span> *<span style="color: #fd971f;">str_array</span>) {
   <span style="color: #66d9ef; font-weight: bold;">name</span> <span style="color: #fd971f;">index</span> = k2n(str);
-  <span style="color: #66d9ef; font-weight: bold;">int</span> <span style="color: #fd971f;">i</span>;
+  <span style="color: #66d9ef; font-weight: bold;">cell</span> <span style="color: #fd971f;">i</span>;
   <span style="color: #66d9ef; font-weight: bold;">name</span> *<span style="color: #fd971f;">array</span>;
   array = (jojo_area + jojo_area_counter);
   <span style="color: #f92672; font-weight: bold;">for</span> (i=0; i &lt; size; i=i+1) {
@@ -1136,14 +1105,12 @@ for the JavaScript code in this tag.
 </div>
 </div>
 
-<div id="outline-container-orgf2ec10" class="outline-3">
-<h3 id="orgf2ec10">define_variable</h3>
-<div class="outline-text-3" id="text-orgf2ec10">
+<div id="outline-container-org4e9f4" class="outline-3">
+<h3 id="org4e9f4">define_variable</h3>
+<div class="outline-text-3" id="text-org4e9f4">
 <div class="org-src-container">
 
-<pre class="src src-c"><span style="color: #66d9ef; font-weight: bold;">void</span>
-<span style="color: #a6e22e;">define_variable</span>
-(<span style="color: #66d9ef; font-weight: bold;">string</span> <span style="color: #fd971f;">str</span>, <span style="color: #66d9ef; font-weight: bold;">int</span> <span style="color: #fd971f;">cell</span>) {
+<pre class="src src-c"><span style="color: #66d9ef; font-weight: bold;">void</span> <span style="color: #a6e22e;">define_variable</span>(<span style="color: #66d9ef; font-weight: bold;">string</span> <span style="color: #fd971f;">str</span>, <span style="color: #66d9ef; font-weight: bold;">cell</span> <span style="color: #fd971f;">cell</span>) {
   <span style="color: #66d9ef; font-weight: bold;">name</span> <span style="color: #fd971f;">index</span> = k2n(str);
   nametable_set_cell(index, cell);
 }
@@ -1153,25 +1120,23 @@ for the JavaScript code in this tag.
 </div>
 </div>
 
-<div id="outline-container-org1c89bf6" class="outline-2">
-<h2 id="org1c89bf6">apply</h2>
-<div class="outline-text-2" id="text-org1c89bf6">
-</div><div id="outline-container-org1d155fd" class="outline-3">
-<h3 id="org1d155fd">apply</h3>
-<div class="outline-text-3" id="text-org1d155fd">
+<div id="outline-container-orgda95115" class="outline-2">
+<h2 id="orgda95115">apply</h2>
+<div class="outline-text-2" id="text-orgda95115">
+</div><div id="outline-container-orgd2e6a83" class="outline-3">
+<h3 id="orgd2e6a83">apply</h3>
+<div class="outline-text-3" id="text-orgd2e6a83">
 <ul class="org-ul">
 <li><p>be careful when calling this function in primitive</p><p>because after rs_push a jojo</p><p>one need to exit current primitive to run the jojo</p></li></ul>
 
 <div class="org-src-container">
 
-<pre class="src src-c"><span style="color: #66d9ef; font-weight: bold;">void</span>
-<span style="color: #a6e22e;">apply</span>
-(<span style="color: #66d9ef; font-weight: bold;">name</span> <span style="color: #fd971f;">jo</span>) {
+<pre class="src src-c"><span style="color: #66d9ef; font-weight: bold;">void</span> <span style="color: #a6e22e;">apply</span>(<span style="color: #66d9ef; font-weight: bold;">name</span> <span style="color: #fd971f;">jo</span>) {
   <span style="color: #f92672; font-weight: bold;">if</span> (<span style="color: #960050;">!</span>nametable_entry_used(nametable[jo])) {
     printf(<span style="color: #e6db74;">"undefined name : %s\n"</span>, n2k(jo));
     <span style="color: #f92672; font-weight: bold;">return</span>;
   }
-  <span style="color: #66d9ef; font-weight: bold;">int</span> <span style="color: #fd971f;">jo_type</span> = nametable[jo].type;
+  <span style="color: #66d9ef; font-weight: bold;">cell</span> <span style="color: #fd971f;">jo_type</span> = nametable[jo].type;
   <span style="color: #f92672; font-weight: bold;">if</span> (jo_type == k2n(<span style="color: #e6db74;">"primitive"</span>)) {
     <span style="color: #66d9ef; font-weight: bold;">primitive</span> <span style="color: #fd971f;">primitive</span> = nametable_get_primitive(jo);
     primitive();
@@ -1181,7 +1146,7 @@ for the JavaScript code in this tag.
     rs_push(jojo.array);
   }
   <span style="color: #f92672; font-weight: bold;">else</span> <span style="color: #f92672; font-weight: bold;">if</span> (jo_type == k2n(<span style="color: #e6db74;">"cell"</span>)) {
-    <span style="color: #66d9ef; font-weight: bold;">int</span> <span style="color: #fd971f;">cell</span> = nametable_get_cell(jo);
+    <span style="color: #66d9ef; font-weight: bold;">cell</span> <span style="color: #fd971f;">cell</span> = nametable_get_cell(jo);
     as_push(cell);
   }
 }
@@ -1190,14 +1155,12 @@ for the JavaScript code in this tag.
 </div>
 </div>
 
-<div id="outline-container-orgd3fc93" class="outline-3">
-<h3 id="orgd3fc93">p_apply</h3>
-<div class="outline-text-3" id="text-orgd3fc93">
+<div id="outline-container-org8c438bd" class="outline-3">
+<h3 id="org8c438bd">p_apply</h3>
+<div class="outline-text-3" id="text-org8c438bd">
 <div class="org-src-container">
 
-<pre class="src src-c"><span style="color: #66d9ef; font-weight: bold;">void</span>
-<span style="color: #a6e22e;">p_apply</span>
-() {
+<pre class="src src-c"><span style="color: #66d9ef; font-weight: bold;">void</span> <span style="color: #a6e22e;">p_apply</span>() {
   apply(as_pop());
 }
 </pre>
@@ -1206,34 +1169,30 @@ for the JavaScript code in this tag.
 </div>
 </div>
 
-<div id="outline-container-org7d16f14" class="outline-2">
-<h2 id="org7d16f14">eval</h2>
-<div class="outline-text-2" id="text-org7d16f14">
-</div><div id="outline-container-orgaeda6ed" class="outline-3">
-<h3 id="orgaeda6ed">eval</h3>
-<div class="outline-text-3" id="text-orgaeda6ed">
+<div id="outline-container-orgaff0c17" class="outline-2">
+<h2 id="orgaff0c17">eval</h2>
+<div class="outline-text-2" id="text-orgaff0c17">
+</div><div id="outline-container-org280c73e" class="outline-3">
+<h3 id="org280c73e">eval</h3>
+<div class="outline-text-3" id="text-org280c73e">
 <div class="org-src-container">
 
 <pre class="src src-c"><span style="color: #66d9ef; font-weight: bold;">jmp_buf</span> <span style="color: #fd971f;">jmp_buffer</span>;
 
-<span style="color: #66d9ef; font-weight: bold;">bool</span>
-<span style="color: #a6e22e;">exit_eval</span>
-() {
+<span style="color: #66d9ef; font-weight: bold;">bool</span> <span style="color: #a6e22e;">exit_eval</span>() {
   longjmp(jmp_buffer, 666);
 }
 
-<span style="color: #66d9ef; font-weight: bold;">void</span>
-<span style="color: #a6e22e;">eval</span>
-() {
+<span style="color: #66d9ef; font-weight: bold;">void</span> <span style="color: #a6e22e;">eval</span>() {
   <span style="color: #f92672; font-weight: bold;">if</span> (666 == setjmp(jmp_buffer)) {
     <span style="color: #f92672; font-weight: bold;">return</span>;
   }
   <span style="color: #f92672; font-weight: bold;">else</span> {
-    <span style="color: #66d9ef; font-weight: bold;">int</span> <span style="color: #fd971f;">rs_base</span> = rs_pointer;
+    <span style="color: #66d9ef; font-weight: bold;">cell</span> <span style="color: #fd971f;">rs_base</span> = rs_pointer;
     <span style="color: #f92672; font-weight: bold;">while</span> (rs_pointer &gt;= rs_base) {
       <span style="color: #66d9ef; font-weight: bold;">name</span>* <span style="color: #fd971f;">function_body</span> = rs_pop();
       rs_push(function_body + 1);
-      <span style="color: #66d9ef; font-weight: bold;">int</span> <span style="color: #fd971f;">jo</span> = *(<span style="color: #66d9ef; font-weight: bold;">int</span>*)function_body;
+      <span style="color: #66d9ef; font-weight: bold;">cell</span> <span style="color: #fd971f;">jo</span> = *(<span style="color: #66d9ef; font-weight: bold;">cell</span>*)function_body;
       apply(jo);
     }
   }
@@ -1243,15 +1202,13 @@ for the JavaScript code in this tag.
 </div>
 </div>
 
-<div id="outline-container-org92d9478" class="outline-3">
-<h3 id="org92d9478">eval_jo</h3>
-<div class="outline-text-3" id="text-org92d9478">
+<div id="outline-container-org6a30754" class="outline-3">
+<h3 id="org6a30754">eval_jo</h3>
+<div class="outline-text-3" id="text-org6a30754">
 <div class="org-src-container">
 
-<pre class="src src-c"><span style="color: #66d9ef; font-weight: bold;">void</span>
-<span style="color: #a6e22e;">eval_jo</span>
-(<span style="color: #66d9ef; font-weight: bold;">name</span> <span style="color: #fd971f;">jo</span>) {
-  <span style="color: #66d9ef; font-weight: bold;">int</span> <span style="color: #fd971f;">jo_type</span> = nametable[jo].type;
+<pre class="src src-c"><span style="color: #66d9ef; font-weight: bold;">void</span> <span style="color: #a6e22e;">eval_jo</span>(<span style="color: #66d9ef; font-weight: bold;">name</span> <span style="color: #fd971f;">jo</span>) {
+  <span style="color: #66d9ef; font-weight: bold;">cell</span> <span style="color: #fd971f;">jo_type</span> = nametable[jo].type;
   <span style="color: #f92672; font-weight: bold;">if</span> (jo_type == k2n(<span style="color: #e6db74;">"primitive"</span>)) {
     <span style="color: #66d9ef; font-weight: bold;">primitive</span> <span style="color: #fd971f;">primitive</span> = nametable_get_primitive(jo);
     primitive();
@@ -1262,7 +1219,7 @@ for the JavaScript code in this tag.
     eval();
   }
   <span style="color: #f92672; font-weight: bold;">else</span> <span style="color: #f92672; font-weight: bold;">if</span> (jo_type == k2n(<span style="color: #e6db74;">"cell"</span>)) {
-    <span style="color: #66d9ef; font-weight: bold;">int</span> <span style="color: #fd971f;">cell</span> = nametable_get_cell(jo);
+    <span style="color: #66d9ef; font-weight: bold;">cell</span> <span style="color: #fd971f;">cell</span> = nametable_get_cell(jo);
     as_push(cell);
   }
 }
@@ -1272,17 +1229,15 @@ for the JavaScript code in this tag.
 </div>
 </div>
 
-<div id="outline-container-orge63f657" class="outline-2">
-<h2 id="orge63f657"><b>stack_operation</b></h2>
-<div class="outline-text-2" id="text-orge63f657">
-</div><div id="outline-container-org1d1a217" class="outline-3">
-<h3 id="org1d1a217">p_drop</h3>
-<div class="outline-text-3" id="text-org1d1a217">
+<div id="outline-container-orgd81864e" class="outline-2">
+<h2 id="orgd81864e"><b>stack_operation</b></h2>
+<div class="outline-text-2" id="text-orgd81864e">
+</div><div id="outline-container-org415f189" class="outline-3">
+<h3 id="org415f189">p_drop</h3>
+<div class="outline-text-3" id="text-org415f189">
 <div class="org-src-container">
 
-<pre class="src src-c"><span style="color: #66d9ef; font-weight: bold;">void</span>
-<span style="color: #a6e22e;">p_drop</span>
-() {
+<pre class="src src-c"><span style="color: #66d9ef; font-weight: bold;">void</span> <span style="color: #a6e22e;">p_drop</span>() {
   <span style="color: #FF8888;">// </span><span style="color: #FF8888;">(a -&gt;)</span>
   as_pop();
 }
@@ -1291,16 +1246,14 @@ for the JavaScript code in this tag.
 </div>
 </div>
 
-<div id="outline-container-org717476b" class="outline-3">
-<h3 id="org717476b">p_dup</h3>
-<div class="outline-text-3" id="text-org717476b">
+<div id="outline-container-org89653fb" class="outline-3">
+<h3 id="org89653fb">p_dup</h3>
+<div class="outline-text-3" id="text-org89653fb">
 <div class="org-src-container">
 
-<pre class="src src-c"><span style="color: #66d9ef; font-weight: bold;">void</span>
-<span style="color: #a6e22e;">p_dup</span>
-() {
+<pre class="src src-c"><span style="color: #66d9ef; font-weight: bold;">void</span> <span style="color: #a6e22e;">p_dup</span>() {
   <span style="color: #FF8888;">// </span><span style="color: #FF8888;">(a a -&gt; a)</span>
-  <span style="color: #66d9ef; font-weight: bold;">int</span> <span style="color: #fd971f;">a</span> = as_pop();
+  <span style="color: #66d9ef; font-weight: bold;">cell</span> <span style="color: #fd971f;">a</span> = as_pop();
   as_push(a);
   as_push(a);
 }
@@ -1309,17 +1262,15 @@ for the JavaScript code in this tag.
 </div>
 </div>
 
-<div id="outline-container-orgd0b9e96" class="outline-3">
-<h3 id="orgd0b9e96">p_over</h3>
-<div class="outline-text-3" id="text-orgd0b9e96">
+<div id="outline-container-orgb521293" class="outline-3">
+<h3 id="orgb521293">p_over</h3>
+<div class="outline-text-3" id="text-orgb521293">
 <div class="org-src-container">
 
-<pre class="src src-c"><span style="color: #66d9ef; font-weight: bold;">void</span>
-<span style="color: #a6e22e;">p_over</span>
-() {
+<pre class="src src-c"><span style="color: #66d9ef; font-weight: bold;">void</span> <span style="color: #a6e22e;">p_over</span>() {
   <span style="color: #FF8888;">// </span><span style="color: #FF8888;">(a b -&gt; a b a)</span>
-  <span style="color: #66d9ef; font-weight: bold;">int</span> <span style="color: #fd971f;">b</span> = as_pop();
-  <span style="color: #66d9ef; font-weight: bold;">int</span> <span style="color: #fd971f;">a</span> = as_pop();
+  <span style="color: #66d9ef; font-weight: bold;">cell</span> <span style="color: #fd971f;">b</span> = as_pop();
+  <span style="color: #66d9ef; font-weight: bold;">cell</span> <span style="color: #fd971f;">a</span> = as_pop();
   as_push(a);
   as_push(b);
   as_push(a);
@@ -1329,17 +1280,15 @@ for the JavaScript code in this tag.
 </div>
 </div>
 
-<div id="outline-container-orga47c0a5" class="outline-3">
-<h3 id="orga47c0a5">p_tuck</h3>
-<div class="outline-text-3" id="text-orga47c0a5">
+<div id="outline-container-org66fe118" class="outline-3">
+<h3 id="org66fe118">p_tuck</h3>
+<div class="outline-text-3" id="text-org66fe118">
 <div class="org-src-container">
 
-<pre class="src src-c"><span style="color: #66d9ef; font-weight: bold;">void</span>
-<span style="color: #a6e22e;">p_tuck</span>
-() {
+<pre class="src src-c"><span style="color: #66d9ef; font-weight: bold;">void</span> <span style="color: #a6e22e;">p_tuck</span>() {
   <span style="color: #FF8888;">// </span><span style="color: #FF8888;">(a b -&gt; b a b)</span>
-  <span style="color: #66d9ef; font-weight: bold;">int</span> <span style="color: #fd971f;">b</span> = as_pop();
-  <span style="color: #66d9ef; font-weight: bold;">int</span> <span style="color: #fd971f;">a</span> = as_pop();
+  <span style="color: #66d9ef; font-weight: bold;">cell</span> <span style="color: #fd971f;">b</span> = as_pop();
+  <span style="color: #66d9ef; font-weight: bold;">cell</span> <span style="color: #fd971f;">a</span> = as_pop();
   as_push(b);
   as_push(a);
   as_push(b);
@@ -1349,17 +1298,15 @@ for the JavaScript code in this tag.
 </div>
 </div>
 
-<div id="outline-container-org712b6fe" class="outline-3">
-<h3 id="org712b6fe">p_swap</h3>
-<div class="outline-text-3" id="text-org712b6fe">
+<div id="outline-container-org7682aa1" class="outline-3">
+<h3 id="org7682aa1">p_swap</h3>
+<div class="outline-text-3" id="text-org7682aa1">
 <div class="org-src-container">
 
-<pre class="src src-c"><span style="color: #66d9ef; font-weight: bold;">void</span>
-<span style="color: #a6e22e;">p_swap</span>
-() {
+<pre class="src src-c"><span style="color: #66d9ef; font-weight: bold;">void</span> <span style="color: #a6e22e;">p_swap</span>() {
   <span style="color: #FF8888;">// </span><span style="color: #FF8888;">(a b -&gt; b a)</span>
-  <span style="color: #66d9ef; font-weight: bold;">int</span> <span style="color: #fd971f;">b</span> = as_pop();
-  <span style="color: #66d9ef; font-weight: bold;">int</span> <span style="color: #fd971f;">a</span> = as_pop();
+  <span style="color: #66d9ef; font-weight: bold;">cell</span> <span style="color: #fd971f;">b</span> = as_pop();
+  <span style="color: #66d9ef; font-weight: bold;">cell</span> <span style="color: #fd971f;">a</span> = as_pop();
   as_push(b);
   as_push(a);
 }
@@ -1368,25 +1315,23 @@ for the JavaScript code in this tag.
 </div>
 </div>
 
-<div id="outline-container-org9a03c50" class="outline-3">
-<h3 id="org9a03c50">p_print_stack</h3>
-<div class="outline-text-3" id="text-org9a03c50">
+<div id="outline-container-org3fdd842" class="outline-3">
+<h3 id="org3fdd842">p_print_stack</h3>
+<div class="outline-text-3" id="text-org3fdd842">
 <div class="org-src-container">
 
-<pre class="src src-c"><span style="color: #66d9ef; font-weight: bold;">void</span>
-<span style="color: #a6e22e;">p_print_stack</span>
-() {
+<pre class="src src-c"><span style="color: #66d9ef; font-weight: bold;">void</span> <span style="color: #a6e22e;">p_print_stack</span>() {
   <span style="color: #FF8888;">// </span><span style="color: #FF8888;">([io] -&gt;)</span>
   <span style="color: #f92672; font-weight: bold;">if</span> (as_pointer &lt; as_base) {
-    printf(<span style="color: #e6db74;">"  * %d *  "</span>, (as_pointer - as_base));
+    printf(<span style="color: #e6db74;">"  * %ld *  "</span>, (as_pointer - as_base));
     printf(<span style="color: #e6db74;">"-- below the stack --\n"</span>);
   }
   <span style="color: #f92672; font-weight: bold;">else</span> {
-    printf(<span style="color: #e6db74;">"  * %d *  "</span>, (as_pointer - as_base));
+    printf(<span style="color: #e6db74;">"  * %ld *  "</span>, (as_pointer - as_base));
     printf(<span style="color: #e6db74;">"-- "</span>);
-    <span style="color: #66d9ef; font-weight: bold;">int</span> <span style="color: #fd971f;">i</span> = as_base;
+    <span style="color: #66d9ef; font-weight: bold;">cell</span> <span style="color: #fd971f;">i</span> = as_base;
     <span style="color: #f92672; font-weight: bold;">while</span> (i &lt; as_pointer) {
-      printf(<span style="color: #e6db74;">"%d "</span>, as[i]);
+      printf(<span style="color: #e6db74;">"%ld "</span>, as[i]);
       i++;
     }
     printf(<span style="color: #e6db74;">"--\n"</span>);
@@ -1397,14 +1342,12 @@ for the JavaScript code in this tag.
 </div>
 </div>
 
-<div id="outline-container-org16065ef" class="outline-3">
-<h3 id="org16065ef">export_stack_operation</h3>
-<div class="outline-text-3" id="text-org16065ef">
+<div id="outline-container-org67a18e0" class="outline-3">
+<h3 id="org67a18e0">export_stack_operation</h3>
+<div class="outline-text-3" id="text-org67a18e0">
 <div class="org-src-container">
 
-<pre class="src src-c"><span style="color: #66d9ef; font-weight: bold;">void</span>
-<span style="color: #a6e22e;">export_stack_operation</span>
-() {
+<pre class="src src-c"><span style="color: #66d9ef; font-weight: bold;">void</span> <span style="color: #a6e22e;">export_stack_operation</span>() {
   define_primitive(<span style="color: #e6db74;">"drop"</span>, p_drop);
   define_primitive(<span style="color: #e6db74;">"dup"</span>, p_dup);
   define_primitive(<span style="color: #e6db74;">"over"</span>, p_over);
@@ -1418,17 +1361,15 @@ for the JavaScript code in this tag.
 </div>
 </div>
 
-<div id="outline-container-orge096c0" class="outline-2">
-<h2 id="orge096c0"><b>ending</b></h2>
-<div class="outline-text-2" id="text-orge096c0">
-</div><div id="outline-container-orgc6c4f83" class="outline-3">
-<h3 id="orgc6c4f83">p_end</h3>
-<div class="outline-text-3" id="text-orgc6c4f83">
+<div id="outline-container-org32e0b1d" class="outline-2">
+<h2 id="org32e0b1d"><b>ending</b></h2>
+<div class="outline-text-2" id="text-org32e0b1d">
+</div><div id="outline-container-orgd93240b" class="outline-3">
+<h3 id="orgd93240b">p_end</h3>
+<div class="outline-text-3" id="text-orgd93240b">
 <div class="org-src-container">
 
-<pre class="src src-c"><span style="color: #66d9ef; font-weight: bold;">void</span>
-<span style="color: #a6e22e;">p_end</span>
-() {
+<pre class="src src-c"><span style="color: #66d9ef; font-weight: bold;">void</span> <span style="color: #a6e22e;">p_end</span>() {
   <span style="color: #FF8888;">// </span><span style="color: #FF8888;">(rs: addr -&gt;)</span>
   rs_pop();
 }
@@ -1437,14 +1378,12 @@ for the JavaScript code in this tag.
 </div>
 </div>
 
-<div id="outline-container-orgdb28e87" class="outline-3">
-<h3 id="orgdb28e87">p_bye</h3>
-<div class="outline-text-3" id="text-orgdb28e87">
+<div id="outline-container-org681b3e1" class="outline-3">
+<h3 id="org681b3e1">p_bye</h3>
+<div class="outline-text-3" id="text-org681b3e1">
 <div class="org-src-container">
 
-<pre class="src src-c"><span style="color: #66d9ef; font-weight: bold;">void</span>
-<span style="color: #a6e22e;">p_bye</span>
-() {
+<pre class="src src-c"><span style="color: #66d9ef; font-weight: bold;">void</span> <span style="color: #a6e22e;">p_bye</span>() {
   <span style="color: #FF8888;">// </span><span style="color: #FF8888;">(-&gt; [exit])</span>
   printf(<span style="color: #e6db74;">"bye bye ^-^/\n"</span>);
   exit_eval();
@@ -1454,14 +1393,12 @@ for the JavaScript code in this tag.
 </div>
 </div>
 
-<div id="outline-container-org35048f8" class="outline-3">
-<h3 id="org35048f8">export_ending</h3>
-<div class="outline-text-3" id="text-org35048f8">
+<div id="outline-container-org7a1234e" class="outline-3">
+<h3 id="org7a1234e">export_ending</h3>
+<div class="outline-text-3" id="text-org7a1234e">
 <div class="org-src-container">
 
-<pre class="src src-c"><span style="color: #66d9ef; font-weight: bold;">void</span>
-<span style="color: #a6e22e;">export_ending</span>
-() {
+<pre class="src src-c"><span style="color: #66d9ef; font-weight: bold;">void</span> <span style="color: #a6e22e;">export_ending</span>() {
   define_primitive(<span style="color: #e6db74;">"end"</span>, p_end);
   define_primitive(<span style="color: #e6db74;">"bye"</span>, p_bye);
 }
@@ -1471,17 +1408,15 @@ for the JavaScript code in this tag.
 </div>
 </div>
 
-<div id="outline-container-org28bcccf" class="outline-2">
-<h2 id="org28bcccf"><b>control</b></h2>
-<div class="outline-text-2" id="text-org28bcccf">
-</div><div id="outline-container-orgea543df" class="outline-3">
-<h3 id="orgea543df">p_jump_back</h3>
-<div class="outline-text-3" id="text-orgea543df">
+<div id="outline-container-orgba45265" class="outline-2">
+<h2 id="orgba45265"><b>control</b></h2>
+<div class="outline-text-2" id="text-orgba45265">
+</div><div id="outline-container-org4b183e7" class="outline-3">
+<h3 id="org4b183e7">p_jump_back</h3>
+<div class="outline-text-3" id="text-org4b183e7">
 <div class="org-src-container">
 
-<pre class="src src-c"><span style="color: #66d9ef; font-weight: bold;">void</span>
-<span style="color: #a6e22e;">p_jump_back</span>
-() {
+<pre class="src src-c"><span style="color: #66d9ef; font-weight: bold;">void</span> <span style="color: #a6e22e;">p_jump_back</span>() {
   <span style="color: #FF8888;">// </span><span style="color: #FF8888;">(offset -&gt; [rs])</span>
   <span style="color: #66d9ef; font-weight: bold;">name</span>* <span style="color: #fd971f;">function_body</span> = rs_pop();
   rs_push(function_body - as_pop());
@@ -1491,14 +1426,12 @@ for the JavaScript code in this tag.
 </div>
 </div>
 
-<div id="outline-container-org9b6ec46" class="outline-3">
-<h3 id="org9b6ec46">p_jump_over</h3>
-<div class="outline-text-3" id="text-org9b6ec46">
+<div id="outline-container-org6c44edb" class="outline-3">
+<h3 id="org6c44edb">p_jump_over</h3>
+<div class="outline-text-3" id="text-org6c44edb">
 <div class="org-src-container">
 
-<pre class="src src-c"><span style="color: #66d9ef; font-weight: bold;">void</span>
-<span style="color: #a6e22e;">p_jump_over</span>
-() {
+<pre class="src src-c"><span style="color: #66d9ef; font-weight: bold;">void</span> <span style="color: #a6e22e;">p_jump_over</span>() {
   <span style="color: #FF8888;">// </span><span style="color: #FF8888;">(offset -&gt; [rs])</span>
   <span style="color: #66d9ef; font-weight: bold;">name</span>* <span style="color: #fd971f;">function_body</span> = rs_pop();
   rs_push(function_body + as_pop());
@@ -1508,18 +1441,16 @@ for the JavaScript code in this tag.
 </div>
 </div>
 
-<div id="outline-container-org651022" class="outline-3">
-<h3 id="org651022">i_lit</h3>
-<div class="outline-text-3" id="text-org651022">
+<div id="outline-container-orgb12e63a" class="outline-3">
+<h3 id="orgb12e63a">i_lit</h3>
+<div class="outline-text-3" id="text-orgb12e63a">
 <div class="org-src-container">
 
-<pre class="src src-c"><span style="color: #66d9ef; font-weight: bold;">void</span>
-<span style="color: #a6e22e;">i_lit</span>
-() {
+<pre class="src src-c"><span style="color: #66d9ef; font-weight: bold;">void</span> <span style="color: #a6e22e;">i_lit</span>() {
   <span style="color: #FF8888;">// </span><span style="color: #FF8888;">([rs] -&gt; int)</span>
   <span style="color: #66d9ef; font-weight: bold;">name</span>* <span style="color: #fd971f;">function_body</span> = rs_pop();
   rs_push(function_body + 1);
-  <span style="color: #66d9ef; font-weight: bold;">int</span> <span style="color: #fd971f;">jo</span> = *(<span style="color: #66d9ef; font-weight: bold;">int</span>*)function_body;
+  <span style="color: #66d9ef; font-weight: bold;">cell</span> <span style="color: #fd971f;">jo</span> = *(<span style="color: #66d9ef; font-weight: bold;">cell</span>*)function_body;
   as_push(jo);
 }
 </pre>
@@ -1527,17 +1458,15 @@ for the JavaScript code in this tag.
 </div>
 </div>
 
-<div id="outline-container-org94308e9" class="outline-3">
-<h3 id="org94308e9">i_tail_call</h3>
-<div class="outline-text-3" id="text-org94308e9">
+<div id="outline-container-orgd7b0e92" class="outline-3">
+<h3 id="orgd7b0e92">i_tail_call</h3>
+<div class="outline-text-3" id="text-orgd7b0e92">
 <div class="org-src-container">
 
-<pre class="src src-c"><span style="color: #66d9ef; font-weight: bold;">void</span>
-<span style="color: #a6e22e;">i_tail_call</span>
-() {
+<pre class="src src-c"><span style="color: #66d9ef; font-weight: bold;">void</span> <span style="color: #a6e22e;">i_tail_call</span>() {
   <span style="color: #FF8888;">// </span><span style="color: #FF8888;">([rs] -&gt; int)</span>
   <span style="color: #66d9ef; font-weight: bold;">name</span>* <span style="color: #fd971f;">function_body</span> = rs_pop();
-  <span style="color: #66d9ef; font-weight: bold;">int</span> <span style="color: #fd971f;">jo</span> = *(<span style="color: #66d9ef; font-weight: bold;">int</span>*)function_body;
+  <span style="color: #66d9ef; font-weight: bold;">cell</span> <span style="color: #fd971f;">jo</span> = *(<span style="color: #66d9ef; font-weight: bold;">cell</span>*)function_body;
   apply(jo);
 }
 </pre>
@@ -1545,17 +1474,15 @@ for the JavaScript code in this tag.
 </div>
 </div>
 
-<div id="outline-container-org535843" class="outline-3">
-<h3 id="org535843">p_jump_if_false</h3>
-<div class="outline-text-3" id="text-org535843">
+<div id="outline-container-org7e74408" class="outline-3">
+<h3 id="org7e74408">p_jump_if_false</h3>
+<div class="outline-text-3" id="text-org7e74408">
 <div class="org-src-container">
 
-<pre class="src src-c"><span style="color: #66d9ef; font-weight: bold;">void</span>
-<span style="color: #a6e22e;">p_jump_if_false</span>
-() {
+<pre class="src src-c"><span style="color: #66d9ef; font-weight: bold;">void</span> <span style="color: #a6e22e;">p_jump_if_false</span>() {
   <span style="color: #FF8888;">// </span><span style="color: #FF8888;">(bool addr -&gt; [rs])</span>
   <span style="color: #66d9ef; font-weight: bold;">name</span>* <span style="color: #fd971f;">a</span> = as_pop();
-  <span style="color: #66d9ef; font-weight: bold;">int</span> <span style="color: #fd971f;">b</span> = as_pop();
+  <span style="color: #66d9ef; font-weight: bold;">cell</span> <span style="color: #fd971f;">b</span> = as_pop();
   <span style="color: #f92672; font-weight: bold;">if</span> (b == 0) {
     rs_pop();
     rs_push(a);
@@ -1566,14 +1493,12 @@ for the JavaScript code in this tag.
 </div>
 </div>
 
-<div id="outline-container-org1d6399c" class="outline-3">
-<h3 id="org1d6399c">export_control</h3>
-<div class="outline-text-3" id="text-org1d6399c">
+<div id="outline-container-org3ef2320" class="outline-3">
+<h3 id="org3ef2320">export_control</h3>
+<div class="outline-text-3" id="text-org3ef2320">
 <div class="org-src-container">
 
-<pre class="src src-c"><span style="color: #66d9ef; font-weight: bold;">void</span>
-<span style="color: #a6e22e;">export_control</span>
-() {
+<pre class="src src-c"><span style="color: #66d9ef; font-weight: bold;">void</span> <span style="color: #a6e22e;">export_control</span>() {
   define_primitive(<span style="color: #e6db74;">"jump-back"</span>, p_jump_back);
   define_primitive(<span style="color: #e6db74;">"jump-over"</span>, p_jump_over);
   define_primitive(<span style="color: #e6db74;">"i/lit"</span>, i_lit);
@@ -1586,17 +1511,15 @@ for the JavaScript code in this tag.
 </div>
 </div>
 
-<div id="outline-container-org688ae30" class="outline-2">
-<h2 id="org688ae30"><b>bool</b></h2>
-<div class="outline-text-2" id="text-org688ae30">
-</div><div id="outline-container-org9b90641" class="outline-3">
-<h3 id="org9b90641">p_true</h3>
-<div class="outline-text-3" id="text-org9b90641">
+<div id="outline-container-orgbb8d9f5" class="outline-2">
+<h2 id="orgbb8d9f5"><b>bool</b></h2>
+<div class="outline-text-2" id="text-orgbb8d9f5">
+</div><div id="outline-container-org11b3e27" class="outline-3">
+<h3 id="org11b3e27">p_true</h3>
+<div class="outline-text-3" id="text-org11b3e27">
 <div class="org-src-container">
 
-<pre class="src src-c"><span style="color: #66d9ef; font-weight: bold;">void</span>
-<span style="color: #a6e22e;">p_true</span>
-() {
+<pre class="src src-c"><span style="color: #66d9ef; font-weight: bold;">void</span> <span style="color: #a6e22e;">p_true</span>() {
   as_push(1);
 }
 </pre>
@@ -1604,14 +1527,12 @@ for the JavaScript code in this tag.
 </div>
 </div>
 
-<div id="outline-container-org8ea64b4" class="outline-3">
-<h3 id="org8ea64b4">p_false</h3>
-<div class="outline-text-3" id="text-org8ea64b4">
+<div id="outline-container-orgf485128" class="outline-3">
+<h3 id="orgf485128">p_false</h3>
+<div class="outline-text-3" id="text-orgf485128">
 <div class="org-src-container">
 
-<pre class="src src-c"><span style="color: #66d9ef; font-weight: bold;">void</span>
-<span style="color: #a6e22e;">p_false</span>
-() {
+<pre class="src src-c"><span style="color: #66d9ef; font-weight: bold;">void</span> <span style="color: #a6e22e;">p_false</span>() {
   as_push(0);
 }
 </pre>
@@ -1619,16 +1540,14 @@ for the JavaScript code in this tag.
 </div>
 </div>
 
-<div id="outline-container-org8099ff5" class="outline-3">
-<h3 id="org8099ff5">p_not</h3>
-<div class="outline-text-3" id="text-org8099ff5">
+<div id="outline-container-org50e29d2" class="outline-3">
+<h3 id="org50e29d2">p_not</h3>
+<div class="outline-text-3" id="text-org50e29d2">
 <div class="org-src-container">
 
-<pre class="src src-c"><span style="color: #66d9ef; font-weight: bold;">void</span>
-<span style="color: #a6e22e;">p_not</span>
-() {
+<pre class="src src-c"><span style="color: #66d9ef; font-weight: bold;">void</span> <span style="color: #a6e22e;">p_not</span>() {
   <span style="color: #FF8888;">// </span><span style="color: #FF8888;">(bool -&gt; bool)</span>
-  <span style="color: #66d9ef; font-weight: bold;">int</span> <span style="color: #fd971f;">a</span> = as_pop();
+  <span style="color: #66d9ef; font-weight: bold;">cell</span> <span style="color: #fd971f;">a</span> = as_pop();
   as_push(<span style="color: #960050;">!</span>a);
 }
 </pre>
@@ -1636,14 +1555,12 @@ for the JavaScript code in this tag.
 </div>
 </div>
 
-<div id="outline-container-orgecb38af" class="outline-3">
-<h3 id="orgecb38af">export_bool</h3>
-<div class="outline-text-3" id="text-orgecb38af">
+<div id="outline-container-orgfcac0ce" class="outline-3">
+<h3 id="orgfcac0ce">export_bool</h3>
+<div class="outline-text-3" id="text-orgfcac0ce">
 <div class="org-src-container">
 
-<pre class="src src-c"><span style="color: #66d9ef; font-weight: bold;">void</span>
-<span style="color: #a6e22e;">export_bool</span>
-() {
+<pre class="src src-c"><span style="color: #66d9ef; font-weight: bold;">void</span> <span style="color: #a6e22e;">export_bool</span>() {
   define_primitive(<span style="color: #e6db74;">"true"</span>, p_true);
   define_primitive(<span style="color: #e6db74;">"false"</span>, p_false);
   define_primitive(<span style="color: #e6db74;">"not"</span>, p_not);
@@ -1654,20 +1571,18 @@ for the JavaScript code in this tag.
 </div>
 </div>
 
-<div id="outline-container-org228b4d8" class="outline-2">
-<h2 id="org228b4d8"><b>int</b></h2>
-<div class="outline-text-2" id="text-org228b4d8">
-</div><div id="outline-container-orgf0c9426" class="outline-3">
-<h3 id="orgf0c9426">p_add</h3>
-<div class="outline-text-3" id="text-orgf0c9426">
+<div id="outline-container-org9299b70" class="outline-2">
+<h2 id="org9299b70"><b>integer</b></h2>
+<div class="outline-text-2" id="text-org9299b70">
+</div><div id="outline-container-org11e6f0d" class="outline-3">
+<h3 id="org11e6f0d">p_add</h3>
+<div class="outline-text-3" id="text-org11e6f0d">
 <div class="org-src-container">
 
-<pre class="src src-c"><span style="color: #66d9ef; font-weight: bold;">void</span>
-<span style="color: #a6e22e;">p_add</span>
-() {
-  <span style="color: #FF8888;">// </span><span style="color: #FF8888;">(int int -&gt; int)</span>
-  <span style="color: #66d9ef; font-weight: bold;">int</span> <span style="color: #fd971f;">b</span> = as_pop();
-  <span style="color: #66d9ef; font-weight: bold;">int</span> <span style="color: #fd971f;">a</span> = as_pop();
+<pre class="src src-c"><span style="color: #66d9ef; font-weight: bold;">void</span> <span style="color: #a6e22e;">p_add</span>() {
+  <span style="color: #FF8888;">// </span><span style="color: #FF8888;">(cell cell -&gt; int)</span>
+  <span style="color: #66d9ef; font-weight: bold;">cell</span> <span style="color: #fd971f;">b</span> = as_pop();
+  <span style="color: #66d9ef; font-weight: bold;">cell</span> <span style="color: #fd971f;">a</span> = as_pop();
   as_push(a + b);
 }
 </pre>
@@ -1675,17 +1590,15 @@ for the JavaScript code in this tag.
 </div>
 </div>
 
-<div id="outline-container-org3a54850" class="outline-3">
-<h3 id="org3a54850">p_sub</h3>
-<div class="outline-text-3" id="text-org3a54850">
+<div id="outline-container-orgf02f7cf" class="outline-3">
+<h3 id="orgf02f7cf">p_sub</h3>
+<div class="outline-text-3" id="text-orgf02f7cf">
 <div class="org-src-container">
 
-<pre class="src src-c"><span style="color: #66d9ef; font-weight: bold;">void</span>
-<span style="color: #a6e22e;">p_sub</span>
-() {
-  <span style="color: #FF8888;">// </span><span style="color: #FF8888;">(int int -&gt; int)</span>
-  <span style="color: #66d9ef; font-weight: bold;">int</span> <span style="color: #fd971f;">b</span> = as_pop();
-  <span style="color: #66d9ef; font-weight: bold;">int</span> <span style="color: #fd971f;">a</span> = as_pop();
+<pre class="src src-c"><span style="color: #66d9ef; font-weight: bold;">void</span> <span style="color: #a6e22e;">p_sub</span>() {
+  <span style="color: #FF8888;">// </span><span style="color: #FF8888;">(cell cell -&gt; int)</span>
+  <span style="color: #66d9ef; font-weight: bold;">cell</span> <span style="color: #fd971f;">b</span> = as_pop();
+  <span style="color: #66d9ef; font-weight: bold;">cell</span> <span style="color: #fd971f;">a</span> = as_pop();
   as_push(a - b);
 }
 </pre>
@@ -1693,17 +1606,15 @@ for the JavaScript code in this tag.
 </div>
 </div>
 
-<div id="outline-container-org4650180" class="outline-3">
-<h3 id="org4650180">p_mul</h3>
-<div class="outline-text-3" id="text-org4650180">
+<div id="outline-container-org248c69e" class="outline-3">
+<h3 id="org248c69e">p_mul</h3>
+<div class="outline-text-3" id="text-org248c69e">
 <div class="org-src-container">
 
-<pre class="src src-c"><span style="color: #66d9ef; font-weight: bold;">void</span>
-<span style="color: #a6e22e;">p_mul</span>
-() {
-  <span style="color: #FF8888;">// </span><span style="color: #FF8888;">(int int -&gt; int)</span>
-  <span style="color: #66d9ef; font-weight: bold;">int</span> <span style="color: #fd971f;">b</span> = as_pop();
-  <span style="color: #66d9ef; font-weight: bold;">int</span> <span style="color: #fd971f;">a</span> = as_pop();
+<pre class="src src-c"><span style="color: #66d9ef; font-weight: bold;">void</span> <span style="color: #a6e22e;">p_mul</span>() {
+  <span style="color: #FF8888;">// </span><span style="color: #FF8888;">(cell cell -&gt; int)</span>
+  <span style="color: #66d9ef; font-weight: bold;">cell</span> <span style="color: #fd971f;">b</span> = as_pop();
+  <span style="color: #66d9ef; font-weight: bold;">cell</span> <span style="color: #fd971f;">a</span> = as_pop();
   as_push(a * b);
 }
 </pre>
@@ -1711,17 +1622,15 @@ for the JavaScript code in this tag.
 </div>
 </div>
 
-<div id="outline-container-org47ca883" class="outline-3">
-<h3 id="org47ca883">p_div</h3>
-<div class="outline-text-3" id="text-org47ca883">
+<div id="outline-container-org5c518b6" class="outline-3">
+<h3 id="org5c518b6">p_div</h3>
+<div class="outline-text-3" id="text-org5c518b6">
 <div class="org-src-container">
 
-<pre class="src src-c"><span style="color: #66d9ef; font-weight: bold;">void</span>
-<span style="color: #a6e22e;">p_div</span>
-() {
-  <span style="color: #FF8888;">// </span><span style="color: #FF8888;">(int int -&gt; int)</span>
-  <span style="color: #66d9ef; font-weight: bold;">int</span> <span style="color: #fd971f;">b</span> = as_pop();
-  <span style="color: #66d9ef; font-weight: bold;">int</span> <span style="color: #fd971f;">a</span> = as_pop();
+<pre class="src src-c"><span style="color: #66d9ef; font-weight: bold;">void</span> <span style="color: #a6e22e;">p_div</span>() {
+  <span style="color: #FF8888;">// </span><span style="color: #FF8888;">(cell cell -&gt; int)</span>
+  <span style="color: #66d9ef; font-weight: bold;">cell</span> <span style="color: #fd971f;">b</span> = as_pop();
+  <span style="color: #66d9ef; font-weight: bold;">cell</span> <span style="color: #fd971f;">a</span> = as_pop();
   as_push(a / b);
 }
 </pre>
@@ -1729,17 +1638,15 @@ for the JavaScript code in this tag.
 </div>
 </div>
 
-<div id="outline-container-org641d5b4" class="outline-3">
-<h3 id="org641d5b4">p_mod</h3>
-<div class="outline-text-3" id="text-org641d5b4">
+<div id="outline-container-orgd420728" class="outline-3">
+<h3 id="orgd420728">p_mod</h3>
+<div class="outline-text-3" id="text-orgd420728">
 <div class="org-src-container">
 
-<pre class="src src-c"><span style="color: #66d9ef; font-weight: bold;">void</span>
-<span style="color: #a6e22e;">p_mod</span>
-() {
-  <span style="color: #FF8888;">// </span><span style="color: #FF8888;">(int int -&gt; int)</span>
-  <span style="color: #66d9ef; font-weight: bold;">int</span> <span style="color: #fd971f;">b</span> = as_pop();
-  <span style="color: #66d9ef; font-weight: bold;">int</span> <span style="color: #fd971f;">a</span> = as_pop();
+<pre class="src src-c"><span style="color: #66d9ef; font-weight: bold;">void</span> <span style="color: #a6e22e;">p_mod</span>() {
+  <span style="color: #FF8888;">// </span><span style="color: #FF8888;">(cell cell -&gt; int)</span>
+  <span style="color: #66d9ef; font-weight: bold;">cell</span> <span style="color: #fd971f;">b</span> = as_pop();
+  <span style="color: #66d9ef; font-weight: bold;">cell</span> <span style="color: #fd971f;">a</span> = as_pop();
   as_push(a % b);
 }
 </pre>
@@ -1747,14 +1654,94 @@ for the JavaScript code in this tag.
 </div>
 </div>
 
-<div id="outline-container-orga5817e6" class="outline-3">
-<h3 id="orga5817e6">k_int</h3>
-<div class="outline-text-3" id="text-orga5817e6">
+<div id="outline-container-org4c5793a" class="outline-3">
+<h3 id="org4c5793a">p_eq_p</h3>
+<div class="outline-text-3" id="text-org4c5793a">
 <div class="org-src-container">
 
-<pre class="src src-c"><span style="color: #66d9ef; font-weight: bold;">void</span>
-<span style="color: #a6e22e;">k_int</span>
-() {
+<pre class="src src-c"><span style="color: #66d9ef; font-weight: bold;">void</span> <span style="color: #a6e22e;">p_eq_p</span>() {
+  <span style="color: #FF8888;">// </span><span style="color: #FF8888;">(cell cell -&gt; bool)</span>
+  <span style="color: #66d9ef; font-weight: bold;">cell</span> <span style="color: #fd971f;">b</span> = as_pop();
+  <span style="color: #66d9ef; font-weight: bold;">cell</span> <span style="color: #fd971f;">a</span> = as_pop();
+  as_push(a == b);
+}
+</pre>
+</div>
+</div>
+</div>
+
+<div id="outline-container-org26cd968" class="outline-3">
+<h3 id="org26cd968">p_gt_p</h3>
+<div class="outline-text-3" id="text-org26cd968">
+<div class="org-src-container">
+
+<pre class="src src-c"><span style="color: #66d9ef; font-weight: bold;">void</span> <span style="color: #a6e22e;">p_gt_p</span>() {
+  <span style="color: #FF8888;">// </span><span style="color: #FF8888;">(cell cell -&gt; bool)</span>
+  <span style="color: #66d9ef; font-weight: bold;">cell</span> <span style="color: #fd971f;">b</span> = as_pop();
+  <span style="color: #66d9ef; font-weight: bold;">cell</span> <span style="color: #fd971f;">a</span> = as_pop();
+  as_push(a &gt; b);
+}
+</pre>
+</div>
+</div>
+</div>
+
+<div id="outline-container-orgfadd6d5" class="outline-3">
+<h3 id="orgfadd6d5">p_lt_p</h3>
+<div class="outline-text-3" id="text-orgfadd6d5">
+<div class="org-src-container">
+
+<pre class="src src-c"><span style="color: #66d9ef; font-weight: bold;">void</span> <span style="color: #a6e22e;">p_lt_p</span>() {
+  <span style="color: #FF8888;">// </span><span style="color: #FF8888;">(cell cell -&gt; bool)</span>
+  <span style="color: #66d9ef; font-weight: bold;">cell</span> <span style="color: #fd971f;">b</span> = as_pop();
+  <span style="color: #66d9ef; font-weight: bold;">cell</span> <span style="color: #fd971f;">a</span> = as_pop();
+  as_push(a &lt; b);
+}
+</pre>
+</div>
+</div>
+</div>
+
+<div id="outline-container-org61c8397" class="outline-3">
+<h3 id="org61c8397">p_gteq_p</h3>
+<div class="outline-text-3" id="text-org61c8397">
+<div class="org-src-container">
+
+<pre class="src src-c"><span style="color: #66d9ef; font-weight: bold;">void</span> <span style="color: #a6e22e;">p_gteq_p</span>() {
+  <span style="color: #FF8888;">// </span><span style="color: #FF8888;">(cell cell -&gt; bool)</span>
+  <span style="color: #66d9ef; font-weight: bold;">cell</span> <span style="color: #fd971f;">b</span> = as_pop();
+  <span style="color: #66d9ef; font-weight: bold;">cell</span> <span style="color: #fd971f;">a</span> = as_pop();
+  as_push(a &gt;= b);
+}
+</pre>
+</div>
+</div>
+</div>
+
+<div id="outline-container-orge277399" class="outline-3">
+<h3 id="orge277399">p_lteq_p</h3>
+<div class="outline-text-3" id="text-orge277399">
+<div class="org-src-container">
+
+<pre class="src src-c"><span style="color: #66d9ef; font-weight: bold;">void</span> <span style="color: #a6e22e;">p_lteq_p</span>() {
+  <span style="color: #FF8888;">// </span><span style="color: #FF8888;">(cell cell -&gt; bool)</span>
+  <span style="color: #66d9ef; font-weight: bold;">cell</span> <span style="color: #fd971f;">b</span> = as_pop();
+  <span style="color: #66d9ef; font-weight: bold;">cell</span> <span style="color: #fd971f;">a</span> = as_pop();
+  as_push(a &lt;= b);
+}
+</pre>
+</div>
+</div>
+</div>
+
+<div id="outline-container-org1197194" class="outline-3">
+<h3 id="org1197194">k_integer</h3>
+<div class="outline-text-3" id="text-org1197194">
+<div class="org-src-container">
+
+<pre class="src src-c"><span style="color: #66d9ef; font-weight: bold;">name</span> <span style="color: #a6e22e;">read_symbol</span>();
+
+<span style="color: #66d9ef; font-weight: bold;">void</span> <span style="color: #a6e22e;">k_integer</span>() {
   <span style="color: #FF8888;">// </span><span style="color: #FF8888;">([io] -&gt; [jojo_area])</span>
   <span style="color: #f92672; font-weight: bold;">while</span> (<span style="color: #ae81ff;">true</span>) {
     <span style="color: #66d9ef; font-weight: bold;">name</span> <span style="color: #fd971f;">s</span> = read_symbol();
@@ -1766,7 +1753,7 @@ for the JavaScript code in this tag.
       here(atoi(n2k(s)));
     }
     <span style="color: #f92672; font-weight: bold;">else</span> {
-      printf(<span style="color: #e6db74;">"meet non-int string in (# ...) : %s"</span>, n2k(s));
+      printf(<span style="color: #e6db74;">"meet non-cell string in (# ...) : %s"</span>, n2k(s));
       <span style="color: #f92672; font-weight: bold;">break</span>;
     }
   }
@@ -1776,104 +1763,40 @@ for the JavaScript code in this tag.
 </div>
 </div>
 
-<div id="outline-container-orgedfc207" class="outline-3">
-<h3 id="orgedfc207">p_eq_p</h3>
-<div class="outline-text-3" id="text-orgedfc207">
+<div id="outline-container-org8a7ce9a" class="outline-3">
+<h3 id="org8a7ce9a">p_print_integer</h3>
+<div class="outline-text-3" id="text-org8a7ce9a">
 <div class="org-src-container">
 
-<pre class="src src-c"><span style="color: #66d9ef; font-weight: bold;">void</span>
-<span style="color: #a6e22e;">p_eq_p</span>
-() {
-  <span style="color: #FF8888;">// </span><span style="color: #FF8888;">(int int -&gt; bool)</span>
-  <span style="color: #66d9ef; font-weight: bold;">int</span> <span style="color: #fd971f;">b</span> = as_pop();
-  <span style="color: #66d9ef; font-weight: bold;">int</span> <span style="color: #fd971f;">a</span> = as_pop();
-  as_push(a == b);
+<pre class="src src-c"><span style="color: #66d9ef; font-weight: bold;">void</span> <span style="color: #a6e22e;">p_print_integer</span>() {
+  <span style="color: #FF8888;">// </span><span style="color: #FF8888;">(cell -&gt; [io])</span>
+  printf(<span style="color: #e6db74;">"%ld"</span>, as_pop());
 }
 </pre>
 </div>
 </div>
 </div>
 
-<div id="outline-container-orgeb74c8a" class="outline-3">
-<h3 id="orgeb74c8a">p_gt_p</h3>
-<div class="outline-text-3" id="text-orgeb74c8a">
+<div id="outline-container-orgfecc28f" class="outline-3">
+<h3 id="orgfecc28f">p_dot</h3>
+<div class="outline-text-3" id="text-orgfecc28f">
 <div class="org-src-container">
 
-<pre class="src src-c"><span style="color: #66d9ef; font-weight: bold;">void</span>
-<span style="color: #a6e22e;">p_gt_p</span>
-() {
-  <span style="color: #FF8888;">// </span><span style="color: #FF8888;">(int int -&gt; bool)</span>
-  <span style="color: #66d9ef; font-weight: bold;">int</span> <span style="color: #fd971f;">b</span> = as_pop();
-  <span style="color: #66d9ef; font-weight: bold;">int</span> <span style="color: #fd971f;">a</span> = as_pop();
-  as_push(a &gt; b);
+<pre class="src src-c"><span style="color: #66d9ef; font-weight: bold;">void</span> <span style="color: #a6e22e;">p_dot</span>() {
+  <span style="color: #FF8888;">// </span><span style="color: #FF8888;">(cell -&gt; [io])</span>
+  printf(<span style="color: #e6db74;">"%ld "</span>, as_pop());
 }
 </pre>
 </div>
 </div>
 </div>
 
-<div id="outline-container-orga5d42a8" class="outline-3">
-<h3 id="orga5d42a8">p_lt_p</h3>
-<div class="outline-text-3" id="text-orga5d42a8">
+<div id="outline-container-orgb30665" class="outline-3">
+<h3 id="orgb30665">export_integer</h3>
+<div class="outline-text-3" id="text-orgb30665">
 <div class="org-src-container">
 
-<pre class="src src-c"><span style="color: #66d9ef; font-weight: bold;">void</span>
-<span style="color: #a6e22e;">p_lt_p</span>
-() {
-  <span style="color: #FF8888;">// </span><span style="color: #FF8888;">(int int -&gt; bool)</span>
-  <span style="color: #66d9ef; font-weight: bold;">int</span> <span style="color: #fd971f;">b</span> = as_pop();
-  <span style="color: #66d9ef; font-weight: bold;">int</span> <span style="color: #fd971f;">a</span> = as_pop();
-  as_push(a &lt; b);
-}
-</pre>
-</div>
-</div>
-</div>
-
-<div id="outline-container-orgbead409" class="outline-3">
-<h3 id="orgbead409">p_gteq_p</h3>
-<div class="outline-text-3" id="text-orgbead409">
-<div class="org-src-container">
-
-<pre class="src src-c"><span style="color: #66d9ef; font-weight: bold;">void</span>
-<span style="color: #a6e22e;">p_gteq_p</span>
-() {
-  <span style="color: #FF8888;">// </span><span style="color: #FF8888;">(int int -&gt; bool)</span>
-  <span style="color: #66d9ef; font-weight: bold;">int</span> <span style="color: #fd971f;">b</span> = as_pop();
-  <span style="color: #66d9ef; font-weight: bold;">int</span> <span style="color: #fd971f;">a</span> = as_pop();
-  as_push(a &gt;= b);
-}
-</pre>
-</div>
-</div>
-</div>
-
-<div id="outline-container-orgfe8cc2b" class="outline-3">
-<h3 id="orgfe8cc2b">p_lteq_p</h3>
-<div class="outline-text-3" id="text-orgfe8cc2b">
-<div class="org-src-container">
-
-<pre class="src src-c"><span style="color: #66d9ef; font-weight: bold;">void</span>
-<span style="color: #a6e22e;">p_lteq_p</span>
-() {
-  <span style="color: #FF8888;">// </span><span style="color: #FF8888;">(int int -&gt; bool)</span>
-  <span style="color: #66d9ef; font-weight: bold;">int</span> <span style="color: #fd971f;">b</span> = as_pop();
-  <span style="color: #66d9ef; font-weight: bold;">int</span> <span style="color: #fd971f;">a</span> = as_pop();
-  as_push(a &lt;= b);
-}
-</pre>
-</div>
-</div>
-</div>
-
-<div id="outline-container-org667db73" class="outline-3">
-<h3 id="org667db73">export_int</h3>
-<div class="outline-text-3" id="text-org667db73">
-<div class="org-src-container">
-
-<pre class="src src-c"><span style="color: #66d9ef; font-weight: bold;">void</span>
-<span style="color: #a6e22e;">export_int</span>
-() {
+<pre class="src src-c"><span style="color: #66d9ef; font-weight: bold;">void</span> <span style="color: #a6e22e;">export_integer</span>() {
   define_primitive(<span style="color: #e6db74;">"add"</span>, p_add);
   define_primitive(<span style="color: #e6db74;">"sub"</span>, p_sub);
 
@@ -1889,7 +1812,10 @@ for the JavaScript code in this tag.
   define_primitive(<span style="color: #e6db74;">"gteq?"</span>, p_gteq_p);
   define_primitive(<span style="color: #e6db74;">"lteq?"</span>, p_lteq_p);
 
-  define_primitive(<span style="color: #e6db74;">"#"</span>, k_int);
+  define_primitive(<span style="color: #e6db74;">"#"</span>, k_integer);
+
+  define_primitive(<span style="color: #e6db74;">"print-integer"</span>, p_print_integer);
+  define_primitive(<span style="color: #e6db74;">"."</span>, p_dot);
 }
 </pre>
 </div>
@@ -1897,32 +1823,65 @@ for the JavaScript code in this tag.
 </div>
 </div>
 
-<div id="outline-container-org4b7a8af" class="outline-2">
-<h2 id="org4b7a8af"><span class="todo _gt__lt_">&gt;&lt;</span> <b>byte</b></h2>
-<div class="outline-text-2" id="text-org4b7a8af">
+<div id="outline-container-org7b81e9e" class="outline-2">
+<h2 id="org7b81e9e"><b>memory</b></h2>
+<div class="outline-text-2" id="text-org7b81e9e">
+</div><div id="outline-container-orge8a621e" class="outline-3">
+<h3 id="orge8a621e">p_allocate</h3>
+<div class="outline-text-3" id="text-orge8a621e">
 <div class="org-src-container">
 
-<pre class="src src-c"><span style="color: #f92672; font-weight: bold;">typedef</span> <span style="color: #66d9ef; font-weight: bold;">uint8_t</span> <span style="color: #66d9ef; font-weight: bold;">byte</span>;
+<pre class="src src-c"><span style="color: #66d9ef; font-weight: bold;">void</span> <span style="color: #a6e22e;">p_allocate</span> () {
+  <span style="color: #FF8888;">// </span><span style="color: #FF8888;">(size -&gt; addr)</span>
+  as_push(calloc(as_pop(), 1));
+}
 </pre>
 </div>
 </div>
 </div>
 
-<div id="outline-container-orgf12042" class="outline-2">
-<h2 id="orgf12042"><b>io</b></h2>
-<div class="outline-text-2" id="text-orgf12042">
-</div><div id="outline-container-org4d79bf6" class="outline-3">
-<h3 id="org4d79bf6">read_symbol</h3>
-<div class="outline-text-3" id="text-org4d79bf6">
+<div id="outline-container-org526a178" class="outline-3">
+<h3 id="org526a178">p_free</h3>
+<div class="outline-text-3" id="text-org526a178">
 <div class="org-src-container">
 
-<pre class="src src-c"><span style="color: #66d9ef; font-weight: bold;">name</span>
-<span style="color: #a6e22e;">read_symbol</span>
-() {
+<pre class="src src-c"><span style="color: #66d9ef; font-weight: bold;">void</span> <span style="color: #a6e22e;">p_free</span> () {
+  <span style="color: #FF8888;">// </span><span style="color: #FF8888;">(addr -&gt;)</span>
+  free(as_pop());
+}
+</pre>
+</div>
+</div>
+</div>
+
+<div id="outline-container-orgc2528f3" class="outline-3">
+<h3 id="orgc2528f3">export_memory</h3>
+<div class="outline-text-3" id="text-orgc2528f3">
+<div class="org-src-container">
+
+<pre class="src src-c"><span style="color: #66d9ef; font-weight: bold;">void</span> <span style="color: #a6e22e;">export_memory</span>() {
+  define_primitive(<span style="color: #e6db74;">"allocate"</span>, p_allocate);
+  define_primitive(<span style="color: #e6db74;">"free"</span>, p_free);
+}
+</pre>
+</div>
+</div>
+</div>
+</div>
+
+<div id="outline-container-orgfc0c710" class="outline-2">
+<h2 id="orgfc0c710"><b>symbol</b></h2>
+<div class="outline-text-2" id="text-orgfc0c710">
+</div><div id="outline-container-org7e374b7" class="outline-3">
+<h3 id="org7e374b7">read_symbol</h3>
+<div class="outline-text-3" id="text-org7e374b7">
+<div class="org-src-container">
+
+<pre class="src src-c"><span style="color: #66d9ef; font-weight: bold;">name</span> <span style="color: #a6e22e;">read_symbol</span>() {
   <span style="color: #FF8888;">// </span><span style="color: #FF8888;">([io] -&gt; symbol)</span>
   <span style="color: #66d9ef; font-weight: bold;">char</span> <span style="color: #fd971f;">buf</span>[1024];
-  <span style="color: #66d9ef; font-weight: bold;">int</span> <span style="color: #fd971f;">cur</span> = 0;
-  <span style="color: #66d9ef; font-weight: bold;">int</span> <span style="color: #fd971f;">collecting</span> = <span style="color: #ae81ff;">false</span>;
+  <span style="color: #66d9ef; font-weight: bold;">cell</span> <span style="color: #fd971f;">cur</span> = 0;
+  <span style="color: #66d9ef; font-weight: bold;">cell</span> <span style="color: #fd971f;">collecting</span> = <span style="color: #ae81ff;">false</span>;
   <span style="color: #66d9ef; font-weight: bold;">char</span> <span style="color: #fd971f;">c</span>;
   <span style="color: #66d9ef; font-weight: bold;">char</span> <span style="color: #fd971f;">go</span> = <span style="color: #ae81ff;">true</span>;
   <span style="color: #f92672; font-weight: bold;">while</span> (go) {
@@ -1960,14 +1919,12 @@ for the JavaScript code in this tag.
 </div>
 </div>
 
-<div id="outline-container-org2ae7da2" class="outline-3">
-<h3 id="org2ae7da2">p_read_symbol</h3>
-<div class="outline-text-3" id="text-org2ae7da2">
+<div id="outline-container-org6a6eaaf" class="outline-3">
+<h3 id="org6a6eaaf">p_read_symbol</h3>
+<div class="outline-text-3" id="text-org6a6eaaf">
 <div class="org-src-container">
 
-<pre class="src src-c"><span style="color: #66d9ef; font-weight: bold;">void</span>
-<span style="color: #a6e22e;">p_read_symbol</span>
-() {
+<pre class="src src-c"><span style="color: #66d9ef; font-weight: bold;">void</span> <span style="color: #a6e22e;">p_read_symbol</span>() {
   as_push(read_symbol());
 }
 </pre>
@@ -1975,33 +1932,13 @@ for the JavaScript code in this tag.
 </div>
 </div>
 
-<div id="outline-container-org6f41a18" class="outline-3">
-<h3 id="org6f41a18">p_simple_wirte</h3>
-<div class="outline-text-3" id="text-org6f41a18">
+<div id="outline-container-org77627f8" class="outline-3">
+<h3 id="org77627f8">export_symbol</h3>
+<div class="outline-text-3" id="text-org77627f8">
 <div class="org-src-container">
 
-<pre class="src src-c"><span style="color: #66d9ef; font-weight: bold;">void</span>
-<span style="color: #a6e22e;">p_simple_wirte</span>
-() {
-  <span style="color: #FF8888;">// </span><span style="color: #FF8888;">(int -&gt; [io])</span>
-  printf(<span style="color: #e6db74;">"%d\n"</span>, as_pop());
-}
-</pre>
-</div>
-</div>
-</div>
-
-<div id="outline-container-orgc9efe0a" class="outline-3">
-<h3 id="orgc9efe0a">export_io</h3>
-<div class="outline-text-3" id="text-orgc9efe0a">
-<div class="org-src-container">
-
-<pre class="src src-c"><span style="color: #66d9ef; font-weight: bold;">void</span>
-<span style="color: #a6e22e;">export_io</span>
-() {
+<pre class="src src-c"><span style="color: #66d9ef; font-weight: bold;">void</span> <span style="color: #a6e22e;">export_symbol</span>() {
   define_primitive(<span style="color: #e6db74;">"read-symbol"</span>, p_read_symbol);
-  define_primitive(<span style="color: #e6db74;">"simple-wirte"</span>, p_simple_wirte);
-  define_primitive(<span style="color: #e6db74;">"."</span>, p_simple_wirte);
 }
 </pre>
 </div>
@@ -2009,17 +1946,116 @@ for the JavaScript code in this tag.
 </div>
 </div>
 
-<div id="outline-container-orgbae5b31" class="outline-2">
-<h2 id="orgbae5b31"><b>keyword</b></h2>
-<div class="outline-text-2" id="text-orgbae5b31">
-</div><div id="outline-container-org55adbd1" class="outline-3">
-<h3 id="org55adbd1">k_comment</h3>
-<div class="outline-text-3" id="text-org55adbd1">
+<div id="outline-container-org4f07ff" class="outline-2">
+<h2 id="org4f07ff"><b>string</b></h2>
+<div class="outline-text-2" id="text-org4f07ff">
+</div><div id="outline-container-orgbb0796d" class="outline-3">
+<h3 id="orgbb0796d">k_string</h3>
+<div class="outline-text-3" id="text-orgbb0796d">
 <div class="org-src-container">
 
-<pre class="src src-c"><span style="color: #66d9ef; font-weight: bold;">void</span>
-<span style="color: #a6e22e;">k_comment</span>
-() {
+<pre class="src src-c"><span style="color: #66d9ef; font-weight: bold;">void</span> <span style="color: #a6e22e;">k_string</span>() {
+  <span style="color: #FF8888;">// </span><span style="color: #FF8888;">([io] -&gt; [jojo_area])</span>
+  <span style="color: #66d9ef; font-weight: bold;">char</span> <span style="color: #fd971f;">buffer</span>[1024 * 1024];
+  <span style="color: #66d9ef; font-weight: bold;">cell</span> <span style="color: #fd971f;">cursor</span> = 0;
+  getchar(); <span style="color: #FF8888;">// </span><span style="color: #FF8888;">drop " "</span>
+  <span style="color: #f92672; font-weight: bold;">while</span> (<span style="color: #ae81ff;">true</span>) {
+    <span style="color: #66d9ef; font-weight: bold;">char</span> <span style="color: #fd971f;">c</span> = getchar();
+    <span style="color: #f92672; font-weight: bold;">if</span> (c == <span style="color: #e6db74;">')'</span>) {
+      buffer[cursor] = 0;
+      cursor++;
+      <span style="color: #f92672; font-weight: bold;">break</span>;
+    }
+    <span style="color: #f92672; font-weight: bold;">else</span> {
+      buffer[cursor] = c;
+      cursor++;
+    }
+  }
+  <span style="color: #66d9ef; font-weight: bold;">string</span> <span style="color: #fd971f;">str</span> = malloc(cursor);
+  strcpy(str, buffer);
+  here(k2n(<span style="color: #e6db74;">"i/lit"</span>));
+  here(str);
+}
+</pre>
+</div>
+</div>
+</div>
+
+<div id="outline-container-orgce5bad2" class="outline-3">
+<h3 id="orgce5bad2">p_print_string</h3>
+<div class="outline-text-3" id="text-orgce5bad2">
+<div class="org-src-container">
+
+<pre class="src src-c"><span style="color: #66d9ef; font-weight: bold;">void</span> <span style="color: #a6e22e;">p_print_string</span>() {
+  <span style="color: #FF8888;">// </span><span style="color: #FF8888;">(string -&gt; [io])</span>
+  printf(<span style="color: #e6db74;">"%s"</span>, as_pop());
+}
+</pre>
+</div>
+</div>
+</div>
+
+<div id="outline-container-orga273432" class="outline-3">
+<h3 id="orga273432">export_string</h3>
+<div class="outline-text-3" id="text-orga273432">
+<div class="org-src-container">
+
+<pre class="src src-c"><span style="color: #66d9ef; font-weight: bold;">void</span> <span style="color: #a6e22e;">export_string</span>() {
+  define_primitive(<span style="color: #e6db74;">"'"</span>, k_string);
+  define_primitive(<span style="color: #e6db74;">"print-string"</span>, p_print_string);
+}
+</pre>
+</div>
+</div>
+</div>
+</div>
+
+<div id="outline-container-orge42dd62" class="outline-2">
+<h2 id="orge42dd62"><b>file</b></h2>
+<div class="outline-text-2" id="text-orge42dd62">
+</div><div id="outline-container-orgecb7f26" class="outline-3">
+<h3 id="orgecb7f26">p_read_file</h3>
+<div class="outline-text-3" id="text-orgecb7f26">
+<div class="org-src-container">
+
+<pre class="src src-c"><span style="color: #66d9ef; font-weight: bold;">void</span> <span style="color: #a6e22e;">p_read_file</span>() {
+  <span style="color: #FF8888;">// </span><span style="color: #FF8888;">(string addr number -&gt; number)</span>
+  <span style="color: #66d9ef; font-weight: bold;">cell</span> <span style="color: #fd971f;">limit</span> = as_pop();
+  <span style="color: #66d9ef; font-weight: bold;">cell</span> <span style="color: #fd971f;">buffer</span> = as_pop();
+  <span style="color: #66d9ef; font-weight: bold;">cell</span> <span style="color: #fd971f;">file_name</span> = as_pop();
+  <span style="color: #66d9ef; font-weight: bold;">FILE</span>* <span style="color: #fd971f;">file_handle</span> = fopen(file_name, <span style="color: #e6db74;">"r"</span>);
+  <span style="color: #66d9ef; font-weight: bold;">cell</span> <span style="color: #fd971f;">readed_counter</span> = fread(buffer, 1, limit, file_handle);
+  fclose(file_handle);
+  as_push(readed_counter);
+}
+</pre>
+</div>
+</div>
+</div>
+
+<div id="outline-container-org9d1bbb3" class="outline-3">
+<h3 id="org9d1bbb3">export_file</h3>
+<div class="outline-text-3" id="text-org9d1bbb3">
+<div class="org-src-container">
+
+<pre class="src src-c"><span style="color: #66d9ef; font-weight: bold;">void</span> <span style="color: #a6e22e;">export_file</span>() {
+  define_primitive(<span style="color: #e6db74;">"read-file"</span>, p_read_file);
+}
+</pre>
+</div>
+</div>
+</div>
+</div>
+
+<div id="outline-container-orgf2c5cf7" class="outline-2">
+<h2 id="orgf2c5cf7"><b>keyword</b></h2>
+<div class="outline-text-2" id="text-orgf2c5cf7">
+</div><div id="outline-container-org88e87cd" class="outline-3">
+<h3 id="org88e87cd">k_comment</h3>
+<div class="outline-text-3" id="text-org88e87cd">
+<div class="org-src-container">
+
+<pre class="src src-c"><span style="color: #66d9ef; font-weight: bold;">void</span> <span style="color: #a6e22e;">k_comment</span>() {
   <span style="color: #FF8888;">// </span><span style="color: #FF8888;">([io] -&gt;)</span>
   <span style="color: #f92672; font-weight: bold;">while</span> (<span style="color: #ae81ff;">true</span>) {
     <span style="color: #66d9ef; font-weight: bold;">name</span> <span style="color: #fd971f;">s</span> = read_symbol();
@@ -2036,12 +2072,12 @@ for the JavaScript code in this tag.
 </div>
 </div>
 
-<div id="outline-container-orgee82697" class="outline-3">
-<h3 id="orgee82697">k_if</h3>
-<div class="outline-text-3" id="text-orgee82697">
-</div><div id="outline-container-org26493ce" class="outline-4">
-<h4 id="org26493ce"><span class="todo note">note</span> </h4>
-<div class="outline-text-4" id="text-org26493ce">
+<div id="outline-container-org9eb55d7" class="outline-3">
+<h3 id="org9eb55d7">k_if</h3>
+<div class="outline-text-3" id="text-org9eb55d7">
+</div><div id="outline-container-orga93e18b" class="outline-4">
+<h4 id="orga93e18b"><span class="todo note">note</span> </h4>
+<div class="outline-text-4" id="text-orga93e18b">
 <ul class="org-ul">
 <li><p>(if a b p? -&gt; c d)</p><p>a b p?</p><p>[jump] jumk_if_false</p><p>c d</p><p>:jump</p></li>
 
@@ -2049,14 +2085,12 @@ for the JavaScript code in this tag.
 </div>
 </div>
 
-<div id="outline-container-orgc556d1c" class="outline-4">
-<h4 id="orgc556d1c">compile_question</h4>
-<div class="outline-text-4" id="text-orgc556d1c">
+<div id="outline-container-orgbd55e96" class="outline-4">
+<h4 id="orgbd55e96">compile_question</h4>
+<div class="outline-text-4" id="text-orgbd55e96">
 <div class="org-src-container">
 
-<pre class="src src-c"><span style="color: #66d9ef; font-weight: bold;">void</span>
-<span style="color: #a6e22e;">compile_question</span>
-() {
+<pre class="src src-c"><span style="color: #66d9ef; font-weight: bold;">void</span> <span style="color: #a6e22e;">compile_question</span>() {
   <span style="color: #FF8888;">// </span><span style="color: #FF8888;">([io] -&gt; [jojo_area])</span>
   <span style="color: #f92672; font-weight: bold;">while</span> (<span style="color: #ae81ff;">true</span>) {
     <span style="color: #66d9ef; font-weight: bold;">name</span> <span style="color: #fd971f;">s</span> = read_symbol();
@@ -2076,17 +2110,15 @@ for the JavaScript code in this tag.
 </div>
 </div>
 
-<div id="outline-container-orgb79cac1" class="outline-4">
-<h4 id="orgb79cac1">compile_answer</h4>
-<div class="outline-text-4" id="text-orgb79cac1">
+<div id="outline-container-org5b809f1" class="outline-4">
+<h4 id="org5b809f1">compile_answer</h4>
+<div class="outline-text-4" id="text-org5b809f1">
 <div class="org-src-container">
 
-<pre class="src src-c"><span style="color: #66d9ef; font-weight: bold;">void</span>
-<span style="color: #a6e22e;">compile_answer</span>
-() {
+<pre class="src src-c"><span style="color: #66d9ef; font-weight: bold;">void</span> <span style="color: #a6e22e;">compile_answer</span>() {
   <span style="color: #FF8888;">// </span><span style="color: #FF8888;">([io] -&gt; [jojo_area])</span>
   here(k2n(<span style="color: #e6db74;">"i/lit"</span>));
-  <span style="color: #66d9ef; font-weight: bold;">int</span>* <span style="color: #fd971f;">offset_place</span> = (jojo_area + jojo_area_counter);
+  <span style="color: #66d9ef; font-weight: bold;">cell</span>* <span style="color: #fd971f;">offset_place</span> = (jojo_area + jojo_area_counter);
   jojo_area_counter++;
   here(k2n(<span style="color: #e6db74;">"jump-if-false"</span>));
   <span style="color: #f92672; font-weight: bold;">while</span> (<span style="color: #ae81ff;">true</span>) {
@@ -2108,14 +2140,12 @@ for the JavaScript code in this tag.
 </div>
 </div>
 
-<div id="outline-container-org52b2498" class="outline-4">
-<h4 id="org52b2498">k_if</h4>
-<div class="outline-text-4" id="text-org52b2498">
+<div id="outline-container-org7181bb8" class="outline-4">
+<h4 id="org7181bb8">k_if</h4>
+<div class="outline-text-4" id="text-org7181bb8">
 <div class="org-src-container">
 
-<pre class="src src-c"><span style="color: #66d9ef; font-weight: bold;">void</span>
-<span style="color: #a6e22e;">k_if</span>
-() {
+<pre class="src src-c"><span style="color: #66d9ef; font-weight: bold;">void</span> <span style="color: #a6e22e;">k_if</span>() {
   <span style="color: #FF8888;">// </span><span style="color: #FF8888;">([io] -&gt; [jojo_area])</span>
   compile_question();
   compile_answer();
@@ -2126,14 +2156,12 @@ for the JavaScript code in this tag.
 </div>
 </div>
 
-<div id="outline-container-orgb2e00fa" class="outline-3">
-<h3 id="orgb2e00fa">k_tail_call</h3>
-<div class="outline-text-3" id="text-orgb2e00fa">
+<div id="outline-container-orga316eb6" class="outline-3">
+<h3 id="orga316eb6">k_tail_call</h3>
+<div class="outline-text-3" id="text-orga316eb6">
 <div class="org-src-container">
 
-<pre class="src src-c"><span style="color: #66d9ef; font-weight: bold;">void</span>
-<span style="color: #a6e22e;">k_tail_call</span>
-() {
+<pre class="src src-c"><span style="color: #66d9ef; font-weight: bold;">void</span> <span style="color: #a6e22e;">k_tail_call</span>() {
   <span style="color: #FF8888;">// </span><span style="color: #FF8888;">([io] -&gt; [jojo_area])</span>
   here(k2n(<span style="color: #e6db74;">"i/tail-call"</span>));
   <span style="color: #66d9ef; font-weight: bold;">name</span> <span style="color: #fd971f;">s</span> = read_symbol();
@@ -2145,14 +2173,12 @@ for the JavaScript code in this tag.
 </div>
 </div>
 
-<div id="outline-container-orgb10beca" class="outline-3">
-<h3 id="orgb10beca">export_keyword</h3>
-<div class="outline-text-3" id="text-orgb10beca">
+<div id="outline-container-org67bad4a" class="outline-3">
+<h3 id="org67bad4a">export_keyword</h3>
+<div class="outline-text-3" id="text-org67bad4a">
 <div class="org-src-container">
 
-<pre class="src src-c"><span style="color: #66d9ef; font-weight: bold;">void</span>
-<span style="color: #a6e22e;">export_keyword</span>
-() {
+<pre class="src src-c"><span style="color: #66d9ef; font-weight: bold;">void</span> <span style="color: #a6e22e;">export_keyword</span>() {
   define_primitive(<span style="color: #e6db74;">":"</span>, k_comment);
   define_primitive(<span style="color: #e6db74;">"if"</span>, k_if);
   define_primitive(<span style="color: #e6db74;">"tail-call"</span>, k_tail_call);
@@ -2163,21 +2189,19 @@ for the JavaScript code in this tag.
 </div>
 </div>
 
-<div id="outline-container-org4c1a45e" class="outline-2">
-<h2 id="org4c1a45e"><b>top_level_keyword</b></h2>
-<div class="outline-text-2" id="text-org4c1a45e">
-</div><div id="outline-container-orgced3d86" class="outline-3">
-<h3 id="orgced3d86">p_define_function</h3>
-<div class="outline-text-3" id="text-orgced3d86">
+<div id="outline-container-org4d150c6" class="outline-2">
+<h2 id="org4d150c6"><b>top_level_keyword</b></h2>
+<div class="outline-text-2" id="text-org4d150c6">
+</div><div id="outline-container-org2bfb306" class="outline-3">
+<h3 id="org2bfb306">p_define_function</h3>
+<div class="outline-text-3" id="text-org2bfb306">
 <div class="org-src-container">
 
-<pre class="src src-c"><span style="color: #66d9ef; font-weight: bold;">void</span>
-<span style="color: #a6e22e;">p_define_function</span>
-() {
+<pre class="src src-c"><span style="color: #66d9ef; font-weight: bold;">void</span> <span style="color: #a6e22e;">p_define_function</span>() {
   <span style="color: #FF8888;">// </span><span style="color: #FF8888;">([io] -&gt; [nametable])</span>
   <span style="color: #66d9ef; font-weight: bold;">name</span> <span style="color: #fd971f;">index</span>;
   index = read_symbol();
-  <span style="color: #66d9ef; font-weight: bold;">int</span> <span style="color: #fd971f;">old_jojo_area_counter</span> = jojo_area_counter;
+  <span style="color: #66d9ef; font-weight: bold;">cell</span> <span style="color: #fd971f;">old_jojo_area_counter</span> = jojo_area_counter;
   <span style="color: #66d9ef; font-weight: bold;">name</span>* <span style="color: #fd971f;">array</span> = jojo_area + jojo_area_counter;
   <span style="color: #f92672; font-weight: bold;">while</span> (<span style="color: #ae81ff;">true</span>) {
     <span style="color: #66d9ef; font-weight: bold;">name</span> <span style="color: #fd971f;">s</span> = read_symbol();
@@ -2201,14 +2225,12 @@ for the JavaScript code in this tag.
 </div>
 </div>
 
-<div id="outline-container-orgeece5e8" class="outline-3">
-<h3 id="orgeece5e8">export_top_level_keyword</h3>
-<div class="outline-text-3" id="text-orgeece5e8">
+<div id="outline-container-org1e5c63c" class="outline-3">
+<h3 id="org1e5c63c">export_top_level_keyword</h3>
+<div class="outline-text-3" id="text-org1e5c63c">
 <div class="org-src-container">
 
-<pre class="src src-c"><span style="color: #66d9ef; font-weight: bold;">void</span>
-<span style="color: #a6e22e;">export_top_level_keyword</span>
-() {
+<pre class="src src-c"><span style="color: #66d9ef; font-weight: bold;">void</span> <span style="color: #a6e22e;">export_top_level_keyword</span>() {
   define_primitive(<span style="color: #e6db74;">"~"</span>, p_define_function);
 }
 </pre>
@@ -2217,31 +2239,27 @@ for the JavaScript code in this tag.
 </div>
 </div>
 
-<div id="outline-container-orgd7a48af" class="outline-2">
-<h2 id="orgd7a48af"><b>misc</b></h2>
-<div class="outline-text-2" id="text-orgd7a48af">
-</div><div id="outline-container-orgd896cb0" class="outline-3">
-<h3 id="orgd896cb0">do_nothing</h3>
-<div class="outline-text-3" id="text-orgd896cb0">
+<div id="outline-container-org650095f" class="outline-2">
+<h2 id="org650095f"><b>misc</b></h2>
+<div class="outline-text-2" id="text-org650095f">
+</div><div id="outline-container-orgda67260" class="outline-3">
+<h3 id="orgda67260">do_nothing</h3>
+<div class="outline-text-3" id="text-orgda67260">
 <div class="org-src-container">
 
-<pre class="src src-c"><span style="color: #66d9ef; font-weight: bold;">void</span>
-<span style="color: #a6e22e;">do_nothing</span>
-() {
+<pre class="src src-c"><span style="color: #66d9ef; font-weight: bold;">void</span> <span style="color: #a6e22e;">do_nothing</span>() {
 }
 </pre>
 </div>
 </div>
 </div>
 
-<div id="outline-container-orgdf56acd" class="outline-3">
-<h3 id="orgdf56acd">export_mise</h3>
-<div class="outline-text-3" id="text-orgdf56acd">
+<div id="outline-container-orgec7836b" class="outline-3">
+<h3 id="orgec7836b">export_mise</h3>
+<div class="outline-text-3" id="text-orgec7836b">
 <div class="org-src-container">
 
-<pre class="src src-c"><span style="color: #66d9ef; font-weight: bold;">void</span>
-<span style="color: #a6e22e;">export_mise</span>
-() {
+<pre class="src src-c"><span style="color: #66d9ef; font-weight: bold;">void</span> <span style="color: #a6e22e;">export_mise</span>() {
   define_primitive(<span style="color: #e6db74;">"("</span>, do_nothing);
   define_primitive(<span style="color: #e6db74;">"apply"</span>, p_apply);
   define_primitive(<span style="color: #e6db74;">"nametable-report"</span>, nametable_report);
@@ -2252,33 +2270,57 @@ for the JavaScript code in this tag.
 </div>
 </div>
 
-<div id="outline-container-org870a8e8" class="outline-2">
-<h2 id="org870a8e8"><b>play</b></h2>
-<div class="outline-text-2" id="text-org870a8e8">
-</div><div id="outline-container-orgb02106" class="outline-3">
-<h3 id="orgb02106">k1</h3>
-<div class="outline-text-3" id="text-orgb02106">
+<div id="outline-container-orge8a0a1d" class="outline-2">
+<h2 id="orge8a0a1d"><b>play</b></h2>
+<div class="outline-text-2" id="text-orge8a0a1d">
+</div><div id="outline-container-org32c9e73" class="outline-3">
+<h3 id="org32c9e73">p1</h3>
+<div class="outline-text-3" id="text-org32c9e73">
 <div class="org-src-container">
 
-<pre class="src src-c"><span style="color: #66d9ef; font-weight: bold;">void</span>
-<span style="color: #a6e22e;">k1</span>
-() {
-  as_push(atoi(<span style="color: #e6db74;">"12345"</span>));
+<pre class="src src-c"><span style="color: #66d9ef; font-weight: bold;">void</span> <span style="color: #a6e22e;">p1</span>() {
+  printf(<span style="color: #e6db74;">"k1: %ld %ld\n"</span>, <span style="color: #f92672; font-weight: bold;">sizeof</span>(<span style="color: #66d9ef; font-weight: bold;">void</span>*), <span style="color: #f92672; font-weight: bold;">sizeof</span>(intptr_t));
 }
 </pre>
 </div>
 </div>
 </div>
 
-<div id="outline-container-orgd7da89c" class="outline-3">
-<h3 id="orgd7da89c">export_play</h3>
-<div class="outline-text-3" id="text-orgd7da89c">
+<div id="outline-container-orgcdcaaf2" class="outline-3">
+<h3 id="orgcdcaaf2">p2</h3>
+<div class="outline-text-3" id="text-orgcdcaaf2">
 <div class="org-src-container">
 
-<pre class="src src-c"><span style="color: #66d9ef; font-weight: bold;">void</span>
-<span style="color: #a6e22e;">export_play</span>
-() {
-  define_primitive(<span style="color: #e6db74;">"k1"</span>, k1);
+<pre class="src src-c"><span style="color: #66d9ef; font-weight: bold;">void</span> <span style="color: #a6e22e;">p2</span>() {
+  printf(<span style="color: #e6db74;">"k1: %ld %ld\n"</span>, <span style="color: #f92672; font-weight: bold;">sizeof</span>(<span style="color: #66d9ef; font-weight: bold;">void</span>*), <span style="color: #f92672; font-weight: bold;">sizeof</span>(intptr_t));
+}
+</pre>
+</div>
+</div>
+</div>
+
+<div id="outline-container-org603a7bd" class="outline-3">
+<h3 id="org603a7bd">p3</h3>
+<div class="outline-text-3" id="text-org603a7bd">
+<div class="org-src-container">
+
+<pre class="src src-c"><span style="color: #66d9ef; font-weight: bold;">void</span> <span style="color: #a6e22e;">p3</span>() {
+
+}
+</pre>
+</div>
+</div>
+</div>
+
+<div id="outline-container-org234ed75" class="outline-3">
+<h3 id="org234ed75">export_play</h3>
+<div class="outline-text-3" id="text-org234ed75">
+<div class="org-src-container">
+
+<pre class="src src-c"><span style="color: #66d9ef; font-weight: bold;">void</span> <span style="color: #a6e22e;">export_play</span>() {
+  define_primitive(<span style="color: #e6db74;">"p1"</span>, p1);
+  define_primitive(<span style="color: #e6db74;">"p2"</span>, p2);
+  define_primitive(<span style="color: #e6db74;">"p3"</span>, p3);
 }
 </pre>
 </div>
@@ -2286,17 +2328,15 @@ for the JavaScript code in this tag.
 </div>
 </div>
 
-<div id="outline-container-orgb919b6e" class="outline-2">
-<h2 id="orgb919b6e"><b>repl</b></h2>
-<div class="outline-text-2" id="text-orgb919b6e">
-</div><div id="outline-container-orgadec3bf" class="outline-3">
-<h3 id="orgadec3bf">export_repl</h3>
-<div class="outline-text-3" id="text-orgadec3bf">
+<div id="outline-container-org6c630aa" class="outline-2">
+<h2 id="org6c630aa"><b>repl</b></h2>
+<div class="outline-text-2" id="text-org6c630aa">
+</div><div id="outline-container-orgaffa741" class="outline-3">
+<h3 id="orgaffa741">export_repl</h3>
+<div class="outline-text-3" id="text-orgaffa741">
 <div class="org-src-container">
 
-<pre class="src src-c"><span style="color: #66d9ef; font-weight: bold;">void</span>
-<span style="color: #a6e22e;">export_repl</span>
-() {
+<pre class="src src-c"><span style="color: #66d9ef; font-weight: bold;">void</span> <span style="color: #a6e22e;">export_repl</span>() {
   define_variable(<span style="color: #e6db74;">"little-test-number"</span>, 4);
   <span style="color: #FF8888;">// </span><span style="color: #FF8888;">basic-repl can not be defined as primitive</span>
   <span style="color: #66d9ef; font-weight: bold;">string</span> <span style="color: #fd971f;">p_basic_repl</span>[] = {
@@ -2313,25 +2353,26 @@ for the JavaScript code in this tag.
 </div>
 </div>
 
-<div id="outline-container-org1281eb2" class="outline-2">
-<h2 id="org1281eb2">the_story_begins</h2>
-<div class="outline-text-2" id="text-org1281eb2">
-</div><div id="outline-container-org8cfcc4" class="outline-3">
-<h3 id="org8cfcc4">the_story_begins</h3>
-<div class="outline-text-3" id="text-org8cfcc4">
+<div id="outline-container-org423c0a2" class="outline-2">
+<h2 id="org423c0a2">the_story_begins</h2>
+<div class="outline-text-2" id="text-org423c0a2">
+</div><div id="outline-container-orgcd28526" class="outline-3">
+<h3 id="orgcd28526">the_story_begins</h3>
+<div class="outline-text-3" id="text-orgcd28526">
 <div class="org-src-container">
 
-<pre class="src src-c"><span style="color: #66d9ef; font-weight: bold;">void</span>
-<span style="color: #a6e22e;">the_story_begins</span>
-() {
+<pre class="src src-c"><span style="color: #66d9ef; font-weight: bold;">void</span> <span style="color: #a6e22e;">the_story_begins</span>() {
 
   init_nametable();
 
   export_stack_operation();
   export_ending();
   export_control();
-  export_int();
-  export_io();
+  export_integer();
+  export_memory();
+  export_symbol();
+  export_string();
+  export_file();
   export_bool();
   export_keyword();
   export_top_level_keyword();
@@ -2348,14 +2389,12 @@ for the JavaScript code in this tag.
 </div>
 </div>
 
-<div id="outline-container-org58f48ae" class="outline-3">
-<h3 id="org58f48ae">main</h3>
-<div class="outline-text-3" id="text-org58f48ae">
+<div id="outline-container-org1773d85" class="outline-3">
+<h3 id="org1773d85">main</h3>
+<div class="outline-text-3" id="text-org1773d85">
 <div class="org-src-container">
 
-<pre class="src src-c"><span style="color: #66d9ef; font-weight: bold;">int</span>
-<span style="color: #a6e22e;">main</span>
-(<span style="color: #66d9ef; font-weight: bold;">int</span> <span style="color: #fd971f;">argc</span>, <span style="color: #66d9ef; font-weight: bold;">string</span>* <span style="color: #fd971f;">argv</span>) {
+<pre class="src src-c"><span style="color: #66d9ef; font-weight: bold;">int</span> <span style="color: #a6e22e;">main</span>(<span style="color: #66d9ef; font-weight: bold;">int</span> <span style="color: #fd971f;">argc</span>, <span style="color: #66d9ef; font-weight: bold;">string</span>* <span style="color: #fd971f;">argv</span>) {
   the_story_begins();
   <span style="color: #f92672; font-weight: bold;">return</span> 0;
 }
@@ -2366,7 +2405,7 @@ for the JavaScript code in this tag.
 </div>
 </div>
 <div id="postamble" class="status">
-喪以不執 所執者喪 執喪相比 方死方生
+涕执我乎垂丧兮 懼余生之茫苦
 </div>
 </body>
 </html>

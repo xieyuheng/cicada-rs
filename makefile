@@ -1,16 +1,17 @@
 .ONESHELL:
 CC = gcc
-# CC = clang
+#CC = clang
 
 build:
 	$(CC) -ldl jojo.c -o jojo -rdynamic
 
+tangle:
+	./tangle.el
+
 run:
 	./jojo
 
-dev:
-	make clean
-	make build
+play: tangle build run
 
 clean:
 	@
