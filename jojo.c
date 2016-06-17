@@ -540,6 +540,7 @@ void p_swap() {
 
 void p_print_stack() {
   // ([io] ->)
+  printf("\n");
   if (as_pointer < as_base) {
     printf("  * %ld *  ", (as_pointer - as_base));
     printf("-- below the stack --\n");
@@ -831,9 +832,24 @@ void export_symbol() {
 
 void k_string() {
   // ([io] -> [jojo_area])
+  while (true) {
+    name s = read_symbol();
+    if (s == k2n(")")) {
+      return;
+    }
+    else if (s == k2n("(")) {
+      k_one_string();
+    }
+    else {
+      // do nothing
+    }
+  }
+}
+
+void k_one_string() {
+  // ([io] -> [jojo_area])
   char buffer[1024 * 1024];
   cell cursor = 0;
-  getchar(); // drop " "
   while (true) {
     char c = getchar();
     if (c == ')') {
@@ -858,7 +874,7 @@ void p_print_string() {
 }
 
 void export_string() {
-  define_primitive("'", k_string);
+  define_primitive("string", k_string);
   define_primitive("print-string", p_print_string);
 }
 
