@@ -11,6 +11,9 @@ tangle:
 run:
 	./jojo
 
+test:
+	./jojo example.org
+
 play: tangle build run
 
 clean:

@@ -1,12 +1,5 @@
 #+HTML_HEAD: <link rel="stylesheet" href="http://xieyuheng.github.io/asset/css/page.css" type="text/css" media="screen" />
-#+PROPERTY: tangle example.jo
 #+title: example code of jojo
-
----------
-
-- simple example code ([[https://github.com/xieyuheng/jojo][source]])
-
----------
 
 * define function
 
@@ -14,30 +7,24 @@
   (~ square (: int int -> int)
      dup mul end)
 
-  (~ t (: ->)
-     (# 11) square .
-     end)
-  t
+  (! (# 11) square .)
   #+end_src
 
 * loop by explicit tail-call
 
   #+begin_src scheme
   (~ stack-repl (: [io] -> *)
-     read-symbol apply
-     print-stack
+     (if read-symbol round-bar eq? -> read-symbol apply print-stack)
      (tail-call stack-repl))
 
-  stack-repl
+  (! stack-repl)
   #+end_src
 
 * branching by if
 
   #+begin_src scheme
-  (~ t (: ->)
-     (if true -> true . end)
+  (! (if true -> true . end)
      (if false -> false . end))
-  t
   #+end_src
 
 * receive function
@@ -47,29 +34,24 @@
      (if dup (# 1) lteq? -> drop (# 1) end)
      dup (# 1) sub factorial mul end)
 
-  (~ t (: ->)
-     (# 0) factorial .
+  (! (# 0) factorial .
      (# 1) factorial .
      (# 2) factorial .
      (# 3) factorial .
-     (# 4) factorial .
-     end)
-  t
+     (# 4) factorial .)
   #+end_src
 
 * string
 
   #+begin_src scheme
-  (~ t (: ->)
-    (string (test1) (test2)) print-string print-string)
-  t
+  (! (string (test1) (test2)) print-string print-string)
   #+end_src
 
 * file
 
-  #+begin_src scheme :tangle no
-  (~ t (: -> addr)
-    (string (README)) (# 1024) allocate tuck (# 1024) read-file
-    . print-string)
-  t
+  #+begin_src scheme
+  (! (string (README))
+     (# 1024) allocate tuck
+     (# 1024) read-file .
+     print-string)
   #+end_src

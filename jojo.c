@@ -313,11 +313,45 @@ void init_nametable() {
 }
 
 name jojo_area[1024 * 1024];
-cell jojo_area_counter = 0;
+
+typedef name* compiling_stack_t[1024];
+
+compiling_stack_t compiling_stack;
+cell compiling_stack_base = 0;
+cell compiling_stack_pointer = 0;
+
+void compiling_stack_push(name* value) {
+  compiling_stack[compiling_stack_pointer] = value;
+  compiling_stack_pointer++;
+}
+
+name* compiling_stack_pop() {
+  compiling_stack_pointer--;
+  return compiling_stack[compiling_stack_pointer];
+}
+
+void compiling_stack_inc() {
+  compiling_stack[compiling_stack_pointer - 1] =
+    compiling_stack[compiling_stack_pointer - 1] + 1;
+}
+
+
+name* compiling_stack_tos() {
+  return compiling_stack[compiling_stack_pointer - 1];
+}
+
+bool compiling_stack_empty_p() {
+  return compiling_stack_pointer == compiling_stack_base;
+}
+
+void init_compiling_stack() {
+  compiling_stack_push(jojo_area);
+}
 
 void here(cell n) {
-  jojo_area[jojo_area_counter] = n;
-  jojo_area_counter++;
+  name* pointer = compiling_stack_pop();
+  pointer[0] = n;
+  compiling_stack_push(pointer + 1);
 }
 
 void nametable_set_cell(cell index, cell cell) {
@@ -419,20 +453,6 @@ void define_primitive(string str, primitive fun) {
   nametable_set_primitive(index, fun);
 }
 
-void define_function(string str, cell size, string *str_array) {
-  name index = k2n(str);
-  cell i;
-  name *array;
-  array = (jojo_area + jojo_area_counter);
-  for (i=0; i < size; i=i+1) {
-    array[i] = k2n(str_array[i]);
-  }
-  jojo_area_counter = size + jojo_area_counter;
-  nametable[index].type = k2n("jojo");
-  nametable[index].value.jojo.size = size;
-  nametable[index].value.jojo.array = array;
-}
-
 void define_variable(string str, cell cell) {
   name index = k2n(str);
   nametable_set_cell(index, cell);
@@ -498,6 +518,11 @@ void eval_jo(name jo) {
     cell cell = nametable_get_cell(jo);
     as_push(cell);
   }
+}
+
+void eval_jojo(name* array) {
+  rs_push(array);
+  eval();
 }
 
 void p_drop() {
@@ -720,7 +745,7 @@ void p_lteq_p() {
 name read_symbol();
 
 void k_integer() {
-  // ([io] -> [jojo_area])
+  // ([io] -> [compile])
   while (true) {
     name s = read_symbol();
     if (s == k2n(")")) {
@@ -880,7 +905,7 @@ void export_symbol() {
 }
 
 void k_string() {
-  // ([io] -> [jojo_area])
+  // ([io] -> [compile])
   while (true) {
     name s = read_symbol();
     if (s == k2n(")")) {
@@ -896,7 +921,7 @@ void k_string() {
 }
 
 void k_one_string() {
-  // ([io] -> [jojo_area])
+  // ([io] -> [compile])
   char buffer[1024 * 1024];
   cell cursor = 0;
   while (true) {
@@ -956,7 +981,7 @@ void k_comment() {
 }
 
 void compile_question() {
-  // ([io] -> [jojo_area])
+  // ([io] -> [compile])
   while (true) {
     name s = read_symbol();
     if (s == k2n("(")) {
@@ -972,10 +997,10 @@ void compile_question() {
 }
 
 void compile_answer() {
-  // ([io] -> [jojo_area])
+  // ([io] -> [compile])
   here(k2n("i/lit"));
-  cell* offset_place = (jojo_area + jojo_area_counter);
-  jojo_area_counter++;
+  cell* offset_place = compiling_stack_tos();
+  compiling_stack_inc();
   here(k2n("jump-if-false"));
   while (true) {
     name s = read_symbol();
@@ -989,17 +1014,17 @@ void compile_answer() {
       here(s);
     }
   }
-  offset_place[0] = (jojo_area + jojo_area_counter);
+  offset_place[0] = compiling_stack_tos();
 }
 
 void k_if() {
-  // ([io] -> [jojo_area])
+  // ([io] -> [compile])
   compile_question();
   compile_answer();
 }
 
 void k_tail_call() {
-  // ([io] -> [jojo_area])
+  // ([io] -> [compile])
   here(k2n("i/tail-call"));
   name s = read_symbol();
   here(s);
@@ -1013,11 +1038,10 @@ void export_keyword() {
 }
 
 void p_define_function() {
-  // ([io] -> [nametable])
+  // ([io] -> [compile] [nametable])
   name index;
   index = read_symbol();
-  cell old_jojo_area_counter = jojo_area_counter;
-  name* array = jojo_area + jojo_area_counter;
+  name* array = compiling_stack_tos();
   while (true) {
     name s = read_symbol();
     if (s == k2n("(")) {
@@ -1032,21 +1056,57 @@ void p_define_function() {
     }
   }
   nametable[index].type = k2n("jojo");
-  nametable[index].value.jojo.size = jojo_area_counter - old_jojo_area_counter;
+  nametable[index].value.jojo.size = compiling_stack_tos() - array;
   nametable[index].value.jojo.array = array;
 }
 
-void export_top_level_keyword() {
+void p_execute() {
+  // ([io] -> *)
+  name array[1024];
+  compiling_stack_push(array);
+  while (true) {
+    name s = read_symbol();
+    if (s == k2n("(")) {
+      eval_jo(read_symbol());
+    }
+    else if (s == k2n(")")) {
+      here(k2n("end"));
+      break;
+    }
+    else {
+      here(s);
+    }
+  }
+  compiling_stack_pop();
+  eval_jojo(array);
+}
+
+void p_top_repl() {
+  // ([io] -> *)
+  while (true) {
+    name s = read_symbol();
+    if (s == k2n("(")) {
+      eval_jo(read_symbol());
+    }
+    else {
+      // do nothing
+    }
+  }
+}
+
+void export_top_level() {
   define_primitive("~", p_define_function);
+  define_primitive("!", p_execute);
+  define_primitive("top-repl", p_top_repl);
 }
 
 void do_nothing() {
 }
 
 void export_mise() {
-  define_primitive("(", do_nothing);
   define_primitive("apply", p_apply);
   define_primitive("nametable-report", nametable_report);
+  define_variable("round-bar", k2n("("));
 }
 
 void p1() {
@@ -1067,21 +1127,9 @@ void export_play() {
   define_primitive("p3", p3);
 }
 
-void export_repl() {
-  define_variable("little-test-number", 4);
-  // basic-repl can not be defined as primitive
-  string p_basic_repl[] = {
-    "read-symbol",
-    "apply",
-    "little-test-number",
-    "jump-back"
-  };
-  define_function("basic-repl", 4, p_basic_repl);
-}
-
 void run_basic_repl() {
-
   init_nametable();
+  init_compiling_stack();
 
   export_stack_operation();
   export_ending();
@@ -1093,14 +1141,11 @@ void run_basic_repl() {
   export_file();
   export_bool();
   export_keyword();
-  export_top_level_keyword();
+  export_top_level();
   export_mise();
-  export_repl();
   export_play();
 
-  jojo first_jojo = nametable_get_jojo(k2n("basic-repl"));
-  rs_push(first_jojo.array);
-  eval();
+  p_top_repl();
 }
 
 int main(int argc, string* argv) {

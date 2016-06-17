@@ -3,7 +3,7 @@
 "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en">
 <head>
-<!-- 2016-06-17 Fri 21:48 -->
+<!-- 2016-06-18 Sat 02:53 -->
 <meta http-equiv="Content-Type" content="text/html;charset=utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>example code of jojo</title>
@@ -67,113 +67,96 @@ for the JavaScript code in this tag.
 <h2>overview</h2>
 <div id="text-table-of-contents">
 <ul>
-<li><a href="#orgedff500">define function</a></li>
-<li><a href="#orga7c0594">loop by explicit tail-call</a></li>
-<li><a href="#orgcfd6d4f">branching by if</a></li>
-<li><a href="#org8283b1c">receive function</a></li>
-<li><a href="#orgf977d57">string</a></li>
-<li><a href="#org1efb82e">file</a></li>
+<li><a href="#orge285e21">define function</a></li>
+<li><a href="#org43439c7">loop by explicit tail-call</a></li>
+<li><a href="#org5a0d50a">branching by if</a></li>
+<li><a href="#orge8b50a3">receive function</a></li>
+<li><a href="#org3eeaa7f">string</a></li>
+<li><a href="#org9abf450">file</a></li>
 </ul>
 </div>
 </div>
-<hr  />
 
-<ul class="org-ul">
-<li><p>simple example code (<a href="https://github.com/xieyuheng/jojo">source</a>)</p></li></ul>
-
-<hr  />
-
-<div id="outline-container-orgedff500" class="outline-2">
-<h2 id="orgedff500">define function</h2>
-<div class="outline-text-2" id="text-orgedff500">
+<div id="outline-container-orge285e21" class="outline-2">
+<h2 id="orge285e21">define function</h2>
+<div class="outline-text-2" id="text-orge285e21">
 <div class="org-src-container">
 
 <pre class="src src-scheme"><span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">~</span> square <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">:</span> int int <span style="color: #66d9ef; font-weight: bold;">-&gt;</span> int<span style="color: #696969;">)</span>
    dup mul end<span style="color: #696969;">)</span>
 
-<span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">~</span> t <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">:</span> <span style="color: #66d9ef; font-weight: bold;">-&gt;</span><span style="color: #696969;">)</span>
-   <span style="color: #696969;">(</span># 11<span style="color: #696969;">)</span> square .
-   end<span style="color: #696969;">)</span>
-t
+<span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">!</span> <span style="color: #696969;">(</span># 11<span style="color: #696969;">)</span> square .<span style="color: #696969;">)</span>
 </pre>
 </div>
 </div>
 </div>
 
-<div id="outline-container-orga7c0594" class="outline-2">
-<h2 id="orga7c0594">loop by explicit tail-call</h2>
-<div class="outline-text-2" id="text-orga7c0594">
+<div id="outline-container-org43439c7" class="outline-2">
+<h2 id="org43439c7">loop by explicit tail-call</h2>
+<div class="outline-text-2" id="text-org43439c7">
 <div class="org-src-container">
 
 <pre class="src src-scheme"><span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">~</span> stack-repl <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">:</span> <span style="color: #797979;">[</span>io<span style="color: #797979;">]</span> <span style="color: #66d9ef; font-weight: bold;">-&gt;</span> *<span style="color: #696969;">)</span>
-   read-symbol apply
-   print-stack
+   <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">if</span> read-symbol round-bar eq? <span style="color: #66d9ef; font-weight: bold;">-&gt;</span> read-symbol apply print-stack<span style="color: #696969;">)</span>
    <span style="color: #696969;">(</span>tail-call stack-repl<span style="color: #696969;">))</span>
 
-stack-repl
+<span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">!</span> stack-repl<span style="color: #696969;">)</span>
 </pre>
 </div>
 </div>
 </div>
 
-<div id="outline-container-orgcfd6d4f" class="outline-2">
-<h2 id="orgcfd6d4f">branching by if</h2>
-<div class="outline-text-2" id="text-orgcfd6d4f">
+<div id="outline-container-org5a0d50a" class="outline-2">
+<h2 id="org5a0d50a">branching by if</h2>
+<div class="outline-text-2" id="text-org5a0d50a">
 <div class="org-src-container">
 
-<pre class="src src-scheme"><span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">~</span> t <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">:</span> <span style="color: #66d9ef; font-weight: bold;">-&gt;</span><span style="color: #696969;">)</span>
-   <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">if</span> true <span style="color: #66d9ef; font-weight: bold;">-&gt;</span> true . end<span style="color: #696969;">)</span>
+<pre class="src src-scheme"><span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">!</span> <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">if</span> true <span style="color: #66d9ef; font-weight: bold;">-&gt;</span> true . end<span style="color: #696969;">)</span>
    <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">if</span> false <span style="color: #66d9ef; font-weight: bold;">-&gt;</span> false . end<span style="color: #696969;">))</span>
-t
 </pre>
 </div>
 </div>
 </div>
 
-<div id="outline-container-org8283b1c" class="outline-2">
-<h2 id="org8283b1c">receive function</h2>
-<div class="outline-text-2" id="text-org8283b1c">
+<div id="outline-container-orge8b50a3" class="outline-2">
+<h2 id="orge8b50a3">receive function</h2>
+<div class="outline-text-2" id="text-orge8b50a3">
 <div class="org-src-container">
 
 <pre class="src src-scheme"><span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">~</span> factorial <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">:</span> int <span style="color: #66d9ef; font-weight: bold;">-&gt;</span> int<span style="color: #696969;">)</span>
    <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">if</span> dup <span style="color: #696969;">(</span># 1<span style="color: #696969;">)</span> lteq? <span style="color: #66d9ef; font-weight: bold;">-&gt;</span> drop <span style="color: #696969;">(</span># 1<span style="color: #696969;">)</span> end<span style="color: #696969;">)</span>
    dup <span style="color: #696969;">(</span># 1<span style="color: #696969;">)</span> sub factorial mul end<span style="color: #696969;">)</span>
 
-<span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">~</span> t <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">:</span> <span style="color: #66d9ef; font-weight: bold;">-&gt;</span><span style="color: #696969;">)</span>
-   <span style="color: #696969;">(</span># 0<span style="color: #696969;">)</span> factorial .
+<span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">!</span> <span style="color: #696969;">(</span># 0<span style="color: #696969;">)</span> factorial .
    <span style="color: #696969;">(</span># 1<span style="color: #696969;">)</span> factorial .
    <span style="color: #696969;">(</span># 2<span style="color: #696969;">)</span> factorial .
    <span style="color: #696969;">(</span># 3<span style="color: #696969;">)</span> factorial .
-   <span style="color: #696969;">(</span># 4<span style="color: #696969;">)</span> factorial .
-   end<span style="color: #696969;">)</span>
-t
+   <span style="color: #696969;">(</span># 4<span style="color: #696969;">)</span> factorial .<span style="color: #696969;">)</span>
 </pre>
 </div>
 </div>
 </div>
 
-<div id="outline-container-orgf977d57" class="outline-2">
-<h2 id="orgf977d57">string</h2>
-<div class="outline-text-2" id="text-orgf977d57">
+<div id="outline-container-org3eeaa7f" class="outline-2">
+<h2 id="org3eeaa7f">string</h2>
+<div class="outline-text-2" id="text-org3eeaa7f">
 <div class="org-src-container">
 
-<pre class="src src-scheme"><span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">~</span> t <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">:</span> <span style="color: #66d9ef; font-weight: bold;">-&gt;</span><span style="color: #696969;">)</span>
-  <span style="color: #696969;">(</span>string <span style="color: #696969;">(</span>test1<span style="color: #696969;">)</span> <span style="color: #696969;">(</span>test2<span style="color: #696969;">))</span> print-string print-string<span style="color: #696969;">)</span>
-t
+<pre class="src src-scheme"><span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">!</span> <span style="color: #696969;">(</span>string <span style="color: #696969;">(</span>test1<span style="color: #696969;">)</span> <span style="color: #696969;">(</span>test2<span style="color: #696969;">))</span> print-string print-string<span style="color: #696969;">)</span>
 </pre>
 </div>
 </div>
 </div>
 
-<div id="outline-container-org1efb82e" class="outline-2">
-<h2 id="org1efb82e">file</h2>
-<div class="outline-text-2" id="text-org1efb82e">
+<div id="outline-container-org9abf450" class="outline-2">
+<h2 id="org9abf450">file</h2>
+<div class="outline-text-2" id="text-org9abf450">
 <div class="org-src-container">
 
-<pre class="src src-scheme"><span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">~</span> t <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">:</span> <span style="color: #66d9ef; font-weight: bold;">-&gt;</span> addr<span style="color: #696969;">)</span>
-  <span style="color: #696969;">(</span>string <span style="color: #696969;">(</span>README<span style="color: #696969;">))</span> <span style="color: #696969;">(</span># 1024<span style="color: #696969;">)</span> allocate tuck <span style="color: #696969;">(</span># 1024<span style="color: #696969;">)</span> read-file
-  . print-string<span style="color: #696969;">)</span>
-t
+<pre class="src src-scheme"><span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">!</span> <span style="color: #696969;">(</span>string <span style="color: #696969;">(</span>README<span style="color: #696969;">))</span>
+   <span style="color: #696969;">(</span># 1024<span style="color: #696969;">)</span> allocate tuck
+   <span style="color: #696969;">(</span># 1024<span style="color: #696969;">)</span> read-file .
+   print-string<span style="color: #696969;">)</span>
 </pre>
 </div>
 </div>
