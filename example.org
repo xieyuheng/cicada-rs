@@ -13,8 +13,14 @@
 * loop by explicit tail-call
 
   #+begin_src scheme
+  (~ apply-key (: jo -> *)
+     (if dup jo-used? -> apply end)
+     (if true ->
+         (string (undefined keyword : )) print-string
+         jo->string print-string end))
+
   (~ stack-repl (: [io] -> *)
-     (if read-symbol round-bar eq? -> read-symbol apply print-stack)
+     (if read-jo round-bar eq? -> read-jo apply-key print-stack)
      (tail-call stack-repl))
 
   (! stack-repl)

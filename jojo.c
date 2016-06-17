@@ -71,11 +71,11 @@ bool int_string_p(string str) {
 
 typedef void (*primitive)();
 
-typedef cell name;
+typedef cell jo;
 
 typedef struct {
   cell size;
-  name *array;
+  jo *array;
 } jojo;
 
 typedef union {
@@ -87,19 +87,19 @@ typedef union {
 typedef struct {
   cell index;
   string key;
-  name type;
+  jo type;
   bind value;
   cell orbit_length;
   cell orbiton;
-} nametable_entry;
+} jotable_entry;
 
-name k2n (string str);
+jo str2jo (string str);
 
-nametable_entry new_nametable_entry(cell index) {
-  nametable_entry e = {
+jotable_entry new_jotable_entry(cell index) {
+  jotable_entry e = {
     .index = index,
     .key = 0,
-    .type = k2n("none"),
+    .type = str2jo("none"),
     .value.cell = 0,
     .orbit_length = 0,
     .orbiton = 0
@@ -107,15 +107,15 @@ nametable_entry new_nametable_entry(cell index) {
   return e;
 }
 
-bool nametable_entry_occured(nametable_entry e) {
+bool jotable_entry_occured(jotable_entry e) {
   return e.key != 0;
 }
 
-bool nametable_entry_used(nametable_entry e) {
-  return e.type != k2n("none");
+bool jotable_entry_used(jotable_entry e) {
+  return e.type != str2jo("none");
 }
 
-bool nametable_entry_no_collision(nametable_entry e) {
+bool jotable_entry_no_collision(jotable_entry e) {
   return e.index == e.orbiton;
 }
 
@@ -126,9 +126,9 @@ bool nametable_entry_no_collision(nametable_entry e) {
 //   100003    about 97 k
 //   100333
 //   997
-#define nametable_size 100003
-nametable_entry nametable[nametable_size];
-cell nametable_counter = 0;
+#define jotable_size 100003
+jotable_entry jotable[jotable_size];
+cell jotable_counter = 0;
 
 cell string_to_sum(string str) {
   cell sum = 0;
@@ -141,12 +141,12 @@ cell string_to_sum(string str) {
   return sum;
 }
 
-bool nametable_keyeq(string k1, string k2) {
+bool jotable_keyeq(string k1, string k2) {
   return string_equal(k1, k2);
 }
 
-cell nametable_hash(string key, cell counter) {
-  return (counter + string_to_sum(key)) % nametable_size;
+cell jotable_hash(string key, cell counter) {
+  return (counter + string_to_sum(key)) % jotable_size;
 }
 
 char string_area[4 * 1024 * 1024];
@@ -172,23 +172,23 @@ string copy_to_string_area(string str) {
 }
 
 // -1 denotes the hash_table is filled
-cell nametable_insert(string key) {
-  cell orbit_index = nametable_hash(key, 0);
+cell jotable_insert(string key) {
+  cell orbit_index = jotable_hash(key, 0);
   cell counter = 0;
   while (true) {
-    cell index = nametable_hash(key, counter);
-    if (!nametable_entry_occured(nametable[index])) {
+    cell index = jotable_hash(key, counter);
+    if (!jotable_entry_occured(jotable[index])) {
       key = copy_to_string_area(key);
-      nametable[index].key = key;
-      nametable[index].orbiton = orbit_index;
-      nametable[orbit_index].orbit_length = 1 + counter;
-      nametable_counter = 1 + nametable_counter;
+      jotable[index].key = key;
+      jotable[index].orbiton = orbit_index;
+      jotable[orbit_index].orbit_length = 1 + counter;
+      jotable_counter = 1 + jotable_counter;
       return index;
     }
-    else if (nametable_keyeq(key, nametable[index].key)) {
+    else if (jotable_keyeq(key, jotable[index].key)) {
       return index;
     }
-    else if (counter == nametable_size) {
+    else if (counter == jotable_size) {
       return -1;
     }
     else {
@@ -198,17 +198,17 @@ cell nametable_insert(string key) {
 }
 
 // -1 denotes key not occured
-cell nametable_search(string key) {
+cell jotable_search(string key) {
   cell counter = 0;
   while (true) {
-    cell index = nametable_hash(key, counter);
-    if (!nametable_entry_occured(nametable[index])) {
+    cell index = jotable_hash(key, counter);
+    if (!jotable_entry_occured(jotable[index])) {
       return -1;
     }
-    else if (nametable_keyeq(key, nametable[index].key)) {
+    else if (jotable_keyeq(key, jotable[index].key)) {
       return index;
     }
-    else if (counter == nametable_size) {
+    else if (counter == jotable_size) {
       return -1;
     }
     else {
@@ -217,17 +217,17 @@ cell nametable_search(string key) {
   }
 }
 
-string n2k (cell index);
+string jo2str (cell index);
 
-void nametable_entry_print(nametable_entry entry) {
-  printf("%s : ", n2k(entry.type));
-  if (entry.type == k2n("cell")) {
+void jotable_entry_print(jotable_entry entry) {
+  printf("%s : ", jo2str(entry.type));
+  if (entry.type == str2jo("cell")) {
     printf("%ld", entry.value.cell);
   }
-  else if (entry.type == k2n("primitive")) {
+  else if (entry.type == str2jo("primitive")) {
     printf("%ld", entry.value.primitive);
   }
-  else if (entry.type == k2n("jojo")) {
+  else if (entry.type == str2jo("jojo")) {
     printf("%ld ", entry.value.jojo.size);
     printf("[ ", entry.value.jojo.size);
     cell i;
@@ -238,94 +238,94 @@ void nametable_entry_print(nametable_entry entry) {
   }
 }
 
-void nametable_report_orbit(cell index, cell counter) {
-  while (counter < nametable[index].orbit_length) {
-    string key = nametable[index].key;
-    cell next_index = nametable_hash(key, counter);
-    if (index == nametable[next_index].orbiton) {
-      printf("  - %ld %s\n", next_index, nametable[next_index].key);
+void jotable_report_orbit(cell index, cell counter) {
+  while (counter < jotable[index].orbit_length) {
+    string key = jotable[index].key;
+    cell next_index = jotable_hash(key, counter);
+    if (index == jotable[next_index].orbiton) {
+      printf("  - %ld %s\n", next_index, jotable[next_index].key);
     }
-    if (nametable_entry_used(nametable[next_index])) {
+    if (jotable_entry_used(jotable[next_index])) {
       printf("    = ");
-      nametable_entry_print(nametable[next_index]);
+      jotable_entry_print(jotable[next_index]);
       printf("\n");
     }
     counter = 1 + counter;
   }
 }
 
-void nametable_report() {
+void jotable_report() {
   printf("\n");
-  printf("- nametable_report\n");
+  printf("- jotable_report\n");
   printf("  : <index> <key> // <orbit-length>\n");
   cell index = 0;
-  while (index < nametable_size) {
-    if (nametable_entry_occured(nametable[index]) &&
-        nametable_entry_no_collision(nametable[index])) {
+  while (index < jotable_size) {
+    if (jotable_entry_occured(jotable[index]) &&
+        jotable_entry_no_collision(jotable[index])) {
       printf("  - %ld %s // %ld\n",
-             index, nametable[index].key, nametable[index].orbit_length);
-      if (nametable_entry_used(nametable[index])) {
+             index, jotable[index].key, jotable[index].orbit_length);
+      if (jotable_entry_used(jotable[index])) {
         printf("    = ");
-        nametable_entry_print(nametable[index]);
+        jotable_entry_print(jotable[index]);
         printf("\n");
       }
-      nametable_report_orbit(index, 1);
+      jotable_report_orbit(index, 1);
     }
     index = 1 + index;
   }
   printf("  : <index> <key> // <orbit-length>\n");
   printf("\n");
-  printf("- used : %ld\n", nametable_counter);
-  printf("- free : %ld\n", nametable_size - nametable_counter);
+  printf("- used : %ld\n", jotable_counter);
+  printf("- free : %ld\n", jotable_size - jotable_counter);
 }
 
-void nametable_print() {
+void jotable_print() {
   printf("\n");
-  printf("- nametable_print\n");
+  printf("- jotable_print\n");
   cell index = 0;
-  while (index < nametable_size) {
+  while (index < jotable_size) {
     printf("  - %ld %s %ld // %ld\n",
            index,
-           nametable[index].key,
-           nametable[index].value,
-           nametable[index].orbit_length);
+           jotable[index].key,
+           jotable[index].value,
+           jotable[index].orbit_length);
     index = 1 + index;
   }
   printf("\n");
-  printf("- used : %ld\n", nametable_counter);
-  printf("- free : %ld\n", nametable_size - nametable_counter);
+  printf("- used : %ld\n", jotable_counter);
+  printf("- free : %ld\n", jotable_size - jotable_counter);
 }
 
-name k2n(string str) {
-  return nametable_insert(str);
+jo str2jo(string str) {
+  return jotable_insert(str);
 }
 
-string n2k(cell index) {
-  return nametable[index].key;
+string jo2str(cell index) {
+  return jotable[index].key;
 }
 
-void init_nametable() {
+void init_jotable() {
   cell i = 0;
-  while (i < nametable_size) {
-    nametable[i] = new_nametable_entry(i);
+  while (i < jotable_size) {
+    jotable[i] = new_jotable_entry(i);
     i++;
   }
 }
 
-name jojo_area[1024 * 1024];
+jo jojo_area[1024 * 1024];
 
-typedef name* compiling_stack_t[1024];
+typedef jo* compiling_stack_t[1024];
 
 compiling_stack_t compiling_stack;
 cell compiling_stack_base = 0;
 cell compiling_stack_pointer = 0;
 
-void compiling_stack_push(name* value) {
+void compiling_stack_push(jo* value) {
   compiling_stack[compiling_stack_pointer] = value;
   compiling_stack_pointer++;
 }
 
-name* compiling_stack_pop() {
+jo* compiling_stack_pop() {
   compiling_stack_pointer--;
   return compiling_stack[compiling_stack_pointer];
 }
@@ -336,7 +336,7 @@ void compiling_stack_inc() {
 }
 
 
-name* compiling_stack_tos() {
+jo* compiling_stack_tos() {
   return compiling_stack[compiling_stack_pointer - 1];
 }
 
@@ -349,71 +349,71 @@ void init_compiling_stack() {
 }
 
 void here(cell n) {
-  name* pointer = compiling_stack_pop();
+  jo* pointer = compiling_stack_pop();
   pointer[0] = n;
   compiling_stack_push(pointer + 1);
 }
 
-void nametable_set_cell(cell index, cell cell) {
-  nametable[index].type = k2n("cell");
-  nametable[index].value.cell = cell;
+void jotable_set_cell(cell index, cell cell) {
+  jotable[index].type = str2jo("cell");
+  jotable[index].value.cell = cell;
 }
 
-void nametable_set_primitive(cell index, primitive primitive) {
-  nametable[index].type = k2n("primitive");
-  nametable[index].value.primitive = primitive;
+void jotable_set_primitive(cell index, primitive primitive) {
+  jotable[index].type = str2jo("primitive");
+  jotable[index].value.primitive = primitive;
 }
 
-cell nametable_get_cell(cell index) {
-  return nametable[index].value.cell;
+cell jotable_get_cell(cell index) {
+  return jotable[index].value.cell;
 }
 
-primitive nametable_get_primitive(cell index) {
-  return nametable[index].value.primitive;
+primitive jotable_get_primitive(cell index) {
+  return jotable[index].value.primitive;
 }
 
-jojo nametable_get_jojo(cell index) {
-  return nametable[index].value.jojo;
+jojo jotable_get_jojo(cell index) {
+  return jotable[index].value.jojo;
 }
 
-void nametable_test() {
-  k2n("testkey0");
-  k2n("testkey1");
-  k2n("testkey2");
-  k2n("testkey3");
-  k2n("testkey4");
+void jotable_test() {
+  str2jo("testkey0");
+  str2jo("testkey1");
+  str2jo("testkey2");
+  str2jo("testkey3");
+  str2jo("testkey4");
 
-  k2n("testkey0");
-  k2n("testkey1");
-  k2n("testkey2");
-  k2n("testkey3");
-  k2n("testkey4");
+  str2jo("testkey0");
+  str2jo("testkey1");
+  str2jo("testkey2");
+  str2jo("testkey3");
+  str2jo("testkey4");
 
-  k2n("testtestkey0");
-  k2n("testtestkey1");
-  k2n("testtestkey2");
-  k2n("testtestkey3");
-  k2n("testtestkey4");
+  str2jo("testtestkey0");
+  str2jo("testtestkey1");
+  str2jo("testtestkey2");
+  str2jo("testtestkey3");
+  str2jo("testtestkey4");
 
-  k2n("testtesttestkey0");
-  k2n("testtesttestkey1");
-  k2n("testtesttestkey2");
-  k2n("testtesttestkey3");
-  k2n("testtesttestkey4");
+  str2jo("testtesttestkey0");
+  str2jo("testtesttestkey1");
+  str2jo("testtesttestkey2");
+  str2jo("testtesttestkey3");
+  str2jo("testtesttestkey4");
 
-  k2n("testtesttesttestkey0");
-  k2n("testtesttesttestkey1");
-  k2n("testtesttesttestkey2");
-  k2n("testtesttesttestkey3");
-  k2n("testtesttesttestkey4");
+  str2jo("testtesttesttestkey0");
+  str2jo("testtesttesttestkey1");
+  str2jo("testtesttesttestkey2");
+  str2jo("testtesttesttestkey3");
+  str2jo("testtesttesttestkey4");
 
-  nametable_set_cell(k2n("k1"), 1);
-  nametable_report();
+  jotable_set_cell(str2jo("k1"), 1);
+  jotable_report();
 
-  nametable_set_cell(k2n("k1"), 0);
-  nametable_report();
+  jotable_set_cell(str2jo("k1"), 0);
+  jotable_report();
 
-  // nametable_print();
+  // jotable_print();
 }
 
 typedef cell argument_stack[1024 * 4];
@@ -432,48 +432,48 @@ cell as_pop() {
   return as[as_pointer];
 }
 
-typedef name* return_stack[1024 * 4];
+typedef jo* return_stack[1024 * 4];
 
 return_stack rs;
 cell rs_base = 64;
 cell rs_pointer = 64;
 
-void rs_push(name* value) {
+void rs_push(jo* value) {
   rs[rs_pointer] = value;
   rs_pointer++;
 }
 
-name* rs_pop() {
+jo* rs_pop() {
   rs_pointer--;
   return rs[rs_pointer];
 }
 
 void define_primitive(string str, primitive fun) {
-  name index = k2n(str);
-  nametable_set_primitive(index, fun);
+  jo index = str2jo(str);
+  jotable_set_primitive(index, fun);
 }
 
 void define_variable(string str, cell cell) {
-  name index = k2n(str);
-  nametable_set_cell(index, cell);
+  jo index = str2jo(str);
+  jotable_set_cell(index, cell);
 }
 
-void apply(name jo) {
-  if (!nametable_entry_used(nametable[jo])) {
-    printf("undefined name : %s\n", n2k(jo));
+void apply(jo jo) {
+  if (!jotable_entry_used(jotable[jo])) {
+    printf("undefined jo : %s\n", jo2str(jo));
     return;
   }
-  cell jo_type = nametable[jo].type;
-  if (jo_type == k2n("primitive")) {
-    primitive primitive = nametable_get_primitive(jo);
+  cell jo_type = jotable[jo].type;
+  if (jo_type == str2jo("primitive")) {
+    primitive primitive = jotable_get_primitive(jo);
     primitive();
   }
-  else if (jo_type == k2n("jojo")) {
-    jojo jojo = nametable_get_jojo(jo);
+  else if (jo_type == str2jo("jojo")) {
+    jojo jojo = jotable_get_jojo(jo);
     rs_push(jojo.array);
   }
-  else if (jo_type == k2n("cell")) {
-    cell cell = nametable_get_cell(jo);
+  else if (jo_type == str2jo("cell")) {
+    cell cell = jotable_get_cell(jo);
     as_push(cell);
   }
 }
@@ -495,7 +495,7 @@ void eval() {
   else {
     cell rs_base = rs_pointer;
     while (rs_pointer >= rs_base) {
-      name* function_body = rs_pop();
+      jo* function_body = rs_pop();
       rs_push(function_body + 1);
       cell jo = *(cell*)function_body;
       apply(jo);
@@ -503,24 +503,33 @@ void eval() {
   }
 }
 
-void eval_jo(name jo) {
-  cell jo_type = nametable[jo].type;
-  if (jo_type == k2n("primitive")) {
-    primitive primitive = nametable_get_primitive(jo);
+void eval_jo(jo jo) {
+  cell jo_type = jotable[jo].type;
+  if (jo_type == str2jo("primitive")) {
+    primitive primitive = jotable_get_primitive(jo);
     primitive();
   }
-  else if (jo_type == k2n("jojo")) {
-    jojo jojo = nametable_get_jojo(jo);
+  else if (jo_type == str2jo("jojo")) {
+    jojo jojo = jotable_get_jojo(jo);
     rs_push(jojo.array);
     eval();
   }
-  else if (jo_type == k2n("cell")) {
-    cell cell = nametable_get_cell(jo);
+  else if (jo_type == str2jo("cell")) {
+    cell cell = jotable_get_cell(jo);
     as_push(cell);
   }
 }
 
-void eval_jojo(name* array) {
+void eval_key(jo jo) {
+  if (!jotable_entry_used(jotable[jo])) {
+    printf("undefined keyword : %s\n", jo2str(jo));
+    k_comment();
+    return;
+  }
+  eval_jo(jo);
+}
+
+void eval_jojo(jo* array) {
   rs_push(array);
   eval();
 }
@@ -609,19 +618,19 @@ void export_ending() {
 
 void p_jump_back() {
   // (offset -> [rs])
-  name* function_body = rs_pop();
+  jo* function_body = rs_pop();
   rs_push(function_body - as_pop());
 }
 
 void p_jump_over() {
   // (offset -> [rs])
-  name* function_body = rs_pop();
+  jo* function_body = rs_pop();
   rs_push(function_body + as_pop());
 }
 
 void i_lit() {
   // ([rs] -> int)
-  name* function_body = rs_pop();
+  jo* function_body = rs_pop();
   rs_push(function_body + 1);
   cell jo = *(cell*)function_body;
   as_push(jo);
@@ -629,14 +638,14 @@ void i_lit() {
 
 void i_tail_call() {
   // ([rs] -> int)
-  name* function_body = rs_pop();
+  jo* function_body = rs_pop();
   cell jo = *(cell*)function_body;
   apply(jo);
 }
 
 void p_jump_if_false() {
   // (bool addr -> [rs])
-  name* a = as_pop();
+  jo* a = as_pop();
   cell b = as_pop();
   if (b == 0) {
     rs_pop();
@@ -742,21 +751,21 @@ void p_lteq_p() {
   as_push(a <= b);
 }
 
-name read_symbol();
+jo read_jo();
 
 void k_integer() {
   // ([io] -> [compile])
   while (true) {
-    name s = read_symbol();
-    if (s == k2n(")")) {
+    jo s = read_jo();
+    if (s == str2jo(")")) {
       break;
     }
-    else if (int_string_p(n2k(s))) {
-      here(k2n("i/lit"));
-      here(atoi(n2k(s)));
+    else if (int_string_p(jo2str(s))) {
+      here(str2jo("i/lit"));
+      here(atoi(jo2str(s)));
     }
     else {
-      printf("meet non-cell string in (# ...) : %s", n2k(s));
+      printf("meet non-cell string in (# ...) : %s", jo2str(s));
       break;
     }
   }
@@ -858,8 +867,8 @@ void unread_char(char c) {
   }
 }
 
-name read_symbol() {
-  // ([io] -> symbol)
+jo read_jo() {
+  // ([io] -> jo)
   char buf[1024];
   cell cur = 0;
   cell collecting = false;
@@ -893,25 +902,39 @@ name read_symbol() {
     }
   }
   buf[cur] = 0;
-  return k2n(buf);
+  return str2jo(buf);
 }
 
-void p_read_symbol() {
-  as_push(read_symbol());
+void p_read_jo() {
+  as_push(read_jo());
 }
 
-void export_symbol() {
-  define_primitive("read-symbol", p_read_symbol);
+void p_jo_used_p() {
+  // (jo -> bool)
+  jo jo = as_pop();
+  as_push(jotable_entry_used(jotable[jo]));
+}
+
+void p_jo_to_string() {
+  // (jo -> string)
+  jo jo = as_pop();
+  as_push(jo2str(jo));
+}
+
+void export_jo() {
+  define_primitive("read-jo", p_read_jo);
+  define_primitive("jo-used?", p_jo_used_p);
+  define_primitive("jo->string", p_jo_to_string);
 }
 
 void k_string() {
   // ([io] -> [compile])
   while (true) {
-    name s = read_symbol();
-    if (s == k2n(")")) {
+    jo s = read_jo();
+    if (s == str2jo(")")) {
       return;
     }
-    else if (s == k2n("(")) {
+    else if (s == str2jo("(")) {
       k_one_string();
     }
     else {
@@ -938,7 +961,7 @@ void k_one_string() {
   }
   string str = malloc(cursor);
   strcpy(str, buffer);
-  here(k2n("i/lit"));
+  here(str2jo("i/lit"));
   here(str);
 }
 
@@ -956,8 +979,8 @@ void p_read_file() {
   // (string addr number -> number)
   cell limit = as_pop();
   cell buffer = as_pop();
-  cell file_name = as_pop();
-  FILE* file_handle = fopen(file_name, "r");
+  cell file_jo = as_pop();
+  FILE* file_handle = fopen(file_jo, "r");
   cell readed_counter = fread(buffer, 1, limit, file_handle);
   fclose(file_handle);
   as_push(readed_counter);
@@ -970,11 +993,11 @@ void export_file() {
 void k_comment() {
   // ([io] ->)
   while (true) {
-    name s = read_symbol();
-    if (s == k2n("(")) {
+    jo s = read_jo();
+    if (s == str2jo("(")) {
       k_comment();
     }
-    if (s == k2n(")")) {
+    if (s == str2jo(")")) {
       break;
     }
   }
@@ -983,11 +1006,11 @@ void k_comment() {
 void compile_question() {
   // ([io] -> [compile])
   while (true) {
-    name s = read_symbol();
-    if (s == k2n("(")) {
-      eval_jo(read_symbol());
+    jo s = read_jo();
+    if (s == str2jo("(")) {
+      eval_key(read_jo());
     }
-    else if (s == k2n("->")) {
+    else if (s == str2jo("->")) {
       break;
     }
     else {
@@ -998,16 +1021,16 @@ void compile_question() {
 
 void compile_answer() {
   // ([io] -> [compile])
-  here(k2n("i/lit"));
+  here(str2jo("i/lit"));
   cell* offset_place = compiling_stack_tos();
   compiling_stack_inc();
-  here(k2n("jump-if-false"));
+  here(str2jo("jump-if-false"));
   while (true) {
-    name s = read_symbol();
-    if (s == k2n("(")) {
-      eval_jo(read_symbol());
+    jo s = read_jo();
+    if (s == str2jo("(")) {
+      eval_key(read_jo());
     }
-    else if (s == k2n(")")) {
+    else if (s == str2jo(")")) {
       break;
     }
     else {
@@ -1025,8 +1048,8 @@ void k_if() {
 
 void k_tail_call() {
   // ([io] -> [compile])
-  here(k2n("i/tail-call"));
-  name s = read_symbol();
+  here(str2jo("i/tail-call"));
+  jo s = read_jo();
   here(s);
   k_comment();
 }
@@ -1038,39 +1061,39 @@ void export_keyword() {
 }
 
 void p_define_function() {
-  // ([io] -> [compile] [nametable])
-  name index;
-  index = read_symbol();
-  name* array = compiling_stack_tos();
+  // ([io] -> [compile] [jotable])
+  jo index;
+  index = read_jo();
+  jo* array = compiling_stack_tos();
   while (true) {
-    name s = read_symbol();
-    if (s == k2n("(")) {
-      eval_jo(read_symbol());
+    jo s = read_jo();
+    if (s == str2jo("(")) {
+      eval_key(read_jo());
     }
-    else if (s == k2n(")")) {
-      here(k2n("end"));
+    else if (s == str2jo(")")) {
+      here(str2jo("end"));
       break;
     }
     else {
       here(s);
     }
   }
-  nametable[index].type = k2n("jojo");
-  nametable[index].value.jojo.size = compiling_stack_tos() - array;
-  nametable[index].value.jojo.array = array;
+  jotable[index].type = str2jo("jojo");
+  jotable[index].value.jojo.size = compiling_stack_tos() - array;
+  jotable[index].value.jojo.array = array;
 }
 
 void p_execute() {
   // ([io] -> *)
-  name array[1024];
+  jo array[1024];
   compiling_stack_push(array);
   while (true) {
-    name s = read_symbol();
-    if (s == k2n("(")) {
-      eval_jo(read_symbol());
+    jo s = read_jo();
+    if (s == str2jo("(")) {
+      eval_key(read_jo());
     }
-    else if (s == k2n(")")) {
-      here(k2n("end"));
+    else if (s == str2jo(")")) {
+      here(str2jo("end"));
       break;
     }
     else {
@@ -1084,9 +1107,9 @@ void p_execute() {
 void p_top_repl() {
   // ([io] -> *)
   while (true) {
-    name s = read_symbol();
-    if (s == k2n("(")) {
-      eval_jo(read_symbol());
+    jo s = read_jo();
+    if (s == str2jo("(")) {
+      eval_key(read_jo());
     }
     else {
       // do nothing
@@ -1105,8 +1128,8 @@ void do_nothing() {
 
 void export_mise() {
   define_primitive("apply", p_apply);
-  define_primitive("nametable-report", nametable_report);
-  define_variable("round-bar", k2n("("));
+  define_primitive("jotable-report", jotable_report);
+  define_variable("round-bar", str2jo("("));
 }
 
 void p1() {
@@ -1128,7 +1151,7 @@ void export_play() {
 }
 
 void run_basic_repl() {
-  init_nametable();
+  init_jotable();
   init_compiling_stack();
 
   export_stack_operation();
@@ -1136,7 +1159,7 @@ void run_basic_repl() {
   export_control();
   export_integer();
   export_memory();
-  export_symbol();
+  export_jo();
   export_string();
   export_file();
   export_bool();

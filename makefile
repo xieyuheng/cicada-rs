@@ -5,16 +5,11 @@ CC = gcc
 build:
 	$(CC) -ldl jojo.c -o jojo -rdynamic
 
-tangle:
-	./tangle.el
-
 run:
 	./jojo
 
 test:
 	./jojo example.org
-
-play: tangle build run
 
 clean:
 	@
