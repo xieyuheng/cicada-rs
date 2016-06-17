@@ -784,6 +784,55 @@ void export_memory() {
   define_primitive("free", p_free);
 }
 
+typedef FILE* reading_stack_t[1024];
+
+reading_stack_t reading_stack;
+cell reading_stack_base = 0;
+cell reading_stack_pointer = 0;
+
+void reading_stack_push(FILE* value) {
+  reading_stack[reading_stack_pointer] = value;
+  reading_stack_pointer++;
+}
+
+FILE* reading_stack_pop() {
+  reading_stack_pointer--;
+  return reading_stack[reading_stack_pointer];
+}
+
+FILE* reading_stack_tos() {
+  return reading_stack[reading_stack_pointer - 1];
+}
+
+bool reading_stack_empty_p() {
+  return reading_stack_pointer == reading_stack_base;
+}
+
+char read_char() {
+  if (reading_stack_empty_p()) {
+    return fgetc(stdin);
+  }
+  else {
+    char c = fgetc(reading_stack_tos());
+    if (c == EOF) {
+      fclose(reading_stack_pop());
+      return read_char();
+    }
+    else {
+      return c;
+    }
+  }
+}
+
+void unread_char(char c) {
+  if (reading_stack_empty_p()) {
+    ungetc(c, stdin);
+  }
+  else {
+    ungetc(c, reading_stack_tos());
+  }
+}
+
 name read_symbol() {
   // ([io] -> symbol)
   char buf[1024];
@@ -792,7 +841,7 @@ name read_symbol() {
   char c;
   char go = true;
   while (go) {
-    c = getchar();
+    c = read_char();
     if (!collecting) {
       if (isspace(c)) {
         // do nothing
@@ -809,7 +858,7 @@ name read_symbol() {
     else {
       if (isbarcket(c) ||
           isspace(c)) {
-        ungetc(c, stdin);
+        unread_char(c);
         go = false;
       }
       else {
@@ -851,7 +900,7 @@ void k_one_string() {
   char buffer[1024 * 1024];
   cell cursor = 0;
   while (true) {
-    char c = getchar();
+    char c = read_char();
     if (c == ')') {
       buffer[cursor] = 0;
       cursor++;
@@ -1030,7 +1079,7 @@ void export_repl() {
   define_function("basic-repl", 4, p_basic_repl);
 }
 
-void the_story_begins() {
+void run_basic_repl() {
 
   init_nametable();
 
@@ -1055,6 +1104,18 @@ void the_story_begins() {
 }
 
 int main(int argc, string* argv) {
-  the_story_begins();
-  return 0;
+  if (argc == 1) {
+    run_basic_repl();
+    return 0;
+  }
+  else {
+    FILE* fp = fopen(argv[1], "r");
+    if(!fp) {
+      perror("File opening failed");
+      printf("fail to open : %s\n", argv[1]);
+      return EXIT_FAILURE;
+    }
+    reading_stack_push(fp);
+    run_basic_repl();
+  }
 }

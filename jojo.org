@@ -10,10 +10,9 @@
 
 * todo
 
-  - file
   - better nametable for module system
   - module system
-  - debug -- mf
+  - debug
   - no redefine
   - fix jump
 
@@ -1161,6 +1160,69 @@
     }
     #+end_src
 
+* reading_stack
+
+*** reading_stack
+
+    #+begin_src c
+    typedef FILE* reading_stack_t[1024];
+
+    reading_stack_t reading_stack;
+    cell reading_stack_base = 0;
+    cell reading_stack_pointer = 0;
+
+    void reading_stack_push(FILE* value) {
+      reading_stack[reading_stack_pointer] = value;
+      reading_stack_pointer++;
+    }
+
+    FILE* reading_stack_pop() {
+      reading_stack_pointer--;
+      return reading_stack[reading_stack_pointer];
+    }
+
+    FILE* reading_stack_tos() {
+      return reading_stack[reading_stack_pointer - 1];
+    }
+
+    bool reading_stack_empty_p() {
+      return reading_stack_pointer == reading_stack_base;
+    }
+    #+end_src
+
+*** read_char
+
+    #+begin_src c
+    char read_char() {
+      if (reading_stack_empty_p()) {
+        return fgetc(stdin);
+      }
+      else {
+        char c = fgetc(reading_stack_tos());
+        if (c == EOF) {
+          fclose(reading_stack_pop());
+          return read_char();
+        }
+        else {
+          return c;
+        }
+      }
+    }
+    #+end_src
+
+*** unread_char
+
+    #+begin_src c
+    void unread_char(char c) {
+      if (reading_stack_empty_p()) {
+        ungetc(c, stdin);
+      }
+      else {
+        ungetc(c, reading_stack_tos());
+      }
+    }
+    #+end_src
+
 * *symbol*
 
 *** read_symbol
@@ -1174,7 +1236,7 @@
       char c;
       char go = true;
       while (go) {
-        c = getchar();
+        c = read_char();
         if (!collecting) {
           if (isspace(c)) {
             // do nothing
@@ -1191,7 +1253,7 @@
         else {
           if (isbarcket(c) ||
               isspace(c)) {
-            ungetc(c, stdin);
+            unread_char(c);
             go = false;
           }
           else {
@@ -1247,7 +1309,7 @@
       char buffer[1024 * 1024];
       cell cursor = 0;
       while (true) {
-        char c = getchar();
+        char c = read_char();
         if (c == ')') {
           buffer[cursor] = 0;
           cursor++;
@@ -1528,12 +1590,12 @@
     }
     #+end_src
 
-* the_story_begins
+* epilog
 
-*** the_story_begins
+*** run_basic_repl
 
     #+begin_src c
-    void the_story_begins() {
+    void run_basic_repl() {
 
       init_nametable();
 
@@ -1558,11 +1620,23 @@
     }
     #+end_src
 
-*** main
+* main
 
-    #+begin_src c
-    int main(int argc, string* argv) {
-      the_story_begins();
+  #+begin_src c
+  int main(int argc, string* argv) {
+    if (argc == 1) {
+      run_basic_repl();
       return 0;
     }
-    #+end_src
+    else {
+      FILE* fp = fopen(argv[1], "r");
+      if(!fp) {
+        perror("File opening failed");
+        printf("fail to open : %s\n", argv[1]);
+        return EXIT_FAILURE;
+      }
+      reading_stack_push(fp);
+      run_basic_repl();
+    }
+  }
+  #+end_src
