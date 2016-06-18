@@ -5,6 +5,7 @@
 #include <setjmp.h>
 #include <string.h>
 #include <dlfcn.h>
+#include <unistd.h>
 
 typedef enum { false, true } bool;
 
@@ -95,7 +96,7 @@ typedef struct {
 
 jo str2jo (string str);
 
-jotable_entry new_jotable_entry(cell index) {
+jotable_entry proto_jotable_entry(cell index) {
   jotable_entry e = {
     .index = index,
     .key = 0,
@@ -307,7 +308,7 @@ string jo2str(cell index) {
 void init_jotable() {
   cell i = 0;
   while (i < jotable_size) {
-    jotable[i] = new_jotable_entry(i);
+    jotable[i] = proto_jotable_entry(i);
     i++;
   }
 }
@@ -818,7 +819,7 @@ void export_memory() {
   define_primitive("free", p_free);
 }
 
-typedef FILE* reading_stack_t[1024];
+typedef FILE* reading_stack_t[64];
 
 reading_stack_t reading_stack;
 cell reading_stack_base = 0;
@@ -842,6 +843,44 @@ bool reading_stack_empty_p() {
   return reading_stack_pointer == reading_stack_base;
 }
 
+typedef struct {
+  jo nick;
+  jo name;
+} alias;
+
+typedef alias* loading_stack_t[64];
+
+loading_stack_t loading_stack;
+cell loading_stack_base = 0;
+cell loading_stack_pointer = 0;
+
+void loading_stack_push(alias* value) {
+  loading_stack[loading_stack_pointer] = value;
+  loading_stack_pointer++;
+}
+
+alias* loading_stack_pop() {
+  loading_stack_pointer--;
+  return loading_stack[loading_stack_pointer];
+}
+
+alias* loading_stack_tos() {
+  return loading_stack[loading_stack_pointer - 1];
+}
+
+bool loading_stack_empty_p() {
+  return loading_stack_pointer == loading_stack_base;
+}
+
+cell alias_record_size = 1024;
+
+void init_loading_stack() {
+  alias record[alias_record_size];
+  alias a = {.nick = 0, .name = 0};
+  record[0] = a;
+  loading_stack_push(record);
+}
+
 char read_char() {
   if (reading_stack_empty_p()) {
     return fgetc(stdin);
@@ -850,6 +889,7 @@ char read_char() {
     char c = fgetc(reading_stack_tos());
     if (c == EOF) {
       fclose(reading_stack_pop());
+      loading_stack_pop();
       return read_char();
     }
     else {
@@ -864,6 +904,43 @@ void unread_char(char c) {
   }
   else {
     ungetc(c, reading_stack_tos());
+  }
+}
+
+void alias_add(jo nick, jo name) {
+  alias* alias_record = loading_stack_tos();
+  cell i = 0;
+  while (i < alias_record_size) {
+    if (alias_record[i].nick == 0 &&
+        alias_record[i].name == 0) {
+      alias_record[i].nick = nick;
+      alias_record[i].name = name;
+      alias_record[i+1].nick = 0;
+      alias_record[i+1].name = 0;
+      return;
+    }
+    else {
+      i++;
+    }
+  }
+  printf("alias_add fail alias_record is full\n");
+}
+
+jo alias_find(jo nick) {
+  // return 0 -- not found
+  alias* alias_record = loading_stack_tos();
+  cell i = 0;
+  while (true) {
+    if (alias_record[i].nick == 0 &&
+        alias_record[i].name == 0) {
+      return 0;
+    }
+    else if (alias_record[i].nick == nick) {
+      return alias_record[i].name;
+    }
+    else {
+      i++;
+    }
   }
 }
 
@@ -902,7 +979,22 @@ jo read_jo() {
     }
   }
   buf[cur] = 0;
-  return str2jo(buf);
+  jo jo0 = str2jo(buf);
+  jo jo1 = alias_find(jo0);
+  if (jo1 != 0) {
+    return jo1;
+  }
+  else {
+    return jo0;
+  }
+}
+
+jo cat_jo(jo x, jo y) {
+  char str[1024];
+  str[0] = 0;
+  strcat(str, jo2str(x));
+  strcat(str, jo2str(y));
+  return str2jo(str);
 }
 
 void p_read_jo() {
@@ -979,11 +1071,26 @@ void p_read_file() {
   // (string addr number -> number)
   cell limit = as_pop();
   cell buffer = as_pop();
-  cell file_jo = as_pop();
-  FILE* file_handle = fopen(file_jo, "r");
-  cell readed_counter = fread(buffer, 1, limit, file_handle);
-  fclose(file_handle);
+  cell path = as_pop();
+  FILE* fp = fopen(path, "r");
+  if(!fp) {
+    perror("p_read_file file to open file");
+    return EXIT_FAILURE;
+  }
+  cell readed_counter = fread(buffer, 1, limit, fp);
+  fclose(fp);
   as_push(readed_counter);
+}
+
+bool file_readable_p(string path) {
+  FILE* fp = fopen(path, "r");
+  if (!fp) {
+    return false;
+  }
+  else {
+    fclose(fp);
+    return true;
+  }
 }
 
 void export_file() {
@@ -1046,6 +1153,13 @@ void k_if() {
   compile_answer();
 }
 
+void k_else() {
+  // ([io] -> [compile])
+  here(str2jo("i/lit"));
+  here(true);
+  compile_answer();
+}
+
 void k_tail_call() {
   // ([io] -> [compile])
   here(str2jo("i/tail-call"));
@@ -1056,14 +1170,175 @@ void k_tail_call() {
 
 void export_keyword() {
   define_primitive(":", k_comment);
+  define_primitive("note", k_comment);
   define_primitive("if", k_if);
+  define_primitive("else", k_else);
   define_primitive("tail-call", k_tail_call);
+}
+
+void p_getcwd() {
+  // (-> string)
+  char buf[1024];
+  as_push(getcwd(buf, 1024));
+}
+
+void export_system() {
+  define_primitive("getcwd", p_getcwd);
+}
+
+string user_module_path = "/home/xyh/.jojo/module/";
+
+string system_module_path = "";
+
+typedef struct {
+  jo name;
+  string path;
+} module;
+
+typedef module module_stack_t[1024];
+
+module_stack_t module_stack;
+cell module_stack_base = 0;
+cell module_stack_pointer = 0;
+
+void module_stack_push(module value) {
+  module_stack[module_stack_pointer] = value;
+  module_stack_pointer++;
+}
+
+module module_stack_tos() {
+  return module_stack[module_stack_pointer - 1];
+}
+
+
+bool module_stack_empty_p() {
+  return module_stack_pointer == module_stack_base;
+}
+
+bool module_stack_find(jo name) {
+  cell i = 0;
+  while (i < module_stack_pointer) {
+    if (name == module_stack[i].name) {
+      return true;
+    }
+    else {
+      // do nothing
+    }
+  }
+  return false;
+}
+
+void load_file(string path) {
+  FILE* fp = fopen(path, "r");
+  if(!fp) {
+    perror("File opening failed");
+    printf("load_file fail : %s\n", path);
+    return EXIT_FAILURE;
+  }
+  reading_stack_push(fp);
+  alias record[alias_record_size];
+  alias a = {.nick = 0, .name = 0};
+  record[0] = a;
+  loading_stack_push(record);
+}
+
+string find_module(jo name) {
+  // return 0 -- not found
+  char path[1024];
+  getcwd(path, 1024);
+  strcat(path, "/");
+  strcat(path, jo2str(name));
+  strcat(path, ".jo");
+  if (file_readable_p(path)) {
+    return copy_to_string_area(path);
+  }
+  else {
+    return 0;
+  }
+}
+
+bool load_module(jo name) {
+  string path = find_module(name);
+  if (path == 0) {
+    return false;
+  }
+  load_file(path);
+  module m = {
+    .name = name,
+    .path = path
+  };
+  module_stack_push(m);
+  return true;
+}
+
+void k_add_alias(jo prefix) {
+  // ([io] -> [loading_stack])
+  while (true) {
+    jo s = read_jo();
+    if (s == str2jo(")")) {
+      return;
+    }
+    else if (s == str2jo("(")) {
+      eval_key(read_jo());
+    }
+    if (!alias_find(s) == 0) {
+      printf("k_add_alias fail, alias used : %s\n", jo2str(s));
+      k_comment();
+      return;
+    }
+    else {
+      char str[1024];
+      str[0] = 0;
+      strcat(str, jo2str(prefix));
+      strcat(str, "/");
+      strcat(str, jo2str(s));
+      alias_add(s, str2jo(str));
+    }
+  }
+}
+
+void k_one_module() {
+  // ([io] -> [loading_stack])
+  jo name = read_jo();
+  if (!module_stack_find(name)) {
+    if(!load_module(name)) {
+      printf("k_one_module fail to load module : %s\n", jo2str(name));
+      k_comment();
+    }
+  }
+  k_add_alias(name);
+}
+
+void k_module() {
+  // ([io] -> [loading_stack])
+  while (true) {
+    jo s = read_jo();
+    if (s == str2jo(")")) {
+      return;
+    }
+    else if (s == str2jo("(")) {
+      k_one_module();
+    }
+    else {
+      // do nothing
+    }
+  }
+}
+
+void export_module() {
+  define_primitive("/", k_module);
 }
 
 void p_define_function() {
   // ([io] -> [compile] [jotable])
-  jo index;
-  index = read_jo();
+  jo index = read_jo();
+  if (!module_stack_empty_p()) {
+    jo new_index = cat_jo(cat_jo(module_stack_tos().name,
+                                 str2jo("/")),
+                          index);
+    alias_add(index, new_index);
+    index = new_index;
+  }
   jo* array = compiling_stack_tos();
   while (true) {
     jo s = read_jo();
@@ -1153,6 +1428,7 @@ void export_play() {
 void run_basic_repl() {
   init_jotable();
   init_compiling_stack();
+  init_loading_stack();
 
   export_stack_operation();
   export_ending();
@@ -1164,6 +1440,8 @@ void run_basic_repl() {
   export_file();
   export_bool();
   export_keyword();
+  export_system();
+  export_module();
   export_top_level();
   export_mise();
   export_play();
@@ -1174,16 +1452,9 @@ void run_basic_repl() {
 int main(int argc, string* argv) {
   if (argc == 1) {
     run_basic_repl();
-    return 0;
   }
   else {
-    FILE* fp = fopen(argv[1], "r");
-    if(!fp) {
-      perror("File opening failed");
-      printf("fail to open : %s\n", argv[1]);
-      return EXIT_FAILURE;
-    }
-    reading_stack_push(fp);
+    load_file(argv[1]);
     run_basic_repl();
   }
 }

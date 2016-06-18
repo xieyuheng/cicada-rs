@@ -9,7 +9,7 @@ run:
 	./jojo
 
 test:
-	./jojo example.org
+	./jojo core.org
 
 clean:
 	@

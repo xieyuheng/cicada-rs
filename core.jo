@@ -1,0 +1,36 @@
+(~ square (: int int -> int)
+   dup mul end)
+
+(! (# 11) square .)
+
+(~ apply-key (: jo -> *)
+   (if dup jo-used? -> apply end)
+   (if true ->
+       (string (undefined keyword : )) print-string
+       jo->string print-string end))
+
+(~ stack-repl (: [io] -> *)
+   (if read-jo round-bar eq? -> read-jo apply-key print-stack)
+   (tail-call stack-repl))
+
+(! stack-repl)
+
+(! (if true -> true . end)
+   (if false -> false . end))
+
+(~ factorial (: int -> int)
+   (if dup (# 1) lteq? -> drop (# 1) end)
+   dup (# 1) sub factorial mul end)
+
+(! (# 0) factorial .
+   (# 1) factorial .
+   (# 2) factorial .
+   (# 3) factorial .
+   (# 4) factorial .)
+
+(! (string (test1) (test2)) print-string print-string)
+
+(! (string (README))
+   (# 1024) allocate tuck
+   (# 1024) read-file .
+   print-string)

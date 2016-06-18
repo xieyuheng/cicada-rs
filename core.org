@@ -1,4 +1,5 @@
 #+HTML_HEAD: <link rel="stylesheet" href="http://xieyuheng.github.io/asset/css/page.css" type="text/css" media="screen" />
+#+PROPERTY: tangle core.jo
 #+title: example code of jojo
 
 * define function
@@ -15,9 +16,9 @@
   #+begin_src scheme
   (~ apply-key (: jo -> *)
      (if dup jo-used? -> apply end)
-     (if true ->
-         (string (undefined keyword : )) print-string
-         jo->string print-string end))
+     (else
+      (string (undefined keyword : )) print-string
+      jo->string print-string end))
 
   (~ stack-repl (: [io] -> *)
      (if read-jo round-bar eq? -> read-jo apply-key print-stack)
@@ -60,4 +61,10 @@
      (# 1024) allocate tuck
      (# 1024) read-file .
      print-string)
+  #+end_src
+
+* system
+
+  #+begin_src scheme
+  (! getcwd print-string)
   #+end_src
