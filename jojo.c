@@ -1329,6 +1329,41 @@ void export_module() {
   define_primitive("/", k_module);
 }
 
+void* clib(string path) {
+  void* lib = dlopen(path, RTLD_LAZY);
+  if (lib == NULL) {
+    printf("fail to open library : %s : %s\n",
+           path, dlerror());
+  };
+  return lib;
+}
+
+void ccall (string str, void* lib) {
+  primitive fun = dlsym(lib, str);
+  if (fun == NULL) {
+    printf("can not find %s function clib : %s\n",
+           str, dlerror());
+  };
+  fun();
+}
+
+void p_clib() {
+  // (string -> clib)
+  as_push(clib(as_pop()));
+}
+
+void p_ccall() {
+  // (string clib -> *)
+  void* lib = as_pop();
+  string str = as_pop();
+  ccall(str, lib);
+}
+
+void export_ffi() {
+  define_primitive("ccall", p_ccall);
+  define_primitive("clib", p_clib);
+}
+
 void p_define_function() {
   // ([io] -> [compile] [jotable])
   jo index = read_jo();
@@ -1442,6 +1477,7 @@ void run_basic_repl() {
   export_keyword();
   export_system();
   export_module();
+  export_ffi();
   export_top_level();
   export_mise();
   export_play();

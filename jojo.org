@@ -10,7 +10,7 @@
 
 * todo
 
-  - FFI for C
+  - interface of module and ffi
   - better jotable for being compiler target
   - export the syntax extension mechanism to jojo
   - debug
@@ -1595,7 +1595,8 @@
 ***** note
 
       - (if a b p? -> c d)
-        a b p?
+
+      - a b p?
         [jump] jumk_if_false
         c d
         :jump
@@ -1904,6 +1905,63 @@
     }
     #+end_src
 
+* *ffi*
+
+*** clib
+
+    #+begin_src c
+    void* clib(string path) {
+      void* lib = dlopen(path, RTLD_LAZY);
+      if (lib == NULL) {
+        printf("fail to open library : %s : %s\n",
+               path, dlerror());
+      };
+      return lib;
+    }
+    #+end_src
+
+*** ccall
+
+    #+begin_src c
+    void ccall (string str, void* lib) {
+      primitive fun = dlsym(lib, str);
+      if (fun == NULL) {
+        printf("can not find %s function clib : %s\n",
+               str, dlerror());
+      };
+      fun();
+    }
+    #+end_src
+
+*** p_clib
+
+    #+begin_src c
+    void p_clib() {
+      // (string -> clib)
+      as_push(clib(as_pop()));
+    }
+    #+end_src
+
+*** p_ccall
+
+    #+begin_src c
+    void p_ccall() {
+      // (string clib -> *)
+      void* lib = as_pop();
+      string str = as_pop();
+      ccall(str, lib);
+    }
+    #+end_src
+
+*** export_ffi
+
+    #+begin_src c
+    void export_ffi() {
+      define_primitive("ccall", p_ccall);
+      define_primitive("clib", p_clib);
+    }
+    #+end_src
+
 * *top_level*
 
 *** p_define_function
@@ -2068,6 +2126,7 @@
       export_keyword();
       export_system();
       export_module();
+      export_ffi();
       export_top_level();
       export_mise();
       export_play();
