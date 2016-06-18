@@ -5,9 +5,9 @@
 
 (~ apply-key (: jo -> *)
    (if dup jo-used? -> apply end)
-   (if true ->
-       (string (undefined keyword : )) print-string
-       jo->string print-string end))
+   (else
+    (string (undefined keyword : )) print-string
+    jo->string print-string end))
 
 (~ stack-repl (: [io] -> *)
    (if read-jo round-bar eq? -> read-jo apply-key print-stack)
@@ -34,3 +34,5 @@
    (# 1024) allocate tuck
    (# 1024) read-file .
    print-string)
+
+(! getcwd print-string)
