@@ -2,7 +2,7 @@
 #include "../libjojo.h"
 
 void c1() {
-  printf("c1c1c1");
+  printf("c1c1c1\n");
 }
 
 void export() {

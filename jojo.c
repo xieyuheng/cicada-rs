@@ -1329,7 +1329,7 @@ void export_module() {
   defprim("/", k_module);
 }
 
-void* clib(string path) {
+void* get_clib(string path) {
   void* lib = dlopen(path, RTLD_LAZY);
   if (lib == NULL) {
     printf("fail to open library : %s : %s\n",
@@ -1341,33 +1341,49 @@ void* clib(string path) {
 void ccall (string str, void* lib) {
   primitive fun = dlsym(lib, str);
   if (fun == NULL) {
-    printf("can not find %s function clib : %s\n",
+    printf("can not find %s function lib : %s\n",
            str, dlerror());
   };
   fun();
 }
 
-void p_clib() {
-  // (string -> clib)
-  as_push(clib(as_pop()));
+void k_clib() {
+  // ([io] -> [compile])
+  while (true) {
+    jo s = read_jo();
+    if (s == str2jo(")")) {
+      return;
+    }
+    else if (s == str2jo("(")) {
+      k_one_clib();
+    }
+    else {
+      // do nothing
+    }
+  }
 }
 
-void p_ccall() {
-  // (string clib -> *)
-  void* lib = as_pop();
-  string str = as_pop();
-  ccall(str, lib);
-}
-
-void p_cload() {
-  // (string -> [compile])
-  ccall("export", clib(as_pop()));
+void k_one_clib() {
+  // ([io] -> [compile])
+  char buffer[1024];
+  cell cursor = 0;
+  while (true) {
+    char c = read_char();
+    if (c == ')') {
+      buffer[cursor] = 0;
+      cursor++;
+      break;
+    }
+    else {
+      buffer[cursor] = c;
+      cursor++;
+    }
+  }
+  ccall("export", get_clib(buffer));
 }
 
 void export_ffi() {
-  defprim("ccall", p_ccall);
-  defprim("clib", p_clib);
-  defprim("cload", p_cload);
+  defprim("clib", k_clib);
 }
 
 void p_define_function() {
