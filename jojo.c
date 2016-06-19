@@ -449,7 +449,7 @@ jo* rs_pop() {
   return rs[rs_pointer];
 }
 
-void define_primitive(string str, primitive fun) {
+void defprim(string str, primitive fun) {
   jo index = str2jo(str);
   jotable_set_primitive(index, fun);
 }
@@ -593,12 +593,12 @@ void p_print_stack() {
 }
 
 void export_stack_operation() {
-  define_primitive("drop", p_drop);
-  define_primitive("dup", p_dup);
-  define_primitive("over", p_over);
-  define_primitive("tuck", p_tuck);
-  define_primitive("swap", p_swap);
-  define_primitive("print-stack", p_print_stack);
+  defprim("drop", p_drop);
+  defprim("dup", p_dup);
+  defprim("over", p_over);
+  defprim("tuck", p_tuck);
+  defprim("swap", p_swap);
+  defprim("print-stack", p_print_stack);
 }
 
 void p_end() {
@@ -613,8 +613,8 @@ void p_bye() {
 }
 
 void export_ending() {
-  define_primitive("end", p_end);
-  define_primitive("bye", p_bye);
+  defprim("end", p_end);
+  defprim("bye", p_bye);
 }
 
 void p_jump_back() {
@@ -655,11 +655,11 @@ void p_jump_if_false() {
 }
 
 void export_control() {
-  define_primitive("jump-back", p_jump_back);
-  define_primitive("jump-over", p_jump_over);
-  define_primitive("i/lit", i_lit);
-  define_primitive("i/tail-call", i_tail_call);
-  define_primitive("jump-if-false", p_jump_if_false);
+  defprim("jump-back", p_jump_back);
+  defprim("jump-over", p_jump_over);
+  defprim("i/lit", i_lit);
+  defprim("i/tail-call", i_tail_call);
+  defprim("jump-if-false", p_jump_if_false);
 }
 
 void p_true() {
@@ -677,9 +677,9 @@ void p_not() {
 }
 
 void export_bool() {
-  define_primitive("true", p_true);
-  define_primitive("false", p_false);
-  define_primitive("not", p_not);
+  defprim("true", p_true);
+  defprim("false", p_false);
+  defprim("not", p_not);
 }
 
 void p_add() {
@@ -783,25 +783,25 @@ void p_dot() {
 }
 
 void export_integer() {
-  define_primitive("add", p_add);
-  define_primitive("sub", p_sub);
+  defprim("add", p_add);
+  defprim("sub", p_sub);
 
-  define_primitive("mul", p_mul);
-  define_primitive("div", p_div);
-  define_primitive("mod", p_mod);
+  defprim("mul", p_mul);
+  defprim("div", p_div);
+  defprim("mod", p_mod);
 
-  define_primitive("neg", p_not);
+  defprim("neg", p_not);
 
-  define_primitive("eq?", p_eq_p);
-  define_primitive("gt?", p_gt_p);
-  define_primitive("lt?", p_lt_p);
-  define_primitive("gteq?", p_gteq_p);
-  define_primitive("lteq?", p_lteq_p);
+  defprim("eq?", p_eq_p);
+  defprim("gt?", p_gt_p);
+  defprim("lt?", p_lt_p);
+  defprim("gteq?", p_gteq_p);
+  defprim("lteq?", p_lteq_p);
 
-  define_primitive("#", k_integer);
+  defprim("#", k_integer);
 
-  define_primitive("print-integer", p_print_integer);
-  define_primitive(".", p_dot);
+  defprim("print-integer", p_print_integer);
+  defprim(".", p_dot);
 }
 
 void p_allocate () {
@@ -815,8 +815,8 @@ void p_free () {
 }
 
 void export_memory() {
-  define_primitive("allocate", p_allocate);
-  define_primitive("free", p_free);
+  defprim("allocate", p_allocate);
+  defprim("free", p_free);
 }
 
 typedef FILE* reading_stack_t[64];
@@ -1014,9 +1014,9 @@ void p_jo_to_string() {
 }
 
 void export_jo() {
-  define_primitive("read-jo", p_read_jo);
-  define_primitive("jo-used?", p_jo_used_p);
-  define_primitive("jo->string", p_jo_to_string);
+  defprim("read-jo", p_read_jo);
+  defprim("jo-used?", p_jo_used_p);
+  defprim("jo->string", p_jo_to_string);
 }
 
 void k_string() {
@@ -1063,8 +1063,8 @@ void p_print_string() {
 }
 
 void export_string() {
-  define_primitive("string", k_string);
-  define_primitive("print-string", p_print_string);
+  defprim("string", k_string);
+  defprim("print-string", p_print_string);
 }
 
 void p_read_file() {
@@ -1094,7 +1094,7 @@ bool file_readable_p(string path) {
 }
 
 void export_file() {
-  define_primitive("read-file", p_read_file);
+  defprim("read-file", p_read_file);
 }
 
 void k_comment() {
@@ -1169,11 +1169,11 @@ void k_tail_call() {
 }
 
 void export_keyword() {
-  define_primitive(":", k_comment);
-  define_primitive("note", k_comment);
-  define_primitive("if", k_if);
-  define_primitive("else", k_else);
-  define_primitive("tail-call", k_tail_call);
+  defprim(":", k_comment);
+  defprim("note", k_comment);
+  defprim("if", k_if);
+  defprim("else", k_else);
+  defprim("tail-call", k_tail_call);
 }
 
 void p_getcwd() {
@@ -1183,7 +1183,7 @@ void p_getcwd() {
 }
 
 void export_system() {
-  define_primitive("getcwd", p_getcwd);
+  defprim("getcwd", p_getcwd);
 }
 
 string user_module_path = "/home/xyh/.jojo/module/";
@@ -1326,7 +1326,7 @@ void k_module() {
 }
 
 void export_module() {
-  define_primitive("/", k_module);
+  defprim("/", k_module);
 }
 
 void* clib(string path) {
@@ -1359,9 +1359,15 @@ void p_ccall() {
   ccall(str, lib);
 }
 
+void p_cload() {
+  // (string -> [compile])
+  ccall("export", clib(as_pop()));
+}
+
 void export_ffi() {
-  define_primitive("ccall", p_ccall);
-  define_primitive("clib", p_clib);
+  defprim("ccall", p_ccall);
+  defprim("clib", p_clib);
+  defprim("cload", p_cload);
 }
 
 void p_define_function() {
@@ -1428,17 +1434,17 @@ void p_top_repl() {
 }
 
 void export_top_level() {
-  define_primitive("~", p_define_function);
-  define_primitive("!", p_execute);
-  define_primitive("top-repl", p_top_repl);
+  defprim("~", p_define_function);
+  defprim("!", p_execute);
+  defprim("top-repl", p_top_repl);
 }
 
 void do_nothing() {
 }
 
 void export_mise() {
-  define_primitive("apply", p_apply);
-  define_primitive("jotable-report", jotable_report);
+  defprim("apply", p_apply);
+  defprim("jotable-report", jotable_report);
   define_variable("round-bar", str2jo("("));
 }
 
@@ -1447,7 +1453,7 @@ void p1() {
 }
 
 void p2() {
-  printf("k1: %ld %ld\n", sizeof(void*), sizeof(intptr_t));
+
 }
 
 void p3() {
@@ -1455,9 +1461,9 @@ void p3() {
 }
 
 void export_play() {
-  define_primitive("p1", p1);
-  define_primitive("p2", p2);
-  define_primitive("p3", p3);
+  defprim("p1", p1);
+  defprim("p2", p2);
+  defprim("p3", p3);
 }
 
 void run_basic_repl() {
