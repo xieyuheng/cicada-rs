@@ -11,12 +11,11 @@
 * todo
 
   - gc as lib
-  - memory ownership as lib
-  - interface of module and ffi
+  - no re-define
+    no use before define
   - better jotable for being compiler target
   - export the syntax extension mechanism to jojo
   - debug
-  - no redefine
   - fix jump
   - error report for every limited number
 
@@ -641,25 +640,23 @@
     }
     #+end_src
 
-* define
+* defprim
 
-*** defprim
+  #+begin_src c
+  void defprim(string str, primitive fun) {
+    jo index = str2jo(str);
+    jotable_set_primitive(index, fun);
+  }
+  #+end_src
 
-    #+begin_src c
-    void defprim(string str, primitive fun) {
-      jo index = str2jo(str);
-      jotable_set_primitive(index, fun);
-    }
-    #+end_src
+* defvar
 
-*** define_variable
-
-    #+begin_src c
-    void define_variable(string str, cell cell) {
-      jo index = str2jo(str);
-      jotable_set_cell(index, cell);
-    }
-    #+end_src
+  #+begin_src c
+  void defvar(string str, cell cell) {
+    jo index = str2jo(str);
+    jotable_set_cell(index, cell);
+  }
+  #+end_src
 
 * apply
 
@@ -753,7 +750,7 @@
     void eval_key(jo jo) {
       if (!jotable_entry_used(jotable[jo])) {
         printf("undefined keyword : %s\n", jo2str(jo));
-        k_comment();
+        k_ignore();
         return;
       }
       eval_jo(jo);
@@ -960,8 +957,8 @@
     void export_control() {
       defprim("jump-back", p_jump_back);
       defprim("jump-over", p_jump_over);
-      defprim("i/lit", i_lit);
-      defprim("i/tail-call", i_tail_call);
+      defprim("i-lit", i_lit);
+      defprim("i-tail-call", i_tail_call);
       defprim("jump-if-false", p_jump_if_false);
     }
     #+end_src
@@ -1129,7 +1126,7 @@
           break;
         }
         else if (int_string_p(jo2str(s))) {
-          here(str2jo("i/lit"));
+          here(str2jo("i-lit"));
           here(atoi(jo2str(s)));
         }
         else {
@@ -1204,12 +1201,48 @@
     }
     #+end_src
 
+*** k_var
+
+    #+begin_src c
+    void k_var() {
+      // ([io] -> [compile])
+      here(str2jo("i-lit"));
+      jo index = read_jo();
+      here(&(jotable[index].value.cell));
+      k_ignore();
+    }
+    #+end_src
+
+*** p_set
+
+    #+begin_src c
+    void p_set() {
+      // (cell addr ->)
+      cell* address = as_pop();
+      cell value = as_pop();
+      address[0] = value;
+    }
+    #+end_src
+
+*** p_get
+
+    #+begin_src c
+    void p_get() {
+      // (addr -> cell)
+      cell* address = as_pop();
+      as_push(address[0]);
+    }
+    #+end_src
+
 *** export_memory
 
     #+begin_src c
     void export_memory() {
       defprim("allocate", p_allocate);
       defprim("free", p_free);
+      defprim("var", k_var);
+      defprim("set", p_set);
+      defprim("get", p_get);
     }
     #+end_src
 
@@ -1506,7 +1539,7 @@
       }
       string str = malloc(cursor);
       strcpy(str, buffer);
-      here(str2jo("i/lit"));
+      here(str2jo("i-lit"));
       here(str);
     }
     #+end_src
@@ -1575,15 +1608,15 @@
 
 * *keyword*
 
-*** k_comment
+*** k_ignore
 
     #+begin_src c
-    void k_comment() {
+    void k_ignore() {
       // ([io] ->)
       while (true) {
         jo s = read_jo();
         if (s == str2jo("(")) {
-          k_comment();
+          k_ignore();
         }
         if (s == str2jo(")")) {
           break;
@@ -1631,7 +1664,7 @@
       #+begin_src c
       void compile_answer() {
         // ([io] -> [compile])
-        here(str2jo("i/lit"));
+        here(str2jo("i-lit"));
         cell* offset_place = compiling_stack_tos();
         compiling_stack_inc();
         here(str2jo("jump-if-false"));
@@ -1666,7 +1699,7 @@
     #+begin_src c
     void k_else() {
       // ([io] -> [compile])
-      here(str2jo("i/lit"));
+      here(str2jo("i-lit"));
       here(true);
       compile_answer();
     }
@@ -1677,10 +1710,10 @@
     #+begin_src c
     void k_tail_call() {
       // ([io] -> [compile])
-      here(str2jo("i/tail-call"));
+      here(str2jo("i-tail-call"));
       jo s = read_jo();
       here(s);
-      k_comment();
+      k_ignore();
     }
     #+end_src
 
@@ -1688,8 +1721,8 @@
 
     #+begin_src c
     void export_keyword() {
-      defprim(":", k_comment);
-      defprim("note", k_comment);
+      defprim(":", k_ignore);
+      defprim("note", k_ignore);
       defprim("if", k_if);
       defprim("else", k_else);
       defprim("tail-call", k_tail_call);
@@ -1831,7 +1864,7 @@
     }
     #+end_src
 
-*** k_module
+*** k_import
 
 ***** k_add_alias
 
@@ -1848,7 +1881,7 @@
           }
           if (!alias_find(s) == 0) {
             printf("k_add_alias fail, alias used : %s\n", jo2str(s));
-            k_comment();
+            k_ignore();
             return;
           }
           else {
@@ -1872,17 +1905,17 @@
         if (!module_stack_find(name)) {
           if(!load_module(name)) {
             printf("k_one_module fail to load module : %s\n", jo2str(name));
-            k_comment();
+            k_ignore();
           }
         }
         k_add_alias(name);
       }
       #+end_src
 
-***** k_module
+***** k_import
 
       #+begin_src c
-      void k_module() {
+      void k_import() {
         // ([io] -> [loading_stack])
         while (true) {
           jo s = read_jo();
@@ -1903,7 +1936,7 @@
 
     #+begin_src c
     void export_module() {
-      defprim("/", k_module);
+      defprim("import", k_import);
     }
     #+end_src
 
@@ -1984,19 +2017,30 @@
 
 * *top_level*
 
-*** p_define_function
+*** read_alias_jo
 
     #+begin_src c
-    void p_define_function() {
-      // ([io] -> [compile] [jotable])
-      jo index = read_jo();
-      if (!module_stack_empty_p()) {
-        jo new_index = cat_jo(cat_jo(module_stack_tos().name,
-                                     str2jo("/")),
-                              index);
-        alias_add(index, new_index);
-        index = new_index;
+    jo read_alias_jo() {
+      jo alias_jo = read_jo();
+      if (module_stack_empty_p()) {
+        return alias_jo;
       }
+      else {
+        jo new_jo = cat_jo(cat_jo(module_stack_tos().name,
+                                         str2jo("/")),
+                                  alias_jo);
+        alias_add(alias_jo, new_jo);
+        return new_jo;
+      }
+    }
+    #+end_src
+
+*** k_defun
+
+    #+begin_src c
+    void k_defun() {
+      // ([io] -> [compile] [jotable])
+      jo index = read_alias_jo();
       jo* array = compiling_stack_tos();
       while (true) {
         jo s = read_jo();
@@ -2017,10 +2061,18 @@
     }
     #+end_src
 
-*** p_execute
+*** >< k_declare
 
     #+begin_src c
-    void p_execute() {
+    void k_declare() {
+
+    }
+    #+end_src
+
+*** k_run
+
+    #+begin_src c
+    void k_run() {
       // ([io] -> *)
       jo array[1024];
       compiling_stack_push(array);
@@ -2039,6 +2091,17 @@
       }
       compiling_stack_pop();
       eval_jojo(array);
+    }
+    #+end_src
+
+*** k_defvar
+
+    #+begin_src c
+    void k_defvar() {
+      // ([io] -> [compile] [jotable])
+      jo index = read_alias_jo();
+      k_run();
+      jotable_set_cell(index, as_pop());
     }
     #+end_src
 
@@ -2063,8 +2126,10 @@
 
     #+begin_src c
     void export_top_level() {
-      defprim("~", p_define_function);
-      defprim("!", p_execute);
+      defprim("defun", k_defun);
+      defprim("declare", k_declare);
+      defprim("run", k_run);
+      defprim("defvar", k_defvar);
       defprim("top-repl", p_top_repl);
     }
     #+end_src
@@ -2084,7 +2149,8 @@
     void export_mise() {
       defprim("apply", p_apply);
       defprim("jotable-report", jotable_report);
-      define_variable("round-bar", str2jo("("));
+      defvar("round-bar", str2jo("("));
+      defvar("cell-size", sizeof(cell));
     }
     #+end_src
 

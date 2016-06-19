@@ -454,7 +454,7 @@ void defprim(string str, primitive fun) {
   jotable_set_primitive(index, fun);
 }
 
-void define_variable(string str, cell cell) {
+void defvar(string str, cell cell) {
   jo index = str2jo(str);
   jotable_set_cell(index, cell);
 }
@@ -524,7 +524,7 @@ void eval_jo(jo jo) {
 void eval_key(jo jo) {
   if (!jotable_entry_used(jotable[jo])) {
     printf("undefined keyword : %s\n", jo2str(jo));
-    k_comment();
+    k_ignore();
     return;
   }
   eval_jo(jo);
@@ -657,8 +657,8 @@ void p_jump_if_false() {
 void export_control() {
   defprim("jump-back", p_jump_back);
   defprim("jump-over", p_jump_over);
-  defprim("i/lit", i_lit);
-  defprim("i/tail-call", i_tail_call);
+  defprim("i-lit", i_lit);
+  defprim("i-tail-call", i_tail_call);
   defprim("jump-if-false", p_jump_if_false);
 }
 
@@ -762,7 +762,7 @@ void k_integer() {
       break;
     }
     else if (int_string_p(jo2str(s))) {
-      here(str2jo("i/lit"));
+      here(str2jo("i-lit"));
       here(atoi(jo2str(s)));
     }
     else {
@@ -814,9 +814,33 @@ void p_free () {
   free(as_pop());
 }
 
+void k_var() {
+  // ([io] -> [compile])
+  here(str2jo("i-lit"));
+  jo index = read_jo();
+  here(&(jotable[index].value.cell));
+  k_ignore();
+}
+
+void p_set() {
+  // (cell addr ->)
+  cell* address = as_pop();
+  cell value = as_pop();
+  address[0] = value;
+}
+
+void p_get() {
+  // (addr -> cell)
+  cell* address = as_pop();
+  as_push(address[0]);
+}
+
 void export_memory() {
   defprim("allocate", p_allocate);
   defprim("free", p_free);
+  defprim("var", k_var);
+  defprim("set", p_set);
+  defprim("get", p_get);
 }
 
 typedef FILE* reading_stack_t[64];
@@ -1053,7 +1077,7 @@ void k_one_string() {
   }
   string str = malloc(cursor);
   strcpy(str, buffer);
-  here(str2jo("i/lit"));
+  here(str2jo("i-lit"));
   here(str);
 }
 
@@ -1097,12 +1121,12 @@ void export_file() {
   defprim("read-file", p_read_file);
 }
 
-void k_comment() {
+void k_ignore() {
   // ([io] ->)
   while (true) {
     jo s = read_jo();
     if (s == str2jo("(")) {
-      k_comment();
+      k_ignore();
     }
     if (s == str2jo(")")) {
       break;
@@ -1128,7 +1152,7 @@ void compile_question() {
 
 void compile_answer() {
   // ([io] -> [compile])
-  here(str2jo("i/lit"));
+  here(str2jo("i-lit"));
   cell* offset_place = compiling_stack_tos();
   compiling_stack_inc();
   here(str2jo("jump-if-false"));
@@ -1155,22 +1179,22 @@ void k_if() {
 
 void k_else() {
   // ([io] -> [compile])
-  here(str2jo("i/lit"));
+  here(str2jo("i-lit"));
   here(true);
   compile_answer();
 }
 
 void k_tail_call() {
   // ([io] -> [compile])
-  here(str2jo("i/tail-call"));
+  here(str2jo("i-tail-call"));
   jo s = read_jo();
   here(s);
-  k_comment();
+  k_ignore();
 }
 
 void export_keyword() {
-  defprim(":", k_comment);
-  defprim("note", k_comment);
+  defprim(":", k_ignore);
+  defprim("note", k_ignore);
   defprim("if", k_if);
   defprim("else", k_else);
   defprim("tail-call", k_tail_call);
@@ -1283,7 +1307,7 @@ void k_add_alias(jo prefix) {
     }
     if (!alias_find(s) == 0) {
       printf("k_add_alias fail, alias used : %s\n", jo2str(s));
-      k_comment();
+      k_ignore();
       return;
     }
     else {
@@ -1303,13 +1327,13 @@ void k_one_module() {
   if (!module_stack_find(name)) {
     if(!load_module(name)) {
       printf("k_one_module fail to load module : %s\n", jo2str(name));
-      k_comment();
+      k_ignore();
     }
   }
   k_add_alias(name);
 }
 
-void k_module() {
+void k_import() {
   // ([io] -> [loading_stack])
   while (true) {
     jo s = read_jo();
@@ -1326,7 +1350,7 @@ void k_module() {
 }
 
 void export_module() {
-  defprim("/", k_module);
+  defprim("import", k_import);
 }
 
 void* get_clib(string path) {
@@ -1386,16 +1410,23 @@ void export_ffi() {
   defprim("clib", k_clib);
 }
 
-void p_define_function() {
-  // ([io] -> [compile] [jotable])
-  jo index = read_jo();
-  if (!module_stack_empty_p()) {
-    jo new_index = cat_jo(cat_jo(module_stack_tos().name,
-                                 str2jo("/")),
-                          index);
-    alias_add(index, new_index);
-    index = new_index;
+jo read_alias_jo() {
+  jo alias_jo = read_jo();
+  if (module_stack_empty_p()) {
+    return alias_jo;
   }
+  else {
+    jo new_jo = cat_jo(cat_jo(module_stack_tos().name,
+                                     str2jo("/")),
+                              alias_jo);
+    alias_add(alias_jo, new_jo);
+    return new_jo;
+  }
+}
+
+void k_defun() {
+  // ([io] -> [compile] [jotable])
+  jo index = read_alias_jo();
   jo* array = compiling_stack_tos();
   while (true) {
     jo s = read_jo();
@@ -1415,7 +1446,7 @@ void p_define_function() {
   jotable[index].value.jojo.array = array;
 }
 
-void p_execute() {
+void k_run() {
   // ([io] -> *)
   jo array[1024];
   compiling_stack_push(array);
@@ -1436,6 +1467,13 @@ void p_execute() {
   eval_jojo(array);
 }
 
+void k_defvar() {
+  // ([io] -> [compile] [jotable])
+  jo index = read_alias_jo();
+  k_run();
+  jotable_set_cell(index, as_pop());
+}
+
 void p_top_repl() {
   // ([io] -> *)
   while (true) {
@@ -1450,8 +1488,9 @@ void p_top_repl() {
 }
 
 void export_top_level() {
-  defprim("~", p_define_function);
-  defprim("!", p_execute);
+  defprim("defun", k_defun);
+  defprim("run", k_run);
+  defprim("defvar", k_defvar);
   defprim("top-repl", p_top_repl);
 }
 
@@ -1461,7 +1500,8 @@ void do_nothing() {
 void export_mise() {
   defprim("apply", p_apply);
   defprim("jotable-report", jotable_report);
-  define_variable("round-bar", str2jo("("));
+  defvar("round-bar", str2jo("("));
+  defvar("cell-size", sizeof(cell));
 }
 
 void p1() {

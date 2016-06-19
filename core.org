@@ -5,66 +5,74 @@
 * define function
 
   #+begin_src scheme
-  (~ square (: int int -> int)
-     dup mul end)
+  (defun square (: int int -> int)
+    dup mul end)
 
-  (! (# 11) square .)
+  (run (# 11) square .)
   #+end_src
 
 * loop by explicit tail-call
 
   #+begin_src scheme
-  (~ apply-key (: jo -> *)
-     (if dup jo-used? -> apply end)
-     (else
-      (string (undefined keyword : )) print-string
-      jo->string print-string end))
+  (defun apply-key (: jo -> *)
+    (if dup jo-used? -> apply end)
+    (else
+     (string (undefined keyword : )) print-string
+     jo->string print-string end))
 
-  (~ stack-repl (: [io] -> *)
-     (if read-jo round-bar eq? -> read-jo apply-key print-stack)
-     (tail-call stack-repl))
+  (defun stack-repl (: [io] -> *)
+    (if read-jo round-bar eq? -> read-jo apply-key print-stack)
+    (tail-call stack-repl))
 
-  (! stack-repl)
+  (run stack-repl)
   #+end_src
 
 * branching by if
 
   #+begin_src scheme
-  (! (if true -> true . end)
-     (if false -> false . end))
+  (run (if true -> true . end)
+       (if false -> false . end))
   #+end_src
 
 * receive function
 
   #+begin_src scheme
-  (~ factorial (: int -> int)
-     (if dup (# 1) lteq? -> drop (# 1) end)
-     dup (# 1) sub factorial mul end)
+  (defun factorial (: int -> int)
+    (if dup (# 1) lteq? -> drop (# 1) end)
+    dup (# 1) sub factorial mul end)
 
-  (! (# 0) factorial .
-     (# 1) factorial .
-     (# 2) factorial .
-     (# 3) factorial .
-     (# 4) factorial .)
+  (run (# 0) factorial .
+       (# 1) factorial .
+       (# 2) factorial .
+       (# 3) factorial .
+       (# 4) factorial .)
   #+end_src
 
 * string
 
   #+begin_src scheme
-  (! (string (test1) (test2)) print-string print-string)
+  (run (string (test1) (test2))
+       print-string print-string)
   #+end_src
 
 * file
 
   #+begin_src scheme
-  (! (string (README))
-     (# 1024) allocate tuck
-     (# 1024) read-file .
-     print-string)
+  (run (string (README))
+       (# 1024) allocate tuck
+       (# 1024) read-file .
+       print-string)
   #+end_src
 
 * system
 
   #+begin_src scheme
-  (! getcwd print-string)
+  (run getcwd print-string)
+  #+end_src
+
+* var
+
+  #+begin_src scheme
+  (defvar var1 (# 666) (# 666) add)
+  (run var1 .)
   #+end_src
