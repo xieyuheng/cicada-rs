@@ -3,4 +3,5 @@ CC = gcc
 # CC = clang
 
 build:
-	$(CC) -shared -fPIC c1.c -o libc1.so
+	$(CC) -shared -fPIC welcome.c -o libwelcome.so
+	$(CC) -shared -fPIC swapview.c -o libswapview.so
