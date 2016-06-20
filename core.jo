@@ -42,6 +42,8 @@
 (defvar var1 (# 666) (# 666) add)
 (run var1 dot)
 
+(run (jo null) jo->string print-string newline)
+
 (defvar cons-size (# 3) cell-size mul)
 (defvar cons-area-size (# 5) (: (# 1024 1024) mul) cons-size mul)
 
@@ -205,27 +207,84 @@
 
 (defun one-list (: [io] -> [compile])
   read-jo
-  (if dup (string "{") string->jo eq? ->
-      drop (string "null") string->jo here
-      (recur) (string "cons") string->jo here
+  (if dup flower-bar eq? ->
+      drop null here
+      (recur) (jo cons) here
       (loop))
-  (if dup (string "}") string->jo eq? ->
+  (if dup flower-ket eq? ->
       drop end)
-  (else (string "i-lit") string->jo here
+  (if dup round-bar eq? ->
+      drop read-jo apply-key
+      (jo cons) here
+      (loop))
+  (else (jo i-lit) here
         here
-        (string "cons") string->jo here
+        (jo cons) here
         (loop)))
 
 (defun list (: [io] -> [compile])
   read-jo
-  (if dup (string ")") string->jo eq? -> drop end)
-  (if dup (string "{") string->jo eq? ->
-      drop
-      (string "null") string->jo here
+  (if dup round-ket eq? -> drop end)
+  (if dup flower-bar eq? ->
+      drop null here
       one-list (loop))
   (else drop (loop)))
 
-(: (run (list {a b})))
+(run (list {a {b c} d})
+     dup car jo->string print-string
+     dup cdr car car jo->string print-string
+     dup cdr car cdr car jo->string print-string
+     dup cdr car cdr cdr jo->string print-string
+     dup cdr cdr car jo->string print-string
+     dup cdr cdr cdr jo->string print-string
+     drop)
+
+(run (list {(# 1) {(# 2) (jojo (# 1 2) add)} (# 4)})
+     dup car dot
+     dup cdr car car dot
+     dup cdr car cdr car dot
+     dup cdr car cdr cdr dot
+     dup cdr cdr car dot
+     dup cdr cdr cdr dot
+     drop)
+
+(declare (print-int-list (: cons -> [io])))
+
+(defun print-int-list/rest (: cons -> [io])
+  (if dup null eq? -> drop end)
+  dup cdr print-int-list/rest
+  car
+  (if dup cons? -> print-int-list end)
+  (else dot end))
+
+(defun print-int-list (: cons -> [io])
+  (string "{ ") print-string
+  print-int-list/rest
+  (string "} ") print-string)
+
+(declare (print-jo-list (: cons -> [io])))
+
+(defun dot-jo (: jo -> [io])
+  jo->string print-string
+  (string " ") print-string)
+
+(defun print-jo-list/rest (: cons -> [io])
+  (if dup null eq? -> drop end)
+  dup cdr print-jo-list/rest
+  car
+  (if dup cons? -> print-jo-list end)
+  (else dot-jo end))
+
+(defun print-jo-list (: cons -> [io])
+  (string "{ ") print-string
+  print-jo-list/rest
+  (string "} ") print-string)
+
+(run (list {a {b c} d})
+     print-jo-list)
+
+(run (list {(# 1) {(# 2) (jojo (# 1 2) add)} (# 4)})
+     print-int-list)
 
 (: (run defprim-report
         defun-report

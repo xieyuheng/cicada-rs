@@ -1080,12 +1080,30 @@ void p_null() {
   as_push(str2jo("null"));
 }
 
+void k_jo() {
+  // ([io] -> [compile])
+  while (true) {
+    jo s = read_jo();
+    if (s == str2jo("(")) {
+      eval_key(read_jo());
+    }
+    else if (s == str2jo(")")) {
+      break;
+    }
+    else {
+      here(str2jo("i-lit"));
+      here(s);
+    }
+  }
+}
+
 void export_jo() {
   defprim("null", p_null);
   defprim("read-jo", p_read_jo);
   defprim("jo-used?", p_jo_used_p);
   defprim("jo->string", p_jo_to_string);
   defprim("string->jo", p_string_to_jo);
+  defprim("jo", k_jo);
 }
 
 void k_one_string() {
@@ -1164,86 +1182,6 @@ bool file_readable_p(string path) {
 
 void export_file() {
   defprim("read-file", p_read_file);
-}
-
-void k_ignore() {
-  // ([io] ->)
-  while (true) {
-    jo s = read_jo();
-    if (s == str2jo("(")) {
-      k_ignore();
-    }
-    if (s == str2jo(")")) {
-      break;
-    }
-  }
-}
-
-void compile_question() {
-  // ([io] -> [compile])
-  while (true) {
-    jo s = read_jo();
-    if (s == str2jo("(")) {
-      eval_key(read_jo());
-    }
-    else if (s == str2jo("->")) {
-      break;
-    }
-    else {
-      here(s);
-    }
-  }
-}
-
-void compile_answer() {
-  // ([io] -> [compile])
-  here(str2jo("i-lit"));
-  cell* offset_place = compiling_stack_tos();
-  compiling_stack_inc();
-  here(str2jo("jump-if-false"));
-  while (true) {
-    jo s = read_jo();
-    if (s == str2jo("(")) {
-      eval_key(read_jo());
-    }
-    else if (s == str2jo(")")) {
-      break;
-    }
-    else {
-      here(s);
-    }
-  }
-  offset_place[0] = compiling_stack_tos();
-}
-
-void k_if() {
-  // ([io] -> [compile])
-  compile_question();
-  compile_answer();
-}
-
-void k_else() {
-  // ([io] -> [compile])
-  here(str2jo("i-lit"));
-  here(true);
-  compile_answer();
-}
-
-void k_tail_call() {
-  // ([io] -> [compile])
-  // no check for "no compile before define"
-  here(str2jo("i-tail-call"));
-  jo s = read_jo();
-  here(s);
-  k_ignore();
-}
-
-void export_keyword() {
-  defprim(":", k_ignore);
-  defprim("note", k_ignore);
-  defprim("if", k_if);
-  defprim("else", k_else);
-  defprim("tail-call", k_tail_call);
 }
 
 void p_getcwd() {
@@ -1537,17 +1475,6 @@ bool defun_stack_empty_p() {
   return defun_stack_pointer == defun_stack_base;
 }
 
-void k_loop() {
-  here(str2jo("i-tail-call"));
-  here(defun_stack_tos());
-  k_ignore();
-}
-
-void k_recur() {
- here(defun_stack_tos());
- k_ignore();
-}
-
 void k_defun() {
   // ([io] -> [compile] [jotable])
   jo index = read_alias_jo();
@@ -1562,27 +1489,8 @@ void k_defun() {
   defun_record_counter++;
   defun_record[defun_record_counter] = 0;
   jo* array = compiling_stack_tos();
-  while (true) {
-    jo s = read_jo();
-    if (s == str2jo("(")) {
-      eval_key(read_jo());
-    }
-    else if (s == str2jo(")")) {
-      here(str2jo("end"));
-      break;
-    }
-    else if (jotable_entry_used(jotable[s]) ||
-             index == s) {
-      here(s);
-    }
-    else {
-      // no compile before define
-      printf("- defun undefined : %s\n", jo2str(s));
-      defun_stack_pop();
-      k_ignore();
-      return;
-    }
-  }
+  k_jojo();
+  here(str2jo("end"));
   jotable[index].type = str2jo("function");
   jotable[index].value.jojo.size = compiling_stack_tos() - array;
   jotable[index].value.jojo.array = array;
@@ -1682,9 +1590,6 @@ void export_top_level() {
   defprim("defun-record", p_defun_record);
   defprim("defun-report", defun_report);
 
-  defprim("loop", k_loop);
-  defprim("recur", k_recur);
-
   defprim("defun", k_defun);
 
   defprim("declare", k_declare);
@@ -1698,6 +1603,106 @@ void export_top_level() {
   defprim("top-repl", p_top_repl);
 }
 
+void k_ignore() {
+  // ([io] ->)
+  while (true) {
+    jo s = read_jo();
+    if (s == str2jo("(")) {
+      k_ignore();
+    }
+    if (s == str2jo(")")) {
+      break;
+    }
+  }
+}
+
+void k_jojo() {
+  // ([io] -> [compile])
+  while (true) {
+    jo s = read_jo();
+    if (s == str2jo("(")) {
+      eval_key(read_jo());
+    }
+    else if (s == str2jo(")")) {
+      break;
+    }
+    else if (jotable_entry_used(jotable[s]) ||
+             defun_stack_empty_p() ||
+             defun_stack_tos() == s) {
+      here(s);
+    }
+    else {
+      // no compile before define
+      printf("- k_jojo undefined : %s\n", jo2str(s));
+      k_ignore();
+      return;
+    }
+  }
+}
+
+void compile_question() {
+  // ([io] -> [compile])
+  while (true) {
+    jo s = read_jo();
+    if (s == str2jo("(")) {
+      eval_key(read_jo());
+    }
+    else if (s == str2jo("->")) {
+      break;
+    }
+    else {
+      here(s);
+    }
+  }
+}
+
+void compile_answer() {
+  // ([io] -> [compile])
+  here(str2jo("i-lit"));
+  cell* offset_place = compiling_stack_tos();
+  compiling_stack_inc();
+  here(str2jo("jump-if-false"));
+  k_jojo();
+  offset_place[0] = compiling_stack_tos();
+}
+
+void k_if() {
+  // ([io] -> [compile])
+  compile_question();
+  compile_answer();
+}
+
+void k_tail_call() {
+  // ([io] -> [compile])
+  // no check for "no compile before define"
+  here(str2jo("i-tail-call"));
+  jo s = read_jo();
+  here(s);
+  k_ignore();
+}
+
+void k_loop() {
+  here(str2jo("i-tail-call"));
+  here(defun_stack_tos());
+  k_ignore();
+}
+
+void k_recur() {
+ here(defun_stack_tos());
+ k_ignore();
+}
+
+void export_keyword() {
+  defprim(":", k_ignore);
+  defprim("note", k_ignore);
+  defprim("if", k_if);
+  defprim("jojo", k_jojo);
+  defprim("else", k_jojo);
+  defprim("tail-call", k_tail_call);
+  defprim("loop", k_loop);
+  defprim("recur", k_recur);
+}
+
 void do_nothing() {
 }
 
@@ -1705,10 +1710,13 @@ void p_here() {
   here(as_pop());
 }
 
-void p_round_bar() {
-  // (-> cell)
-  as_push(str2jo("("));
-}
+void p_round_bar() { as_push(str2jo("(")); }
+void p_round_ket() { as_push(str2jo(")")); }
+void p_square_bar() { as_push(str2jo("[")); }
+void p_square_ket() { as_push(str2jo("]")); }
+void p_flower_bar() { as_push(str2jo("{")); }
+void p_flower_ket() { as_push(str2jo("}")); }
+void p_double_quote() { as_push(str2jo("\"")); }
 
 void p_cell_size() {
   // (-> cell)
@@ -1723,14 +1731,22 @@ void export_mise() {
   defprim("here", p_here);
   defprim("apply", p_apply);
   defprim("jotable-report", jotable_report);
+
   defprim("round-bar", p_round_bar);
+  defprim("round-ket", p_round_ket);
+  defprim("square-bar", p_square_bar);
+  defprim("square-ket", p_square_ket);
+  defprim("flower-bar", p_flower_bar);
+  defprim("flower-ket", p_flower_ket);
+  defprim("double-quote", p_double_quote);
+
   defprim("cell-size", p_cell_size);
   defprim("defprim-report", defprim_report);
   defprim("newline", p_newline);
 }
 
 void p1() {
-  printf("k1: %ld %ld\n", sizeof(void*), sizeof(intptr_t));
+  printf("p1 : %ld %ld\n", sizeof(void*), sizeof(intptr_t));
 }
 
 void p2() {
