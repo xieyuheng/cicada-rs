@@ -3,7 +3,7 @@
 "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en">
 <head>
-<!-- 2016-06-20 Mon 05:03 -->
+<!-- 2016-06-20 Mon 11:18 -->
 <meta http-equiv="Content-Type" content="text/html;charset=utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>example code of jojo</title>
@@ -67,46 +67,57 @@ for the JavaScript code in this tag.
 <h2>overview</h2>
 <div id="text-table-of-contents">
 <ul>
-<li><a href="#orgaaeccb3">define function</a></li>
-<li><a href="#org923fbd8">loop by explicit tail-call</a></li>
-<li><a href="#org2f46330">branching by if</a></li>
-<li><a href="#org5256638">receive function</a></li>
-<li><a href="#orgef0461d">string</a></li>
-<li><a href="#org854b45c">file</a></li>
-<li><a href="#org7ae2329">system</a></li>
-<li><a href="#org7a66fe6">var</a></li>
+<li><a href="#orgb535826">define function</a></li>
+<li><a href="#org5566388">loop by explicit tail-call</a></li>
+<li><a href="#org78043c9">branching by if</a></li>
+<li><a href="#orga443a9a">receive function</a></li>
+<li><a href="#orgd39bffc">integer</a></li>
+<li><a href="#org8fa109a">string</a></li>
+<li><a href="#org3622b6c">file</a></li>
+<li><a href="#org30d534d">system</a></li>
+<li><a href="#org7332c76">var</a></li>
+<li><a href="#orgd9909ea">gc</a>
+<ul>
+<li><a href="#org75c023c">cons-area</a></li>
+<li><a href="#org64fc24e">cons-area-report</a></li>
+<li><a href="#org710720e">sweep-cons-area</a></li>
+<li><a href="#orgd5c9dd0">mark-cons-area</a></li>
+<li><a href="#org6783141">cons</a></li>
+<li><a href="#orgdd3d3ba"><span class="done test">test</span> </a></li>
+<li><a href="#org3f0239a">list</a></li>
+</ul>
+</li>
 </ul>
 </div>
 </div>
 
-<div id="outline-container-orgaaeccb3" class="outline-2">
-<h2 id="orgaaeccb3">define function</h2>
-<div class="outline-text-2" id="text-orgaaeccb3">
+<div id="outline-container-orgb535826" class="outline-2">
+<h2 id="orgb535826">define function</h2>
+<div class="outline-text-2" id="text-orgb535826">
 <div class="org-src-container">
 
 <pre class="src src-scheme"><span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">defun</span> square <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">:</span> int int <span style="color: #66d9ef; font-weight: bold;">-&gt;</span> int<span style="color: #696969;">)</span>
   dup mul end<span style="color: #696969;">)</span>
 
-<span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">run</span> <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">#</span> 11<span style="color: #696969;">)</span> square .<span style="color: #696969;">)</span>
+<span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">run</span> <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">#</span> 11<span style="color: #696969;">)</span> square dot<span style="color: #696969;">)</span>
 </pre>
 </div>
 </div>
 </div>
 
-<div id="outline-container-org923fbd8" class="outline-2">
-<h2 id="org923fbd8">loop by explicit tail-call</h2>
-<div class="outline-text-2" id="text-org923fbd8">
+<div id="outline-container-org5566388" class="outline-2">
+<h2 id="org5566388">loop by explicit tail-call</h2>
+<div class="outline-text-2" id="text-org5566388">
 <div class="org-src-container">
 
 <pre class="src src-scheme"><span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">defun</span> apply-key <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">:</span> jo <span style="color: #66d9ef; font-weight: bold;">-&gt;</span> *<span style="color: #696969;">)</span>
   <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">if</span> dup jo-used? <span style="color: #66d9ef; font-weight: bold;">-&gt;</span> apply end<span style="color: #696969;">)</span>
-  <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">else</span>
-   <span style="color: #696969;">(</span>string <span style="color: #696969;">(</span>undefined keyword : <span style="color: #696969;">))</span> print-string
-   jo-&gt;string print-string end<span style="color: #696969;">))</span>
+  <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">string</span> <span style="color: #696969;">(</span>undefined keyword : <span style="color: #696969;">))</span> print-string
+  jo-&gt;string print-string end<span style="color: #696969;">)</span>
 
 <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">defun</span> stack-repl <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">:</span> <span style="color: #797979;">[</span>io<span style="color: #797979;">]</span> <span style="color: #66d9ef; font-weight: bold;">-&gt;</span> *<span style="color: #696969;">)</span>
   <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">if</span> read-jo round-bar eq? <span style="color: #66d9ef; font-weight: bold;">-&gt;</span> read-jo apply-key print-stack<span style="color: #696969;">)</span>
-  <span style="color: #696969;">(</span>tail-call stack-repl<span style="color: #696969;">))</span>
+  <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">tail-call</span> stack-repl<span style="color: #696969;">))</span>
 
 <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">run</span> stack-repl<span style="color: #696969;">)</span>
 </pre>
@@ -114,66 +125,77 @@ for the JavaScript code in this tag.
 </div>
 </div>
 
-<div id="outline-container-org2f46330" class="outline-2">
-<h2 id="org2f46330">branching by if</h2>
-<div class="outline-text-2" id="text-org2f46330">
+<div id="outline-container-org78043c9" class="outline-2">
+<h2 id="org78043c9">branching by if</h2>
+<div class="outline-text-2" id="text-org78043c9">
 <div class="org-src-container">
 
-<pre class="src src-scheme"><span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">run</span> <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">if</span> true <span style="color: #66d9ef; font-weight: bold;">-&gt;</span> true . end<span style="color: #696969;">)</span>
-     <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">if</span> false <span style="color: #66d9ef; font-weight: bold;">-&gt;</span> false . end<span style="color: #696969;">))</span>
+<pre class="src src-scheme"><span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">run</span> <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">if</span> true <span style="color: #66d9ef; font-weight: bold;">-&gt;</span> true dot end<span style="color: #696969;">)</span>
+     <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">if</span> false <span style="color: #66d9ef; font-weight: bold;">-&gt;</span> false dot end<span style="color: #696969;">))</span>
 </pre>
 </div>
 </div>
 </div>
 
-<div id="outline-container-org5256638" class="outline-2">
-<h2 id="org5256638">receive function</h2>
-<div class="outline-text-2" id="text-org5256638">
+<div id="outline-container-orga443a9a" class="outline-2">
+<h2 id="orga443a9a">receive function</h2>
+<div class="outline-text-2" id="text-orga443a9a">
 <div class="org-src-container">
 
 <pre class="src src-scheme"><span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">defun</span> factorial <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">:</span> int <span style="color: #66d9ef; font-weight: bold;">-&gt;</span> int<span style="color: #696969;">)</span>
   <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">if</span> dup <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">#</span> 1<span style="color: #696969;">)</span> lteq? <span style="color: #66d9ef; font-weight: bold;">-&gt;</span> drop <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">#</span> 1<span style="color: #696969;">)</span> end<span style="color: #696969;">)</span>
   dup <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">#</span> 1<span style="color: #696969;">)</span> sub factorial mul end<span style="color: #696969;">)</span>
 
-<span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">run</span> <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">#</span> 0<span style="color: #696969;">)</span> factorial .
-     <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">#</span> 1<span style="color: #696969;">)</span> factorial .
-     <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">#</span> 2<span style="color: #696969;">)</span> factorial .
-     <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">#</span> 3<span style="color: #696969;">)</span> factorial .
-     <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">#</span> 4<span style="color: #696969;">)</span> factorial .<span style="color: #696969;">)</span>
+<span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">run</span> <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">#</span> 0<span style="color: #696969;">)</span> factorial dot
+     <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">#</span> 1<span style="color: #696969;">)</span> factorial dot
+     <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">#</span> 2<span style="color: #696969;">)</span> factorial dot
+     <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">#</span> 3<span style="color: #696969;">)</span> factorial dot
+     <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">#</span> 4<span style="color: #696969;">)</span> factorial dot<span style="color: #696969;">)</span>
 </pre>
 </div>
 </div>
 </div>
 
-<div id="outline-container-orgef0461d" class="outline-2">
-<h2 id="orgef0461d">string</h2>
-<div class="outline-text-2" id="text-orgef0461d">
+<div id="outline-container-orgd39bffc" class="outline-2">
+<h2 id="orgd39bffc">integer</h2>
+<div class="outline-text-2" id="text-orgd39bffc">
 <div class="org-src-container">
 
-<pre class="src src-scheme"><span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">run</span> <span style="color: #696969;">(</span>string <span style="color: #696969;">(</span>test1<span style="color: #696969;">)</span> <span style="color: #696969;">(</span>test2<span style="color: #696969;">))</span>
+<pre class="src src-scheme"><span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">run</span> <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">#</span> 18 5<span style="color: #696969;">)</span> mod dot<span style="color: #696969;">)</span>
+</pre>
+</div>
+</div>
+</div>
+
+<div id="outline-container-org8fa109a" class="outline-2">
+<h2 id="org8fa109a">string</h2>
+<div class="outline-text-2" id="text-org8fa109a">
+<div class="org-src-container">
+
+<pre class="src src-scheme"><span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">run</span> <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">string</span> <span style="color: #696969;">(</span>test1<span style="color: #696969;">)</span> <span style="color: #696969;">(</span>test2<span style="color: #696969;">))</span>
      print-string print-string<span style="color: #696969;">)</span>
 </pre>
 </div>
 </div>
 </div>
 
-<div id="outline-container-org854b45c" class="outline-2">
-<h2 id="org854b45c">file</h2>
-<div class="outline-text-2" id="text-org854b45c">
+<div id="outline-container-org3622b6c" class="outline-2">
+<h2 id="org3622b6c">file</h2>
+<div class="outline-text-2" id="text-org3622b6c">
 <div class="org-src-container">
 
-<pre class="src src-scheme"><span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">run</span> <span style="color: #696969;">(</span>string <span style="color: #696969;">(</span>README<span style="color: #696969;">))</span>
+<pre class="src src-scheme"><span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">run</span> <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">string</span> <span style="color: #696969;">(</span>README<span style="color: #696969;">))</span>
      <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">#</span> 1024<span style="color: #696969;">)</span> allocate tuck
-     <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">#</span> 1024<span style="color: #696969;">)</span> read-file .
+     <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">#</span> 1024<span style="color: #696969;">)</span> read-file dot
      print-string<span style="color: #696969;">)</span>
 </pre>
 </div>
 </div>
 </div>
 
-<div id="outline-container-org7ae2329" class="outline-2">
-<h2 id="org7ae2329">system</h2>
-<div class="outline-text-2" id="text-org7ae2329">
+<div id="outline-container-org30d534d" class="outline-2">
+<h2 id="org30d534d">system</h2>
+<div class="outline-text-2" id="text-org30d534d">
 <div class="org-src-container">
 
 <pre class="src src-scheme"><span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">run</span> getcwd print-string<span style="color: #696969;">)</span>
@@ -182,14 +204,250 @@ for the JavaScript code in this tag.
 </div>
 </div>
 
-<div id="outline-container-org7a66fe6" class="outline-2">
-<h2 id="org7a66fe6">var</h2>
-<div class="outline-text-2" id="text-org7a66fe6">
+<div id="outline-container-org7332c76" class="outline-2">
+<h2 id="org7332c76">var</h2>
+<div class="outline-text-2" id="text-org7332c76">
 <div class="org-src-container">
 
 <pre class="src src-scheme"><span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">defvar</span> var1 <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">#</span> 666<span style="color: #696969;">)</span> <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">#</span> 666<span style="color: #696969;">)</span> add<span style="color: #696969;">)</span>
-<span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">run</span> var1 .<span style="color: #696969;">)</span>
+<span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">run</span> var1 dot<span style="color: #696969;">)</span>
+
+<span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">defun</span> defvar-report/loop <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">:</span> record <span style="color: #66d9ef; font-weight: bold;">-&gt;</span> <span style="color: #797979;">[</span>io<span style="color: #797979;">]</span><span style="color: #696969;">)</span>
+  <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">if</span> dup get <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">#</span> 0<span style="color: #696969;">)</span> eq? <span style="color: #66d9ef; font-weight: bold;">-&gt;</span> drop end<span style="color: #696969;">)</span>
+  <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">string</span> <span style="color: #696969;">(</span>  <span style="color: #696969;">))</span> print-string
+  dup get jo-&gt;string print-string
+  newline
+  cell-size add <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">tail-call</span> defvar-report/loop<span style="color: #696969;">))</span>
+
+<span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">defun</span> defvar-report <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">:</span> <span style="color: #66d9ef; font-weight: bold;">-&gt;</span> <span style="color: #797979;">[</span>io<span style="color: #797979;">]</span><span style="color: #696969;">)</span>
+  <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">string</span> <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">-</span> defvar-report :<span style="color: #696969;">))</span> print-string newline
+  defvar-record defvar-report/loop<span style="color: #696969;">)</span>
 </pre>
+</div>
+</div>
+</div>
+
+<div id="outline-container-orgd9909ea" class="outline-2">
+<h2 id="orgd9909ea">gc</h2>
+<div class="outline-text-2" id="text-orgd9909ea">
+</div><div id="outline-container-org75c023c" class="outline-3">
+<h3 id="org75c023c">cons-area</h3>
+<div class="outline-text-3" id="text-org75c023c">
+<div class="org-src-container">
+
+<pre class="src src-scheme"><span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">defvar</span> cons-size <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">#</span> 3<span style="color: #696969;">)</span> cell-size mul<span style="color: #696969;">)</span>
+<span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">defvar</span> cons-area-size <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">#</span> 5<span style="color: #696969;">)</span> <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">:</span> <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">#</span> 1024 1024<span style="color: #696969;">)</span> mul<span style="color: #696969;">)</span> cons-size mul<span style="color: #696969;">)</span>
+
+<span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">defvar</span> cons-area cons-area-size allocate<span style="color: #696969;">)</span>
+<span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">defvar</span> cons-area-top cons-area cons-area-size add<span style="color: #696969;">)</span>
+
+<span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">defvar</span> cons-pointer cons-area<span style="color: #696969;">)</span>
+
+<span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">defun</span> cons-pointer/next <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">:</span> <span style="color: #66d9ef; font-weight: bold;">-&gt;</span> <span style="color: #797979;">[</span>cons-pointer<span style="color: #797979;">]</span><span style="color: #696969;">)</span>
+  cons-size cons-pointer add
+  <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">var</span> cons-pointer<span style="color: #696969;">)</span> set<span style="color: #696969;">)</span>
+
+<span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">defun</span> cons-pointer/init <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">:</span> <span style="color: #66d9ef; font-weight: bold;">-&gt;</span> <span style="color: #797979;">[</span>cons-pointer<span style="color: #797979;">]</span><span style="color: #696969;">)</span>
+  cons-area
+  <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">var</span> cons-pointer<span style="color: #696969;">)</span> set<span style="color: #696969;">)</span>
+
+<span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">defun</span> cons-pointer/next-free <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">:</span> <span style="color: #66d9ef; font-weight: bold;">-&gt;</span> <span style="color: #797979;">[</span>cons-pointer<span style="color: #797979;">]</span><span style="color: #696969;">)</span>
+  <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">if</span> cons-pointer cons-area-top eq? <span style="color: #66d9ef; font-weight: bold;">-&gt;</span> end<span style="color: #696969;">)</span>
+  <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">if</span> cons-pointer get currnet-mark eq? not <span style="color: #66d9ef; font-weight: bold;">-&gt;</span> end<span style="color: #696969;">)</span>
+  cons-pointer/next
+  <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">tail-call</span> cons-pointer/next-free<span style="color: #696969;">))</span>
+</pre>
+</div>
+</div>
+</div>
+
+<div id="outline-container-org64fc24e" class="outline-3">
+<h3 id="org64fc24e">cons-area-report</h3>
+<div class="outline-text-3" id="text-org64fc24e">
+<div class="org-src-container">
+
+<pre class="src src-scheme"><span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">defun</span> cons-area-report/loop <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">:</span> cons <span style="color: #66d9ef; font-weight: bold;">-&gt;</span> <span style="color: #797979;">[</span>io<span style="color: #797979;">]</span><span style="color: #696969;">)</span>
+  <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">if</span> dup cons-area-top eq? <span style="color: #66d9ef; font-weight: bold;">-&gt;</span> drop end<span style="color: #696969;">)</span>
+  <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">string</span> <span style="color: #696969;">(</span>#:<span style="color: #696969;">))</span> print-string
+  dup dot
+  <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">string</span> <span style="color: #696969;">(</span>mark: <span style="color: #696969;">))</span> print-string
+  dup get dot
+  <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">string</span> <span style="color: #696969;">(</span>car: <span style="color: #696969;">))</span> print-string
+  dup car dot
+  <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">string</span> <span style="color: #696969;">(</span>cdr: <span style="color: #696969;">))</span> print-string
+  dup cdr dot
+  newline
+  cons-size add
+  <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">tail-call</span> cons-area-report/loop<span style="color: #696969;">))</span>
+
+<span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">defun</span> cons-area-report <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">:</span> <span style="color: #66d9ef; font-weight: bold;">-&gt;</span> <span style="color: #797979;">[</span>io<span style="color: #797979;">]</span><span style="color: #696969;">)</span>
+  cons-area cons-area-report/loop<span style="color: #696969;">)</span>
+</pre>
+</div>
+</div>
+</div>
+
+<div id="outline-container-org710720e" class="outline-3">
+<h3 id="org710720e">sweep-cons-area</h3>
+<div class="outline-text-3" id="text-org710720e">
+<div class="org-src-container">
+
+<pre class="src src-scheme"><span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">defun</span> sweep-cons-area/loop <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">:</span> cons <span style="color: #66d9ef; font-weight: bold;">-&gt;</span> <span style="color: #797979;">[</span>io<span style="color: #797979;">]</span><span style="color: #696969;">)</span>
+  <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">if</span> dup cons-area-top eq? <span style="color: #66d9ef; font-weight: bold;">-&gt;</span> drop end<span style="color: #696969;">)</span>
+  dup <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">#</span> 0<span style="color: #696969;">)</span>  swap set
+  cons-size add
+  <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">tail-call</span> sweep-cons-area/loop<span style="color: #696969;">))</span>
+
+<span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">defun</span> sweep-cons-area <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">:</span> <span style="color: #66d9ef; font-weight: bold;">-&gt;</span> <span style="color: #797979;">[</span>cons-area<span style="color: #797979;">]</span><span style="color: #696969;">)</span>
+  cons-area sweep-cons-area/loop<span style="color: #696969;">)</span>
+</pre>
+</div>
+</div>
+</div>
+
+<div id="outline-container-orgd5c9dd0" class="outline-3">
+<h3 id="orgd5c9dd0">mark-cons-area</h3>
+<div class="outline-text-3" id="text-orgd5c9dd0">
+<ul class="org-ul">
+<li><p>root from</p><p><ul class="org-ul"></p><p><li><p>stack</p></li></p><p><li><p>defvar</p></li></ul></p></li></ul>
+
+<div class="org-src-container">
+
+<pre class="src src-scheme"><span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">defvar</span> currnet-mark <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">#</span> 1<span style="color: #696969;">))</span>
+<span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">defvar</span> max-mark <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">#</span> 3<span style="color: #696969;">))</span>
+
+<span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">defun</span> mark-cons <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">:</span> cons <span style="color: #66d9ef; font-weight: bold;">-&gt;</span> <span style="color: #797979;">[</span>cons-area<span style="color: #797979;">]</span><span style="color: #696969;">)</span>
+  <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">if</span> dup cons? not <span style="color: #66d9ef; font-weight: bold;">-&gt;</span> drop end<span style="color: #696969;">)</span>
+  dup currnet-mark swap set
+  <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">string</span> <span style="color: #696969;">(</span> <span style="color: #66d9ef; font-weight: bold;">&lt;mark-cons&gt;</span> <span style="color: #696969;">))</span> print-string newline
+  dup car mark-cons
+  cdr <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">tail-call</span> mark-cons<span style="color: #696969;">))</span>
+
+<span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">defun</span> mark-cons-area-for-defvar <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">:</span> defvar-record/addr <span style="color: #66d9ef; font-weight: bold;">-&gt;</span> <span style="color: #797979;">[</span>cons-area<span style="color: #797979;">]</span><span style="color: #696969;">)</span>
+  <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">if</span> dup get <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">#</span> 0<span style="color: #696969;">)</span> eq? <span style="color: #66d9ef; font-weight: bold;">-&gt;</span> drop end<span style="color: #696969;">)</span>
+  dup get mark-cons
+  cell-size add
+  <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">tail-call</span> mark-cons-area-for-defvar<span style="color: #696969;">))</span>
+
+<span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">defun</span> mark-cons-area-for-stack <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">:</span> stack/addr <span style="color: #66d9ef; font-weight: bold;">-&gt;</span> <span style="color: #797979;">[</span>cons-area<span style="color: #797979;">]</span><span style="color: #696969;">)</span>
+  <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">if</span> dup stack-base eq? <span style="color: #66d9ef; font-weight: bold;">-&gt;</span> drop end<span style="color: #696969;">)</span>
+  cell-size sub
+  dup get mark-cons
+  <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">tail-call</span> mark-cons-area-for-stack<span style="color: #696969;">))</span>
+
+<span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">defun</span> mark-cons-area <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">:</span> <span style="color: #66d9ef; font-weight: bold;">-&gt;</span> <span style="color: #797979;">[</span>cons-area<span style="color: #797979;">]</span><span style="color: #696969;">)</span>
+  <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">if</span> currnet-mark max-mark eq? <span style="color: #66d9ef; font-weight: bold;">-&gt;</span>
+      sweep-cons-area
+      <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">#</span> 0<span style="color: #696969;">)</span> <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">var</span> currnet-mark<span style="color: #696969;">)</span> set<span style="color: #696969;">)</span>
+  currnet-mark <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">#</span> 1<span style="color: #696969;">)</span> add <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">var</span> currnet-mark<span style="color: #696969;">)</span> set
+  defvar-record mark-cons-area-for-defvar
+  stack-pointer
+  mark-cons-area-for-stack<span style="color: #696969;">)</span>
+</pre>
+</div>
+</div>
+</div>
+
+<div id="outline-container-org6783141" class="outline-3">
+<h3 id="org6783141">cons</h3>
+<div class="outline-text-3" id="text-org6783141">
+<ul class="org-ul">
+<li><p><p></p><p>cons</p><p></p></p><p><table border="2" cellspacing="0" cellpadding="6" rules="groups" frame="hsides"></p><p></p><p></p><p><colgroup></p><p><col  class="org-left" /></p><p></colgroup></p><p><tbody></p><p><tr></p><p><td class="org-left">mark</td></p><p></tr></p><p></p><p><tr></p><p><td class="org-left">car</td></p><p></tr></p><p></p><p><tr></p><p><td class="org-left">cdr</td></p><p></tr></p><p></tbody></p><p></table></p></li></ul>
+
+<div class="org-src-container">
+
+<pre class="src src-scheme"><span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">defun</span> new-cons <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">:</span> <span style="color: #66d9ef; font-weight: bold;">-&gt;</span> cons<span style="color: #696969;">)</span>
+  <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">if</span> cons-pointer cons-area-top eq? <span style="color: #66d9ef; font-weight: bold;">-&gt;</span>
+      mark-cons-area
+      cons-pointer/init
+      cons-pointer/next-free
+      <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">if</span> cons-pointer cons-area-top eq? <span style="color: #66d9ef; font-weight: bold;">-&gt;</span>
+          <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">string</span> <span style="color: #696969;">(</span>cons-area is full<span style="color: #696969;">))</span> print-string newline end<span style="color: #696969;">)</span>
+      <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">tail-call</span> new-cons<span style="color: #696969;">))</span>
+  <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">if</span> cons-pointer get currnet-mark eq? <span style="color: #66d9ef; font-weight: bold;">-&gt;</span>
+      cons-pointer/next <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">tail-call</span> new-cons<span style="color: #696969;">))</span>
+  cons-pointer
+  cons-pointer/next end<span style="color: #696969;">)</span>
+
+<span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">defun</span> set-car <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">:</span> cell cons <span style="color: #66d9ef; font-weight: bold;">-&gt;</span> cons<span style="color: #696969;">)</span>
+  tuck
+  cell-size add
+  set<span style="color: #696969;">)</span>
+
+<span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">defun</span> set-cdr <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">:</span> cell cons <span style="color: #66d9ef; font-weight: bold;">-&gt;</span> cons<span style="color: #696969;">)</span>
+  tuck
+  cell-size add
+  cell-size add
+  set<span style="color: #696969;">)</span>
+
+
+<span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">defun</span> car <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">:</span> cons <span style="color: #66d9ef; font-weight: bold;">-&gt;</span> cell<span style="color: #696969;">)</span>
+  cell-size add
+  get<span style="color: #696969;">)</span>
+
+<span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">defun</span> cdr <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">:</span> cons <span style="color: #66d9ef; font-weight: bold;">-&gt;</span> cell<span style="color: #696969;">)</span>
+  cell-size add
+  cell-size add
+  get<span style="color: #696969;">)</span>
+
+<span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">defun</span> cons? <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">:</span> cell <span style="color: #66d9ef; font-weight: bold;">-&gt;</span> bool<span style="color: #696969;">)</span>
+  <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">if</span> dup cons-area lt? <span style="color: #66d9ef; font-weight: bold;">-&gt;</span> drop false end<span style="color: #696969;">)</span>
+  <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">if</span> dup cons-area-top gteq? <span style="color: #66d9ef; font-weight: bold;">-&gt;</span> drop false end<span style="color: #696969;">)</span>
+  cons-area sub cons-size mod <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">#</span> 0<span style="color: #696969;">)</span> eq?<span style="color: #696969;">)</span>
+
+<span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">defun</span> cons <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">:</span> cdr-cell car-cell <span style="color: #66d9ef; font-weight: bold;">-&gt;</span> cons<span style="color: #696969;">)</span>
+  new-cons set-car set-cdr<span style="color: #696969;">)</span>
+</pre>
+</div>
+</div>
+</div>
+
+<div id="outline-container-orgdd3d3ba" class="outline-3">
+<h3 id="orgdd3d3ba"><span class="done test">test</span> </h3>
+<div class="outline-text-3" id="text-orgdd3d3ba">
+<div class="org-src-container">
+
+<pre class="src src-scheme"><span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">run</span> <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">#</span> 0<span style="color: #696969;">)</span>
+     <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">#</span> 1<span style="color: #696969;">)</span> cons
+     <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">#</span> 2<span style="color: #696969;">)</span> cons
+     dup car dot
+     dup cdr car dot
+     dup cdr cdr dot
+
+     dup cons? dot
+     dup cdr cons? dot
+     dup car cons? dot
+     dup cdr car cons? dot
+     dup cdr cdr cons? dot
+     dot
+
+     currnet-mark
+     dot<span style="color: #696969;">)</span>
+
+<span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">:</span> <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">run</span> jotable-report<span style="color: #696969;">))</span>
+
+<span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">run</span> newline
+     new-cons dot
+     new-cons dot
+     new-cons dot
+     new-cons dot
+     new-cons dot
+     currnet-mark dot
+     newline
+     cons-area-report
+     newline<span style="color: #696969;">)</span>
+</pre>
+</div>
+</div>
+</div>
+
+<div id="outline-container-org3f0239a" class="outline-3">
+<h3 id="org3f0239a">list</h3>
+<div class="outline-text-3" id="text-org3f0239a">
+<div class="org-src-container">
+
+<pre class="src src-scheme"></pre>
+</div>
 </div>
 </div>
 </div>

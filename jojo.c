@@ -417,6 +417,26 @@ void jotable_test() {
   // jotable_print();
 }
 
+jo defprim_record[64 * 1024];
+cell defprim_record_counter = 0;
+
+void defprim_report() {
+  printf("- defprim_report :\n");
+  cell i = 0;
+  while (i < defprim_record_counter) {
+    printf("  %s\n", jo2str(defprim_record[i]));
+    i++;
+  }
+}
+
+void defprim(string str, primitive fun) {
+  jo index = str2jo(str);
+  defprim_record[defprim_record_counter] = index;
+  defprim_record_counter++;
+  defprim_record[defprim_record_counter] = 0;
+  jotable_set_primitive(index, fun);
+}
+
 typedef cell argument_stack[1024 * 4];
 
 argument_stack as;
@@ -447,16 +467,6 @@ void rs_push(jo* value) {
 jo* rs_pop() {
   rs_pointer--;
   return rs[rs_pointer];
-}
-
-void defprim(string str, primitive fun) {
-  jo index = str2jo(str);
-  jotable_set_primitive(index, fun);
-}
-
-void defvar(string str, cell cell) {
-  jo index = str2jo(str);
-  jotable_set_cell(index, cell);
 }
 
 void apply(jo jo) {
@@ -592,6 +602,14 @@ void p_print_stack() {
   }
 }
 
+void p_stack_base() {
+  as_push(as + as_base);
+}
+
+void p_stack_pointer() {
+  as_push(as + as_pointer);
+}
+
 void export_stack_operation() {
   defprim("drop", p_drop);
   defprim("dup", p_dup);
@@ -599,6 +617,8 @@ void export_stack_operation() {
   defprim("tuck", p_tuck);
   defprim("swap", p_swap);
   defprim("print-stack", p_print_stack);
+  defprim("stack-pointer", p_stack_pointer);
+  defprim("stack-base", p_stack_base);
 }
 
 void p_end() {
@@ -801,7 +821,7 @@ void export_integer() {
   defprim("#", k_integer);
 
   defprim("print-integer", p_print_integer);
-  defprim(".", p_dot);
+  defprim("dot", p_dot);
 }
 
 void p_allocate () {
@@ -1424,9 +1444,15 @@ jo read_alias_jo() {
   }
 }
 
+jo defun_record[64 * 1024];
+cell defun_record_counter = 0;
+
 void k_defun() {
   // ([io] -> [compile] [jotable])
   jo index = read_alias_jo();
+  defun_record[defun_record_counter] = index;
+  defun_record_counter++;
+  defun_record[defun_record_counter] = 0;
   jo* array = compiling_stack_tos();
   while (true) {
     jo s = read_jo();
@@ -1446,9 +1472,13 @@ void k_defun() {
   jotable[index].value.jojo.array = array;
 }
 
+void k_declare() {
+
+}
+
 void k_run() {
   // ([io] -> *)
-  jo array[1024];
+  jo array[64 * 1024];
   compiling_stack_push(array);
   while (true) {
     jo s = read_jo();
@@ -1467,9 +1497,20 @@ void k_run() {
   eval_jojo(array);
 }
 
+jo defvar_record[64 * 1024];
+cell defvar_record_counter = 0;
+
+void p_defvar_record() {
+  // (-> addr)
+  as_push(defvar_record);
+}
+
 void k_defvar() {
   // ([io] -> [compile] [jotable])
   jo index = read_alias_jo();
+  defvar_record[defvar_record_counter] = index;
+  defvar_record_counter++;
+  defvar_record[defvar_record_counter] = 0;
   k_run();
   jotable_set_cell(index, as_pop());
 }
@@ -1489,19 +1530,37 @@ void p_top_repl() {
 
 void export_top_level() {
   defprim("defun", k_defun);
+  defprim("declare", k_declare);
   defprim("run", k_run);
   defprim("defvar", k_defvar);
+  defprim("defvar-record", p_defvar_record);
   defprim("top-repl", p_top_repl);
 }
 
 void do_nothing() {
 }
 
+void p_round_bar() {
+  // (-> cell)
+  as_push(str2jo("("));
+}
+
+void p_cell_size() {
+  // (-> cell)
+  as_push(sizeof(cell));
+}
+
+void p_newline() {
+  printf("\n");
+}
+
 void export_mise() {
   defprim("apply", p_apply);
   defprim("jotable-report", jotable_report);
-  defvar("round-bar", str2jo("("));
-  defvar("cell-size", sizeof(cell));
+  defprim("round-bar", p_round_bar);
+  defprim("cell-size", p_cell_size);
+  defprim("defprim-report", defprim_report);
+  defprim("newline", p_newline);
 }
 
 void p1() {

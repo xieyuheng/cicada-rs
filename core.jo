@@ -1,41 +1,207 @@
-(~ square (: int int -> int)
-   dup mul end)
+(defun square (: int int -> int)
+  dup mul end)
 
-(! (# 11) square .)
+(run (# 11) square dot)
 
-(~ apply-key (: jo -> *)
-   (if dup jo-used? -> apply end)
-   (else
-    (string (undefined keyword : )) print-string
-    jo->string print-string end))
+(defun apply-key (: jo -> *)
+  (if dup jo-used? -> apply end)
+  (string (undefined keyword : )) print-string
+  jo->string print-string end)
 
-(~ stack-repl (: [io] -> *)
-   (if read-jo round-bar eq? -> read-jo apply-key print-stack)
-   (tail-call stack-repl))
+(defun stack-repl (: [io] -> *)
+  (if read-jo round-bar eq? -> read-jo apply-key print-stack)
+  (tail-call stack-repl))
 
-(! stack-repl)
+(run stack-repl)
 
-(! (if true -> true . end)
-   (if false -> false . end))
+(run (if true -> true dot end)
+     (if false -> false dot end))
 
-(~ factorial (: int -> int)
-   (if dup (# 1) lteq? -> drop (# 1) end)
-   dup (# 1) sub factorial mul end)
+(defun factorial (: int -> int)
+  (if dup (# 1) lteq? -> drop (# 1) end)
+  dup (# 1) sub factorial mul end)
 
-(! (# 0) factorial .
-   (# 1) factorial .
-   (# 2) factorial .
-   (# 3) factorial .
-   (# 4) factorial .)
+(run (# 0) factorial dot
+     (# 1) factorial dot
+     (# 2) factorial dot
+     (# 3) factorial dot
+     (# 4) factorial dot)
 
-(! (string (test1) (test2)) print-string print-string)
+(run (# 18 5) mod dot)
 
-(! (string (README))
-   (# 1024) allocate tuck
-   (# 1024) read-file .
-   print-string)
+(run (string (test1) (test2))
+     print-string print-string)
 
-(! getcwd print-string)
+(run (string (README))
+     (# 1024) allocate tuck
+     (# 1024) read-file dot
+     print-string)
 
-($ var1 (# 666) (# 666) add)
-(! var1 .)
+(run getcwd print-string)
+
+(defvar var1 (# 666) (# 666) add)
+(run var1 dot)
+
+(defun defvar-report/loop (: record -> [io])
+  (if dup get (# 0) eq? -> drop end)
+  (string (  )) print-string
+  dup get jo->string print-string
+  newline
+  cell-size add (tail-call defvar-report/loop))
+
+(defun defvar-report (: -> [io])
+  (string (- defvar-report :)) print-string newline
+  defvar-record defvar-report/loop)
+
+(defvar cons-size (# 3) cell-size mul)
+(defvar cons-area-size (# 5) (: (# 1024 1024) mul) cons-size mul)
+
+(defvar cons-area cons-area-size allocate)
+(defvar cons-area-top cons-area cons-area-size add)
+
+(defvar cons-pointer cons-area)
+
+(defun cons-pointer/next (: -> [cons-pointer])
+  cons-size cons-pointer add
+  (var cons-pointer) set)
+
+(defun cons-pointer/init (: -> [cons-pointer])
+  cons-area
+  (var cons-pointer) set)
+
+(defun cons-pointer/next-free (: -> [cons-pointer])
+  (if cons-pointer cons-area-top eq? -> end)
+  (if cons-pointer get currnet-mark eq? not -> end)
+  cons-pointer/next
+  (tail-call cons-pointer/next-free))
+
+(defun cons-area-report/loop (: cons -> [io])
+  (if dup cons-area-top eq? -> drop end)
+  (string (#:)) print-string
+  dup dot
+  (string (mark: )) print-string
+  dup get dot
+  (string (car: )) print-string
+  dup car dot
+  (string (cdr: )) print-string
+  dup cdr dot
+  newline
+  cons-size add
+  (tail-call cons-area-report/loop))
+
+(defun cons-area-report (: -> [io])
+  cons-area cons-area-report/loop)
+
+(defun sweep-cons-area/loop (: cons -> [io])
+  (if dup cons-area-top eq? -> drop end)
+  dup (# 0)  swap set
+  cons-size add
+  (tail-call sweep-cons-area/loop))
+
+(defun sweep-cons-area (: -> [cons-area])
+  cons-area sweep-cons-area/loop)
+
+(defvar currnet-mark (# 1))
+(defvar max-mark (# 3))
+
+(defun mark-cons (: cons -> [cons-area])
+  (if dup cons? not -> drop end)
+  dup currnet-mark swap set
+  (string ( <mark-cons> )) print-string newline
+  dup car mark-cons
+  cdr (tail-call mark-cons))
+
+(defun mark-cons-area-for-defvar (: defvar-record/addr -> [cons-area])
+  (if dup get (# 0) eq? -> drop end)
+  dup get mark-cons
+  cell-size add
+  (tail-call mark-cons-area-for-defvar))
+
+(defun mark-cons-area-for-stack (: stack/addr -> [cons-area])
+  (if dup stack-base eq? -> drop end)
+  cell-size sub
+  dup get mark-cons
+  (tail-call mark-cons-area-for-stack))
+
+(defun mark-cons-area (: -> [cons-area])
+  (if currnet-mark max-mark eq? ->
+      sweep-cons-area
+      (# 0) (var currnet-mark) set)
+  currnet-mark (# 1) add (var currnet-mark) set
+  defvar-record mark-cons-area-for-defvar
+  stack-pointer
+  mark-cons-area-for-stack)
+
+(defun new-cons (: -> cons)
+  (if cons-pointer cons-area-top eq? ->
+      mark-cons-area
+      cons-pointer/init
+      cons-pointer/next-free
+      (if cons-pointer cons-area-top eq? ->
+          (string (cons-area is full)) print-string newline end)
+      (tail-call new-cons))
+  (if cons-pointer get currnet-mark eq? ->
+      cons-pointer/next (tail-call new-cons))
+  cons-pointer
+  cons-pointer/next end)
+
+(defun set-car (: cell cons -> cons)
+  tuck
+  cell-size add
+  set)
+
+(defun set-cdr (: cell cons -> cons)
+  tuck
+  cell-size add
+  cell-size add
+  set)
+
+
+(defun car (: cons -> cell)
+  cell-size add
+  get)
+
+(defun cdr (: cons -> cell)
+  cell-size add
+  cell-size add
+  get)
+
+(defun cons? (: cell -> bool)
+  (if dup cons-area lt? -> drop false end)
+  (if dup cons-area-top gteq? -> drop false end)
+  cons-area sub cons-size mod (# 0) eq?)
+
+(defun cons (: cdr-cell car-cell -> cons)
+  new-cons set-car set-cdr)
+
+(run (# 0)
+     (# 1) cons
+     (# 2) cons
+     dup car dot
+     dup cdr car dot
+     dup cdr cdr dot
+
+     dup cons? dot
+     dup cdr cons? dot
+     dup car cons? dot
+     dup cdr car cons? dot
+     dup cdr cdr cons? dot
+     dot
+
+     currnet-mark
+     dot)
+
+(: (run jotable-report))
+
+(run newline
+     new-cons dot
+     new-cons dot
+     new-cons dot
+     new-cons dot
+     new-cons dot
+     currnet-mark dot
+     newline
+     cons-area-report
+     newline)
+
+
