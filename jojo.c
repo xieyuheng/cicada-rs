@@ -632,7 +632,7 @@ void p_end() {
 void p_bye() {
   // (-> [exit])
   printf("bye bye ^-^/\n");
-  exit_eval();
+  exit(0);
 }
 
 void export_ending() {

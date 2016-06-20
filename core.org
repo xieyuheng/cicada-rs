@@ -4,7 +4,7 @@
 
 * define function
 
-  #+begin_src scheme
+  #+begin_src jojo
   (defun square (: int int -> int)
     dup mul end)
 
@@ -13,7 +13,7 @@
 
 * loop by explicit tail-call
 
-  #+begin_src scheme
+  #+begin_src jojo
   (defun apply-key (: jo -> *)
     (if dup jo-used? -> apply end)
     (string (undefined keyword : )) print-string
@@ -28,14 +28,14 @@
 
 * branching by if
 
-  #+begin_src scheme
+  #+begin_src jojo
   (run (if true -> true dot end)
        (if false -> false dot end))
   #+end_src
 
 * receive function
 
-  #+begin_src scheme
+  #+begin_src jojo
   (defun factorial (: int -> int)
     (if dup (# 1) lteq? -> drop (# 1) end)
     dup (# 1) sub factorial mul end)
@@ -49,20 +49,20 @@
 
 * integer
 
-  #+begin_src scheme
+  #+begin_src jojo
   (run (# 18 5) mod dot)
   #+end_src
 
 * string
 
-  #+begin_src scheme
+  #+begin_src jojo
   (run (string (test1) (test2))
        print-string print-string)
   #+end_src
 
 * file
 
-  #+begin_src scheme
+  #+begin_src jojo
   (run (string (README))
        (# 1024) allocate tuck
        (# 1024) read-file dot
@@ -71,20 +71,20 @@
 
 * system
 
-  #+begin_src scheme
+  #+begin_src jojo
   (run getcwd print-string)
   #+end_src
 
 * var
 
-  #+begin_src scheme
+  #+begin_src jojo
   (defvar var1 (# 666) (# 666) add)
   (run var1 dot)
   #+end_src
 
 * report
 
-  #+begin_src scheme
+  #+begin_src jojo
   (run defprim-report
        defun-report
        defvar-report)
@@ -94,7 +94,7 @@
 
 *** cons-area
 
-    #+begin_src scheme
+    #+begin_src jojo
     (defvar cons-size (# 3) cell-size mul)
     (defvar cons-area-size (# 5) (: (# 1024 1024) mul) cons-size mul)
 
@@ -120,7 +120,7 @@
 
 *** cons-area-report
 
-    #+begin_src scheme
+    #+begin_src jojo
     (defun cons-area-report/loop (: cons -> [io])
       (if dup cons-area-top eq? -> drop end)
       (string (#:)) print-string
@@ -141,7 +141,7 @@
 
 *** sweep-cons-area
 
-    #+begin_src scheme
+    #+begin_src jojo
     (defun sweep-cons-area/loop (: cons -> [io])
       (if dup cons-area-top eq? -> drop end)
       dup (# 0)  swap set
@@ -158,7 +158,7 @@
       - stack
       - defvar
 
-    #+begin_src scheme
+    #+begin_src jojo
     (defvar currnet-mark (# 1))
     (defvar max-mark (# 3))
 
@@ -197,7 +197,7 @@
       | car  |
       | cdr  |
 
-    #+begin_src scheme
+    #+begin_src jojo
     (defun new-cons (: -> cons)
       (if cons-pointer cons-area-top eq? ->
           mark-cons-area
@@ -244,40 +244,38 @@
 
 *** test
 
-    #+begin_src scheme
-    (run (# 0)
-         (# 1) cons
-         (# 2) cons
-         dup car dot
-         dup cdr car dot
-         dup cdr cdr dot
+    #+begin_src jojo
+    (: (run (# 0)
+            (# 1) cons
+            (# 2) cons
+            dup car dot
+            dup cdr car dot
+            dup cdr cdr dot
 
-         dup cons? dot
-         dup cdr cons? dot
-         dup car cons? dot
-         dup cdr car cons? dot
-         dup cdr cdr cons? dot
-         dot
+            dup cons? dot
+            dup cdr cons? dot
+            dup car cons? dot
+            dup cdr car cons? dot
+            dup cdr cdr cons? dot
+            dot
 
-         currnet-mark
-         dot)
+            currnet-mark
+            dot))
 
-    (: (run jotable-report))
-
-    (run newline
-         new-cons dot
-         new-cons dot
-         new-cons dot
-         new-cons dot
-         new-cons dot
-         currnet-mark dot
-         newline
-         cons-area-report
-         newline)
+    (: (run newline
+            new-cons dot
+            new-cons dot
+            new-cons dot
+            new-cons dot
+            new-cons dot
+            currnet-mark dot
+            newline
+            cons-area-report
+            newline))
     #+end_src
 
-*** list
+* list
 
-    #+begin_src scheme
+  #+begin_src jojo
 
-    #+end_src
+  #+end_src
