@@ -10,7 +10,6 @@
 
 * todo
 
-  - defprim respect module
   - linear pattern matching
   - a way to load init module
   - test framework
@@ -629,9 +628,10 @@
     #+begin_src c
     void k_ignore();
     bool used_jo_p(jo index);
+    jo jo_to_jo_in_module(jo alias_jo);
 
     void defprim(string str, primitive fun) {
-      jo index = str2jo(str);
+      jo index = jo_to_jo_in_module(str2jo(str));
       if (used_jo_p(index)) {
         printf("- defprim can not re-define : %s\n", jo2str(index));
         printf("  it already defined as : %s\n", jo2str(jotable[index].type));
@@ -2016,11 +2016,10 @@
     }
     #+end_src
 
-*** read_alias_jo
+*** jo_to_jo_in_module
 
     #+begin_src c
-    jo read_alias_jo() {
-      jo alias_jo = read_jo();
+    jo jo_to_jo_in_module(jo alias_jo) {
       if (module_stack_empty_p()) {
         return alias_jo;
       }
@@ -2031,6 +2030,14 @@
         alias_add(alias_jo, new_jo);
         return new_jo;
       }
+    }
+    #+end_src
+
+*** read_jo_in_module
+
+    #+begin_src c
+    jo read_jo_in_module() {
+      jo_to_jo_in_module(read_jo());
     }
     #+end_src
 
@@ -2105,7 +2112,7 @@
       #+begin_src c
       void k_defun() {
         // ([io] -> [compile] [jotable])
-        jo index = read_alias_jo();
+        jo index = read_jo_in_module();
         if (used_jo_p(index)) {
           printf("- defun can not re-define : %s\n", jo2str(index));
           printf("  it already defined as : %s\n", jo2str(jotable[index].type));
@@ -2137,7 +2144,7 @@
 
       #+begin_src c
       void k_one_declare() {
-        jo index = read_alias_jo();
+        jo index = read_jo_in_module();
         jotable[index].type = str2jo("declared");
         k_ignore();
       }
@@ -2224,7 +2231,7 @@
       #+begin_src c
       void k_defvar() {
         // ([io] -> [compile] [jotable])
-        jo index = read_alias_jo();
+        jo index = read_jo_in_module();
         if (used_jo_p(index)) {
           printf("- defvar can not re-define : %s\n", jo2str(index));
           printf("  it already defined as : %s\n", jo2str(jotable[index].type));

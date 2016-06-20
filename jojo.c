@@ -433,9 +433,10 @@ void defprim_report() {
 
 void k_ignore();
 bool used_jo_p(jo index);
+jo jo_to_jo_in_module(jo alias_jo);
 
 void defprim(string str, primitive fun) {
-  jo index = str2jo(str);
+  jo index = jo_to_jo_in_module(str2jo(str));
   if (used_jo_p(index)) {
     printf("- defprim can not re-define : %s\n", jo2str(index));
     printf("  it already defined as : %s\n", jo2str(jotable[index].type));
@@ -1413,8 +1414,7 @@ bool used_jo_p(jo index) {
     var_jo_p(index);
 }
 
-jo read_alias_jo() {
-  jo alias_jo = read_jo();
+jo jo_to_jo_in_module(jo alias_jo) {
   if (module_stack_empty_p()) {
     return alias_jo;
   }
@@ -1425,6 +1425,10 @@ jo read_alias_jo() {
     alias_add(alias_jo, new_jo);
     return new_jo;
   }
+}
+
+jo read_jo_in_module() {
+  jo_to_jo_in_module(read_jo());
 }
 
 jo defun_record[64 * 1024];
@@ -1477,7 +1481,7 @@ bool defun_stack_empty_p() {
 
 void k_defun() {
   // ([io] -> [compile] [jotable])
-  jo index = read_alias_jo();
+  jo index = read_jo_in_module();
   if (used_jo_p(index)) {
     printf("- defun can not re-define : %s\n", jo2str(index));
     printf("  it already defined as : %s\n", jo2str(jotable[index].type));
@@ -1498,7 +1502,7 @@ void k_defun() {
 }
 
 void k_one_declare() {
-  jo index = read_alias_jo();
+  jo index = read_jo_in_module();
   jotable[index].type = str2jo("declared");
   k_ignore();
 }
@@ -1559,7 +1563,7 @@ void defvar_report() {
 
 void k_defvar() {
   // ([io] -> [compile] [jotable])
-  jo index = read_alias_jo();
+  jo index = read_jo_in_module();
   if (used_jo_p(index)) {
     printf("- defvar can not re-define : %s\n", jo2str(index));
     printf("  it already defined as : %s\n", jo2str(jotable[index].type));
