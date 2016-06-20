@@ -10,7 +10,7 @@
 
 (defun stack-repl (: [io] -> *)
   (if read-jo round-bar eq? -> read-jo apply-key print-stack)
-  (tail-call stack-repl))
+  loop)
 
 (run stack-repl)
 
@@ -19,7 +19,7 @@
 
 (defun factorial (: int -> int)
   (if dup (# 1) lteq? -> drop (# 1) end)
-  dup (# 1) sub factorial mul end)
+  dup (# 1) sub recur mul end)
 
 (run (# 0) factorial dot
      (# 1) factorial dot
@@ -66,7 +66,11 @@
   (if cons-pointer cons-area-top eq? -> end)
   (if cons-pointer get currnet-mark eq? not -> end)
   cons-pointer/next
-  (tail-call cons-pointer/next-free))
+  loop)
+
+(declare
+  (car (: cons -> cell))
+  (cdr (: cons -> cell)))
 
 (defun cons-area-report/loop (: cons -> [io])
   (if dup cons-area-top eq? -> drop end)
@@ -80,7 +84,7 @@
   dup cdr dot
   newline
   cons-size add
-  (tail-call cons-area-report/loop))
+  loop)
 
 (defun cons-area-report (: -> [io])
   cons-area cons-area-report/loop)
@@ -89,7 +93,7 @@
   (if dup cons-area-top eq? -> drop end)
   dup (# 0)  swap set
   cons-size add
-  (tail-call sweep-cons-area/loop))
+  loop)
 
 (defun sweep-cons-area (: -> [cons-area])
   cons-area sweep-cons-area/loop)
@@ -101,19 +105,19 @@
   (if dup cons? not -> drop end)
   dup currnet-mark swap set
   dup car mark-cons
-  cdr (tail-call mark-cons))
+  cdr loop)
 
 (defun mark-cons-area-for-defvar (: defvar-record/addr -> [cons-area])
   (if dup get (# 0) eq? -> drop end)
   dup get mark-cons
   cell-size add
-  (tail-call mark-cons-area-for-defvar))
+  loop)
 
 (defun mark-cons-area-for-stack (: stack/addr -> [cons-area])
   (if dup stack-base eq? -> drop end)
   cell-size sub
   dup get mark-cons
-  (tail-call mark-cons-area-for-stack))
+  loop)
 
 (defun mark-cons-area (: -> [cons-area])
   (if currnet-mark max-mark eq? ->
@@ -132,9 +136,9 @@
       (if cons-pointer cons-area-top eq? ->
           (string (fatal error : cons-area is full)) print-string
           newline bye)
-      (tail-call new-cons))
+      loop)
   (if cons-pointer get currnet-mark eq? ->
-      cons-pointer/next (tail-call new-cons))
+      cons-pointer/next loop)
   cons-pointer
   cons-pointer/next end)
 
@@ -167,34 +171,32 @@
 (defun cons (: cdr-cell car-cell -> cons)
   new-cons set-car set-cdr)
 
-(run (# 0)
-     (# 1) cons
-     (# 2) cons
-     dup car dot
-     dup cdr car dot
-     dup cdr cdr dot
+(: (run (# 0)
+        (# 1) cons
+        (# 2) cons
+        dup car dot
+        dup cdr car dot
+        dup cdr cdr dot
 
-     dup cons? dot
-     dup cdr cons? dot
-     dup car cons? dot
-     dup cdr car cons? dot
-     dup cdr cdr cons? dot
-     dot
+        dup cons? dot
+        dup cdr cons? dot
+        dup car cons? dot
+        dup cdr car cons? dot
+        dup cdr cdr cons? dot
+        dot
 
-     currnet-mark
-     dot)
+        currnet-mark
+        dot))
 
-(: (run jotable-report))
-
-(run newline
-     new-cons dot
-     new-cons dot
-     new-cons dot
-     new-cons dot
-     new-cons dot
-     currnet-mark dot
-     newline
-     cons-area-report
-     newline)
+(: (run newline
+        new-cons dot
+        new-cons dot
+        new-cons dot
+        new-cons dot
+        new-cons dot
+        currnet-mark dot
+        newline
+        cons-area-report
+        newline))
 
 

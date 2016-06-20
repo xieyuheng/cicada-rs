@@ -222,13 +222,13 @@ string jo2str (cell index);
 
 void jotable_entry_print(jotable_entry entry) {
   printf("%s : ", jo2str(entry.type));
-  if (entry.type == str2jo("cell")) {
+  if (entry.type == str2jo("variable")) {
     printf("%ld", entry.value.cell);
   }
   else if (entry.type == str2jo("primitive")) {
     printf("%ld", entry.value.primitive);
   }
-  else if (entry.type == str2jo("jojo")) {
+  else if (entry.type == str2jo("function")) {
     printf("%ld ", entry.value.jojo.size);
     printf("[ ");
     cell i;
@@ -356,7 +356,7 @@ void here(cell n) {
 }
 
 void jotable_set_cell(cell index, cell cell) {
-  jotable[index].type = str2jo("cell");
+  jotable[index].type = str2jo("variable");
   jotable[index].value.cell = cell;
 }
 
@@ -430,8 +430,17 @@ void defprim_report() {
   printf("\n");
 }
 
+void k_ignore();
+bool used_jo_p(jo index);
+
 void defprim(string str, primitive fun) {
   jo index = str2jo(str);
+  if (used_jo_p(index)) {
+    printf("- defprim can not re-define : %s\n", jo2str(index));
+    printf("  it already defined as : %s\n", jo2str(jotable[index].type));
+    k_ignore();
+    return;
+  }
   defprim_record[defprim_record_counter] = index;
   defprim_record_counter++;
   defprim_record[defprim_record_counter] = 0;
@@ -480,11 +489,11 @@ void apply(jo jo) {
     primitive primitive = jotable_get_primitive(jo);
     primitive();
   }
-  else if (jo_type == str2jo("jojo")) {
+  else if (jo_type == str2jo("function")) {
     jojo jojo = jotable_get_jojo(jo);
     rs_push(jojo.array);
   }
-  else if (jo_type == str2jo("cell")) {
+  else if (jo_type == str2jo("variable")) {
     cell cell = jotable_get_cell(jo);
     as_push(cell);
   }
@@ -494,14 +503,14 @@ void p_apply() {
   apply(as_pop());
 }
 
-jmp_buf jmp_buffer;
+jmp_buf eval_jmp_buffer;
 
 bool exit_eval() {
-  longjmp(jmp_buffer, 666);
+  longjmp(eval_jmp_buffer, 666);
 }
 
 void eval() {
-  if (666 == setjmp(jmp_buffer)) {
+  if (666 == setjmp(eval_jmp_buffer)) {
     return;
   }
   else {
@@ -521,12 +530,12 @@ void eval_jo(jo jo) {
     primitive primitive = jotable_get_primitive(jo);
     primitive();
   }
-  else if (jo_type == str2jo("jojo")) {
+  else if (jo_type == str2jo("function")) {
     jojo jojo = jotable_get_jojo(jo);
     rs_push(jojo.array);
     eval();
   }
-  else if (jo_type == str2jo("cell")) {
+  else if (jo_type == str2jo("variable")) {
     cell cell = jotable_get_cell(jo);
     as_push(cell);
   }
@@ -1209,6 +1218,7 @@ void k_else() {
 
 void k_tail_call() {
   // ([io] -> [compile])
+  // no check for "no compile before define"
   here(str2jo("i-tail-call"));
   jo s = read_jo();
   here(s);
@@ -1433,6 +1443,25 @@ void export_ffi() {
   defprim("clib", k_clib);
 }
 
+bool prim_jo_p(jo index) {
+  return jotable[index].type == str2jo("primitive");
+}
+
+bool fun_jo_p(jo index) {
+  return jotable[index].type == str2jo("function");
+}
+
+bool var_jo_p(jo index) {
+  return jotable[index].type == str2jo("variable");
+}
+
+bool used_jo_p(jo index) {
+  return
+    prim_jo_p(index) ||
+    fun_jo_p(index) ||
+    var_jo_p(index);
+}
+
 jo read_alias_jo() {
   jo alias_jo = read_jo();
   if (module_stack_empty_p()) {
@@ -1468,6 +1497,12 @@ void defun_report() {
 void k_defun() {
   // ([io] -> [compile] [jotable])
   jo index = read_alias_jo();
+  if (used_jo_p(index)) {
+    printf("- defun can not re-define : %s\n", jo2str(index));
+    printf("  it already defined as : %s\n", jo2str(jotable[index].type));
+    k_ignore();
+    return;
+  }
   defun_record[defun_record_counter] = index;
   defun_record_counter++;
   defun_record[defun_record_counter] = 0;
@@ -1481,17 +1516,48 @@ void k_defun() {
       here(str2jo("end"));
       break;
     }
-    else {
+    else if (s == str2jo("loop")) {
+      here(str2jo("i-tail-call"));
+      here(index);
+    }
+    else if (s == str2jo("recur")) {
+      here(index);
+    }
+    else if (jotable_entry_used(jotable[s]) ||
+             index == s) {
       here(s);
     }
+    else {
+      // no compile before define
+      printf("- defun undefined : %s\n", jo2str(s));
+      k_ignore();
+      return;
+    }
   }
-  jotable[index].type = str2jo("jojo");
+  jotable[index].type = str2jo("function");
   jotable[index].value.jojo.size = compiling_stack_tos() - array;
   jotable[index].value.jojo.array = array;
 }
 
-void k_declare() {
+void k_one_declare() {
+  jo index = read_alias_jo();
+  jotable[index].type = str2jo("declared");
+  k_ignore();
+}
 
+void k_declare() {
+  while (true) {
+    jo s = read_jo();
+    if (s == str2jo(")")) {
+      return;
+    }
+    else if (s == str2jo("(")) {
+      k_one_declare();
+    }
+    else {
+      // do nothing
+    }
+  }
 }
 
 void k_run() {
@@ -1536,6 +1602,12 @@ void defvar_report() {
 void k_defvar() {
   // ([io] -> [compile] [jotable])
   jo index = read_alias_jo();
+  if (used_jo_p(index)) {
+    printf("- defvar can not re-define : %s\n", jo2str(index));
+    printf("  it already defined as : %s\n", jo2str(jotable[index].type));
+    k_ignore();
+    return;
+  }
   defvar_record[defvar_record_counter] = index;
   defvar_record_counter++;
   defvar_record[defvar_record_counter] = 0;
@@ -1562,6 +1634,7 @@ void export_top_level() {
   defprim("defun", k_defun);
 
   defprim("declare", k_declare);
+
   defprim("run", k_run);
 
   defprim("defvar-record", p_defvar_record);
