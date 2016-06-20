@@ -3,7 +3,7 @@
 "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en">
 <head>
-<!-- 2016-06-20 Mon 13:47 -->
+<!-- 2016-06-20 Mon 23:57 -->
 <meta http-equiv="Content-Type" content="text/html;charset=utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>example code of jojo</title>
@@ -67,34 +67,34 @@ for the JavaScript code in this tag.
 <h2>overview</h2>
 <div id="text-table-of-contents">
 <ul>
-<li><a href="#org9125424">define function</a></li>
-<li><a href="#org94cf60f">loop by explicit tail-call</a></li>
-<li><a href="#org603e9b5">branching by if</a></li>
-<li><a href="#orgeebee80">receive function</a></li>
-<li><a href="#orge2f151d">integer</a></li>
-<li><a href="#org4dcba5f">string</a></li>
-<li><a href="#org9e38d9a">file</a></li>
-<li><a href="#org962440e">system</a></li>
-<li><a href="#orgdc340de">var</a></li>
-<li><a href="#org9cbbbb0">report</a></li>
-<li><a href="#orga389969">gc</a>
+<li><a href="#org7eb2ab3">define function</a></li>
+<li><a href="#orga400a57">loop by explicit tail-call</a></li>
+<li><a href="#org4d7dd7c">branching by if</a></li>
+<li><a href="#org7c85dd4">receive function</a></li>
+<li><a href="#orge1d0b59">integer</a></li>
+<li><a href="#orge169002">string</a></li>
+<li><a href="#orgb353279">file</a></li>
+<li><a href="#org44d6e50">system</a></li>
+<li><a href="#orgb3444b5">var</a></li>
+<li><a href="#org3106690">gc</a>
 <ul>
-<li><a href="#org4fc6004">cons-area</a></li>
-<li><a href="#orgaabfa9f">cons-area-report</a></li>
-<li><a href="#orgd67c71e">sweep-cons-area</a></li>
-<li><a href="#orgd1efbea">mark-cons-area</a></li>
-<li><a href="#org3a51151">cons</a></li>
-<li><a href="#org85702a"><span class="done test">test</span> </a></li>
+<li><a href="#org158d291">cons-area</a></li>
+<li><a href="#org7bb4476">cons-area-report</a></li>
+<li><a href="#org11c72ad">sweep-cons-area</a></li>
+<li><a href="#orgada31">mark-cons-area</a></li>
+<li><a href="#orgff49634">cons</a></li>
+<li><a href="#org8adbdcd"><span class="done test">test</span> </a></li>
 </ul>
 </li>
-<li><a href="#org5bdef2d">list</a></li>
+<li><a href="#org470bfdb">list</a></li>
+<li><a href="#org8ca00a1">report</a></li>
 </ul>
 </div>
 </div>
 
-<div id="outline-container-org9125424" class="outline-2">
-<h2 id="org9125424">define function</h2>
-<div class="outline-text-2" id="text-org9125424">
+<div id="outline-container-org7eb2ab3" class="outline-2">
+<h2 id="org7eb2ab3">define function</h2>
+<div class="outline-text-2" id="text-org7eb2ab3">
 <div class="org-src-container">
 
 <pre class="src src-jojo"><span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">defun</span> <span style="color: #a6e22e;">square</span> <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">:</span> int int <span style="color: #66d9ef; font-weight: bold;">-&gt;</span> int<span style="color: #696969;">)</span>
@@ -106,29 +106,29 @@ for the JavaScript code in this tag.
 </div>
 </div>
 
-<div id="outline-container-org94cf60f" class="outline-2">
-<h2 id="org94cf60f">loop by explicit tail-call</h2>
-<div class="outline-text-2" id="text-org94cf60f">
+<div id="outline-container-orga400a57" class="outline-2">
+<h2 id="orga400a57">loop by explicit tail-call</h2>
+<div class="outline-text-2" id="text-orga400a57">
 <div class="org-src-container">
 
 <pre class="src src-jojo"><span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">defun</span> <span style="color: #a6e22e;">apply-key</span> <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">:</span> jo <span style="color: #66d9ef; font-weight: bold;">-&gt;</span> *<span style="color: #696969;">)</span>
   <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">if</span> dup jo-used? <span style="color: #66d9ef; font-weight: bold;">-&gt;</span> apply end<span style="color: #696969;">)</span>
-  <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">string</span> <span style="color: #696969;">(</span>undefined keyword : <span style="color: #696969;">))</span> print-string
+  <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">string</span> <span style="color: #e6db74;">"undefined keyword : "</span><span style="color: #696969;">)</span> print-string
   jo-&gt;string print-string end<span style="color: #696969;">)</span>
 
 <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">defun</span> <span style="color: #a6e22e;">stack-repl</span> <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">:</span> <span style="color: #797979;">[</span>io<span style="color: #797979;">]</span> <span style="color: #66d9ef; font-weight: bold;">-&gt;</span> *<span style="color: #696969;">)</span>
   <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">if</span> read-jo round-bar eq? <span style="color: #66d9ef; font-weight: bold;">-&gt;</span> read-jo apply-key print-stack<span style="color: #696969;">)</span>
   <span style="color: #66d9ef; font-weight: bold;">loop</span><span style="color: #696969;">)</span>
 
-<span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">run</span> stack-repl<span style="color: #696969;">)</span>
+<span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">:</span> <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">run</span> stack-repl<span style="color: #696969;">))</span>
 </pre>
 </div>
 </div>
 </div>
 
-<div id="outline-container-org603e9b5" class="outline-2">
-<h2 id="org603e9b5">branching by if</h2>
-<div class="outline-text-2" id="text-org603e9b5">
+<div id="outline-container-org4d7dd7c" class="outline-2">
+<h2 id="org4d7dd7c">branching by if</h2>
+<div class="outline-text-2" id="text-org4d7dd7c">
 <div class="org-src-container">
 
 <pre class="src src-jojo"><span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">run</span> <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">if</span> true <span style="color: #66d9ef; font-weight: bold;">-&gt;</span> true dot end<span style="color: #696969;">)</span>
@@ -138,9 +138,9 @@ for the JavaScript code in this tag.
 </div>
 </div>
 
-<div id="outline-container-orgeebee80" class="outline-2">
-<h2 id="orgeebee80">receive function</h2>
-<div class="outline-text-2" id="text-orgeebee80">
+<div id="outline-container-org7c85dd4" class="outline-2">
+<h2 id="org7c85dd4">receive function</h2>
+<div class="outline-text-2" id="text-org7c85dd4">
 <div class="org-src-container">
 
 <pre class="src src-jojo"><span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">defun</span> <span style="color: #a6e22e;">factorial</span> <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">:</span> int <span style="color: #66d9ef; font-weight: bold;">-&gt;</span> int<span style="color: #696969;">)</span>
@@ -157,9 +157,9 @@ for the JavaScript code in this tag.
 </div>
 </div>
 
-<div id="outline-container-orge2f151d" class="outline-2">
-<h2 id="orge2f151d">integer</h2>
-<div class="outline-text-2" id="text-orge2f151d">
+<div id="outline-container-orge1d0b59" class="outline-2">
+<h2 id="orge1d0b59">integer</h2>
+<div class="outline-text-2" id="text-orge1d0b59">
 <div class="org-src-container">
 
 <pre class="src src-jojo"><span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">run</span> <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">#</span> 18 5<span style="color: #696969;">)</span> mod dot<span style="color: #696969;">)</span>
@@ -168,24 +168,24 @@ for the JavaScript code in this tag.
 </div>
 </div>
 
-<div id="outline-container-org4dcba5f" class="outline-2">
-<h2 id="org4dcba5f">string</h2>
-<div class="outline-text-2" id="text-org4dcba5f">
+<div id="outline-container-orge169002" class="outline-2">
+<h2 id="orge169002">string</h2>
+<div class="outline-text-2" id="text-orge169002">
 <div class="org-src-container">
 
-<pre class="src src-jojo"><span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">run</span> <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">string</span> <span style="color: #696969;">(</span>test1<span style="color: #696969;">)</span> <span style="color: #696969;">(</span>test2<span style="color: #696969;">))</span>
+<pre class="src src-jojo"><span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">run</span> <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">string</span> <span style="color: #e6db74;">"test1"</span> <span style="color: #e6db74;">"test2"</span><span style="color: #696969;">)</span>
      print-string print-string<span style="color: #696969;">)</span>
 </pre>
 </div>
 </div>
 </div>
 
-<div id="outline-container-org9e38d9a" class="outline-2">
-<h2 id="org9e38d9a">file</h2>
-<div class="outline-text-2" id="text-org9e38d9a">
+<div id="outline-container-orgb353279" class="outline-2">
+<h2 id="orgb353279">file</h2>
+<div class="outline-text-2" id="text-orgb353279">
 <div class="org-src-container">
 
-<pre class="src src-jojo"><span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">run</span> <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">string</span> <span style="color: #696969;">(</span>README<span style="color: #696969;">))</span>
+<pre class="src src-jojo"><span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">run</span> <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">string</span> <span style="color: #e6db74;">"README"</span><span style="color: #696969;">)</span>
      <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">#</span> 1024<span style="color: #696969;">)</span> allocate tuck
      <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">#</span> 1024<span style="color: #696969;">)</span> read-file dot
      print-string<span style="color: #696969;">)</span>
@@ -194,9 +194,9 @@ for the JavaScript code in this tag.
 </div>
 </div>
 
-<div id="outline-container-org962440e" class="outline-2">
-<h2 id="org962440e">system</h2>
-<div class="outline-text-2" id="text-org962440e">
+<div id="outline-container-org44d6e50" class="outline-2">
+<h2 id="org44d6e50">system</h2>
+<div class="outline-text-2" id="text-org44d6e50">
 <div class="org-src-container">
 
 <pre class="src src-jojo"><span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">run</span> getcwd print-string<span style="color: #696969;">)</span>
@@ -205,9 +205,9 @@ for the JavaScript code in this tag.
 </div>
 </div>
 
-<div id="outline-container-orgdc340de" class="outline-2">
-<h2 id="orgdc340de">var</h2>
-<div class="outline-text-2" id="text-orgdc340de">
+<div id="outline-container-orgb3444b5" class="outline-2">
+<h2 id="orgb3444b5">var</h2>
+<div class="outline-text-2" id="text-orgb3444b5">
 <div class="org-src-container">
 
 <pre class="src src-jojo"><span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">defvar</span> var1 <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">#</span> 666<span style="color: #696969;">)</span> <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">#</span> 666<span style="color: #696969;">)</span> add<span style="color: #696969;">)</span>
@@ -217,25 +217,12 @@ for the JavaScript code in this tag.
 </div>
 </div>
 
-<div id="outline-container-org9cbbbb0" class="outline-2">
-<h2 id="org9cbbbb0">report</h2>
-<div class="outline-text-2" id="text-org9cbbbb0">
-<div class="org-src-container">
-
-<pre class="src src-jojo"><span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">run</span> defprim-report
-     defun-report
-     defvar-report<span style="color: #696969;">)</span>
-</pre>
-</div>
-</div>
-</div>
-
-<div id="outline-container-orga389969" class="outline-2">
-<h2 id="orga389969">gc</h2>
-<div class="outline-text-2" id="text-orga389969">
-</div><div id="outline-container-org4fc6004" class="outline-3">
-<h3 id="org4fc6004">cons-area</h3>
-<div class="outline-text-3" id="text-org4fc6004">
+<div id="outline-container-org3106690" class="outline-2">
+<h2 id="org3106690">gc</h2>
+<div class="outline-text-2" id="text-org3106690">
+</div><div id="outline-container-org158d291" class="outline-3">
+<h3 id="org158d291">cons-area</h3>
+<div class="outline-text-3" id="text-org158d291">
 <div class="org-src-container">
 
 <pre class="src src-jojo"><span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">defvar</span> cons-size <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">#</span> 3<span style="color: #696969;">)</span> cell-size mul<span style="color: #696969;">)</span>
@@ -264,9 +251,9 @@ for the JavaScript code in this tag.
 </div>
 </div>
 
-<div id="outline-container-orgaabfa9f" class="outline-3">
-<h3 id="orgaabfa9f">cons-area-report</h3>
-<div class="outline-text-3" id="text-orgaabfa9f">
+<div id="outline-container-org7bb4476" class="outline-3">
+<h3 id="org7bb4476">cons-area-report</h3>
+<div class="outline-text-3" id="text-org7bb4476">
 <div class="org-src-container">
 
 <pre class="src src-jojo"><span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">declare</span>
@@ -275,13 +262,13 @@ for the JavaScript code in this tag.
 
 <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">defun</span> <span style="color: #a6e22e;">cons-area-report/loop</span> <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">:</span> cons <span style="color: #66d9ef; font-weight: bold;">-&gt;</span> <span style="color: #797979;">[</span>io<span style="color: #797979;">]</span><span style="color: #696969;">)</span>
   <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">if</span> dup cons-area-top eq? <span style="color: #66d9ef; font-weight: bold;">-&gt;</span> drop end<span style="color: #696969;">)</span>
-  <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">string</span> <span style="color: #696969;">(</span>#:<span style="color: #696969;">))</span> print-string
+  <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">string</span> <span style="color: #e6db74;">"#:"</span><span style="color: #696969;">)</span> print-string
   dup dot
-  <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">string</span> <span style="color: #696969;">(</span>mark: <span style="color: #696969;">))</span> print-string
+  <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">string</span> <span style="color: #e6db74;">"mark: "</span><span style="color: #696969;">)</span> print-string
   dup get dot
-  <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">string</span> <span style="color: #696969;">(</span>car: <span style="color: #696969;">))</span> print-string
+  <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">string</span> <span style="color: #e6db74;">"car: "</span><span style="color: #696969;">)</span> print-string
   dup car dot
-  <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">string</span> <span style="color: #696969;">(</span>cdr: <span style="color: #696969;">))</span> print-string
+  <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">string</span> <span style="color: #e6db74;">"cdr: "</span><span style="color: #696969;">)</span> print-string
   dup cdr dot
   newline
   cons-size add
@@ -294,9 +281,9 @@ for the JavaScript code in this tag.
 </div>
 </div>
 
-<div id="outline-container-orgd67c71e" class="outline-3">
-<h3 id="orgd67c71e">sweep-cons-area</h3>
-<div class="outline-text-3" id="text-orgd67c71e">
+<div id="outline-container-org11c72ad" class="outline-3">
+<h3 id="org11c72ad">sweep-cons-area</h3>
+<div class="outline-text-3" id="text-org11c72ad">
 <div class="org-src-container">
 
 <pre class="src src-jojo"><span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">defun</span> <span style="color: #a6e22e;">sweep-cons-area/loop</span> <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">:</span> cons <span style="color: #66d9ef; font-weight: bold;">-&gt;</span> <span style="color: #797979;">[</span>io<span style="color: #797979;">]</span><span style="color: #696969;">)</span>
@@ -312,9 +299,9 @@ for the JavaScript code in this tag.
 </div>
 </div>
 
-<div id="outline-container-orgd1efbea" class="outline-3">
-<h3 id="orgd1efbea">mark-cons-area</h3>
-<div class="outline-text-3" id="text-orgd1efbea">
+<div id="outline-container-orgada31" class="outline-3">
+<h3 id="orgada31">mark-cons-area</h3>
+<div class="outline-text-3" id="text-orgada31">
 <ul class="org-ul">
 <li><p>root from</p><p><ul class="org-ul"></p><p><li><p>stack</p></li></p><p><li><p>defvar</p></li></ul></p></li></ul>
 
@@ -354,9 +341,9 @@ for the JavaScript code in this tag.
 </div>
 </div>
 
-<div id="outline-container-org3a51151" class="outline-3">
-<h3 id="org3a51151">cons</h3>
-<div class="outline-text-3" id="text-org3a51151">
+<div id="outline-container-orgff49634" class="outline-3">
+<h3 id="orgff49634">cons</h3>
+<div class="outline-text-3" id="text-orgff49634">
 <ul class="org-ul">
 <li><p><p></p><p>cons</p><p></p></p><p><table border="2" cellspacing="0" cellpadding="6" rules="groups" frame="hsides"></p><p></p><p></p><p><colgroup></p><p><col  class="org-left" /></p><p></colgroup></p><p><tbody></p><p><tr></p><p><td class="org-left">mark</td></p><p></tr></p><p></p><p><tr></p><p><td class="org-left">car</td></p><p></tr></p><p></p><p><tr></p><p><td class="org-left">cdr</td></p><p></tr></p><p></tbody></p><p></table></p></li></ul>
 
@@ -368,7 +355,7 @@ for the JavaScript code in this tag.
       cons-pointer/init
       cons-pointer/next-free
       <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">if</span> cons-pointer cons-area-top eq? <span style="color: #66d9ef; font-weight: bold;">-&gt;</span>
-          <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">string</span> <span style="color: #696969;">(</span>fatal error : cons-area is full<span style="color: #696969;">))</span> print-string
+          <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">string</span> <span style="color: #e6db74;">"fatal error : cons-area is full"</span><span style="color: #696969;">)</span> print-string
           newline bye<span style="color: #696969;">)</span>
       <span style="color: #66d9ef; font-weight: bold;">loop</span><span style="color: #696969;">)</span>
   <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">if</span> cons-pointer get currnet-mark eq? <span style="color: #66d9ef; font-weight: bold;">-&gt;</span>
@@ -386,7 +373,6 @@ for the JavaScript code in this tag.
   cell-size add
   cell-size add
   set<span style="color: #696969;">)</span>
-
 
 <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">defun</span> <span style="color: #a6e22e;">car</span> <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">:</span> cons <span style="color: #66d9ef; font-weight: bold;">-&gt;</span> cell<span style="color: #696969;">)</span>
   cell-size add
@@ -409,9 +395,9 @@ for the JavaScript code in this tag.
 </div>
 </div>
 
-<div id="outline-container-org85702a" class="outline-3">
-<h3 id="org85702a"><span class="done test">test</span> </h3>
-<div class="outline-text-3" id="text-org85702a">
+<div id="outline-container-org8adbdcd" class="outline-3">
+<h3 id="org8adbdcd"><span class="done test">test</span> </h3>
+<div class="outline-text-3" id="text-org8adbdcd">
 <div class="org-src-container">
 
 <pre class="src src-jojo"><span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">:</span> <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">run</span> <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">#</span> 0<span style="color: #696969;">)</span>
@@ -447,12 +433,30 @@ for the JavaScript code in this tag.
 </div>
 </div>
 
-<div id="outline-container-org5bdef2d" class="outline-2">
-<h2 id="org5bdef2d">list</h2>
-<div class="outline-text-2" id="text-org5bdef2d">
+<div id="outline-container-org470bfdb" class="outline-2">
+<h2 id="org470bfdb">list</h2>
+<div class="outline-text-2" id="text-org470bfdb">
 <div class="org-src-container">
 
-<pre class="src src-jojo"></pre>
+<pre class="src src-jojo"><span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">defun</span> <span style="color: #a6e22e;">one-list</span> <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">:</span> <span style="color: #797979;">[</span>io<span style="color: #797979;">]</span> <span style="color: #66d9ef; font-weight: bold;">-&gt;</span> <span style="color: #797979;">[</span>compile<span style="color: #797979;">]</span><span style="color: #696969;">)</span>
+  <span style="color: #696969;">)</span>
+
+<span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">defun</span> <span style="color: #a6e22e;">list</span> <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">:</span> <span style="color: #797979;">[</span>io<span style="color: #797979;">]</span> <span style="color: #66d9ef; font-weight: bold;">-&gt;</span> <span style="color: #797979;">[</span>compile<span style="color: #797979;">]</span><span style="color: #696969;">)</span>
+  read-jo<span style="color: #696969;">)</span>
+</pre>
+</div>
+</div>
+</div>
+
+<div id="outline-container-org8ca00a1" class="outline-2">
+<h2 id="org8ca00a1">report</h2>
+<div class="outline-text-2" id="text-org8ca00a1">
+<div class="org-src-container">
+
+<pre class="src src-jojo"><span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">run</span> defprim-report
+     defun-report
+     defvar-report<span style="color: #696969;">)</span>
+</pre>
 </div>
 </div>
 </div>

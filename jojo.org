@@ -10,13 +10,18 @@
 
 * todo
 
+  - jo literal
   - export the syntax extension mechanism to jojo
     syntax for list
+  - a way to load init module
+  - factor gc out to module
+  - linear pattern matching
   - test framework
   - better jotable for being compiler target
   - debug
   - better structure of code
-    - fix jump
+  - factor some functions out to module
+  - fix jump
   - error report for every limited number
 
 * helper
@@ -77,7 +82,8 @@
               c == '[' ||
               c == ']' ||
               c == '{' ||
-              c == '}');
+              c == '}' ||
+              c == '"');
     }
     #+end_src
 
@@ -1557,7 +1563,7 @@
       cell cursor = 0;
       while (true) {
         char c = read_char();
-        if (c == ')') {
+        if (c == '"') {
           buffer[cursor] = 0;
           cursor++;
           break;
@@ -1584,7 +1590,7 @@
         if (s == str2jo(")")) {
           return;
         }
-        else if (s == str2jo("(")) {
+        else if (s == str2jo("\"")) {
           k_one_string();
         }
         else {

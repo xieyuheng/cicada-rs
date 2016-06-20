@@ -35,7 +35,8 @@ bool isbarcket(char c) {
           c == '[' ||
           c == ']' ||
           c == '{' ||
-          c == '}');
+          c == '}' ||
+          c == '"');
 }
 
 typedef char* string;
@@ -1081,7 +1082,7 @@ void k_one_string() {
   cell cursor = 0;
   while (true) {
     char c = read_char();
-    if (c == ')') {
+    if (c == '"') {
       buffer[cursor] = 0;
       cursor++;
       break;
@@ -1104,7 +1105,7 @@ void k_string() {
     if (s == str2jo(")")) {
       return;
     }
-    else if (s == str2jo("(")) {
+    else if (s == str2jo("\"")) {
       k_one_string();
     }
     else {

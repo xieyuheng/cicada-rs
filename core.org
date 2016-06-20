@@ -16,14 +16,14 @@
   #+begin_src jojo
   (defun apply-key (: jo -> *)
     (if dup jo-used? -> apply end)
-    (string (undefined keyword : )) print-string
+    (string "undefined keyword : ") print-string
     jo->string print-string end)
 
   (defun stack-repl (: [io] -> *)
     (if read-jo round-bar eq? -> read-jo apply-key print-stack)
     loop)
 
-  (run stack-repl)
+  (: (run stack-repl))
   #+end_src
 
 * branching by if
@@ -56,14 +56,14 @@
 * string
 
   #+begin_src jojo
-  (run (string (test1) (test2))
+  (run (string "test1" "test2")
        print-string print-string)
   #+end_src
 
 * file
 
   #+begin_src jojo
-  (run (string (README))
+  (run (string "README")
        (# 1024) allocate tuck
        (# 1024) read-file dot
        print-string)
@@ -80,14 +80,6 @@
   #+begin_src jojo
   (defvar var1 (# 666) (# 666) add)
   (run var1 dot)
-  #+end_src
-
-* report
-
-  #+begin_src jojo
-  (run defprim-report
-       defun-report
-       defvar-report)
   #+end_src
 
 * gc
@@ -127,13 +119,13 @@
 
     (defun cons-area-report/loop (: cons -> [io])
       (if dup cons-area-top eq? -> drop end)
-      (string (#:)) print-string
+      (string "#:") print-string
       dup dot
-      (string (mark: )) print-string
+      (string "mark: ") print-string
       dup get dot
-      (string (car: )) print-string
+      (string "car: ") print-string
       dup car dot
-      (string (cdr: )) print-string
+      (string "cdr: ") print-string
       dup cdr dot
       newline
       cons-size add
@@ -208,7 +200,7 @@
           cons-pointer/init
           cons-pointer/next-free
           (if cons-pointer cons-area-top eq? ->
-              (string (fatal error : cons-area is full)) print-string
+              (string "fatal error : cons-area is full") print-string
               newline bye)
           loop)
       (if cons-pointer get currnet-mark eq? ->
@@ -226,7 +218,6 @@
       cell-size add
       cell-size add
       set)
-
 
     (defun car (: cons -> cell)
       cell-size add
@@ -281,5 +272,17 @@
 * list
 
   #+begin_src jojo
+  (defun one-list (: [io] -> [compile])
+    )
 
+  (defun list (: [io] -> [compile])
+    read-jo)
+  #+end_src
+
+* report
+
+  #+begin_src jojo
+  (run defprim-report
+       defun-report
+       defvar-report)
   #+end_src
