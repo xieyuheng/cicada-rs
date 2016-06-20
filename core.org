@@ -80,17 +80,14 @@
   #+begin_src scheme
   (defvar var1 (# 666) (# 666) add)
   (run var1 dot)
+  #+end_src
 
-  (defun defvar-report/loop (: record -> [io])
-    (if dup get (# 0) eq? -> drop end)
-    (string (  )) print-string
-    dup get jo->string print-string
-    newline
-    cell-size add (tail-call defvar-report/loop))
+* report
 
-  (defun defvar-report (: -> [io])
-    (string (- defvar-report :)) print-string newline
-    defvar-record defvar-report/loop)
+  #+begin_src scheme
+  (run defprim-report
+       defun-report
+       defvar-report)
   #+end_src
 
 * gc
@@ -168,7 +165,6 @@
     (defun mark-cons (: cons -> [cons-area])
       (if dup cons? not -> drop end)
       dup currnet-mark swap set
-      (string ( <mark-cons> )) print-string newline
       dup car mark-cons
       cdr (tail-call mark-cons))
 
@@ -208,7 +204,8 @@
           cons-pointer/init
           cons-pointer/next-free
           (if cons-pointer cons-area-top eq? ->
-              (string (cons-area is full)) print-string newline end)
+              (string (fatal error : cons-area is full)) print-string
+              newline bye)
           (tail-call new-cons))
       (if cons-pointer get currnet-mark eq? ->
           cons-pointer/next (tail-call new-cons))

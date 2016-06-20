@@ -230,12 +230,12 @@ void jotable_entry_print(jotable_entry entry) {
   }
   else if (entry.type == str2jo("jojo")) {
     printf("%ld ", entry.value.jojo.size);
-    printf("[ ", entry.value.jojo.size);
+    printf("[ ");
     cell i;
     for (i=0; i < entry.value.jojo.size; i=i+1) {
       printf("%ld ", entry.value.jojo.array[i]);
     }
-    printf("]", entry.value.jojo.size);
+    printf("]");
   }
 }
 
@@ -421,12 +421,13 @@ jo defprim_record[64 * 1024];
 cell defprim_record_counter = 0;
 
 void defprim_report() {
-  printf("- defprim_report :\n");
+  printf("- defprim_report // counter : %ld\n", defprim_record_counter);
   cell i = 0;
   while (i < defprim_record_counter) {
     printf("  %s\n", jo2str(defprim_record[i]));
     i++;
   }
+  printf("\n");
 }
 
 void defprim(string str, primitive fun) {
@@ -530,6 +531,8 @@ void eval_jo(jo jo) {
     as_push(cell);
   }
 }
+
+void k_ignore();
 
 void eval_key(jo jo) {
   if (!jotable_entry_used(jotable[jo])) {
@@ -1063,22 +1066,6 @@ void export_jo() {
   defprim("jo->string", p_jo_to_string);
 }
 
-void k_string() {
-  // ([io] -> [compile])
-  while (true) {
-    jo s = read_jo();
-    if (s == str2jo(")")) {
-      return;
-    }
-    else if (s == str2jo("(")) {
-      k_one_string();
-    }
-    else {
-      // do nothing
-    }
-  }
-}
-
 void k_one_string() {
   // ([io] -> [compile])
   char buffer[1024 * 1024];
@@ -1101,6 +1088,22 @@ void k_one_string() {
   here(str);
 }
 
+void k_string() {
+  // ([io] -> [compile])
+  while (true) {
+    jo s = read_jo();
+    if (s == str2jo(")")) {
+      return;
+    }
+    else if (s == str2jo("(")) {
+      k_one_string();
+    }
+    else {
+      // do nothing
+    }
+  }
+}
+
 void p_print_string() {
   // (string -> [io])
   printf("%s", as_pop());
@@ -1119,7 +1122,7 @@ void p_read_file() {
   FILE* fp = fopen(path, "r");
   if(!fp) {
     perror("p_read_file file to open file");
-    return EXIT_FAILURE;
+    return;
   }
   cell readed_counter = fread(buffer, 1, limit, fp);
   fclose(fp);
@@ -1277,7 +1280,7 @@ void load_file(string path) {
   if(!fp) {
     perror("File opening failed");
     printf("load_file fail : %s\n", path);
-    return EXIT_FAILURE;
+    return;
   }
   reading_stack_push(fp);
   alias record[alias_record_size];
@@ -1391,22 +1394,6 @@ void ccall (string str, void* lib) {
   fun();
 }
 
-void k_clib() {
-  // ([io] -> [compile])
-  while (true) {
-    jo s = read_jo();
-    if (s == str2jo(")")) {
-      return;
-    }
-    else if (s == str2jo("(")) {
-      k_one_clib();
-    }
-    else {
-      // do nothing
-    }
-  }
-}
-
 void k_one_clib() {
   // ([io] -> [compile])
   char buffer[1024];
@@ -1424,6 +1411,22 @@ void k_one_clib() {
     }
   }
   ccall("export", get_clib(buffer));
+}
+
+void k_clib() {
+  // ([io] -> [compile])
+  while (true) {
+    jo s = read_jo();
+    if (s == str2jo(")")) {
+      return;
+    }
+    else if (s == str2jo("(")) {
+      k_one_clib();
+    }
+    else {
+      // do nothing
+    }
+  }
 }
 
 void export_ffi() {
@@ -1446,6 +1449,21 @@ jo read_alias_jo() {
 
 jo defun_record[64 * 1024];
 cell defun_record_counter = 0;
+
+void p_defun_record() {
+  // (-> addr)
+  as_push(defun_record);
+}
+
+void defun_report() {
+  printf("- defun_report // counter : %ld\n", defun_record_counter);
+  cell i = 0;
+  while (i < defun_record_counter) {
+    printf("  %s\n", jo2str(defun_record[i]));
+    i++;
+  }
+  printf("\n");
+}
 
 void k_defun() {
   // ([io] -> [compile] [jotable])
@@ -1505,6 +1523,16 @@ void p_defvar_record() {
   as_push(defvar_record);
 }
 
+void defvar_report() {
+  printf("- defvar_report // counter : %ld\n", defvar_record_counter);
+  cell i = 0;
+  while (i < defvar_record_counter) {
+    printf("  %s\n", jo2str(defvar_record[i]));
+    i++;
+  }
+  printf("\n");
+}
+
 void k_defvar() {
   // ([io] -> [compile] [jotable])
   jo index = read_alias_jo();
@@ -1529,11 +1557,17 @@ void p_top_repl() {
 }
 
 void export_top_level() {
+  defprim("defun-record", p_defun_record);
+  defprim("defun-report", defun_report);
   defprim("defun", k_defun);
+
   defprim("declare", k_declare);
   defprim("run", k_run);
-  defprim("defvar", k_defvar);
+
   defprim("defvar-record", p_defvar_record);
+  defprim("defvar-report", defvar_report);
+  defprim("defvar", k_defvar);
+
   defprim("top-repl", p_top_repl);
 }
 

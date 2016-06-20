@@ -10,10 +10,9 @@
 
 * todo
 
-  - maintain a record for
-    - defprim
-    - defun
-    - defvar
+  - better emacs mode
+  - better bye
+  - test framework
   - better structure of code
   - export the syntax extension mechanism to jojo
     syntax for list
@@ -354,12 +353,12 @@
       }
       else if (entry.type == str2jo("jojo")) {
         printf("%ld ", entry.value.jojo.size);
-        printf("[ ", entry.value.jojo.size);
+        printf("[ ");
         cell i;
         for (i=0; i < entry.value.jojo.size; i=i+1) {
           printf("%ld ", entry.value.jojo.array[i]);
         }
-        printf("]", entry.value.jojo.size);
+        printf("]");
       }
     }
     #+end_src
@@ -617,12 +616,13 @@
 
     #+begin_src c
     void defprim_report() {
-      printf("- defprim_report :\n");
+      printf("- defprim_report // counter : %ld\n", defprim_record_counter);
       cell i = 0;
       while (i < defprim_record_counter) {
         printf("  %s\n", jo2str(defprim_record[i]));
         i++;
       }
+      printf("\n");
     }
     #+end_src
 
@@ -769,6 +769,8 @@
 *** eval_key
 
     #+begin_src c
+    void k_ignore();
+
     void eval_key(jo jo) {
       if (!jotable_entry_used(jotable[jo])) {
         printf("undefined keyword : %s\n", jo2str(jo));
@@ -1542,25 +1544,9 @@
 
 * *string*
 
-*** k_string
+*** k_one_string
 
     #+begin_src c
-    void k_string() {
-      // ([io] -> [compile])
-      while (true) {
-        jo s = read_jo();
-        if (s == str2jo(")")) {
-          return;
-        }
-        else if (s == str2jo("(")) {
-          k_one_string();
-        }
-        else {
-          // do nothing
-        }
-      }
-    }
-
     void k_one_string() {
       // ([io] -> [compile])
       char buffer[1024 * 1024];
@@ -1581,6 +1567,26 @@
       strcpy(str, buffer);
       here(str2jo("i-lit"));
       here(str);
+    }
+    #+end_src
+
+*** k_string
+
+    #+begin_src c
+    void k_string() {
+      // ([io] -> [compile])
+      while (true) {
+        jo s = read_jo();
+        if (s == str2jo(")")) {
+          return;
+        }
+        else if (s == str2jo("(")) {
+          k_one_string();
+        }
+        else {
+          // do nothing
+        }
+      }
     }
     #+end_src
 
@@ -1615,7 +1621,7 @@
       FILE* fp = fopen(path, "r");
       if(!fp) {
         perror("p_read_file file to open file");
-        return EXIT_FAILURE;
+        return;
       }
       cell readed_counter = fread(buffer, 1, limit, fp);
       fclose(fp);
@@ -1857,7 +1863,7 @@
       if(!fp) {
         perror("File opening failed");
         printf("load_file fail : %s\n", path);
-        return EXIT_FAILURE;
+        return;
       }
       reading_stack_push(fp);
       alias record[alias_record_size];
@@ -2008,25 +2014,9 @@
     }
     #+end_src
 
-*** k_clib
+*** k_one_clib
 
     #+begin_src c
-    void k_clib() {
-      // ([io] -> [compile])
-      while (true) {
-        jo s = read_jo();
-        if (s == str2jo(")")) {
-          return;
-        }
-        else if (s == str2jo("(")) {
-          k_one_clib();
-        }
-        else {
-          // do nothing
-        }
-      }
-    }
-
     void k_one_clib() {
       // ([io] -> [compile])
       char buffer[1024];
@@ -2044,6 +2034,26 @@
         }
       }
       ccall("export", get_clib(buffer));
+    }
+    #+end_src
+
+*** k_clib
+
+    #+begin_src c
+    void k_clib() {
+      // ([io] -> [compile])
+      while (true) {
+        jo s = read_jo();
+        if (s == str2jo(")")) {
+          return;
+        }
+        else if (s == str2jo("(")) {
+          k_one_clib();
+        }
+        else {
+          // do nothing
+        }
+      }
     }
     #+end_src
 
@@ -2075,41 +2085,66 @@
     }
     #+end_src
 
-*** defun_record
-
-    #+begin_src c
-    jo defun_record[64 * 1024];
-    cell defun_record_counter = 0;
-    #+end_src
-
 *** k_defun
 
-    #+begin_src c
-    void k_defun() {
-      // ([io] -> [compile] [jotable])
-      jo index = read_alias_jo();
-      defun_record[defun_record_counter] = index;
-      defun_record_counter++;
-      defun_record[defun_record_counter] = 0;
-      jo* array = compiling_stack_tos();
-      while (true) {
-        jo s = read_jo();
-        if (s == str2jo("(")) {
-          eval_key(read_jo());
-        }
-        else if (s == str2jo(")")) {
-          here(str2jo("end"));
-          break;
-        }
-        else {
-          here(s);
-        }
+***** defun_record
+
+      #+begin_src c
+      jo defun_record[64 * 1024];
+      cell defun_record_counter = 0;
+      #+end_src
+
+***** p_defun_record
+
+      #+begin_src c
+      void p_defun_record() {
+        // (-> addr)
+        as_push(defun_record);
       }
-      jotable[index].type = str2jo("jojo");
-      jotable[index].value.jojo.size = compiling_stack_tos() - array;
-      jotable[index].value.jojo.array = array;
-    }
-    #+end_src
+      #+end_src
+
+***** defun_report
+
+      #+begin_src c
+      void defun_report() {
+        printf("- defun_report // counter : %ld\n", defun_record_counter);
+        cell i = 0;
+        while (i < defun_record_counter) {
+          printf("  %s\n", jo2str(defun_record[i]));
+          i++;
+        }
+        printf("\n");
+      }
+      #+end_src
+
+***** k_defun
+
+      #+begin_src c
+      void k_defun() {
+        // ([io] -> [compile] [jotable])
+        jo index = read_alias_jo();
+        defun_record[defun_record_counter] = index;
+        defun_record_counter++;
+        defun_record[defun_record_counter] = 0;
+        jo* array = compiling_stack_tos();
+        while (true) {
+          jo s = read_jo();
+          if (s == str2jo("(")) {
+            eval_key(read_jo());
+          }
+          else if (s == str2jo(")")) {
+            here(str2jo("end"));
+            break;
+          }
+          else {
+            here(s);
+          }
+        }
+        jotable[index].type = str2jo("jojo");
+        jotable[index].value.jojo.size = compiling_stack_tos() - array;
+        jotable[index].value.jojo.array = array;
+      }
+      #+end_src
 
 *** >< k_declare
 
@@ -2144,35 +2179,51 @@
     }
     #+end_src
 
-*** defvar_record
-
-    #+begin_src c
-    jo defvar_record[64 * 1024];
-    cell defvar_record_counter = 0;
-    #+end_src
-
-*** p_defvar_record
-
-    #+begin_src c
-    void p_defvar_record() {
-      // (-> addr)
-      as_push(defvar_record);
-    }
-    #+end_src
-
 *** k_defvar
 
-    #+begin_src c
-    void k_defvar() {
-      // ([io] -> [compile] [jotable])
-      jo index = read_alias_jo();
-      defvar_record[defvar_record_counter] = index;
-      defvar_record_counter++;
-      defvar_record[defvar_record_counter] = 0;
-      k_run();
-      jotable_set_cell(index, as_pop());
-    }
-    #+end_src
+***** defvar_record
+
+      #+begin_src c
+      jo defvar_record[64 * 1024];
+      cell defvar_record_counter = 0;
+      #+end_src
+
+***** p_defvar_record
+
+      #+begin_src c
+      void p_defvar_record() {
+        // (-> addr)
+        as_push(defvar_record);
+      }
+      #+end_src
+
+***** defvar_report
+
+      #+begin_src c
+      void defvar_report() {
+        printf("- defvar_report // counter : %ld\n", defvar_record_counter);
+        cell i = 0;
+        while (i < defvar_record_counter) {
+          printf("  %s\n", jo2str(defvar_record[i]));
+          i++;
+        }
+        printf("\n");
+      }
+      #+end_src
+
+***** k_defvar
+
+      #+begin_src c
+      void k_defvar() {
+        // ([io] -> [compile] [jotable])
+        jo index = read_alias_jo();
+        defvar_record[defvar_record_counter] = index;
+        defvar_record_counter++;
+        defvar_record[defvar_record_counter] = 0;
+        k_run();
+        jotable_set_cell(index, as_pop());
+      }
+      #+end_src
 
 *** p_top_repl
 
@@ -2195,11 +2246,17 @@
 
     #+begin_src c
     void export_top_level() {
+      defprim("defun-record", p_defun_record);
+      defprim("defun-report", defun_report);
       defprim("defun", k_defun);
+
       defprim("declare", k_declare);
       defprim("run", k_run);
-      defprim("defvar", k_defvar);
+
       defprim("defvar-record", p_defvar_record);
+      defprim("defvar-report", defvar_report);
+      defprim("defvar", k_defvar);
+
       defprim("top-repl", p_top_repl);
     }
     #+end_src
