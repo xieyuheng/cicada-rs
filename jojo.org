@@ -11,8 +11,6 @@
 * todo
 
   - jo literal
-  - export the syntax extension mechanism to jojo
-    syntax for list
   - a way to load init module
   - factor gc out to module
   - linear pattern matching
@@ -1542,13 +1540,33 @@
     }
     #+end_src
 
+*** p_string_to_jo
+
+    #+begin_src c
+    void p_string_to_jo() {
+      // (string -> jo)
+      string str = as_pop();
+      as_push(str2jo(str));
+    }
+    #+end_src
+
+*** p_null
+
+    #+begin_src c
+    void p_null() {
+      as_push(str2jo("null"));
+    }
+    #+end_src
+
 *** export_jo
 
     #+begin_src c
     void export_jo() {
+      defprim("null", p_null);
       defprim("read-jo", p_read_jo);
       defprim("jo-used?", p_jo_used_p);
       defprim("jo->string", p_jo_to_string);
+      defprim("string->jo", p_string_to_jo);
     }
     #+end_src
 
@@ -2151,6 +2169,59 @@
       }
       #+end_src
 
+***** defun_stack
+
+      #+begin_src c
+      typedef jo defun_stack_t[1024];
+
+      defun_stack_t defun_stack;
+      cell defun_stack_base = 0;
+      cell defun_stack_pointer = 0;
+
+      void defun_stack_push(jo* value) {
+        defun_stack[defun_stack_pointer] = value;
+        defun_stack_pointer++;
+      }
+
+      jo* defun_stack_pop() {
+        defun_stack_pointer--;
+        return defun_stack[defun_stack_pointer];
+      }
+
+      void defun_stack_inc() {
+        defun_stack[defun_stack_pointer - 1] =
+          defun_stack[defun_stack_pointer - 1] + 1;
+      }
+
+
+      jo* defun_stack_tos() {
+        return defun_stack[defun_stack_pointer - 1];
+      }
+
+      bool defun_stack_empty_p() {
+        return defun_stack_pointer == defun_stack_base;
+      }
+      #+end_src
+
+***** k_loop
+
+      #+begin_src c
+      void k_loop() {
+        here(str2jo("i-tail-call"));
+        here(defun_stack_tos());
+        k_ignore();
+      }
+      #+end_src
+
+***** k_recur
+
+      #+begin_src c
+      void k_recur() {
+       here(defun_stack_tos());
+       k_ignore();
+      }
+      #+end_src
+
 ***** k_defun
 
       #+begin_src c
@@ -2163,6 +2234,7 @@
           k_ignore();
           return;
         }
+        defun_stack_push(index);
         defun_record[defun_record_counter] = index;
         defun_record_counter++;
         defun_record[defun_record_counter] = 0;
@@ -2176,13 +2248,6 @@
             here(str2jo("end"));
             break;
           }
-          else if (s == str2jo("loop")) {
-            here(str2jo("i-tail-call"));
-            here(index);
-          }
-          else if (s == str2jo("recur")) {
-            here(index);
-          }
           else if (jotable_entry_used(jotable[s]) ||
                    index == s) {
             here(s);
@@ -2190,6 +2255,7 @@
           else {
             // no compile before define
             printf("- defun undefined : %s\n", jo2str(s));
+            defun_stack_pop();
             k_ignore();
             return;
           }
@@ -2197,6 +2263,7 @@
         jotable[index].type = str2jo("function");
         jotable[index].value.jojo.size = compiling_stack_tos() - array;
         jotable[index].value.jojo.array = array;
+        defun_stack_pop();
       }
       #+end_src
 
@@ -2336,6 +2403,10 @@
     void export_top_level() {
       defprim("defun-record", p_defun_record);
       defprim("defun-report", defun_report);
+
+      defprim("loop", k_loop);
+      defprim("recur", k_recur);
+
       defprim("defun", k_defun);
 
       defprim("declare", k_declare);
@@ -2356,6 +2427,14 @@
 
     #+begin_src c
     void do_nothing() {
+    }
+    #+end_src
+
+*** p_here
+
+    #+begin_src c
+    void p_here() {
+      here(as_pop());
     }
     #+end_src
 
@@ -2389,6 +2468,7 @@
 
     #+begin_src c
     void export_mise() {
+      defprim("here", p_here);
       defprim("apply", p_apply);
       defprim("jotable-report", jotable_report);
       defprim("round-bar", p_round_bar);

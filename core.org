@@ -21,9 +21,9 @@
 
   (defun stack-repl (: [io] -> *)
     (if read-jo round-bar eq? -> read-jo apply-key print-stack)
-    loop)
+    (loop))
 
-  (: (run stack-repl))
+  (run stack-repl)
   #+end_src
 
 * branching by if
@@ -38,7 +38,7 @@
   #+begin_src jojo
   (defun factorial (: int -> int)
     (if dup (# 1) lteq? -> drop (# 1) end)
-    dup (# 1) sub recur mul end)
+    dup (# 1) sub (recur) mul end)
 
   (run (# 0) factorial dot
        (# 1) factorial dot
@@ -72,7 +72,7 @@
 * system
 
   #+begin_src jojo
-  (run getcwd print-string)
+  (run getcwd print-string newline)
   #+end_src
 
 * var
@@ -82,7 +82,7 @@
   (run var1 dot)
   #+end_src
 
-* gc
+* list
 
 *** cons-area
 
@@ -107,7 +107,7 @@
       (if cons-pointer cons-area-top eq? -> end)
       (if cons-pointer get currnet-mark eq? not -> end)
       cons-pointer/next
-      loop)
+      (loop))
     #+end_src
 
 *** cons-area-report
@@ -129,7 +129,7 @@
       dup cdr dot
       newline
       cons-size add
-      loop)
+      (loop))
 
     (defun cons-area-report (: -> [io])
       cons-area cons-area-report/loop)
@@ -142,7 +142,7 @@
       (if dup cons-area-top eq? -> drop end)
       dup (# 0)  swap set
       cons-size add
-      loop)
+      (loop))
 
     (defun sweep-cons-area (: -> [cons-area])
       cons-area sweep-cons-area/loop)
@@ -162,19 +162,19 @@
       (if dup cons? not -> drop end)
       dup currnet-mark swap set
       dup car mark-cons
-      cdr loop)
+      cdr (loop))
 
     (defun mark-cons-area-for-defvar (: defvar-record/addr -> [cons-area])
       (if dup get (# 0) eq? -> drop end)
       dup get mark-cons
       cell-size add
-      loop)
+      (loop))
 
     (defun mark-cons-area-for-stack (: stack/addr -> [cons-area])
       (if dup stack-base eq? -> drop end)
       cell-size sub
       dup get mark-cons
-      loop)
+      (loop))
 
     (defun mark-cons-area (: -> [cons-area])
       (if currnet-mark max-mark eq? ->
@@ -202,9 +202,9 @@
           (if cons-pointer cons-area-top eq? ->
               (string "fatal error : cons-area is full") print-string
               newline bye)
-          loop)
+          (loop))
       (if cons-pointer get currnet-mark eq? ->
-          cons-pointer/next loop)
+          cons-pointer/next (loop))
       cons-pointer
       cons-pointer/next end)
 
@@ -269,20 +269,55 @@
             newline))
     #+end_src
 
-* list
+*** list
 
-  #+begin_src jojo
-  (defun one-list (: [io] -> [compile])
-    )
+    #+begin_src jojo
+    (: {a {b c} d}
+       null
+       a cons
+         null
+         b cons
+         c cons
+       cons
+       d cons)
 
-  (defun list (: [io] -> [compile])
-    read-jo)
-  #+end_src
+    (defun one-list (: [io] -> [compile])
+      read-jo
+      (if dup (string "{") string->jo eq? ->
+          drop (string "null") string->jo here
+          (recur) (string "cons") string->jo here
+          (loop))
+      (if dup (string "}") string->jo eq? ->
+          drop end)
+      (else (string "i-lit") string->jo here
+            here
+            (string "cons") string->jo here
+            (loop)))
+
+    (defun list (: [io] -> [compile])
+      read-jo
+      (if dup (string ")") string->jo eq? -> drop end)
+      (if dup (string "{") string->jo eq? ->
+          drop
+          (string "null") string->jo here
+          one-list (loop))
+      (else drop (loop)))
+    #+end_src
+
+*** test
+
+    #+begin_src jojo
+    (run (list {a b})
+         dup car jo->string print-string
+         dup cdr car jo->string print-string
+         dup cdr cdr jo->string print-string
+         drop)
+    #+end_src
 
 * report
 
   #+begin_src jojo
-  (run defprim-report
-       defun-report
-       defvar-report)
+  (: (run defprim-report
+          defun-report
+          defvar-report))
   #+end_src

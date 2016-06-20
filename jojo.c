@@ -1070,10 +1070,22 @@ void p_jo_to_string() {
   as_push(jo2str(jo));
 }
 
+void p_string_to_jo() {
+  // (string -> jo)
+  string str = as_pop();
+  as_push(str2jo(str));
+}
+
+void p_null() {
+  as_push(str2jo("null"));
+}
+
 void export_jo() {
+  defprim("null", p_null);
   defprim("read-jo", p_read_jo);
   defprim("jo-used?", p_jo_used_p);
   defprim("jo->string", p_jo_to_string);
+  defprim("string->jo", p_string_to_jo);
 }
 
 void k_one_string() {
@@ -1495,6 +1507,47 @@ void defun_report() {
   printf("\n");
 }
 
+typedef jo defun_stack_t[1024];
+
+defun_stack_t defun_stack;
+cell defun_stack_base = 0;
+cell defun_stack_pointer = 0;
+
+void defun_stack_push(jo* value) {
+  defun_stack[defun_stack_pointer] = value;
+  defun_stack_pointer++;
+}
+
+jo* defun_stack_pop() {
+  defun_stack_pointer--;
+  return defun_stack[defun_stack_pointer];
+}
+
+void defun_stack_inc() {
+  defun_stack[defun_stack_pointer - 1] =
+    defun_stack[defun_stack_pointer - 1] + 1;
+}
+
+
+jo* defun_stack_tos() {
+  return defun_stack[defun_stack_pointer - 1];
+}
+
+bool defun_stack_empty_p() {
+  return defun_stack_pointer == defun_stack_base;
+}
+
+void k_loop() {
+  here(str2jo("i-tail-call"));
+  here(defun_stack_tos());
+  k_ignore();
+}
+
+void k_recur() {
+ here(defun_stack_tos());
+ k_ignore();
+}
+
 void k_defun() {
   // ([io] -> [compile] [jotable])
   jo index = read_alias_jo();
@@ -1504,6 +1557,7 @@ void k_defun() {
     k_ignore();
     return;
   }
+  defun_stack_push(index);
   defun_record[defun_record_counter] = index;
   defun_record_counter++;
   defun_record[defun_record_counter] = 0;
@@ -1517,13 +1571,6 @@ void k_defun() {
       here(str2jo("end"));
       break;
     }
-    else if (s == str2jo("loop")) {
-      here(str2jo("i-tail-call"));
-      here(index);
-    }
-    else if (s == str2jo("recur")) {
-      here(index);
-    }
     else if (jotable_entry_used(jotable[s]) ||
              index == s) {
       here(s);
@@ -1531,6 +1578,7 @@ void k_defun() {
     else {
       // no compile before define
       printf("- defun undefined : %s\n", jo2str(s));
+      defun_stack_pop();
       k_ignore();
       return;
     }
@@ -1538,6 +1586,7 @@ void k_defun() {
   jotable[index].type = str2jo("function");
   jotable[index].value.jojo.size = compiling_stack_tos() - array;
   jotable[index].value.jojo.array = array;
+  defun_stack_pop();
 }
 
 void k_one_declare() {
@@ -1632,6 +1681,10 @@ void p_top_repl() {
 void export_top_level() {
   defprim("defun-record", p_defun_record);
   defprim("defun-report", defun_report);
+
+  defprim("loop", k_loop);
+  defprim("recur", k_recur);
+
   defprim("defun", k_defun);
 
   defprim("declare", k_declare);
@@ -1646,6 +1699,10 @@ void export_top_level() {
 }
 
 void do_nothing() {
+}
+
+void p_here() {
+  here(as_pop());
 }
 
 void p_round_bar() {
@@ -1663,6 +1720,7 @@ void p_newline() {
 }
 
 void export_mise() {
+  defprim("here", p_here);
   defprim("apply", p_apply);
   defprim("jotable-report", jotable_report);
   defprim("round-bar", p_round_bar);
