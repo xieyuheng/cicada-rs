@@ -8,16 +8,15 @@
 
 ---------
 
+- case
 * todo
 
-  - linear pattern matching
   - a way to load init module
   - test framework
   - better jotable for being compiler target
   - debug
   - better structure of code
   - factor some functions out to module
-  - fix jump
   - error report for every limited number
 
 * helper
@@ -943,26 +942,6 @@
 
 * *control*
 
-*** p_jump_back
-
-    #+begin_src c
-    void p_jump_back() {
-      // (offset -> [rs])
-      jo* function_body = rs_pop();
-      rs_push(function_body - as_pop());
-    }
-    #+end_src
-
-*** p_jump_over
-
-    #+begin_src c
-    void p_jump_over() {
-      // (offset -> [rs])
-      jo* function_body = rs_pop();
-      rs_push(function_body + as_pop());
-    }
-    #+end_src
-
 *** i_lit
 
     #+begin_src c
@@ -1004,8 +983,6 @@
 
     #+begin_src c
     void export_control() {
-      defprim("jump-back", p_jump_back);
-      defprim("jump-over", p_jump_over);
       defprim("i-lit", i_lit);
       defprim("i-tail-call", i_tail_call);
       defprim("jump-if-false", p_jump_if_false);
@@ -2303,17 +2280,17 @@
     }
     #+end_src
 
-*** k_jojo
+*** compile_jojo_until_meet_jo
 
     #+begin_src c
-    void k_jojo() {
+    void compile_jojo_until_meet_jo(jo end) {
       // ([io] -> [compile])
       while (true) {
         jo s = read_jo();
         if (s == str2jo("(")) {
           eval_key(read_jo());
         }
-        else if (s == str2jo(")")) {
+        else if (s == end) {
           break;
         }
         else if (jotable_entry_used(jotable[s]) ||
@@ -2331,63 +2308,47 @@
     }
     #+end_src
 
+*** k_compile_jojo_until_meet_jo
+
+    #+begin_src c
+    void k_compile_jojo_until_meet_jo() {
+      compile_jojo_until_meet_jo(as_pop());
+    }
+    #+end_src
+
+*** k_jojo
+
+    #+begin_src c
+    void k_jojo() {
+      // ([io] -> [compile])
+      compile_jojo_until_meet_jo(str2jo(")"));
+    }
+    #+end_src
+
 *** k_if
 
-***** note
+    - (if a b p? -> c d)
 
-      - (if a b p? -> c d)
+    - a b p?
+      [jump] jumk_if_false
+      c d
+      :jump
 
-      - a b p?
-        [jump] jumk_if_false
-        c d
-        :jump
+    - because the use of as_snapshot
+      bar can not be nested in antecedent
 
-      - because the use of as_snapshot
-        bar can not be nested in antecedent
-
-***** compile_question
-
-      #+begin_src c
-      void compile_question() {
-        // ([io] -> [compile])
-        while (true) {
-          jo s = read_jo();
-          if (s == str2jo("(")) {
-            eval_key(read_jo());
-          }
-          else if (s == str2jo("->")) {
-            break;
-          }
-          else {
-            here(s);
-          }
-        }
-      }
-      #+end_src
-
-***** compile_answer
-
-      #+begin_src c
-      void compile_answer() {
-        // ([io] -> [compile])
-        here(str2jo("i-lit"));
-        cell* offset_place = compiling_stack_tos();
-        compiling_stack_inc();
-        here(str2jo("jump-if-false"));
-        k_jojo();
-        offset_place[0] = compiling_stack_tos();
-      }
-      #+end_src
-
-***** k_if
-
-      #+begin_src c
-      void k_if() {
-        // ([io] -> [compile])
-        compile_question();
-        compile_answer();
-      }
-      #+end_src
+    #+begin_src c
+    void k_if() {
+      // ([io] -> [compile])
+      compile_jojo_until_meet_jo(str2jo("->"));
+      here(str2jo("i-lit"));
+      cell* offset_place = compiling_stack_tos();
+      compiling_stack_inc();
+      here(str2jo("jump-if-false"));
+      k_jojo();
+      offset_place[0] = compiling_stack_tos();
+    }
+    #+end_src
 
 *** k_tail_call
 
@@ -2429,6 +2390,7 @@
       defprim("note", k_ignore);
       defprim("if", k_if);
       defprim("jojo", k_jojo);
+      defprim("compile-jojo-until-meet-jo", k_compile_jojo_until_meet_jo);
       defprim("else", k_jojo);
       defprim("tail-call", k_tail_call);
       defprim("loop", k_loop);

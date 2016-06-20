@@ -52,6 +52,9 @@
 
 (defvar cons-pointer cons-area)
 
+(defvar current-mark (# 1))
+(defvar max-mark (# 3))
+
 (defun cons-pointer/next (: -> [cons-pointer])
   cons-size cons-pointer add
   (var cons-pointer) set)
@@ -62,9 +65,14 @@
 
 (defun cons-pointer/next-free (: -> [cons-pointer])
   (if cons-pointer cons-area-top eq? -> end)
-  (if cons-pointer get currnet-mark eq? not -> end)
+  (if cons-pointer get current-mark eq? not -> end)
   cons-pointer/next
   (loop))
+
+(defun cons? (: cell -> bool)
+  (if dup cons-area lt? -> drop false end)
+  (if dup cons-area-top gteq? -> drop false end)
+  cons-area sub cons-size mod (# 0) eq?)
 
 (declare
   (car (: cons -> cell))
@@ -96,12 +104,9 @@
 (defun sweep-cons-area (: -> [cons-area])
   cons-area sweep-cons-area/loop)
 
-(defvar currnet-mark (# 1))
-(defvar max-mark (# 3))
-
 (defun mark-cons (: cons -> [cons-area])
   (if dup cons? not -> drop end)
-  dup currnet-mark swap set
+  dup current-mark swap set
   dup car mark-cons
   cdr (loop))
 
@@ -118,10 +123,10 @@
   (loop))
 
 (defun mark-cons-area (: -> [cons-area])
-  (if currnet-mark max-mark eq? ->
+  (if current-mark max-mark eq? ->
       sweep-cons-area
-      (# 0) (var currnet-mark) set)
-  currnet-mark (# 1) add (var currnet-mark) set
+      (# 0) (var current-mark) set)
+  current-mark (# 1) add (var current-mark) set
   defvar-record mark-cons-area-for-defvar
   stack-pointer
   mark-cons-area-for-stack)
@@ -135,7 +140,7 @@
           (string "fatal error : cons-area is full") print-string
           newline bye)
       (loop))
-  (if cons-pointer get currnet-mark eq? ->
+  (if cons-pointer get current-mark eq? ->
       cons-pointer/next (loop))
   cons-pointer
   cons-pointer/next end)
@@ -160,11 +165,6 @@
   cell-size add
   get)
 
-(defun cons? (: cell -> bool)
-  (if dup cons-area lt? -> drop false end)
-  (if dup cons-area-top gteq? -> drop false end)
-  cons-area sub cons-size mod (# 0) eq?)
-
 (defun cons (: cdr-cell car-cell -> cons)
   new-cons set-car set-cdr)
 
@@ -182,7 +182,7 @@
         dup cdr cdr cons? dot
         dot
 
-        currnet-mark
+        current-mark
         dot))
 
 (: (run newline
@@ -191,7 +191,7 @@
         new-cons dot
         new-cons dot
         new-cons dot
-        currnet-mark dot
+        current-mark dot
         newline
         cons-area-report
         newline))
@@ -285,6 +285,26 @@
 
 (run (list {(# 1) {(# 2) (jojo (# 1 2) add)} (# 4)})
      print-int-list)
+
+(defvar case-stack (# 1024) cell-size mul allocate)
+(defvar case-stack-pointer case-stack)
+(defun case-stack-pop (: -> stack/addr)
+  case-stack-pointer cell-size sub
+  (var case-stack-pointer) set
+  case-stack-pointer get)
+(defun case-stack-push (: stack/addr ->)
+  case-stack-pointer set
+  case-stack-pointer cell-size add
+  (var case-stack-pointer) set)
+
+(defun one-case (: [io] -> [compile])
+  )
+
+(defun case (: [io] -> [compile])
+  read-jo
+  (if dup round-bar eq? -> one-case (loop))
+  (if dup round-ket eq? -> drop end)
+  (loop))
 
 (: (run defprim-report
         defun-report

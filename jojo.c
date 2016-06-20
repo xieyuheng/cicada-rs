@@ -651,18 +651,6 @@ void export_ending() {
   defprim("bye", p_bye);
 }
 
-void p_jump_back() {
-  // (offset -> [rs])
-  jo* function_body = rs_pop();
-  rs_push(function_body - as_pop());
-}
-
-void p_jump_over() {
-  // (offset -> [rs])
-  jo* function_body = rs_pop();
-  rs_push(function_body + as_pop());
-}
-
 void i_lit() {
   // ([rs] -> int)
   jo* function_body = rs_pop();
@@ -689,8 +677,6 @@ void p_jump_if_false() {
 }
 
 void export_control() {
-  defprim("jump-back", p_jump_back);
-  defprim("jump-over", p_jump_over);
   defprim("i-lit", i_lit);
   defprim("i-tail-call", i_tail_call);
   defprim("jump-if-false", p_jump_if_false);
@@ -1620,14 +1606,14 @@ void k_ignore() {
   }
 }
 
-void k_jojo() {
+void compile_jojo_until_meet_jo(jo end) {
   // ([io] -> [compile])
   while (true) {
     jo s = read_jo();
     if (s == str2jo("(")) {
       eval_key(read_jo());
     }
-    else if (s == str2jo(")")) {
+    else if (s == end) {
       break;
     }
     else if (jotable_entry_used(jotable[s]) ||
@@ -1644,36 +1630,24 @@ void k_jojo() {
   }
 }
 
-void compile_question() {
-  // ([io] -> [compile])
-  while (true) {
-    jo s = read_jo();
-    if (s == str2jo("(")) {
-      eval_key(read_jo());
-    }
-    else if (s == str2jo("->")) {
-      break;
-    }
-    else {
-      here(s);
-    }
-  }
+void k_compile_jojo_until_meet_jo() {
+  compile_jojo_until_meet_jo(as_pop());
 }
 
-void compile_answer() {
+void k_jojo() {
   // ([io] -> [compile])
+  compile_jojo_until_meet_jo(str2jo(")"));
+}
+
+void k_if() {
+  // ([io] -> [compile])
+  compile_jojo_until_meet_jo(str2jo("->"));
   here(str2jo("i-lit"));
   cell* offset_place = compiling_stack_tos();
   compiling_stack_inc();
   here(str2jo("jump-if-false"));
   k_jojo();
   offset_place[0] = compiling_stack_tos();
-}
-
-void k_if() {
-  // ([io] -> [compile])
-  compile_question();
-  compile_answer();
 }
 
 void k_tail_call() {
@@ -1701,6 +1675,7 @@ void export_keyword() {
   defprim("note", k_ignore);
   defprim("if", k_if);
   defprim("jojo", k_jojo);
+  defprim("compile-jojo-until-meet-jo", k_compile_jojo_until_meet_jo);
   defprim("else", k_jojo);
   defprim("tail-call", k_tail_call);
   defprim("loop", k_loop);
