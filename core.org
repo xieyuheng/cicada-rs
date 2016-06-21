@@ -51,6 +51,8 @@
 
   #+begin_src jojo
   (run (# 18 5) mod dot)
+  (run (# 0 3 2) (# 1 3 2) (# 3) n-eq? dot)
+  (run (# 1 3 2) (# 1 3 2) (# 3) n-eq? dot)
   #+end_src
 
 * string
@@ -388,6 +390,9 @@
 * case
 
   #+begin_src jojo
+  (defun compile-jojo (: [io] -> [compile])
+    (string ")") string->jo compile-jojo-until-meet-jo)
+
   (defvar case-stack (# 1024) cell-size mul allocate)
   (defvar case-stack-pointer case-stack)
   (defun case-stack-pop (: -> stack/addr)
@@ -400,24 +405,36 @@
     (var case-stack-pointer) set)
 
   (defun one-case (: [io] -> [compile])
-    (jo stack-pointer) here
-    (jo case-stack-push) here
     (jo ->) compile-jojo-until-meet-jo
-    (jo stack-pointer) here
-    (jo case-stack-pop) here
-    (jo swap) here
-    (jo sub) here
-    (jo cell-size) here
-    (jo div) here
-    (jo n-eq?) here
-    round-ket compile-jojo-until-meet-jo
-    )
+    (jo over) here
+    (jo eq?) here
+    (jo i-lit) here
+    compiling-stack-tos compiling-stack-inc
+    (jo jump-if-false) here
+    (jo drop) here
+    square-ket compile-jojo-until-meet-jo
+    compiling-stack-tos swap set)
 
   (defun case (: [io] -> [compile])
     read-jo
-    (if dup round-bar eq? -> one-case (loop))
     (if dup round-ket eq? -> drop end)
-    (loop))
+    (if dup round-bar eq? -> drop read-jo apply-key (loop))
+    (if dup square-bar eq? -> drop one-case (loop))
+    here (loop))
+
+  (run
+    (jo a)
+    (case
+      [(jo a) -> (string "a") print-string newline]
+      (: comment)
+      (string "between a & b") print-string newline
+      [(jo b) -> (string "b") print-string newline]))
+
+  (run
+    (jo b)
+    (case
+      [(jo a) -> (string "a") print-string newline]
+      [(jo b) -> (string "b") print-string newline]))
   #+end_src
 
 * report

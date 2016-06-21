@@ -737,6 +737,24 @@ void p_mod() {
   as_push(a % b);
 }
 
+void p_n_eq_p() {
+  // (a ... b ... n -> bool)
+  cell n = as_pop();
+  cell old_n = n;
+  cell* cursor1 = (as + as_pointer - n);
+  cell* cursor2 = (as + as_pointer - n - n);
+  while (n > 0) {
+    if (cursor1[n-1] != cursor2[n-1]) {
+      as_pointer = as_pointer - old_n - old_n;
+      as_push(false);
+      return;
+    }
+    n--;
+  }
+  as_pointer = as_pointer - old_n - old_n;
+  as_push(true);
+}
+
 void p_eq_p() {
   // (cell cell -> bool)
   cell b = as_pop();
@@ -811,6 +829,8 @@ void export_integer() {
   defprim("mod", p_mod);
 
   defprim("neg", p_not);
+
+  defprim("n-eq?", p_n_eq_p);
 
   defprim("eq?", p_eq_p);
   defprim("gt?", p_gt_p);
@@ -1270,7 +1290,7 @@ void k_add_alias(jo prefix) {
   // ([io] -> [loading_stack])
   while (true) {
     jo s = read_jo();
-    if (s == str2jo(")")) {
+    if (s == str2jo("]")) {
       return;
     }
     else if (s == str2jo("(")) {
@@ -1311,7 +1331,7 @@ void k_import() {
     if (s == str2jo(")")) {
       return;
     }
-    else if (s == str2jo("(")) {
+    else if (s == str2jo("[")) {
       k_one_module();
     }
     else {
@@ -1348,7 +1368,7 @@ void k_one_clib() {
   cell cursor = 0;
   while (true) {
     char c = read_char();
-    if (c == ')') {
+    if (c == ']') {
       buffer[cursor] = 0;
       cursor++;
       break;
@@ -1368,7 +1388,7 @@ void k_clib() {
     if (s == str2jo(")")) {
       return;
     }
-    else if (s == str2jo("(")) {
+    else if (s == str2jo("[")) {
       k_one_clib();
     }
     else {
@@ -1670,9 +1690,17 @@ void k_recur() {
  k_ignore();
 }
 
+void p_compiling_stack_tos() {
+  as_push(compiling_stack_tos());
+}
+
 void export_keyword() {
   defprim(":", k_ignore);
   defprim("note", k_ignore);
+
+  defprim("compiling-stack-tos", p_compiling_stack_tos);
+  defprim("compiling-stack-inc", compiling_stack_inc);
+
   defprim("if", k_if);
   defprim("jojo", k_jojo);
   defprim("compile-jojo-until-meet-jo", k_compile_jojo_until_meet_jo);

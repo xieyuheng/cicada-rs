@@ -8,10 +8,11 @@
 
 ---------
 
-- case
 * todo
 
-  - a way to load init module
+  - better ffi & module
+    make it easier to implement package manager
+  - package manager
   - test framework
   - better jotable for being compiler target
   - debug
@@ -1084,6 +1085,28 @@
     }
     #+end_src
 
+*** p_n_eq_p
+
+    #+begin_src c
+    void p_n_eq_p() {
+      // (a ... b ... n -> bool)
+      cell n = as_pop();
+      cell old_n = n;
+      cell* cursor1 = (as + as_pointer - n);
+      cell* cursor2 = (as + as_pointer - n - n);
+      while (n > 0) {
+        if (cursor1[n-1] != cursor2[n-1]) {
+          as_pointer = as_pointer - old_n - old_n;
+          as_push(false);
+          return;
+        }
+        n--;
+      }
+      as_pointer = as_pointer - old_n - old_n;
+      as_push(true);
+    }
+    #+end_src
+
 *** p_eq_p
 
     #+begin_src c
@@ -1193,6 +1216,8 @@
       defprim("mod", p_mod);
 
       defprim("neg", p_not);
+
+      defprim("n-eq?", p_n_eq_p);
 
       defprim("eq?", p_eq_p);
       defprim("gt?", p_gt_p);
@@ -1822,7 +1847,7 @@
         // ([io] -> [loading_stack])
         while (true) {
           jo s = read_jo();
-          if (s == str2jo(")")) {
+          if (s == str2jo("]")) {
             return;
           }
           else if (s == str2jo("(")) {
@@ -1871,7 +1896,7 @@
           if (s == str2jo(")")) {
             return;
           }
-          else if (s == str2jo("(")) {
+          else if (s == str2jo("[")) {
             k_one_module();
           }
           else {
@@ -1926,7 +1951,7 @@
       cell cursor = 0;
       while (true) {
         char c = read_char();
-        if (c == ')') {
+        if (c == ']') {
           buffer[cursor] = 0;
           cursor++;
           break;
@@ -1950,7 +1975,7 @@
         if (s == str2jo(")")) {
           return;
         }
-        else if (s == str2jo("(")) {
+        else if (s == str2jo("[")) {
           k_one_clib();
         }
         else {
@@ -2382,12 +2407,24 @@
     }
     #+end_src
 
+*** p_compiling_stack_tos
+
+    #+begin_src c
+    void p_compiling_stack_tos() {
+      as_push(compiling_stack_tos());
+    }
+    #+end_src
+
 *** export_keyword
 
     #+begin_src c
     void export_keyword() {
       defprim(":", k_ignore);
       defprim("note", k_ignore);
+
+      defprim("compiling-stack-tos", p_compiling_stack_tos);
+      defprim("compiling-stack-inc", compiling_stack_inc);
+
       defprim("if", k_if);
       defprim("jojo", k_jojo);
       defprim("compile-jojo-until-meet-jo", k_compile_jojo_until_meet_jo);
