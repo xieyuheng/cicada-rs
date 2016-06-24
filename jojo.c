@@ -1316,7 +1316,7 @@ module module_stack_tos() {
 }
 
 void load_file(string path) {
-  // [loading_stack]
+  // [reading_stack]
   FILE* fp = fopen(path, "r");
   if(!fp) {
     perror("File opening failed");
@@ -1324,6 +1324,44 @@ void load_file(string path) {
     return;
   }
   reading_stack_push(fp);
+}
+
+void k_one_include() {
+  // ([io] -> *)
+  char buffer[1024 * 1024];
+  cell cursor = 0;
+  while (true) {
+    char c = read_char();
+    if (c == '"') {
+      buffer[cursor] = 0;
+      cursor++;
+      break;
+    }
+    else {
+      buffer[cursor] = c;
+      cursor++;
+    }
+  }
+  load_file(buffer);
+}
+
+void k_include() {
+  // ([io] -> [compile])
+  while (true) {
+    jo s = read_jo();
+    if (s == str2jo(")")) {
+      return;
+    }
+    else if (s == str2jo("(")) {
+      eval_key(read_jo());
+    }
+    else if (s == str2jo("\"")) {
+      k_one_include();
+    }
+    else {
+      // do nothing
+    }
+  }
 }
 
 string user_module_dir = "/.jojo/module/";
@@ -1409,10 +1447,6 @@ void k_dep() {
   jo prefix = read_jo_without_prefix();
   jo version = read_jo_without_prefix();
   jo name = cat_3_jo(prefix, str2jo("/"), version);
-  // printf("k_dep\n prefix: %s\n version: %s\n name: %s\n\n",
-  //        jo2str(prefix),
-  //        jo2str(version),
-  //        jo2str(name));
   if (!module_record_find(name)) {
     bool result = k_dep_load(name);
     if (result == false) {
@@ -1484,6 +1518,7 @@ void module_report() {
 }
 
 void export_module() {
+  defprim("include", k_include);
   defprim("dep", k_dep);
   defprim("module", k_module);
   defprim("module-report", module_report);
