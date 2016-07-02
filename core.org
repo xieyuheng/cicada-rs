@@ -8,19 +8,19 @@
   (defun square (: int int -> int)
     dup mul end)
 
-  (run (# 11) square dot)
+  (run (int 11) square dot)
   #+end_src
 
 * loop by explicit tail-call
 
   #+begin_src jojo
-  (defun apply-key (: jo -> *)
-    (if dup jo-used? -> apply end)
+  (defun key-apply (: jo -> *)
+    (if dup jo-used? -> jo/apply end)
     (string "undefined keyword : ") print-string
     jo->string print-string end)
 
   (defun stack-repl (: [io] -> *)
-    (if read-jo round-bar eq? -> read-jo apply-key print-stack)
+    (if read-jo round-bar eq? -> read-jo key-apply print-stack)
     (loop))
 
   (run stack-repl)
@@ -37,22 +37,22 @@
 
   #+begin_src jojo
   (defun factorial (: int -> int)
-    (if dup (# 1) lteq? -> drop (# 1) end)
-    dup (# 1) sub (recur) mul end)
+    (if dup (int 1) lteq? -> drop (int 1) end)
+    dup (int 1) sub (recur) mul end)
 
-  (run (# 0) factorial dot
-       (# 1) factorial dot
-       (# 2) factorial dot
-       (# 3) factorial dot
-       (# 4) factorial dot)
+  (run (int 0) factorial dot
+       (int 1) factorial dot
+       (int 2) factorial dot
+       (int 3) factorial dot
+       (int 4) factorial dot)
   #+end_src
 
-* integer
+* int
 
   #+begin_src jojo
-  (run (# 18 5) mod dot)
-  (run (# 0 3 2) (# 1 3 2) (# 3) n-eq? dot)
-  (run (# 1 3 2) (# 1 3 2) (# 3) n-eq? dot)
+  (run (int 18 5) mod dot)
+  (run (int 0 3 2) (int 1 3 2) (int 3) n-eq? dot)
+  (run (int 1 3 2) (int 1 3 2) (int 3) n-eq? dot)
   #+end_src
 
 * string
@@ -62,12 +62,20 @@
        print-string print-string)
   #+end_src
 
+* byte
+
+  #+begin_src jojo
+  (run (string "test1" "test2")
+       dup (int 66) swap set-byte print-string
+       dup get-byte dot print-string)
+  #+end_src
+
 * file
 
   #+begin_src jojo
   (run (string "README")
-       (# 1024) allocate tuck
-       (# 1024) read-file dot
+       (int 1024) allocate tuck
+       (int 1024) read-file dot
        print-string)
   #+end_src
 
@@ -80,7 +88,7 @@
 * var
 
   #+begin_src jojo
-  (defvar var1 (# 666) (# 666) add)
+  (defvar var1 (int 666) (int 666) add)
   (run var1 dot)
   #+end_src
 
@@ -95,16 +103,19 @@
 *** cons-area
 
     #+begin_src jojo
-    (defvar cons-size (# 3) cell-size mul)
-    (defvar cons-area-size (# 5) (: (# 1024 1024) mul) cons-size mul)
+    (defvar cons-size (int 3) cell-size mul)
+    (defvar cons-area-size
+      (: (int 5) (: for testing))
+      (int 1024 1024) mul
+      cons-size mul)
 
     (defvar cons-area cons-area-size allocate)
     (defvar cons-area-top cons-area cons-area-size add)
 
     (defvar cons-pointer cons-area)
 
-    (defvar current-mark (# 1))
-    (defvar max-mark (# 3))
+    (defvar current-mark (int 1))
+    (defvar max-mark (int 3))
 
     (defun cons-pointer/next (: -> [cons-pointer])
       cons-size cons-pointer add
@@ -123,7 +134,7 @@
     (defun cons? (: cell -> bool)
       (if dup cons-area lt? -> drop false end)
       (if dup cons-area-top gteq? -> drop false end)
-      cons-area sub cons-size mod (# 0) eq?)
+      cons-area sub cons-size mod (int 0) eq?)
     #+end_src
 
 *** cons-area-report
@@ -156,7 +167,7 @@
     #+begin_src jojo
     (defun sweep-cons-area/loop (: cons -> [io])
       (if dup cons-area-top eq? -> drop end)
-      dup (# 0)  swap set
+      dup (int 0)  swap set
       cons-size add
       (loop))
 
@@ -178,7 +189,7 @@
       cdr (loop))
 
     (defun mark-cons-area-for-defvar (: defvar-record/addr -> [cons-area])
-      (if dup get (# 0) eq? -> drop end)
+      (if dup get (int 0) eq? -> drop end)
       dup get mark-cons
       cell-size add
       (loop))
@@ -192,8 +203,8 @@
     (defun mark-cons-area (: -> [cons-area])
       (if current-mark max-mark eq? ->
           sweep-cons-area
-          (# 0) (var current-mark) set)
-      current-mark (# 1) add (var current-mark) set
+          (int 0) (var current-mark) set)
+      current-mark (int 1) add (var current-mark) set
       defvar-record mark-cons-area-for-defvar
       stack-pointer
       mark-cons-area-for-stack)
@@ -248,9 +259,9 @@
 *** test
 
     #+begin_src jojo
-    (: (run (# 0)
-            (# 1) cons
-            (# 2) cons
+    (: (run (int 0)
+            (int 1) cons
+            (int 2) cons
             dup car dot
             dup cdr car dot
             dup cdr cdr dot
@@ -298,7 +309,7 @@
       (if dup flower-ket eq? ->
           drop end)
       (if dup round-bar eq? ->
-          drop read-jo apply-key
+          drop read-jo key-apply
           (jo cons) here
           (loop))
       (else (jo i-lit) here
@@ -327,7 +338,7 @@
          dup cdr cdr cdr jo->string print-string
          drop)
 
-    (run (list {(# 1) {(# 2) (jojo (# 1 2) add)} (# 4)})
+    (run (list {(int 1) {(int 2) (do (int 1 2) add)} (int 4)})
          dup car dot
          dup cdr car car dot
          dup cdr car cdr car dot
@@ -353,6 +364,96 @@
       (string "{ ") print-string
       print-int-list/rest
       (string "} ") print-string)
+    #+end_src
+
+*** test
+
+    #+begin_src jojo
+    (run (list {(int 1) {(int 2) (do (int 1 2) add)} (int 4)})
+         print-int-list)
+    #+end_src
+
+*** jo/map & jo/itr
+
+    #+begin_src jojo
+    (defun jo/map (: {... a} (a -> b) -> {... b})
+      (if over null eq? -> drop end)
+      over car over jo/apply
+      (int 2 1) xy-swap
+      swap cdr swap (recur)
+      swap cons)
+
+    (defun jo/itr (: {... a} (a ->) ->)
+      (if over null eq? -> drop drop end)
+      over car over jo/apply
+      swap cdr swap (loop))
+    #+end_src
+
+*** test
+
+    #+begin_src jojo
+    (defun add1 (: int -> int)
+      (int 1) add)
+
+    (run (int 1)
+         (jo add1) jo/apply
+         dot)
+
+    (run (int 1) (int 2) (int 3) (int 4)
+         (int 2 1) xy-swap dot dot dot dot)
+
+    (run (list {(int 1) (int 2) (int 3) (int 4)})
+         (jo add1) jo/map
+         print-int-list)
+
+    (run (list {(int 1) (int 2) (int 3) (int 4)})
+         (jo dot) jo/itr)
+    #+end_src
+
+*** map
+
+    #+begin_src jojo
+    (defun map (: {... a} (a -> b) -> {... b})
+      (if over null eq? -> drop end)
+      over car over apply
+      (int 2 1) xy-swap
+      swap cdr swap (recur)
+      swap cons)
+
+    (defun itr (: {... a} (a ->) ->)
+      (if over null eq? -> drop drop end)
+      over car over apply
+      swap cdr swap (loop))
+    #+end_src
+
+*** test
+
+    #+begin_src jojo
+    (run (list {(int 1) (int 2) (int 3) (int 4)})
+         (jojo (int 1) add) map
+         (jojo (int 1) add) map
+         (jojo (int 1) add) map
+         (jojo (int 1) add) map
+         (jojo (int 1) add) map
+         print-int-list)
+
+    (run (list {(int 1) (int 2) (int 3) (int 4)})
+         (jojo dup dot dot) itr)
+    #+end_src
+
+*** list/ref
+
+    #+begin_src jojo
+    (defun list/ref (: {... a} int -> a)
+      (if dup (int 0) lteq? -> drop car end)
+      (else swap cdr swap (int 1) sub (loop)))
+    #+end_src
+
+*** test
+
+    #+begin_src jojo
+    (run (list {(int 1) (int 2) (int 3) (int 4)})
+         (int 1) list/ref dot)
     #+end_src
 
 *** print-jo-list
@@ -382,9 +483,37 @@
     #+begin_src jojo
     (run (list {a {b c} d})
          print-jo-list)
+    #+end_src
 
-    (run (list {(# 1) {(# 2) (jojo (# 1 2) add)} (# 4)})
-         print-int-list)
+*** print-string-list
+
+    #+begin_src jojo
+    (declare (print-string-list (: cons -> [io])))
+
+    (defun dot-string (: string -> [io])
+      double-quote jo->string print-string
+      print-string
+      double-quote jo->string print-string
+      (string " ") print-string)
+
+    (defun print-string-list/rest (: cons -> [io])
+      (if dup null eq? -> drop end)
+      dup cdr print-string-list/rest
+      car
+      (if dup cons? -> print-string-list end)
+      (else dot-string end))
+
+    (defun print-string-list (: cons -> [io])
+      (string "{ ") print-string
+      print-string-list/rest
+      (string "} ") print-string)
+    #+end_src
+
+*** test
+
+    #+begin_src jojo
+    (run (list {(string "111") {(string "222") (string "333")} (string "444")})
+         print-string-list)
     #+end_src
 
 * case
@@ -393,7 +522,7 @@
   (defun compile-jojo (: [io] -> [compile])
     (string ")") string->jo compile-jojo-until-meet-jo)
 
-  (defvar case-stack (# 1024) cell-size mul allocate)
+  (defvar case-stack (int 1024) cell-size mul allocate)
   (defvar case-stack-pointer case-stack)
   (defun case-stack-pop (: -> stack/addr)
     case-stack-pointer cell-size sub
@@ -418,7 +547,7 @@
   (defun case (: [io] -> [compile])
     read-jo
     (if dup round-ket eq? -> drop end)
-    (if dup round-bar eq? -> drop read-jo apply-key (loop))
+    (if dup round-bar eq? -> drop read-jo key-apply (loop))
     (if dup square-bar eq? -> drop one-case (loop))
     here (loop))
 

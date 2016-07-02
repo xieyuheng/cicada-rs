@@ -31,6 +31,15 @@ cell min(cell a, cell b) {
   }
 }
 
+cell power(cell a, cell n) {
+  cell result = 1;
+  while (n >= 1) {
+    result = result * a;
+    n--;
+  }
+  return result;
+}
+
 bool isbarcket(char c) {
   return (c == '(' ||
           c == ')' ||
@@ -39,6 +48,21 @@ bool isbarcket(char c) {
           c == '{' ||
           c == '}' ||
           c == '"');
+}
+
+cell char_to_nat(char c) {
+  if (c >= '0' && c <= '9') {
+    return (c - '0');
+  }
+  else if (c >= 'A' && c <= 'Z') {
+    return (c - 'A') + 10;
+  }
+  else if (c >= 'a' && c <= 'z') {
+    return (c - 'a') + 10;
+  }
+  else {
+    return 0;
+  }
 }
 
 typedef char* string;
@@ -72,6 +96,31 @@ bool int_string_p(string str) {
     return nat_string_p(str);
   }
 }
+
+cell string_to_based_nat(string str, cell base) {
+  cell result = 0;
+  cell len = strlen(str);
+  cell i = 0;
+  while (i < len) {
+    result = result + (char_to_nat(str[i]) * power(base, (len - i - 1)));
+    i++;
+  }
+  return result;
+}
+
+cell string_to_based_int(string str, cell base) {
+  if (str[0] == '-') {
+    return - string_to_based_nat(str, base);
+  }
+  else {
+    return string_to_based_nat(str, base);
+  }
+}
+
+cell string_to_dec(string str) { return string_to_based_int(str, 10); }
+cell string_to_bin(string str) { return string_to_based_int(str,  2); }
+cell string_to_oct(string str) { return string_to_based_int(str,  8); }
+cell string_to_hex(string str) { return string_to_based_int(str, 16); }
 
 typedef void (*primitive)();
 
@@ -139,7 +188,7 @@ cell string_to_sum(string str) {
   cell max_step = 10;
   cell i = 0;
   while (i < strlen(str)) {
-    sum = sum + str[i] * (2 << min(i, max_step));
+    sum = sum + ((unsigned char) str[i]) * (2 << min(i, max_step));
     i++;
   }
   return sum;
@@ -247,7 +296,7 @@ void jotable_report_orbit(cell index, cell counter) {
     string key = jotable[index].key;
     cell next_index = jotable_hash(key, counter);
     if (index == jotable[next_index].orbiton) {
-      printf("  - %ld %s\n", next_index, jotable[next_index].key);
+      printf("  | %ld %s\n", next_index, jotable[next_index].key);
     }
     if (jotable_entry_used(jotable[next_index])) {
       printf("    = ");
@@ -483,7 +532,7 @@ jo* rs_pop() {
   return rs[rs_pointer];
 }
 
-void apply(jo jo) {
+void jo_apply(jo jo) {
   if (!jotable_entry_used(jotable[jo])) {
     printf("undefined jo : %s\n", jo2str(jo));
     return;
@@ -501,6 +550,14 @@ void apply(jo jo) {
     cell cell = jotable_get_cell(jo);
     as_push(cell);
   }
+}
+
+void p_jo_apply() {
+  jo_apply(as_pop());
+}
+
+void apply(jo* jojo_array) {
+  rs_push(jojo_array);
 }
 
 void p_apply() {
@@ -523,7 +580,7 @@ void eval() {
       jo* function_body = rs_pop();
       rs_push(function_body + 1);
       cell jo = *(cell*)function_body;
-      apply(jo);
+      jo_apply(jo);
     }
   }
 }
@@ -559,6 +616,14 @@ void eval_key(jo jo) {
 void eval_jojo(jo* array) {
   rs_push(array);
   eval();
+}
+
+void cell_copy(cell length, cell* from, cell* to) {
+  cell i = 0;
+  while (i < length) {
+    to[i] = from[i];
+    i++;
+  }
 }
 
 void p_drop() {
@@ -599,6 +664,20 @@ void p_swap() {
   as_push(a);
 }
 
+void p_xy_swap() {
+  // (xxx yyy x y -> yyy xxx)
+  cell y = as_pop();
+  cell x = as_pop();
+  cell* yp = calloc(y, sizeof(cell));
+  cell* xp = calloc(x, sizeof(cell));
+  cell_copy(y, (as + (as_pointer - y)), yp);
+  cell_copy(x, (as + (as_pointer - y - x)), xp);
+  cell_copy(y, yp, (as + (as_pointer - y - x)));
+  cell_copy(x, xp, (as + (as_pointer - x)));
+  free(yp);
+  free(xp);
+}
+
 void p_print_stack() {
   // ([io] ->)
   printf("\n");
@@ -632,6 +711,7 @@ void export_stack_operation() {
   defprim("over", p_over);
   defprim("tuck", p_tuck);
   defprim("swap", p_swap);
+  defprim("xy-swap", p_xy_swap);
   defprim("print-stack", p_print_stack);
   defprim("stack-pointer", p_stack_pointer);
   defprim("stack-base", p_stack_base);
@@ -665,7 +745,7 @@ void i_tail_call() {
   // ([rs] -> int)
   jo* function_body = rs_pop();
   cell jo = *(cell*)function_body;
-  apply(jo);
+  jo_apply(jo);
 }
 
 void p_jump_if_false() {
@@ -698,10 +778,83 @@ void p_not() {
   as_push(!a);
 }
 
+void p_and() {
+  // (bool bool -> bool)
+  cell a = as_pop();
+  cell b = as_pop();
+  as_push(a&&b);
+}
+
+void p_or() {
+  // (bool bool -> bool)
+  cell a = as_pop();
+  cell b = as_pop();
+  as_push(a||b);
+}
+
 void export_bool() {
   defprim("true", p_true);
   defprim("false", p_false);
   defprim("not", p_not);
+  defprim("and", p_and);
+  defprim("or", p_or);
+}
+
+void p_bit_true() {
+  // (-> cell)
+  cell i = -1;
+  as_push(i);
+}
+
+void p_bit_false() {
+  // (-> cell)
+  as_push(0);
+}
+
+void p_bit_and() {
+  // (cell cell -> cell)
+  cell b = as_pop();
+  cell a = as_pop();
+  as_push(a&b);
+}
+
+void p_bit_or() {
+  // (cell cell -> cell)
+  cell b = as_pop();
+  cell a = as_pop();
+  as_push(a|b);
+}
+
+void p_bit_xor() {
+  // (cell cell -> cell)
+  cell b = as_pop();
+  cell a = as_pop();
+  as_push(a^b);
+}
+
+void p_bit_not() {
+  // (cell -> cell)
+  cell a = as_pop();
+  as_push(~a);
+}
+
+void p_bit_shift_left() {
+  // (cell step -> cell)
+  cell s = as_pop();
+  cell a = as_pop();
+  as_push(a<<s);
+}
+
+void export_bit() {
+  defprim("bit/true", p_bit_true);
+  defprim("bit/false", p_bit_false);
+  defprim("bit/not", p_bit_not);
+  defprim("bit/and", p_bit_and);
+  defprim("bit/xor", p_bit_xor);
+  defprim("bit/or", p_bit_or);
+  defprim("bit/shift-left", p_bit_shift_left);
+  // defprim("bit/shift-right", p_bit_shift_right);
+  // defprim("bit/arithmetic-shift-right", p_bit_arithmetic_shift_right);
 }
 
 void p_add() {
@@ -794,7 +947,7 @@ void p_lteq_p() {
 
 jo read_jo();
 
-void k_integer() {
+void k_int() {
   // ([io] -> [compile])
   while (true) {
     jo s = read_jo();
@@ -803,16 +956,70 @@ void k_integer() {
     }
     else if (int_string_p(jo2str(s))) {
       here(str2jo("i-lit"));
-      here(atoi(jo2str(s)));
+      here(string_to_dec(jo2str(s)));
     }
     else {
-      printf("meet non-cell string in (# ...) : %s", jo2str(s));
+      printf("meet non-cell string in (int ...) : %s", jo2str(s));
       break;
     }
   }
 }
 
-void p_print_integer() {
+void k_bin() {
+  // ([io] -> [compile])
+  while (true) {
+    jo s = read_jo();
+    if (s == str2jo(")")) {
+      break;
+    }
+    else if (int_string_p(jo2str(s))) {
+      here(str2jo("i-lit"));
+      here(string_to_bin(jo2str(s)));
+    }
+    else {
+      printf("meet non-cell string in (int ...) : %s", jo2str(s));
+      break;
+    }
+  }
+}
+
+void k_oct() {
+  // ([io] -> [compile])
+  while (true) {
+    jo s = read_jo();
+    if (s == str2jo(")")) {
+      break;
+    }
+    else if (int_string_p(jo2str(s))) {
+      here(str2jo("i-lit"));
+      here(string_to_oct(jo2str(s)));
+    }
+    else {
+      printf("meet non-cell string in (int ...) : %s", jo2str(s));
+      break;
+    }
+  }
+}
+
+void k_hex() {
+  // ([io] -> [compile])
+  while (true) {
+    jo s = read_jo();
+    if (s == str2jo(")")) {
+      break;
+    }
+    else if (int_string_p(jo2str(s))) {
+      here(str2jo("i-lit"));
+      here(string_to_hex(jo2str(s)));
+    }
+    else {
+      printf("meet non-cell string in (int ...) : %s", jo2str(s));
+      break;
+    }
+  }
+}
+
+void p_print_int() {
   // (cell -> [io])
   printf("%ld", as_pop());
 }
@@ -822,7 +1029,7 @@ void p_dot() {
   printf("%ld ", as_pop());
 }
 
-void export_integer() {
+void export_int() {
   defprim("add", p_add);
   defprim("sub", p_sub);
 
@@ -840,9 +1047,13 @@ void export_integer() {
   defprim("gteq?", p_gteq_p);
   defprim("lteq?", p_lteq_p);
 
-  defprim("#", k_integer);
+  defprim("int", k_int);
+  defprim("dec", k_int);
+  defprim("bin", k_bin);
+  defprim("oct", k_oct);
+  defprim("hex", k_hex);
 
-  defprim("print-integer", p_print_integer);
+  defprim("print-int", p_print_int);
   defprim("dot", p_dot);
 }
 
@@ -877,12 +1088,27 @@ void p_get() {
   as_push(address[0]);
 }
 
+void p_set_byte() {
+  // (cell addr ->)
+  char* address = as_pop();
+  cell value = as_pop();
+  address[0] = value;
+}
+
+void p_get_byte() {
+  // (addr -> cell)
+  char* address = as_pop();
+  as_push(address[0]);
+}
+
 void export_memory() {
   defprim("allocate", p_allocate);
   defprim("free", p_free);
   defprim("var", k_var);
   defprim("set", p_set);
   defprim("get", p_get);
+  defprim("set-byte", p_set_byte);
+  defprim("get-byte", p_get_byte);
 }
 
 typedef FILE* reading_stack_t[64];
@@ -1098,6 +1324,16 @@ void p_jo_to_string() {
   as_push(jo2str(jo));
 }
 
+void p_string_length_to_jo() {
+  // (string length -> jo)
+  cell len = as_pop();
+  cell str = as_pop();
+  char buffer[2 * 1024];
+  strncpy(buffer, str, len);
+  buffer[len] = 0;
+  as_push(str2jo(buffer));
+}
+
 void p_string_to_jo() {
   // (string -> jo)
   string str = as_pop();
@@ -1132,6 +1368,7 @@ void export_jo() {
   defprim("jo-used?", p_jo_used_p);
   defprim("jo->string", p_jo_to_string);
   defprim("string->jo", p_string_to_jo);
+  defprim("string/length->jo", p_string_length_to_jo);
   defprim("jo", k_jo);
 }
 
@@ -1613,10 +1850,6 @@ jo jo_to_jo_in_module(jo alias_jo) {
                          str2jo("/"),
                          alias_jo);
     alias_add(alias_jo, new_jo);
-    printf("jo_to_jo_in_module #%ld : %s -> %s\n",
-           module_stack_pointer,
-           jo2str(alias_jo),
-           jo2str(new_jo));
     return new_jo;
   }
 }
@@ -1673,7 +1906,7 @@ bool defun_stack_empty_p() {
   return defun_stack_pointer == defun_stack_base;
 }
 
-void k_jojo();
+void k_compile_jojo();
 
 void k_defun() {
   // ([io] -> [compile] [jotable])
@@ -1689,7 +1922,7 @@ void k_defun() {
   defun_record_counter++;
   defun_record[defun_record_counter] = 0;
   jo* array = compiling_stack_tos();
-  k_jojo();
+  k_compile_jojo();
   here(str2jo("end"));
   jotable[index].type = str2jo("function");
   jotable[index].value.jojo.size = compiling_stack_tos() - array;
@@ -1833,7 +2066,7 @@ void compile_jojo_until_meet_jo(jo end) {
     }
     else {
       // no compile before define
-      printf("- k_jojo undefined : %s\n", jo2str(s));
+      printf("- k_compile_jojo undefined : %s\n", jo2str(s));
       k_ignore();
       return;
     }
@@ -1844,7 +2077,7 @@ void k_compile_jojo_until_meet_jo() {
   compile_jojo_until_meet_jo(as_pop());
 }
 
-void k_jojo() {
+void k_compile_jojo() {
   // ([io] -> [compile])
   compile_jojo_until_meet_jo(str2jo(")"));
 }
@@ -1856,7 +2089,7 @@ void k_if() {
   cell* offset_place = compiling_stack_tos();
   compiling_stack_inc();
   here(str2jo("jump-if-false"));
-  k_jojo();
+  k_compile_jojo();
   offset_place[0] = compiling_stack_tos();
 }
 
@@ -1884,6 +2117,23 @@ void p_compiling_stack_tos() {
   as_push(compiling_stack_tos());
 }
 
+void i_jojo() {
+  // ([rs] -> int)
+  jo* function_body = rs_pop();
+  rs_push(function_body[0]);
+  as_push(function_body + 1);
+}
+
+void k_jojo() {
+  // ([io] -> [compile])
+  here(str2jo("i-jojo"));
+  cell* offset_place = compiling_stack_tos();
+  compiling_stack_inc();
+  k_compile_jojo();
+  here(str2jo("end"));
+  offset_place[0] = compiling_stack_tos();
+}
+
 void export_keyword() {
   defprim(":", k_ignore);
   defprim("note", k_ignore);
@@ -1892,12 +2142,15 @@ void export_keyword() {
   defprim("compiling-stack-inc", compiling_stack_inc);
 
   defprim("if", k_if);
-  defprim("jojo", k_jojo);
+  defprim("do", k_compile_jojo);
   defprim("compile-jojo-until-meet-jo", k_compile_jojo_until_meet_jo);
-  defprim("else", k_jojo);
+  defprim("else", k_compile_jojo);
   defprim("tail-call", k_tail_call);
   defprim("loop", k_loop);
   defprim("recur", k_recur);
+
+  defprim("jojo", k_jojo);
+  defprim("i-jojo", i_jojo);
 }
 
 void do_nothing() {
@@ -1926,6 +2179,7 @@ void p_newline() {
 
 void export_mise() {
   defprim("here", p_here);
+  defprim("jo/apply", p_jo_apply);
   defprim("apply", p_apply);
   defprim("jotable-report", jotable_report);
 
@@ -1943,15 +2197,36 @@ void export_mise() {
 }
 
 void p1() {
-  printf("p1 : %ld %ld\n", sizeof(void*), sizeof(intptr_t));
+  printf("- p1\n");
+  printf("  %ld %ld %ld\n", sizeof(void*), sizeof(cell), sizeof(unsigned));
+  printf("  %ld %ld\n", sizeof((cell)-1), sizeof(-1));
+  printf("  %x %x\n", 1<<sizeof(cell), 32>>6);
+  printf("  %x %x %x\n", -1>>2, (cell)-1>>2, (unsigned)-1>>2);
+  printf("  %ld %ld\n", string_to_bin("1000"), string_to_hex("ffff"));
+  printf("  %ld %ld %ld %ld\n", '0', '1', 'A', 'a');
 }
 
 void p2() {
+  printf("- p2\n");
+}
 
+cell string_to_sum_test(string str) {
+  cell sum = 0;
+  cell max_step = 10;
+  cell i = 0;
+  while (i < strlen(str)) {
+    sum = sum + ((unsigned char) str[i]) * (2 << min(i, max_step));
+    printf("| char: %ld | unsigned char: %ld | sum: %ld |\n", str[i], (unsigned char) str[i], sum);
+    i++;
+  }
+  return sum;
 }
 
 void p3() {
-
+  printf("- p3\n");
+  printf("  %ld\n", string_to_sum_test("abcabcabc"));
+  printf("  %ld\n", string_to_sum_test("中中"));
+  printf("  %ld\n", string_to_sum_test("中中中"));
 }
 
 void export_play() {
@@ -1968,12 +2243,13 @@ void init_top_repl() {
   export_stack_operation();
   export_ending();
   export_control();
-  export_integer();
+  export_bool();
+  export_bit();
+  export_int();
   export_memory();
   export_jo();
   export_string();
   export_file();
-  export_bool();
   export_keyword();
   export_system();
   export_module();
