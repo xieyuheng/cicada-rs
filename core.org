@@ -14,13 +14,13 @@
 * loop by explicit tail-call
 
   #+begin_src jojo
-  (defun key-apply (: jo -> *)
-    (if dup jo-used? -> jo/apply end)
-    (string "undefined keyword : ") print-string
-    jo->string print-string end)
+  (defun key-jo/apply (: jo -> *)
+    (if dup jo/used? -> jo/apply end)
+    (string "undefined keyword : ") string/print
+    jo->string string/print end)
 
   (defun stack-repl (: [io] -> *)
-    (if read-jo round-bar eq? -> read-jo key-apply print-stack)
+    (if read/jo round-bar eq? -> read/jo key-jo/apply print-stack)
     (loop))
 
   (run stack-repl)
@@ -59,15 +59,15 @@
 
   #+begin_src jojo
   (run (string "test1" "test2")
-       print-string print-string)
+       string/print string/print)
   #+end_src
 
 * byte
 
   #+begin_src jojo
   (run (string "test1" "test2")
-       dup (int 66) swap set-byte print-string
-       dup get-byte dot print-string)
+       dup (int 66) swap set-byte string/print
+       dup get-byte dot string/print)
   #+end_src
 
 * file
@@ -76,13 +76,13 @@
   (run (string "README")
        (int 1024) allocate tuck
        (int 1024) read-file dot
-       print-string)
+       string/print)
   #+end_src
 
 * system
 
   #+begin_src jojo
-  (run getcwd print-string newline)
+  (run current-dir string/print newline)
   #+end_src
 
 * var
@@ -95,7 +95,7 @@
 * jo
 
   #+begin_src jojo
-  (run (jo null) jo->string print-string newline)
+  (run (jo null) jo->string string/print newline)
   #+end_src
 
 * list
@@ -115,7 +115,8 @@
     (defvar cons-pointer cons-area)
 
     (defvar current-mark (int 1))
-    (defvar max-mark (int 3))
+    (defvar max-mark (: (int 3) (: for testing))
+            (int 1024 1024) mul)
 
     (defun cons-pointer/next (: -> [cons-pointer])
       cons-size cons-pointer add
@@ -137,29 +138,29 @@
       cons-area sub cons-size mod (int 0) eq?)
     #+end_src
 
-*** cons-area-report
+*** cons-area/report
 
     #+begin_src jojo
     (declare
       (car (: cons -> cell))
       (cdr (: cons -> cell)))
 
-    (defun cons-area-report/loop (: cons -> [io])
+    (defun cons-area/report/loop (: cons -> [io])
       (if dup cons-area-top eq? -> drop end)
-      (string "#:") print-string
+      (string "#:") string/print
       dup dot
-      (string "mark: ") print-string
+      (string "mark: ") string/print
       dup get dot
-      (string "car: ") print-string
+      (string "car: ") string/print
       dup car dot
-      (string "cdr: ") print-string
+      (string "cdr: ") string/print
       dup cdr dot
       newline
       cons-size add
       (loop))
 
-    (defun cons-area-report (: -> [io])
-      cons-area cons-area-report/loop)
+    (defun cons-area/report (: -> [io])
+      cons-area cons-area/report/loop)
     #+end_src
 
 *** sweep-cons-area
@@ -188,13 +189,13 @@
       dup car mark-cons
       cdr (loop))
 
-    (defun mark-cons-area-for-defvar (: defvar-record/addr -> [cons-area])
+    (defun mark-cons-area/defvar-record (: defvar-record -> [cons-area])
       (if dup get (int 0) eq? -> drop end)
       dup get mark-cons
       cell-size add
       (loop))
 
-    (defun mark-cons-area-for-stack (: stack/addr -> [cons-area])
+    (defun mark-cons-area/argument-stack (: stack -> [cons-area])
       (if dup stack-base eq? -> drop end)
       cell-size sub
       dup get mark-cons
@@ -205,9 +206,9 @@
           sweep-cons-area
           (int 0) (var current-mark) set)
       current-mark (int 1) add (var current-mark) set
-      defvar-record mark-cons-area-for-defvar
+      defvar-record mark-cons-area/defvar-record
       stack-pointer
-      mark-cons-area-for-stack)
+      mark-cons-area/argument-stack)
     #+end_src
 
 *** cons
@@ -218,13 +219,13 @@
       | cdr  |
 
     #+begin_src jojo
-    (defun new-cons (: -> cons)
+    (defun new/cons (: -> cons)
       (if cons-pointer cons-area-top eq? ->
           mark-cons-area
           cons-pointer/init
           cons-pointer/next-free
           (if cons-pointer cons-area-top eq? ->
-              (string "fatal error : cons-area is full") print-string
+              (string "fatal error : cons-area is full") string/print
               newline bye)
           (loop))
       (if cons-pointer get current-mark eq? ->
@@ -253,7 +254,7 @@
       get)
 
     (defun cons (: cdr-cell car-cell -> cons)
-      new-cons set-car set-cdr)
+      new/cons set-car set-cdr)
     #+end_src
 
 *** test
@@ -277,14 +278,14 @@
             dot))
 
     (: (run newline
-            new-cons dot
-            new-cons dot
-            new-cons dot
-            new-cons dot
-            new-cons dot
+            new/cons dot
+            new/cons dot
+            new/cons dot
+            new/cons dot
+            new/cons dot
             current-mark dot
             newline
-            cons-area-report
+            cons-area/report
             newline))
     #+end_src
 
@@ -300,8 +301,8 @@
        cons
        d cons)
 
-    (defun one-list (: [io] -> [compile])
-      read-jo
+    (defun list/one (: [io] -> [compile])
+      read/jo
       (if dup flower-bar eq? ->
           drop null here
           (recur) (jo cons) here
@@ -309,20 +310,20 @@
       (if dup flower-ket eq? ->
           drop end)
       (if dup round-bar eq? ->
-          drop read-jo key-apply
+          drop read/jo key-jo/apply
           (jo cons) here
           (loop))
-      (else (jo i-lit) here
+      (else (jo instruction/lit) here
             here
             (jo cons) here
             (loop)))
 
     (defun list (: [io] -> [compile])
-      read-jo
+      read/jo
       (if dup round-ket eq? -> drop end)
       (if dup flower-bar eq? ->
           drop null here
-          one-list (loop))
+          list/one (loop))
       (else drop (loop)))
     #+end_src
 
@@ -330,12 +331,12 @@
 
     #+begin_src jojo
     (run (list {a {b c} d})
-         dup car jo->string print-string
-         dup cdr car car jo->string print-string
-         dup cdr car cdr car jo->string print-string
-         dup cdr car cdr cdr jo->string print-string
-         dup cdr cdr car jo->string print-string
-         dup cdr cdr cdr jo->string print-string
+         dup car jo->string string/print
+         dup cdr car car jo->string string/print
+         dup cdr car cdr car jo->string string/print
+         dup cdr car cdr cdr jo->string string/print
+         dup cdr cdr car jo->string string/print
+         dup cdr cdr cdr jo->string string/print
          drop)
 
     (run (list {(int 1) {(int 2) (do (int 1 2) add)} (int 4)})
@@ -348,29 +349,29 @@
          drop)
     #+end_src
 
-*** print-int-list
+*** int-list/print
 
     #+begin_src jojo
-    (declare (print-int-list (: cons -> [io])))
+    (declare (int-list/print (: cons -> [io])))
 
-    (defun print-int-list/rest (: cons -> [io])
+    (defun int-list/print/rest (: cons -> [io])
       (if dup null eq? -> drop end)
-      dup cdr print-int-list/rest
+      dup cdr int-list/print/rest
       car
-      (if dup cons? -> print-int-list end)
+      (if dup cons? -> int-list/print end)
       (else dot end))
 
-    (defun print-int-list (: cons -> [io])
-      (string "{ ") print-string
-      print-int-list/rest
-      (string "} ") print-string)
+    (defun int-list/print (: cons -> [io])
+      (string "{ ") string/print
+      int-list/print/rest
+      (string "} ") string/print)
     #+end_src
 
 *** test
 
     #+begin_src jojo
     (run (list {(int 1) {(int 2) (do (int 1 2) add)} (int 4)})
-         print-int-list)
+         int-list/print)
     #+end_src
 
 *** jo/map & jo/itr
@@ -404,7 +405,7 @@
 
     (run (list {(int 1) (int 2) (int 3) (int 4)})
          (jo add1) jo/map
-         print-int-list)
+         int-list/print)
 
     (run (list {(int 1) (int 2) (int 3) (int 4)})
          (jo dot) jo/itr)
@@ -435,7 +436,7 @@
          (jojo (int 1) add) map
          (jojo (int 1) add) map
          (jojo (int 1) add) map
-         print-int-list)
+         int-list/print)
 
     (run (list {(int 1) (int 2) (int 3) (int 4)})
          (jojo dup dot dot) itr)
@@ -456,71 +457,71 @@
          (int 1) list/ref dot)
     #+end_src
 
-*** print-jo-list
+*** jo-list/print
 
     #+begin_src jojo
-    (declare (print-jo-list (: cons -> [io])))
+    (declare (jo-list/print (: cons -> [io])))
 
-    (defun dot-jo (: jo -> [io])
-      jo->string print-string
-      (string " ") print-string)
+    (defun jo/dot (: jo -> [io])
+      jo->string string/print
+      (string " ") string/print)
 
-    (defun print-jo-list/rest (: cons -> [io])
+    (defun jo-list/print/rest (: cons -> [io])
       (if dup null eq? -> drop end)
-      dup cdr print-jo-list/rest
+      dup cdr jo-list/print/rest
       car
-      (if dup cons? -> print-jo-list end)
-      (else dot-jo end))
+      (if dup cons? -> jo-list/print end)
+      (else jo/dot end))
 
-    (defun print-jo-list (: cons -> [io])
-      (string "{ ") print-string
-      print-jo-list/rest
-      (string "} ") print-string)
+    (defun jo-list/print (: cons -> [io])
+      (string "{ ") string/print
+      jo-list/print/rest
+      (string "} ") string/print)
     #+end_src
 
 *** test
 
     #+begin_src jojo
     (run (list {a {b c} d})
-         print-jo-list)
+         jo-list/print)
     #+end_src
 
-*** print-string-list
+*** string-list/print
 
     #+begin_src jojo
-    (declare (print-string-list (: cons -> [io])))
+    (declare (string-list/print (: cons -> [io])))
 
-    (defun dot-string (: string -> [io])
-      double-quote jo->string print-string
-      print-string
-      double-quote jo->string print-string
-      (string " ") print-string)
+    (defun string/dot (: string -> [io])
+      double-quote jo->string string/print
+      string/print
+      double-quote jo->string string/print
+      (string " ") string/print)
 
-    (defun print-string-list/rest (: cons -> [io])
+    (defun string-list/print/rest (: cons -> [io])
       (if dup null eq? -> drop end)
-      dup cdr print-string-list/rest
+      dup cdr string-list/print/rest
       car
-      (if dup cons? -> print-string-list end)
-      (else dot-string end))
+      (if dup cons? -> string-list/print end)
+      (else string/dot end))
 
-    (defun print-string-list (: cons -> [io])
-      (string "{ ") print-string
-      print-string-list/rest
-      (string "} ") print-string)
+    (defun string-list/print (: cons -> [io])
+      (string "{ ") string/print
+      string-list/print/rest
+      (string "} ") string/print)
     #+end_src
 
 *** test
 
     #+begin_src jojo
     (run (list {(string "111") {(string "222") (string "333")} (string "444")})
-         print-string-list)
+         string-list/print)
     #+end_src
 
 * case
 
   #+begin_src jojo
   (defun compile-jojo (: [io] -> [compile])
-    (string ")") string->jo compile-jojo-until-meet-jo)
+    (string ")") string->jo compile-jojo/until-meet-jo)
 
   (defvar case-stack (int 1024) cell-size mul allocate)
   (defvar case-stack-pointer case-stack)
@@ -533,43 +534,43 @@
     case-stack-pointer cell-size add
     (var case-stack-pointer) set)
 
-  (defun one-case (: [io] -> [compile])
-    (jo ->) compile-jojo-until-meet-jo
+  (defun case/one (: [io] -> [compile])
+    (jo ->) compile-jojo/until-meet-jo
     (jo over) here
     (jo eq?) here
-    (jo i-lit) here
-    compiling-stack-tos compiling-stack-inc
+    (jo instruction/lit) here
+    compiling-stack/tos compiling-stack/inc
     (jo jump-if-false) here
     (jo drop) here
-    square-ket compile-jojo-until-meet-jo
-    compiling-stack-tos swap set)
+    square-ket compile-jojo/until-meet-jo
+    compiling-stack/tos swap set)
 
   (defun case (: [io] -> [compile])
-    read-jo
+    read/jo
     (if dup round-ket eq? -> drop end)
-    (if dup round-bar eq? -> drop read-jo key-apply (loop))
-    (if dup square-bar eq? -> drop one-case (loop))
+    (if dup round-bar eq? -> drop read/jo key-jo/apply (loop))
+    (if dup square-bar eq? -> drop case/one (loop))
     here (loop))
 
   (run
     (jo a)
     (case
-      [(jo a) -> (string "a") print-string newline]
+      [(jo a) -> (string "a") string/print newline]
       (: comment)
-      (string "between a & b") print-string newline
-      [(jo b) -> (string "b") print-string newline]))
+      (string "between a & b") string/print newline
+      [(jo b) -> (string "b") string/print newline]))
 
   (run
     (jo b)
     (case
-      [(jo a) -> (string "a") print-string newline]
-      [(jo b) -> (string "b") print-string newline]))
+      [(jo a) -> (string "a") string/print newline]
+      [(jo b) -> (string "b") string/print newline]))
   #+end_src
 
 * report
 
   #+begin_src jojo
-  (: (run defprim-report
-          defun-report
-          defvar-report))
+  (: (run defprim/report
+          defun/report
+          defvar/report))
   #+end_src
