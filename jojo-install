@@ -6,9 +6,11 @@ by ungetc
 (: (defun module-file->prefix-string (: file-name -> string)
      ))
 
-(run (string "rsync -av --exclude='.git' . ~/.jojo/module/")
-     (string "module.jo") module-file->prefix-string
-     (int 2) n-command/run)
+(: (run (string "rsync -av --exclude='.git' . ~/.jojo/module/")
+        (string "module.jo") module-file->prefix-string
+        (int 2) n-command/run))
 
-(run newline
+(run (int 66) byte/unread
+     read/byte dup byte/print dot
+     newline
      bye)

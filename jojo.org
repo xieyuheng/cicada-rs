@@ -10,9 +10,9 @@
 
 * todo
 
-  - better "read-file"
   - separate functions to module
   - install
+  - better "read-file"
   - (loop) and (recur) in jojo
   - fix semantic of case no "in between"
   - [safe] error report for every limited number
@@ -1730,12 +1730,22 @@
     }
     #+end_src
 
+*** p_byte_print
+
+    #+begin_src c
+    void p_byte_print() {
+      // (byte ->)
+      printf("%c", as_pop());
+    }
+    #+end_src
+
 *** export_byte
 
     #+begin_src c
     void export_byte() {
       defprim("read/byte", p_read_byte);
       defprim("byte/unread", p_byte_unread);
+      defprim("byte/print", p_byte_print);
     }
     #+end_src
 
@@ -2457,9 +2467,7 @@
     #+begin_src c
     void k_dep() {
       // ([io] -> [loading_stack])
-      jo prefix = read_jo_without_prefix();
-      jo version = read_jo_without_prefix();
-      jo name = cat_3_jo(prefix, str2jo("/"), version);
+      jo name = read_jo_without_prefix();
       if (!module_record_find(name)) {
         bool result = k_dep_load(name);
         if (result == false) {
@@ -2492,9 +2500,7 @@
     #+begin_src c
     void k_module() {
       // ([io] -> [loading_stack_tos])
-      jo prefix = read_jo_without_prefix();
-      jo version = read_jo_without_prefix();
-      jo name = cat_3_jo(prefix, str2jo("/"), version);
+      jo name = read_jo_without_prefix();
       // ><><>< check module name
 
       jo* export = compiling_stack_tos();

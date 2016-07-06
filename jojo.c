@@ -1173,9 +1173,15 @@ void p_byte_unread() {
   byte_unread(as_pop());
 }
 
+void p_byte_print() {
+  // (byte ->)
+  printf("%c", as_pop());
+}
+
 void export_byte() {
   defprim("read/byte", p_read_byte);
   defprim("byte/unread", p_byte_unread);
+  defprim("byte/print", p_byte_print);
 }
 
 typedef struct {
@@ -1727,9 +1733,7 @@ bool k_dep_load(jo name) {
 
 void k_dep() {
   // ([io] -> [loading_stack])
-  jo prefix = read_jo_without_prefix();
-  jo version = read_jo_without_prefix();
-  jo name = cat_3_jo(prefix, str2jo("/"), version);
+  jo name = read_jo_without_prefix();
   if (!module_record_find(name)) {
     bool result = k_dep_load(name);
     if (result == false) {
@@ -1758,9 +1762,7 @@ void k_dep() {
 
 void k_module() {
   // ([io] -> [loading_stack_tos])
-  jo prefix = read_jo_without_prefix();
-  jo version = read_jo_without_prefix();
-  jo name = cat_3_jo(prefix, str2jo("/"), version);
+  jo name = read_jo_without_prefix();
   // ><><>< check module name
 
   jo* export = compiling_stack_tos();
