@@ -3,7 +3,7 @@
 "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en">
 <head>
-<!-- 2016-06-21 Tue 07:59 -->
+<!-- 2016-07-07 Thu 03:32 -->
 <meta http-equiv="Content-Type" content="text/html;charset=utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>example code of jojo</title>
@@ -67,64 +67,73 @@ for the JavaScript code in this tag.
 <h2>overview</h2>
 <div id="text-table-of-contents">
 <ul>
-<li><a href="#org1711582">define function</a></li>
-<li><a href="#org9758adf">loop by explicit tail-call</a></li>
-<li><a href="#org3f5930e">branching by if</a></li>
-<li><a href="#orgff3683">receive function</a></li>
-<li><a href="#orgb747e99">integer</a></li>
-<li><a href="#org6fc5290">string</a></li>
-<li><a href="#org87c05f0">file</a></li>
-<li><a href="#org2ddbddb">system</a></li>
-<li><a href="#org5469ab2">var</a></li>
-<li><a href="#org28be921">jo</a></li>
-<li><a href="#orga6e7db5">list</a>
+<li><a href="#orgfd9581f">define function</a></li>
+<li><a href="#org1d6a7d3">loop by explicit tail-call</a></li>
+<li><a href="#org656f8a0">branching by if</a></li>
+<li><a href="#org807bd9e">receive function</a></li>
+<li><a href="#org34373f6">int</a></li>
+<li><a href="#org8ea2c69">string</a></li>
+<li><a href="#org4055c93">byte</a></li>
+<li><a href="#orgbf16c69">system</a></li>
+<li><a href="#org68c7134">var</a></li>
+<li><a href="#org3305016">jo</a></li>
+<li><a href="#orgc67f382">list</a>
 <ul>
-<li><a href="#orgbfdcc04">cons-area</a></li>
-<li><a href="#org9f91215">cons-area-report</a></li>
-<li><a href="#org1e776f1">sweep-cons-area</a></li>
-<li><a href="#org1182417">mark-cons-area</a></li>
-<li><a href="#org322eb22">cons</a></li>
-<li><a href="#orgf9b8197"><span class="done test">test</span> </a></li>
-<li><a href="#orgec88a70">list</a></li>
-<li><a href="#orgb29998f"><span class="done test">test</span> </a></li>
-<li><a href="#org906d389">print-int-list</a></li>
-<li><a href="#org2a40e7f">print-jo-list</a></li>
-<li><a href="#orgfda043c"><span class="done test">test</span> </a></li>
+<li><a href="#orgb3fe910">cons-area</a></li>
+<li><a href="#orga9c4c93">cons-area/report</a></li>
+<li><a href="#orgdaeefd0">sweep-cons-area</a></li>
+<li><a href="#org7afacf7">mark-cons-area</a></li>
+<li><a href="#orgf768499">cons</a></li>
+<li><a href="#org1be8a45"><span class="done test">test</span> </a></li>
+<li><a href="#org3aed435">list</a></li>
+<li><a href="#org6118ba2"><span class="done test">test</span> </a></li>
+<li><a href="#org979e98c">int-list/print</a></li>
+<li><a href="#orge234a86"><span class="done test">test</span> </a></li>
+<li><a href="#org4a616c2">jo/map &amp; jo/itr</a></li>
+<li><a href="#orgfe26349"><span class="done test">test</span> </a></li>
+<li><a href="#org2bd218c">map</a></li>
+<li><a href="#org21fec27"><span class="done test">test</span> </a></li>
+<li><a href="#org182ccb7">list/ref</a></li>
+<li><a href="#orgf293b99"><span class="done test">test</span> </a></li>
+<li><a href="#orgbfc500c">jo-list/print</a></li>
+<li><a href="#orgdd5cdd1"><span class="done test">test</span> </a></li>
+<li><a href="#orgec47731">string-list/print</a></li>
+<li><a href="#orgd556a11"><span class="done test">test</span> </a></li>
 </ul>
 </li>
-<li><a href="#org77b7e33">case</a></li>
-<li><a href="#org69fa881">report</a></li>
+<li><a href="#orgff78e4c">case</a></li>
+<li><a href="#org7ae8322">report</a></li>
 </ul>
 </div>
 </div>
 
-<div id="outline-container-org1711582" class="outline-2">
-<h2 id="org1711582">define function</h2>
-<div class="outline-text-2" id="text-org1711582">
+<div id="outline-container-orgfd9581f" class="outline-2">
+<h2 id="orgfd9581f">define function</h2>
+<div class="outline-text-2" id="text-orgfd9581f">
 <div class="org-src-container">
 
 <pre class="src src-jojo"><span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">defun</span> <span style="color: #a6e22e;">square</span> <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">:</span> int int <span style="color: #66d9ef; font-weight: bold;">-&gt;</span> int<span style="color: #696969;">)</span>
   dup mul <span style="color: #66d9ef; font-weight: bold;">end</span><span style="color: #696969;">)</span>
 
-<span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">run</span> <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">#</span> 11<span style="color: #696969;">)</span> square dot<span style="color: #696969;">)</span>
+<span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">run</span> <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">int</span> 11<span style="color: #696969;">)</span> square dot<span style="color: #696969;">)</span>
 </pre>
 </div>
 </div>
 </div>
 
-<div id="outline-container-org9758adf" class="outline-2">
-<h2 id="org9758adf">loop by explicit tail-call</h2>
-<div class="outline-text-2" id="text-org9758adf">
+<div id="outline-container-org1d6a7d3" class="outline-2">
+<h2 id="org1d6a7d3">loop by explicit tail-call</h2>
+<div class="outline-text-2" id="text-org1d6a7d3">
 <div class="org-src-container">
 
-<pre class="src src-jojo"><span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">defun</span> <span style="color: #a6e22e;">apply-key</span> <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">:</span> jo <span style="color: #66d9ef; font-weight: bold;">-&gt;</span> *<span style="color: #696969;">)</span>
-  <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">if</span> dup jo-used? <span style="color: #66d9ef; font-weight: bold;">-&gt;</span> apply <span style="color: #66d9ef; font-weight: bold;">end</span><span style="color: #696969;">)</span>
-  <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">string</span> <span style="color: #e6db74;">"undefined keyword : "</span><span style="color: #696969;">)</span> print-string
-  jo-&gt;string print-string <span style="color: #66d9ef; font-weight: bold;">end</span><span style="color: #696969;">)</span>
+<pre class="src src-jojo"><span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">defun</span> <span style="color: #a6e22e;">key-jo/apply</span> <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">:</span> jo <span style="color: #66d9ef; font-weight: bold;">-&gt;</span> *<span style="color: #696969;">)</span>
+  <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">if</span> dup jo/used? <span style="color: #66d9ef; font-weight: bold;">-&gt;</span> jo/apply <span style="color: #66d9ef; font-weight: bold;">end</span><span style="color: #696969;">)</span>
+  <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">string</span> <span style="color: #e6db74;">"undefined keyword : "</span><span style="color: #696969;">)</span> string/print
+  jo-&gt;string string/print <span style="color: #66d9ef; font-weight: bold;">end</span><span style="color: #696969;">)</span>
 
 <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">defun</span> <span style="color: #a6e22e;">stack-repl</span> <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">:</span> <span style="color: #797979;">[</span>io<span style="color: #797979;">]</span> <span style="color: #66d9ef; font-weight: bold;">-&gt;</span> *<span style="color: #696969;">)</span>
-  <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">if</span> read-jo round-bar eq? <span style="color: #66d9ef; font-weight: bold;">-&gt;</span> read-jo apply-key print-stack<span style="color: #696969;">)</span>
-  <span style="color: #696969;">(</span><span style="color: #66d9ef; font-weight: bold;">loop</span><span style="color: #696969;">))</span>
+  <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">if</span> read/jo round-bar eq? <span style="color: #66d9ef; font-weight: bold;">-&gt;</span> read/jo key-jo/apply print-stack<span style="color: #696969;">)</span>
+  <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">loop</span><span style="color: #696969;">))</span>
 
 <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">run</span> stack-repl<span style="color: #696969;">)</span>
 </pre>
@@ -132,9 +141,9 @@ for the JavaScript code in this tag.
 </div>
 </div>
 
-<div id="outline-container-org3f5930e" class="outline-2">
-<h2 id="org3f5930e">branching by if</h2>
-<div class="outline-text-2" id="text-org3f5930e">
+<div id="outline-container-org656f8a0" class="outline-2">
+<h2 id="org656f8a0">branching by if</h2>
+<div class="outline-text-2" id="text-org656f8a0">
 <div class="org-src-container">
 
 <pre class="src src-jojo"><span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">run</span> <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">if</span> true <span style="color: #66d9ef; font-weight: bold;">-&gt;</span> true dot <span style="color: #66d9ef; font-weight: bold;">end</span><span style="color: #696969;">)</span>
@@ -144,116 +153,138 @@ for the JavaScript code in this tag.
 </div>
 </div>
 
-<div id="outline-container-orgff3683" class="outline-2">
-<h2 id="orgff3683">receive function</h2>
-<div class="outline-text-2" id="text-orgff3683">
+<div id="outline-container-org807bd9e" class="outline-2">
+<h2 id="org807bd9e">receive function</h2>
+<div class="outline-text-2" id="text-org807bd9e">
 <div class="org-src-container">
 
 <pre class="src src-jojo"><span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">defun</span> <span style="color: #a6e22e;">factorial</span> <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">:</span> int <span style="color: #66d9ef; font-weight: bold;">-&gt;</span> int<span style="color: #696969;">)</span>
-  <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">if</span> dup <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">#</span> 1<span style="color: #696969;">)</span> lteq? <span style="color: #66d9ef; font-weight: bold;">-&gt;</span> drop <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">#</span> 1<span style="color: #696969;">)</span> <span style="color: #66d9ef; font-weight: bold;">end</span><span style="color: #696969;">)</span>
-  dup <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">#</span> 1<span style="color: #696969;">)</span> sub <span style="color: #696969;">(</span><span style="color: #66d9ef; font-weight: bold;">recur</span><span style="color: #696969;">)</span> mul <span style="color: #66d9ef; font-weight: bold;">end</span><span style="color: #696969;">)</span>
+  <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">if</span> dup <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">int</span> 1<span style="color: #696969;">)</span> lteq? <span style="color: #66d9ef; font-weight: bold;">-&gt;</span> drop <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">int</span> 1<span style="color: #696969;">)</span> <span style="color: #66d9ef; font-weight: bold;">end</span><span style="color: #696969;">)</span>
+  dup <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">int</span> 1<span style="color: #696969;">)</span> sub <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">recur</span><span style="color: #696969;">)</span> mul <span style="color: #66d9ef; font-weight: bold;">end</span><span style="color: #696969;">)</span>
 
-<span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">run</span> <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">#</span> 0<span style="color: #696969;">)</span> factorial dot
-     <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">#</span> 1<span style="color: #696969;">)</span> factorial dot
-     <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">#</span> 2<span style="color: #696969;">)</span> factorial dot
-     <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">#</span> 3<span style="color: #696969;">)</span> factorial dot
-     <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">#</span> 4<span style="color: #696969;">)</span> factorial dot<span style="color: #696969;">)</span>
+<span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">run</span> <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">int</span> 0<span style="color: #696969;">)</span> factorial dot
+     <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">int</span> 1<span style="color: #696969;">)</span> factorial dot
+     <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">int</span> 2<span style="color: #696969;">)</span> factorial dot
+     <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">int</span> 3<span style="color: #696969;">)</span> factorial dot
+     <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">int</span> 4<span style="color: #696969;">)</span> factorial dot<span style="color: #696969;">)</span>
 </pre>
 </div>
 </div>
 </div>
 
-<div id="outline-container-orgb747e99" class="outline-2">
-<h2 id="orgb747e99">integer</h2>
-<div class="outline-text-2" id="text-orgb747e99">
+<div id="outline-container-org34373f6" class="outline-2">
+<h2 id="org34373f6">int</h2>
+<div class="outline-text-2" id="text-org34373f6">
 <div class="org-src-container">
 
-<pre class="src src-jojo"><span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">run</span> <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">#</span> 18 5<span style="color: #696969;">)</span> mod dot<span style="color: #696969;">)</span>
-<span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">run</span> <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">#</span> 0 3 2<span style="color: #696969;">)</span> <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">#</span> 1 3 2<span style="color: #696969;">)</span> <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">#</span> 3<span style="color: #696969;">)</span> n-eq? dot<span style="color: #696969;">)</span>
-<span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">run</span> <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">#</span> 1 3 2<span style="color: #696969;">)</span> <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">#</span> 1 3 2<span style="color: #696969;">)</span> <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">#</span> 3<span style="color: #696969;">)</span> n-eq? dot<span style="color: #696969;">)</span>
+<pre class="src src-jojo"><span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">run</span> <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">int</span> 18 5<span style="color: #696969;">)</span> mod dot<span style="color: #696969;">)</span>
+<span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">run</span> <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">int</span> 0 3 2<span style="color: #696969;">)</span> <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">int</span> 1 3 2<span style="color: #696969;">)</span> <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">int</span> 3<span style="color: #696969;">)</span> n-eq? dot<span style="color: #696969;">)</span>
+<span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">run</span> <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">int</span> 1 3 2<span style="color: #696969;">)</span> <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">int</span> 1 3 2<span style="color: #696969;">)</span> <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">int</span> 3<span style="color: #696969;">)</span> n-eq? dot<span style="color: #696969;">)</span>
 </pre>
 </div>
 </div>
 </div>
 
-<div id="outline-container-org6fc5290" class="outline-2">
-<h2 id="org6fc5290">string</h2>
-<div class="outline-text-2" id="text-org6fc5290">
+<div id="outline-container-org8ea2c69" class="outline-2">
+<h2 id="org8ea2c69">string</h2>
+<div class="outline-text-2" id="text-org8ea2c69">
 <div class="org-src-container">
 
 <pre class="src src-jojo"><span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">run</span> <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">string</span> <span style="color: #e6db74;">"test1"</span> <span style="color: #e6db74;">"test2"</span><span style="color: #696969;">)</span>
-     print-string print-string<span style="color: #696969;">)</span>
+     string/print string/print<span style="color: #696969;">)</span>
 </pre>
 </div>
 </div>
 </div>
 
-<div id="outline-container-org87c05f0" class="outline-2">
-<h2 id="org87c05f0">file</h2>
-<div class="outline-text-2" id="text-org87c05f0">
+<div id="outline-container-org4055c93" class="outline-2">
+<h2 id="org4055c93">byte</h2>
+<div class="outline-text-2" id="text-org4055c93">
 <div class="org-src-container">
 
-<pre class="src src-jojo"><span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">run</span> <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">string</span> <span style="color: #e6db74;">"README"</span><span style="color: #696969;">)</span>
-     <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">#</span> 1024<span style="color: #696969;">)</span> allocate tuck
-     <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">#</span> 1024<span style="color: #696969;">)</span> read-file dot
-     print-string<span style="color: #696969;">)</span>
+<pre class="src src-jojo"><span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">run</span> <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">string</span> <span style="color: #e6db74;">"test1"</span> <span style="color: #e6db74;">"test2"</span><span style="color: #696969;">)</span>
+     dup <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">int</span> 66<span style="color: #696969;">)</span> swap set-byte string/print
+     dup get-byte dot string/print<span style="color: #696969;">)</span>
 </pre>
 </div>
 </div>
 </div>
 
-<div id="outline-container-org2ddbddb" class="outline-2">
-<h2 id="org2ddbddb">system</h2>
-<div class="outline-text-2" id="text-org2ddbddb">
+<div id="outline-container-orgbf16c69" class="outline-2">
+<h2 id="orgbf16c69">system</h2>
+<div class="outline-text-2" id="text-orgbf16c69">
 <div class="org-src-container">
 
-<pre class="src src-jojo"><span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">run</span> getcwd print-string newline<span style="color: #696969;">)</span>
+<pre class="src src-jojo"><span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">run</span> current-dir string/print newline<span style="color: #696969;">)</span>
+
+<span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">run</span> <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">string</span> <span style="color: #e6db74;">"HOME"</span><span style="color: #696969;">)</span> var-string-&gt;env-string
+     string/print newline<span style="color: #696969;">)</span>
+
+<span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">run</span> <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">string</span> <span style="color: #e6db74;">"PATH"</span><span style="color: #696969;">)</span> var-string-&gt;env-string
+     string/print newline<span style="color: #696969;">)</span>
+
+<span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">defun</span> <span style="color: #a6e22e;">command-line/print-argument/loop</span> <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">:</span> index <span style="color: #66d9ef; font-weight: bold;">-&gt;</span> <span style="color: #797979;">[</span>io<span style="color: #797979;">]</span><span style="color: #696969;">)</span>
+  <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">if</span> dup argument-counter lt? <span style="color: #66d9ef; font-weight: bold;">-&gt;</span>
+      dup index-&gt;argument-string string/print
+      newline
+      <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">int</span> 1<span style="color: #696969;">)</span> add
+      <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">loop</span><span style="color: #696969;">))</span>
+  <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">else</span> drop <span style="color: #66d9ef; font-weight: bold;">end</span><span style="color: #696969;">))</span>
+
+<span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">defun</span> <span style="color: #a6e22e;">command-line/print-argument</span> <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">:</span> <span style="color: #66d9ef; font-weight: bold;">-&gt;</span> <span style="color: #797979;">[</span>io<span style="color: #797979;">]</span><span style="color: #696969;">)</span>
+  <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">int</span> 0<span style="color: #696969;">)</span> command-line/print-argument/loop<span style="color: #696969;">)</span>
+
+<span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">run</span> command-line/print-argument<span style="color: #696969;">)</span>
 </pre>
 </div>
 </div>
 </div>
 
-<div id="outline-container-org5469ab2" class="outline-2">
-<h2 id="org5469ab2">var</h2>
-<div class="outline-text-2" id="text-org5469ab2">
+<div id="outline-container-org68c7134" class="outline-2">
+<h2 id="org68c7134">var</h2>
+<div class="outline-text-2" id="text-org68c7134">
 <div class="org-src-container">
 
-<pre class="src src-jojo"><span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">defvar</span> var1 <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">#</span> 666<span style="color: #696969;">)</span> <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">#</span> 666<span style="color: #696969;">)</span> add<span style="color: #696969;">)</span>
+<pre class="src src-jojo"><span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">defvar</span> var1 <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">int</span> 666<span style="color: #696969;">)</span> <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">int</span> 666<span style="color: #696969;">)</span> add<span style="color: #696969;">)</span>
 <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">run</span> var1 dot<span style="color: #696969;">)</span>
 </pre>
 </div>
 </div>
 </div>
 
-<div id="outline-container-org28be921" class="outline-2">
-<h2 id="org28be921">jo</h2>
-<div class="outline-text-2" id="text-org28be921">
+<div id="outline-container-org3305016" class="outline-2">
+<h2 id="org3305016">jo</h2>
+<div class="outline-text-2" id="text-org3305016">
 <div class="org-src-container">
 
-<pre class="src src-jojo"><span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">run</span> <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">jo</span> null<span style="color: #696969;">)</span> jo-&gt;string print-string newline<span style="color: #696969;">)</span>
+<pre class="src src-jojo"><span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">run</span> <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">jo</span> null<span style="color: #696969;">)</span> jo-&gt;string string/print newline<span style="color: #696969;">)</span>
 </pre>
 </div>
 </div>
 </div>
 
-<div id="outline-container-orga6e7db5" class="outline-2">
-<h2 id="orga6e7db5">list</h2>
-<div class="outline-text-2" id="text-orga6e7db5">
-</div><div id="outline-container-orgbfdcc04" class="outline-3">
-<h3 id="orgbfdcc04">cons-area</h3>
-<div class="outline-text-3" id="text-orgbfdcc04">
+<div id="outline-container-orgc67f382" class="outline-2">
+<h2 id="orgc67f382">list</h2>
+<div class="outline-text-2" id="text-orgc67f382">
+</div><div id="outline-container-orgb3fe910" class="outline-3">
+<h3 id="orgb3fe910">cons-area</h3>
+<div class="outline-text-3" id="text-orgb3fe910">
 <div class="org-src-container">
 
-<pre class="src src-jojo"><span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">defvar</span> cons-size <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">#</span> 3<span style="color: #696969;">)</span> cell-size mul<span style="color: #696969;">)</span>
-<span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">defvar</span> cons-area-size <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">#</span> 5<span style="color: #696969;">)</span> <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">:</span> <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">#</span> 1024 1024<span style="color: #696969;">)</span> mul<span style="color: #696969;">)</span> cons-size mul<span style="color: #696969;">)</span>
+<pre class="src src-jojo"><span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">defvar</span> cons-size <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">int</span> 3<span style="color: #696969;">)</span> cell-size mul<span style="color: #696969;">)</span>
+<span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">defvar</span> cons-area-size
+  <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">:</span> <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">int</span> 5<span style="color: #696969;">)</span> <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">:</span> for testing<span style="color: #696969;">))</span>
+  <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">int</span> 1024 1024<span style="color: #696969;">)</span> mul
+  cons-size mul<span style="color: #696969;">)</span>
 
 <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">defvar</span> cons-area cons-area-size allocate<span style="color: #696969;">)</span>
 <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">defvar</span> cons-area-top cons-area cons-area-size add<span style="color: #696969;">)</span>
 
 <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">defvar</span> cons-pointer cons-area<span style="color: #696969;">)</span>
 
-<span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">defvar</span> current-mark <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">#</span> 1<span style="color: #696969;">))</span>
-<span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">defvar</span> max-mark <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">#</span> 3<span style="color: #696969;">))</span>
+<span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">defvar</span> current-mark <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">int</span> 1<span style="color: #696969;">))</span>
+<span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">defvar</span> max-mark <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">:</span> <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">int</span> 3<span style="color: #696969;">)</span> <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">:</span> for testing<span style="color: #696969;">))</span>
+        <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">int</span> 1024 1024<span style="color: #696969;">)</span> mul<span style="color: #696969;">)</span>
 
 <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">defun</span> <span style="color: #a6e22e;">cons-pointer/next</span> <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">:</span> <span style="color: #66d9ef; font-weight: bold;">-&gt;</span> <span style="color: #797979;">[</span>cons-pointer<span style="color: #797979;">]</span><span style="color: #696969;">)</span>
   cons-size cons-pointer add
@@ -267,57 +298,57 @@ for the JavaScript code in this tag.
   <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">if</span> cons-pointer cons-area-top eq? <span style="color: #66d9ef; font-weight: bold;">-&gt;</span> <span style="color: #66d9ef; font-weight: bold;">end</span><span style="color: #696969;">)</span>
   <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">if</span> cons-pointer get current-mark eq? not <span style="color: #66d9ef; font-weight: bold;">-&gt;</span> <span style="color: #66d9ef; font-weight: bold;">end</span><span style="color: #696969;">)</span>
   cons-pointer/next
-  <span style="color: #696969;">(</span><span style="color: #66d9ef; font-weight: bold;">loop</span><span style="color: #696969;">))</span>
+  <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">loop</span><span style="color: #696969;">))</span>
 
 <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">defun</span> <span style="color: #a6e22e;">cons?</span> <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">:</span> cell <span style="color: #66d9ef; font-weight: bold;">-&gt;</span> bool<span style="color: #696969;">)</span>
   <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">if</span> dup cons-area lt? <span style="color: #66d9ef; font-weight: bold;">-&gt;</span> drop false <span style="color: #66d9ef; font-weight: bold;">end</span><span style="color: #696969;">)</span>
   <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">if</span> dup cons-area-top gteq? <span style="color: #66d9ef; font-weight: bold;">-&gt;</span> drop false <span style="color: #66d9ef; font-weight: bold;">end</span><span style="color: #696969;">)</span>
-  cons-area sub cons-size mod <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">#</span> 0<span style="color: #696969;">)</span> eq?<span style="color: #696969;">)</span>
+  cons-area sub cons-size mod <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">int</span> 0<span style="color: #696969;">)</span> eq?<span style="color: #696969;">)</span>
 </pre>
 </div>
 </div>
 </div>
 
-<div id="outline-container-org9f91215" class="outline-3">
-<h3 id="org9f91215">cons-area-report</h3>
-<div class="outline-text-3" id="text-org9f91215">
+<div id="outline-container-orga9c4c93" class="outline-3">
+<h3 id="orga9c4c93">cons-area/report</h3>
+<div class="outline-text-3" id="text-orga9c4c93">
 <div class="org-src-container">
 
 <pre class="src src-jojo"><span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">declare</span>
   <span style="color: #696969;">(</span>car <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">:</span> cons <span style="color: #66d9ef; font-weight: bold;">-&gt;</span> cell<span style="color: #696969;">))</span>
   <span style="color: #696969;">(</span>cdr <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">:</span> cons <span style="color: #66d9ef; font-weight: bold;">-&gt;</span> cell<span style="color: #696969;">)))</span>
 
-<span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">defun</span> <span style="color: #a6e22e;">cons-area-report/loop</span> <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">:</span> cons <span style="color: #66d9ef; font-weight: bold;">-&gt;</span> <span style="color: #797979;">[</span>io<span style="color: #797979;">]</span><span style="color: #696969;">)</span>
+<span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">defun</span> <span style="color: #a6e22e;">cons-area/report/loop</span> <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">:</span> cons <span style="color: #66d9ef; font-weight: bold;">-&gt;</span> <span style="color: #797979;">[</span>io<span style="color: #797979;">]</span><span style="color: #696969;">)</span>
   <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">if</span> dup cons-area-top eq? <span style="color: #66d9ef; font-weight: bold;">-&gt;</span> drop <span style="color: #66d9ef; font-weight: bold;">end</span><span style="color: #696969;">)</span>
-  <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">string</span> <span style="color: #e6db74;">"#:"</span><span style="color: #696969;">)</span> print-string
+  <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">string</span> <span style="color: #e6db74;">"#:"</span><span style="color: #696969;">)</span> string/print
   dup dot
-  <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">string</span> <span style="color: #e6db74;">"mark: "</span><span style="color: #696969;">)</span> print-string
+  <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">string</span> <span style="color: #e6db74;">"mark: "</span><span style="color: #696969;">)</span> string/print
   dup get dot
-  <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">string</span> <span style="color: #e6db74;">"car: "</span><span style="color: #696969;">)</span> print-string
+  <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">string</span> <span style="color: #e6db74;">"car: "</span><span style="color: #696969;">)</span> string/print
   dup car dot
-  <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">string</span> <span style="color: #e6db74;">"cdr: "</span><span style="color: #696969;">)</span> print-string
+  <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">string</span> <span style="color: #e6db74;">"cdr: "</span><span style="color: #696969;">)</span> string/print
   dup cdr dot
   newline
   cons-size add
-  <span style="color: #696969;">(</span><span style="color: #66d9ef; font-weight: bold;">loop</span><span style="color: #696969;">))</span>
+  <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">loop</span><span style="color: #696969;">))</span>
 
-<span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">defun</span> <span style="color: #a6e22e;">cons-area-report</span> <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">:</span> <span style="color: #66d9ef; font-weight: bold;">-&gt;</span> <span style="color: #797979;">[</span>io<span style="color: #797979;">]</span><span style="color: #696969;">)</span>
-  cons-area cons-area-report/loop<span style="color: #696969;">)</span>
+<span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">defun</span> <span style="color: #a6e22e;">cons-area/report</span> <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">:</span> <span style="color: #66d9ef; font-weight: bold;">-&gt;</span> <span style="color: #797979;">[</span>io<span style="color: #797979;">]</span><span style="color: #696969;">)</span>
+  cons-area cons-area/report/loop<span style="color: #696969;">)</span>
 </pre>
 </div>
 </div>
 </div>
 
-<div id="outline-container-org1e776f1" class="outline-3">
-<h3 id="org1e776f1">sweep-cons-area</h3>
-<div class="outline-text-3" id="text-org1e776f1">
+<div id="outline-container-orgdaeefd0" class="outline-3">
+<h3 id="orgdaeefd0">sweep-cons-area</h3>
+<div class="outline-text-3" id="text-orgdaeefd0">
 <div class="org-src-container">
 
 <pre class="src src-jojo"><span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">defun</span> <span style="color: #a6e22e;">sweep-cons-area/loop</span> <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">:</span> cons <span style="color: #66d9ef; font-weight: bold;">-&gt;</span> <span style="color: #797979;">[</span>io<span style="color: #797979;">]</span><span style="color: #696969;">)</span>
   <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">if</span> dup cons-area-top eq? <span style="color: #66d9ef; font-weight: bold;">-&gt;</span> drop <span style="color: #66d9ef; font-weight: bold;">end</span><span style="color: #696969;">)</span>
-  dup <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">#</span> 0<span style="color: #696969;">)</span>  swap set
+  dup <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">int</span> 0<span style="color: #696969;">)</span>  swap set
   cons-size add
-  <span style="color: #696969;">(</span><span style="color: #66d9ef; font-weight: bold;">loop</span><span style="color: #696969;">))</span>
+  <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">loop</span><span style="color: #696969;">))</span>
 
 <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">defun</span> <span style="color: #a6e22e;">sweep-cons-area</span> <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">:</span> <span style="color: #66d9ef; font-weight: bold;">-&gt;</span> <span style="color: #797979;">[</span>cons-area<span style="color: #797979;">]</span><span style="color: #696969;">)</span>
   cons-area sweep-cons-area/loop<span style="color: #696969;">)</span>
@@ -326,9 +357,9 @@ for the JavaScript code in this tag.
 </div>
 </div>
 
-<div id="outline-container-org1182417" class="outline-3">
-<h3 id="org1182417">mark-cons-area</h3>
-<div class="outline-text-3" id="text-org1182417">
+<div id="outline-container-org7afacf7" class="outline-3">
+<h3 id="org7afacf7">mark-cons-area</h3>
+<div class="outline-text-3" id="text-org7afacf7">
 <ul class="org-ul">
 <li><p>root from</p><p><ul class="org-ul"></p><p><li><p>stack</p></li></p><p><li><p>defvar</p></li></ul></p></li></ul>
 
@@ -338,52 +369,52 @@ for the JavaScript code in this tag.
   <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">if</span> dup cons? not <span style="color: #66d9ef; font-weight: bold;">-&gt;</span> drop <span style="color: #66d9ef; font-weight: bold;">end</span><span style="color: #696969;">)</span>
   dup current-mark swap set
   dup car mark-cons
-  cdr <span style="color: #696969;">(</span><span style="color: #66d9ef; font-weight: bold;">loop</span><span style="color: #696969;">))</span>
+  cdr <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">loop</span><span style="color: #696969;">))</span>
 
-<span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">defun</span> <span style="color: #a6e22e;">mark-cons-area-for-defvar</span> <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">:</span> defvar-record/addr <span style="color: #66d9ef; font-weight: bold;">-&gt;</span> <span style="color: #797979;">[</span>cons-area<span style="color: #797979;">]</span><span style="color: #696969;">)</span>
-  <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">if</span> dup get <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">#</span> 0<span style="color: #696969;">)</span> eq? <span style="color: #66d9ef; font-weight: bold;">-&gt;</span> drop <span style="color: #66d9ef; font-weight: bold;">end</span><span style="color: #696969;">)</span>
+<span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">defun</span> <span style="color: #a6e22e;">mark-cons-area/defvar-record</span> <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">:</span> defvar-record <span style="color: #66d9ef; font-weight: bold;">-&gt;</span> <span style="color: #797979;">[</span>cons-area<span style="color: #797979;">]</span><span style="color: #696969;">)</span>
+  <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">if</span> dup get <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">int</span> 0<span style="color: #696969;">)</span> eq? <span style="color: #66d9ef; font-weight: bold;">-&gt;</span> drop <span style="color: #66d9ef; font-weight: bold;">end</span><span style="color: #696969;">)</span>
   dup get mark-cons
   cell-size add
-  <span style="color: #696969;">(</span><span style="color: #66d9ef; font-weight: bold;">loop</span><span style="color: #696969;">))</span>
+  <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">loop</span><span style="color: #696969;">))</span>
 
-<span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">defun</span> <span style="color: #a6e22e;">mark-cons-area-for-stack</span> <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">:</span> stack/addr <span style="color: #66d9ef; font-weight: bold;">-&gt;</span> <span style="color: #797979;">[</span>cons-area<span style="color: #797979;">]</span><span style="color: #696969;">)</span>
+<span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">defun</span> <span style="color: #a6e22e;">mark-cons-area/argument-stack</span> <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">:</span> stack <span style="color: #66d9ef; font-weight: bold;">-&gt;</span> <span style="color: #797979;">[</span>cons-area<span style="color: #797979;">]</span><span style="color: #696969;">)</span>
   <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">if</span> dup stack-base eq? <span style="color: #66d9ef; font-weight: bold;">-&gt;</span> drop <span style="color: #66d9ef; font-weight: bold;">end</span><span style="color: #696969;">)</span>
   cell-size sub
   dup get mark-cons
-  <span style="color: #696969;">(</span><span style="color: #66d9ef; font-weight: bold;">loop</span><span style="color: #696969;">))</span>
+  <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">loop</span><span style="color: #696969;">))</span>
 
 <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">defun</span> <span style="color: #a6e22e;">mark-cons-area</span> <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">:</span> <span style="color: #66d9ef; font-weight: bold;">-&gt;</span> <span style="color: #797979;">[</span>cons-area<span style="color: #797979;">]</span><span style="color: #696969;">)</span>
   <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">if</span> current-mark max-mark eq? <span style="color: #66d9ef; font-weight: bold;">-&gt;</span>
       sweep-cons-area
-      <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">#</span> 0<span style="color: #696969;">)</span> <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">var</span> current-mark<span style="color: #696969;">)</span> set<span style="color: #696969;">)</span>
-  current-mark <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">#</span> 1<span style="color: #696969;">)</span> add <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">var</span> current-mark<span style="color: #696969;">)</span> set
-  defvar-record mark-cons-area-for-defvar
+      <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">int</span> 0<span style="color: #696969;">)</span> <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">var</span> current-mark<span style="color: #696969;">)</span> set<span style="color: #696969;">)</span>
+  current-mark <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">int</span> 1<span style="color: #696969;">)</span> add <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">var</span> current-mark<span style="color: #696969;">)</span> set
+  defvar-record mark-cons-area/defvar-record
   stack-pointer
-  mark-cons-area-for-stack<span style="color: #696969;">)</span>
+  mark-cons-area/argument-stack<span style="color: #696969;">)</span>
 </pre>
 </div>
 </div>
 </div>
 
-<div id="outline-container-org322eb22" class="outline-3">
-<h3 id="org322eb22">cons</h3>
-<div class="outline-text-3" id="text-org322eb22">
+<div id="outline-container-orgf768499" class="outline-3">
+<h3 id="orgf768499">cons</h3>
+<div class="outline-text-3" id="text-orgf768499">
 <ul class="org-ul">
 <li><p><p></p><p>cons</p><p></p></p><p><table border="2" cellspacing="0" cellpadding="6" rules="groups" frame="hsides"></p><p></p><p></p><p><colgroup></p><p><col  class="org-left" /></p><p></colgroup></p><p><tbody></p><p><tr></p><p><td class="org-left">mark</td></p><p></tr></p><p></p><p><tr></p><p><td class="org-left">car</td></p><p></tr></p><p></p><p><tr></p><p><td class="org-left">cdr</td></p><p></tr></p><p></tbody></p><p></table></p></li></ul>
 
 <div class="org-src-container">
 
-<pre class="src src-jojo"><span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">defun</span> <span style="color: #a6e22e;">new-cons</span> <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">:</span> <span style="color: #66d9ef; font-weight: bold;">-&gt;</span> cons<span style="color: #696969;">)</span>
+<pre class="src src-jojo"><span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">defun</span> <span style="color: #a6e22e;">new/cons</span> <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">:</span> <span style="color: #66d9ef; font-weight: bold;">-&gt;</span> cons<span style="color: #696969;">)</span>
   <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">if</span> cons-pointer cons-area-top eq? <span style="color: #66d9ef; font-weight: bold;">-&gt;</span>
       mark-cons-area
       cons-pointer/init
       cons-pointer/next-free
       <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">if</span> cons-pointer cons-area-top eq? <span style="color: #66d9ef; font-weight: bold;">-&gt;</span>
-          <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">string</span> <span style="color: #e6db74;">"fatal error : cons-area is full"</span><span style="color: #696969;">)</span> print-string
+          <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">string</span> <span style="color: #e6db74;">"fatal error : cons-area is full"</span><span style="color: #696969;">)</span> string/print
           newline bye<span style="color: #696969;">)</span>
-      <span style="color: #696969;">(</span><span style="color: #66d9ef; font-weight: bold;">loop</span><span style="color: #696969;">))</span>
+      <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">loop</span><span style="color: #696969;">))</span>
   <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">if</span> cons-pointer get current-mark eq? <span style="color: #66d9ef; font-weight: bold;">-&gt;</span>
-      cons-pointer/next <span style="color: #696969;">(</span><span style="color: #66d9ef; font-weight: bold;">loop</span><span style="color: #696969;">))</span>
+      cons-pointer/next <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">loop</span><span style="color: #696969;">))</span>
   cons-pointer
   cons-pointer/next <span style="color: #66d9ef; font-weight: bold;">end</span><span style="color: #696969;">)</span>
 
@@ -408,20 +439,20 @@ for the JavaScript code in this tag.
   get<span style="color: #696969;">)</span>
 
 <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">defun</span> <span style="color: #a6e22e;">cons</span> <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">:</span> cdr-cell car-cell <span style="color: #66d9ef; font-weight: bold;">-&gt;</span> cons<span style="color: #696969;">)</span>
-  new-cons set-car set-cdr<span style="color: #696969;">)</span>
+  new/cons set-car set-cdr<span style="color: #696969;">)</span>
 </pre>
 </div>
 </div>
 </div>
 
-<div id="outline-container-orgf9b8197" class="outline-3">
-<h3 id="orgf9b8197"><span class="done test">test</span> </h3>
-<div class="outline-text-3" id="text-orgf9b8197">
+<div id="outline-container-org1be8a45" class="outline-3">
+<h3 id="org1be8a45"><span class="done test">test</span> </h3>
+<div class="outline-text-3" id="text-org1be8a45">
 <div class="org-src-container">
 
-<pre class="src src-jojo"><span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">:</span> <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">run</span> <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">#</span> 0<span style="color: #696969;">)</span>
-        <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">#</span> 1<span style="color: #696969;">)</span> cons
-        <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">#</span> 2<span style="color: #696969;">)</span> cons
+<pre class="src src-jojo"><span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">:</span> <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">run</span> <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">int</span> 0<span style="color: #696969;">)</span>
+        <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">int</span> 1<span style="color: #696969;">)</span> cons
+        <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">int</span> 2<span style="color: #696969;">)</span> cons
         dup car dot
         dup cdr car dot
         dup cdr cdr dot
@@ -437,23 +468,23 @@ for the JavaScript code in this tag.
         dot<span style="color: #696969;">))</span>
 
 <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">:</span> <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">run</span> newline
-        new-cons dot
-        new-cons dot
-        new-cons dot
-        new-cons dot
-        new-cons dot
+        new/cons dot
+        new/cons dot
+        new/cons dot
+        new/cons dot
+        new/cons dot
         current-mark dot
         newline
-        cons-area-report
+        cons-area/report
         newline<span style="color: #696969;">))</span>
 </pre>
 </div>
 </div>
 </div>
 
-<div id="outline-container-orgec88a70" class="outline-3">
-<h3 id="orgec88a70">list</h3>
-<div class="outline-text-3" id="text-orgec88a70">
+<div id="outline-container-org3aed435" class="outline-3">
+<h3 id="org3aed435">list</h3>
+<div class="outline-text-3" id="text-org3aed435">
 <div class="org-src-container">
 
 <pre class="src src-jojo"><span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">:</span> <span style="color: #B380A8;">{</span>a <span style="color: #B380A8;">{</span>b c<span style="color: #B380A8;">}</span> d<span style="color: #B380A8;">}</span>
@@ -465,50 +496,50 @@ for the JavaScript code in this tag.
    cons
    d cons<span style="color: #696969;">)</span>
 
-<span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">defun</span> <span style="color: #a6e22e;">one-list</span> <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">:</span> <span style="color: #797979;">[</span>io<span style="color: #797979;">]</span> <span style="color: #66d9ef; font-weight: bold;">-&gt;</span> <span style="color: #797979;">[</span>compile<span style="color: #797979;">]</span><span style="color: #696969;">)</span>
-  read-jo
+<span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">defun</span> <span style="color: #a6e22e;">list/one</span> <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">:</span> <span style="color: #797979;">[</span>io<span style="color: #797979;">]</span> <span style="color: #66d9ef; font-weight: bold;">-&gt;</span> <span style="color: #797979;">[</span>compile<span style="color: #797979;">]</span><span style="color: #696969;">)</span>
+  read/jo
   <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">if</span> dup flower-bar eq? <span style="color: #66d9ef; font-weight: bold;">-&gt;</span>
       drop null here
-      <span style="color: #696969;">(</span><span style="color: #66d9ef; font-weight: bold;">recur</span><span style="color: #696969;">)</span> <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">jo</span> cons<span style="color: #696969;">)</span> here
-      <span style="color: #696969;">(</span><span style="color: #66d9ef; font-weight: bold;">loop</span><span style="color: #696969;">))</span>
+      <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">recur</span><span style="color: #696969;">)</span> <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">jo</span> cons<span style="color: #696969;">)</span> here
+      <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">loop</span><span style="color: #696969;">))</span>
   <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">if</span> dup flower-ket eq? <span style="color: #66d9ef; font-weight: bold;">-&gt;</span>
       drop <span style="color: #66d9ef; font-weight: bold;">end</span><span style="color: #696969;">)</span>
   <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">if</span> dup round-bar eq? <span style="color: #66d9ef; font-weight: bold;">-&gt;</span>
-      drop read-jo apply-key
+      drop read/jo key-jo/apply
       <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">jo</span> cons<span style="color: #696969;">)</span> here
-      <span style="color: #696969;">(</span><span style="color: #66d9ef; font-weight: bold;">loop</span><span style="color: #696969;">))</span>
-  <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">else</span> <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">jo</span> i-lit<span style="color: #696969;">)</span> here
+      <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">loop</span><span style="color: #696969;">))</span>
+  <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">else</span> <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">jo</span> instruction/lit<span style="color: #696969;">)</span> here
         here
         <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">jo</span> cons<span style="color: #696969;">)</span> here
-        <span style="color: #696969;">(</span><span style="color: #66d9ef; font-weight: bold;">loop</span><span style="color: #696969;">)))</span>
+        <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">loop</span><span style="color: #696969;">)))</span>
 
 <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">defun</span> <span style="color: #a6e22e;">list</span> <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">:</span> <span style="color: #797979;">[</span>io<span style="color: #797979;">]</span> <span style="color: #66d9ef; font-weight: bold;">-&gt;</span> <span style="color: #797979;">[</span>compile<span style="color: #797979;">]</span><span style="color: #696969;">)</span>
-  read-jo
+  read/jo
   <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">if</span> dup round-ket eq? <span style="color: #66d9ef; font-weight: bold;">-&gt;</span> drop <span style="color: #66d9ef; font-weight: bold;">end</span><span style="color: #696969;">)</span>
   <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">if</span> dup flower-bar eq? <span style="color: #66d9ef; font-weight: bold;">-&gt;</span>
       drop null here
-      one-list <span style="color: #696969;">(</span><span style="color: #66d9ef; font-weight: bold;">loop</span><span style="color: #696969;">))</span>
-  <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">else</span> drop <span style="color: #696969;">(</span><span style="color: #66d9ef; font-weight: bold;">loop</span><span style="color: #696969;">)))</span>
+      list/one <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">loop</span><span style="color: #696969;">))</span>
+  <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">else</span> drop <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">loop</span><span style="color: #696969;">)))</span>
 </pre>
 </div>
 </div>
 </div>
 
-<div id="outline-container-orgb29998f" class="outline-3">
-<h3 id="orgb29998f"><span class="done test">test</span> </h3>
-<div class="outline-text-3" id="text-orgb29998f">
+<div id="outline-container-org6118ba2" class="outline-3">
+<h3 id="org6118ba2"><span class="done test">test</span> </h3>
+<div class="outline-text-3" id="text-org6118ba2">
 <div class="org-src-container">
 
-<pre class="src src-jojo"><span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">run</span> <span style="color: #696969;">(</span>list <span style="color: #B380A8;">{</span>a <span style="color: #B380A8;">{</span>b c<span style="color: #B380A8;">}</span> d<span style="color: #B380A8;">}</span><span style="color: #696969;">)</span>
-     dup car jo-&gt;string print-string
-     dup cdr car car jo-&gt;string print-string
-     dup cdr car cdr car jo-&gt;string print-string
-     dup cdr car cdr cdr jo-&gt;string print-string
-     dup cdr cdr car jo-&gt;string print-string
-     dup cdr cdr cdr jo-&gt;string print-string
+<pre class="src src-jojo"><span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">run</span> <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">list</span> <span style="color: #B380A8;">{</span>a <span style="color: #B380A8;">{</span>b c<span style="color: #B380A8;">}</span> d<span style="color: #B380A8;">}</span><span style="color: #696969;">)</span>
+     dup car jo-&gt;string string/print
+     dup cdr car car jo-&gt;string string/print
+     dup cdr car cdr car jo-&gt;string string/print
+     dup cdr car cdr cdr jo-&gt;string string/print
+     dup cdr cdr car jo-&gt;string string/print
+     dup cdr cdr cdr jo-&gt;string string/print
      drop<span style="color: #696969;">)</span>
 
-<span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">run</span> <span style="color: #696969;">(</span>list <span style="color: #B380A8;">{</span><span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">#</span> 1<span style="color: #696969;">)</span> <span style="color: #B380A8;">{</span><span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">#</span> 2<span style="color: #696969;">)</span> <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">jojo</span> <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">#</span> 1 2<span style="color: #696969;">)</span> add<span style="color: #696969;">)</span><span style="color: #B380A8;">}</span> <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">#</span> 4<span style="color: #696969;">)</span><span style="color: #B380A8;">}</span><span style="color: #696969;">)</span>
+<span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">run</span> <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">list</span> <span style="color: #B380A8;">{</span><span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">int</span> 1<span style="color: #696969;">)</span> <span style="color: #B380A8;">{</span><span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">int</span> 2<span style="color: #696969;">)</span> <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">do</span> <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">int</span> 1 2<span style="color: #696969;">)</span> add<span style="color: #696969;">)</span><span style="color: #B380A8;">}</span> <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">int</span> 4<span style="color: #696969;">)</span><span style="color: #B380A8;">}</span><span style="color: #696969;">)</span>
      dup car dot
      dup cdr car car dot
      dup cdr car cdr car dot
@@ -521,81 +552,244 @@ for the JavaScript code in this tag.
 </div>
 </div>
 
-<div id="outline-container-org906d389" class="outline-3">
-<h3 id="org906d389">print-int-list</h3>
-<div class="outline-text-3" id="text-org906d389">
+<div id="outline-container-org979e98c" class="outline-3">
+<h3 id="org979e98c">int-list/print</h3>
+<div class="outline-text-3" id="text-org979e98c">
 <div class="org-src-container">
 
-<pre class="src src-jojo"><span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">declare</span> <span style="color: #696969;">(</span>print-int-list <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">:</span> cons <span style="color: #66d9ef; font-weight: bold;">-&gt;</span> <span style="color: #797979;">[</span>io<span style="color: #797979;">]</span><span style="color: #696969;">)))</span>
+<pre class="src src-jojo"><span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">declare</span> <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">int</span>-list/print <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">:</span> cons <span style="color: #66d9ef; font-weight: bold;">-&gt;</span> <span style="color: #797979;">[</span>io<span style="color: #797979;">]</span><span style="color: #696969;">)))</span>
 
-<span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">defun</span> <span style="color: #a6e22e;">print-int-list/rest</span> <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">:</span> cons <span style="color: #66d9ef; font-weight: bold;">-&gt;</span> <span style="color: #797979;">[</span>io<span style="color: #797979;">]</span><span style="color: #696969;">)</span>
+<span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">defun</span> <span style="color: #a6e22e;">int-list/print/rest</span> <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">:</span> cons <span style="color: #66d9ef; font-weight: bold;">-&gt;</span> <span style="color: #797979;">[</span>io<span style="color: #797979;">]</span><span style="color: #696969;">)</span>
   <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">if</span> dup null eq? <span style="color: #66d9ef; font-weight: bold;">-&gt;</span> drop <span style="color: #66d9ef; font-weight: bold;">end</span><span style="color: #696969;">)</span>
-  dup cdr print-int-list/rest
+  dup cdr int-list/print/rest
   car
-  <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">if</span> dup cons? <span style="color: #66d9ef; font-weight: bold;">-&gt;</span> print-int-list <span style="color: #66d9ef; font-weight: bold;">end</span><span style="color: #696969;">)</span>
+  <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">if</span> dup cons? <span style="color: #66d9ef; font-weight: bold;">-&gt;</span> int-list/print <span style="color: #66d9ef; font-weight: bold;">end</span><span style="color: #696969;">)</span>
   <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">else</span> dot <span style="color: #66d9ef; font-weight: bold;">end</span><span style="color: #696969;">))</span>
 
-<span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">defun</span> <span style="color: #a6e22e;">print-int-list</span> <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">:</span> cons <span style="color: #66d9ef; font-weight: bold;">-&gt;</span> <span style="color: #797979;">[</span>io<span style="color: #797979;">]</span><span style="color: #696969;">)</span>
-  <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">string</span> <span style="color: #e6db74;">"{ "</span><span style="color: #696969;">)</span> print-string
-  print-int-list/rest
-  <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">string</span> <span style="color: #e6db74;">"} "</span><span style="color: #696969;">)</span> print-string<span style="color: #696969;">)</span>
+<span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">defun</span> <span style="color: #a6e22e;">int-list/print</span> <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">:</span> cons <span style="color: #66d9ef; font-weight: bold;">-&gt;</span> <span style="color: #797979;">[</span>io<span style="color: #797979;">]</span><span style="color: #696969;">)</span>
+  <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">string</span> <span style="color: #e6db74;">"{ "</span><span style="color: #696969;">)</span> string/print
+  int-list/print/rest
+  <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">string</span> <span style="color: #e6db74;">"} "</span><span style="color: #696969;">)</span> string/print<span style="color: #696969;">)</span>
 </pre>
 </div>
 </div>
 </div>
 
-<div id="outline-container-org2a40e7f" class="outline-3">
-<h3 id="org2a40e7f">print-jo-list</h3>
-<div class="outline-text-3" id="text-org2a40e7f">
+<div id="outline-container-orge234a86" class="outline-3">
+<h3 id="orge234a86"><span class="done test">test</span> </h3>
+<div class="outline-text-3" id="text-orge234a86">
 <div class="org-src-container">
 
-<pre class="src src-jojo"><span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">declare</span> <span style="color: #696969;">(</span>print-jo-list <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">:</span> cons <span style="color: #66d9ef; font-weight: bold;">-&gt;</span> <span style="color: #797979;">[</span>io<span style="color: #797979;">]</span><span style="color: #696969;">)))</span>
+<pre class="src src-jojo"><span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">run</span> <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">list</span> <span style="color: #B380A8;">{</span><span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">int</span> 1<span style="color: #696969;">)</span> <span style="color: #B380A8;">{</span><span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">int</span> 2<span style="color: #696969;">)</span> <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">do</span> <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">int</span> 1 2<span style="color: #696969;">)</span> add<span style="color: #696969;">)</span><span style="color: #B380A8;">}</span> <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">int</span> 4<span style="color: #696969;">)</span><span style="color: #B380A8;">}</span><span style="color: #696969;">)</span>
+     int-list/print<span style="color: #696969;">)</span>
+</pre>
+</div>
+</div>
+</div>
 
-<span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">defun</span> <span style="color: #a6e22e;">dot-jo</span> <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">:</span> jo <span style="color: #66d9ef; font-weight: bold;">-&gt;</span> <span style="color: #797979;">[</span>io<span style="color: #797979;">]</span><span style="color: #696969;">)</span>
-  jo-&gt;string print-string
-  <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">string</span> <span style="color: #e6db74;">" "</span><span style="color: #696969;">)</span> print-string<span style="color: #696969;">)</span>
+<div id="outline-container-org4a616c2" class="outline-3">
+<h3 id="org4a616c2">jo/map &amp; jo/itr</h3>
+<div class="outline-text-3" id="text-org4a616c2">
+<div class="org-src-container">
 
-<span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">defun</span> <span style="color: #a6e22e;">print-jo-list/rest</span> <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">:</span> cons <span style="color: #66d9ef; font-weight: bold;">-&gt;</span> <span style="color: #797979;">[</span>io<span style="color: #797979;">]</span><span style="color: #696969;">)</span>
+<pre class="src src-jojo"><span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">defun</span> <span style="color: #a6e22e;">jo/map</span> <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">:</span> <span style="color: #B380A8;">{</span>... a<span style="color: #B380A8;">}</span> <span style="color: #696969;">(</span>a <span style="color: #66d9ef; font-weight: bold;">-&gt;</span> b<span style="color: #696969;">)</span> <span style="color: #66d9ef; font-weight: bold;">-&gt;</span> <span style="color: #B380A8;">{</span>... b<span style="color: #B380A8;">}</span><span style="color: #696969;">)</span>
+  <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">if</span> over null eq? <span style="color: #66d9ef; font-weight: bold;">-&gt;</span> drop <span style="color: #66d9ef; font-weight: bold;">end</span><span style="color: #696969;">)</span>
+  over car over jo/apply
+  <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">int</span> 2 1<span style="color: #696969;">)</span> xy-swap
+  swap cdr swap <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">recur</span><span style="color: #696969;">)</span>
+  swap cons<span style="color: #696969;">)</span>
+
+<span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">defun</span> <span style="color: #a6e22e;">jo/itr</span> <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">:</span> <span style="color: #B380A8;">{</span>... a<span style="color: #B380A8;">}</span> <span style="color: #696969;">(</span>a <span style="color: #66d9ef; font-weight: bold;">-&gt;</span><span style="color: #696969;">)</span> <span style="color: #66d9ef; font-weight: bold;">-&gt;</span><span style="color: #696969;">)</span>
+  <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">if</span> over null eq? <span style="color: #66d9ef; font-weight: bold;">-&gt;</span> drop drop <span style="color: #66d9ef; font-weight: bold;">end</span><span style="color: #696969;">)</span>
+  over car over jo/apply
+  swap cdr swap <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">loop</span><span style="color: #696969;">))</span>
+</pre>
+</div>
+</div>
+</div>
+
+<div id="outline-container-orgfe26349" class="outline-3">
+<h3 id="orgfe26349"><span class="done test">test</span> </h3>
+<div class="outline-text-3" id="text-orgfe26349">
+<div class="org-src-container">
+
+<pre class="src src-jojo"><span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">defun</span> <span style="color: #a6e22e;">add1</span> <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">:</span> int <span style="color: #66d9ef; font-weight: bold;">-&gt;</span> int<span style="color: #696969;">)</span>
+  <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">int</span> 1<span style="color: #696969;">)</span> add<span style="color: #696969;">)</span>
+
+<span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">run</span> <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">int</span> 1<span style="color: #696969;">)</span>
+     <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">jo</span> add1<span style="color: #696969;">)</span> jo/apply
+     dot<span style="color: #696969;">)</span>
+
+<span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">run</span> <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">int</span> 1<span style="color: #696969;">)</span> <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">int</span> 2<span style="color: #696969;">)</span> <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">int</span> 3<span style="color: #696969;">)</span> <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">int</span> 4<span style="color: #696969;">)</span>
+     <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">int</span> 2 1<span style="color: #696969;">)</span> xy-swap dot dot dot dot<span style="color: #696969;">)</span>
+
+<span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">run</span> <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">list</span> <span style="color: #B380A8;">{</span><span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">int</span> 1<span style="color: #696969;">)</span> <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">int</span> 2<span style="color: #696969;">)</span> <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">int</span> 3<span style="color: #696969;">)</span> <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">int</span> 4<span style="color: #696969;">)</span><span style="color: #B380A8;">}</span><span style="color: #696969;">)</span>
+     <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">jo</span> add1<span style="color: #696969;">)</span> jo/map
+     int-list/print<span style="color: #696969;">)</span>
+
+<span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">run</span> <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">list</span> <span style="color: #B380A8;">{</span><span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">int</span> 1<span style="color: #696969;">)</span> <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">int</span> 2<span style="color: #696969;">)</span> <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">int</span> 3<span style="color: #696969;">)</span> <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">int</span> 4<span style="color: #696969;">)</span><span style="color: #B380A8;">}</span><span style="color: #696969;">)</span>
+     <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">jo</span> dot<span style="color: #696969;">)</span> jo/itr<span style="color: #696969;">)</span>
+</pre>
+</div>
+</div>
+</div>
+
+<div id="outline-container-org2bd218c" class="outline-3">
+<h3 id="org2bd218c">map</h3>
+<div class="outline-text-3" id="text-org2bd218c">
+<div class="org-src-container">
+
+<pre class="src src-jojo"><span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">defun</span> <span style="color: #a6e22e;">map</span> <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">:</span> <span style="color: #B380A8;">{</span>... a<span style="color: #B380A8;">}</span> <span style="color: #696969;">(</span>a <span style="color: #66d9ef; font-weight: bold;">-&gt;</span> b<span style="color: #696969;">)</span> <span style="color: #66d9ef; font-weight: bold;">-&gt;</span> <span style="color: #B380A8;">{</span>... b<span style="color: #B380A8;">}</span><span style="color: #696969;">)</span>
+  <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">if</span> over null eq? <span style="color: #66d9ef; font-weight: bold;">-&gt;</span> drop <span style="color: #66d9ef; font-weight: bold;">end</span><span style="color: #696969;">)</span>
+  over car over apply
+  <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">int</span> 2 1<span style="color: #696969;">)</span> xy-swap
+  swap cdr swap <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">recur</span><span style="color: #696969;">)</span>
+  swap cons<span style="color: #696969;">)</span>
+
+<span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">defun</span> <span style="color: #a6e22e;">itr</span> <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">:</span> <span style="color: #B380A8;">{</span>... a<span style="color: #B380A8;">}</span> <span style="color: #696969;">(</span>a <span style="color: #66d9ef; font-weight: bold;">-&gt;</span><span style="color: #696969;">)</span> <span style="color: #66d9ef; font-weight: bold;">-&gt;</span><span style="color: #696969;">)</span>
+  <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">if</span> over null eq? <span style="color: #66d9ef; font-weight: bold;">-&gt;</span> drop drop <span style="color: #66d9ef; font-weight: bold;">end</span><span style="color: #696969;">)</span>
+  over car over apply
+  swap cdr swap <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">loop</span><span style="color: #696969;">))</span>
+</pre>
+</div>
+</div>
+</div>
+
+<div id="outline-container-org21fec27" class="outline-3">
+<h3 id="org21fec27"><span class="done test">test</span> </h3>
+<div class="outline-text-3" id="text-org21fec27">
+<div class="org-src-container">
+
+<pre class="src src-jojo"><span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">run</span> <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">list</span> <span style="color: #B380A8;">{</span><span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">int</span> 1<span style="color: #696969;">)</span> <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">int</span> 2<span style="color: #696969;">)</span> <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">int</span> 3<span style="color: #696969;">)</span> <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">int</span> 4<span style="color: #696969;">)</span><span style="color: #B380A8;">}</span><span style="color: #696969;">)</span>
+     <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">jojo</span> <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">int</span> 1<span style="color: #696969;">)</span> add<span style="color: #696969;">)</span> map
+     <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">jojo</span> <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">int</span> 1<span style="color: #696969;">)</span> add<span style="color: #696969;">)</span> map
+     <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">jojo</span> <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">int</span> 1<span style="color: #696969;">)</span> add<span style="color: #696969;">)</span> map
+     <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">jojo</span> <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">int</span> 1<span style="color: #696969;">)</span> add<span style="color: #696969;">)</span> map
+     <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">jojo</span> <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">int</span> 1<span style="color: #696969;">)</span> add<span style="color: #696969;">)</span> map
+     int-list/print<span style="color: #696969;">)</span>
+
+<span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">run</span> <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">list</span> <span style="color: #B380A8;">{</span><span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">int</span> 1<span style="color: #696969;">)</span> <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">int</span> 2<span style="color: #696969;">)</span> <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">int</span> 3<span style="color: #696969;">)</span> <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">int</span> 4<span style="color: #696969;">)</span><span style="color: #B380A8;">}</span><span style="color: #696969;">)</span>
+     <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">jojo</span> dup dot dot<span style="color: #696969;">)</span> itr<span style="color: #696969;">)</span>
+</pre>
+</div>
+</div>
+</div>
+
+<div id="outline-container-org182ccb7" class="outline-3">
+<h3 id="org182ccb7">list/ref</h3>
+<div class="outline-text-3" id="text-org182ccb7">
+<div class="org-src-container">
+
+<pre class="src src-jojo"><span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">defun</span> <span style="color: #a6e22e;">list/ref</span> <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">:</span> <span style="color: #B380A8;">{</span>... a<span style="color: #B380A8;">}</span> int <span style="color: #66d9ef; font-weight: bold;">-&gt;</span> a<span style="color: #696969;">)</span>
+  <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">if</span> dup <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">int</span> 0<span style="color: #696969;">)</span> lteq? <span style="color: #66d9ef; font-weight: bold;">-&gt;</span> drop car <span style="color: #66d9ef; font-weight: bold;">end</span><span style="color: #696969;">)</span>
+  <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">else</span> swap cdr swap <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">int</span> 1<span style="color: #696969;">)</span> sub <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">loop</span><span style="color: #696969;">)))</span>
+</pre>
+</div>
+</div>
+</div>
+
+<div id="outline-container-orgf293b99" class="outline-3">
+<h3 id="orgf293b99"><span class="done test">test</span> </h3>
+<div class="outline-text-3" id="text-orgf293b99">
+<div class="org-src-container">
+
+<pre class="src src-jojo"><span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">run</span> <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">list</span> <span style="color: #B380A8;">{</span><span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">int</span> 1<span style="color: #696969;">)</span> <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">int</span> 2<span style="color: #696969;">)</span> <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">int</span> 3<span style="color: #696969;">)</span> <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">int</span> 4<span style="color: #696969;">)</span><span style="color: #B380A8;">}</span><span style="color: #696969;">)</span>
+     <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">int</span> 1<span style="color: #696969;">)</span> list/ref dot<span style="color: #696969;">)</span>
+</pre>
+</div>
+</div>
+</div>
+
+<div id="outline-container-orgbfc500c" class="outline-3">
+<h3 id="orgbfc500c">jo-list/print</h3>
+<div class="outline-text-3" id="text-orgbfc500c">
+<div class="org-src-container">
+
+<pre class="src src-jojo"><span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">declare</span> <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">jo</span>-list/print <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">:</span> cons <span style="color: #66d9ef; font-weight: bold;">-&gt;</span> <span style="color: #797979;">[</span>io<span style="color: #797979;">]</span><span style="color: #696969;">)))</span>
+
+<span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">defun</span> <span style="color: #a6e22e;">jo/dot</span> <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">:</span> jo <span style="color: #66d9ef; font-weight: bold;">-&gt;</span> <span style="color: #797979;">[</span>io<span style="color: #797979;">]</span><span style="color: #696969;">)</span>
+  jo-&gt;string string/print
+  <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">string</span> <span style="color: #e6db74;">" "</span><span style="color: #696969;">)</span> string/print<span style="color: #696969;">)</span>
+
+<span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">defun</span> <span style="color: #a6e22e;">jo-list/print/rest</span> <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">:</span> cons <span style="color: #66d9ef; font-weight: bold;">-&gt;</span> <span style="color: #797979;">[</span>io<span style="color: #797979;">]</span><span style="color: #696969;">)</span>
   <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">if</span> dup null eq? <span style="color: #66d9ef; font-weight: bold;">-&gt;</span> drop <span style="color: #66d9ef; font-weight: bold;">end</span><span style="color: #696969;">)</span>
-  dup cdr print-jo-list/rest
+  dup cdr jo-list/print/rest
   car
-  <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">if</span> dup cons? <span style="color: #66d9ef; font-weight: bold;">-&gt;</span> print-jo-list <span style="color: #66d9ef; font-weight: bold;">end</span><span style="color: #696969;">)</span>
-  <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">else</span> dot-jo <span style="color: #66d9ef; font-weight: bold;">end</span><span style="color: #696969;">))</span>
+  <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">if</span> dup cons? <span style="color: #66d9ef; font-weight: bold;">-&gt;</span> jo-list/print <span style="color: #66d9ef; font-weight: bold;">end</span><span style="color: #696969;">)</span>
+  <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">else</span> jo/dot <span style="color: #66d9ef; font-weight: bold;">end</span><span style="color: #696969;">))</span>
 
-<span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">defun</span> <span style="color: #a6e22e;">print-jo-list</span> <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">:</span> cons <span style="color: #66d9ef; font-weight: bold;">-&gt;</span> <span style="color: #797979;">[</span>io<span style="color: #797979;">]</span><span style="color: #696969;">)</span>
-  <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">string</span> <span style="color: #e6db74;">"{ "</span><span style="color: #696969;">)</span> print-string
-  print-jo-list/rest
-  <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">string</span> <span style="color: #e6db74;">"} "</span><span style="color: #696969;">)</span> print-string<span style="color: #696969;">)</span>
+<span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">defun</span> <span style="color: #a6e22e;">jo-list/print</span> <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">:</span> cons <span style="color: #66d9ef; font-weight: bold;">-&gt;</span> <span style="color: #797979;">[</span>io<span style="color: #797979;">]</span><span style="color: #696969;">)</span>
+  <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">string</span> <span style="color: #e6db74;">"{ "</span><span style="color: #696969;">)</span> string/print
+  jo-list/print/rest
+  <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">string</span> <span style="color: #e6db74;">"} "</span><span style="color: #696969;">)</span> string/print<span style="color: #696969;">)</span>
 </pre>
 </div>
 </div>
 </div>
 
-<div id="outline-container-orgfda043c" class="outline-3">
-<h3 id="orgfda043c"><span class="done test">test</span> </h3>
-<div class="outline-text-3" id="text-orgfda043c">
+<div id="outline-container-orgdd5cdd1" class="outline-3">
+<h3 id="orgdd5cdd1"><span class="done test">test</span> </h3>
+<div class="outline-text-3" id="text-orgdd5cdd1">
 <div class="org-src-container">
 
-<pre class="src src-jojo"><span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">run</span> <span style="color: #696969;">(</span>list <span style="color: #B380A8;">{</span>a <span style="color: #B380A8;">{</span>b c<span style="color: #B380A8;">}</span> d<span style="color: #B380A8;">}</span><span style="color: #696969;">)</span>
-     print-jo-list<span style="color: #696969;">)</span>
+<pre class="src src-jojo"><span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">run</span> <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">list</span> <span style="color: #B380A8;">{</span>a <span style="color: #B380A8;">{</span>b c<span style="color: #B380A8;">}</span> d<span style="color: #B380A8;">}</span><span style="color: #696969;">)</span>
+     jo-list/print<span style="color: #696969;">)</span>
+</pre>
+</div>
+</div>
+</div>
 
-<span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">run</span> <span style="color: #696969;">(</span>list <span style="color: #B380A8;">{</span><span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">#</span> 1<span style="color: #696969;">)</span> <span style="color: #B380A8;">{</span><span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">#</span> 2<span style="color: #696969;">)</span> <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">jojo</span> <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">#</span> 1 2<span style="color: #696969;">)</span> add<span style="color: #696969;">)</span><span style="color: #B380A8;">}</span> <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">#</span> 4<span style="color: #696969;">)</span><span style="color: #B380A8;">}</span><span style="color: #696969;">)</span>
-     print-int-list<span style="color: #696969;">)</span>
+<div id="outline-container-orgec47731" class="outline-3">
+<h3 id="orgec47731">string-list/print</h3>
+<div class="outline-text-3" id="text-orgec47731">
+<div class="org-src-container">
+
+<pre class="src src-jojo"><span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">declare</span> <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">string</span>-list/print <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">:</span> cons <span style="color: #66d9ef; font-weight: bold;">-&gt;</span> <span style="color: #797979;">[</span>io<span style="color: #797979;">]</span><span style="color: #696969;">)))</span>
+
+<span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">defun</span> <span style="color: #a6e22e;">string/dot</span> <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">:</span> string <span style="color: #66d9ef; font-weight: bold;">-&gt;</span> <span style="color: #797979;">[</span>io<span style="color: #797979;">]</span><span style="color: #696969;">)</span>
+  double-quote jo-&gt;string string/print
+  string/print
+  double-quote jo-&gt;string string/print
+  <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">string</span> <span style="color: #e6db74;">" "</span><span style="color: #696969;">)</span> string/print<span style="color: #696969;">)</span>
+
+<span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">defun</span> <span style="color: #a6e22e;">string-list/print/rest</span> <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">:</span> cons <span style="color: #66d9ef; font-weight: bold;">-&gt;</span> <span style="color: #797979;">[</span>io<span style="color: #797979;">]</span><span style="color: #696969;">)</span>
+  <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">if</span> dup null eq? <span style="color: #66d9ef; font-weight: bold;">-&gt;</span> drop <span style="color: #66d9ef; font-weight: bold;">end</span><span style="color: #696969;">)</span>
+  dup cdr string-list/print/rest
+  car
+  <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">if</span> dup cons? <span style="color: #66d9ef; font-weight: bold;">-&gt;</span> string-list/print <span style="color: #66d9ef; font-weight: bold;">end</span><span style="color: #696969;">)</span>
+  <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">else</span> string/dot <span style="color: #66d9ef; font-weight: bold;">end</span><span style="color: #696969;">))</span>
+
+<span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">defun</span> <span style="color: #a6e22e;">string-list/print</span> <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">:</span> cons <span style="color: #66d9ef; font-weight: bold;">-&gt;</span> <span style="color: #797979;">[</span>io<span style="color: #797979;">]</span><span style="color: #696969;">)</span>
+  <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">string</span> <span style="color: #e6db74;">"{ "</span><span style="color: #696969;">)</span> string/print
+  string-list/print/rest
+  <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">string</span> <span style="color: #e6db74;">"} "</span><span style="color: #696969;">)</span> string/print<span style="color: #696969;">)</span>
+</pre>
+</div>
+</div>
+</div>
+
+<div id="outline-container-orgd556a11" class="outline-3">
+<h3 id="orgd556a11"><span class="done test">test</span> </h3>
+<div class="outline-text-3" id="text-orgd556a11">
+<div class="org-src-container">
+
+<pre class="src src-jojo"><span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">run</span> <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">list</span> <span style="color: #B380A8;">{</span><span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">string</span> <span style="color: #e6db74;">"111"</span><span style="color: #696969;">)</span> <span style="color: #B380A8;">{</span><span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">string</span> <span style="color: #e6db74;">"222"</span><span style="color: #696969;">)</span> <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">string</span> <span style="color: #e6db74;">"333"</span><span style="color: #696969;">)</span><span style="color: #B380A8;">}</span> <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">string</span> <span style="color: #e6db74;">"444"</span><span style="color: #696969;">)</span><span style="color: #B380A8;">}</span><span style="color: #696969;">)</span>
+     string-list/print<span style="color: #696969;">)</span>
 </pre>
 </div>
 </div>
 </div>
 </div>
 
-<div id="outline-container-org77b7e33" class="outline-2">
-<h2 id="org77b7e33">case</h2>
-<div class="outline-text-2" id="text-org77b7e33">
+<div id="outline-container-orgff78e4c" class="outline-2">
+<h2 id="orgff78e4c">case</h2>
+<div class="outline-text-2" id="text-orgff78e4c">
 <div class="org-src-container">
 
 <pre class="src src-jojo"><span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">defun</span> <span style="color: #a6e22e;">compile-jojo</span> <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">:</span> <span style="color: #797979;">[</span>io<span style="color: #797979;">]</span> <span style="color: #66d9ef; font-weight: bold;">-&gt;</span> <span style="color: #797979;">[</span>compile<span style="color: #797979;">]</span><span style="color: #696969;">)</span>
-  <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">string</span> <span style="color: #e6db74;">")"</span><span style="color: #696969;">)</span> string-&gt;jo compile-jojo-until-meet-jo<span style="color: #696969;">)</span>
+  <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">string</span> <span style="color: #e6db74;">")"</span><span style="color: #696969;">)</span> string-&gt;jo compile-jojo/until-meet-jo<span style="color: #696969;">)</span>
 
-<span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">defvar</span> case-stack <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">#</span> 1024<span style="color: #696969;">)</span> cell-size mul allocate<span style="color: #696969;">)</span>
+<span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">defvar</span> case-stack <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">int</span> 1024<span style="color: #696969;">)</span> cell-size mul allocate<span style="color: #696969;">)</span>
 <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">defvar</span> case-stack-pointer case-stack<span style="color: #696969;">)</span>
 <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">defun</span> <span style="color: #a6e22e;">case-stack-pop</span> <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">:</span> <span style="color: #66d9ef; font-weight: bold;">-&gt;</span> stack/addr<span style="color: #696969;">)</span>
   case-stack-pointer cell-size sub
@@ -606,50 +800,50 @@ for the JavaScript code in this tag.
   case-stack-pointer cell-size add
   <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">var</span> case-stack-pointer<span style="color: #696969;">)</span> set<span style="color: #696969;">)</span>
 
-<span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">defun</span> <span style="color: #a6e22e;">one-case</span> <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">:</span> <span style="color: #797979;">[</span>io<span style="color: #797979;">]</span> <span style="color: #66d9ef; font-weight: bold;">-&gt;</span> <span style="color: #797979;">[</span>compile<span style="color: #797979;">]</span><span style="color: #696969;">)</span>
-  <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">jo</span> <span style="color: #66d9ef; font-weight: bold;">-&gt;</span><span style="color: #696969;">)</span> compile-jojo-until-meet-jo
+<span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">defun</span> <span style="color: #a6e22e;">case/one</span> <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">:</span> <span style="color: #797979;">[</span>io<span style="color: #797979;">]</span> <span style="color: #66d9ef; font-weight: bold;">-&gt;</span> <span style="color: #797979;">[</span>compile<span style="color: #797979;">]</span><span style="color: #696969;">)</span>
+  <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">jo</span> <span style="color: #66d9ef; font-weight: bold;">-&gt;</span><span style="color: #696969;">)</span> compile-jojo/until-meet-jo
   <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">jo</span> over<span style="color: #696969;">)</span> here
   <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">jo</span> eq?<span style="color: #696969;">)</span> here
-  <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">jo</span> i-lit<span style="color: #696969;">)</span> here
-  compiling-stack-tos compiling-stack-inc
+  <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">jo</span> instruction/lit<span style="color: #696969;">)</span> here
+  compiling-stack/tos compiling-stack/inc
   <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">jo</span> jump-if-false<span style="color: #696969;">)</span> here
   <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">jo</span> drop<span style="color: #696969;">)</span> here
-  square-ket compile-jojo-until-meet-jo
-  compiling-stack-tos swap set<span style="color: #696969;">)</span>
+  square-ket compile-jojo/until-meet-jo
+  compiling-stack/tos swap set<span style="color: #696969;">)</span>
 
 <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">defun</span> <span style="color: #a6e22e;">case</span> <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">:</span> <span style="color: #797979;">[</span>io<span style="color: #797979;">]</span> <span style="color: #66d9ef; font-weight: bold;">-&gt;</span> <span style="color: #797979;">[</span>compile<span style="color: #797979;">]</span><span style="color: #696969;">)</span>
-  read-jo
+  read/jo
   <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">if</span> dup round-ket eq? <span style="color: #66d9ef; font-weight: bold;">-&gt;</span> drop <span style="color: #66d9ef; font-weight: bold;">end</span><span style="color: #696969;">)</span>
-  <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">if</span> dup round-bar eq? <span style="color: #66d9ef; font-weight: bold;">-&gt;</span> drop read-jo apply-key <span style="color: #696969;">(</span><span style="color: #66d9ef; font-weight: bold;">loop</span><span style="color: #696969;">))</span>
-  <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">if</span> dup square-bar eq? <span style="color: #66d9ef; font-weight: bold;">-&gt;</span> drop one-case <span style="color: #696969;">(</span><span style="color: #66d9ef; font-weight: bold;">loop</span><span style="color: #696969;">))</span>
-  here <span style="color: #696969;">(</span><span style="color: #66d9ef; font-weight: bold;">loop</span><span style="color: #696969;">))</span>
+  <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">if</span> dup round-bar eq? <span style="color: #66d9ef; font-weight: bold;">-&gt;</span> drop read/jo key-jo/apply <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">loop</span><span style="color: #696969;">))</span>
+  <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">if</span> dup square-bar eq? <span style="color: #66d9ef; font-weight: bold;">-&gt;</span> drop case/one <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">loop</span><span style="color: #696969;">))</span>
+  here <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">loop</span><span style="color: #696969;">))</span>
 
 <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">run</span>
   <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">jo</span> a<span style="color: #696969;">)</span>
   <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">case</span>
-    <span style="color: #797979;">[</span><span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">jo</span> a<span style="color: #696969;">)</span> <span style="color: #66d9ef; font-weight: bold;">-&gt;</span> <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">string</span> <span style="color: #e6db74;">"a"</span><span style="color: #696969;">)</span> print-string newline<span style="color: #797979;">]</span>
+    <span style="color: #797979;">[</span><span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">jo</span> a<span style="color: #696969;">)</span> <span style="color: #66d9ef; font-weight: bold;">-&gt;</span> <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">string</span> <span style="color: #e6db74;">"a"</span><span style="color: #696969;">)</span> string/print newline<span style="color: #797979;">]</span>
     <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">:</span> comment<span style="color: #696969;">)</span>
-    <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">string</span> <span style="color: #e6db74;">"between a &amp; b"</span><span style="color: #696969;">)</span> print-string newline
-    <span style="color: #797979;">[</span><span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">jo</span> b<span style="color: #696969;">)</span> <span style="color: #66d9ef; font-weight: bold;">-&gt;</span> <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">string</span> <span style="color: #e6db74;">"b"</span><span style="color: #696969;">)</span> print-string newline<span style="color: #797979;">]</span><span style="color: #696969;">))</span>
+    <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">string</span> <span style="color: #e6db74;">"between a &amp; b"</span><span style="color: #696969;">)</span> string/print newline
+    <span style="color: #797979;">[</span><span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">jo</span> b<span style="color: #696969;">)</span> <span style="color: #66d9ef; font-weight: bold;">-&gt;</span> <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">string</span> <span style="color: #e6db74;">"b"</span><span style="color: #696969;">)</span> string/print newline<span style="color: #797979;">]</span><span style="color: #696969;">))</span>
 
 <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">run</span>
   <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">jo</span> b<span style="color: #696969;">)</span>
   <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">case</span>
-    <span style="color: #797979;">[</span><span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">jo</span> a<span style="color: #696969;">)</span> <span style="color: #66d9ef; font-weight: bold;">-&gt;</span> <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">string</span> <span style="color: #e6db74;">"a"</span><span style="color: #696969;">)</span> print-string newline<span style="color: #797979;">]</span>
-    <span style="color: #797979;">[</span><span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">jo</span> b<span style="color: #696969;">)</span> <span style="color: #66d9ef; font-weight: bold;">-&gt;</span> <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">string</span> <span style="color: #e6db74;">"b"</span><span style="color: #696969;">)</span> print-string newline<span style="color: #797979;">]</span><span style="color: #696969;">))</span>
+    <span style="color: #797979;">[</span><span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">jo</span> a<span style="color: #696969;">)</span> <span style="color: #66d9ef; font-weight: bold;">-&gt;</span> <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">string</span> <span style="color: #e6db74;">"a"</span><span style="color: #696969;">)</span> string/print newline<span style="color: #797979;">]</span>
+    <span style="color: #797979;">[</span><span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">jo</span> b<span style="color: #696969;">)</span> <span style="color: #66d9ef; font-weight: bold;">-&gt;</span> <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">string</span> <span style="color: #e6db74;">"b"</span><span style="color: #696969;">)</span> string/print newline<span style="color: #797979;">]</span><span style="color: #696969;">))</span>
 </pre>
 </div>
 </div>
 </div>
 
-<div id="outline-container-org69fa881" class="outline-2">
-<h2 id="org69fa881">report</h2>
-<div class="outline-text-2" id="text-org69fa881">
+<div id="outline-container-org7ae8322" class="outline-2">
+<h2 id="org7ae8322">report</h2>
+<div class="outline-text-2" id="text-org7ae8322">
 <div class="org-src-container">
 
-<pre class="src src-jojo"><span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">:</span> <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">run</span> defprim-report
-        defun-report
-        defvar-report<span style="color: #696969;">))</span>
+<pre class="src src-jojo"><span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">:</span> <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">run</span> defprim/report
+        defun/report
+        defvar/report<span style="color: #696969;">))</span>
 </pre>
 </div>
 </div>

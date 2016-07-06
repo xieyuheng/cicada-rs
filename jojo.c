@@ -12,6 +12,7 @@
 typedef enum { false, true } bool;
 
 typedef intptr_t cell;
+cell cell_size = sizeof(cell);
 
 cell max(cell a, cell b) {
   if (a < b) {
@@ -518,6 +519,10 @@ cell as_pop() {
   return as[as_pointer];
 }
 
+cell as_tos() {
+  return as[as_pointer - 1];
+}
+
 typedef jo* return_stack[1024 * 4];
 
 return_stack rs;
@@ -532,6 +537,10 @@ void rs_push(jo* value) {
 jo* rs_pop() {
   rs_pointer--;
   return rs[rs_pointer];
+}
+
+jo* rs_tos() {
+  return rs[rs_pointer - 1];
 }
 
 void jo_apply(jo jo) {
@@ -670,8 +679,8 @@ void p_xy_swap() {
   // (xxx yyy x y -> yyy xxx)
   cell y = as_pop();
   cell x = as_pop();
-  cell* yp = calloc(y, sizeof(cell));
-  cell* xp = calloc(x, sizeof(cell));
+  cell* yp = calloc(y, cell_size);
+  cell* xp = calloc(x, cell_size);
   cell_copy(y, (as + (as_pointer - y)), yp);
   cell_copy(x, (as + (as_pointer - y - x)), xp);
   cell_copy(y, yp, (as + (as_pointer - y - x)));
@@ -1114,23 +1123,29 @@ void export_memory() {
   defprim("get-byte", p_get_byte);
 }
 
-typedef FILE* reading_stack_t[64];
+typedef struct {
+  FILE* file_handle;
+  string file;
+  string dir;
+} reading_point;
+
+typedef reading_point reading_stack_t[64];
 
 reading_stack_t reading_stack;
 cell reading_stack_base = 0;
 cell reading_stack_pointer = 0;
 
-void reading_stack_push(FILE* value) {
+void reading_stack_push(reading_point value) {
   reading_stack[reading_stack_pointer] = value;
   reading_stack_pointer++;
 }
 
-FILE* reading_stack_pop() {
+reading_point reading_stack_pop() {
   reading_stack_pointer--;
   return reading_stack[reading_stack_pointer];
 }
 
-FILE* reading_stack_tos() {
+reading_point reading_stack_tos() {
   return reading_stack[reading_stack_pointer - 1];
 }
 
@@ -1138,14 +1153,35 @@ bool reading_stack_empty_p() {
   return reading_stack_pointer == reading_stack_base;
 }
 
+void real_reading_path(string path, char* buffer) {
+  if (path[0] == '/') {
+    realpath(path, buffer);
+    return;
+  }
+  else if (reading_stack_empty_p()) {
+    realpath(path, buffer);
+    return;
+  }
+  else {
+    buffer[0] = 0;
+    strcat(buffer, reading_stack_tos().dir);
+    strcat(buffer, "/");
+    strcat(buffer, path);
+    return;
+  }
+}
+
 byte read_byte() {
   if (reading_stack_empty_p()) {
     return fgetc(stdin);
   }
   else {
-    char c = fgetc(reading_stack_tos());
+    char c = fgetc(reading_stack_tos().file_handle);
     if (c == EOF) {
-      fclose(reading_stack_pop());
+      reading_point rp = reading_stack_pop();
+      fclose(rp.file_handle);
+      free(rp.file);
+      free(rp.dir);
       return read_byte();
     }
     else {
@@ -1159,7 +1195,7 @@ void byte_unread(byte c) {
     ungetc(c, stdin);
   }
   else {
-    ungetc(c, reading_stack_tos());
+    ungetc(c, reading_stack_tos().file_handle);
   }
 }
 
@@ -1444,25 +1480,18 @@ void p_string_print() {
   printf("%s", as_pop());
 }
 
+void p_string_append_to_buffer() {
+  // (buffer, string -> buffer)
+  string str = as_pop();
+  string buffer = as_tos();
+  strcat(buffer, str);
+}
+
 void export_string() {
   defprim("string", k_string);
   defprim("string/print", p_string_print);
   defprim("string/length", p_string_length);
-}
-
-void p_read_file() {
-  // (file-name addr number -> number)
-  cell limit = as_pop();
-  cell buffer = as_pop();
-  cell path = as_pop();
-  FILE* fp = fopen(path, "r");
-  if(!fp) {
-    perror("p_read_file file to open file");
-    return;
-  }
-  cell readed_counter = fread(buffer, 1, limit, fp);
-  fclose(fp);
-  as_push(readed_counter);
+  defprim("string/append-to-buffer", p_string_append_to_buffer);
 }
 
 bool file_readable_p(string path) {
@@ -1487,8 +1516,19 @@ bool dir_ok_p(string path) {
   }
 }
 
+void p_file_readable_p() {
+  // (file -> bool)
+  as_push(file_readable_p(as_pop()));
+}
+
+void p_dir_ok_p() {
+  // (dir -> bool)
+  as_push(dir_ok_p(as_pop()));
+}
+
 void export_file() {
-  defprim("read-file", p_read_file);
+  defprim("file/readable?", p_file_readable_p);
+  defprim("dir/ok?", p_dir_ok_p);
 }
 
 void p_current_dir() {
@@ -1517,10 +1557,36 @@ void p_n_command_run() {
   free(str);
 }
 
+cell argument_counter;
+
+void p_argument_counter() {
+  // (-> argument_counter)
+  as_push(argument_counter);
+}
+
+string* argument_string_array;
+
+void p_index_to_argument_string() {
+  // (index -> string)
+  cell index = as_pop();
+  string argument_string = argument_string_array[index];
+  as_push(argument_string);
+}
+
+void p_var_string_to_env_string() {
+  // (string -> string)
+  string var_string = as_pop();
+  string env_string = getenv(var_string);
+  as_push(env_string);
+}
+
 void export_system() {
   defprim("current-dir", p_current_dir);
   defprim("command/run", p_command_run);
   defprim("n-command/run", p_n_command_run);
+  defprim("argument-counter", p_argument_counter);
+  defprim("index->argument-string", p_index_to_argument_string);
+  defprim("var-string->env-string", p_var_string_to_env_string);
 }
 
 typedef struct {
@@ -1576,8 +1642,8 @@ void module_record_set_export(jo name, jo* export) {
     }
     i++;
   }
-  printf("module_record_set_export fail\n",
-         "can not find module: %s\n", jo2str(name));
+  printf("- module_record_set_export fail\n");
+  printf("  can not find module: %s\n", jo2str(name));
 }
 
 typedef module module_stack_t[128];
@@ -1612,12 +1678,32 @@ void load_file(string path) {
     printf("load_file fail : %s\n", path);
     return;
   }
-  reading_stack_push(fp);
+  char* file_buffer = malloc(PATH_MAX);
+  char* dir_buffer = malloc(PATH_MAX);
+  realpath(path, file_buffer);
+  realpath(path, dir_buffer);
+  char* dir_addr = dirname(dir_buffer);
+  reading_point rp = {
+    .file_handle = fp,
+    .file = file_buffer,
+    .dir = dir_addr
+  };
+  // printf("- load_file\n");
+  // printf("  fp: %d\n", fp);
+  // printf("  file: %s\n", file_buffer);
+  // printf("  dir_buffer: %s #%ld\n", dir_buffer, dir_buffer);
+  // printf("  dir_addr: %s #%ld\n", dir_addr, dir_addr);
+  reading_stack_push(rp);
+}
+
+void p_load_file() {
+  // (string -> [reading_stack])
+  load_file(as_pop());
 }
 
 void k_include_one() {
   // ([io] -> *)
-  char buffer[1024 * 1024];
+  char buffer[PATH_MAX];
   cell cursor = 0;
   while (true) {
     char c = read_byte();
@@ -1631,7 +1717,9 @@ void k_include_one() {
       cursor++;
     }
   }
-  load_file(buffer);
+  char buffer1[PATH_MAX];
+  real_reading_path(buffer, buffer1);
+  load_file(buffer1);
 }
 
 void k_include() {
@@ -1656,7 +1744,7 @@ void k_include() {
 string user_module_dir = "/.jojo/module/";
 string system_module_dir = "";
 
-jo get_module_path(jo name) {
+jo find_module_file_jo(jo name) {
   // return 0 -- not found
   char path[4 * 1024];
   path[0] = 0;
@@ -1673,7 +1761,7 @@ jo get_module_path(jo name) {
   }
 }
 
-jo get_module_dir(jo name) {
+jo find_module_dir_jo(jo name) {
   // return 0 -- not found
   char path[4 * 1024];
   path[0] = 0;
@@ -1687,6 +1775,18 @@ jo get_module_dir(jo name) {
   else {
     return 0;
   }
+}
+
+void p_find_module_file_jo() {
+  // (prefix-jo -> module-file-jo)
+  // return 0 -- not found
+  as_push(find_module_file_jo(as_pop()));
+}
+
+void p_find_module_dir_jo() {
+  // (prefix-jo -> module-dir-jo)
+  // return 0 -- not found
+  as_push(find_module_dir_jo(as_pop()));
 }
 
 void import_module(jo name) {
@@ -1706,9 +1806,9 @@ void import_module(jo name) {
 }
 
 bool k_dep_load(jo name) {
-  jo module_path = get_module_path(name);
-  jo module_dir = get_module_dir(name);
-  if (module_path == 0) {
+  jo module_file_jo = find_module_file_jo(name);
+  jo module_dir_jo = find_module_dir_jo(name);
+  if (module_file_jo == 0) {
     return false;
   }
 
@@ -1716,7 +1816,7 @@ bool k_dep_load(jo name) {
   export[0] = 0;
   module m = {
     .name = name,
-    .dir = module_dir,
+    .dir = module_dir_jo,
     .export = export
   };
   module_record_push(m);
@@ -1726,7 +1826,7 @@ bool k_dep_load(jo name) {
   loading_stack_area[loading_stack_pointer][0] = a;
   loading_stack_push(loading_stack_area[loading_stack_pointer]);
 
-  load_file(jo2str(module_path));
+  load_file(jo2str(module_file_jo));
 
   return true;
 }
@@ -1749,7 +1849,6 @@ void k_dep() {
         else if (s == str2jo(")")) {
           loading_stack_pop();
           module_stack_pop();
-          import_module(name);
           break;
         }
         else {
@@ -1758,6 +1857,7 @@ void k_dep() {
       }
     }
   }
+  import_module(name);
 }
 
 void k_module() {
@@ -1803,23 +1903,15 @@ void module_report() {
 }
 
 void export_module() {
+  defprim("load-file", p_load_file);
+
+  defprim("find-module-file-jo", p_find_module_file_jo);
+  defprim("find-module-dir-jo", p_find_module_dir_jo);
+
   defprim("include", k_include);
   defprim("dep", k_dep);
   defprim("module", k_module);
   defprim("module/report", module_report);
-}
-
-void* get_clib(string rel_path) {
-  char path[2 * 1024];
-  path[0] = 0;
-  strcat(path, jo2str(module_stack_tos().dir));
-  strcat(path, rel_path);
-  void* lib = dlopen(path, RTLD_LAZY);
-  if (lib == NULL) {
-    printf("fail to open library : %s : %s\n",
-           path, dlerror());
-  };
-  return lib;
 }
 
 void ccall (string str, void* lib) {
@@ -1831,9 +1923,20 @@ void ccall (string str, void* lib) {
   fun();
 }
 
+void* get_clib(string rel_path) {
+  char path[PATH_MAX];
+  real_reading_path(rel_path, path);
+  void* lib = dlopen(path, RTLD_LAZY);
+  if (lib == NULL) {
+    printf("fail to open library : %s : %s\n",
+           path, dlerror());
+  };
+  return lib;
+}
+
 void k_clib_one() {
   // ([io] -> [compile])
-  char buffer[1024];
+  char buffer[PATH_MAX];
   cell cursor = 0;
   while (true) {
     char c = read_byte();
@@ -2184,8 +2287,8 @@ void k_jojo() {
 }
 
 void export_keyword() {
+  defprim("ignore", k_ignore);
   defprim(":", k_ignore);
-  defprim("note", k_ignore);
 
   defprim("compiling-stack/tos", p_compiling_stack_tos);
   defprim("compiling-stack/inc", compiling_stack_inc);
@@ -2219,7 +2322,7 @@ void p_double_quote() { as_push(str2jo("\"")); }
 
 void p_cell_size() {
   // (-> cell)
-  as_push(sizeof(cell));
+  as_push(cell_size);
 }
 
 void p_newline() {
@@ -2247,9 +2350,9 @@ void export_mise() {
 
 void p1() {
   printf("- p1\n");
-  printf("  %ld %ld %ld\n", sizeof(void*), sizeof(cell), sizeof(unsigned));
+  printf("  %ld %ld %ld\n", sizeof(void*), cell_size, sizeof(unsigned));
   printf("  %ld %ld\n", sizeof((cell)-1), sizeof(-1));
-  printf("  %x %x\n", 1<<sizeof(cell), 32>>6);
+  printf("  %x %x\n", 1<<cell_size, 32>>6);
   printf("  %x %x %x\n", -1>>2, (cell)-1>>2, (unsigned)-1>>2);
   printf("  %ld %ld\n", string_to_bin("1000"), string_to_hex("ffff"));
   printf("  %ld %ld %ld %ld\n", '0', '1', 'A', 'a');
@@ -2258,6 +2361,7 @@ void p1() {
 void p2() {
   printf("- p2\n");
   printf("  %ld\n", EOF);
+  printf("  %ld\n", PATH_MAX);
 }
 
 cell string_to_sum_test(string str) {
@@ -2311,9 +2415,22 @@ void init_top_repl() {
 }
 
 int main(int argc, string* argv) {
+
+  argument_counter = argc;
+  argument_string_array = argv;
+
   init_top_repl();
+
   if (argc != 1) {
-    load_file(argv[1]);
+    if (file_readable_p(argv[1])) {
+      load_file(argv[1]);
+    }
+    else {
+      printf("- jojo can not load file: %s\n", argv[1]);
+      printf("  it is not readable\n");
+      return 69;
+    }
   }
+
   p_top_repl();
 }

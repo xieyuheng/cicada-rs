@@ -1,0 +1,193 @@
+#+title: spring
+
+* header
+
+  #+begin_src jojo
+  (: (dep text-ui 0.0.1))
+  #+end_src
+
+* note
+
+*** line-mode
+
+    #+begin_src jojo
+    (: line-mode {{... line} counter})
+    (: line {{... char} counter})
+    (: char utf8-jo)
+    #+end_src
+
+* line
+
+*** line/current-char
+
+    #+begin_src jojo
+    (defun line/counter (: line -> counter)
+      car)
+
+    (defun line/current-char (: line -> char)
+      dup line/counter list/ref)
+    #+end_src
+
+*** line/char-list
+
+    #+begin_src jojo
+    (defun line/char-list (: line -> {... char})
+      cdr car)
+    #+end_src
+
+*** line/new
+
+    #+begin_src jojo
+    (defun line/new (: {... char} -> line)
+      null swap cons
+      (int 0) cons)
+    #+end_src
+
+* line-mode
+
+*** line-mode/current-line
+
+    #+begin_src jojo
+    (defun line-mode/counter (: line-mode -> counter)
+      dup line-mode/counter list/ref)
+
+    (defun line-mode/current-line (: line-mode -> line)
+      car)
+    #+end_src
+
+*** line-mode/line-list
+
+    #+begin_src jojo
+    (defun line-mode/line-list (: line-mode -> {... line})
+      cdr car)
+    #+end_src
+
+*** line-mode/new
+
+    #+begin_src jojo
+    (defun line-mode/new (: {... line} -> line-mode)
+      null swap cons
+      (int 0) cons)
+    #+end_src
+
+*** buffer->string-list
+
+    #+begin_src jojo
+    (defun buffer->string-list/cursor (: buffer cursor -> {... string})
+      (if dup get-byte (int 0) eq? ->
+          drop null swap cons end)
+      (if dup get-byte (int 10) eq? ->
+          (: buffer cursor) dup (int 0) swap set-byte (int 1) add dup
+          (: buffer cursor cursor) (recur)
+          (: buffer {... string}) swap cons end)
+      (else (int 1) add
+            (loop)))
+
+    (defun buffer->string-list (: buffer -> {... string})
+      dup buffer->string-list/cursor)
+    #+end_src
+
+*** string->line
+
+    #+begin_src jojo
+    (defun string/empty? (: string -> bool)
+      get-byte (int 0) eq?)
+
+    (: utf8
+       1 0xxxxxxx
+       2 110xxxxx 10xxxxxx
+       3 1110xxxx 10xxxxxx 10xxxxxx
+       4 11110xxx 10xxxxxx 10xxxxxx 10xxxxxx
+       5 111110xx 10xxxxxx 10xxxxxx 10xxxxxx 10xxxxxx
+       6 1111110x 10xxxxxx 10xxxxxx 10xxxxxx 10xxxxxx 10xxxxxx)
+
+
+    (defun char->length (: char -> length)
+      (if dup (bin 10000000) bit/and (bin 00000000) eq? -> drop (int 1) end)
+      (if dup (bin 11100000) bit/and (bin 11000000) eq? -> drop (int 2) end)
+      (if dup (bin 11110000) bit/and (bin 11100000) eq? -> drop (int 3) end)
+      (if dup (bin 11111000) bit/and (bin 11110000) eq? -> drop (int 4) end)
+      (if dup (bin 11111100) bit/and (bin 11111000) eq? -> drop (int 5) end)
+      (if dup (bin 11111110) bit/and (bin 11111100) eq? -> drop (int 6) end)
+      (else drop (int 0) end))
+
+    (defun next-char (: string -> rest-string char)
+      dup get-byte char->length
+      (if dup (int 0) eq? -> drop (int 1) add (loop))
+      (else over over string/length->jo (int 2 1) xy-swap
+            add swap end))
+
+    (defun string->char-list (: string -> {... char})
+      (if dup string/empty? -> drop null end)
+      next-char swap (recur) swap cons)
+
+    (defun string->line (: string -> line)
+      string->char-list line/new)
+    #+end_src
+
+*** line-mode/parse
+
+    #+begin_src jojo
+    (defvar line-mode/buffer-size (int 1024 1024) mul)
+
+    (defun line-mode/parse (: file-name -> line-mode)
+      (: file-name) line-mode/buffer-size allocate tuck
+      (: buffer file-name buffer max) line-mode/buffer-size read-file
+      (: buffer counter) drop dup
+      (: buffer buffer) buffer->string-list
+      (: buffer {... string}) (jojo string->line) map
+      (: buffer {... line}) swap free
+      (: {... line}) line-mode/new
+      (: {{... line} counter}))
+    #+end_src
+
+*** line-mode/print
+
+    #+begin_src jojo
+    (defun jo/print (: jo -> [io])
+      jo->string string/print)
+
+    (defun line/print (: line -> [io])
+      line/char-list (jojo jo/print) itr newline)
+
+    (defun line-mode/print (: line-mode -> [io])
+      line-mode/line-list (jojo line/print) itr)
+    #+end_src
+
+*** test
+
+    #+begin_src jojo
+    (: (run (string "c中文")
+            next-char dup dot-jo swap
+            next-char dup dot-jo swap
+            next-char dup dot-jo swap
+            drop))
+
+    (run (string "README") line-mode/parse line-mode/print)
+    #+end_src
+
+*** >< line-mode/display
+
+    #+begin_src jojo
+
+    #+end_src
+
+* >< undo-stack
+
+  - every editing function should be reversible
+    a record of editing functions help undo
+
+  #+begin_src jojo
+  (: (defvar undo-stack ))
+  #+end_src
+
+* run
+
+  #+begin_src jojo
+  (: (defun spring (: -> *)
+       init-ui
+       get-char
+       end-ui)
+
+     (run spring))
+  #+end_src

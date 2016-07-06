@@ -1,0 +1,81 @@
+#!/usr/bin/env jojo
+
+(defun dir->prefix-jo/loop (: [io] -> prefix-jo)
+  read/jo
+  (if dup round-bar eq? -> drop
+      read/jo
+      (if dup (jo module) eq? -> drop read/jo ignore ignore end)
+      (if dup round-bar eq? -> drop ignore ignore (loop))
+      (if dup round-ket eq? -> drop (loop))
+      (else drop (loop)))
+  (if dup round-ket eq? -> drop
+      (string "- jojo-install can not find (module ...) in module.jo")
+      string/print
+      newline
+      (string "  current-dir: ") string/print
+      current-dir string/print
+      newline
+      bye)
+  (else drop (loop)))
+
+(defun dir->prefix-jo (: dir -> prefix-jo)
+  (int 4 1024) mul allocate
+  dup (int 0) swap set-byte
+  swap string/append-to-buffer
+  (string "/") string/append-to-buffer
+  (string "module.jo") string/append-to-buffer
+  (if dup file/readable? ->
+      (int 41) byte/unread
+      load-file dir->prefix-jo/loop end)
+  (else
+   (string "- jojo-install can not read file: ") string/print
+   string/print
+   newline
+   (string "  current-dir: ") string/print
+   current-dir string/print
+   newline
+   bye))
+
+(defun prefix-string/mkdir (: prefix-string -> [mkdir])
+  (string "mkdir -p ~/.jojo/module/")
+  swap
+  (int 2) n-command/run)
+
+(defun dir/copy-to-jojo-module-dir (: dir prefix-string -> [~/.jojo/module/])
+  (string "rsync --recursive --links --perms --times --group --owner --specials --verbose --human-readable --exclude='.git' ")
+  (int 2 1) xy-swap
+  (string "/") swap
+  (string " ~/.jojo/module/")
+  swap
+  (int 5) n-command/run)
+
+(defun dir/install (: dir -> [~/.jojo/module/])
+  dup dir->prefix-jo
+  (if dup find-module-dir-jo ->
+      (string "- jojo-install already exist") string/print
+      newline
+      (string "  module : ") string/print jo->string string/print
+      newline
+      (string "  dir : ") string/print string/print
+      newline
+      newline
+      end)
+  (else jo->string dup prefix-string/mkdir
+        dir/copy-to-jojo-module-dir
+        newline
+        end))
+
+(defun main/loop (: index -> [io])
+  (if dup argument-counter lt? ->
+      dup index->argument-string dir/install
+      (int 1) add
+      (loop))
+  (else drop end))
+
+(defun main (: -> *)
+  (if argument-counter (int 2) eq? ->
+      (string "./") dir/install end)
+  (else (int 2) main/loop end))
+
+(run main
+     bye)

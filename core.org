@@ -70,19 +70,29 @@
        dup get-byte dot string/print)
   #+end_src
 
-* file
-
-  #+begin_src jojo
-  (run (string "README")
-       (int 1024) allocate tuck
-       (int 1024) read-file dot
-       string/print)
-  #+end_src
-
 * system
 
   #+begin_src jojo
   (run current-dir string/print newline)
+
+  (run (string "HOME") var-string->env-string
+       string/print newline)
+
+  (run (string "PATH") var-string->env-string
+       string/print newline)
+
+  (defun command-line/print-argument/loop (: index -> [io])
+    (if dup argument-counter lt? ->
+        dup index->argument-string string/print
+        newline
+        (int 1) add
+        (loop))
+    (else drop end))
+
+  (defun command-line/print-argument (: -> [io])
+    (int 0) command-line/print-argument/loop)
+
+  (run command-line/print-argument)
   #+end_src
 
 * var
