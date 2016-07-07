@@ -1,10 +1,5 @@
+#+PROPERTY: tangle spring.jo
 #+title: spring
-
-* header
-
-  #+begin_src jojo
-  (: (dep text-ui 0.0.1))
-  #+end_src
 
 * note
 
@@ -130,10 +125,9 @@
     #+begin_src jojo
     (defvar line-mode/buffer-size (int 1024 1024) mul)
 
-    (defun line-mode/parse (: file-name -> line-mode)
-      (: file-name) line-mode/buffer-size allocate tuck
-      (: buffer file-name buffer max) line-mode/buffer-size read-file
-      (: buffer counter) drop dup
+    (defun line-mode/parse (: file -> line-mode)
+      (: file) line-mode/buffer-size allocate tuck
+      (: buffer file buffer) file/copy-to-buffer drop dup
       (: buffer buffer) buffer->string-list
       (: buffer {... string}) (jojo string->line) map
       (: buffer {... line}) swap free
@@ -144,9 +138,6 @@
 *** line-mode/print
 
     #+begin_src jojo
-    (defun jo/print (: jo -> [io])
-      jo->string string/print)
-
     (defun line/print (: line -> [io])
       line/char-list (jojo jo/print) itr newline)
 
@@ -157,13 +148,14 @@
 *** test
 
     #+begin_src jojo
-    (: (run (string "c中文")
-            next-char dup dot-jo swap
-            next-char dup dot-jo swap
-            next-char dup dot-jo swap
-            drop))
+    (run (string "c中文")
+         next-char dup jo/dot swap
+         next-char dup jo/dot swap
+         next-char dup jo/dot swap
+         drop
+         newline)
 
-    (run (string "README") line-mode/parse line-mode/print)
+    (run (string "module.jo") line-mode/parse line-mode/print)
     #+end_src
 
 *** >< line-mode/display

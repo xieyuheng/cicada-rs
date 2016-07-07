@@ -1,3 +1,5 @@
+#include <sys/stat.h>
+#include <sys/types.h>
 #include <stdio.h>
 #include <ctype.h>
 #include <stdlib.h>
@@ -6,7 +8,6 @@
 #include <string.h>
 #include <dlfcn.h>
 #include <unistd.h>
-#include <sys/types.h>
 #include <dirent.h>
 
 typedef enum { false, true } bool;
@@ -543,6 +544,14 @@ jo* rs_tos() {
   return rs[rs_pointer - 1];
 }
 
+void apply(jo* jojo_array) {
+  rs_push(jojo_array);
+}
+
+void p_apply() {
+  apply(as_pop());
+}
+
 void jo_apply(jo jo) {
   if (!jotable_entry_used(jotable[jo])) {
     printf("undefined jo : %s\n", jo2str(jo));
@@ -567,12 +576,25 @@ void p_jo_apply() {
   jo_apply(as_pop());
 }
 
-void apply(jo* jojo_array) {
-  rs_push(jojo_array);
+void key_jo_apply(jo jo) {
+  if (jotable_entry_used(jotable[jo])) {
+    jo_apply(jo);
+    return;
+  }
+  else {
+    printf("- key_jo_apply undefined key : %s\n", jo2str(jo));
+    return;
+  }
 }
 
-void p_apply() {
-  apply(as_pop());
+void p_key_jo_apply() {
+  key_jo_apply(as_pop());
+}
+
+void export_apply() {
+  defprim("apply", p_apply);
+  defprim("jo/apply", p_jo_apply);
+  defprim("key-jo/apply", p_key_jo_apply);
 }
 
 jmp_buf eval_jmp_buffer;
@@ -689,7 +711,7 @@ void p_xy_swap() {
   free(xp);
 }
 
-void p_print_stack() {
+void p_as_print() {
   // ([io] ->)
   printf("\n");
   if (as_pointer < as_base) {
@@ -723,7 +745,7 @@ void export_stack_operation() {
   defprim("tuck", p_tuck);
   defprim("swap", p_swap);
   defprim("xy-swap", p_xy_swap);
-  defprim("print-stack", p_print_stack);
+  defprim("as/print", p_as_print);
   defprim("stack-pointer", p_stack_pointer);
   defprim("stack-base", p_stack_base);
 }
@@ -1030,15 +1052,16 @@ void k_hex() {
   }
 }
 
-void p_int_print() {
-  // (cell -> [io])
-  printf("%ld", as_pop());
-}
+void p_int_print() { printf("%ld", as_pop()); }
+void p_bin_print() { printf("%ld", as_pop()); }
+void p_oct_print() { printf("%lo", as_pop()); }
+void p_hex_print() { printf("%lx", as_pop()); }
 
-void p_dot() {
-  // (cell -> [io])
-  printf("%ld ", as_pop());
-}
+void p_dot() { printf("%ld ", as_pop()); }
+void p_int_dot() { printf("%ld ", as_pop()); }
+void p_bin_dot() { printf("%ld ", as_pop()); }
+void p_oct_dot() { printf("%lo ", as_pop()); }
+void p_hex_dot() { printf("%lx ", as_pop()); }
 
 void export_int() {
   defprim("add", p_add);
@@ -1059,14 +1082,20 @@ void export_int() {
   defprim("lteq?", p_lteq_p);
 
   defprim("int", k_int);
-  defprim("dec", k_int);
   defprim("bin", k_bin);
   defprim("oct", k_oct);
   defprim("hex", k_hex);
 
   defprim("int/print", p_int_print);
+  defprim("bin/print", p_bin_print);
+  defprim("oct/print", p_oct_print);
+  defprim("hex/print", p_hex_print);
+
   defprim("dot", p_dot);
-  defprim("int/dot", p_dot);
+  defprim("int/dot", p_int_dot);
+  defprim("bin/dot", p_bin_dot);
+  defprim("oct/dot", p_oct_dot);
+  defprim("hex/dot", p_hex_dot);
 }
 
 void p_allocate () {
@@ -1421,6 +1450,16 @@ void k_jo() {
   }
 }
 
+void p_jo_print() {
+  // (jo -> [io])
+  printf("%s", jo2str(as_pop()));
+}
+
+void p_jo_dot() {
+  // (jo -> [io])
+  printf("%s ", jo2str(as_pop()));
+}
+
 void export_jo() {
   defprim("null", p_null);
   defprim("read/jo", p_read_jo);
@@ -1430,6 +1469,8 @@ void export_jo() {
   defprim("string->jo", p_string_to_jo);
   defprim("string/length->jo", p_string_length_to_jo);
   defprim("jo", k_jo);
+  defprim("jo/print", p_jo_print);
+  defprim("jo/dot", p_jo_dot);
 }
 
 void k_string_one() {
@@ -1480,6 +1521,11 @@ void p_string_print() {
   printf("%s", as_pop());
 }
 
+void p_string_dot() {
+  // (string -> [io])
+  printf("\"%s \"", as_pop());
+}
+
 void p_string_append_to_buffer() {
   // (buffer, string -> buffer)
   string str = as_pop();
@@ -1490,6 +1536,7 @@ void p_string_append_to_buffer() {
 void export_string() {
   defprim("string", k_string);
   defprim("string/print", p_string_print);
+  defprim("string/dot", p_string_dot);
   defprim("string/length", p_string_length);
   defprim("string/append-to-buffer", p_string_append_to_buffer);
 }
@@ -1526,9 +1573,38 @@ void p_dir_ok_p() {
   as_push(dir_ok_p(as_pop()));
 }
 
+cell file_size(string file_name) {
+  struct stat st;
+  stat(file_name, &st);
+  return st.st_size;
+}
+
+void p_file_size() {
+  as_push(file_size(as_pop()));
+}
+
+void p_file_copy_to_buffer() {
+  // (file-name addr -> number)
+  cell buffer = as_pop();
+  cell path = as_pop();
+  cell limit = file_size(path);
+  FILE* fp = fopen(path, "r");
+  if(!fp) {
+    printf("- p_file_copy_to_buffer file to open file : %s\n", path);
+    perror("  ");
+    as_push(0);
+    return;
+  }
+  cell readed_counter = fread(buffer, 1, limit, fp);
+  fclose(fp);
+  as_push(readed_counter);
+}
+
 void export_file() {
   defprim("file/readable?", p_file_readable_p);
   defprim("dir/ok?", p_dir_ok_p);
+  defprim("file/size", p_file_size);
+  defprim("file/copy-to-buffer", p_file_copy_to_buffer);
 }
 
 void p_current_dir() {
@@ -1688,11 +1764,12 @@ void load_file(string path) {
     .file = file_buffer,
     .dir = dir_addr
   };
-  // printf("- load_file\n");
-  // printf("  fp: %d\n", fp);
-  // printf("  file: %s\n", file_buffer);
-  // printf("  dir_buffer: %s #%ld\n", dir_buffer, dir_buffer);
-  // printf("  dir_addr: %s #%ld\n", dir_addr, dir_addr);
+  // { printf("- load_file\n");
+  //   printf("  fp: %d\n", fp);
+  //   printf("  file: %s\n", file_buffer);
+  //   printf("  dir_buffer: %s #%ld\n", dir_buffer, dir_buffer);
+  //   printf("  dir_addr: %s #%ld\n", dir_addr, dir_addr);
+  // }
   reading_stack_push(rp);
 }
 
@@ -1837,7 +1914,7 @@ void k_dep() {
   if (!module_record_find(name)) {
     bool result = k_dep_load(name);
     if (result == false) {
-      printf("k_dep fail to load module : %s\n", jo2str(name));
+      printf("- k_dep fail to load module : %s\n", jo2str(name));
       k_ignore();
     }
     else {
@@ -1996,6 +2073,9 @@ jo jo_to_jo_in_module(jo alias_jo) {
   if (module_stack_empty_p()) {
     return alias_jo;
   }
+  else if (jotable[alias_jo].type == str2jo("declared")) {
+    return alias_jo;
+  }
   else {
     jo new_jo = cat_3_jo(module_stack_tos().name,
                          str2jo("/"),
@@ -2123,6 +2203,20 @@ void k_run() {
   eval_jojo(array);
 }
 
+bool testing_flag = false;
+void p_testing_flag() { as_push(testing_flag); }
+void p_testing_flag_on() { testing_flag = true; }
+void p_testing_flag_off() { testing_flag = false; }
+
+void k_test() {
+  if (testing_flag) {
+    k_run();
+  }
+  else {
+    k_ignore();
+  }
+}
+
 jo defvar_record[64 * 1024];
 cell defvar_record_counter = 0;
 
@@ -2157,18 +2251,34 @@ void k_defvar() {
   jotable_set_cell(index, as_pop());
 }
 
+bool top_repl_printing_flag = false;
+
+void p_as_print_by_flag() {
+  if (top_repl_printing_flag) {
+    p_as_print();
+  }
+  else {
+    // do nothing
+  }
+}
+
 void p_top_repl() {
   // ([io] -> *)
   while (true) {
     jo s = read_jo();
     if (s == str2jo("(")) {
       eval_key(read_jo());
+      p_as_print_by_flag();
     }
     else {
       // do nothing
     }
   }
 }
+
+void p_top_repl_printing_flag() { as_push(top_repl_printing_flag); }
+void p_top_repl_printing_flag_on() { top_repl_printing_flag = true; }
+void p_top_repl_printing_flag_off() { top_repl_printing_flag = false; }
 
 void export_top_level() {
   defprim("defun-record", p_defun_record);
@@ -2180,11 +2290,20 @@ void export_top_level() {
 
   defprim("run", k_run);
 
+  defprim("test", k_test);
+  defprim("testing-flag", p_testing_flag);
+  defprim("testing-flag/on", p_testing_flag_on);
+  defprim("testing-flag/off", p_testing_flag_off);
+
   defprim("defvar-record", p_defvar_record);
   defprim("defvar/report", defvar_report);
   defprim("defvar", k_defvar);
 
+  defprim("as/print-by-flag", p_as_print_by_flag);
   defprim("top-repl", p_top_repl);
+  defprim("top-repl/printing-flag", p_top_repl_printing_flag);
+  defprim("top-repl/printing-flag/on", p_top_repl_printing_flag_on);
+  defprim("top-repl/printing-flag/off", p_top_repl_printing_flag_off);
 }
 
 void k_ignore() {
@@ -2331,8 +2450,6 @@ void p_newline() {
 
 void export_mise() {
   defprim("here", p_here);
-  defprim("jo/apply", p_jo_apply);
-  defprim("apply", p_apply);
   defprim("jotable/report", jotable_report);
 
   defprim("round-bar", p_round_bar);
@@ -2362,6 +2479,12 @@ void p2() {
   printf("- p2\n");
   printf("  %ld\n", EOF);
   printf("  %ld\n", PATH_MAX);
+
+  struct stat st;
+  stat("READM", &st);
+  printf("  file-size of README : %ld\n", st.st_size);
+  printf("  sizeof &st : %ld\n", sizeof(&st));
+  printf("  sizeof st : %ld\n", sizeof(st));
 }
 
 cell string_to_sum_test(string str) {
@@ -2394,6 +2517,7 @@ void init_top_repl() {
   init_compiling_stack();
   init_loading_stack();
 
+  export_apply();
   export_stack_operation();
   export_ending();
   export_control();

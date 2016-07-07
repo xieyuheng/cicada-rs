@@ -1,0 +1,49 @@
+* case
+
+  #+begin_src jojo
+  (defun compile-jojo (: [io] -> [compile])
+    (string ")") string->jo compile-jojo/until-meet-jo)
+
+  (defvar case-stack (int 1024) cell-size mul allocate)
+  (defvar case-stack-pointer case-stack)
+  (defun case-stack-pop (: -> stack/addr)
+    case-stack-pointer cell-size sub
+    (var case-stack-pointer) set
+    case-stack-pointer get)
+  (defun case-stack-push (: stack/addr ->)
+    case-stack-pointer set
+    case-stack-pointer cell-size add
+    (var case-stack-pointer) set)
+
+  (defun case/one (: [io] -> [compile])
+    (jo ->) compile-jojo/until-meet-jo
+    (jo over) here
+    (jo eq?) here
+    (jo instruction/lit) here
+    compiling-stack/tos compiling-stack/inc
+    (jo jump-if-false) here
+    (jo drop) here
+    square-ket compile-jojo/until-meet-jo
+    compiling-stack/tos swap set)
+
+  (defun case (: [io] -> [compile])
+    read/jo
+    (if dup round-ket eq? -> drop end)
+    (if dup round-bar eq? -> drop read/jo key-jo/apply (loop))
+    (if dup square-bar eq? -> drop case/one (loop))
+    here (loop))
+
+  (run
+    (jo a)
+    (case
+      [(jo a) -> (string "a") string/print newline]
+      (: comment)
+      (string "between a & b") string/print newline
+      [(jo b) -> (string "b") string/print newline]))
+
+  (run
+    (jo b)
+    (case
+      [(jo a) -> (string "a") string/print newline]
+      [(jo b) -> (string "b") string/print newline]))
+  #+end_src

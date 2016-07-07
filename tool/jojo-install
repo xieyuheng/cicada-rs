@@ -1,5 +1,13 @@
 #!/usr/bin/env jojo
 
+(: jojo-install
+   read module.jo
+   get the <prefix> in (module <prefix> ...)
+   copy dir to "~/.jojo/module/<prefix>"
+   (usage
+    "jojo-install" == "jojo-install ./"
+    "jojo-install dir ..."))
+
 (defun dir->prefix-jo/loop (: [io] -> prefix-jo)
   read/jo
   (if dup round-bar eq? -> drop

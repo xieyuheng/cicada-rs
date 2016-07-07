@@ -1,0 +1,131 @@
+#+title: example code of jojo
+
+* testing-flag
+
+  #+begin_src jojo
+  (run testing-flag/on)
+  #+end_src
+
+* define function
+
+  #+begin_src jojo
+  (defun square (: int int -> int)
+    dup mul end)
+
+  (test (int 11) square dot)
+  #+end_src
+
+* top-repl/printing-flag/on
+
+  #+begin_src jojo
+  (test top-repl/printing-flag/on)
+  #+end_src
+
+* branching by if
+
+  #+begin_src jojo
+  (test (if true -> true dot end)
+        (if false -> false dot end))
+  #+end_src
+
+* receive function
+
+  #+begin_src jojo
+  (defun factorial (: int -> int)
+    (if dup (int 1) lteq? -> drop (int 1) end)
+    dup (int 1) sub (recur) mul end)
+
+  (test (int 0) factorial dot
+        (int 1) factorial dot
+        (int 2) factorial dot
+        (int 3) factorial dot
+        (int 4) factorial dot)
+  #+end_src
+
+* int
+
+  #+begin_src jojo
+  (test (int 18 5) mod dot)
+  (test (int 0 3 2) (int 1 3 2) (int 3) n-eq? dot)
+  (test (int 1 3 2) (int 1 3 2) (int 3) n-eq? dot)
+  #+end_src
+
+* string
+
+  #+begin_src jojo
+  (test (string "test1" "test2")
+        string/print string/print)
+  #+end_src
+
+* byte
+
+  #+begin_src jojo
+  (test (string "test1" "test2")
+        dup (int 66) swap set-byte string/print
+        dup get-byte dot string/print)
+  #+end_src
+
+* system
+
+  #+begin_src jojo
+  (test current-dir string/print newline)
+
+  (test (string "HOME") var-string->env-string
+        string/print newline)
+
+  (test (string "PATH") var-string->env-string
+        string/print newline)
+
+  (defun command-line/print-argument/loop (: index -> [io])
+    (if dup argument-counter lt? ->
+        dup index->argument-string string/print
+        newline
+        (int 1) add
+        (loop))
+    (else drop end))
+
+  (defun command-line/print-argument (: -> [io])
+    (int 0) command-line/print-argument/loop)
+
+  (test command-line/print-argument)
+  #+end_src
+
+* file
+
+  #+begin_src jojo
+  (test (string "../README") file/size dot)
+
+  (test (string "../README")
+        dup file/size
+        allocate tuck file/copy-to-buffer
+        drop
+        string/print
+        newline)
+  #+end_src
+
+* var
+
+  #+begin_src jojo
+  (defvar var1 (int 666) (int 666) add)
+  (test var1 dot)
+  #+end_src
+
+* jo
+
+  #+begin_src jojo
+  (test (jo null) jo->string string/print newline)
+  #+end_src
+
+* report
+
+  #+begin_src jojo
+  (: (test defprim/report
+           defun/report
+           defvar/report))
+  #+end_src
+
+* bye
+
+  #+begin_src jojo
+  (run bye)
+  #+end_src
