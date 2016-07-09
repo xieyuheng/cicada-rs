@@ -6,82 +6,128 @@
 #include <stdio.h>
 #include "libjojo.h"
 
-void init_ui() {
+void text_ui_init() {
   setlocale(LC_ALL, "");
   initscr();
-  raw();
   keypad(stdscr, TRUE);
+  raw();
   noecho();
 }
 
-void get_char() {
-  // (-> char)
+void text_ui_refresh() {
+  // (->)
+  wrefresh(stdscr);
+}
+
+void receive_byte() {
+  // (-> byte)
   as_push(getch());
 }
 
-void unget_char() {
-  // (char ->)
-  ungetch(as_pop());
+void byte_unreceive() {
+  // (byte ->)
+  unreceivech(as_pop());
 }
 
-void refresh_window() {
-  // (window ->)
-  wrefresh(as_pop());
-}
-
-void draw_char() {
-  // (window char -> [text-window])
+void byte_draw() {
+  // (byte -> [text-window])
   int c = as_pop();
-  WINDOW* win = as_pop();
-  waddch(win, c);
+  waddch(stdscr, c);
 }
 
-void draw_string() {
-  // (window string -> [text-window])
+void string_draw() {
+  // (string -> [text-window])
   string str = as_pop();
-  WINDOW* win = as_pop();
-  waddch(win, str);
+  waddch(stdscr, str);
 }
 
-void current_window() {
-  // (-> window)
-  as_push(stdscr);
-}
-
-void get_size() {
-  // (window -> x y)
+void xy_border() {
+  // (-> x y)
   int y, x;
-  getmaxyx((WINDOW*)as_pop(), y, x);
+  getmaxyx(stdscr, y, x);
   as_push(x);
   as_push(y);
 }
 
-void get_cursor() {
-  // (window -> x y)
+void x_border() {
+  // (-> x)
   int y, x;
-  getyx((WINDOW*)as_pop(), y, x);
+  getmaxyx(stdscr, y, x);
+  as_push(x);
+}
+
+void y_border() {
+  // (-> y)
+  int y, x;
+  getmaxyx(stdscr, y, x);
+  as_push(y);
+}
+
+void xy_cursor() {
+  // (-> x y)
+  int y, x;
+  getyx(stdscr, y, x);
   as_push(x);
   as_push(y);
 }
 
-void set_cursor() {
-  // (window x y ->)
+void x_cursor() {
+  // (-> x)
+  int y, x;
+  getyx(stdscr, y, x);
+  as_push(x);
+}
+
+void y_cursor() {
+  // (-> y)
+  int y, x;
+  getyx(stdscr, y, x);
+  as_push(y);
+}
+
+void set_xy_cursor() {
+  // (x y ->)
   int y = as_pop();
   int x = as_pop();
-  WINDOW* win = as_pop();
-  wmove(win, y, x);
+  wmove(stdscr, y, x);
+}
+
+void set_x_cursor() {
+  // (x ->)
+  int x = as_pop();
+  int y0, x0;
+  getyx(stdscr, y0, x0);
+  wmove(stdscr, y0, x);
+}
+
+void set_y_cursor() {
+  // (y ->)
+  int y = as_pop();
+  int y0, x0;
+  getyx(stdscr, y0, x0);
+  wmove(stdscr, y, x0);
 }
 
 void export() {
-  defprim("init-ui", init_ui);
-  defprim("end-ui", endwin);
-  defprim("get-char", get_char);
-  defprim("unget-char", unget_char);
-  defprim("refresh", refresh_window);
-  defprim("draw-char", draw_char);
-  defprim("draw-string", draw_string);
-  defprim("current-window", current_window);
-  defprim("get-size", get_size);
-  defprim("get-cursor", get_cursor);
-  defprim("set-cursor", set_cursor);
+  defprim("text-ui/init", text_ui_init);
+  defprim("text-ui/end", endwin);
+  defprim("text-ui/refresh", text_ui_refresh);
+
+  defprim("receive/byte", receive_byte);
+  defprim("byte/unreceive", byte_unreceive);
+
+  defprim("byte/draw", byte_draw);
+  defprim("string/draw", string_draw);
+
+  defprim("xy-border", xy_border);
+  defprim("x-border", x_border);
+  defprim("y-border", y_border);
+
+  defprim("xy-cursor", xy_cursor);
+  defprim("x-cursor", x_cursor);
+  defprim("y-cursor", y_cursor);
+
+  defprim("set-xy-cursor", set_xy_cursor);
+  defprim("set-x-cursor", set_x_cursor);
+  defprim("set-y-cursor", set_y_cursor);
 }

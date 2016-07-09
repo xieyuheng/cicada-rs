@@ -3,64 +3,47 @@
 
 * note
 
-*** line-mode
-
-    #+begin_src jojo
-    (: line-mode {{... line} counter})
-    (: line {{... char} counter})
-    (: char utf8-jo)
-    #+end_src
-
 * line
 
-*** line/current-char
+*** line
 
     #+begin_src jojo
+    (: line {{... char} counter})
+    (: currently char is utf8-jo
+       to use jo is to waste jotable
+       need better design for this)
+
     (defun line/counter (: line -> counter)
       car)
 
     (defun line/current-char (: line -> char)
       dup line/counter list/ref)
-    #+end_src
 
-*** line/char-list
-
-    #+begin_src jojo
     (defun line/char-list (: line -> {... char})
       cdr car)
-    #+end_src
 
-*** line/new
-
-    #+begin_src jojo
-    (defun line/new (: {... char} -> line)
+    (defun make/line (: {... char} -> line)
       null swap cons
       (int 0) cons)
     #+end_src
 
 * line-mode
 
-*** line-mode/current-line
+*** line-mode
 
     #+begin_src jojo
+    (: line-mode {{... line} counter})
+
     (defun line-mode/counter (: line-mode -> counter)
-      dup line-mode/counter list/ref)
+      car)
 
     (defun line-mode/current-line (: line-mode -> line)
-      car)
-    #+end_src
+      dup line-mode/counter list/ref)
 
-*** line-mode/line-list
-
-    #+begin_src jojo
     (defun line-mode/line-list (: line-mode -> {... line})
       cdr car)
-    #+end_src
 
-*** line-mode/new
-
-    #+begin_src jojo
-    (defun line-mode/new (: {... line} -> line-mode)
+    (defun make/line-mode (: {... line} -> line-mode)
       null swap cons
       (int 0) cons)
     #+end_src
@@ -117,7 +100,7 @@
       next-char swap (recur) swap cons)
 
     (defun string->line (: string -> line)
-      string->char-list line/new)
+      string->char-list make/line)
     #+end_src
 
 *** line-mode/parse
@@ -131,8 +114,7 @@
       (: buffer buffer) buffer->string-list
       (: buffer {... string}) (jojo string->line) map
       (: buffer {... line}) swap free
-      (: {... line}) line-mode/new
-      (: {{... line} counter}))
+      (: {... line}) make/line-mode)
     #+end_src
 
 *** line-mode/print
@@ -148,20 +130,22 @@
 *** test
 
     #+begin_src jojo
-    (run (string "c中文")
-         next-char dup jo/dot swap
-         next-char dup jo/dot swap
-         next-char dup jo/dot swap
-         drop
-         newline)
+    (test (string "cn中文")
+          next-char dup jo/dot swap
+          next-char dup jo/dot swap
+          next-char dup jo/dot swap
+          next-char dup jo/dot swap
+          drop
+          newline)
 
-    (run (string "module.jo") line-mode/parse line-mode/print)
+    (test (string "module.jo") line-mode/parse line-mode/print)
     #+end_src
 
-*** >< line-mode/display
+*** >< line-mode/view
 
     #+begin_src jojo
-
+    (defun line-mode/view (: line-mode -> [window])
+      )
     #+end_src
 
 * >< undo-stack
@@ -171,15 +155,4 @@
 
   #+begin_src jojo
   (: (defvar undo-stack ))
-  #+end_src
-
-* run
-
-  #+begin_src jojo
-  (: (defun spring (: -> *)
-       init-ui
-       get-char
-       end-ui)
-
-     (run spring))
   #+end_src

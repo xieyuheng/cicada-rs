@@ -1,6 +1,7 @@
-(: line-mode {{... line} counter})
 (: line {{... char} counter})
-(: char utf8-jo)
+(: currently char is utf8-jo
+   to use jo is to waste jotable
+   need better design for this)
 
 (defun line/counter (: line -> counter)
   car)
@@ -11,20 +12,22 @@
 (defun line/char-list (: line -> {... char})
   cdr car)
 
-(defun line/new (: {... char} -> line)
+(defun make/line (: {... char} -> line)
   null swap cons
   (int 0) cons)
 
+(: line-mode {{... line} counter})
+
 (defun line-mode/counter (: line-mode -> counter)
-  dup line-mode/counter list/ref)
+  car)
 
 (defun line-mode/current-line (: line-mode -> line)
-  car)
+  dup line-mode/counter list/ref)
 
 (defun line-mode/line-list (: line-mode -> {... line})
   cdr car)
 
-(defun line-mode/new (: {... line} -> line-mode)
+(defun make/line-mode (: {... line} -> line-mode)
   null swap cons
   (int 0) cons)
 
@@ -73,7 +76,7 @@
   next-char swap (recur) swap cons)
 
 (defun string->line (: string -> line)
-  string->char-list line/new)
+  string->char-list make/line)
 
 (defvar line-mode/buffer-size (int 1024 1024) mul)
 
@@ -83,8 +86,7 @@
   (: buffer buffer) buffer->string-list
   (: buffer {... string}) (jojo string->line) map
   (: buffer {... line}) swap free
-  (: {... line}) line-mode/new
-  (: {{... line} counter}))
+  (: {... line}) make/line-mode)
 
 (defun line/print (: line -> [io])
   line/char-list (jojo jo/print) itr newline)
@@ -92,21 +94,17 @@
 (defun line-mode/print (: line-mode -> [io])
   line-mode/line-list (jojo line/print) itr)
 
-(run (string "c中文")
-     next-char dup jo/dot swap
-     next-char dup jo/dot swap
-     next-char dup jo/dot swap
-     drop)
+(test (string "cn中文")
+      next-char dup jo/dot swap
+      next-char dup jo/dot swap
+      next-char dup jo/dot swap
+      next-char dup jo/dot swap
+      drop
+      newline)
 
-(run (string "module.jo") line-mode/parse line-mode/print)
+(test (string "module.jo") line-mode/parse line-mode/print)
 
-
+(defun line-mode/view (: line-mode -> [window])
+  )
 
 (: (defvar undo-stack ))
-
-(: (defun spring (: -> *)
-     init-ui
-     get-char
-     end-ui)
-
-   (run spring))

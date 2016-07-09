@@ -1,0 +1,18 @@
+#!/usr/bin/env jojo
+
+(dep list/0.0.1)
+(dep text-ui/0.0.1)
+
+(include "spring.org")
+
+(defun main/loop (: -> *)
+  receive/byte byte/draw
+  text-ui/refresh
+  (loop))
+
+(defun main (: -> *)
+  text-ui/init
+  main/loop
+  text-ui/end)
+
+(run main)
