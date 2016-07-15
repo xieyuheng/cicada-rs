@@ -103,13 +103,11 @@
   cons-pointer
   cons-pointer/next end)
 
-(defun set-car (: cell cons -> cons)
-  tuck
+(defun set-car (: cell cons ->)
   cell-size add
   set)
 
-(defun set-cdr (: cell cons -> cons)
-  tuck
+(defun set-cdr (: cell cons ->)
   cell-size add
   cell-size add
   set)
@@ -124,7 +122,9 @@
   get)
 
 (defun cons (: cdr-cell car-cell -> cons)
-  new/cons set-car set-cdr)
+  new/cons
+  tuck set-car
+  tuck set-cdr)
 
 (: the following tests are for small cons-area)
 
@@ -208,6 +208,15 @@
       dup cdr cdr cdr dot
       drop)
 
+(defun list/length (: list -> nat)
+  (if dup cons? not -> drop (int 0) end)
+  (else cdr (recur) (int 1) add end))
+
+(test newline
+      (list {a {b c} d}) list/length dot
+      newline
+      (list {}) list/length dot)
+
 (declare (int-list/print (: cons -> [io])))
 
 (defun int-list/print/rest (: cons -> [io])
@@ -283,6 +292,16 @@
 
 (test (list {(int 1) (int 2) (int 3) (int 4)})
       (int 1) list/ref dot)
+
+(defun list/drop (: {... a} nat -> {... a})
+  (if dup (int 0) lteq? -> drop end)
+  (else swap cdr swap (int 1) sub (loop)))
+
+(defun list/take (: {... a} nat -> {... a})
+  (if dup (int 0) lteq? -> drop null end)
+  (else over car (int 2 1) xy-swap
+        swap cdr swap (int 1) sub (recur)
+        swap cons end))
 
 (declare (jo-list/print (: cons -> [io])))
 

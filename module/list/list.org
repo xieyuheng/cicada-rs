@@ -134,13 +134,11 @@
     cons-pointer
     cons-pointer/next end)
 
-  (defun set-car (: cell cons -> cons)
-    tuck
+  (defun set-car (: cell cons ->)
     cell-size add
     set)
 
-  (defun set-cdr (: cell cons -> cons)
-    tuck
+  (defun set-cdr (: cell cons ->)
     cell-size add
     cell-size add
     set)
@@ -155,7 +153,9 @@
     get)
 
   (defun cons (: cdr-cell car-cell -> cons)
-    new/cons set-car set-cdr)
+    new/cons
+    tuck set-car
+    tuck set-cdr)
   #+end_src
 
 * test
@@ -250,6 +250,23 @@
         dup cdr cdr car dot
         dup cdr cdr cdr dot
         drop)
+  #+end_src
+
+* list/length
+
+  #+begin_src jojo
+  (defun list/length (: list -> nat)
+    (if dup cons? not -> drop (int 0) end)
+    (else cdr (recur) (int 1) add end))
+  #+end_src
+
+* test
+
+  #+begin_src jojo
+  (test newline
+        (list {a {b c} d}) list/length dot
+        newline
+        (list {}) list/length dot)
   #+end_src
 
 * int-list/print
@@ -358,6 +375,24 @@
   #+begin_src jojo
   (test (list {(int 1) (int 2) (int 3) (int 4)})
         (int 1) list/ref dot)
+  #+end_src
+
+* list/drop
+
+  #+begin_src jojo
+  (defun list/drop (: {... a} nat -> {... a})
+    (if dup (int 0) lteq? -> drop end)
+    (else swap cdr swap (int 1) sub (loop)))
+  #+end_src
+
+* list/take
+
+  #+begin_src jojo
+  (defun list/take (: {... a} nat -> {... a})
+    (if dup (int 0) lteq? -> drop null end)
+    (else over car (int 2 1) xy-swap
+          swap cdr swap (int 1) sub (recur)
+          swap cons end))
   #+end_src
 
 * jo-list/print

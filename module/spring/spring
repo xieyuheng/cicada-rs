@@ -5,13 +5,29 @@
 
 (include "spring.org")
 
+(defun nat/backward-draw/loop (: nat -> [window])
+  (if dup (int 0) eq? -> drop end)
+  dup (int 10) mod (string "0") get-byte add byte/draw
+  (int 10) div
+  (loop))
+
+(defun nat/backward-draw (: nat -> [window])
+  (if dup (int 0) eq? -> drop (string "0") string/draw end)
+  nat/backward-draw/loop)
+
 (defun main/loop (: -> *)
   receive/byte byte/draw
+  (string "(") string/draw
+  x-border nat/backward-draw
+  (string " ") string/draw
+  y-border nat/backward-draw
+  (string ") ") string/draw
   text-ui/refresh
   (loop))
 
 (defun main (: -> *)
   text-ui/init
+  (string "module.jo") parse/line-mode line-mode/view
   main/loop
   text-ui/end)
 

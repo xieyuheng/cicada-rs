@@ -1,6 +1,5 @@
 .ONESHELL:
 CC = gcc
-#CC = clang
 
 build:
 	$(CC) -w -ldl jojo.c -o jojo -rdynamic
@@ -17,4 +16,4 @@ clean:
 	echo "* clean"
 	echo -e "\e[0m"
 	rm jojo
-	rm -f *~ */*~ */*/*~ */*/*/*~ */*/*/*/*~  */*/*/*/*/*~
+	rm -f *~ */*~ */*/*~ */*/*/*~ */*/*/*/*~ */*/*/*/*/*~

@@ -1,51 +1,51 @@
 #+PROPERTY: tangle spring.jo
 #+title: spring
 
-* note
+* todo
 
-* line
-
-*** line
-
-    #+begin_src jojo
-    (: line {{... char} counter})
-    (: currently char is utf8-jo
-       to use jo is to waste jotable
-       need better design for this)
-
-    (defun line/counter (: line -> counter)
-      car)
-
-    (defun line/current-char (: line -> char)
-      dup line/counter list/ref)
-
-    (defun line/char-list (: line -> {... char})
-      cdr car)
-
-    (defun make/line (: {... char} -> line)
-      null swap cons
-      (int 0) cons)
-    #+end_src
+  - optimize line-mode/view
+  - use list/take
 
 * line-mode
 
 *** line-mode
 
     #+begin_src jojo
-    (: line-mode {{... line} counter})
+    (: line {... char})
+    (: currently char is utf8-jo
+       to use jo is to waste jotable
+       need better design for this)
 
-    (defun line-mode/counter (: line-mode -> counter)
-      car)
+    (: line-mode {{... line} base cursor})
+    (: base {x y})
+    (: cursor {x y})
+
+    (defun line-mode/cursor    (: line-mode -> point) car)
+    (defun line-mode/base      (: line-mode -> point) cdr car)
+    (defun line-mode/line-list (: line-mode -> {... line}) cdr cdr car)
+
+    (defun line-mode/set-cursor    (: point line-mode ->) set-car)
+    (defun line-mode/set-base      (: point line-mode ->) cdr set-car)
+    (defun line-mode/set-line-list (: {... line} line-mode ->) cdr cdr set-car)
+
+    (defun point/y (: point -> int) car)
+    (defun point/x (: point -> int) cdr car)
+
+    (defun point/set-y (: int point ->) set-car)
+    (defun point/set-x (: int point ->) cdr set-car)
+
+    (defun make/point (: int int -> point)
+      swap null swap cons swap cons)
 
     (defun line-mode/current-line (: line-mode -> line)
-      dup line-mode/counter list/ref)
-
-    (defun line-mode/line-list (: line-mode -> {... line})
-      cdr car)
+      dup line-mode/line-list
+      swap line-mode/cursor point/y
+      list/ref)
 
     (defun make/line-mode (: {... line} -> line-mode)
       null swap cons
-      (int 0) cons)
+      (int 0 0) make/point cons
+      (int 0 0) make/point cons)
     #+end_src
 
 *** buffer->string-list
@@ -100,15 +100,15 @@
       next-char swap (recur) swap cons)
 
     (defun string->line (: string -> line)
-      string->char-list make/line)
+      string->char-list)
     #+end_src
 
-*** line-mode/parse
+*** parse/line-mode
 
     #+begin_src jojo
     (defvar line-mode/buffer-size (int 1024 1024) mul)
 
-    (defun line-mode/parse (: file -> line-mode)
+    (defun parse/line-mode (: file -> line-mode)
       (: file) line-mode/buffer-size allocate tuck
       (: buffer file buffer) file/copy-to-buffer drop dup
       (: buffer buffer) buffer->string-list
@@ -121,7 +121,7 @@
 
     #+begin_src jojo
     (defun line/print (: line -> [io])
-      line/char-list (jojo jo/print) itr newline)
+      (jojo jo/print) itr newline)
 
     (defun line-mode/print (: line-mode -> [io])
       line-mode/line-list (jojo line/print) itr)
@@ -138,14 +138,92 @@
           drop
           newline)
 
-    (test (string "module.jo") line-mode/parse line-mode/print)
+    (test (string "module.jo") parse/line-mode line-mode/print)
     #+end_src
 
-*** >< line-mode/view
+*** line-mode/adjust-base
 
     #+begin_src jojo
+    (defun point/sub (: point point -> point)
+      over over
+      point/x swap point/x swap
+      sub
+      (int 2 1) xy-swap
+      point/y swap point/y swap
+      sub
+      make/point)
+
+    (defun point/add (: point point -> point)
+      over over
+      point/x swap point/x swap
+      add
+      (int 2 1) xy-swap
+      point/y swap point/y swap
+      add
+      make/point)
+
+    (defun line-mode/relative-cursor (: line-mode -> point)
+      dup line-mode/base
+      swap line-mode/cursor
+      point/sub)
+
+    (defun line-mode/adjust-base (: line-mode ->)
+      (: to keep cursor in window)
+      dup line-mode/relative-cursor
+      (if dup point/x
+          x-border (int 1) sub
+          gt? ->
+          dup point/x
+          x-border (int 1) sub
+          sub (int 2 1) xy-swap)
+      (else (int 0) (int 2 1) xy-swap)
+      (if dup point/y
+          y-border (int 1) sub
+          gt? ->
+          dup point/y
+          y-border (int 1) sub
+          sub (int 2 1) xy-swap)
+      (else (int 0) (int 2 1) xy-swap)
+      drop
+      (int 2 1) xy-swap make/point
+      over line-mode/base point/add
+      swap line-mode/set-base)
+    #+end_src
+
+*** line-mode/view
+
+    #+begin_src jojo
+    (defun line/draw-by-base (: line x-nat -> [window])
+      (if over list/length over lteq? -> drop drop (int 10) byte/draw end)
+      list/drop (jojo jo->string string/draw) itr
+      (int 10) byte/draw end)
+
+    (defun pre/line/draw-by-base (: {... line} point -> line x-nat)
+      tuck point/y list/ref
+      swap point/x)
+
+    (defun line-mode/view/content/loop (: {... line} point -> [window])
+      (if over over point/y swap list/length gteq? -> drop drop end)
+      over over pre/line/draw-by-base line/draw-by-base
+      dup point/y (int 1) add
+      over point/set-y
+      (loop))
+
+    (defun line-mode/view/content (: line-mode -> [window])
+      dup line-mode/line-list
+      swap line-mode/base
+      line-mode/view/content/loop)
+
+    (defun line-mode/view/cursor (: line-mode -> [window])
+      line-mode/cursor
+      dup point/x set-x-cursor
+      point/y set-y-cursor)
+
     (defun line-mode/view (: line-mode -> [window])
-      )
+      dup line-mode/adjust-base
+      dup line-mode/view/content
+      line-mode/view/cursor
+      text-ui/refresh)
     #+end_src
 
 * >< undo-stack

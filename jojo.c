@@ -132,7 +132,7 @@ typedef cell jo;
 
 typedef struct {
   cell size;
-  jo *array;
+  jo* array;
 } jojo;
 
 typedef union {
@@ -524,32 +524,81 @@ cell as_tos() {
   return as[as_pointer - 1];
 }
 
-typedef jo* return_stack[1024 * 4];
+typedef struct {
+  jo name;
+  cell value;
+} local_point;
+
+local_point local_area[1024 * 1024];
+cell local_area_pointer = 0;
+
+typedef struct {
+  jo* array;
+  cell local_pointer;
+} return_point;
+
+typedef return_point return_stack[1024 * 4];
 
 return_stack rs;
 cell rs_base = 64;
 cell rs_pointer = 64;
 
-void rs_push(jo* value) {
+void rs_push(return_point value) {
   rs[rs_pointer] = value;
   rs_pointer++;
 }
 
-jo* rs_pop() {
+return_point rs_pop() {
   rs_pointer--;
   return rs[rs_pointer];
 }
 
-jo* rs_tos() {
+return_point rs_tos() {
   return rs[rs_pointer - 1];
 }
 
+void rs_make_point(jo* array, cell local_pointer) {
+  return_point rp = {.array = array, .local_pointer = local_pointer};
+  rs[rs_pointer] = rp;
+  rs_pointer++;
+}
+
+void rs_new_point(jo* array) {
+  rs_make_point(array, local_area_pointer);
+}
+
+void rs_inc() {
+  return_point rp = rs_pop();
+  return_point rp1 = {.array = rp.array + 1, .local_pointer = rp.local_pointer};
+  rs_push(rp1);
+}
+
 void apply(jo* jojo_array) {
-  rs_push(jojo_array);
+  rs_new_point(jojo_array);
 }
 
 void p_apply() {
   apply(as_pop());
+}
+
+void jo_apply_with_local_pointer(jo jo, cell local_pointer) {
+  if (!jotable_entry_used(jotable[jo])) {
+    printf("undefined jo : %s\n", jo2str(jo));
+    return;
+  }
+  cell jo_type = jotable[jo].type;
+  if (jo_type == str2jo("primitive")) {
+    primitive primitive = jotable_get_primitive(jo);
+    primitive();
+  }
+  else if (jo_type == str2jo("function")) {
+    jojo jojo = jotable_get_jojo(jo);
+    rs_make_point(jojo.array, local_pointer);
+  }
+  else if (jo_type == str2jo("variable")) {
+    cell cell = jotable_get_cell(jo);
+    as_push(cell);
+  }
 }
 
 void jo_apply(jo jo) {
@@ -564,7 +613,7 @@ void jo_apply(jo jo) {
   }
   else if (jo_type == str2jo("function")) {
     jojo jojo = jotable_get_jojo(jo);
-    rs_push(jojo.array);
+    rs_new_point(jojo.array);
   }
   else if (jo_type == str2jo("variable")) {
     cell cell = jotable_get_cell(jo);
@@ -610,9 +659,9 @@ void eval() {
   else {
     cell rs_base = rs_pointer;
     while (rs_pointer >= rs_base) {
-      jo* function_body = rs_pop();
-      rs_push(function_body + 1);
-      cell jo = *(cell*)function_body;
+      return_point rp = rs_tos();
+      rs_inc();
+      cell jo = *(cell*)rp.array;
       jo_apply(jo);
     }
   }
@@ -626,7 +675,7 @@ void eval_jo(jo jo) {
   }
   else if (jo_type == str2jo("function")) {
     jojo jojo = jotable_get_jojo(jo);
-    rs_push(jojo.array);
+    rs_new_point(jojo.array);
     eval();
   }
   else if (jo_type == str2jo("variable")) {
@@ -647,7 +696,7 @@ void eval_key(jo jo) {
 }
 
 void eval_jojo(jo* array) {
-  rs_push(array);
+  rs_new_point(array);
   eval();
 }
 
@@ -752,7 +801,8 @@ void export_stack_operation() {
 
 void p_end() {
   // (rs: addr ->)
-  rs_pop();
+  return_point rp = rs_pop();
+  local_area_pointer = rp.local_pointer;
 }
 
 void p_bye() {
@@ -768,17 +818,17 @@ void export_ending() {
 
 void i_lit() {
   // ([rs] -> int)
-  jo* function_body = rs_pop();
-  rs_push(function_body + 1);
-  cell jo = *(cell*)function_body;
+  return_point rp = rs_tos();
+  rs_inc();
+  cell jo = *(cell*)rp.array;
   as_push(jo);
 }
 
 void i_tail_call() {
   // ([rs] -> int)
-  jo* function_body = rs_pop();
-  cell jo = *(cell*)function_body;
-  jo_apply(jo);
+  return_point rp = rs_pop();
+  cell jo = *(cell*)rp.array;
+  jo_apply_with_local_pointer(jo, rp.local_pointer);
 }
 
 void p_jump_if_false() {
@@ -786,8 +836,8 @@ void p_jump_if_false() {
   jo* a = as_pop();
   cell b = as_pop();
   if (b == 0) {
-    rs_pop();
-    rs_push(a);
+    return_point rp = rs_pop();
+    rs_make_point(a, rp.local_pointer);
   }
 }
 
@@ -1130,7 +1180,7 @@ void p_get() {
 }
 
 void p_set_byte() {
-  // (cell addr ->)
+  // (cell address ->)
   char* address = as_pop();
   cell value = as_pop();
   address[0] = value;
@@ -2390,9 +2440,9 @@ void p_compiling_stack_tos() {
 
 void i_jojo() {
   // ([rs] -> int)
-  jo* function_body = rs_pop();
-  rs_push(function_body[0]);
-  as_push(function_body + 1);
+  return_point rp = rs_pop();
+  rs_make_point(rp.array[0], rp.local_pointer);
+  as_push(rp.array + 1);
 }
 
 void k_jojo() {
@@ -2403,6 +2453,105 @@ void k_jojo() {
   k_compile_jojo();
   here(str2jo("end"));
   offset_place[0] = compiling_stack_tos();
+}
+
+cell local_find(jo name) {
+  // return index of local_area
+  // -1 -- no found
+  return_point rp = rs_tos();
+  cell cursor = local_area_pointer - 1;
+  while (cursor >= rp.local_pointer) {
+    if (local_area[cursor].name == name) {
+      return cursor;
+    }
+    else {
+      cursor--;
+    }
+  }
+  return -1;
+}
+
+void i_local_in() {
+  return_point rp = rs_tos();
+  rs_inc();
+  cell jo = *(cell*)rp.array;
+  cell index = local_find(jo);
+  cell value = as_pop();
+  if (index != -1) {
+    local_area[index].name = jo;
+    local_area[index].value = value;
+    // {
+    //   printf("- i_local_in\n");
+    //   printf("  old name : %s\n", jo2str(jo));
+    //   printf("  value : %ld\n", value);
+    // }
+  }
+  else {
+    local_area[local_area_pointer].name = jo;
+    local_area[local_area_pointer].value = value;
+    local_area_pointer = local_area_pointer + 1;
+    // {
+    //   printf("- i_local_in\n");
+    //   printf("  new name : %s\n", jo2str(jo));
+    //   printf("  value : %ld\n", value);
+    //   printf("  new local_area_pointer : %ld\n", local_area_pointer);
+    // }
+  }
+}
+
+void k_local_in() {
+  jo s = read_jo();
+  if (s == str2jo("(")) {
+    eval_key(read_jo());
+    k_local_in();
+  }
+  else if (s == str2jo(")")) {
+    return;
+  }
+  else {
+    k_local_in();
+    here(str2jo("instruction/>"));
+    here(s);
+  }
+}
+
+void i_local_out() {
+  return_point rp = rs_tos();
+  rs_inc();
+  cell jo = *(cell*)rp.array;
+  cell index = local_find(jo);
+  if (index != -1) {
+    local_point lp = local_area[index];
+    as_push(lp.value);
+    // {
+    //   printf("- i_local_out\n");
+    //   printf("  name : %s\n", jo2str(jo));
+    //   printf("  lp.name : %s\n", jo2str(lp.name));
+    //   printf("  lp.value : %ld\n", lp.value);
+    //   printf("  lp : %p\n", &lp);
+    // }
+  }
+  else {
+    printf("- i_local_out fatal error\n");
+    printf("  name is not bound\n");
+    printf("  name : %s\n", jo2str(jo));
+  }
+}
+
+void k_local_out() {
+  jo s = read_jo();
+  if (s == str2jo("(")) {
+    eval_key(read_jo());
+    k_local_out();
+  }
+  else if (s == str2jo(")")) {
+    return;
+  }
+  else {
+    k_local_out();
+    here(str2jo("instruction/<"));
+    here(s);
+  }
 }
 
 void export_keyword() {
@@ -2422,6 +2571,11 @@ void export_keyword() {
 
   defprim("jojo", k_jojo);
   defprim("instruction/jojo", i_jojo);
+
+  defprim("instruction/>", i_local_in);
+  defprim("instruction/<", i_local_out);
+  defprim(">", k_local_in);
+  defprim("<", k_local_out);
 }
 
 void do_nothing() {
@@ -2473,10 +2627,7 @@ void p1() {
   printf("  %x %x %x\n", -1>>2, (cell)-1>>2, (unsigned)-1>>2);
   printf("  %ld %ld\n", string_to_bin("1000"), string_to_hex("ffff"));
   printf("  %ld %ld %ld %ld\n", '0', '1', 'A', 'a');
-}
 
-void p2() {
-  printf("- p2\n");
   printf("  %ld\n", EOF);
   printf("  %ld\n", PATH_MAX);
 
@@ -2485,6 +2636,12 @@ void p2() {
   printf("  file-size of README : %ld\n", st.st_size);
   printf("  sizeof &st : %ld\n", sizeof(&st));
   printf("  sizeof st : %ld\n", sizeof(st));
+}
+
+void p2() {
+  printf("- p2\n");
+  printf("  sizeof local_point : %ld\n", sizeof(local_point));
+  printf("  sizeof local_area : %ld\n", sizeof(local_area));
 }
 
 cell string_to_sum_test(string str) {
