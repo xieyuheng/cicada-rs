@@ -226,6 +226,173 @@
       text-ui/refresh)
     #+end_src
 
+*** note key
+
+    - input is limited by term-ui
+    - key-binding is actually byte-binding
+      <esc> is ignored
+    - the only modkey is ctrl
+
+*** byte->key
+
+    #+begin_src jojo
+    (defun key jo)
+
+    (defun key->byte (: key -> byte)
+      )
+
+    (defun byte->key (: byte -> key)
+      (case
+        [(hex 00) -> (jo C-@)]
+        [(hex 01) -> (jo C-A)]
+        [(hex 02) -> (jo C-B)]
+        [(hex 03) -> (jo C-C)]
+        [(hex 04) -> (jo C-D)]
+        [(hex 05) -> (jo C-E)]
+        [(hex 06) -> (jo C-F)]
+        [(hex 07) -> (jo C-G)]
+        [(hex 08) -> (jo C-H)]
+        [(hex 09) -> (jo C-I)]
+        [(hex 0A) -> (jo C-J)]
+        [(hex 0B) -> (jo C-K)]
+        [(hex 0C) -> (jo C-L)]
+        [(hex 0D) -> (jo C-M)]
+        [(hex 0E) -> (jo C-N)]
+        [(hex 0F) -> (jo C-O)]
+        [(hex 10) -> (jo C-P)]
+        [(hex 11) -> (jo C-Q)]
+        [(hex 12) -> (jo C-R)]
+        [(hex 13) -> (jo C-S)]
+        [(hex 14) -> (jo C-T)]
+        [(hex 15) -> (jo C-U)]
+        [(hex 16) -> (jo C-V)]
+        [(hex 17) -> (jo C-W)]
+        [(hex 18) -> (jo C-X)]
+        [(hex 19) -> (jo C-Y)]
+        [(hex 1A) -> (jo C-Z)]
+        [(hex 1B) -> (jo C-square-bar)]
+        [(hex 1C) -> (jo C-backslash)]
+        [(hex 1D) -> (jo C-square-ket)]
+        [(hex 1E) -> (jo C-^)]
+        [(hex 1F) -> (jo C-_)]
+        [(hex 7F) -> (jo C-?)]
+        [(hex 20) -> (jo whitespace)]
+        [(hex 21) -> (jo !)]
+        [(hex 22) -> (jo double-quote)]
+        [(hex 23) -> (jo #)]
+        [(hex 24) -> (jo $)]
+        [(hex 25) -> (jo %)]
+        [(hex 26) -> (jo &)]
+        [(hex 27) -> (jo ')]
+        [(hex 28) -> round-bar]
+        [(hex 29) -> round-ket]
+        [(hex 2A) -> (jo *)]
+        [(hex 2B) -> (jo +)]
+        [(hex 2C) -> (jo ,)]
+        [(hex 2D) -> (jo -)]
+        [(hex 2E) -> (jo .)]
+        [(hex 2F) -> (jo /)]
+        [(hex 30) -> (jo 0)]
+        [(hex 31) -> (jo 1)]
+        [(hex 32) -> (jo 2)]
+        [(hex 33) -> (jo 3)]
+        [(hex 34) -> (jo 4)]
+        [(hex 35) -> (jo 5)]
+        [(hex 36) -> (jo 6)]
+        [(hex 37) -> (jo 7)]
+        [(hex 38) -> (jo 8)]
+        [(hex 39) -> (jo 9)]
+        [(hex 3A) -> (jo :)]
+        [(hex 3B) -> (jo ;)]
+        [(hex 3C) -> (jo <)]
+        [(hex 3D) -> (jo =)]
+        [(hex 3E) -> (jo >)]
+        [(hex 3F) -> (jo ?)]
+        [(hex 40) -> (jo @)]
+        [(hex 41) -> (jo A)]
+        [(hex 42) -> (jo B)]
+        [(hex 43) -> (jo C)]
+        [(hex 44) -> (jo D)]
+        [(hex 45) -> (jo E)]
+        [(hex 46) -> (jo F)]
+        [(hex 47) -> (jo G)]
+        [(hex 48) -> (jo H)]
+        [(hex 49) -> (jo I)]
+        [(hex 4A) -> (jo J)]
+        [(hex 4B) -> (jo K)]
+        [(hex 4C) -> (jo L)]
+        [(hex 4D) -> (jo M)]
+        [(hex 4E) -> (jo N)]
+        [(hex 4F) -> (jo O)]
+        [(hex 50) -> (jo P)]
+        [(hex 51) -> (jo Q)]
+        [(hex 52) -> (jo R)]
+        [(hex 53) -> (jo S)]
+        [(hex 54) -> (jo T)]
+        [(hex 55) -> (jo U)]
+        [(hex 56) -> (jo V)]
+        [(hex 57) -> (jo W)]
+        [(hex 58) -> (jo X)]
+        [(hex 59) -> (jo Y)]
+        [(hex 5A) -> (jo Z)]
+        [(hex 5B) -> square-bar]
+        [(hex 5C) -> backslash]
+        [(hex 5D) -> square-ket]
+        [(hex 5E) -> (jo ^)]
+        [(hex 5F) -> (jo _)]
+        [(hex 60) -> (jo `)]
+        [(hex 61) -> (jo a)]
+        [(hex 62) -> (jo b)]
+        [(hex 63) -> (jo c)]
+        [(hex 64) -> (jo d)]
+        [(hex 65) -> (jo e)]
+        [(hex 66) -> (jo f)]
+        [(hex 67) -> (jo g)]
+        [(hex 68) -> (jo h)]
+        [(hex 69) -> (jo i)]
+        [(hex 6A) -> (jo j)]
+        [(hex 6B) -> (jo k)]
+        [(hex 6C) -> (jo l)]
+        [(hex 6D) -> (jo m)]
+        [(hex 6E) -> (jo n)]
+        [(hex 6F) -> (jo o)]
+        [(hex 70) -> (jo p)]
+        [(hex 71) -> (jo q)]
+        [(hex 72) -> (jo r)]
+        [(hex 73) -> (jo s)]
+        [(hex 74) -> (jo t)]
+        [(hex 75) -> (jo u)]
+        [(hex 76) -> (jo v)]
+        [(hex 77) -> (jo w)]
+        [(hex 78) -> (jo x)]
+        [(hex 79) -> (jo y)]
+        [(hex 7A) -> (jo z)]
+        [(hex 7B) -> flower-bar]
+        [(hex 7C) -> (jo |)]
+        [(hex 7D) -> flower-ket]
+        [(hex 7E) -> (jo ~)])
+      drop (jo unknow))
+    #+end_src
+
+*** receive/key
+
+    #+begin_src jojo
+    (defun receive/key (: [io] -> key)
+      )
+    #+end_src
+
+*** key/bind
+
+    #+begin_src jojo
+    (defun key/bind (: ->))
+    #+end_src
+
+*** key->editing-function
+
+    #+begin_src jojo
+    (defun key->editing-function (: ->))
+    #+end_src
+
 * >< undo-stack
 
   - every editing function should be reversible

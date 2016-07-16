@@ -16,19 +16,33 @@
   nat/backward-draw/loop)
 
 (defun main/loop (: -> *)
-  receive/byte byte/draw
+  receive/byte (> b)
+  (if (< b) (string "q") get-byte eq? -> end)
   (string "(") string/draw
-  x-border nat/backward-draw
+  (< b) byte/draw
   (string " ") string/draw
-  y-border nat/backward-draw
+  (< b) nat/backward-draw
   (string ") ") string/draw
   text-ui/refresh
   (loop))
 
+(: (defun main/loop (: -> *)
+     receive/byte byte/draw
+     (string "(") string/draw
+     x-border nat/backward-draw
+     (string " ") string/draw
+     y-border nat/backward-draw
+     (string ") ") string/draw
+     text-ui/refresh
+     (loop)))
+
+(defun mode (string "module.jo") parse/line-mode)
+
 (defun main (: -> *)
   text-ui/init
-  (string "module.jo") parse/line-mode line-mode/view
+  mode line-mode/view
   main/loop
-  text-ui/end)
+  text-ui/end
+  bye)
 
 (run main)

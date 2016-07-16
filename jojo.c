@@ -686,7 +686,7 @@ void eval_jo(jo jo) {
 
 void k_ignore();
 
-void eval_key(jo jo) {
+void eval_key_jo(jo jo) {
   if (!jotable_entry_used(jotable[jo])) {
     printf("undefined keyword : %s\n", jo2str(jo));
     k_ignore();
@@ -831,20 +831,33 @@ void i_tail_call() {
   jo_apply_with_local_pointer(jo, rp.local_pointer);
 }
 
-void p_jump_if_false() {
-  // (bool addr -> [rs])
-  jo* a = as_pop();
+void i_jump_if_false() {
+  // (bool [rs] -> [rs])
+  return_point rp = rs_tos();
+  rs_inc();
+  jo* a = *(cell*)rp.array;
   cell b = as_pop();
   if (b == 0) {
-    return_point rp = rs_pop();
-    rs_make_point(a, rp.local_pointer);
+    return_point rp1 = rs_pop();
+    rs_make_point(a, rp1.local_pointer);
   }
+}
+
+void i_jump() {
+  // ([rs] -> [rs])
+  return_point rp = rs_tos();
+  rs_inc();
+  jo* a = *(cell*)rp.array;
+  return_point rp1 = rs_pop();
+  rs_make_point(a, rp1.local_pointer);
+
 }
 
 void export_control() {
   defprim("instruction/lit", i_lit);
   defprim("instruction/tail-call", i_tail_call);
-  defprim("jump-if-false", p_jump_if_false);
+  defprim("instruction/jump-if-false", i_jump_if_false);
+  defprim("instruction/jump", i_jump);
 }
 
 void p_true() {
@@ -1488,7 +1501,7 @@ void k_jo() {
   while (true) {
     jo s = read_jo();
     if (s == str2jo("(")) {
-      eval_key(read_jo());
+      eval_key_jo(read_jo());
     }
     else if (s == str2jo(")")) {
       break;
@@ -1857,7 +1870,7 @@ void k_include() {
       return;
     }
     else if (s == str2jo("(")) {
-      eval_key(read_jo());
+      eval_key_jo(read_jo());
     }
     else if (s == str2jo("\"")) {
       k_include_one();
@@ -1971,7 +1984,7 @@ void k_dep() {
       while (true) {
         jo s = read_jo();
         if (s == str2jo("(")) {
-          eval_key(read_jo());
+          eval_key_jo(read_jo());
         }
         else if (s == str2jo(")")) {
           loading_stack_pop();
@@ -2239,7 +2252,7 @@ void k_run() {
   while (true) {
     jo s = read_jo();
     if (s == str2jo("(")) {
-      eval_key(read_jo());
+      eval_key_jo(read_jo());
     }
     else if (s == str2jo(")")) {
       here(str2jo("end"));
@@ -2317,7 +2330,7 @@ void p_top_repl() {
   while (true) {
     jo s = read_jo();
     if (s == str2jo("(")) {
-      eval_key(read_jo());
+      eval_key_jo(read_jo());
       p_as_print_by_flag();
     }
     else {
@@ -2374,7 +2387,7 @@ void compile_jojo_until_meet_jo(jo end) {
   while (true) {
     jo s = read_jo();
     if (s == str2jo("(")) {
-      eval_key(read_jo());
+      eval_key_jo(read_jo());
     }
     else if (s == end) {
       break;
@@ -2406,10 +2419,9 @@ void k_compile_jojo() {
 void k_if() {
   // ([io] -> [compile])
   compile_jojo_until_meet_jo(str2jo("->"));
-  here(str2jo("instruction/lit"));
+  here(str2jo("instruction/jump-if-false"));
   cell* offset_place = compiling_stack_tos();
   compiling_stack_inc();
-  here(str2jo("jump-if-false"));
   k_compile_jojo();
   offset_place[0] = compiling_stack_tos();
 }
@@ -2502,7 +2514,7 @@ void i_local_in() {
 void k_local_in() {
   jo s = read_jo();
   if (s == str2jo("(")) {
-    eval_key(read_jo());
+    eval_key_jo(read_jo());
     k_local_in();
   }
   else if (s == str2jo(")")) {
@@ -2541,7 +2553,7 @@ void i_local_out() {
 void k_local_out() {
   jo s = read_jo();
   if (s == str2jo("(")) {
-    eval_key(read_jo());
+    eval_key_jo(read_jo());
     k_local_out();
   }
   else if (s == str2jo(")")) {
