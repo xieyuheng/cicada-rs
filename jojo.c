@@ -1050,13 +1050,9 @@ void k_int() {
     if (s == str2jo(")")) {
       break;
     }
-    else if (int_string_p(jo2str(s))) {
+    else {
       here(str2jo("instruction/lit"));
       here(string_to_dec(jo2str(s)));
-    }
-    else {
-      printf("meet non-cell string in (int ...) : %s", jo2str(s));
-      break;
     }
   }
 }
@@ -1068,13 +1064,9 @@ void k_bin() {
     if (s == str2jo(")")) {
       break;
     }
-    else if (int_string_p(jo2str(s))) {
+    else {
       here(str2jo("instruction/lit"));
       here(string_to_bin(jo2str(s)));
-    }
-    else {
-      printf("meet non-cell string in (int ...) : %s", jo2str(s));
-      break;
     }
   }
 }
@@ -1086,13 +1078,9 @@ void k_oct() {
     if (s == str2jo(")")) {
       break;
     }
-    else if (int_string_p(jo2str(s))) {
+    else {
       here(str2jo("instruction/lit"));
       here(string_to_oct(jo2str(s)));
-    }
-    else {
-      printf("meet non-cell string in (int ...) : %s", jo2str(s));
-      break;
     }
   }
 }
@@ -1104,13 +1092,9 @@ void k_hex() {
     if (s == str2jo(")")) {
       break;
     }
-    else if (int_string_p(jo2str(s))) {
+    else {
       here(str2jo("instruction/lit"));
       here(string_to_hex(jo2str(s)));
-    }
-    else {
-      printf("meet non-cell string in (int ...) : %s", jo2str(s));
-      break;
     }
   }
 }
@@ -1180,27 +1164,27 @@ void k_var() {
 }
 
 void p_set() {
-  // (cell addr ->)
+  // (cell address ->)
   cell* address = as_pop();
   cell value = as_pop();
   address[0] = value;
 }
 
 void p_get() {
-  // (addr -> cell)
+  // (address -> cell)
   cell* address = as_pop();
   as_push(address[0]);
 }
 
 void p_set_byte() {
-  // (cell address ->)
+  // (byte address ->)
   char* address = as_pop();
   cell value = as_pop();
   address[0] = value;
 }
 
 void p_get_byte() {
-  // (addr -> cell)
+  // (address -> byte)
   char* address = as_pop();
   as_push(address[0]);
 }

@@ -1,15 +1,32 @@
+(defun compile-with/jump-if-false (: * -> *)
+  (> j)
+  (jo instruction/jump-if-false) here
+  compiling-stack/tos (> place) compiling-stack/inc
+  (< j) apply
+  compiling-stack/tos (< place) set)
+
 (defun case/one (: [io] back-place -> [compile])
-  (> back-place)
   (jo dup) here
   (jo ->) compile-jojo/until-meet-jo
   (jo eq?) here
-  (jo instruction/jump-if-false) here
-  compiling-stack/tos (> place) compiling-stack/inc
-  (jo drop) here
-  square-ket compile-jojo/until-meet-jo
-  (jo instruction/jump) here
-  (< back-place) here
-  compiling-stack/tos (< place) set)
+  (jojo (jo drop) here
+        square-ket compile-jojo/until-meet-jo
+        (jo instruction/jump) here
+        (: back-place) here)
+  compile-with/jump-if-false)
+
+(: (defun case/one (: [io] back-place -> [compile])
+     (> back-place)
+     (jo dup) here
+     (jo ->) compile-jojo/until-meet-jo
+     (jo eq?) here
+     (jo instruction/jump-if-false) here
+     compiling-stack/tos (> place) compiling-stack/inc
+     (jo drop) here
+     square-ket compile-jojo/until-meet-jo
+     (jo instruction/jump) here
+     (< back-place) here
+     compiling-stack/tos (< place) set))
 
 (defun case/loop (: [io] back-place -> [compile])
   read/jo
