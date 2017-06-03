@@ -2402,7 +2402,7 @@ void k_compile_jojo() {
 
 void k_if() {
   // ([io] -> [compile])
-  compile_jojo_until_meet_jo(str2jo("->"));
+  compile_jojo_until_meet_jo(str2jo("then"));
   here(str2jo("instruction/jump-if-false"));
   cell* offset_place = compiling_stack_tos();
   compiling_stack_inc();

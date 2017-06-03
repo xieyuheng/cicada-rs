@@ -48,6 +48,12 @@
       verb/type (... -> type) (... -> [type])
       type/verb (type -> ...) ([type] -> ...)
 
+*** jojo
+
+    - in jojo :
+      primitive
+      instruction data
+
 * helper
 
 *** header
@@ -3386,7 +3392,7 @@
 
 *** k_if
 
-    - (if a b p? -> c d)
+    - (if a b p? then c d)
 
     - a b p?
       [jump] jumk_if_false
@@ -3399,7 +3405,7 @@
     #+begin_src c
     void k_if() {
       // ([io] -> [compile])
-      compile_jojo_until_meet_jo(str2jo("->"));
+      compile_jojo_until_meet_jo(str2jo("then"));
       here(str2jo("instruction/jump-if-false"));
       cell* offset_place = compiling_stack_tos();
       compiling_stack_inc();

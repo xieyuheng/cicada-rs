@@ -24,15 +24,15 @@
 * branching by if
 
   #+begin_src jojo
-  (test (if true -> true dot end)
-        (if false -> false dot end))
+  (test (if true then true dot end)
+        (if false then false dot end))
   #+end_src
 
 * receive function
 
   #+begin_src jojo
   (defun factorial (: int -> int)
-    (if dup (int 1) lteq? -> drop (int 1) end)
+    (if dup (int 1) lteq? then drop (int 1) end)
     dup (int 1) sub (recur) mul end)
 
   (test (int 0) factorial dot
@@ -77,7 +77,7 @@
         string/print newline)
 
   (defun command-line/print-argument/loop (: index -> [io])
-    (if dup argument-counter lt? ->
+    (if dup argument-counter lt? then
         dup index->argument-string string/print
         newline
         (int 1) add
@@ -128,69 +128,24 @@
 
   #+begin_src jojo
   (run
-    (int 1 2 3) (> a b c)
-    (< a) dot
-    (< b) dot
-    (< c) dot)
+    (int 1 2 3) (> :a :b :c)
+    (< :a) dot
+    (< :b) dot
+    (< :c) dot)
 
-  (defun local-test/0 (: ->)
-    (int 1 2 3) (> a b c)
-    (< a) dot
-    (< b) dot
-    (< c) dot)
+  (defun local-test/0
+    (int 1 2 3) (> :a :b :c)
+    (< :a) dot
+    (< :b) dot
+    (< :c) dot)
 
-  (defun local-test (: ->)
-    (int 1 2 3) (> a b c)
-    (< a) dot local-test/0 newline
-    (< b) dot local-test/0 newline
-    (< c) dot local-test/0 newline)
+  (defun local-test
+    (int 1 2 3) (> :a :b :c)
+    (< :a) dot local-test/0 newline
+    (< :b) dot local-test/0 newline
+    (< :c) dot local-test/0 newline)
 
   (run local-test)
-  #+end_src
-
-* case
-
-  #+begin_src jojo
-  (dep core/0.0.1)
-
-  (test
-    (int 1)
-    (case
-      [(int 1) -> (int 11) dot]
-      [(int 2) -> (int 22) dot]))
-
-  (test
-    (jo b)
-    (case
-      [(jo a) -> (string "a") string/print newline]
-      [(jo b) -> (string "b") string/print newline]))
-
-  (test
-    (jo a)
-    (case
-      [(jo a) -> (string "a") string/print newline]
-      (: comment)
-      (string "between a & b") string/print newline
-      [(jo b) -> (string "b") string/print newline]))
-
-  (test
-    (jo a)
-    (case
-      [(jo a) ->
-       (string "a") string/print
-       (jo a) (case
-                [(jo a) -> (string "a") string/print]
-                [(jo b) -> (string "b") string/print])]
-      [(jo b) -> (string "b") string/print])
-    newline
-    (jo b)
-    (case
-      [(jo a) -> (string "a") string/print]
-      [(jo b) -> (string "b") string/print
-       (jo b) (case
-                [(jo a) -> (string "a") string/print]
-                [(jo b) -> (string "b") string/print])])
-    newline)
   #+end_src
 
 * hex

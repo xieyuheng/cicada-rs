@@ -1,0 +1,44 @@
+* case
+
+  #+begin_src jojo
+  (dep core/0.0.1)
+
+  (test
+    (int 1)
+    (case
+      [(int 1) -> (int 11) dot]
+      [(int 2) -> (int 22) dot]))
+
+  (test
+    (jo b)
+    (case
+      [(jo a) -> (string "a") string/print newline]
+      [(jo b) -> (string "b") string/print newline]))
+
+  (test
+    (jo a)
+    (case
+      [(jo a) -> (string "a") string/print newline]
+      (: comment)
+      (string "between a & b") string/print newline
+      [(jo b) -> (string "b") string/print newline]))
+
+  (test
+    (jo a)
+    (case
+      [(jo a) ->
+       (string "a") string/print
+       (jo a) (case
+                [(jo a) -> (string "a") string/print]
+                [(jo b) -> (string "b") string/print])]
+      [(jo b) -> (string "b") string/print])
+    newline
+    (jo b)
+    (case
+      [(jo a) -> (string "a") string/print]
+      [(jo b) -> (string "b") string/print
+       (jo b) (case
+                [(jo a) -> (string "a") string/print]
+                [(jo b) -> (string "b") string/print])])
+    newline)
+  #+end_src

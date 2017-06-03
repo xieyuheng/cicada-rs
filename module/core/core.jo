@@ -1,3 +1,5 @@
+(run testing-flag/on)
+
 (defvar cons-size (int 3) cell-size mul)
 (defvar cons-area-size
   (: (int 5) (: for testing))
@@ -22,14 +24,14 @@
   (var cons-pointer) set)
 
 (defun cons-pointer/next-free (: -> [cons-pointer])
-  (if cons-pointer cons-area-top eq? -> end)
-  (if cons-pointer get current-mark eq? not -> end)
+  (if cons-pointer cons-area-top eq? then end)
+  (if cons-pointer get current-mark eq? not then end)
   cons-pointer/next
   (loop))
 
 (defun cons? (: cell -> bool)
-  (if dup cons-area lt? -> drop false end)
-  (if dup cons-area-top gteq? -> drop false end)
+  (if dup cons-area lt? then drop false end)
+  (if dup cons-area-top gteq? then drop false end)
   cons-area sub cons-size mod (int 0) eq?)
 
 (declare
@@ -37,7 +39,7 @@
   (cdr (: cons -> cell)))
 
 (defun cons-area/report/loop (: cons -> [io])
-  (if dup cons-area-top eq? -> drop end)
+  (if dup cons-area-top eq? then drop end)
   (string "#:") string/print
   dup dot
   (string "mark: ") string/print
@@ -54,7 +56,7 @@
   cons-area cons-area/report/loop)
 
 (defun sweep-cons-area/loop (: cons -> [io])
-  (if dup cons-area-top eq? -> drop end)
+  (if dup cons-area-top eq? then drop end)
   dup (int 0)  swap set
   cons-size add
   (loop))
@@ -63,25 +65,25 @@
   cons-area sweep-cons-area/loop)
 
 (defun mark-cons (: cons -> [cons-area])
-  (if dup cons? not -> drop end)
+  (if dup cons? not then drop end)
   dup current-mark swap set
   dup car mark-cons
   cdr (loop))
 
 (defun mark-cons-area/defvar-record (: defvar-record -> [cons-area])
-  (if dup get (int 0) eq? -> drop end)
+  (if dup get (int 0) eq? then drop end)
   dup get mark-cons
   cell-size add
   (loop))
 
 (defun mark-cons-area/argument-stack (: stack -> [cons-area])
-  (if dup stack-base eq? -> drop end)
+  (if dup stack-base eq? then drop end)
   cell-size sub
   dup get mark-cons
   (loop))
 
 (defun mark-cons-area (: -> [cons-area])
-  (if current-mark max-mark eq? ->
+  (if current-mark max-mark eq? then
       sweep-cons-area
       (int 0) (var current-mark) set)
   current-mark (int 1) add (var current-mark) set
@@ -90,15 +92,15 @@
   mark-cons-area/argument-stack)
 
 (defun new/cons (: -> cons)
-  (if cons-pointer cons-area-top eq? ->
+  (if cons-pointer cons-area-top eq? then
       mark-cons-area
       cons-pointer/init
       cons-pointer/next-free
-      (if cons-pointer cons-area-top eq? ->
+      (if cons-pointer cons-area-top eq? then
           (string "fatal error : cons-area is full") string/print
           newline bye)
       (loop))
-  (if cons-pointer get current-mark eq? ->
+  (if cons-pointer get current-mark eq? then
       cons-pointer/next (loop))
   cons-pointer
   cons-pointer/next end)
@@ -156,50 +158,42 @@
          cons-area/report
          newline))
 
-(: {a {b c} d}
-   null
-   a cons
-   null
-   b cons
-   c cons
+(: (list a (list b c) d))
+(: null
+   (jo a) cons
+     null
+     (jo b) cons
+     (jo c) cons
    cons
-   d cons)
+   (jo d) cons)
 
-(defun list/one (: [io] -> [compile])
+(defun list/one (: jo [io] -> [compile])
+  (if dup round-bar eq? then drop read/jo key-jo/apply end)
+  (jo instruction/lit) here here end)
+
+(defun list/help (: [io] -> [compile])
   read/jo
-  (if dup flower-bar eq? ->
-      drop null here
-      (recur) (jo cons) here
-      (loop))
-  (if dup flower-ket eq? ->
-      drop end)
-  (if dup round-bar eq? ->
-      drop read/jo key-jo/apply
-      (jo cons) here
-      (loop))
-  (else (jo instruction/lit) here
-        here
-        (jo cons) here
-        (loop)))
+  (if dup round-ket eq? then drop end)
+  list/one
+  (jo cons) here
+  (loop))
 
 (defun list (: [io] -> [compile])
-  read/jo
-  (if dup round-ket eq? -> drop end)
-  (if dup flower-bar eq? ->
-      drop null here
-      list/one (loop))
-  (else drop (loop)))
+  (jo null) here
+  list/help)
 
-(test (list {a {b c} d})
-      dup car jo->string string/print
-      dup cdr car car jo->string string/print
-      dup cdr car cdr car jo->string string/print
-      dup cdr car cdr cdr jo->string string/print
-      dup cdr cdr car jo->string string/print
-      dup cdr cdr cdr jo->string string/print
-      drop)
+(run (list a) dot)
 
-(test (list {(int 1) {(int 2) (do (int 1 2) add)} (int 4)})
+(run (list a (list b c) d)
+     dup car jo->string string/print
+     dup cdr car car jo->string string/print
+     dup cdr car cdr car jo->string string/print
+     dup cdr car cdr cdr jo->string string/print
+     dup cdr cdr car jo->string string/print
+     dup cdr cdr cdr jo->string string/print
+     drop)
+
+(test (list (int 1) (list (int 2) (do (int 1 2) add)) (int 4))
       dup car dot
       dup cdr car car dot
       dup cdr car cdr car dot
@@ -209,40 +203,43 @@
       drop)
 
 (defun list/length (: list -> nat)
-  (if dup cons? not -> drop (int 0) end)
+  (if dup cons? not then drop (int 0) end)
   (else cdr (recur) (int 1) add end))
 
 (test newline
-      (list {a {b c} d}) list/length dot
+      (list (list a (list b c) d)) list/length dot
       newline
-      (list {}) list/length dot)
+      (list) list/length dot)
 
 (declare (int-list/print (: cons -> [io])))
 
 (defun int-list/print/rest (: cons -> [io])
-  (if dup null eq? -> drop end)
+  (if dup null eq? then drop end)
   dup cdr int-list/print/rest
   car
-  (if dup cons? -> int-list/print end)
+  (if dup cons? then int-list/print end)
   (else dot end))
 
 (defun int-list/print (: cons -> [io])
-  (string "{ ") string/print
+  (string "( list ") string/print
   int-list/print/rest
-  (string "} ") string/print)
+  (string ") ") string/print)
 
-(test (list {(int 1) {(int 2) (do (int 1 2) add)} (int 4)})
+(test (list (int 1) (list (int 2) (do (int 1 2) add)) (int 4))
       int-list/print)
 
-(defun jo/map (: {... a} (a -> b) -> {... b})
-  (if over null eq? -> drop end)
+(test (list a (list b c) d)
+      int-list/print)
+
+(defun jo/map (: [... a] (a -> b) -> [... b])
+  (if over null eq? then drop end)
   over car over jo/apply
   (int 2 1) xy-swap
   swap cdr swap (recur)
   swap cons)
 
-(defun jo/itr (: {... a} (a ->) ->)
-  (if over null eq? -> drop drop end)
+(defun jo/itr (: [... a] (a ->) ->)
+  (if over null eq? then drop drop end)
   over car over jo/apply
   swap cdr swap (loop))
 
@@ -256,26 +253,26 @@
 (test (int 1) (int 2) (int 3) (int 4)
       (int 2 1) xy-swap dot dot dot dot)
 
-(test (list {(int 1) (int 2) (int 3) (int 4)})
+(test (list [(int 1) (int 2) (int 3) (int 4)])
       (jo add1) jo/map
       int-list/print)
 
-(test (list {(int 1) (int 2) (int 3) (int 4)})
+(test (list [(int 1) (int 2) (int 3) (int 4)])
       (jo dot) jo/itr)
 
-(defun map (: {... a} (a -> b) -> {... b})
-  (if over null eq? -> drop end)
+(defun map (: [... a] (a -> b) -> [... b])
+  (if over null eq? then drop end)
   over car over apply
   (int 2 1) xy-swap
   swap cdr swap (recur)
   swap cons)
 
-(defun itr (: {... a} (a ->) ->)
-  (if over null eq? -> drop drop end)
+(defun itr (: [... a] (a ->) ->)
+  (if over null eq? then drop drop end)
   over car over apply
   swap cdr swap (loop))
 
-(test (list {(int 1) (int 2) (int 3) (int 4)})
+(test (list [(int 1) (int 2) (int 3) (int 4)])
       (jojo (int 1) add) map
       (jojo (int 1) add) map
       (jojo (int 1) add) map
@@ -283,22 +280,22 @@
       (jojo (int 1) add) map
       int-list/print)
 
-(test (list {(int 1) (int 2) (int 3) (int 4)})
+(test (list [(int 1) (int 2) (int 3) (int 4)])
       (jojo dup dot dot) itr)
 
-(defun list/ref (: {... a} int -> a)
-  (if dup (int 0) lteq? -> drop car end)
+(defun list/ref (: [... a] int -> a)
+  (if dup (int 0) lteq? then drop car end)
   (else swap cdr swap (int 1) sub (loop)))
 
-(test (list {(int 1) (int 2) (int 3) (int 4)})
+(test (list (int 1) (int 2) (int 3) (int 4))
       (int 1) list/ref dot)
 
-(defun list/drop (: {... a} nat -> {... a})
-  (if dup (int 0) lteq? -> drop end)
+(defun list/drop (: [... a] nat -> [... a])
+  (if dup (int 0) lteq? then drop end)
   (else swap cdr swap (int 1) sub (loop)))
 
-(defun list/take (: {... a} nat -> {... a})
-  (if dup (int 0) lteq? -> drop null end)
+(defun list/take (: [... a] nat -> [... a])
+  (if dup (int 0) lteq? then drop null end)
   (else over car (int 2 1) xy-swap
         swap cdr swap (int 1) sub (recur)
         swap cons end))
@@ -306,33 +303,16 @@
 (declare (jo-list/print (: cons -> [io])))
 
 (defun jo-list/print/rest (: cons -> [io])
-  (if dup null eq? -> drop end)
+  (if dup null eq? then drop end)
   dup cdr jo-list/print/rest
   car
-  (if dup cons? -> jo-list/print end)
+  (if dup cons? then jo-list/print end)
   (else jo/dot end))
 
 (defun jo-list/print (: cons -> [io])
-  (string "{ ") string/print
+  (string "( list ") string/print
   jo-list/print/rest
-  (string "} ") string/print)
+  (string ") ") string/print)
 
-(test (list {a {b c} d})
+(test (list a (list b c) d)
       jo-list/print)
-
-(declare (string-list/print (: cons -> [io])))
-
-(defun string-list/print/rest (: cons -> [io])
-  (if dup null eq? -> drop end)
-  dup cdr string-list/print/rest
-  car
-  (if dup cons? -> string-list/print end)
-  (else string/dot end))
-
-(defun string-list/print (: cons -> [io])
-  (string "{ ") string/print
-  string-list/print/rest
-  (string "} ") string/print)
-
-(test (list {(string "111") {(string "222") (string "333")} (string "444")})
-      string-list/print)
