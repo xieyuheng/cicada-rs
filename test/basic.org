@@ -9,7 +9,7 @@
 * define function
 
   #+begin_src jojo
-  (defun square (: int int -> int)
+  (defun square (note int int -> int)
     dup mul end)
 
   (test (int 11) square dot)
@@ -31,7 +31,7 @@
 * receive function
 
   #+begin_src jojo
-  (defun factorial (: int -> int)
+  (defun factorial (note int -> int)
     (if dup (int 1) lteq? then drop (int 1) end)
     dup (int 1) sub (recur) mul end)
 
@@ -76,7 +76,7 @@
   (test (string "PATH") var-string->env-string
         string/print newline)
 
-  (defun command-line/print-argument/loop (: index -> [io])
+  (defun command-line/print-argument/loop (note index -> [io])
     (if dup argument-counter lt? then
         dup index->argument-string string/print
         newline
@@ -84,7 +84,7 @@
         (loop))
     (else drop end))
 
-  (defun command-line/print-argument (: -> [io])
+  (defun command-line/print-argument (note -> [io])
     (int 0) command-line/print-argument/loop)
 
   (test command-line/print-argument)
@@ -119,7 +119,7 @@
 * report
 
   #+begin_src jojo
-  (: (test defprim/report
+  (note (test defprim/report
            defun/report
            defvar/report))
   #+end_src
@@ -128,22 +128,22 @@
 
   #+begin_src jojo
   (run
-    (int 1 2 3) (> :a :b :c)
-    (< :a) dot
-    (< :b) dot
-    (< :c) dot)
+    (int 1 2 3) (:> a b c)
+    (<: a) dot
+    (<: b) dot
+    (<: c) dot)
 
   (defun local-test/0
-    (int 1 2 3) (> :a :b :c)
-    (< :a) dot
-    (< :b) dot
-    (< :c) dot)
+    (int 1 2 3) (:> a b c)
+    (<: a) dot
+    (<: b) dot
+    (<: c) dot)
 
   (defun local-test
-    (int 1 2 3) (> :a :b :c)
-    (< :a) dot local-test/0 newline
-    (< :b) dot local-test/0 newline
-    (< :c) dot local-test/0 newline)
+    (int 1 2 3) (:> a b c)
+    (<: a) dot local-test/0 newline
+    (<: b) dot local-test/0 newline
+    (<: c) dot local-test/0 newline)
 
   (run local-test)
   #+end_src

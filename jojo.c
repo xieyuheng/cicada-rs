@@ -2467,10 +2467,8 @@ cell local_find(jo name) {
   return -1;
 }
 
-void i_local_in() {
-  return_point rp = rs_tos();
-  rs_inc();
-  cell jo = *(cell*)rp.array;
+void p_local_in() {
+  cell jo = as_pop();
   cell index = local_find(jo);
   cell value = as_pop();
   if (index != -1) {
@@ -2506,15 +2504,14 @@ void k_local_in() {
   }
   else {
     k_local_in();
-    here(str2jo("instruction/>"));
+    here(str2jo("instruction/lit"));
     here(s);
+    here(str2jo("local-in"));
   }
 }
 
-void i_local_out() {
-  return_point rp = rs_tos();
-  rs_inc();
-  cell jo = *(cell*)rp.array;
+void p_local_out() {
+  cell jo = as_pop();
   cell index = local_find(jo);
   if (index != -1) {
     local_point lp = local_area[index];
@@ -2545,14 +2542,25 @@ void k_local_out() {
   }
   else {
     k_local_out();
-    here(str2jo("instruction/<"));
+    here(str2jo("instruction/lit"));
     here(s);
+    here(str2jo("local-out"));
   }
+}
+
+void p_apply_with_local_binding() {
+  jo name = as_pop();
+  jo value = as_pop();
+  jo* jojo_array = as_pop();
+  rs_make_point(jojo_array, local_area_pointer);
+  as_push(value);
+  as_push(name);
+  p_local_in();
 }
 
 void export_keyword() {
   defprim("ignore", k_ignore);
-  defprim(":", k_ignore);
+  defprim("note", k_ignore);
 
   defprim("compiling-stack/tos", p_compiling_stack_tos);
   defprim("compiling-stack/inc", compiling_stack_inc);
@@ -2568,10 +2576,12 @@ void export_keyword() {
   defprim("jojo", k_jojo);
   defprim("instruction/jojo", i_jojo);
 
-  defprim("instruction/>", i_local_in);
-  defprim("instruction/<", i_local_out);
-  defprim(">", k_local_in);
-  defprim("<", k_local_out);
+  defprim("local-in", p_local_in);
+  defprim("local-out", p_local_out);
+  defprim(":>", k_local_in);
+  defprim("<:", k_local_out);
+
+  defprim("apply-with-local-binding", p_apply_with_local_binding);
 }
 
 void do_nothing() {
