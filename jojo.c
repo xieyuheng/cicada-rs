@@ -625,25 +625,9 @@ void p_jo_apply() {
   jo_apply(as_pop());
 }
 
-void key_jo_apply(jo jo) {
-  if (jotable_entry_used(jotable[jo])) {
-    jo_apply(jo);
-    return;
-  }
-  else {
-    printf("- key_jo_apply undefined key : %s\n", jo2str(jo));
-    return;
-  }
-}
-
-void p_key_jo_apply() {
-  key_jo_apply(as_pop());
-}
-
 void export_apply() {
   defprim("apply", p_apply);
   defprim("jo/apply", p_jo_apply);
-  defprim("key-jo/apply", p_key_jo_apply);
 }
 
 jmp_buf eval_jmp_buffer;
@@ -1163,6 +1147,11 @@ void k_var() {
   k_ignore();
 }
 
+void p_jo_as_var() {
+  jo jo = as_pop();
+  as_push(&(jotable[jo].value.cell));
+}
+
 void p_set() {
   // (cell address ->)
   cell* address = as_pop();
@@ -1193,6 +1182,7 @@ void export_memory() {
   defprim("allocate", p_allocate);
   defprim("free", p_free);
   defprim("var", k_var);
+  defprim("jo-as-var", p_jo_as_var);
   defprim("set", p_set);
   defprim("get", p_get);
   defprim("set-byte", p_set_byte);
@@ -1507,6 +1497,10 @@ void p_jo_dot() {
   printf("%s ", jo2str(as_pop()));
 }
 
+void p_generate_jo() {
+  as_push(str2jo("generated-jo"));
+}
+
 void export_jo() {
   defprim("null", p_null);
   defprim("read/jo", p_read_jo);
@@ -1518,6 +1512,7 @@ void export_jo() {
   defprim("jo", k_jo);
   defprim("jo/print", p_jo_print);
   defprim("jo/dot", p_jo_dot);
+  defprim("generate-jo", p_generate_jo);
 }
 
 void k_string_one() {
@@ -2332,6 +2327,7 @@ void export_top_level() {
   defprim("defun/report", defun_report);
 
   defprim("defun", k_defun);
+  defprim("defmacro", k_defun);
 
   defprim("declare", k_declare);
 
@@ -2569,6 +2565,7 @@ void export_keyword() {
   defprim("do", k_compile_jojo);
   defprim("compile-jojo/until-meet-jo", k_compile_jojo_until_meet_jo);
   defprim("else", k_compile_jojo);
+  defprim("compile-jojo", k_compile_jojo);
   defprim("tail-call", k_tail_call);
   defprim("loop", k_loop);
   defprim("recur", k_recur);
@@ -2578,8 +2575,8 @@ void export_keyword() {
 
   defprim("local-in", p_local_in);
   defprim("local-out", p_local_out);
-  defprim(":>", k_local_in);
-  defprim("<:", k_local_out);
+  defprim(">>", k_local_in);
+  defprim("<<", k_local_out);
 
   defprim("apply-with-local-binding", p_apply_with_local_binding);
 }
@@ -2589,6 +2586,10 @@ void do_nothing() {
 
 void p_here() {
   here(as_pop());
+}
+
+void p_address_of_here() {
+ as_push(compiling_stack_tos());
 }
 
 void p_round_bar() { as_push(str2jo("(")); }
@@ -2610,6 +2611,8 @@ void p_newline() {
 
 void export_mise() {
   defprim("here", p_here);
+  defprim("address-of-here", p_address_of_here);
+
   defprim("jotable/report", jotable_report);
 
   defprim("round-bar", p_round_bar);

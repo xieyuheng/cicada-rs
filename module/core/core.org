@@ -3,10 +3,6 @@
 
 * note
 
-  - 語法擴展機制好用的前提是
-    1. jojo.c 中關於定義的代碼要充分 refactoring
-    2. 設計語法時保持簡潔
-
   - three level of languages :
     baredata -> list -> object
 
@@ -220,20 +216,11 @@
 
 *** list
 
-    - (list <tail> ... <head>)
-
     #+begin_src jojo
-    (note (list a (list b c) d))
-    (note null
-          (jo a) cons
-          null
-          (jo b) cons
-          (jo c) cons
-          cons
-          (jo d) cons)
+    (note (list <tail> ... <head>))
 
     (defun list/one (note jo [io] -> [compile])
-      (if dup round-bar eq? then drop read/jo key-jo/apply end)
+      (if dup round-bar eq? then drop read/jo jo/apply end)
       (jo instruction/lit) here here end)
 
     (defun list/help (note [io] -> [compile])
@@ -243,7 +230,16 @@
       (jo cons) here
       (loop))
 
-    (defun list (note [io] -> [compile])
+    (defmacro list
+      (note (list a (list b c) d)
+            =>
+            null
+            (jo a) cons
+            null
+            (jo b) cons
+            (jo c) cons
+            cons
+            (jo d) cons)
       (jo null) here
       list/help)
     #+end_src
@@ -422,43 +418,15 @@
 
 *** note
 
-    - class 也是一個 object
-      new 可以作爲信息傳遞給這些 object
-
     #+begin_src jojo
-    (note (defclass <class-name>
-            ...)
-          (defmethod <class-name> <method-name>
-            ...)
-          <object> (send <method-name> ...))
-    #+end_src
+    (note class is also an object
+          we can send new to it)
 
-*** send
+    (note under <class-name> we have
+          method-record
+          [method-record alone for now])
 
-    #+begin_src jojo
-    (defun object/class-name cdr)
-    (defun object/data car)
-    (defun object/method-record object/class-name jo/apply)
-
-    (defun method-record/search
-      (note message method-record -> (or method false))
-      (if dup null eq? then
-          drop drop false end)
-      (if over over car car eq? then
-          swap drop car cdr end)
-      cdr (loop))
-
-    (defun send
-      (note object message -> [depends on object and message])
-      (:> message)
-      (:> object)
-      (<: message)
-      (<: object)
-      object/method-record
-      method-record/search
-      (if dup false eq? not then
-          (<: object) (jo self) apply-with-local-binding end)
-      (note error handling))
+    (note object = <class-name> <data> cons)
 
     (note when defining a class
           different interface-generator can be used to generate method list
@@ -473,33 +441,104 @@
           such as self)
     #+end_src
 
+*** class
+
+    #+begin_src jojo
+    (defun empty-class
+      (list))
+    #+end_src
+
+*** defmethod
+
+    #+begin_src jojo
+    (defun new/method (note method/body method/name -> method) cons)
+    (defun method/name car)
+    (defun method/body cdr)
+
+    (defmacro defmethod
+      (note (defmethod <class-name> <method-name> ...)
+            =>
+            (jojo ...) (jo <method-name>) new/method
+            <class-name> swap cons
+            (var <class-name>) set)
+      read/jo (>> class-name)
+      read/jo (>> method-name)
+
+      address-of-here (>> jojo)
+      compile-jojo
+      (jo end) here
+
+      (<< class-name) jo-as-var get
+      (<< jojo) (<< method-name) new/method
+      cons
+
+      (<< class-name) jo-as-var set)
+    #+end_src
+
+*** send
+
+    #+begin_src jojo
+    (defun object/class-name cdr)
+    (defun object/data car)
+    (defun object/method-record object/class-name jo/apply)
+
+    (defun method-record/search
+      (note message method-record -> (or method false))
+      (if dup null eq? then
+          drop drop false end)
+      (if over over car method/name eq? then
+          swap drop car method/body end)
+      cdr (loop))
+
+    (defun send
+      (note object message -> [depends on object and message])
+      (>> message)
+      (>> object)
+      (<< message)
+      (<< object)
+      object/method-record
+      method-record/search
+      (if dup false eq? not then
+          (<< object) (jo self) apply-with-local-binding end)
+      (string "can not find message : ") string/print
+      (<< message) jo/print newline
+      (string "object/class-name : ") string/print
+      (<< object) object/class-name jo/print newline)
+
+    (defmacro ::
+      (note (:: message ...)
+            =>
+            (>> object) (jojo ...) apply
+            (<< object) (jo message) send)
+      read/jo (>> message)
+      generate-jo (>> object-jo)
+
+      (jo instruction/lit) here
+      (<< object-jo) here
+      (jo local-in) here
+
+      jojo (jo apply) here
+
+      (jo instruction/lit) here
+      (<< object-jo) here
+      (jo local-out) here
+
+      (jo instruction/lit) here
+      (<< message) here
+      (jo send) here)
+    #+end_src
+
 *** test
 
     #+begin_src jojo
-    (note
-      under <class-name> we have
-      method-record
-      [method-record alone for now])
-
-    (defvar person (list))
-
-    (note
-      object = <class-name> <data> cons)
+    (defvar person empty-class)
 
     (defun new/person
       (jo person) (int 13) cons)
 
-    (note
-      (defmethod person print-age
-        (<: self) car dot))
-
-    (defun just-like-defmethod
-      (jojo (<: self) car dot)
-      (jo print-age) cons
-      person swap cons
-      (var person) set)
+    (defmethod person print-age
+      (<< self) car dot)
 
     (run
-      just-like-defmethod
-      new/person (jo print-age) send)
+      new/person (:: print-age))
     #+end_src
