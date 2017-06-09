@@ -12,21 +12,21 @@
 *** line-mode
 
     #+begin_src jojo
-    (defun generate-get (: prefix-jo name-jo index -> [compile])
+    (defun generate-get (note prefix-jo name-jo index -> [compile])
       )
 
-    (defun generate-set (: prefix-jo name-jo index -> [compile])
+    (defun generate-set (note prefix-jo name-jo index -> [compile])
       )
 
-    (defun genstruct (: [io] -> [compile])
+    (defun genstruct (note [io] -> [compile])
       read/jo (> prefix)
       )
-    (: 就輸入流而言
+    (note 就輸入流而言
        只有讀完前半部分 才能讀後半部分
        而且一邊讀就要一邊編譯
        可否不邊讀邊編譯 ?)
 
-    (: 就編譯而言
+    (note 就編譯而言
        所需要的鏈表順序是 (a b c)
        而作爲 literal 鏈表
        它寫爲 {c b a}
@@ -42,20 +42,20 @@
     (defun point/set-y  set-car)
     (defun point/set-x  cdr set-car)
 
-    (defun make/point (: x-int y-int -> point)
+    (defun make/point (note x-int y-int -> point)
       swap
       null
       swap cons
       swap cons)
 
-    (defun make/point (: int int -> point)
+    (defun make/point (note int int -> point)
       null
       swap cons
       swap cons)
 
 
-    (: line {... char})
-    (: currently char is utf8-jo
+    (note line {... char})
+    (note currently char is utf8-jo
        to use jo is to waste jotable
        need better design for this)
 
@@ -71,12 +71,12 @@
     (defun line-mode/set-base       cdr set-car)
     (defun line-mode/set-line-list  cdr cdr set-car)
 
-    (defun line-mode/current-line (: line-mode -> line)
+    (defun line-mode/current-line (note line-mode -> line)
       dup line-mode/get-line-list
       swap line-mode/get-cursor point/get-y
       list/ref)
 
-    (defun make/line-mode (: {... line} -> line-mode)
+    (defun make/line-mode (note {... line} -> line-mode)
       null swap cons
       (int 0 0) make/point cons
       (int 0 0) make/point cons)
@@ -85,27 +85,27 @@
 *** buffer->string-list
 
     #+begin_src jojo
-    (defun buffer->string-list/cursor (: buffer cursor -> {... string})
+    (defun buffer->string-list/cursor (note buffer cursor -> {... string})
       (if dup get-byte (int 0) eq? ->
           drop null swap cons end)
       (if dup get-byte (int 10) eq? ->
-          (: buffer cursor) dup (int 0) swap set-byte (int 1) add dup
-          (: buffer cursor cursor) (recur)
-          (: buffer {... string}) swap cons end)
+          (note buffer cursor) dup (int 0) swap set-byte (int 1) add dup
+          (note buffer cursor cursor) (recur)
+          (note buffer {... string}) swap cons end)
       (else (int 1) add
             (loop)))
 
-    (defun buffer->string-list (: buffer -> {... string})
+    (defun buffer->string-list (note buffer -> {... string})
       dup buffer->string-list/cursor)
     #+end_src
 
 *** string->line
 
     #+begin_src jojo
-    (defun string/empty? (: string -> bool)
+    (defun string/empty? (note string -> bool)
       get-byte (int 0) eq?)
 
-    (: utf8
+    (note utf8
        1 0xxxxxxx
        2 110xxxxx 10xxxxxx
        3 1110xxxx 10xxxxxx 10xxxxxx
@@ -114,7 +114,7 @@
        6 1111110x 10xxxxxx 10xxxxxx 10xxxxxx 10xxxxxx 10xxxxxx)
 
 
-    (defun char->length (: char -> length)
+    (defun char->length (note char -> length)
       (if dup (bin 10000000) bit/and (bin 00000000) eq? -> drop (int 1) end)
       (if dup (bin 11100000) bit/and (bin 11000000) eq? -> drop (int 2) end)
       (if dup (bin 11110000) bit/and (bin 11100000) eq? -> drop (int 3) end)
@@ -123,17 +123,17 @@
       (if dup (bin 11111110) bit/and (bin 11111100) eq? -> drop (int 6) end)
       (else drop (int 0) end))
 
-    (defun next-char (: string -> rest-string char)
+    (defun next-char (note string -> rest-string char)
       dup get-byte char->length
       (if dup (int 0) eq? -> drop (int 1) add (loop))
       (else over over string/length->jo (int 2 1) xy-swap
             add swap end))
 
-    (defun string->char-list (: string -> {... char})
+    (defun string->char-list (note string -> {... char})
       (if dup string/empty? -> drop null end)
       next-char swap (recur) swap cons)
 
-    (defun string->line (: string -> line)
+    (defun string->line (note string -> line)
       string->char-list)
     #+end_src
 
@@ -142,22 +142,22 @@
     #+begin_src jojo
     (defvar line-mode/buffer-size (int 1024 1024) mul)
 
-    (defun parse/line-mode (: file -> line-mode)
-      (: file) line-mode/buffer-size allocate tuck
-      (: buffer file buffer) file/copy-to-buffer drop dup
-      (: buffer buffer) buffer->string-list
-      (: buffer {... string}) (jojo string->line) map
-      (: buffer {... line}) swap free
-      (: {... line}) make/line-mode)
+    (defun parse/line-mode (note file -> line-mode)
+      (note file) line-mode/buffer-size allocate tuck
+      (note buffer file buffer) file/copy-to-buffer drop dup
+      (note buffer buffer) buffer->string-list
+      (note buffer {... string}) (jojo string->line) map
+      (note buffer {... line}) swap free
+      (note {... line}) make/line-mode)
     #+end_src
 
 *** line-mode/print
 
     #+begin_src jojo
-    (defun line/print (: line -> [io])
+    (defun line/print (note line -> [io])
       (jojo jo/print) itr newline)
 
-    (defun line-mode/print (: line-mode -> [io])
+    (defun line-mode/print (note line-mode -> [io])
       line-mode/get-line-list (jojo line/print) itr)
     #+end_src
 
@@ -178,7 +178,7 @@
 *** line-mode/adjust-base
 
     #+begin_src jojo
-    (defun point/sub (: point point -> point)
+    (defun point/sub (note point point -> point)
       over over
       point/get-x swap point/get-x swap
       sub
@@ -187,7 +187,7 @@
       sub
       make/point)
 
-    (defun point/add (: point point -> point)
+    (defun point/add (note point point -> point)
       over over
       point/get-x swap point/get-x swap
       add
@@ -196,13 +196,13 @@
       add
       make/point)
 
-    (defun line-mode/relative-cursor (: line-mode -> point)
+    (defun line-mode/relative-cursor (note line-mode -> point)
       dup line-mode/get-base
       swap line-mode/get-cursor
       point/sub)
 
-    (defun line-mode/adjust-base (: line-mode ->)
-      (: to keep cursor in window)
+    (defun line-mode/adjust-base (note line-mode ->)
+      (note to keep cursor in window)
       dup line-mode/relative-cursor
       (if dup point/get-x
           x-border (int 1) sub
@@ -227,33 +227,33 @@
 *** line-mode/view
 
     #+begin_src jojo
-    (defun line/draw-by-base (: line x-nat -> [window])
+    (defun line/draw-by-base (note line x-nat -> [window])
       (if over list/length over lteq? -> drop drop (int 10) byte/draw end)
       list/drop (jojo jo->string string/draw) itr
       (int 10) byte/draw end)
 
-    (defun pre/line/draw-by-base (: {... line} point -> line x-nat)
+    (defun pre/line/draw-by-base (note {... line} point -> line x-nat)
       tuck point/get-y list/ref
       swap point/get-x)
 
-    (defun line-mode/view/content/loop (: {... line} point -> [window])
+    (defun line-mode/view/content/loop (note {... line} point -> [window])
       (if over over point/get-y swap list/length gteq? -> drop drop end)
       over over pre/line/draw-by-base line/draw-by-base
       dup point/get-y (int 1) add
       over point/set-y
       (loop))
 
-    (defun line-mode/view/content (: line-mode -> [window])
+    (defun line-mode/view/content (note line-mode -> [window])
       dup line-mode/get-line-list
       swap line-mode/get-base
       line-mode/view/content/loop)
 
-    (defun line-mode/view/cursor (: line-mode -> [window])
+    (defun line-mode/view/cursor (note line-mode -> [window])
       line-mode/get-cursor
       dup point/get-x set-x-cursor
       point/get-y set-y-cursor)
 
-    (defun line-mode/view (: line-mode -> [window])
+    (defun line-mode/view (note line-mode -> [window])
       dup line-mode/adjust-base
       dup line-mode/view/content
       line-mode/view/cursor
@@ -270,7 +270,7 @@
 *** key->byte
 
     #+begin_src jojo
-    (defun key->byte (: key -> byte)
+    (defun key->byte (note key -> byte)
       (case
         [(jo C-@) -> (hex 00)]
         [(jo C-A) -> (hex 01)]
@@ -406,7 +406,7 @@
 *** byte->key
 
     #+begin_src jojo
-    (defun byte->key (: byte -> key)
+    (defun byte->key (note byte -> key)
       (case
         [(hex 00) -> (jo C-@)]
         [(hex 01) -> (jo C-A)]
@@ -542,7 +542,7 @@
 *** receive/key
 
     #+begin_src jojo
-    (defun receive/key (: [io] -> key)
+    (defun receive/key (note [io] -> key)
       receive/byte byte->key
       (case
         [(jo unknow) -> (loop)]
@@ -553,17 +553,17 @@
 *** key/bind
 
     #+begin_src jojo
-    (defun keylist (:  -> )
+    (defun keylist (note  -> )
       )
 
-    (defun key/bind (: editing-function key ->)
+    (defun key/bind (note editing-function key ->)
       )
     #+end_src
 
 *** key->editing-function
 
     #+begin_src jojo
-    (defun key->editing-function (: ->))
+    (defun key->editing-function (note ->))
     #+end_src
 
 * >< undo-stack
@@ -572,5 +572,5 @@
     a record of editing functions help undo
 
   #+begin_src jojo
-  (: (defvar undo-stack ))
+  (note (defvar undo-stack ))
   #+end_src

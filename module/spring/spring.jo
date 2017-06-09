@@ -1,53 +1,89 @@
-(: line {{... char} counter})
-(: currently char is utf8-jo
+(defun generate-get (note prefix-jo name-jo index -> [compile])
+  )
+
+(defun generate-set (note prefix-jo name-jo index -> [compile])
+  )
+
+(defun genstruct (note [io] -> [compile])
+  read/jo (> prefix)
+  )
+(note 就輸入流而言
+   只有讀完前半部分 才能讀後半部分
+   而且一邊讀就要一邊編譯
+   可否不邊讀邊編譯 ?)
+
+(note 就編譯而言
+   所需要的鏈表順序是 (a b c)
+   而作爲 literal 鏈表
+   它寫爲 {c b a}
+   如此的反向
+   導致我不能以 sexp 爲語法擴展機制的基本數據結構)
+
+(genstruct point
+  x
+  y)
+
+(defun point/get-y  car)
+(defun point/get-x  cdr car)
+(defun point/set-y  set-car)
+(defun point/set-x  cdr set-car)
+
+(defun make/point (note x-int y-int -> point)
+  swap
+  null
+  swap cons
+  swap cons)
+
+(defun make/point (note int int -> point)
+  null
+  swap cons
+  swap cons)
+
+
+(note line {... char})
+(note currently char is utf8-jo
    to use jo is to waste jotable
    need better design for this)
 
-(defun line/counter (: line -> counter)
-  car)
+(genstruct line-mode
+  cursor
+  base
+  line-list)
 
-(defun line/current-char (: line -> char)
-  dup line/counter list/ref)
+(defun line-mode/get-cursor     car)
+(defun line-mode/get-base       cdr car)
+(defun line-mode/get-line-list  cdr cdr car)
+(defun line-mode/set-cursor     set-car)
+(defun line-mode/set-base       cdr set-car)
+(defun line-mode/set-line-list  cdr cdr set-car)
 
-(defun line/char-list (: line -> {... char})
-  cdr car)
+(defun line-mode/current-line (note line-mode -> line)
+  dup line-mode/get-line-list
+  swap line-mode/get-cursor point/get-y
+  list/ref)
 
-(defun make/line (: {... char} -> line)
+(defun make/line-mode (note {... line} -> line-mode)
   null swap cons
-  (int 0) cons)
+  (int 0 0) make/point cons
+  (int 0 0) make/point cons)
 
-(: line-mode {{... line} counter})
-
-(defun line-mode/counter (: line-mode -> counter)
-  car)
-
-(defun line-mode/current-line (: line-mode -> line)
-  dup line-mode/counter list/ref)
-
-(defun line-mode/line-list (: line-mode -> {... line})
-  cdr car)
-
-(defun make/line-mode (: {... line} -> line-mode)
-  null swap cons
-  (int 0) cons)
-
-(defun buffer->string-list/cursor (: buffer cursor -> {... string})
+(defun buffer->string-list/cursor (note buffer cursor -> {... string})
   (if dup get-byte (int 0) eq? ->
       drop null swap cons end)
   (if dup get-byte (int 10) eq? ->
-      (: buffer cursor) dup (int 0) swap set-byte (int 1) add dup
-      (: buffer cursor cursor) (recur)
-      (: buffer {... string}) swap cons end)
+      (note buffer cursor) dup (int 0) swap set-byte (int 1) add dup
+      (note buffer cursor cursor) (recur)
+      (note buffer {... string}) swap cons end)
   (else (int 1) add
         (loop)))
 
-(defun buffer->string-list (: buffer -> {... string})
+(defun buffer->string-list (note buffer -> {... string})
   dup buffer->string-list/cursor)
 
-(defun string/empty? (: string -> bool)
+(defun string/empty? (note string -> bool)
   get-byte (int 0) eq?)
 
-(: utf8
+(note utf8
    1 0xxxxxxx
    2 110xxxxx 10xxxxxx
    3 1110xxxx 10xxxxxx 10xxxxxx
@@ -56,7 +92,7 @@
    6 1111110x 10xxxxxx 10xxxxxx 10xxxxxx 10xxxxxx 10xxxxxx)
 
 
-(defun char->length (: char -> length)
+(defun char->length (note char -> length)
   (if dup (bin 10000000) bit/and (bin 00000000) eq? -> drop (int 1) end)
   (if dup (bin 11100000) bit/and (bin 11000000) eq? -> drop (int 2) end)
   (if dup (bin 11110000) bit/and (bin 11100000) eq? -> drop (int 3) end)
@@ -65,34 +101,34 @@
   (if dup (bin 11111110) bit/and (bin 11111100) eq? -> drop (int 6) end)
   (else drop (int 0) end))
 
-(defun next-char (: string -> rest-string char)
+(defun next-char (note string -> rest-string char)
   dup get-byte char->length
   (if dup (int 0) eq? -> drop (int 1) add (loop))
   (else over over string/length->jo (int 2 1) xy-swap
         add swap end))
 
-(defun string->char-list (: string -> {... char})
+(defun string->char-list (note string -> {... char})
   (if dup string/empty? -> drop null end)
   next-char swap (recur) swap cons)
 
-(defun string->line (: string -> line)
-  string->char-list make/line)
+(defun string->line (note string -> line)
+  string->char-list)
 
 (defvar line-mode/buffer-size (int 1024 1024) mul)
 
-(defun line-mode/parse (: file -> line-mode)
-  (: file) line-mode/buffer-size allocate tuck
-  (: buffer file buffer) file/copy-to-buffer drop dup
-  (: buffer buffer) buffer->string-list
-  (: buffer {... string}) (jojo string->line) map
-  (: buffer {... line}) swap free
-  (: {... line}) make/line-mode)
+(defun parse/line-mode (note file -> line-mode)
+  (note file) line-mode/buffer-size allocate tuck
+  (note buffer file buffer) file/copy-to-buffer drop dup
+  (note buffer buffer) buffer->string-list
+  (note buffer {... string}) (jojo string->line) map
+  (note buffer {... line}) swap free
+  (note {... line}) make/line-mode)
 
-(defun line/print (: line -> [io])
-  line/char-list (jojo jo/print) itr newline)
+(defun line/print (note line -> [io])
+  (jojo jo/print) itr newline)
 
-(defun line-mode/print (: line-mode -> [io])
-  line-mode/line-list (jojo line/print) itr)
+(defun line-mode/print (note line-mode -> [io])
+  line-mode/get-line-list (jojo line/print) itr)
 
 (test (string "cn中文")
       next-char dup jo/dot swap
@@ -102,9 +138,362 @@
       drop
       newline)
 
-(test (string "module.jo") line-mode/parse line-mode/print)
+(test (string "module.jo") parse/line-mode line-mode/print)
 
-(defun line-mode/view (: line-mode -> [window])
+(defun point/sub (note point point -> point)
+  over over
+  point/get-x swap point/get-x swap
+  sub
+  (int 2 1) xy-swap
+  point/get-y swap point/get-y swap
+  sub
+  make/point)
+
+(defun point/add (note point point -> point)
+  over over
+  point/get-x swap point/get-x swap
+  add
+  (int 2 1) xy-swap
+  point/get-y swap point/get-y swap
+  add
+  make/point)
+
+(defun line-mode/relative-cursor (note line-mode -> point)
+  dup line-mode/get-base
+  swap line-mode/get-cursor
+  point/sub)
+
+(defun line-mode/adjust-base (note line-mode ->)
+  (note to keep cursor in window)
+  dup line-mode/relative-cursor
+  (if dup point/get-x
+      x-border (int 1) sub
+      gt? ->
+      dup point/get-x
+      x-border (int 1) sub
+      sub (int 2 1) xy-swap)
+  (else (int 0) (int 2 1) xy-swap)
+  (if dup point/get-y
+      y-border (int 1) sub
+      gt? ->
+      dup point/get-y
+      y-border (int 1) sub
+      sub (int 2 1) xy-swap)
+  (else (int 0) (int 2 1) xy-swap)
+  drop
+  (int 2 1) xy-swap make/point
+  over line-mode/get-base point/add
+  swap line-mode/set-base)
+
+(defun line/draw-by-base (note line x-nat -> [window])
+  (if over list/length over lteq? -> drop drop (int 10) byte/draw end)
+  list/drop (jojo jo->string string/draw) itr
+  (int 10) byte/draw end)
+
+(defun pre/line/draw-by-base (note {... line} point -> line x-nat)
+  tuck point/get-y list/ref
+  swap point/get-x)
+
+(defun line-mode/view/content/loop (note {... line} point -> [window])
+  (if over over point/get-y swap list/length gteq? -> drop drop end)
+  over over pre/line/draw-by-base line/draw-by-base
+  dup point/get-y (int 1) add
+  over point/set-y
+  (loop))
+
+(defun line-mode/view/content (note line-mode -> [window])
+  dup line-mode/get-line-list
+  swap line-mode/get-base
+  line-mode/view/content/loop)
+
+(defun line-mode/view/cursor (note line-mode -> [window])
+  line-mode/get-cursor
+  dup point/get-x set-x-cursor
+  point/get-y set-y-cursor)
+
+(defun line-mode/view (note line-mode -> [window])
+  dup line-mode/adjust-base
+  dup line-mode/view/content
+  line-mode/view/cursor
+  text-ui/refresh)
+
+(defun key->byte (note key -> byte)
+  (case
+    [(jo C-@) -> (hex 00)]
+    [(jo C-A) -> (hex 01)]
+    [(jo C-B) -> (hex 02)]
+    [(jo C-C) -> (hex 03)]
+    [(jo C-D) -> (hex 04)]
+    [(jo C-E) -> (hex 05)]
+    [(jo C-F) -> (hex 06)]
+    [(jo C-G) -> (hex 07)]
+    [(jo C-H) -> (hex 08)]
+    [(jo C-I) -> (hex 09)]
+    [(jo C-J) -> (hex 0A)]
+    [(jo C-K) -> (hex 0B)]
+    [(jo C-L) -> (hex 0C)]
+    [(jo C-M) -> (hex 0D)]
+    [(jo C-N) -> (hex 0E)]
+    [(jo C-O) -> (hex 0F)]
+    [(jo C-P) -> (hex 10)]
+    [(jo C-Q) -> (hex 11)]
+    [(jo C-R) -> (hex 12)]
+    [(jo C-S) -> (hex 13)]
+    [(jo C-T) -> (hex 14)]
+    [(jo C-U) -> (hex 15)]
+    [(jo C-V) -> (hex 16)]
+    [(jo C-W) -> (hex 17)]
+    [(jo C-X) -> (hex 18)]
+    [(jo C-Y) -> (hex 19)]
+    [(jo C-Z) -> (hex 1A)]
+    [(jo C-square-bar) -> (hex 1B)]
+    [(jo C-backslash) -> (hex 1C)]
+    [(jo C-square-ket) -> (hex 1D)]
+    [(jo C-^) -> (hex 1E)]
+    [(jo C-_) -> (hex 1F)]
+    [(jo C-?) -> (hex 7F)]
+    [(jo whitespace) -> (hex 20)]
+    [(jo !) -> (hex 21)]
+    [(jo double-quote) -> (hex 22)]
+    [(jo #) -> (hex 23)]
+    [(jo $) -> (hex 24)]
+    [(jo %) -> (hex 25)]
+    [(jo &) -> (hex 26)]
+    [(jo ') -> (hex 27)]
+    [round-bar -> (hex 28)]
+    [round-ket -> (hex 29)]
+    [(jo *) -> (hex 2A)]
+    [(jo +) -> (hex 2B)]
+    [(jo ,) -> (hex 2C)]
+    [(jo -) -> (hex 2D)]
+    [(jo .) -> (hex 2E)]
+    [(jo /) -> (hex 2F)]
+    [(jo 0) -> (hex 30)]
+    [(jo 1) -> (hex 31)]
+    [(jo 2) -> (hex 32)]
+    [(jo 3) -> (hex 33)]
+    [(jo 4) -> (hex 34)]
+    [(jo 5) -> (hex 35)]
+    [(jo 6) -> (hex 36)]
+    [(jo 7) -> (hex 37)]
+    [(jo 8) -> (hex 38)]
+    [(jo 9) -> (hex 39)]
+    [(jo :) -> (hex 3A)]
+    [(jo ;) -> (hex 3B)]
+    [(jo <) -> (hex 3C)]
+    [(jo =) -> (hex 3D)]
+    [(jo >) -> (hex 3E)]
+    [(jo ?) -> (hex 3F)]
+    [(jo @) -> (hex 40)]
+    [(jo A) -> (hex 41)]
+    [(jo B) -> (hex 42)]
+    [(jo C) -> (hex 43)]
+    [(jo D) -> (hex 44)]
+    [(jo E) -> (hex 45)]
+    [(jo F) -> (hex 46)]
+    [(jo G) -> (hex 47)]
+    [(jo H) -> (hex 48)]
+    [(jo I) -> (hex 49)]
+    [(jo J) -> (hex 4A)]
+    [(jo K) -> (hex 4B)]
+    [(jo L) -> (hex 4C)]
+    [(jo M) -> (hex 4D)]
+    [(jo N) -> (hex 4E)]
+    [(jo O) -> (hex 4F)]
+    [(jo P) -> (hex 50)]
+    [(jo Q) -> (hex 51)]
+    [(jo R) -> (hex 52)]
+    [(jo S) -> (hex 53)]
+    [(jo T) -> (hex 54)]
+    [(jo U) -> (hex 55)]
+    [(jo V) -> (hex 56)]
+    [(jo W) -> (hex 57)]
+    [(jo X) -> (hex 58)]
+    [(jo Y) -> (hex 59)]
+    [(jo Z) -> (hex 5A)]
+    [square-bar -> (hex 5B)]
+    [(jo backslash) -> (hex 5C)]
+    [square-ket -> (hex 5D)]
+    [(jo ^) -> (hex 5E)]
+    [(jo _) -> (hex 5F)]
+    [(jo `) -> (hex 60)]
+    [(jo a) -> (hex 61)]
+    [(jo b) -> (hex 62)]
+    [(jo c) -> (hex 63)]
+    [(jo d) -> (hex 64)]
+    [(jo e) -> (hex 65)]
+    [(jo f) -> (hex 66)]
+    [(jo g) -> (hex 67)]
+    [(jo h) -> (hex 68)]
+    [(jo i) -> (hex 69)]
+    [(jo j) -> (hex 6A)]
+    [(jo k) -> (hex 6B)]
+    [(jo l) -> (hex 6C)]
+    [(jo m) -> (hex 6D)]
+    [(jo n) -> (hex 6E)]
+    [(jo o) -> (hex 6F)]
+    [(jo p) -> (hex 70)]
+    [(jo q) -> (hex 71)]
+    [(jo r) -> (hex 72)]
+    [(jo s) -> (hex 73)]
+    [(jo t) -> (hex 74)]
+    [(jo u) -> (hex 75)]
+    [(jo v) -> (hex 76)]
+    [(jo w) -> (hex 77)]
+    [(jo x) -> (hex 78)]
+    [(jo y) -> (hex 79)]
+    [(jo z) -> (hex 7A)]
+    [flower-bar -> (hex 7B)]
+    [(jo |) -> (hex 7C)]
+    [flower-ket -> (hex 7D)]
+    [(jo ~) -> (hex 7E)])
+  drop (hex 00))
+
+(defun byte->key (note byte -> key)
+  (case
+    [(hex 00) -> (jo C-@)]
+    [(hex 01) -> (jo C-A)]
+    [(hex 02) -> (jo C-B)]
+    [(hex 03) -> (jo C-C)]
+    [(hex 04) -> (jo C-D)]
+    [(hex 05) -> (jo C-E)]
+    [(hex 06) -> (jo C-F)]
+    [(hex 07) -> (jo C-G)]
+    [(hex 08) -> (jo C-H)]
+    [(hex 09) -> (jo C-I)]
+    [(hex 0A) -> (jo C-J)]
+    [(hex 0B) -> (jo C-K)]
+    [(hex 0C) -> (jo C-L)]
+    [(hex 0D) -> (jo C-M)]
+    [(hex 0E) -> (jo C-N)]
+    [(hex 0F) -> (jo C-O)]
+    [(hex 10) -> (jo C-P)]
+    [(hex 11) -> (jo C-Q)]
+    [(hex 12) -> (jo C-R)]
+    [(hex 13) -> (jo C-S)]
+    [(hex 14) -> (jo C-T)]
+    [(hex 15) -> (jo C-U)]
+    [(hex 16) -> (jo C-V)]
+    [(hex 17) -> (jo C-W)]
+    [(hex 18) -> (jo C-X)]
+    [(hex 19) -> (jo C-Y)]
+    [(hex 1A) -> (jo C-Z)]
+    [(hex 1B) -> (jo C-square-bar)]
+    [(hex 1C) -> (jo C-backslash)]
+    [(hex 1D) -> (jo C-square-ket)]
+    [(hex 1E) -> (jo C-^)]
+    [(hex 1F) -> (jo C-_)]
+    [(hex 7F) -> (jo C-?)]
+    [(hex 20) -> (jo whitespace)]
+    [(hex 21) -> (jo !)]
+    [(hex 22) -> (jo double-quote)]
+    [(hex 23) -> (jo #)]
+    [(hex 24) -> (jo $)]
+    [(hex 25) -> (jo %)]
+    [(hex 26) -> (jo &)]
+    [(hex 27) -> (jo ')]
+    [(hex 28) -> round-bar]
+    [(hex 29) -> round-ket]
+    [(hex 2A) -> (jo *)]
+    [(hex 2B) -> (jo +)]
+    [(hex 2C) -> (jo ,)]
+    [(hex 2D) -> (jo -)]
+    [(hex 2E) -> (jo .)]
+    [(hex 2F) -> (jo /)]
+    [(hex 30) -> (jo 0)]
+    [(hex 31) -> (jo 1)]
+    [(hex 32) -> (jo 2)]
+    [(hex 33) -> (jo 3)]
+    [(hex 34) -> (jo 4)]
+    [(hex 35) -> (jo 5)]
+    [(hex 36) -> (jo 6)]
+    [(hex 37) -> (jo 7)]
+    [(hex 38) -> (jo 8)]
+    [(hex 39) -> (jo 9)]
+    [(hex 3A) -> (jo :)]
+    [(hex 3B) -> (jo ;)]
+    [(hex 3C) -> (jo <)]
+    [(hex 3D) -> (jo =)]
+    [(hex 3E) -> (jo >)]
+    [(hex 3F) -> (jo ?)]
+    [(hex 40) -> (jo @)]
+    [(hex 41) -> (jo A)]
+    [(hex 42) -> (jo B)]
+    [(hex 43) -> (jo C)]
+    [(hex 44) -> (jo D)]
+    [(hex 45) -> (jo E)]
+    [(hex 46) -> (jo F)]
+    [(hex 47) -> (jo G)]
+    [(hex 48) -> (jo H)]
+    [(hex 49) -> (jo I)]
+    [(hex 4A) -> (jo J)]
+    [(hex 4B) -> (jo K)]
+    [(hex 4C) -> (jo L)]
+    [(hex 4D) -> (jo M)]
+    [(hex 4E) -> (jo N)]
+    [(hex 4F) -> (jo O)]
+    [(hex 50) -> (jo P)]
+    [(hex 51) -> (jo Q)]
+    [(hex 52) -> (jo R)]
+    [(hex 53) -> (jo S)]
+    [(hex 54) -> (jo T)]
+    [(hex 55) -> (jo U)]
+    [(hex 56) -> (jo V)]
+    [(hex 57) -> (jo W)]
+    [(hex 58) -> (jo X)]
+    [(hex 59) -> (jo Y)]
+    [(hex 5A) -> (jo Z)]
+    [(hex 5B) -> square-bar]
+    [(hex 5C) -> (jo backslash)]
+    [(hex 5D) -> square-ket]
+    [(hex 5E) -> (jo ^)]
+    [(hex 5F) -> (jo _)]
+    [(hex 60) -> (jo `)]
+    [(hex 61) -> (jo a)]
+    [(hex 62) -> (jo b)]
+    [(hex 63) -> (jo c)]
+    [(hex 64) -> (jo d)]
+    [(hex 65) -> (jo e)]
+    [(hex 66) -> (jo f)]
+    [(hex 67) -> (jo g)]
+    [(hex 68) -> (jo h)]
+    [(hex 69) -> (jo i)]
+    [(hex 6A) -> (jo j)]
+    [(hex 6B) -> (jo k)]
+    [(hex 6C) -> (jo l)]
+    [(hex 6D) -> (jo m)]
+    [(hex 6E) -> (jo n)]
+    [(hex 6F) -> (jo o)]
+    [(hex 70) -> (jo p)]
+    [(hex 71) -> (jo q)]
+    [(hex 72) -> (jo r)]
+    [(hex 73) -> (jo s)]
+    [(hex 74) -> (jo t)]
+    [(hex 75) -> (jo u)]
+    [(hex 76) -> (jo v)]
+    [(hex 77) -> (jo w)]
+    [(hex 78) -> (jo x)]
+    [(hex 79) -> (jo y)]
+    [(hex 7A) -> (jo z)]
+    [(hex 7B) -> flower-bar]
+    [(hex 7C) -> (jo |)]
+    [(hex 7D) -> flower-ket]
+    [(hex 7E) -> (jo ~)])
+  drop (jo unknow))
+
+(defun receive/key (note [io] -> key)
+  receive/byte byte->key
+  (case
+    [(jo unknow) -> (loop)]
+    [(jo C-@) -> (loop)]
+    [(jo C-backslash) -> (loop)]))
+
+(defun keylist (note  -> )
   )
 
-(: (defvar undo-stack ))
+(defun key/bind (note editing-function key ->)
+  )
+
+(defun key->editing-function (note ->))
+
+(note (defvar undo-stack ))

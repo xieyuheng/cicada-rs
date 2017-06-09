@@ -1,21 +1,21 @@
-(defun compile-with/jump-if-false (: * -> *)
+(defun compile-with/jump-if-false (note * -> *)
   (> j)
   (jo instruction/jump-if-false) here
   compiling-stack/tos (> place) compiling-stack/inc
   (< j) apply
   compiling-stack/tos (< place) set)
 
-(defun case/one (: [io] back-place -> [compile])
+(defun case/one (note [io] back-place -> [compile])
   (jo dup) here
   (jo ->) compile-jojo/until-meet-jo
   (jo eq?) here
   (jojo (jo drop) here
         square-ket compile-jojo/until-meet-jo
         (jo instruction/jump) here
-        (: back-place) here)
+        (note back-place) here)
   compile-with/jump-if-false)
 
-(: (defun case/one (: [io] back-place -> [compile])
+(note (defun case/one (note [io] back-place -> [compile])
      (> back-place)
      (jo dup) here
      (jo ->) compile-jojo/until-meet-jo
@@ -28,14 +28,14 @@
      (< back-place) here
      compiling-stack/tos (< place) set))
 
-(defun case/loop (: [io] back-place -> [compile])
+(defun case/loop (note [io] back-place -> [compile])
   read/jo
   (if dup round-ket eq? then drop drop end)
   (if dup round-bar eq? then drop read/jo key-jo/apply (loop))
   (if dup square-bar eq? then drop dup case/one (loop))
   here (loop))
 
-(defun case (: [io] -> [compile])
+(defun case (note [io] -> [compile])
   (jo instruction/jump) here
   compiling-stack/tos (> place0) compiling-stack/inc
   compiling-stack/tos (> back-place)
@@ -45,11 +45,11 @@
   (< back-place) case/loop
   compiling-stack/tos (< place1) set)
 
-(: (test
+(note (test
      (jo a)
      (case
        [(jo a) -> (string "a") string/print newline]
-       (: comment)
+       (note comment)
        (string "between a & b") string/print newline
        [(jo b) -> (string "b") string/print newline]))
 
