@@ -3,16 +3,51 @@
 
 * note
 
-  - three level of languages :
-    baredata -> list -> object
+*** intro
 
-  - oo like smalltalk
-    re-implement everything by oo
-    to see where it can take us
+    - three level of languages :
+      baredata -> list -> object
 
-  - oo 的設計需要考慮到 c
-    c 中的數據結構和函數 要能夠方便地 轉化成 jojo 的 class 與 method
-    同時又要知道 jojo 所使用的主要數據結構是鏈表
+*** oo
+
+    - oo like smalltalk
+      re-implement everything by oo
+      to see where it can take us
+
+    - oo 的設計需要考慮到 c
+      c 中的數據結構和函數 要能夠方便地 轉化成 jojo 的 class 與 method
+      同時又要知道 jojo 所使用的主要數據結構是鏈表
+
+*** module system
+
+***** note
+
+      - 以 module 爲單位加載別人寫的函數所在的文件
+        用 module_record 來記錄已經加載過的 module
+        加載過的就不重複加載
+
+***** 命名
+
+      - 需要避免命名衝突
+
+      - 每個函數有實際的唯一的名字
+        module/name
+
+      - 在每個 module 加載過程中
+        ><
+
+***** 版本
+
+      - 需要控制版本
+        module/name
+
+      - ><
+
+***** >< re-export
+
+      - module 正是用 interface function name 來編碼的
+        所以可以設計類似 subtype 的機制
+        (考慮 ocaml)
 
 * flag
 
@@ -461,6 +496,7 @@
             (jojo ...) (jo <method-name>) new/method
             <class-name> swap cons
             (var <class-name>) set)
+
       read/jo (>> class-name)
       read/jo (>> method-name)
 
@@ -510,6 +546,7 @@
             =>
             (>> object) (jojo ...) apply
             (<< object) (jo message) send)
+
       read/jo (>> message)
       generate-jo (>> object-jo)
 
