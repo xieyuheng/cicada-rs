@@ -4,19 +4,13 @@
 * todo
 
   - 'jo/apply' as dynamic dispatcher
+    with dynamicly typed jo, the concept of 'instruction' might be better.
 
-  - implement gc in c code
-
-  - 'end' should be (end)
-
-  - fix p_generate_jo
+  - should 'end' be (end) ?
 
   - module system after oo in core
 
   - understand the effect of compile time function i.e. macro
-
-  - function generator example :
-    genstruct
 
   - [test] assert
 
@@ -2161,11 +2155,16 @@
     }
     #+end_src
 
-*** >< p_generate_jo
+*** p_generate_jo
 
     #+begin_src c
+    cell p_generate_jo_counter = 0;
     void p_generate_jo() {
-      as_push(str2jo("generated-jo"));
+      string s = as_pop();
+      char buffer [1024];
+      sprintf(buffer, "%s:generated-jo#%ld", jo2str(s), p_generate_jo_counter);
+      p_generate_jo_counter++;
+      as_push(str2jo(buffer));
     }
     #+end_src
 

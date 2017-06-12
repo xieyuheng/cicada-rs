@@ -1487,8 +1487,13 @@ void p_jo_dot() {
   printf("%s ", jo2str(as_pop()));
 }
 
+cell p_generate_jo_counter = 0;
 void p_generate_jo() {
-  as_push(str2jo("generated-jo"));
+  string s = as_pop();
+  char buffer [1024];
+  sprintf(buffer, "%s:generated-jo#%ld", jo2str(s), p_generate_jo_counter);
+  p_generate_jo_counter++;
+  as_push(str2jo(buffer));
 }
 
 void export_jo() {
