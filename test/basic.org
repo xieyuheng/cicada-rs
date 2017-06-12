@@ -1,16 +1,20 @@
+#+PROPERTY: tangle basic.jo
 #+title: example code of jojo
 
 * testing-flag
 
   #+begin_src jojo
   (run testing-flag/on)
+
+  (run (int 1 2 3) dot dot dot)
   #+end_src
 
 * define function
 
   #+begin_src jojo
-  (defun square (note int int -> int)
-    dup mul end)
+  (def square
+    (jojo (note int int -> int)
+      dup mul end))
 
   (test (int 11) square dot)
   #+end_src
@@ -31,9 +35,10 @@
 * receive function
 
   #+begin_src jojo
-  (defun factorial (note int -> int)
-    (if dup (int 1) lteq? then drop (int 1) end)
-    dup (int 1) sub (recur) mul end)
+  (def factorial
+    (jojo (note int -> int)
+      (if dup (int 1) lteq? then drop (int 1) end)
+      dup (int 1) sub (recur) mul end))
 
   (test (int 0) factorial dot
         (int 1) factorial dot
@@ -76,16 +81,18 @@
   (test (string "PATH") var-string->env-string
         string/print newline)
 
-  (defun command-line/print-argument/loop (note index -> [io])
-    (if dup argument-counter lt? then
-        dup index->argument-string string/print
-        newline
-        (int 1) add
-        (loop))
-    (else drop end))
+  (def command-line/print-argument/loop
+    (jojo (note index -> [io])
+      (if dup argument-counter lt? then
+          dup index->argument-string string/print
+          newline
+          (int 1) add
+          (loop))
+      drop end))
 
-  (defun command-line/print-argument (note -> [io])
-    (int 0) command-line/print-argument/loop)
+  (def command-line/print-argument
+    (jojo (note -> [io])
+      (int 0) command-line/print-argument/loop))
 
   (test command-line/print-argument)
   #+end_src
@@ -106,7 +113,7 @@
 * var
 
   #+begin_src jojo
-  (defvar var1 (int 666) (int 666) add)
+  (def var1 (int 666) (int 666) add (jo <var>))
   (test var1 dot)
   #+end_src
 
@@ -119,9 +126,7 @@
 * report
 
   #+begin_src jojo
-  (note (test defprim/report
-           defun/report
-           defvar/report))
+  (note (test def/report))
   #+end_src
 
 * local
@@ -133,17 +138,19 @@
     (<< b) dot
     (<< c) dot)
 
-  (defun local-test/0
-    (int 1 2 3) (>> a b c)
-    (<< a) dot
-    (<< b) dot
-    (<< c) dot)
+  (def local-test/0
+    (jojo (note)
+      (int 1 2 3) (>> a b c)
+      (<< a) dot
+      (<< b) dot
+      (<< c) dot))
 
-  (defun local-test
-    (int 1 2 3) (>> a b c)
-    (<< a) dot local-test/0 newline
-    (<< b) dot local-test/0 newline
-    (<< c) dot local-test/0 newline)
+  (def local-test
+    (jojo (note)
+      (int 1 2 3) (>> a b c)
+      (<< a) dot local-test/0 newline
+      (<< b) dot local-test/0 newline
+      (<< c) dot local-test/0 newline))
 
   (run local-test)
   #+end_src

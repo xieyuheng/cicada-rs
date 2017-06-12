@@ -13,7 +13,7 @@
 typedef enum { false, true } bool;
 
 typedef intptr_t cell;
-cell cell_size = sizeof(cell);
+#define cell_size (sizeof(cell))
 
 cell max(cell a, cell b) {
   if (a < b) {
@@ -135,11 +135,7 @@ typedef struct {
   jo* array;
 } jojo;
 
-typedef union {
-  cell cell;
-  primitive primitive;
-  jojo jojo;
-} bind;
+typedef cell bind;
 
 typedef struct {
   cell index;
@@ -157,7 +153,7 @@ jotable_entry proto_jotable_entry(cell index) {
     .index = index,
     .key = 0,
     .type = str2jo("none"),
-    .value.cell = 0,
+    .value = 0,
     .orbit_length = 0,
     .orbiton = 0
   };
@@ -276,23 +272,28 @@ cell jotable_search(string key) {
 
 string jo2str (cell index);
 
+// void jotable_entry_print(jotable_entry entry) {
+//   printf("%s : ", jo2str(entry.type));
+//   if (entry.type == str2jo("<var>")) {
+//     printf("%ld", entry.value.cell);
+//   }
+//   else if (entry.type == str2jo("<prim>")) {
+//     printf("%ld", entry.value.primitive);
+//   }
+//   else if (entry.type == str2jo("<jojo>")) {
+//     printf("%ld ", entry.value.jojo.size);
+//     printf("[ ");
+//     cell i;
+//     for (i=0; i < entry.value.jojo.size; i=i+1) {
+//       printf("%ld ", entry.value.jojo.array[i]);
+//     }
+//     printf("]");
+//   }
+// }
+
 void jotable_entry_print(jotable_entry entry) {
   printf("%s : ", jo2str(entry.type));
-  if (entry.type == str2jo("variable")) {
-    printf("%ld", entry.value.cell);
-  }
-  else if (entry.type == str2jo("primitive")) {
-    printf("%ld", entry.value.primitive);
-  }
-  else if (entry.type == str2jo("function")) {
-    printf("%ld ", entry.value.jojo.size);
-    printf("[ ");
-    cell i;
-    for (i=0; i < entry.value.jojo.size; i=i+1) {
-      printf("%ld ", entry.value.jojo.array[i]);
-    }
-    printf("]");
-  }
+  printf("%ld", entry.value);
 }
 
 void jotable_report_orbit(cell index, cell counter) {
@@ -411,26 +412,13 @@ void here(cell n) {
   compiling_stack_push(pointer + 1);
 }
 
-void jotable_set_cell(cell index, cell cell) {
-  jotable[index].type = str2jo("variable");
-  jotable[index].value.cell = cell;
+void jotable_set_type_value(cell index, jo type, cell value) {
+  jotable[index].type = type;
+  jotable[index].value = value;
 }
 
-void jotable_set_primitive(cell index, primitive primitive) {
-  jotable[index].type = str2jo("primitive");
-  jotable[index].value.primitive = primitive;
-}
-
-cell jotable_get_cell(cell index) {
-  return jotable[index].value.cell;
-}
-
-primitive jotable_get_primitive(cell index) {
-  return jotable[index].value.primitive;
-}
-
-jojo jotable_get_jojo(cell index) {
-  return jotable[index].value.jojo;
+cell jotable_get_value(cell index) {
+  return jotable[index].value;
 }
 
 void jotable_test() {
@@ -464,23 +452,27 @@ void jotable_test() {
   str2jo("testtesttesttestkey3");
   str2jo("testtesttesttestkey4");
 
-  jotable_set_cell(str2jo("k1"), 1);
+  jotable_set_type_value(str2jo("k1"), str2jo("<var>"), 1);
   jotable_report();
 
-  jotable_set_cell(str2jo("k1"), 0);
+  jotable_set_type_value(str2jo("k1"), str2jo("<var>"), 0);
   jotable_report();
 
   // jotable_print();
 }
 
-jo defprim_record[64 * 1024];
-cell defprim_record_counter = 0;
+jo def_record[64 * 1024];
+cell def_record_counter = 0;
 
-void defprim_report() {
-  printf("- defprim_report // counter : %ld\n", defprim_record_counter);
+void p_def_record() {
+  as_push(def_record);
+}
+
+void def_report() {
+  printf("- def_report // counter : %ld\n", def_record_counter);
   cell i = 0;
-  while (i < defprim_record_counter) {
-    printf("  %s\n", jo2str(defprim_record[i]));
+  while (i < def_record_counter) {
+    printf("  %s\n", jo2str(def_record[i]));
     i++;
   }
   printf("\n");
@@ -488,20 +480,19 @@ void defprim_report() {
 
 void k_ignore();
 bool used_jo_p(jo index);
-jo jo_to_jo_in_module(jo alias_jo);
 
 void defprim(string str, primitive fun) {
-  jo index = jo_to_jo_in_module(str2jo(str));
+  jo index = str2jo(str);
   if (used_jo_p(index)) {
     printf("- defprim can not re-define : %s\n", jo2str(index));
     printf("  it already defined as : %s\n", jo2str(jotable[index].type));
     k_ignore();
     return;
   }
-  defprim_record[defprim_record_counter] = index;
-  defprim_record_counter++;
-  defprim_record[defprim_record_counter] = 0;
-  jotable_set_primitive(index, fun);
+  def_record[def_record_counter] = index;
+  def_record_counter++;
+  def_record[def_record_counter] = 0;
+  jotable_set_type_value(index, str2jo("<prim>"), fun);
 }
 
 typedef cell argument_stack[1024 * 4];
@@ -587,16 +578,16 @@ void jo_apply_with_local_pointer(jo jo, cell local_pointer) {
     return;
   }
   cell jo_type = jotable[jo].type;
-  if (jo_type == str2jo("primitive")) {
-    primitive primitive = jotable_get_primitive(jo);
+  if (jo_type == str2jo("<prim>")) {
+    primitive primitive = jotable_get_value(jo);
     primitive();
   }
-  else if (jo_type == str2jo("function")) {
-    jojo jojo = jotable_get_jojo(jo);
-    rs_make_point(jojo.array, local_pointer);
+  else if (jo_type == str2jo("<jojo>")) {
+    cell jojo = jotable_get_value(jo);
+    rs_make_point(jojo, local_pointer);
   }
-  else if (jo_type == str2jo("variable")) {
-    cell cell = jotable_get_cell(jo);
+  else if (jo_type == str2jo("<var>")) {
+    cell cell = jotable_get_value(jo);
     as_push(cell);
   }
 }
@@ -607,16 +598,16 @@ void jo_apply(jo jo) {
     return;
   }
   cell jo_type = jotable[jo].type;
-  if (jo_type == str2jo("primitive")) {
-    primitive primitive = jotable_get_primitive(jo);
+  if (jo_type == str2jo("<prim>")) {
+    primitive primitive = jotable_get_value(jo);
     primitive();
   }
-  else if (jo_type == str2jo("function")) {
-    jojo jojo = jotable_get_jojo(jo);
-    rs_new_point(jojo.array);
+  else if (jo_type == str2jo("<jojo>")) {
+    cell jojo = jotable_get_value(jo);
+    rs_new_point(jojo);
   }
-  else if (jo_type == str2jo("variable")) {
-    cell cell = jotable_get_cell(jo);
+  else if (jo_type == str2jo("<var>")) {
+    cell cell = jotable_get_value(jo);
     as_push(cell);
   }
 }
@@ -653,17 +644,17 @@ void eval() {
 
 void eval_jo(jo jo) {
   cell jo_type = jotable[jo].type;
-  if (jo_type == str2jo("primitive")) {
-    primitive primitive = jotable_get_primitive(jo);
+  if (jo_type == str2jo("<prim>")) {
+    primitive primitive = jotable_get_value(jo);
     primitive();
   }
-  else if (jo_type == str2jo("function")) {
-    jojo jojo = jotable_get_jojo(jo);
-    rs_new_point(jojo.array);
+  else if (jo_type == str2jo("<jojo>")) {
+    cell jojo = jotable_get_value(jo);
+    rs_new_point(jojo);
     eval();
   }
-  else if (jo_type == str2jo("variable")) {
-    cell cell = jotable_get_cell(jo);
+  else if (jo_type == str2jo("<var>")) {
+    cell cell = jotable_get_value(jo);
     as_push(cell);
   }
 }
@@ -677,11 +668,6 @@ void eval_key_jo(jo jo) {
     return;
   }
   eval_jo(jo);
-}
-
-void eval_jojo(jo* array) {
-  rs_new_point(array);
-  eval();
 }
 
 void cell_copy(cell length, cell* from, cell* to) {
@@ -830,11 +816,9 @@ void i_jump_if_false() {
 void i_jump() {
   // ([rs] -> [rs])
   return_point rp = rs_tos();
-  rs_inc();
   jo* a = *(cell*)rp.array;
   return_point rp1 = rs_pop();
   rs_make_point(a, rp1.local_pointer);
-
 }
 
 void export_control() {
@@ -1139,17 +1123,22 @@ void p_free () {
   free(as_pop());
 }
 
-void k_var() {
+void k_address() {
   // ([io] -> [compile])
   here(str2jo("instruction/lit"));
   jo index = read_jo();
-  here(&(jotable[index].value.cell));
+  here(&(jotable[index].value));
   k_ignore();
+}
+
+void k_var() {
+
 }
 
 void p_jo_as_var() {
   jo jo = as_pop();
-  as_push(&(jotable[jo].value.cell));
+  // as_push(&(jotable[jo].value.cell));
+  as_push(&(jotable[jo].value));
 }
 
 void p_set() {
@@ -1181,6 +1170,7 @@ void p_get_byte() {
 void export_memory() {
   defprim("allocate", p_allocate);
   defprim("free", p_free);
+  defprim("&", k_address);
   defprim("var", k_var);
   defprim("jo-as-var", p_jo_as_var);
   defprim("set", p_set);
@@ -1707,401 +1697,16 @@ void export_system() {
   defprim("var-string->env-string", p_var_string_to_env_string);
 }
 
-typedef struct {
-  jo name;
-  jo dir;
-  jo* export;
-} module;
-
-typedef module module_record_t[1024];
-
-module_record_t module_record;
-cell module_record_base = 0;
-cell module_record_pointer = 0;
-
-void module_record_push(module value) {
-  module_record[module_record_pointer] = value;
-  module_record_pointer++;
-}
-
-bool module_record_empty_p() {
-  return module_record_pointer == module_record_base;
-}
-
-bool module_record_find(jo name) {
-  cell i = 0;
-  while (i < module_record_pointer) {
-    if (name == module_record[i].name) {
-      return true;
-    }
-    i++;
-  }
-  return false;
-}
-
-jo* module_record_get_export(jo name) {
-  // 0 -- not found
-  cell i = module_record_base;
-  while (i < module_record_pointer) {
-    if (name == module_record[i].name) {
-      return module_record[i].export;
-    }
-    i++;
-  }
-  return false;
-}
-
-void module_record_set_export(jo name, jo* export) {
-  cell i = module_record_base;
-  while (i < module_record_pointer) {
-    if (name == module_record[i].name) {
-      module_record[i].export = export;
-      return;
-    }
-    i++;
-  }
-  printf("- module_record_set_export fail\n");
-  printf("  can not find module: %s\n", jo2str(name));
-}
-
-typedef module module_stack_t[128];
-
-module_stack_t module_stack;
-cell module_stack_base = 0;
-cell module_stack_pointer = 0;
-
-void module_stack_push(module value) {
-  module_stack[module_stack_pointer] = value;
-  module_stack_pointer++;
-}
-
-bool module_stack_empty_p() {
-  return module_stack_pointer == module_stack_base;
-}
-
-module module_stack_pop() {
-  module_stack_pointer--;
-  return module_stack[module_stack_pointer];
-}
-
-module module_stack_tos() {
-  return module_stack[module_stack_pointer - 1];
-}
-
-void load_file(string path) {
-  // [reading_stack]
-  FILE* fp = fopen(path, "r");
-  if(!fp) {
-    perror("File opening failed");
-    printf("load_file fail : %s\n", path);
-    return;
-  }
-  char* file_buffer = malloc(PATH_MAX);
-  char* dir_buffer = malloc(PATH_MAX);
-  realpath(path, file_buffer);
-  realpath(path, dir_buffer);
-  char* dir_addr = dirname(dir_buffer);
-  reading_point rp = {
-    .file_handle = fp,
-    .file = file_buffer,
-    .dir = dir_addr
-  };
-  // { printf("- load_file\n");
-  //   printf("  fp: %d\n", fp);
-  //   printf("  file: %s\n", file_buffer);
-  //   printf("  dir_buffer: %s #%ld\n", dir_buffer, dir_buffer);
-  //   printf("  dir_addr: %s #%ld\n", dir_addr, dir_addr);
-  // }
-  reading_stack_push(rp);
-}
-
-void p_load_file() {
-  // (string -> [reading_stack])
-  load_file(as_pop());
-}
-
-void k_include_one() {
-  // ([io] -> *)
-  char buffer[PATH_MAX];
-  cell cursor = 0;
-  while (true) {
-    char c = read_byte();
-    if (c == '"') {
-      buffer[cursor] = 0;
-      cursor++;
-      break;
-    }
-    else {
-      buffer[cursor] = c;
-      cursor++;
-    }
-  }
-  char buffer1[PATH_MAX];
-  real_reading_path(buffer, buffer1);
-  load_file(buffer1);
-}
-
-void k_include() {
-  // ([io] -> [compile])
-  while (true) {
-    jo s = read_jo();
-    if (s == str2jo(")")) {
-      return;
-    }
-    else if (s == str2jo("(")) {
-      eval_key_jo(read_jo());
-    }
-    else if (s == str2jo("\"")) {
-      k_include_one();
-    }
-    else {
-      // do nothing
-    }
-  }
-}
-
-string user_module_dir = "/.jojo/module/";
-string system_module_dir = "";
-
-jo find_module_file_jo(jo name) {
-  // return 0 -- not found
-  char path[4 * 1024];
-  path[0] = 0;
-  strcat(path, getenv("HOME"));
-  strcat(path, user_module_dir);
-  strcat(path, jo2str(name));
-  strcat(path, "/");
-  strcat(path, "module.jo");
-  if (file_readable_p(path)) {
-    return str2jo(path);
-  }
-  else {
-    return 0;
-  }
-}
-
-jo find_module_dir_jo(jo name) {
-  // return 0 -- not found
-  char path[4 * 1024];
-  path[0] = 0;
-  strcat(path, getenv("HOME"));
-  strcat(path, user_module_dir);
-  strcat(path, jo2str(name));
-  strcat(path, "/");
-  if (dir_ok_p(path)) {
-    return str2jo(path);
-  }
-  else {
-    return 0;
-  }
-}
-
-void p_find_module_file_jo() {
-  // (prefix-jo -> module-file-jo)
-  // return 0 -- not found
-  as_push(find_module_file_jo(as_pop()));
-}
-
-void p_find_module_dir_jo() {
-  // (prefix-jo -> module-dir-jo)
-  // return 0 -- not found
-  as_push(find_module_dir_jo(as_pop()));
-}
-
-void import_module(jo name) {
-  jo* export = module_record_get_export(name);
-  if (export == 0) {
-    printf("import_module fail to import: %s\n", jo2str(name));
-    return;
-  }
-  cell i = 0;
-  while (export[i] != 0) {
-    jo new_jo = cat_3_jo(name,
-                         str2jo("/"),
-                         export[i]);
-    alias_add(export[i], new_jo);
-    i++;
-  }
-}
-
-bool k_dep_load(jo name) {
-  jo module_file_jo = find_module_file_jo(name);
-  jo module_dir_jo = find_module_dir_jo(name);
-  if (module_file_jo == 0) {
-    return false;
-  }
-
-  jo export[1];
-  export[0] = 0;
-  module m = {
-    .name = name,
-    .dir = module_dir_jo,
-    .export = export
-  };
-  module_record_push(m);
-  module_stack_push(m);
-
-  alias a = {.nick = 0, .name = 0};
-  loading_stack_area[loading_stack_pointer][0] = a;
-  loading_stack_push(loading_stack_area[loading_stack_pointer]);
-
-  load_file(jo2str(module_file_jo));
-
-  return true;
-}
-
-void k_dep() {
-  // ([io] -> [loading_stack])
-  jo name = read_jo_without_prefix();
-  if (!module_record_find(name)) {
-    bool result = k_dep_load(name);
-    if (result == false) {
-      printf("- k_dep fail to load module : %s\n", jo2str(name));
-      k_ignore();
-    }
-    else {
-      while (true) {
-        jo s = read_jo();
-        if (s == str2jo("(")) {
-          eval_key_jo(read_jo());
-        }
-        else if (s == str2jo(")")) {
-          loading_stack_pop();
-          module_stack_pop();
-          break;
-        }
-        else {
-          // do nothing
-        }
-      }
-    }
-  }
-  import_module(name);
-}
-
-void k_module() {
-  // ([io] -> [loading_stack_tos])
-  jo name = read_jo_without_prefix();
-  // ><><>< check module name
-
-  jo* export = compiling_stack_tos();
-  while (true) {
-    jo s = read_jo_without_prefix();
-    if (s == str2jo(")")) {
-      here(0);
-      module_record_set_export(name, export);
-      return;
-    }
-    else if (!alias_find(s) == 0) {
-      printf("k_module fail, alias used : %s\n", jo2str(s));
-      k_ignore();
-      return;
-    }
-    else {
-      here(s);
-    }
-  }
-}
-
-void module_report_one(module m) {
-  printf("  - %s -- %s\n", jo2str(m.name), jo2str(m.dir));
-  cell i = 0;
-  while (m.export[i] != 0) {
-    printf("    %s\n", jo2str(m.export[i]));
-    i++;
-  }
-}
-
-void module_report() {
-  printf("- module_report\n");
-  cell i = module_record_base;
-  while (i < module_record_pointer) {
-    module_report_one(module_record[i]);
-    i++;
-  }
-}
-
-void export_module() {
-  defprim("load-file", p_load_file);
-
-  defprim("find-module-file-jo", p_find_module_file_jo);
-  defprim("find-module-dir-jo", p_find_module_dir_jo);
-
-  defprim("include", k_include);
-  defprim("dep", k_dep);
-  defprim("module", k_module);
-  defprim("module/report", module_report);
-}
-
-void ccall (string str, void* lib) {
-  primitive fun = dlsym(lib, str);
-  if (fun == NULL) {
-    printf("can not find %s function lib : %s\n",
-           str, dlerror());
-  };
-  fun();
-}
-
-void* get_clib(string rel_path) {
-  char path[PATH_MAX];
-  real_reading_path(rel_path, path);
-  void* lib = dlopen(path, RTLD_LAZY);
-  if (lib == NULL) {
-    printf("fail to open library : %s : %s\n",
-           path, dlerror());
-  };
-  return lib;
-}
-
-void k_clib_one() {
-  // ([io] -> [compile])
-  char buffer[PATH_MAX];
-  cell cursor = 0;
-  while (true) {
-    char c = read_byte();
-    if (c == '"') {
-      buffer[cursor] = 0;
-      cursor++;
-      break;
-    }
-    else {
-      buffer[cursor] = c;
-      cursor++;
-    }
-  }
-  ccall("export", get_clib(buffer));
-}
-
-void k_clib() {
-  // ([io] -> [compile])
-  while (true) {
-    jo s = read_jo();
-    if (s == str2jo(")")) {
-      return;
-    }
-    else if (s == str2jo("\"")) {
-      k_clib_one();
-    }
-    else {
-      // do nothing
-    }
-  }
-}
-
-void export_ffi() {
-  defprim("clib", k_clib);
-}
-
 bool prim_jo_p(jo index) {
-  return jotable[index].type == str2jo("primitive");
+  return jotable[index].type == str2jo("<prim>");
 }
 
 bool fun_jo_p(jo index) {
-  return jotable[index].type == str2jo("function");
+  return jotable[index].type == str2jo("<jojo>");
 }
 
 bool var_jo_p(jo index) {
-  return jotable[index].type == str2jo("variable");
+  return jotable[index].type == str2jo("<var>");
 }
 
 bool used_jo_p(jo index) {
@@ -2111,100 +1716,60 @@ bool used_jo_p(jo index) {
     var_jo_p(index);
 }
 
-jo jo_to_jo_in_module(jo alias_jo) {
-  if (module_stack_empty_p()) {
-    return alias_jo;
-  }
-  else if (jotable[alias_jo].type == str2jo("declared")) {
-    return alias_jo;
-  }
-  else {
-    jo new_jo = cat_3_jo(module_stack_tos().name,
-                         str2jo("/"),
-                         alias_jo);
-    alias_add(alias_jo, new_jo);
-    return new_jo;
-  }
+typedef jo def_stack_t[1024];
+
+def_stack_t def_stack;
+cell def_stack_base = 0;
+cell def_stack_pointer = 0;
+
+void def_stack_push(jo* value) {
+  def_stack[def_stack_pointer] = value;
+  def_stack_pointer++;
 }
 
-jo read_jo_in_module() {
-  jo_to_jo_in_module(read_jo());
+jo* def_stack_pop() {
+  def_stack_pointer--;
+  return def_stack[def_stack_pointer];
 }
 
-jo defun_record[64 * 1024];
-cell defun_record_counter = 0;
-
-void p_defun_record() {
-  // (-> addr)
-  as_push(defun_record);
-}
-
-void defun_report() {
-  printf("- defun_report // counter : %ld\n", defun_record_counter);
-  cell i = 0;
-  while (i < defun_record_counter) {
-    printf("  %s\n", jo2str(defun_record[i]));
-    i++;
-  }
-  printf("\n");
-}
-
-typedef jo defun_stack_t[1024];
-
-defun_stack_t defun_stack;
-cell defun_stack_base = 0;
-cell defun_stack_pointer = 0;
-
-void defun_stack_push(jo* value) {
-  defun_stack[defun_stack_pointer] = value;
-  defun_stack_pointer++;
-}
-
-jo* defun_stack_pop() {
-  defun_stack_pointer--;
-  return defun_stack[defun_stack_pointer];
-}
-
-void defun_stack_inc() {
-  defun_stack[defun_stack_pointer - 1] =
-    defun_stack[defun_stack_pointer - 1] + 1;
+void def_stack_inc() {
+  def_stack[def_stack_pointer - 1] =
+    def_stack[def_stack_pointer - 1] + 1;
 }
 
 
-jo* defun_stack_tos() {
-  return defun_stack[defun_stack_pointer - 1];
+jo* def_stack_tos() {
+  return def_stack[def_stack_pointer - 1];
 }
 
-bool defun_stack_empty_p() {
-  return defun_stack_pointer == defun_stack_base;
+bool def_stack_empty_p() {
+  return def_stack_pointer == def_stack_base;
 }
 
-void k_compile_jojo();
-
-void k_defun() {
+void k_def() {
   // ([io] -> [compile] [jotable])
-  jo index = read_jo_in_module();
+  jo index = read_jo();
   if (used_jo_p(index)) {
-    printf("- defun can not re-define : %s\n", jo2str(index));
+    printf("- (def ...) can not re-define : %s\n", jo2str(index));
     printf("  it already defined as : %s\n", jo2str(jotable[index].type));
     k_ignore();
     return;
   }
-  defun_stack_push(index);
-  defun_record[defun_record_counter] = index;
-  defun_record_counter++;
-  defun_record[defun_record_counter] = 0;
-  jo* array = compiling_stack_tos();
-  k_compile_jojo();
-  here(str2jo("end"));
-  jotable[index].type = str2jo("function");
-  jotable[index].value.jojo.size = compiling_stack_tos() - array;
-  jotable[index].value.jojo.array = array;
-  defun_stack_pop();
+  def_stack_push(index);
+  def_record[def_record_counter] = index;
+  def_record_counter++;
+  def_record[def_record_counter] = 0;
+
+  k_run();
+  jo type = as_pop();
+  cell value = as_pop();
+
+  jotable_set_type_value(index, type, value);
+  def_stack_pop();
 }
 
 void k_declare_one() {
-  jo index = read_jo_in_module();
+  jo index = read_jo();
   jotable[index].type = str2jo("declared");
   k_ignore();
 }
@@ -2224,25 +1789,26 @@ void k_declare() {
   }
 }
 
-void k_run() {
+void k_compile_jojo();
+
+void k_run_with_tmp_jojo_area() {
   // ([io] -> *)
   jo array[64 * 1024];
   compiling_stack_push(array);
-  while (true) {
-    jo s = read_jo();
-    if (s == str2jo("(")) {
-      eval_key_jo(read_jo());
-    }
-    else if (s == str2jo(")")) {
-      here(str2jo("end"));
-      break;
-    }
-    else {
-      here(s);
-    }
-  }
+  k_compile_jojo();
+  here(str2jo("end"));
   compiling_stack_pop();
-  eval_jojo(array);
+  rs_new_point(array);
+  eval();
+}
+
+void k_run() {
+  // ([io] -> *)
+  jo* array = compiling_stack_tos();
+  k_compile_jojo();
+  here(str2jo("end"));
+  rs_new_point(array);
+  eval();
 }
 
 bool testing_flag = false;
@@ -2257,40 +1823,6 @@ void k_test() {
   else {
     k_ignore();
   }
-}
-
-jo defvar_record[64 * 1024];
-cell defvar_record_counter = 0;
-
-void p_defvar_record() {
-  // (-> addr)
-  as_push(defvar_record);
-}
-
-void defvar_report() {
-  printf("- defvar_report // counter : %ld\n", defvar_record_counter);
-  cell i = 0;
-  while (i < defvar_record_counter) {
-    printf("  %s\n", jo2str(defvar_record[i]));
-    i++;
-  }
-  printf("\n");
-}
-
-void k_defvar() {
-  // ([io] -> [compile] [jotable])
-  jo index = read_jo_in_module();
-  if (used_jo_p(index)) {
-    printf("- defvar can not re-define : %s\n", jo2str(index));
-    printf("  it already defined as : %s\n", jo2str(jotable[index].type));
-    k_ignore();
-    return;
-  }
-  defvar_record[defvar_record_counter] = index;
-  defvar_record_counter++;
-  defvar_record[defvar_record_counter] = 0;
-  k_run();
-  jotable_set_cell(index, as_pop());
 }
 
 bool top_repl_printing_flag = false;
@@ -2323,11 +1855,7 @@ void p_top_repl_printing_flag_on() { top_repl_printing_flag = true; }
 void p_top_repl_printing_flag_off() { top_repl_printing_flag = false; }
 
 void export_top_level() {
-  defprim("defun-record", p_defun_record);
-  defprim("defun/report", defun_report);
-
-  defprim("defun", k_defun);
-  defprim("defmacro", k_defun);
+  defprim("def", k_def);
 
   defprim("declare", k_declare);
 
@@ -2338,9 +1866,6 @@ void export_top_level() {
   defprim("testing-flag/on", p_testing_flag_on);
   defprim("testing-flag/off", p_testing_flag_off);
 
-  defprim("defvar-record", p_defvar_record);
-  defprim("defvar/report", defvar_report);
-  defprim("defvar", k_defvar);
 
   defprim("as/print-by-flag", p_as_print_by_flag);
   defprim("top-repl", p_top_repl);
@@ -2362,24 +1887,24 @@ void k_ignore() {
   }
 }
 
-void compile_jojo_until_meet_jo(jo end) {
+void compile_jojo_until_meet_jo(jo ending_jo) {
   // ([io] -> [compile])
   while (true) {
     jo s = read_jo();
     if (s == str2jo("(")) {
       eval_key_jo(read_jo());
     }
-    else if (s == end) {
+    else if (s == ending_jo) {
       break;
     }
     else if (jotable_entry_used(jotable[s]) ||
-             defun_stack_empty_p() ||
-             defun_stack_tos() == s) {
+             def_stack_empty_p() ||
+             def_stack_tos() == s) {
       here(s);
     }
     else {
       // no compile before define
-      printf("- k_compile_jojo undefined : %s\n", jo2str(s));
+      printf("- 'compile_jojo_until_meet_jo' undefined : %s\n", jo2str(s));
       k_ignore();
       return;
     }
@@ -2417,12 +1942,12 @@ void k_tail_call() {
 
 void k_loop() {
   here(str2jo("instruction/tail-call"));
-  here(defun_stack_tos());
+  here(def_stack_tos());
   k_ignore();
 }
 
 void k_recur() {
- here(defun_stack_tos());
+ here(def_stack_tos());
  k_ignore();
 }
 
@@ -2437,6 +1962,16 @@ void i_jojo() {
   as_push(rp.array + 1);
 }
 
+void k_bare_jojo() {
+  // ([io] -> [compile])
+  here(str2jo("instruction/jojo"));
+  cell* offset_place = compiling_stack_tos();
+  compiling_stack_inc();
+  k_compile_jojo();
+  here(str2jo("end"));
+  offset_place[0] = compiling_stack_tos();
+}
+
 void k_jojo() {
   // ([io] -> [compile])
   here(str2jo("instruction/jojo"));
@@ -2445,6 +1980,8 @@ void k_jojo() {
   k_compile_jojo();
   here(str2jo("end"));
   offset_place[0] = compiling_stack_tos();
+  here(str2jo("instruction/lit"));
+  here(str2jo("<jojo>"));
 }
 
 cell local_find(jo name) {
@@ -2544,14 +2081,14 @@ void k_local_out() {
   }
 }
 
-void p_apply_with_local_binding() {
-  jo name = as_pop();
-  jo value = as_pop();
+void p_apply_with_local_area_pointer() {
+  cell the_local_area_pointer = as_pop();
   jo* jojo_array = as_pop();
-  rs_make_point(jojo_array, local_area_pointer);
-  as_push(value);
-  as_push(name);
-  p_local_in();
+  rs_make_point(jojo_array, the_local_area_pointer);
+}
+
+void p_local_area_pointer() {
+  as_push(local_area_pointer);
 }
 
 void export_keyword() {
@@ -2562,14 +2099,13 @@ void export_keyword() {
   defprim("compiling-stack/inc", compiling_stack_inc);
 
   defprim("if", k_if);
-  defprim("do", k_compile_jojo);
   defprim("compile-jojo/until-meet-jo", k_compile_jojo_until_meet_jo);
-  defprim("else", k_compile_jojo);
   defprim("compile-jojo", k_compile_jojo);
   defprim("tail-call", k_tail_call);
   defprim("loop", k_loop);
   defprim("recur", k_recur);
 
+  defprim("bare-jojo", k_bare_jojo);
   defprim("jojo", k_jojo);
   defprim("instruction/jojo", i_jojo);
 
@@ -2578,7 +2114,8 @@ void export_keyword() {
   defprim(">>", k_local_in);
   defprim("<<", k_local_out);
 
-  defprim("apply-with-local-binding", p_apply_with_local_binding);
+  defprim("local-area-pointer", p_local_area_pointer);
+  defprim("apply-with-local-area-pointer", p_apply_with_local_area_pointer);
 }
 
 void do_nothing() {
@@ -2624,7 +2161,8 @@ void export_mise() {
   defprim("double-quote", p_double_quote);
 
   defprim("cell-size", p_cell_size);
-  defprim("defprim/report", defprim_report);
+  defprim("def-report", def_report);
+  defprim("def-record", p_def_record);
   defprim("newline", p_newline);
 }
 
@@ -2697,11 +2235,38 @@ void init_top_repl() {
   export_file();
   export_keyword();
   export_system();
-  export_module();
-  export_ffi();
+  // export_module();
+  // export_ffi();
   export_top_level();
   export_mise();
   export_play();
+}
+
+void load_file(string path) {
+  // [reading_stack]
+  FILE* fp = fopen(path, "r");
+  if(!fp) {
+    perror("File opening failed");
+    printf("load_file fail : %s\n", path);
+    return;
+  }
+  char* file_buffer = malloc(PATH_MAX);
+  char* dir_buffer = malloc(PATH_MAX);
+  realpath(path, file_buffer);
+  realpath(path, dir_buffer);
+  char* dir_addr = dirname(dir_buffer);
+  reading_point rp = {
+    .file_handle = fp,
+    .file = file_buffer,
+    .dir = dir_addr
+  };
+  // { printf("- load_file\n");
+  //   printf("  fp: %d\n", fp);
+  //   printf("  file: %s\n", file_buffer);
+  //   printf("  dir_buffer: %s #%ld\n", dir_buffer, dir_buffer);
+  //   printf("  dir_addr: %s #%ld\n", dir_addr, dir_addr);
+  // }
+  reading_stack_push(rp);
 }
 
 int main(int argc, string* argv) {
