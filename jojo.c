@@ -642,7 +642,13 @@ void eval() {
   }
 }
 
+void k_ignore();
+
 void eval_jo(jo jo) {
+  if (!jotable_entry_used(jotable[jo])) {
+    printf("undefined jo : %s\n", jo2str(jo));
+    return;
+  }
   cell jo_type = jotable[jo].type;
   if (jo_type == str2jo("<prim>")) {
     primitive primitive = jotable_get_value(jo);
@@ -657,17 +663,6 @@ void eval_jo(jo jo) {
     cell cell = jotable_get_value(jo);
     as_push(cell);
   }
-}
-
-void k_ignore();
-
-void eval_key_jo(jo jo) {
-  if (!jotable_entry_used(jotable[jo])) {
-    printf("undefined keyword : %s\n", jo2str(jo));
-    k_ignore();
-    return;
-  }
-  eval_jo(jo);
 }
 
 void cell_copy(cell length, cell* from, cell* to) {
@@ -1465,7 +1460,7 @@ void k_jo() {
   while (true) {
     jo s = read_jo();
     if (s == str2jo("(")) {
-      eval_key_jo(read_jo());
+      eval_jo(read_jo());
     }
     else if (s == str2jo(")")) {
       break;
@@ -1846,7 +1841,7 @@ void p_top_repl() {
   while (true) {
     jo s = read_jo();
     if (s == str2jo("(")) {
-      eval_key_jo(read_jo());
+      eval_jo(read_jo());
       p_as_print_by_flag();
     }
     else {
@@ -1897,7 +1892,7 @@ void compile_jojo_until_meet_jo(jo ending_jo) {
   while (true) {
     jo s = read_jo();
     if (s == str2jo("(")) {
-      eval_key_jo(read_jo());
+      eval_jo(read_jo());
     }
     else if (s == ending_jo) {
       break;
@@ -2034,7 +2029,7 @@ void p_local_in() {
 void k_local_in() {
   jo s = read_jo();
   if (s == str2jo("(")) {
-    eval_key_jo(read_jo());
+    eval_jo(read_jo());
     k_local_in();
   }
   else if (s == str2jo(")")) {
@@ -2072,7 +2067,7 @@ void p_local_out() {
 void k_local_out() {
   jo s = read_jo();
   if (s == str2jo("(")) {
-    eval_key_jo(read_jo());
+    eval_jo(read_jo());
     k_local_out();
   }
   else if (s == str2jo(")")) {

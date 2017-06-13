@@ -3,14 +3,21 @@
 
 * todo
 
-  - 'jo/apply' as dynamic dispatcher
-    with dynamicly typed jo, the concept of 'instruction' might be better.
+  - subroutine-threading-model
+    - the concept of 'instruction' might be made better.
+    - understand the effect of compile time function i.e. macro
+    - disassembler
 
-  - should 'end' be (end) ?
+  - [debug] print jojo body
+  - [debug] print return-stack
+  - [debug] debug repl
+  - [debug] trace
+  - [debug] step
+
+  - 'jo/apply' as dynamic dispatcher
+    with dynamicly typed jo.
 
   - module system after oo in core
-
-  - understand the effect of compile time function i.e. macro
 
   - [test] assert
 
@@ -27,12 +34,6 @@
   - [safe] error report for every limited number
     jo-max-length
   - [safe] to handle all the error
-
-  - [debug] print jojo body
-  - [debug] print return-stack
-  - [debug] debug repl
-  - [debug] trace
-  - [debug] step
 
   - [maybe] package manager
 
@@ -933,7 +934,13 @@
 *** eval_jo
 
     #+begin_src c
+    void k_ignore();
+
     void eval_jo(jo jo) {
+      if (!jotable_entry_used(jotable[jo])) {
+        printf("undefined jo : %s\n", jo2str(jo));
+        return;
+      }
       cell jo_type = jotable[jo].type;
       if (jo_type == str2jo("<prim>")) {
         primitive primitive = jotable_get_value(jo);
@@ -948,21 +955,6 @@
         cell cell = jotable_get_value(jo);
         as_push(cell);
       }
-    }
-    #+end_src
-
-*** eval_key_jo
-
-    #+begin_src c
-    void k_ignore();
-
-    void eval_key_jo(jo jo) {
-      if (!jotable_entry_used(jotable[jo])) {
-        printf("undefined keyword : %s\n", jo2str(jo));
-        k_ignore();
-        return;
-      }
-      eval_jo(jo);
     }
     #+end_src
 
@@ -2124,7 +2116,7 @@
       while (true) {
         jo s = read_jo();
         if (s == str2jo("(")) {
-          eval_key_jo(read_jo());
+          eval_jo(read_jo());
         }
         else if (s == str2jo(")")) {
           break;
@@ -2666,7 +2658,7 @@
       while (true) {
         jo s = read_jo();
         if (s == str2jo("(")) {
-          eval_key_jo(read_jo());
+          eval_jo(read_jo());
           p_as_print_by_flag();
         }
         else {
@@ -2735,7 +2727,7 @@
       while (true) {
         jo s = read_jo();
         if (s == str2jo("(")) {
-          eval_key_jo(read_jo());
+          eval_jo(read_jo());
         }
         else if (s == ending_jo) {
           break;
@@ -2934,7 +2926,7 @@
     void k_local_in() {
       jo s = read_jo();
       if (s == str2jo("(")) {
-        eval_key_jo(read_jo());
+        eval_jo(read_jo());
         k_local_in();
       }
       else if (s == str2jo(")")) {
@@ -2980,7 +2972,7 @@
     void k_local_out() {
       jo s = read_jo();
       if (s == str2jo("(")) {
-        eval_key_jo(read_jo());
+        eval_jo(read_jo());
         k_local_out();
       }
       else if (s == str2jo(")")) {
