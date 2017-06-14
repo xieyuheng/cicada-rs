@@ -1,0 +1,114 @@
+#+title: note
+
+* note
+
+  - we need two values syntax for object
+    and one value syntax bare-data
+
+  - simple way to use object
+    is to make it a list of (name object) pair
+
+    - c is only used to implement primitive object ?
+      and to do optimization ?
+
+  - use [] and :name to sugar the syntax of message
+    let (jojo ...) handles more syntax
+
+  - named variable used in method should use different syntax
+    then (<< ...) and (>> ...)
+
+  - subclass
+
+* emacs mode
+
+  - bright and dark color theme
+
+* module system
+
+*** note
+
+    - 以 module 爲單位加載別人寫的函數所在的文件
+      用 module_record 來記錄已經加載過的 module
+      加載過的就不重複加載
+
+*** 命名
+
+    - 需要避免命名衝突
+
+    - 每個函數有實際的唯一的名字
+      module/name
+
+    - 在每個 module 加載過程中
+      ><
+
+*** 版本
+
+    - 需要控制版本
+      module/name
+
+    - ><
+
+*** >< re-export
+
+    - module 正是用 interface function name 來編碼的
+      所以可以設計類似 subtype 的機制
+      [考慮 ocaml]
+
+* defmethod
+
+  #+begin_src jojo
+  (note
+    (def new/method (jojo (note method/body method/name -> method) cons))
+    (def method/name (jojo car))
+    (def method/body (jojo cdr))
+
+    (def defmethod
+      (jojo (note (defmethod :class-name :method-name ...)
+                  =>
+                  (bare-jojo ...) (jo :method-name) new/method
+                  :class-name swap cons
+                  (& :class-name) set)
+
+        read/jo (> class-name)
+        read/jo (> method-name)
+
+        address-of-here (> bare-jojo)
+        compile-jojo
+        (jo end) here
+
+        (< class-name) jo-as-var get
+        (< bare-jojo) (< method-name) new/method
+        cons
+
+        (< class-name) jo-as-var set)))
+  #+end_src
+
+* file
+
+*** file
+
+    #+begin_src jojo
+    (def <file> (bare-data empty-class))
+
+    (def new/file
+      (jojo (note string -> <file>)
+        (jo <file>)))
+
+    (defmethod <file> readable?
+      (<< self) file/readable?)
+
+    (run
+      (string "READM") new/file (:: readable?))
+    #+end_src
+
+* module
+
+*** note
+
+    #+begin_src jojo
+    (note
+     (module <module-name> function ...)
+     (dep <module-name>)
+     (include <path>)
+     (clib <path>))
+    #+end_src

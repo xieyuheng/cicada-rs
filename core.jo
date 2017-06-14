@@ -1,22 +1,15 @@
 (run testing-flag/on)
 (test top-repl/printing-flag/on)
 
-(def cons-size (int 3) cell-size mul (jo <var>))
 
-(def cons-area-size
-  (note (int 5) (note for testing))
-  (int 1024 1024) mul
-  cons-size mul (jo <var>))
 
-(def cons-area cons-area-size allocate (jo <var>))
-(def cons-area-top cons-area cons-area-size add (jo <var>))
-
-(def cons-pointer cons-area (jo <var>))
-
-(def current-mark (int 1) (jo <var>))
-(def max-mark
-  (note (int 3) (note for testing))
-  (int 1024 1024) mul (jo <var>))
+(def cons-size      (bare-data (int 3) cell-size mul))
+(def cons-area-size (bare-data (int 1024 1024) mul cons-size mul))
+(def cons-area      (bare-data cons-area-size allocate))
+(def cons-area-top  (bare-data cons-area cons-area-size add))
+(def cons-pointer   (bare-data cons-area))
+(def current-mark   (bare-data (int 1)))
+(def max-mark       (bare-data (int 1024 1024) mul))
 
 (def cons-pointer/next
   (jojo (note -> [cons-pointer])
@@ -41,9 +34,11 @@
     (if dup cons-area-top gteq? then drop false end)
     cons-area sub cons-size mod (int 0) eq?))
 
+
+
 (declare
-  (car (note cons -> cell))
-  (cdr (note cons -> cell)))
+ (car (note cons -> cell))
+ (cdr (note cons -> cell)))
 
 (def cons-area/report/loop
   (jojo (note cons -> [io])
@@ -64,6 +59,8 @@
   (jojo (note -> [io])
     cons-area cons-area/report/loop))
 
+
+
 (def sweep-cons-area/loop
   (jojo (note cons -> [io])
     (if dup cons-area-top eq? then drop end)
@@ -74,6 +71,12 @@
 (def sweep-cons-area
   (jojo (note -> [cons-area])
     cons-area sweep-cons-area/loop))
+
+
+
+(note root from :
+      stack
+      defbare-data)
 
 (def mark-cons
   (jojo (note cons -> [cons-area])
@@ -105,6 +108,13 @@
     def-record mark-cons-area/def-record
     stack-pointer
     mark-cons-area/argument-stack))
+
+
+
+(note cons :
+      mark
+      car
+      cdr)
 
 (def new/cons
   (jojo (note -> cons)
@@ -149,6 +159,7 @@
     tuck set-car
     tuck set-cdr))
 
+
 (note the following tests are for small cons-area)
 
 (note (test (int 0)
@@ -179,11 +190,13 @@
             cons-area/report
             newline))
 
-(note under <class-name> we have
+
+
+(note under :class-name we have
       method-record
       [method-record alone for now])
 
-(note object = <data> <class-name>
+(note object = :data :class-name
       i.e. two value on the stack)
 
 (note when defining a class
@@ -194,37 +207,127 @@
       - free must free everything
       high level list list data using gc)
 
-(note when using defmethod
-      a function can assuming certain named local points)
+(note
+  (class
+    (note basd on one superclass
+          thus single inheritance)
+    (note shared variable list)
+    (note instance variable list
+          i.e. parts of the object)
+    (note class method list)
+    (note object method list
+          where super can be used to use an method of superclass
+          to implement a new method to override it)))
 
-(def empty-class
-  null (jo <var>))
+(note object creation
 
-(def new/method (jojo (note method/body method/name -> method) cons))
-(def method/name (jojo car))
-(def method/body (jojo cdr))
+      two ways to implement this :
+      (1) to use meta class -- class is an object
+      (2) to use meta method -- class is not an object
 
-(def defmethod
-  (jojo (note (defmethod <class-name> <method-name> ...)
-              =>
-              (bare-jojo ...) (jo <method-name>) new/method
-              <class-name> swap cons
-              (& <class-name>) set)
+      i will use (2))
 
-    read/jo (>> class-name)
-    read/jo (>> method-name)
 
-    address-of-here (>> bare-jojo)
+(note syntax in a class
+
+      inheritance
+
+      object variable list
+      (= ...)
+      object method list
+      (: ...)
+
+      class variable list
+      (meta (= ...))
+      class method list
+      (meta (: ...))
+
+      (note syntax in a method
+
+            get and set local variable
+            (< ...)
+            (> ...)
+            (<< ...)
+            (>> ...)
+
+            message to object
+            (: m1: ... m2: ...)
+            get and set object variable
+            (<= ...)
+            (=> ...)
+
+            message to class
+            (: m1: ... m2: ...)
+            get and set class variable
+            (<= ...)
+            (=> ...)))
+
+
+
+(def class
+  (jojo (note)
     compile-jojo
-    (jo end) here
+    (jo instruction/lit) here
+    (jo <class>) here))
 
-    (<< class-name) jo-as-var get
-    (<< bare-jojo) (<< method-name) new/method
+(def class/superclass          (jojo cdr cdr cdr cdr car))
+(def class/meta-variable-list  (jojo cdr cdr cdr car))
+(def class/meta-method-list    (jojo cdr cdr car))
+(def class/variable-list       (jojo cdr car))
+(def class/method-list         (jojo car))
+
+(def <person>
+  (class
+
+    null
+
+    (jo <no>)
     cons
 
-    (<< class-name) jo-as-var set))
+    null
+    (jo k1) (int 1) cons cons
+    (jo k2) (int 2) cons cons
+    cons
+
+    null
+    (jo new) (jojo null) drop cons cons
+    (jo new2) (jojo null null cons) drop cons cons
+    cons
+
+    null
+    (jo age1) (int 111) cons cons
+    (jo age2) (int 222) cons cons
+    cons
+
+    null
+    (jo grow) (jojo dup dot) drop cons cons
+    (jo grow2) (jojo dup dot) drop cons cons
+    cons
+
+    ))
+
+(run <person> jo/print newline
+     class/superclass jo/print)
+
+
+
+
+(run <person> (jo new) send-to-class
+     over over (jo grow) send-to-object
+     (<= age) dot)
+
+
+(def send-to-class
+  (jojo (note)
+    ))
+
+(note (def send-to-object )
+      )
+
+
 
 (def class-name/method-record (jojo jo/apply))
+
 
 (def method-record/search
   (jojo (note message method-record -> (or method false))
@@ -236,59 +339,40 @@
 
 (def send
   (jojo (note object message -> [depends on object and message])
-    (>> message)
-    (>> class-name)
-    (>> data)
-    (<< message)
-    (<< class-name)
+    (> message)
+    (> class-name)
+    (> data)
+    (< message)
+    (< class-name)
     class-name/method-record method-record/search
     (if dup false eq? not then
         local-area-pointer
-        (<< data) (jo this-data) local-in
-        (<< class-name) (jo this-class-name) local-in
+        (< data) (jo self) local-in
         apply-with-local-area-pointer end)
     (string "can not find message : ") string/print
-    (<< message) jo/print newline
+    (< message) jo/print newline
     (string "object/class-name : ") string/print
-    (<< class-name) jo/print newline))
+    (< class-name) jo/print newline))
 
 (def ::
   (jojo (note (:: message ...)
               =>
-              (>> object) (bare-jojo ...) apply
-              (<< object) (jo message) send)
+              (> object) (bare-jojo ...) apply
+              (< object) (jo message) send)
 
-    read/jo (>> message)
-    generate-jo (>> object-jo)
+    read/jo (> message)
+    (jo ::) generate-jo (> object-jo)
 
     (jo instruction/lit) here
-    (<< object-jo) here
+    (< object-jo) here
     (jo local-in) here
 
     bare-jojo (jo apply) here
 
     (jo instruction/lit) here
-    (<< object-jo) here
+    (< object-jo) here
     (jo local-out) here
 
     (jo instruction/lit) here
-    (<< message) here
+    (< message) here
     (jo send) here))
-
-(def person empty-class (jo <var>))
-
-(def new/person
-  (jojo (int 13) (jo person)))
-
-(defmethod person print-age
-  (<< this-class-name) jo/print newline
-  (<< this-data) dot newline)
-
-(run
-  new/person (:: print-age))
-
-(note
-  (module <module-name> function ...)
-  (dep <module-name>)
-  (include <path>)
-  (clib <path>))

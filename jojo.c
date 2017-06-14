@@ -2438,8 +2438,8 @@ void export_keyword() {
 
   defprim("local-in", p_local_in);
   defprim("local-out", p_local_out);
-  defprim(">>", k_local_in);
-  defprim("<<", k_local_out);
+  defprim(">", k_local_in);
+  defprim("<", k_local_out);
 
   defprim("local-area-pointer", p_local_area_pointer);
   defprim("apply-with-local-area-pointer", p_apply_with_local_area_pointer);
