@@ -191,6 +191,13 @@
             newline))
 
 
+(def assq
+  (jojo (note assoc-list value -> pair or null)
+    (if over null eq? then drop drop null end)
+    (if over car cdr over eq? then drop car end)
+    swap cdr swap (loop)))
+
+
 
 (note under :class-name we have
       method-record
@@ -263,116 +270,218 @@
             (=> ...)))
 
 
+(note define syntax not by dispatch
+      but by locally alias for keyword
+      push when into the syntax
+      pop when into another syntax
+      push when back to the syntax
+      pop when leave the syntax)
+
+(def class/one/inherit
+  (jojo (note [input] -> [compile])
+    (jo instruction/lit) here
+    read/jo here
+    ignore))
+
+(def class/one/variable-list/one
+  (jojo (note)
+    ))
+
+(def class/one/variable-list/loop
+  (jojo (note)
+    read/jo
+    (if dup eq?)
+    class/one/variable-list/one
+    (loop)))
+
+(def class/one/variable-list
+  (jojo (note)
+    (jo null) here
+    class/one/variable-list/loop
+    (jo cons) here))
+
+(def class/one/method-list
+  (jojo (note)
+    ))
+
+(def class/one
+  (jojo (note)
+    read/jo
+    (if dup (jo inherit) eq? then
+        (jo instruction/lit) here here
+        class/one/inherit
+        (jo cons) here
+        end)
+    (if dup (jo meta-variable) eq?
+        over (jo variable) eq? or then
+        (jo instruction/lit) here here
+        class/one/variable-list
+        (jo cons) here
+        end)
+    (if dup (jo meta-method) eq?
+        over (jo method) eq? or then
+        (jo instruction/lit) here here
+        class/one/method-list
+        (jo cons) here
+        end)
+    drop ignore))
+
+(def class/loop
+  (jojo (note)
+    read/jo
+    (if dup round-ket eq? then drop end)
+    (if dup round-bar eq? then drop class/one (loop))
+    drop (loop)))
 
 (def class
   (jojo (note)
-    compile-jojo
+    (jo null) here
+    class/loop
     (jo instruction/lit) here
     (jo <class>) here))
 
-(def class/superclass          (jojo cdr cdr cdr cdr car))
-(def class/meta-variable-list  (jojo cdr cdr cdr car))
-(def class/meta-method-list    (jojo cdr cdr car))
-(def class/variable-list       (jojo cdr car))
-(def class/method-list         (jojo car))
+(def class/superclass          (jojo (jo inherit) assq car))
+(def class/meta-variable-list  (jojo (jo meta-variable) assq car))
+(def class/meta-method-list    (jojo (jo meta-method) assq car))
+(def class/variable-list       (jojo (jo variable) assq car))
+(def class/method-list         (jojo (jo method) assq car))
+
+(note
+
+  (def <object>
+    (class
+      (meta-method
+       (: new (jojo (note)
+                ><><><)))))
+
+  (def <person>
+    (class
+      (inherit <object>)
+      (meta-variable
+       (= k1 (int 1))
+       (= k2 (int 2)))
+      (variable
+       (= age1 (int 111))
+       (= age2 (int 222)))
+      (method
+       (: grow (jojo dup dot))
+       (: grow2 (jojo dup dot))))))
 
 (def <person>
   (class
 
     null
 
-    (jo <no>)
+    (jo inherit) (jo <no>) cons
     cons
 
+    (jo meta-variable)
     null
     (jo k1) (int 1) cons cons
     (jo k2) (int 2) cons cons
     cons
-
-    null
-    (jo new) (jojo null) drop cons cons
-    (jo new2) (jojo null null cons) drop cons cons
     cons
 
+    (jo meta-method)
+    null
+    (jo new) (bare-jojo (jo herehere)) cons cons
+    (jo new2) (bare-jojo null null cons) cons cons
+    cons
+    cons
+
+    (jo variable)
     null
     (jo age1) (int 111) cons cons
     (jo age2) (int 222) cons cons
     cons
-
-    null
-    (jo grow) (jojo dup dot) drop cons cons
-    (jo grow2) (jojo dup dot) drop cons cons
     cons
 
+    (jo method)
+    null
+    (jo grow) (bare-jojo dup dot) cons cons
+    (jo grow2) (bare-jojo dup dot) cons cons
+    cons
+    cons
     ))
 
 (run <person> jo/print newline
      class/superclass jo/print)
 
-
-
-
-(run <person> (jo new) send-to-class
-     over over (jo grow) send-to-object
-     (<= age) dot)
-
-
 (def send-to-class
   (jojo (note)
-    ))
+    (> message)
+    drop
+    (> class)
 
-(note (def send-to-object )
-      )
+    (< class) class/meta-method-list
+    (< message) assq
 
+    (if dup null eq? not then
+        car apply end)
 
+    (string "- send-to-class : can not find message : ") string/print
+    (< message) jo/print newline))
 
-(def class-name/method-record (jojo jo/apply))
-
-
-(def method-record/search
-  (jojo (note message method-record -> (or method false))
-    (if dup null eq? then
-        drop drop false end)
-    (if over over car method/name eq? then
-        swap drop car method/body end)
-    cdr (loop)))
-
-(def send
-  (jojo (note object message -> [depends on object and message])
+(def send-to-object
+  (jojo (note)
     (> message)
     (> class-name)
     (> data)
-    (< message)
-    (< class-name)
-    class-name/method-record method-record/search
-    (if dup false eq? not then
+
+    (< class-name) jo/apply class/method-list
+    (< message) assq
+
+    (if dup null eq? not then
         local-area-pointer
         (< data) (jo self) local-in
-        apply-with-local-area-pointer end)
-    (string "can not find message : ") string/print
+        car apply-with-local-area-pointer end)
+
+    (string "- send-to-object :can not find message : ") string/print
     (< message) jo/print newline
-    (string "object/class-name : ") string/print
+    (string "  object/class-name : ") string/print
     (< class-name) jo/print newline))
 
-(def ::
-  (jojo (note (:: message ...)
-              =>
-              (> object) (bare-jojo ...) apply
-              (< object) (jo message) send)
+(def send
+  (jojo (note)
+    (if over (jo <class>) eq? then send-to-class end)
+    send-to-object))
 
-    read/jo (> message)
-    (jo ::) generate-jo (> object-jo)
 
-    (jo instruction/lit) here
-    (< object-jo) here
-    (jo local-in) here
 
-    bare-jojo (jo apply) here
+(run <person> (jo new) send jo/print)
 
-    (jo instruction/lit) here
-    (< object-jo) here
-    (jo local-out) here
 
-    (jo instruction/lit) here
-    (< message) here
-    (jo send) here))
+(note (run <person> (jo new) send-to-class
+           over over (jo grow) send-to-object
+           (<= age) dot))
+
+
+
+(note (run <person> (jo new) send-to-class
+           over over (jo grow) send-to-object
+           (<= age) dot))
+
+
+
+(note (def ::
+        (jojo (note (:: message ...)
+                    =>
+                    (> object) (bare-jojo ...) apply
+                    (< object) (jo message) send)
+
+          read/jo (> message)
+          (jo ::) generate-jo (> object-jo)
+
+          (jo instruction/lit) here
+          (< object-jo) here
+          (jo local-in) here
+
+          bare-jojo (jo apply) here
+
+          (jo instruction/lit) here
+          (< object-jo) here
+          (jo local-out) here
+
+          (jo instruction/lit) here
+          (< message) here
+          (jo send) here)))

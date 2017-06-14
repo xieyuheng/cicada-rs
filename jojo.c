@@ -2091,7 +2091,7 @@ void k_def() {
   jo index = read_jo();
   if (used_jo_p(index) && !declared_jo_p(index)) {
     printf("- (def ...) can not re-define : %s\n", jo2str(index));
-    printf("  it already defined as : %s\n", jo2str(jotable[index].type));
+    printf("  it already has been defined as a %s\n", jo2str(jotable[index].type));
     k_ignore();
     return;
   }
