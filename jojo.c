@@ -568,10 +568,6 @@ void apply(jo* jojo_array) {
   rs_new_point(jojo_array);
 }
 
-void p_apply() {
-  apply(as_pop());
-}
-
 void jo_apply_with_local_pointer(jo jo, cell local_pointer) {
   if (!jotable_entry_used(jotable[jo])) {
     printf("undefined jo : %s\n", jo2str(jo));
@@ -612,15 +608,6 @@ void jo_apply(jo jo) {
   }
 }
 
-void p_jo_apply() {
-  jo_apply(as_pop());
-}
-
-void export_apply() {
-  defprim("apply", p_apply);
-  defprim("jo/apply", p_jo_apply);
-}
-
 jmp_buf eval_jmp_buffer;
 
 bool exit_eval() {
@@ -644,7 +631,7 @@ void eval() {
 
 void k_ignore();
 
-void eval_jo(jo jo) {
+void jo_eval(jo jo) {
   if (!jotable_entry_used(jotable[jo])) {
     printf("undefined jo : %s\n", jo2str(jo));
     return;
@@ -663,6 +650,19 @@ void eval_jo(jo jo) {
     cell cell = jotable_get_value(jo);
     as_push(cell);
   }
+}
+
+void p_apply() {
+  apply(as_pop());
+}
+
+void p_jo_apply() {
+  jo_apply(as_pop());
+}
+
+void export_apply() {
+  defprim("apply", p_apply);
+  defprim("jo/apply", p_jo_apply);
 }
 
 void cell_copy(cell length, cell* from, cell* to) {
@@ -1028,7 +1028,7 @@ void k_bin() {
       break;
     }
     else {
-      here(str2jo("instruction/lit"));
+      here(str2jo("instruction/lit)"));
       here(string_to_bin(jo2str(s)));
     }
   }
@@ -1038,7 +1038,7 @@ void k_oct() {
   // ([io] -> [compile])
   while (true) {
     jo s = read_jo();
-    if (s == str2jo(")")) {
+    if (s == str2jo("")) {
       break;
     }
     else {
@@ -1126,10 +1126,6 @@ void k_address() {
   k_ignore();
 }
 
-void k_var() {
-
-}
-
 void p_jo_as_var() {
   jo jo = as_pop();
   // as_push(&(jotable[jo].value.cell));
@@ -1166,7 +1162,6 @@ void export_memory() {
   defprim("allocate", p_allocate);
   defprim("free", p_free);
   defprim("&", k_address);
-  defprim("var", k_var);
   defprim("jo-as-var", p_jo_as_var);
   defprim("set", p_set);
   defprim("get", p_get);
@@ -1460,7 +1455,7 @@ void k_jo() {
   while (true) {
     jo s = read_jo();
     if (s == str2jo("(")) {
-      eval_jo(read_jo());
+      jo_eval(read_jo());
     }
     else if (s == str2jo(")")) {
       break;
@@ -1841,7 +1836,7 @@ void p_top_repl() {
   while (true) {
     jo s = read_jo();
     if (s == str2jo("(")) {
-      eval_jo(read_jo());
+      jo_eval(read_jo());
       p_as_print_by_flag();
     }
     else {
@@ -1892,7 +1887,7 @@ void compile_jojo_until_meet_jo(jo ending_jo) {
   while (true) {
     jo s = read_jo();
     if (s == str2jo("(")) {
-      eval_jo(read_jo());
+      jo_eval(read_jo());
     }
     else if (s == ending_jo) {
       break;
@@ -1955,31 +1950,28 @@ void p_compiling_stack_tos() {
   as_push(compiling_stack_tos());
 }
 
-void i_jojo() {
-  // ([rs] -> int)
-  return_point rp = rs_pop();
-  rs_make_point(rp.array[0], rp.local_pointer);
-  as_push(rp.array + 1);
-}
-
 void k_bare_jojo() {
   // ([io] -> [compile])
-  here(str2jo("instruction/jojo"));
+  here(str2jo("instruction/jump"));
   cell* offset_place = compiling_stack_tos();
   compiling_stack_inc();
   k_compile_jojo();
   here(str2jo("end"));
   offset_place[0] = compiling_stack_tos();
+  here(str2jo("instruction/lit"));
+  here(offset_place + 1);
 }
 
 void k_jojo() {
   // ([io] -> [compile])
-  here(str2jo("instruction/jojo"));
+  here(str2jo("instruction/jump"));
   cell* offset_place = compiling_stack_tos();
   compiling_stack_inc();
   k_compile_jojo();
   here(str2jo("end"));
   offset_place[0] = compiling_stack_tos();
+  here(str2jo("instruction/lit"));
+  here(offset_place + 1);
   here(str2jo("instruction/lit"));
   here(str2jo("<jojo>"));
 }
@@ -2007,29 +1999,18 @@ void p_local_in() {
   if (index != -1) {
     local_area[index].name = jo;
     local_area[index].value = value;
-    // {
-    //   printf("- i_local_in\n");
-    //   printf("  old name : %s\n", jo2str(jo));
-    //   printf("  value : %ld\n", value);
-    // }
   }
   else {
     local_area[local_area_pointer].name = jo;
     local_area[local_area_pointer].value = value;
     local_area_pointer = local_area_pointer + 1;
-    // {
-    //   printf("- i_local_in\n");
-    //   printf("  new name : %s\n", jo2str(jo));
-    //   printf("  value : %ld\n", value);
-    //   printf("  new local_area_pointer : %ld\n", local_area_pointer);
-    // }
   }
 }
 
 void k_local_in() {
   jo s = read_jo();
   if (s == str2jo("(")) {
-    eval_jo(read_jo());
+    jo_eval(read_jo());
     k_local_in();
   }
   else if (s == str2jo(")")) {
@@ -2049,16 +2030,9 @@ void p_local_out() {
   if (index != -1) {
     local_point lp = local_area[index];
     as_push(lp.value);
-    // {
-    //   printf("- i_local_out\n");
-    //   printf("  name : %s\n", jo2str(jo));
-    //   printf("  lp.name : %s\n", jo2str(lp.name));
-    //   printf("  lp.value : %ld\n", lp.value);
-    //   printf("  lp : %p\n", &lp);
-    // }
   }
   else {
-    printf("- i_local_out fatal error\n");
+    printf("- p_local_out fatal error\n");
     printf("  name is not bound\n");
     printf("  name : %s\n", jo2str(jo));
   }
@@ -2067,7 +2041,7 @@ void p_local_out() {
 void k_local_out() {
   jo s = read_jo();
   if (s == str2jo("(")) {
-    eval_jo(read_jo());
+    jo_eval(read_jo());
     k_local_out();
   }
   else if (s == str2jo(")")) {
@@ -2107,7 +2081,6 @@ void export_keyword() {
 
   defprim("bare-jojo", k_bare_jojo);
   defprim("jojo", k_jojo);
-  defprim("instruction/jojo", i_jojo);
 
   defprim("local-in", p_local_in);
   defprim("local-out", p_local_out);
