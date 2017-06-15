@@ -1,0 +1,627 @@
+#+PROPERTY: tangle core.jo
+#+title: core
+
+* todo
+
+  - send-to-object
+
+* note
+
+  - we need two values syntax for object
+    and one value syntax bare-data
+
+  - simple way to use object
+    is to make it a list of (name object) pair
+
+    - c is only used to implement primitive object ?
+      and to do optimization ?
+
+  - use [] and :name to sugar the syntax of message
+    let (jojo ...) handles more syntax
+
+  - named variable used in method should use different syntax
+    then (<< ...) and (>> ...)
+
+  - subclass
+
+* emacs mode
+
+  - bright and dark color theme
+
+* module system
+
+*** note
+
+    - 以 module 爲單位加載別人寫的函數所在的文件
+      用 module_record 來記錄已經加載過的 module
+      加載過的就不重複加載
+
+*** 命名
+
+    - 需要避免命名衝突
+
+    - 每個函數有實際的唯一的名字
+      module/name
+
+    - 在每個 module 加載過程中
+      ><
+
+*** 版本
+
+    - 需要控制版本
+      module/name
+
+    - ><
+
+*** >< re-export
+
+    - module 正是用 interface function name 來編碼的
+      所以可以設計類似 subtype 的機制
+      [考慮 ocaml]
+
+* list
+
+  #+begin_src jojo
+  (run testing-flag/on)
+  (test top-repl/printing-flag/on)
+
+
+
+  (def cons-size      (bare-data (int 3) cell-size mul))
+  (def cons-area-size (bare-data (int 1024 1024) mul cons-size mul))
+  (def cons-area      (bare-data cons-area-size allocate))
+  (def cons-area-top  (bare-data cons-area cons-area-size add))
+  (def cons-pointer   (bare-data cons-area))
+  (def current-mark   (bare-data (int 1)))
+  (def max-mark       (bare-data (int 1024 1024) mul))
+
+  (def cons-pointer/next
+    (jojo (note -> [cons-pointer])
+      cons-size cons-pointer add
+      (& cons-pointer) set))
+
+  (def cons-pointer/init
+    (jojo (note -> [cons-pointer])
+      cons-area
+      (& cons-pointer) set))
+
+  (def cons-pointer/next-free
+    (jojo (note -> [cons-pointer])
+      (if cons-pointer cons-area-top eq? then end)
+      (if cons-pointer get current-mark eq? not then end)
+      cons-pointer/next
+      (loop)))
+
+  (def cons?
+    (jojo (note cell -> bool)
+      (if dup cons-area lt? then drop false end)
+      (if dup cons-area-top gteq? then drop false end)
+      cons-area sub cons-size mod (int 0) eq?))
+
+
+
+  (declare
+   (car (note cons -> cell))
+   (cdr (note cons -> cell)))
+
+  (def cons-area/report/loop
+    (jojo (note cons -> [io])
+      (if dup cons-area-top eq? then drop end)
+      (string "#:") string/print
+      dup dot
+      (string "mark: ") string/print
+      dup get dot
+      (string "car: ") string/print
+      dup car dot
+      (string "cdr: ") string/print
+      dup cdr dot
+      newline
+      cons-size add
+      (loop)))
+
+  (def cons-area/report
+    (jojo (note -> [io])
+      cons-area cons-area/report/loop))
+
+
+
+  (def sweep-cons-area/loop
+    (jojo (note cons -> [io])
+      (if dup cons-area-top eq? then drop end)
+      dup (int 0)  swap set
+      cons-size add
+      (loop)))
+
+  (def sweep-cons-area
+    (jojo (note -> [cons-area])
+      cons-area sweep-cons-area/loop))
+
+
+
+  (note root from :
+        stack
+        defbare-data)
+
+  (def mark-cons
+    (jojo (note cons -> [cons-area])
+      (if dup cons? not then drop end)
+      dup current-mark swap set
+      dup car mark-cons
+      cdr (loop)))
+
+  (def mark-cons-area/def-record
+    (jojo (note def-record -> [cons-area])
+      (if dup get (int 0) eq? then drop end)
+      dup get mark-cons
+      cell-size add
+      (loop)))
+
+  (def mark-cons-area/argument-stack
+    (jojo (note stack -> [cons-area])
+      (if dup stack-base eq? then drop end)
+      cell-size sub
+      dup get mark-cons
+      (loop)))
+
+  (def mark-cons-area
+    (jojo (note -> [cons-area])
+      (if current-mark max-mark eq? then
+          sweep-cons-area
+          (int 0) (& current-mark) set)
+      current-mark (int 1) add (& current-mark) set
+      def-record mark-cons-area/def-record
+      stack-pointer
+      mark-cons-area/argument-stack))
+
+
+
+  (note cons :
+        mark
+        car
+        cdr)
+
+  (def new/cons
+    (jojo (note -> cons)
+      (if cons-pointer cons-area-top eq? then
+          mark-cons-area
+          cons-pointer/init
+          cons-pointer/next-free
+          (if cons-pointer cons-area-top eq? then
+              (string "fatal error : cons-area is full") string/print
+              newline bye)
+          (loop))
+      (if cons-pointer get current-mark eq? then
+          cons-pointer/next (loop))
+      cons-pointer
+      cons-pointer/next end))
+
+  (def set-car
+    (jojo (note cell cons ->)
+      cell-size add
+      set))
+
+  (def set-cdr
+    (jojo (note cell cons ->)
+      cell-size add
+      cell-size add
+      set))
+
+  (def car
+    (jojo (note cons -> cell)
+      cell-size add
+      get))
+
+  (def cdr
+    (jojo (note cons -> cell)
+      cell-size add
+      cell-size add
+      get))
+
+  (def cons
+    (jojo (note cdr-cell car-cell -> cons)
+      new/cons
+      tuck set-car
+      tuck set-cdr))
+
+
+  (note the following tests are for small cons-area)
+
+  (note (test (int 0)
+              (int 1) cons
+              (int 2) cons
+              dup car dot
+              dup cdr car dot
+              dup cdr cdr dot
+
+              dup cons? dot
+              dup cdr cons? dot
+              dup car cons? dot
+              dup cdr car cons? dot
+              dup cdr cdr cons? dot
+              dot
+
+              current-mark
+              dot))
+
+  (note (test newline
+              new/cons dot
+              new/cons dot
+              new/cons dot
+              new/cons dot
+              new/cons dot
+              current-mark dot
+              newline
+              cons-area/report
+              newline))
+
+
+  (def assq
+    (jojo (note assoc-list value -> pair or null)
+      (if over null eq? then drop drop null end)
+      (if over car cdr over eq? then drop car end)
+      swap cdr swap (loop)))
+
+
+
+  (def list/print
+    (jojo (note list -> [output])
+      (if dup null eq? then drop (jo null) jo/print (string " ") string/print end)
+      (if dup cons? not then dot end)
+      dup cdr (recur)
+      car (recur) (jo cons) jo/print (string " ") string/print))
+  #+end_src
+
+* object
+
+*** note
+
+    #+begin_src jojo
+    (note under :class-name we have
+          method-record
+          [method-record alone for now])
+
+    (note object = :data :class-name
+          i.e. two value on the stack)
+
+    (note when defining a class
+          different interface-generator can be used to generate method list
+          for example
+          inherit
+          low level array like data with free
+          - free must free everything
+          high level list list data using gc)
+
+    (note
+      (class
+        (note basd on one superclass
+              thus single inheritance)
+        (note shared variable list)
+        (note instance variable list
+              i.e. parts of the object)
+        (note class method list)
+        (note object method list
+              where super can be used to use an method of superclass
+              to implement a new method to override it)))
+
+    (note object creation
+
+          two ways to implement this :
+          (1) to use meta class -- class is an object
+          (2) to use meta method -- class is not an object
+
+          i will use (2))
+
+
+    (note syntax in a class
+
+          inheritance
+
+          object variable list
+          (= ...)
+          object method list
+          (: ...)
+
+          class variable list
+          (meta (= ...))
+          class method list
+          (meta (: ...))
+
+          (note syntax in a method
+
+                get and set local variable
+                (< ...)
+                (> ...)
+                (<< ...)
+                (>> ...)
+
+                message to object
+                (: m1: ... m2: ...)
+                get and set object variable
+                (<= ...)
+                (=> ...)
+
+                message to class
+                (: m1: ... m2: ...)
+                get and set class variable
+                (<= ...)
+                (=> ...)))
+
+
+    (note define syntax not by dispatch
+          but by locally alias for keyword
+          push when into the syntax
+          pop when into another syntax
+          push when back to the syntax
+          pop when leave the syntax)
+    #+end_src
+
+*** class
+
+    #+begin_src jojo
+    (def class/has-superclass?         (jojo (jo inherit) assq null eq? not))
+    (def class/get-superclass          (jojo (jo inherit) assq car))
+
+    (def class/has-meta-variable-list? (jojo (jo meta-variable) assq null eq? not))
+    (def class/get-meta-variable-list  (jojo (jo meta-variable) assq car))
+
+    (def class/has-meta-method-list?   (jojo (jo meta-method) assq null eq? not))
+    (def class/get-meta-method-list    (jojo (jo meta-method) assq car))
+
+    (def class/has-variable-list?      (jojo (jo variable) assq null eq? not))
+    (def class/get-variable-list       (jojo (jo variable) assq car))
+
+    (def class/has-method-list?        (jojo (jo method) assq null eq? not))
+    (def class/get-method-list         (jojo (jo method) assq car))
+
+    (def class/keyword/one-variable
+      (jojo (note)
+        (jo instruction/lit) here read/jo here
+        compile-jojo
+        (jo cons) here
+        (jo cons) here))
+
+    (def class/keyword/one-method
+      (jojo (note)
+        (jo instruction/lit) here read/jo here
+        compile-jojo
+        (jo cons) here
+        (jo cons) here))
+
+    (def class/keyword/inherit
+      (jojo (note)
+        (jo instruction/lit) here (jo inherit) here
+        (jo instruction/lit) here read/jo here
+        ignore
+        (jo cons) here
+        (jo cons) here))
+
+    (def class/keyword/meta-variable-list
+      (jojo (note)
+        (jo instruction/lit) here (jo meta-variable) here
+        (jo null) here
+        compile-jojo
+        (jo cons) here
+        (jo cons) here))
+
+    (def class/keyword/meta-method-list
+      (jojo (note)
+        (jo instruction/lit) here (jo meta-method) here
+        (jo null) here
+        compile-jojo
+        (jo cons) here
+        (jo cons) here))
+
+    (def class/keyword/variable-list
+      (jojo (note)
+        (jo instruction/lit) here (jo variable) here
+        (jo null) here
+        compile-jojo
+        (jo cons) here
+        (jo cons) here))
+
+    (def class/keyword/method-list
+      (jojo (note)
+        (jo instruction/lit) here (jo method) here
+        (jo null) here
+        compile-jojo
+        (jo cons) here
+        (jo cons) here))
+
+    (def class
+      (jojo (note)
+        (jo null) here
+        compile-jojo
+        (jo instruction/lit) here
+        (jo <class>) here))
+    #+end_src
+
+*** send
+
+    #+begin_src jojo
+    (def send-to-class
+      (jojo (note)
+        (> message)
+        drop
+        (> class)
+
+        (if (< class) class/has-meta-method-list? then
+            (if (< class) class/get-meta-method-list
+                (< message) assq dup null eq? not then
+                car apply end)
+            drop)
+
+        (if (< class) class/has-superclass? then
+            (< class) class/get-superclass jo/apply (< message) (loop))
+
+        (string "- send-to-class : can not find message : ") string/print
+        (< message) jo/print newline))
+
+    (def send-to-object
+      (jojo (note)
+        (> message)
+        (> class-name)
+        (> data)
+
+        (< class-name) jo/apply class/get-method-list
+        (< message) assq
+
+        (if dup null eq? not then
+            local-area-pointer
+            (< data) (jo self) local-in
+            car apply-with-local-area-pointer end)
+
+        (string "- send-to-object : can not find message : ") string/print
+        (< message) jo/print newline
+        (string "  object/class-name : ") string/print
+        (< class-name) jo/print newline))
+
+    (def send
+      (jojo (note)
+        (if over (jo <class>) eq? then send-to-class end)
+        send-to-object))
+
+    (note (def ::
+            (jojo (note (:: message ...)
+                        =>
+                        (> object) (bare-jojo ...) apply
+                        (< object) (jo message) send)
+
+              read/jo (> message)
+              (jo ::) generate-jo (> object-jo)
+
+              (jo instruction/lit) here
+              (< object-jo) here
+              (jo local-in) here
+
+              bare-jojo (jo apply) here
+
+              (jo instruction/lit) here
+              (< object-jo) here
+              (jo local-out) here
+
+              (jo instruction/lit) here
+              (< message) here
+              (jo send) here)))
+    #+end_src
+
+*** test
+
+    #+begin_src jojo
+    (note
+      (def <object>
+        (class
+          (meta-method
+            (* new (jojo ><><><)))))
+      (def <person>
+        (class
+          (inherit <object>)
+          (meta-variable
+            (= k1 (int 1))
+            (= k2 (int 2)))
+          (variable
+            (= age1 (int 111))
+            (= age2 (int 222)))
+          (method
+            (* grow (jojo dup dot))
+            (* grow2 (jojo dup dot))))))
+
+    (def <object>
+      (class
+        (class/keyword/meta-method-list
+         (class/keyword/one-method new (bare-jojo (jo <object>-here))))))
+
+    (def <person0>
+      (class
+        (class/keyword/inherit <object>)
+        (class/keyword/meta-variable-list
+         (class/keyword/one-variable k1 (int 1))
+         (class/keyword/one-variable k2 (int 2)))
+        (class/keyword/meta-method-list
+         (class/keyword/one-method new (bare-jojo (jo <person>-here))))
+        (class/keyword/variable-list
+         (class/keyword/one-variable age1 (int 111))
+         (class/keyword/one-variable age2 (int 222)))
+        (class/keyword/method-list
+         (class/keyword/one-method grow (bare-jojo dup dot))
+         (class/keyword/one-method grow2 (bare-jojo dup dot)))))
+
+    (def <person>
+      (class
+        (class/keyword/inherit <object>)
+        (class/keyword/meta-variable-list
+         (class/keyword/one-variable k1 (int 1))
+         (class/keyword/one-variable k2 (int 2)))
+        (class/keyword/variable-list
+         (class/keyword/one-variable age1 (int 111))
+         (class/keyword/one-variable age2 (int 222)))
+        (class/keyword/method-list
+         (class/keyword/one-method grow (bare-jojo dup dot))
+         (class/keyword/one-method grow2 (bare-jojo dup dot)))))
+
+    (run <person> jo/print newline
+         (if dup class/has-superclass? then
+             class/get-superclass jo/print end)
+         drop)
+
+    (run <object> (jo new) send jo/print)
+    (run <person0> (jo new) send jo/print)
+    (run <person> (jo new) send jo/print)
+    #+end_src
+
+*** defmethod
+
+    #+begin_src jojo
+    (note
+      (def new/method (jojo (note method/body method/name -> method) cons))
+
+      (def defmethod
+        (jojo (note (defmethod :class-name :method-name ...)
+                    =>
+                    (bare-jojo ...) (jo :method-name) new/method
+                    :class-name swap cons
+                    (& :class-name) set)
+
+          read/jo (> class-name)
+          read/jo (> method-name)
+
+          address-of-here (> bare-jojo)
+          compile-jojo
+          (jo end) here
+
+          (< class-name) jo-as-var get
+          (< bare-jojo) (< method-name) new/method
+          cons
+
+          (< class-name) jo-as-var set)))
+    #+end_src
+
+* file
+
+*** file
+
+    #+begin_src jojo
+    (note
+      (def <file> (bare-data empty-class))
+
+      (def new/file
+        (jojo (note string -> <file>)
+          (jo <file>)))
+
+      (defmethod <file> readable?
+        (<< self) file/readable?)
+
+      (run
+        (string "READM") new/file (:: readable?)))
+    #+end_src
+
+* module
+
+*** note
+
+    #+begin_src jojo
+    (note
+     (module <module-name> function ...)
+     (dep <module-name>)
+     (include <path>)
+     (clib <path>))
+    #+end_src

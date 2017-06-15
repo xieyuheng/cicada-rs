@@ -199,6 +199,13 @@
 
 
 
+(def list/print
+  (jojo (note list -> [output])
+    (if dup null eq? then drop (jo null) jo/print (string " ") string/print end)
+    (if dup cons? not then dot end)
+    dup cdr (recur)
+    car (recur) (jo cons) jo/print (string " ") string/print))
+
 (note under :class-name we have
       method-record
       [method-record alone for now])
@@ -277,83 +284,27 @@
       push when back to the syntax
       pop when leave the syntax)
 
-(def class/one/inherit
-  (jojo (note [input] -> [compile])
-    (jo instruction/lit) here
-    read/jo here
-    ignore))
+(def class/has-superclass?         (jojo (jo inherit) assq null eq? not))
+(def class/get-superclass          (jojo (jo inherit) assq car))
 
-(def class/one/variable-list/one
-  (jojo (note)
-    ))
+(def class/has-meta-variable-list? (jojo (jo meta-variable) assq null eq? not))
+(def class/get-meta-variable-list  (jojo (jo meta-variable) assq car))
 
-(def class/one/variable-list/loop
-  (jojo (note)
-    read/jo
-    (if dup eq?)
-    class/one/variable-list/one
-    (loop)))
+(def class/has-meta-method-list?   (jojo (jo meta-method) assq null eq? not))
+(def class/get-meta-method-list    (jojo (jo meta-method) assq car))
 
-(def class/one/variable-list
-  (jojo (note)
-    (jo null) here
-    class/one/variable-list/loop
-    (jo cons) here))
+(def class/has-variable-list?      (jojo (jo variable) assq null eq? not))
+(def class/get-variable-list       (jojo (jo variable) assq car))
 
-(def class/one/method-list
-  (jojo (note)
-    ))
-
-(def class/one
-  (jojo (note)
-    read/jo
-    (if dup (jo inherit) eq? then
-        (jo instruction/lit) here here
-        class/one/inherit
-        (jo cons) here
-        end)
-    (if dup (jo meta-variable) eq?
-        over (jo variable) eq? or then
-        (jo instruction/lit) here here
-        class/one/variable-list
-        (jo cons) here
-        end)
-    (if dup (jo meta-method) eq?
-        over (jo method) eq? or then
-        (jo instruction/lit) here here
-        class/one/method-list
-        (jo cons) here
-        end)
-    drop ignore))
-
-(def class/loop
-  (jojo (note)
-    read/jo
-    (if dup round-ket eq? then drop end)
-    (if dup round-bar eq? then drop class/one (loop))
-    drop (loop)))
-
-(def class
-  (jojo (note)
-    (jo null) here
-    class/loop
-    (jo instruction/lit) here
-    (jo <class>) here))
-
-(def class/superclass          (jojo (jo inherit) assq car))
-(def class/meta-variable-list  (jojo (jo meta-variable) assq car))
-(def class/meta-method-list    (jojo (jo meta-method) assq car))
-(def class/variable-list       (jojo (jo variable) assq car))
-(def class/method-list         (jojo (jo method) assq car))
+(def class/has-method-list?        (jojo (jo method) assq null eq? not))
+(def class/get-method-list         (jojo (jo method) assq car))
 
 (note
-
   (def <object>
     (class
       (meta-method
        (: new (jojo (note)
                 ><><><)))))
-
   (def <person>
     (class
       (inherit <object>)
@@ -367,45 +318,66 @@
        (: grow (jojo dup dot))
        (: grow2 (jojo dup dot))))))
 
-(def <person>
-  (class
+(def class/keyword/one-variable
+  (jojo (note)
+    (jo instruction/lit) here read/jo here
+    compile-jojo
+    (jo cons) here
+    (jo cons) here))
 
-    null
+(def class/keyword/one-method
+  (jojo (note)
+    (jo instruction/lit) here read/jo here
+    compile-jojo
+    (jo cons) here
+    (jo cons) here))
 
-    (jo inherit) (jo <no>) cons
-    cons
+(def class/keyword/inherit
+  (jojo (note)
+    (jo instruction/lit) here (jo inherit) here
+    (jo instruction/lit) here read/jo here
+    ignore
+    (jo cons) here
+    (jo cons) here))
 
-    (jo meta-variable)
-    null
-    (jo k1) (int 1) cons cons
-    (jo k2) (int 2) cons cons
-    cons
-    cons
+(def class/keyword/meta-variable-list
+  (jojo (note)
+    (jo instruction/lit) here (jo meta-variable) here
+    (jo null) here
+    compile-jojo
+    (jo cons) here
+    (jo cons) here))
 
-    (jo meta-method)
-    null
-    (jo new) (bare-jojo (jo herehere)) cons cons
-    (jo new2) (bare-jojo null null cons) cons cons
-    cons
-    cons
+(def class/keyword/meta-method-list
+  (jojo (note)
+    (jo instruction/lit) here (jo meta-method) here
+    (jo null) here
+    compile-jojo
+    (jo cons) here
+    (jo cons) here))
 
-    (jo variable)
-    null
-    (jo age1) (int 111) cons cons
-    (jo age2) (int 222) cons cons
-    cons
-    cons
+(def class/keyword/variable-list
+  (jojo (note)
+    (jo instruction/lit) here (jo variable) here
+    (jo null) here
+    compile-jojo
+    (jo cons) here
+    (jo cons) here))
 
-    (jo method)
-    null
-    (jo grow) (bare-jojo dup dot) cons cons
-    (jo grow2) (bare-jojo dup dot) cons cons
-    cons
-    cons
-    ))
+(def class/keyword/method-list
+  (jojo (note)
+    (jo instruction/lit) here (jo method) here
+    (jo null) here
+    compile-jojo
+    (jo cons) here
+    (jo cons) here))
 
-(run <person> jo/print newline
-     class/superclass jo/print)
+(def class
+  (jojo (note)
+    (jo null) here
+    compile-jojo
+    (jo instruction/lit) here
+    (jo <class>) here))
 
 (def send-to-class
   (jojo (note)
@@ -413,11 +385,14 @@
     drop
     (> class)
 
-    (< class) class/meta-method-list
-    (< message) assq
+    (if (< class) class/has-meta-method-list? then
+        (if (< class) class/get-meta-method-list
+            (< message) assq dup null eq? not then
+            car apply end)
+        drop)
 
-    (if dup null eq? not then
-        car apply end)
+    (if (< class) class/has-superclass? then
+        (< class) class/get-superclass jo/apply (< message) (loop))
 
     (string "- send-to-class : can not find message : ") string/print
     (< message) jo/print newline))
@@ -428,7 +403,7 @@
     (> class-name)
     (> data)
 
-    (< class-name) jo/apply class/method-list
+    (< class-name) jo/apply class/get-method-list
     (< message) assq
 
     (if dup null eq? not then
@@ -445,23 +420,6 @@
   (jojo (note)
     (if over (jo <class>) eq? then send-to-class end)
     send-to-object))
-
-
-
-(run <person> (jo new) send jo/print)
-
-
-(note (run <person> (jo new) send-to-class
-           over over (jo grow) send-to-object
-           (<= age) dot))
-
-
-
-(note (run <person> (jo new) send-to-class
-           over over (jo grow) send-to-object
-           (<= age) dot))
-
-
 
 (note (def ::
         (jojo (note (:: message ...)
@@ -485,3 +443,87 @@
           (jo instruction/lit) here
           (< message) here
           (jo send) here)))
+
+(def <object>
+  (class
+    (class/keyword/meta-method-list
+     (class/keyword/one-method new (bare-jojo (jo <object>-here))))))
+
+(def <person0>
+  (class
+    (class/keyword/inherit <object>)
+    (class/keyword/meta-variable-list
+     (class/keyword/one-variable k1 (int 1))
+     (class/keyword/one-variable k2 (int 2)))
+    (class/keyword/meta-method-list
+     (class/keyword/one-method new (bare-jojo (jo <person>-here))))
+    (class/keyword/variable-list
+     (class/keyword/one-variable age1 (int 111))
+     (class/keyword/one-variable age2 (int 222)))
+    (class/keyword/method-list
+     (class/keyword/one-method grow (bare-jojo dup dot))
+     (class/keyword/one-method grow2 (bare-jojo dup dot)))))
+
+(def <person>
+  (class
+    (class/keyword/inherit <object>)
+    (class/keyword/meta-variable-list
+     (class/keyword/one-variable k1 (int 1))
+     (class/keyword/one-variable k2 (int 2)))
+    (class/keyword/variable-list
+     (class/keyword/one-variable age1 (int 111))
+     (class/keyword/one-variable age2 (int 222)))
+    (class/keyword/method-list
+     (class/keyword/one-method grow (bare-jojo dup dot))
+     (class/keyword/one-method grow2 (bare-jojo dup dot)))))
+
+(run <person> jo/print newline
+     (if dup class/has-superclass? then
+         class/get-superclass jo/print end)
+     drop)
+
+(run <object> (jo new) send jo/print)
+(run <person0> (jo new) send jo/print)
+(run <person> (jo new) send jo/print)
+
+(note
+  (def new/method (jojo (note method/body method/name -> method) cons))
+
+  (def defmethod
+    (jojo (note (defmethod :class-name :method-name ...)
+                =>
+                (bare-jojo ...) (jo :method-name) new/method
+                :class-name swap cons
+                (& :class-name) set)
+
+      read/jo (> class-name)
+      read/jo (> method-name)
+
+      address-of-here (> bare-jojo)
+      compile-jojo
+      (jo end) here
+
+      (< class-name) jo-as-var get
+      (< bare-jojo) (< method-name) new/method
+      cons
+
+      (< class-name) jo-as-var set)))
+
+(note
+  (def <file> (bare-data empty-class))
+
+  (def new/file
+    (jojo (note string -> <file>)
+      (jo <file>)))
+
+  (defmethod <file> readable?
+    (<< self) file/readable?)
+
+  (run
+    (string "READM") new/file (:: readable?)))
+
+(note
+ (module <module-name> function ...)
+ (dep <module-name>)
+ (include <path>)
+ (clib <path>))

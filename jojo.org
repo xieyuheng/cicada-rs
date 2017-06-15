@@ -891,6 +891,15 @@
     }
     #+end_src
 
+*** keyword_jo_eval
+
+    - keyword_jo is evaled with its alias_stack
+
+    #+begin_src c
+    void keyword_jo_eval() {
+    }
+    #+end_src
+
 * *apply*
 
 *** p_apply
@@ -1816,7 +1825,7 @@
 
 * *jo*
 
-*** loading_stack
+*** alias_stack
 
     - a hook for read_jo
 
@@ -1826,62 +1835,47 @@
       jo name;
     } alias;
 
-    typedef alias* loading_stack_t[64];
+    typedef alias alias_stack_t[1024];
 
-    cell alias_record_size = 1024;
+    alias_stack_t alias_stack;
+    cell alias_stack_base = 0;
+    cell alias_stack_pointer = 0;
 
-    alias loading_stack_area[64][1024];
-
-    loading_stack_t loading_stack;
-    cell loading_stack_base = 0;
-    cell loading_stack_pointer = 0;
-
-    void loading_stack_push(alias* value) {
-      loading_stack[loading_stack_pointer] = value;
-      loading_stack_pointer++;
+    void alias_stack_push(alias value) {
+      alias_stack[alias_stack_pointer] = value;
+      alias_stack_pointer++;
     }
 
-    alias* loading_stack_pop() {
-      loading_stack_pointer--;
-      return loading_stack[loading_stack_pointer];
+    alias alias_stack_pop() {
+      alias_stack_pointer--;
+      return alias_stack[alias_stack_pointer];
     }
 
-    alias* loading_stack_tos() {
-      return loading_stack[loading_stack_pointer - 1];
+    alias alias_stack_tos() {
+      return alias_stack[alias_stack_pointer - 1];
     }
 
-    bool loading_stack_empty_p() {
-      return loading_stack_pointer == loading_stack_base;
-    }
-
-    void init_loading_stack() {
-      alias record[alias_record_size];
-      alias a = {.nick = 0, .name = 0};
-      record[0] = a;
-      loading_stack_push(record);
+    bool alias_stack_empty_p() {
+      return alias_stack_pointer == alias_stack_base;
     }
     #+end_src
 
-*** alias_add
+*** p_alias_push
 
     #+begin_src c
-    void alias_add(jo nick, jo name) {
-      alias* alias_record = loading_stack_tos();
-      cell i = 0;
-      while (i < alias_record_size) {
-        if (alias_record[i].nick == 0 &&
-            alias_record[i].name == 0) {
-          alias_record[i].nick = nick;
-          alias_record[i].name = name;
-          alias_record[i+1].nick = 0;
-          alias_record[i+1].name = 0;
-          return;
-        }
-        else {
-          i++;
-        }
-      }
-      printf("alias_add fail alias_record is full\n");
+    void p_alias_push() {
+      jo name = as_pop();
+      jo nick = as_pop();
+      alias a = {.nick = nick, .name = name};
+      alias_stack_push(a);
+    }
+    #+end_src
+
+*** p_alias_drop
+
+    #+begin_src c
+    void p_alias_drop() {
+      alias_stack_pop();
     }
     #+end_src
 
@@ -1890,27 +1884,23 @@
     #+begin_src c
     jo alias_find(jo nick) {
       // return 0 -- not found
-      alias* alias_record = loading_stack_tos();
-      cell i = 0;
-      while (true) {
-        if (alias_record[i].nick == 0 &&
-            alias_record[i].name == 0) {
-          return 0;
-        }
-        else if (alias_record[i].nick == nick) {
-          return alias_record[i].name;
+      cell i = alias_stack_pointer;
+      while (i >= 0) {
+        if (alias_stack[i].nick == nick) {
+          return alias_stack[i].name;
         }
         else {
-          i++;
+          i--;
         }
       }
+      return 0;
     }
     #+end_src
 
-*** read_jo_without_prefix
+*** read_jo_without_alias
 
     #+begin_src c
-    jo read_jo_without_prefix() {
+    jo read_jo_without_alias() {
       // ([io] -> jo)
       byte buf[1024];
       cell cur = 0;
@@ -1949,12 +1939,20 @@
     }
     #+end_src
 
+*** p_read_jo_without_alias
+
+    #+begin_src c
+    void p_read_jo_without_alias() {
+      as_push(read_jo_without_alias());
+    }
+    #+end_src
+
 *** read_jo
 
     #+begin_src c
     jo read_jo() {
       // ([io] -> jo)
-      jo jo0 = read_jo_without_prefix();
+      jo jo0 = read_jo_without_alias();
       jo jo1 = alias_find(jo0);
       if (jo1 != 0) {
         return jo1;
@@ -1962,14 +1960,6 @@
       else {
         return jo0;
       }
-    }
-    #+end_src
-
-*** p_read_jo_without_prefix
-
-    #+begin_src c
-    void p_read_jo_without_prefix() {
-      as_push(read_jo_without_prefix());
     }
     #+end_src
 
@@ -2115,8 +2105,10 @@
     #+begin_src c
     void export_jo() {
       defprim("null", p_null);
+      defprim("alias-push", p_alias_push);
+      defprim("alias-drop", p_alias_drop);
       defprim("read/jo", p_read_jo);
-      defprim("read/jo/without-prefix", p_read_jo_without_prefix);
+      defprim("read/jo-without-alias", p_read_jo_without_alias);
       defprim("jo/used?", p_jo_used_p);
       defprim("jo->string", p_jo_to_string);
       defprim("string->jo", p_string_to_jo);
@@ -2413,489 +2405,6 @@
       defprim("argument-counter", p_argument_counter);
       defprim("index->argument-string", p_index_to_argument_string);
       defprim("var-string->env-string", p_var_string_to_env_string);
-    }
-    #+end_src
-
-* *module*
-
-*** module_record
-
-    - just record what modules are loaded
-      and their meta-data
-
-    #+begin_src c
-    typedef struct {
-      jo name;
-      jo dir;
-      jo* export;
-    } module;
-
-    typedef module module_record_t[1024];
-
-    module_record_t module_record;
-    cell module_record_base = 0;
-    cell module_record_pointer = 0;
-
-    void module_record_push(module value) {
-      module_record[module_record_pointer] = value;
-      module_record_pointer++;
-    }
-
-    bool module_record_empty_p() {
-      return module_record_pointer == module_record_base;
-    }
-
-    bool module_record_find(jo name) {
-      cell i = 0;
-      while (i < module_record_pointer) {
-        if (name == module_record[i].name) {
-          return true;
-        }
-        i++;
-      }
-      return false;
-    }
-
-    jo* module_record_get_export(jo name) {
-      // 0 -- not found
-      cell i = module_record_base;
-      while (i < module_record_pointer) {
-        if (name == module_record[i].name) {
-          return module_record[i].export;
-        }
-        i++;
-      }
-      return false;
-    }
-
-    void module_record_set_export(jo name, jo* export) {
-      cell i = module_record_base;
-      while (i < module_record_pointer) {
-        if (name == module_record[i].name) {
-          module_record[i].export = export;
-          return;
-        }
-        i++;
-      }
-      printf("- module_record_set_export fail\n");
-      printf("  can not find module: %s\n", jo2str(name));
-    }
-    #+end_src
-
-*** module_stack
-
-    - just record what modules are loaded
-      and their meta-data
-
-    #+begin_src c
-    typedef module module_stack_t[128];
-
-    module_stack_t module_stack;
-    cell module_stack_base = 0;
-    cell module_stack_pointer = 0;
-
-    void module_stack_push(module value) {
-      module_stack[module_stack_pointer] = value;
-      module_stack_pointer++;
-    }
-
-    bool module_stack_empty_p() {
-      return module_stack_pointer == module_stack_base;
-    }
-
-    module module_stack_pop() {
-      module_stack_pointer--;
-      return module_stack[module_stack_pointer];
-    }
-
-    module module_stack_tos() {
-      return module_stack[module_stack_pointer - 1];
-    }
-    #+end_src
-
-*** load_file
-
-    #+begin_src c
-    void load_file(string path) {
-      // [reading_stack]
-      FILE* fp = fopen(path, "r");
-      if(!fp) {
-        perror("File opening failed");
-        printf("load_file fail : %s\n", path);
-        return;
-      }
-      char* file_buffer = malloc(PATH_MAX);
-      char* dir_buffer = malloc(PATH_MAX);
-      realpath(path, file_buffer);
-      realpath(path, dir_buffer);
-      char* dir_addr = dirname(dir_buffer);
-      reading_point rp = {
-        .file_handle = fp,
-        .file = file_buffer,
-        .dir = dir_addr
-      };
-      // { printf("- load_file\n");
-      //   printf("  fp: %d\n", fp);
-      //   printf("  file: %s\n", file_buffer);
-      //   printf("  dir_buffer: %s #%ld\n", dir_buffer, dir_buffer);
-      //   printf("  dir_addr: %s #%ld\n", dir_addr, dir_addr);
-      // }
-      reading_stack_push(rp);
-    }
-    #+end_src
-
-*** p_load_file
-
-    #+begin_src c
-    void p_load_file() {
-      // (string -> [reading_stack])
-      load_file(as_pop());
-    }
-    #+end_src
-
-*** k_include_one
-
-    #+begin_src c
-    void k_include_one() {
-      // ([io] -> *)
-      char buffer[PATH_MAX];
-      cell cursor = 0;
-      while (true) {
-        char c = read_byte();
-        if (c == '"') {
-          buffer[cursor] = 0;
-          cursor++;
-          break;
-        }
-        else {
-          buffer[cursor] = c;
-          cursor++;
-        }
-      }
-      char buffer1[PATH_MAX];
-      real_reading_path(buffer, buffer1);
-      load_file(buffer1);
-    }
-    #+end_src
-
-*** k_include
-
-    #+begin_src c
-    void k_include() {
-      // ([io] -> [compile])
-      while (true) {
-        jo s = read_jo();
-        if (s == str2jo(")")) {
-          return;
-        }
-        else if (s == str2jo("(")) {
-          jo_eval(read_jo());
-        }
-        else if (s == str2jo("\"")) {
-          k_include_one();
-        }
-        else {
-          // do nothing
-        }
-      }
-    }
-    #+end_src
-
-*** find_module_file_jo
-
-    #+begin_src c
-    string user_module_dir = "/.jojo/module/";
-    string system_module_dir = "";
-
-    jo find_module_file_jo(jo name) {
-      // return 0 -- not found
-      char path[4 * 1024];
-      path[0] = 0;
-      strcat(path, getenv("HOME"));
-      strcat(path, user_module_dir);
-      strcat(path, jo2str(name));
-      strcat(path, "/");
-      strcat(path, "module.jo");
-      if (file_readable_p(path)) {
-        return str2jo(path);
-      }
-      else {
-        return 0;
-      }
-    }
-    #+end_src
-
-*** find_module_dir_jo
-
-    #+begin_src c
-    jo find_module_dir_jo(jo name) {
-      // return 0 -- not found
-      char path[4 * 1024];
-      path[0] = 0;
-      strcat(path, getenv("HOME"));
-      strcat(path, user_module_dir);
-      strcat(path, jo2str(name));
-      strcat(path, "/");
-      if (dir_ok_p(path)) {
-        return str2jo(path);
-      }
-      else {
-        return 0;
-      }
-    }
-    #+end_src
-
-*** p_find_module_file_jo
-
-    #+begin_src c
-    void p_find_module_file_jo() {
-      // (prefix-jo -> module-file-jo)
-      // return 0 -- not found
-      as_push(find_module_file_jo(as_pop()));
-    }
-    #+end_src
-
-*** p_find_module_dir_jo
-
-    #+begin_src c
-    void p_find_module_dir_jo() {
-      // (prefix-jo -> module-dir-jo)
-      // return 0 -- not found
-      as_push(find_module_dir_jo(as_pop()));
-    }
-    #+end_src
-
-*** import_module
-
-    #+begin_src c
-    void import_module(jo name) {
-      jo* export = module_record_get_export(name);
-      if (export == 0) {
-        printf("import_module fail to import: %s\n", jo2str(name));
-        return;
-      }
-      cell i = 0;
-      while (export[i] != 0) {
-        jo new_jo = cat_3_jo(name,
-                             str2jo("/"),
-                             export[i]);
-        alias_add(export[i], new_jo);
-        i++;
-      }
-    }
-    #+end_src
-
-*** k_dep_load
-
-    #+begin_src c
-    bool k_dep_load(jo name) {
-      jo module_file_jo = find_module_file_jo(name);
-      jo module_dir_jo = find_module_dir_jo(name);
-      if (module_file_jo == 0) {
-        return false;
-      }
-
-      jo export[1];
-      export[0] = 0;
-      module m = {
-        .name = name,
-        .dir = module_dir_jo,
-        .export = export
-      };
-      module_record_push(m);
-      module_stack_push(m);
-
-      alias a = {.nick = 0, .name = 0};
-      loading_stack_area[loading_stack_pointer][0] = a;
-      loading_stack_push(loading_stack_area[loading_stack_pointer]);
-
-      load_file(jo2str(module_file_jo));
-
-      return true;
-    }
-    #+end_src
-
-*** k_dep
-
-    #+begin_src c
-    void k_dep() {
-      // ([io] -> [loading_stack])
-      jo name = read_jo_without_prefix();
-      if (!module_record_find(name)) {
-        bool result = k_dep_load(name);
-        if (result == false) {
-          printf("- k_dep fail to load module : %s\n", jo2str(name));
-          k_ignore();
-        }
-        else {
-          while (true) {
-            jo s = read_jo();
-            if (s == str2jo("(")) {
-              jo_eval(read_jo());
-            }
-            else if (s == str2jo(")")) {
-              loading_stack_pop();
-              module_stack_pop();
-              break;
-            }
-            else {
-              // do nothing
-            }
-          }
-        }
-      }
-      import_module(name);
-    }
-    #+end_src
-
-*** k_module
-
-    #+begin_src c
-    void k_module() {
-      // ([io] -> [loading_stack_tos])
-      jo name = read_jo_without_prefix();
-      // ><><>< check module name
-
-      jo* export = compiling_stack_tos();
-      while (true) {
-        jo s = read_jo_without_prefix();
-        if (s == str2jo(")")) {
-          here(0);
-          module_record_set_export(name, export);
-          return;
-        }
-        else if (!alias_find(s) == 0) {
-          printf("k_module fail, alias used : %s\n", jo2str(s));
-          k_ignore();
-          return;
-        }
-        else {
-          here(s);
-        }
-      }
-    }
-    #+end_src
-
-*** module_report_one
-
-    #+begin_src c
-    void module_report_one(module m) {
-      printf("  - %s -- %s\n", jo2str(m.name), jo2str(m.dir));
-      cell i = 0;
-      while (m.export[i] != 0) {
-        printf("    %s\n", jo2str(m.export[i]));
-        i++;
-      }
-    }
-    #+end_src
-
-*** module_report
-
-    #+begin_src c
-    void module_report() {
-      printf("- module_report\n");
-      cell i = module_record_base;
-      while (i < module_record_pointer) {
-        module_report_one(module_record[i]);
-        i++;
-      }
-    }
-    #+end_src
-
-*** export_module
-
-    #+begin_src c
-    void export_module() {
-      defprim("load-file", p_load_file);
-
-      defprim("find-module-file-jo", p_find_module_file_jo);
-      defprim("find-module-dir-jo", p_find_module_dir_jo);
-
-      defprim("include", k_include);
-      defprim("dep", k_dep);
-      defprim("module", k_module);
-      defprim("module/report", module_report);
-    }
-    #+end_src
-
-* *ffi*
-
-*** ccall
-
-    #+begin_src c
-    void ccall (string str, void* lib) {
-      primitive fun = dlsym(lib, str);
-      if (fun == NULL) {
-        printf("can not find %s function lib : %s\n",
-               str, dlerror());
-      };
-      fun();
-    }
-    #+end_src
-
-*** get_clib
-
-    #+begin_src c
-    void* get_clib(string rel_path) {
-      char path[PATH_MAX];
-      real_reading_path(rel_path, path);
-      void* lib = dlopen(path, RTLD_LAZY);
-      if (lib == NULL) {
-        printf("fail to open library : %s : %s\n",
-               path, dlerror());
-      };
-      return lib;
-    }
-    #+end_src
-
-*** k_clib_one
-
-    #+begin_src c
-    void k_clib_one() {
-      // ([io] -> [compile])
-      char buffer[PATH_MAX];
-      cell cursor = 0;
-      while (true) {
-        char c = read_byte();
-        if (c == '"') {
-          buffer[cursor] = 0;
-          cursor++;
-          break;
-        }
-        else {
-          buffer[cursor] = c;
-          cursor++;
-        }
-      }
-      ccall("export", get_clib(buffer));
-    }
-    #+end_src
-
-*** k_clib
-
-    #+begin_src c
-    void k_clib() {
-      // ([io] -> [compile])
-      while (true) {
-        jo s = read_jo();
-        if (s == str2jo(")")) {
-          return;
-        }
-        else if (s == str2jo("\"")) {
-          k_clib_one();
-        }
-        else {
-          // do nothing
-        }
-      }
-    }
-    #+end_src
-
-*** export_ffi
-
-    #+begin_src c
-    void export_ffi() {
-      defprim("clib", k_clib);
     }
     #+end_src
 
@@ -3595,13 +3104,43 @@
 
 * main
 
+*** load_file
+
+    #+begin_src c
+    void load_file(string path) {
+      // [reading_stack]
+      FILE* fp = fopen(path, "r");
+      if(!fp) {
+        perror("File opening failed");
+        printf("load_file fail : %s\n", path);
+        return;
+      }
+      char* file_buffer = malloc(PATH_MAX);
+      char* dir_buffer = malloc(PATH_MAX);
+      realpath(path, file_buffer);
+      realpath(path, dir_buffer);
+      char* dir_addr = dirname(dir_buffer);
+      reading_point rp = {
+        .file_handle = fp,
+        .file = file_buffer,
+        .dir = dir_addr
+      };
+      // { printf("- load_file\n");
+      //   printf("  fp: %d\n", fp);
+      //   printf("  file: %s\n", file_buffer);
+      //   printf("  dir_buffer: %s #%ld\n", dir_buffer, dir_buffer);
+      //   printf("  dir_addr: %s #%ld\n", dir_addr, dir_addr);
+      // }
+      reading_stack_push(rp);
+    }
+    #+end_src
+
 *** init_top_repl
 
     #+begin_src c
     void init_top_repl() {
       init_jotable();
       init_compiling_stack();
-      init_loading_stack();
 
       export_apply();
       export_stack_operation();
