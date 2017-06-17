@@ -512,7 +512,8 @@ cell as_tos() {
 
 typedef struct {
   jo name;
-  cell value;
+  cell local_value1;
+  cell local_value2;
 } local_point;
 
 local_point local_area[1024 * 1024];
@@ -1992,15 +1993,62 @@ cell local_find(jo name) {
 void p_local_in() {
   cell jo = as_pop();
   cell index = local_find(jo);
-  cell value = as_pop();
+  cell value1 = as_pop();
   if (index != -1) {
     local_area[index].name = jo;
-    local_area[index].value = value;
+    local_area[index].local_value1 = value1;
   }
   else {
     local_area[local_area_pointer].name = jo;
-    local_area[local_area_pointer].value = value;
+    local_area[local_area_pointer].local_value1 = value1;
     local_area_pointer = local_area_pointer + 1;
+  }
+}
+
+void p_local_out() {
+  cell jo = as_pop();
+  cell index = local_find(jo);
+  if (index != -1) {
+    local_point lp = local_area[index];
+    as_push(lp.local_value1);
+  }
+  else {
+    printf("- p_local_out fatal error\n");
+    printf("  name is not bound\n");
+    printf("  name : %s\n", jo2str(jo));
+  }
+}
+
+void p_local_two_in() {
+  cell jo = as_pop();
+  cell index = local_find(jo);
+  cell value1 = as_pop();
+  cell value2 = as_pop();
+  if (index != -1) {
+    local_area[index].name = jo;
+    local_area[index].local_value1 = value1;
+    local_area[index].local_value2 = value2;
+  }
+  else {
+    local_area[local_area_pointer].name = jo;
+    local_area[local_area_pointer].local_value1 = value1;
+    local_area[local_area_pointer].local_value2 = value2;
+    local_area_pointer = local_area_pointer + 1;
+  }
+}
+
+void p_local_two_out() {
+  cell jo = as_pop();
+  cell index = local_find(jo);
+  if (index != -1) {
+    local_point lp = local_area[index];
+    as_push(lp.local_value2);
+    as_push(lp.local_value1);
+  }
+  else {
+    printf("- p_local_two_out fatal error\n");
+    printf("  name is not bound\n");
+    printf("  name : %s\n", jo2str(jo));
   }
 }
 
@@ -2021,20 +2069,6 @@ void k_local_in() {
   }
 }
 
-void p_local_out() {
-  cell jo = as_pop();
-  cell index = local_find(jo);
-  if (index != -1) {
-    local_point lp = local_area[index];
-    as_push(lp.value);
-  }
-  else {
-    printf("- p_local_out fatal error\n");
-    printf("  name is not bound\n");
-    printf("  name : %s\n", jo2str(jo));
-  }
-}
-
 void k_local_out() {
   jo s = read_jo();
   if (s == str2jo("(")) {
@@ -2049,6 +2083,40 @@ void k_local_out() {
     here(str2jo("instruction/lit"));
     here(s);
     here(str2jo("local-out"));
+  }
+}
+
+void k_local_two_in() {
+  jo s = read_jo();
+  if (s == str2jo("(")) {
+    jo_apply(read_jo());
+    k_local_in();
+  }
+  else if (s == str2jo(")")) {
+    return;
+  }
+  else {
+    k_local_in();
+    here(str2jo("instruction/lit"));
+    here(s);
+    here(str2jo("local-two-in"));
+  }
+}
+
+void k_local_two_out() {
+  jo s = read_jo();
+  if (s == str2jo("(")) {
+    jo_apply(read_jo());
+    k_local_out();
+  }
+  else if (s == str2jo(")")) {
+    return;
+  }
+  else {
+    k_local_out();
+    here(str2jo("instruction/lit"));
+    here(s);
+    here(str2jo("local-two-out"));
   }
 }
 
@@ -2086,6 +2154,11 @@ void export_keyword() {
   defprim("local-out", p_local_out);
   defprimkey(">", k_local_in);
   defprimkey("<", k_local_out);
+
+  defprim("local-two-in", p_local_two_in);
+  defprim("local-two-out", p_local_two_out);
+  defprimkey(">>", k_local_two_in);
+  defprimkey("<<", k_local_two_out);
 
   defprim("local-area-pointer", p_local_area_pointer);
   defprim("apply-with-local-area-pointer", p_apply_with_local_area_pointer);
