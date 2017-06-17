@@ -300,21 +300,21 @@
 (def class/get-method-list         (jojo (jo method) assq car))
 
 (def class/keyword/one-variable
-  (jojo (note)
+  (keyword
     (jo instruction/lit) here read/jo here
     compile-jojo
     (jo cons) here
     (jo cons) here))
 
 (def class/keyword/one-method
-  (jojo (note)
+  (keyword
     (jo instruction/lit) here read/jo here
     compile-jojo
     (jo cons) here
     (jo cons) here))
 
 (def class/keyword/inherit
-  (jojo (note)
+  (keyword
     (jo instruction/lit) here (jo inherit) here
     (jo instruction/lit) here read/jo here
     ignore
@@ -322,7 +322,9 @@
     (jo cons) here))
 
 (def class/keyword/meta-variable-list
-  (jojo (note)
+  (keyword
+    (jo =) (jo class/keyword/one-variable) alias-push
+
     (jo instruction/lit) here (jo meta-variable) here
     (jo null) here
     compile-jojo
@@ -330,7 +332,9 @@
     (jo cons) here))
 
 (def class/keyword/meta-method-list
-  (jojo (note)
+  (keyword
+    (jo *) (jo class/keyword/one-method) alias-push
+
     (jo instruction/lit) here (jo meta-method) here
     (jo null) here
     compile-jojo
@@ -338,7 +342,9 @@
     (jo cons) here))
 
 (def class/keyword/variable-list
-  (jojo (note)
+  (keyword
+    (jo =) (jo class/keyword/one-variable) alias-push
+
     (jo instruction/lit) here (jo variable) here
     (jo null) here
     compile-jojo
@@ -346,7 +352,9 @@
     (jo cons) here))
 
 (def class/keyword/method-list
-  (jojo (note)
+  (keyword
+    (jo *) (jo class/keyword/one-method) alias-push
+
     (jo instruction/lit) here (jo method) here
     (jo null) here
     compile-jojo
@@ -354,14 +362,20 @@
     (jo cons) here))
 
 (def class
-  (jojo (note)
+  (keyword
+    (jo inherit) (jo class/keyword/inherit) alias-push
+    (jo meta-method) (jo class/keyword/meta-method-list) alias-push
+    (jo meta-variable) (jo class/keyword/meta-variable-list) alias-push
+    (jo variable) (jo class/keyword/variable-list) alias-push
+    (jo method) (jo class/keyword/method-list) alias-push
+
     (jo null) here
     compile-jojo
     (jo instruction/lit) here
     (jo <class>) here))
 
 (def send-to-class
-  (jojo (note)
+  (jojo
     (> message)
     drop
     (> class)
@@ -382,7 +396,7 @@
 
 
 (def send-to-object
-  (jojo (note)
+  (jojo
     (> message)
     (> class-name)
     (> data)
@@ -410,7 +424,7 @@
     (< class-name) jo/print newline))
 
 (def send
-  (jojo (note)
+  (jojo
     (if over (jo <class>) eq? then send-to-class end)
     send-to-object))
 
@@ -420,73 +434,55 @@
                     (> object) (bare-jojo ...) apply
                     (< object) (jo message) send)
 
-          read/jo (> message)
-          (jo ::) generate-jo (> object-jo)
+              read/jo (> message)
+              (jo ::) generate-jo (> object-jo)
 
-          (jo instruction/lit) here
-          (< object-jo) here
-          (jo local-in) here
+              (jo instruction/lit) here
+              (< object-jo) here
+              (jo local-in) here
 
-          bare-jojo (jo apply) here
+              bare-jojo (jo apply) here
 
-          (jo instruction/lit) here
-          (< object-jo) here
-          (jo local-out) here
+              (jo instruction/lit) here
+              (< object-jo) here
+              (jo local-out) here
 
-          (jo instruction/lit) here
-          (< message) here
-          (jo send) here)))
-
-(note
-  (def <object>
-    (class
-      (meta-method
-        (* new (jojo ><><><)))))
-  (def <person>
-    (class
-      (inherit <object>)
-      (meta-variable
-        (= k1 (int 1))
-        (= k2 (int 2)))
-      (variable
-        (= age1 (int 111))
-        (= age2 (int 222)))
-      (method
-        (* grow (jojo dup dot))
-        (* grow2 (jojo dup dot))))))
+              (jo instruction/lit) here
+              (< message) here
+              (jo send) here)))
 
 (def <object>
   (class
-    (class/keyword/meta-method-list
-     (class/keyword/one-method new (bare-jojo (jo <object>-here))))))
+    (meta-method
+      (* new (bare-jojo (jo <object>-here))))))
 
 (def <person0>
   (class
-    (class/keyword/inherit <object>)
-    (class/keyword/meta-variable-list
-     (class/keyword/one-variable k1 (int 1))
-     (class/keyword/one-variable k2 (int 2)))
-    (class/keyword/meta-method-list
-     (class/keyword/one-method new (bare-jojo (jo <person>-here))))
-    (class/keyword/variable-list
-     (class/keyword/one-variable age1 (int 111))
-     (class/keyword/one-variable age2 (int 222)))
-    (class/keyword/method-list
-     (class/keyword/one-method grow (bare-jojo dup dot))
-     (class/keyword/one-method grow2 (bare-jojo dup dot)))))
+    (inherit <object>)
+    (meta-variable
+      (= k1 (int 1))
+      (= k2 (int 2)))
+    (method
+      (* new (bare-jojo (jo <person>-here))))
+    (variable
+      (= age1 (int 111))
+      (= age2 (int 222)))
+    (method
+      (* grow (bare-jojo dup dot))
+      (* grow2 (bare-jojo dup dot)))))
 
 (def <person>
   (class
-    (class/keyword/inherit <object>)
-    (class/keyword/meta-variable-list
-     (class/keyword/one-variable k1 (int 1))
-     (class/keyword/one-variable k2 (int 2)))
-    (class/keyword/variable-list
-     (class/keyword/one-variable age1 (int 111))
-     (class/keyword/one-variable age2 (int 222)))
-    (class/keyword/method-list
-     (class/keyword/one-method grow (bare-jojo dup dot))
-     (class/keyword/one-method grow2 (bare-jojo dup dot)))))
+    (inherit <object>)
+    (meta-variable
+      (= k1 (int 1))
+      (= k2 (int 2)))
+    (variable
+      (= age1 (int 111))
+      (= age2 (int 222)))
+    (method
+      (* grow (bare-jojo dup dot))
+      (* grow2 (bare-jojo dup dot)))))
 
 (run <person> jo/print newline
      (if dup class/has-superclass? then
@@ -499,26 +495,27 @@
 
 (def <object2>
   (class
-    (class/keyword/meta-method-list
-     (class/keyword/one-method new (bare-jojo (jo <object>-here))))
-    (class/keyword/method-list
-     (class/keyword/one-method grow (bare-jojo
-                                     (string "><><>< ") string/print
-                                     (< self) jo/print
-                                     (< self-class-name) jo/print
-                                     (string "><><>< ") string/print)))))
+    (meta-method
+      (* new (bare-jojo (jo <object>-here))))
+    (method
+      (* grow (bare-jojo
+               (string " ><><>< ") string/print
+               (< self) jo/print
+               (string " ><><>< ") string/print
+               (< self-class-name) jo/print
+               (string " ><><>< ") string/print)))))
 
 (def <person2>
   (class
-    (class/keyword/inherit <object2>)
-    (class/keyword/meta-variable-list
-     (class/keyword/one-variable k1 (int 1))
-     (class/keyword/one-variable k2 (int 2)))
-    (class/keyword/variable-list
-     (class/keyword/one-variable age1 (int 111))
-     (class/keyword/one-variable age2 (int 222)))
-    (class/keyword/method-list
-     (class/keyword/one-method grow2 (bare-jojo dup dot)))))
+    (inherit <object2>)
+    (meta-variable
+      (= k1 (int 1))
+      (= k2 (int 2)))
+    (variable
+      (= age1 (int 111))
+      (= age2 (int 222)))
+    (method
+      (* grow2 (bare-jojo dup dot)))))
 
 (run (jo kkk) (jo <person2>) (jo grow) send)
 
