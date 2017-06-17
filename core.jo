@@ -299,25 +299,6 @@
 (def class/has-method-list?        (jojo (jo method) assq null eq? not))
 (def class/get-method-list         (jojo (jo method) assq car))
 
-(note
-  (def <object>
-    (class
-      (meta-method
-       (: new (jojo (note)
-                ><><><)))))
-  (def <person>
-    (class
-      (inherit <object>)
-      (meta-variable
-       (= k1 (int 1))
-       (= k2 (int 2)))
-      (variable
-       (= age1 (int 111))
-       (= age2 (int 222)))
-      (method
-       (: grow (jojo dup dot))
-       (: grow2 (jojo dup dot))))))
-
 (def class/keyword/one-variable
   (jojo (note)
     (jo instruction/lit) here read/jo here
@@ -392,10 +373,13 @@
         drop)
 
     (if (< class) class/has-superclass? then
-        (< class) class/get-superclass jo/apply (< message) (loop))
+        (< class) class/get-superclass jo/apply
+        (< message)
+        (loop))
 
     (string "- send-to-class : can not find message : ") string/print
     (< message) jo/print newline))
+
 
 (def send-to-object
   (jojo (note)
@@ -403,15 +387,24 @@
     (> class-name)
     (> data)
 
-    (< class-name) jo/apply class/get-method-list
-    (< message) assq
+    (< class-name) jo/apply drop (> class)
 
-    (if dup null eq? not then
-        local-area-pointer
-        (< data) (jo self) local-in
-        car apply-with-local-area-pointer end)
+    (if (< class) class/has-method-list? then
+        (if (< class) class/get-method-list
+            (< message) assq dup null eq? not then
+            local-area-pointer swap
+            (< data) (jo self) local-in
+            (< class-name) (jo self-class-name) local-in
+            car apply-with-local-area-pointer end)
+        drop)
 
-    (string "- send-to-object :can not find message : ") string/print
+    (if (< class) class/has-superclass? then
+        (< data)
+        (< class) class/get-superclass
+        (< message)
+        (loop))
+
+    (string "- send-to-object : can not find message : ") string/print
     (< message) jo/print newline
     (string "  object/class-name : ") string/print
     (< class-name) jo/print newline))
@@ -443,6 +436,24 @@
           (jo instruction/lit) here
           (< message) here
           (jo send) here)))
+
+(note
+  (def <object>
+    (class
+      (meta-method
+        (* new (jojo ><><><)))))
+  (def <person>
+    (class
+      (inherit <object>)
+      (meta-variable
+        (= k1 (int 1))
+        (= k2 (int 2)))
+      (variable
+        (= age1 (int 111))
+        (= age2 (int 222)))
+      (method
+        (* grow (jojo dup dot))
+        (* grow2 (jojo dup dot))))))
 
 (def <object>
   (class
@@ -485,6 +496,31 @@
 (run <object> (jo new) send jo/print)
 (run <person0> (jo new) send jo/print)
 (run <person> (jo new) send jo/print)
+
+(def <object2>
+  (class
+    (class/keyword/meta-method-list
+     (class/keyword/one-method new (bare-jojo (jo <object>-here))))
+    (class/keyword/method-list
+     (class/keyword/one-method grow (bare-jojo
+                                     (string "><><>< ") string/print
+                                     (< self) jo/print
+                                     (< self-class-name) jo/print
+                                     (string "><><>< ") string/print)))))
+
+(def <person2>
+  (class
+    (class/keyword/inherit <object2>)
+    (class/keyword/meta-variable-list
+     (class/keyword/one-variable k1 (int 1))
+     (class/keyword/one-variable k2 (int 2)))
+    (class/keyword/variable-list
+     (class/keyword/one-variable age1 (int 111))
+     (class/keyword/one-variable age2 (int 222)))
+    (class/keyword/method-list
+     (class/keyword/one-method grow2 (bare-jojo dup dot)))))
+
+(run (jo kkk) (jo <person2>) (jo grow) send)
 
 (note
   (def new/method (jojo (note method/body method/name -> method) cons))

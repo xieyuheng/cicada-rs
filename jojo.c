@@ -622,6 +622,9 @@ void jo_eval(jo jo) {
   }
 }
 
+void keyword_jo_eval() {
+}
+
 void p_apply() {
   apply(as_pop());
 }
@@ -2002,8 +2005,8 @@ void k_local_out() {
 }
 
 void p_apply_with_local_area_pointer() {
-  cell the_local_area_pointer = as_pop();
   jo* jojo_array = as_pop();
+  cell the_local_area_pointer = as_pop();
   rs_make_point(jojo_array, the_local_area_pointer);
 }
 
