@@ -1718,17 +1718,33 @@ bool def_stack_empty_p() {
   return def_stack_pointer == def_stack_base;
 }
 
+void p_bind_name() {
+  jo name = as_pop();
+  jo type = as_pop();
+  cell value = as_pop();
+  if (used_jo_p(name) && !declared_jo_p(name)) {
+    printf("- p_bind_name can not bind name : %s\n", jo2str(name));
+    printf("  to type : %s\n", jo2str(type));
+    printf("  and value : %ld\n", value);
+    printf("  it already has been bound as a %s\n", jo2str(jotable[name].type));
+    return;
+  }
+  jotable_set_type_value(name, type, value);
+}
+
 void k_def() {
   // ([io] -> [compile] [jotable])
-  jo index = read_jo();
-  if (used_jo_p(index) && !declared_jo_p(index)) {
-    printf("- (def ...) can not re-define : %s\n", jo2str(index));
-    printf("  it already has been defined as a %s\n", jo2str(jotable[index].type));
+  jo name = read_jo();
+  if (used_jo_p(name) && !declared_jo_p(name)) {
+    printf("- (def ...) can not bind name : %s\n", jo2str(name));
+    printf("  it already has been bound as a %s\n", jo2str(jotable[name].type));
+    // ><><><
+    // print what is ignored
     k_ignore();
     return;
   }
-  def_stack_push(index);
-  def_record[def_record_counter] = index;
+  def_stack_push(name);
+  def_record[def_record_counter] = name;
   def_record_counter++;
   def_record[def_record_counter] = 0;
 
@@ -1736,7 +1752,7 @@ void k_def() {
   jo type = as_pop();
   cell value = as_pop();
 
-  jotable_set_type_value(index, type, value);
+  jotable_set_type_value(name, type, value);
   def_stack_pop();
 }
 
@@ -1828,7 +1844,7 @@ void p_top_repl_printing_flag_off() { top_repl_printing_flag = false; }
 
 void export_top_level() {
   defprimkey("def", k_def);
-
+  defprimkey("bind-name", p_bind_name);
   defprimkey("declare", k_declare);
 
   defprimkey("run", k_run);
