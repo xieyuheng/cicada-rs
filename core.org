@@ -3,6 +3,10 @@
 
 * todo
 
+  - 2-value stack operations
+
+  - primitive objects
+
   - cat for error message
 
   - c is only used to implement primitive object ?
@@ -578,7 +582,7 @@
         (if then car dup car swap cdr swap end)
         (string "- get-instance-variable fail") string/print newline))
 
-    (def =>
+    (def <=
       (keyword
         (jo instruction/lit) here
         read/jo here
@@ -591,10 +595,10 @@
       (jojo
         (note [object data type name] -> [])
         (> name)
-        (> type-name)
-        (> data)
         (> class-name)
         (> instance-variable-list)
+        (> type-name)
+        (> data)
 
         (< instance-variable-list)
         (< name)
@@ -604,7 +608,7 @@
             (< instance-variable) set-car end)
         (string "- set-instance-variable fail") string/print newline))
 
-    (def <=
+    (def =>
       (keyword
         (jo instruction/lit) here
         read/jo here
@@ -634,22 +638,26 @@
     (define-class <person>
       (inherit <object>)
       (meta-variable
-        (= k1 (int 1) (jo <int>))
-        (= k2 (int 2) (jo <int>)))
+        (= language (jo chinese) (jo <jo>)))
       (variable
         (= age (int 13) (jo <int>)))
       (method
-        (= grow (jojo dup dot))
-        (= grow2 (jojo dup dot))))
+        (= grow
+           (jojo
+             (<< self) (=> age)))))
 
     (run <object> (: new) jo/print newline list/print newline)
     (run <person> (: new) jo/print newline list/print newline)
 
-    (run <person> (: new) (=> age) jo/print newline dot newline)
+    (run <person> (: new) (<= age) jo/print newline dot newline)
 
-    (run <person> (: new) over over
-         (int 14) (jo <int>) (<= age)
-         (=> age) jo/print newline dot newline)
+    (def 2dup (jojo over over))
+    (def 2swap (jojo (>> a) (>> b)
+                     (<< a) (<< b)))
+
+    (run  <person> (: new) 2dup
+          (int 14) (jo <int>) 2swap (=> age)
+          (<= age) jo/print newline dot newline)
     #+end_src
 
 *** ><><>< defmethod
