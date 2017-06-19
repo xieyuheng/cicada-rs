@@ -1462,6 +1462,16 @@ jo cat_3_jo(jo x, jo y, jo z) {
   return str2jo(str);
 }
 
+void p_jo_append() {
+  jo jo2 = as_pop();
+  jo jo1 = as_pop();
+  as_push(cat_2_jo(jo1, jo2));
+}
+
+void p_empty_jo() {
+  as_push(str2jo(""));
+}
+
 void p_jo_used_p() {
   // (jo -> bool)
   jo jo = as_pop();
@@ -1536,6 +1546,8 @@ void export_jo() {
   defprim("read/jo", p_read_jo);
   defprim("read/jo-without-alias", p_read_jo_without_alias);
   defprim("jo/used?", p_jo_used_p);
+  defprim("jo/append", p_jo_append);
+  defprim("empty-jo", p_empty_jo);
   defprim("jo->string", p_jo_to_string);
   defprim("string->jo", p_string_to_jo);
   defprim("string/length->jo", p_string_length_to_jo);
@@ -1605,12 +1617,22 @@ void p_string_append_to_buffer() {
   strcat(buffer, str);
 }
 
+void p_string_last_char() {
+  string s = as_pop();
+  cell i = 0;
+  while (s[i+1] != 0) {
+    i++;
+  }
+  as_push(s[i]);
+}
+
 void export_string() {
   defprimkey("string", k_string);
   defprim("string/print", p_string_print);
   defprim("string/dot", p_string_dot);
   defprim("string/length", p_string_length);
   defprim("string/append-to-buffer", p_string_append_to_buffer);
+  defprim("string/last-char", p_string_last_char);
 }
 
 bool file_readable_p(string path) {
@@ -2367,6 +2389,9 @@ void load_file(string path) {
 void init_top_repl() {
   init_jotable();
   init_compiling_stack();
+
+  p_empty_jo();
+  p_drop();
 
   export_apply();
   export_stack_operation();
