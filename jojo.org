@@ -1012,7 +1012,15 @@
 
     #+begin_src c
     void p_drop() {
-      // (a ->)
+      as_pop();
+    }
+    #+end_src
+
+*** p_2drop
+
+    #+begin_src c
+    void p_2drop() {
+      as_pop();
       as_pop();
     }
     #+end_src
@@ -1028,16 +1036,48 @@
     }
     #+end_src
 
+*** p_2dup
+
+    #+begin_src c
+    void p_2dup() {
+      // (b a -> b a b a)
+      cell a = as_pop();
+      cell b = as_pop();
+      as_push(b);
+      as_push(a);
+      as_push(b);
+      as_push(a);
+    }
+    #+end_src
+
 *** p_over
 
     #+begin_src c
     void p_over() {
-      // (a b -> a b a)
-      cell b = as_pop();
+      // (b a -> b a b)
       cell a = as_pop();
-      as_push(a);
+      cell b = as_pop();
       as_push(b);
       as_push(a);
+      as_push(b);
+    }
+    #+end_src
+
+*** p_2over
+
+    #+begin_src c
+    void p_2over() {
+      // (d c  b a -> d c  b a  d c)
+      cell a = as_pop();
+      cell b = as_pop();
+      cell c = as_pop();
+      cell d = as_pop();
+      as_push(d);
+      as_push(c);
+      as_push(b);
+      as_push(a);
+      as_push(d);
+      as_push(c);
     }
     #+end_src
 
@@ -1045,12 +1085,30 @@
 
     #+begin_src c
     void p_tuck() {
-      // (a b -> b a b)
-      cell b = as_pop();
+      // (b a -> a b a)
       cell a = as_pop();
-      as_push(b);
+      cell b = as_pop();
       as_push(a);
       as_push(b);
+      as_push(a);
+    }
+    #+end_src
+
+*** p_2tuck
+
+    #+begin_src c
+    void p_2tuck() {
+      // (d c  b a -> b a  d c  b a)
+      cell a = as_pop();
+      cell b = as_pop();
+      cell c = as_pop();
+      cell d = as_pop();
+      as_push(b);
+      as_push(a);
+      as_push(d);
+      as_push(c);
+      as_push(b);
+      as_push(a);
     }
     #+end_src
 
@@ -1058,11 +1116,27 @@
 
     #+begin_src c
     void p_swap() {
-      // (a b -> b a)
-      cell b = as_pop();
+      // (b a -> a b)
       cell a = as_pop();
+      cell b = as_pop();
+      as_push(a);
+      as_push(b);
+    }
+    #+end_src
+
+*** p_2swap
+
+    #+begin_src c
+    void p_2swap() {
+      // (d c  b a -> b a  d c)
+      cell a = as_pop();
+      cell b = as_pop();
+      cell c = as_pop();
+      cell d = as_pop();
       as_push(b);
       as_push(a);
+      as_push(d);
+      as_push(c);
     }
     #+end_src
 
@@ -1128,10 +1202,15 @@
     #+begin_src c
     void export_stack_operation() {
       defprim("drop", p_drop);
+      defprim("2drop", p_2drop);
       defprim("dup", p_dup);
+      defprim("2dup", p_2dup);
       defprim("over", p_over);
+      defprim("2over", p_2over);
       defprim("tuck", p_tuck);
+      defprim("2tuck", p_2tuck);
       defprim("swap", p_swap);
+      defprim("2swap", p_2swap);
       defprim("xy-swap", p_xy_swap);
       defprim("as/print", p_as_print);
       defprim("stack-pointer", p_stack_pointer);

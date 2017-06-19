@@ -715,7 +715,11 @@ void cell_copy(cell length, cell* from, cell* to) {
 }
 
 void p_drop() {
-  // (a ->)
+  as_pop();
+}
+
+void p_2drop() {
+  as_pop();
   as_pop();
 }
 
@@ -726,30 +730,80 @@ void p_dup() {
   as_push(a);
 }
 
-void p_over() {
-  // (a b -> a b a)
-  cell b = as_pop();
+void p_2dup() {
+  // (b a -> b a b a)
   cell a = as_pop();
+  cell b = as_pop();
+  as_push(b);
   as_push(a);
   as_push(b);
   as_push(a);
+}
+
+void p_over() {
+  // (b a -> b a b)
+  cell a = as_pop();
+  cell b = as_pop();
+  as_push(b);
+  as_push(a);
+  as_push(b);
+}
+
+void p_2over() {
+  // (d c  b a -> d c  b a  d c)
+  cell a = as_pop();
+  cell b = as_pop();
+  cell c = as_pop();
+  cell d = as_pop();
+  as_push(d);
+  as_push(c);
+  as_push(b);
+  as_push(a);
+  as_push(d);
+  as_push(c);
 }
 
 void p_tuck() {
-  // (a b -> b a b)
-  cell b = as_pop();
+  // (b a -> a b a)
   cell a = as_pop();
+  cell b = as_pop();
+  as_push(a);
   as_push(b);
+  as_push(a);
+}
+
+void p_2tuck() {
+  // (d c  b a -> b a  d c  b a)
+  cell a = as_pop();
+  cell b = as_pop();
+  cell c = as_pop();
+  cell d = as_pop();
+  as_push(b);
+  as_push(a);
+  as_push(d);
+  as_push(c);
+  as_push(b);
+  as_push(a);
+}
+
+void p_swap() {
+  // (b a -> a b)
+  cell a = as_pop();
+  cell b = as_pop();
   as_push(a);
   as_push(b);
 }
 
-void p_swap() {
-  // (a b -> b a)
-  cell b = as_pop();
+void p_2swap() {
+  // (d c  b a -> b a  d c)
   cell a = as_pop();
+  cell b = as_pop();
+  cell c = as_pop();
+  cell d = as_pop();
   as_push(b);
   as_push(a);
+  as_push(d);
+  as_push(c);
 }
 
 void p_xy_swap() {
@@ -795,10 +849,15 @@ void p_stack_pointer() {
 
 void export_stack_operation() {
   defprim("drop", p_drop);
+  defprim("2drop", p_2drop);
   defprim("dup", p_dup);
+  defprim("2dup", p_2dup);
   defprim("over", p_over);
+  defprim("2over", p_2over);
   defprim("tuck", p_tuck);
+  defprim("2tuck", p_2tuck);
   defprim("swap", p_swap);
+  defprim("2swap", p_2swap);
   defprim("xy-swap", p_xy_swap);
   defprim("as/print", p_as_print);
   defprim("stack-pointer", p_stack_pointer);
