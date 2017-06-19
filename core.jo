@@ -256,7 +256,7 @@
     (jo cons) here
     (jo cons) here))
 
-(def message-jo?
+(def jo-ending-with-colon?
   (jojo
     (note jo -> bool)
     jo->string string/last-char
@@ -267,15 +267,10 @@
     (note sum-jo -> sum-jo)
     read/jo
     (if dup round-ket eq? then drop end)
-    (if dup message-jo? then
-        (string "<herehere>") string/print newline
-        dup jo/print newline
+    (if dup jo-ending-with-colon? then
         jo/append
-        (string "<herehere>") string/print newline
-        dup jo/print newline
         (loop))
     swap (recur) swap
-    dup jo/print newline
     (jo instruction/lit) here
     here
     (jo local-two-in) here))
@@ -286,30 +281,7 @@
     read/jo
     (if dup round-bar eq? not then end)
     drop read/jo drop
-    (jo :::) define-class/keyword/one-method/complex-message))
-
-(note (def define-class/keyword/one-method
-        (keyword
-          (jo instruction/jump) here
-          compiling-stack/tos (> offset-place)
-          compiling-stack/inc
-          compiling-stack/tos (> bare-jojo-place)
-          define-class/keyword/one-method/message (> message)
-
-          (string "<here123>") string/print newline
-          (< message) jo/print newline
-
-          compile-jojo
-          (jo end) here
-          compiling-stack/tos (< offset-place) set
-          (jo instruction/lit) here
-          (< bare-jojo-place) here
-          (jo instruction/lit) here
-          (< message) here
-          (jo swap) here
-          (jo cons) here
-          (jo cons) here)))
-
+    empty-jo define-class/keyword/one-method/complex-message))
 
 (def define-class/keyword/one-method
   (keyword
@@ -317,12 +289,7 @@
     compiling-stack/tos (> offset-place)
     compiling-stack/inc
     compiling-stack/tos (> bare-jojo-place)
-
-
-    (string "<here123>") string/print newline
-    read/jo (> message)
-    (< message) jo/print newline
-
+    define-class/keyword/one-method/message (> message)
     compile-jojo
     (jo end) here
     compiling-stack/tos (< offset-place) set
@@ -423,7 +390,7 @@
     (> class)
     (if (< class) class/has-meta-method-list? then
         (< class) class/get-meta-method-list
-        (< message)  dup jo/print newline
+        (< message)
         assoc/find
         (if then
             car
@@ -490,34 +457,71 @@
     (if over (jo <class>) eq? then swap drop send-to-class end)
     send-to-object))
 
-(def :
+(def send/sugar/simple
   (keyword
     (note (: message ...)
           =>
           (> object) (bare-jojo ...) apply
           (< object) (jo message) send)
 
-    read/jo (> message)
-    (jo :) generate-jo (> class-name-jo)
+    (> message)
     (jo :) generate-jo (> object-jo)
 
     (jo instruction/lit) here
-    (< class-name-jo) here
-    (jo local-in) here
+    (< object-jo) here
+    (jo local-two-in) here
+
+    bare-jojo
+    (jo apply) here
 
     (jo instruction/lit) here
     (< object-jo) here
-    (jo local-in) here
+    (jo local-two-out) here
 
-    bare-jojo (jo apply) here
+    (jo instruction/lit) here
+    (< message) here
+    (jo send) here))
+
+(def send/sugar/complex/loop
+  (keyword
+    (note sum-jo -> sum-jo)
+    read/jo
+    (if dup round-ket eq? then drop end)
+    (if dup round-bar eq? then drop read/jo jo/apply (loop))
+    (if dup jo-ending-with-colon? then jo/append (loop))
+    here (loop)))
+
+(def send/sugar/complex
+  (keyword
+    (note sum-jo -> sum-jo)
+    (jo instruction/jump) here
+    compiling-stack/tos (> offset-place)
+    compiling-stack/inc
+    compiling-stack/tos (> bare-jojo-place)
+    send/sugar/complex/loop
+    (jo end) here
+    compiling-stack/tos (< offset-place) set
+    (jo instruction/lit) here
+    (< bare-jojo-place) here))
+
+(def :
+  (keyword
+    read/jo
+    (if dup jo-ending-with-colon? not then
+        send/sugar/simple end)
+
+    (jo :) generate-jo (> object-jo)
 
     (jo instruction/lit) here
     (< object-jo) here
-    (jo local-out) here
+    (jo local-two-in) here
+
+    send/sugar/complex (> message)
+    (jo apply) here
 
     (jo instruction/lit) here
-    (< class-name-jo) here
-    (jo local-out) here
+    (< object-jo) here
+    (jo local-two-out) here
 
     (jo instruction/lit) here
     (< message) here
@@ -542,7 +546,6 @@
     read/jo here
     ignore
     (jo get-instance-variable) here))
-
 
 
 (def set-instance-variable
@@ -587,10 +590,13 @@
   (method
     (* grow
        (<< self) (=> age))
-    (* (: m1: sdads m2: sad m3: asd)
-       (<< self) (=> age))))
+    (* (: m1: a1 m2: a2)
+       (<< a1) jo/print newline jo/print newline
+       (<< a2) jo/print newline jo/print newline)))
 
 (run <object> (: new) jo/print newline list/print newline)
+
+
 (run <person> (: new) jo/print newline list/print newline)
 
 (run <person> (: new) (<= age) jo/print newline dot newline)
@@ -598,6 +604,12 @@
 (run  <person> (: new) 2dup
       (int 14) (jo <int>) 2swap (=> age)
       (<= age) jo/print newline dot newline)
+
+(run  <person> (: new)
+      (: m1:m2: (jo j1) (jo <j1>) (jo j2) (jo <j2>)))
+
+(run  <person> (: new)
+      (: m1: (jo j1) (jo <j1>) m2: (jo j2) (jo <j2>)))
 
 (note
   (def new/method (jojo (note method/body method/name -> method) cons))
