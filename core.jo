@@ -220,83 +220,16 @@
     swap
     cons))
 
-(note under :class-name we have
-      method-record
-      [method-record alone for now])
-
-(note object = :data :class-name
-      i.e. two value on the stack)
-
-(note when defining a class
-      different interface-generator can be used to generate method list
-      for example
-      inherit
-      low level array like data with free
-      - free must free everything
-      high level list list data using gc)
-
 (note
-  (class
-    (note basd on one superclass
-          thus single inheritance)
-    (note shared variable list)
-    (note instance variable list
-          i.e. parts of the object)
-    (note class method list)
-    (note object method list
-          where super can be used to use an method of superclass
-          to implement a new method to override it)))
-
-(note object creation
-
-      two ways to implement this :
-      (1) to use meta class -- class is an object
-      (2) to use meta method -- class is not an object
-
-      i will use (2))
-
-
-(note syntax in a class
-
-      inheritance
-
-      object variable list
-      (= ...)
-      object method list
-      (: ...)
-
-      class variable list
-      (meta (= ...))
-      class method list
-      (meta (: ...))
-
-      (note syntax in a method
-
-            get and set local variable
-            (< ...)
-            (> ...)
-            (<< ...)
-            (>> ...)
-
-            message to object
-            (: m1: ... m2: ...)
-            get and set object variable
-            (<= ...)
-            (=> ...)
-
-            message to class
-            (: m1: ... m2: ...)
-            get and set class variable
-            (<= ...)
-            (=> ...)))
-
-
-(note define syntax not by dispatch
-      but by locally alias for keyword
-      push when into the syntax
-      pop when into another syntax
-      push when back to the syntax
-      pop when leave the syntax)
+  (run (int 1) (int 2) cons
+       (int 3) null cons
+       cons
+       dup
+       cons
+       dup list/print newline
+       dup list/copy list/print newline
+       dup list/copy list/print newline
+       drop))
 
 (def class/get-class-name          (jojo (jo class-name) assq car))
 
@@ -522,9 +455,60 @@
     (< message) here
     (jo send) here))
 
+(def get-instance-variable
+  (jojo
+    (note [object name] -> [data tag])
+    (> name)
+    (> class-name)
+    (> instance-variable-list)
+
+    (< instance-variable-list)
+    (< name)
+    assoc/find
+    (if then car dup car swap cdr swap end)
+    (string "- get-instance-variable fail") string/print newline))
+
+(def =>
+  (keyword
+    (jo instruction/lit) here
+    read/jo here
+    ignore
+    (jo get-instance-variable) here))
+
+
+
+(def set-instance-variable
+  (jojo
+    (note [object data type name] -> [])
+    (> name)
+    (> type-name)
+    (> data)
+    (> class-name)
+    (> instance-variable-list)
+
+    (< instance-variable-list)
+    (< name)
+    assoc/find
+    (if then (> instance-variable)
+        (< data) (< type-name) cons
+        (< instance-variable) set-car end)
+    (string "- set-instance-variable fail") string/print newline))
+
+(def <=
+  (keyword
+    (jo instruction/lit) here
+    read/jo here
+    ignore
+    (jo set-instance-variable) here))
+
 (define-class <object>
   (meta-method
-    (= new (jojo (< self-class) class/get-class-name))))
+    (= new (jojo
+             (if (< self-class) class/has-variable-list? then
+                 (< self-class) class/get-variable-list list/copy
+                 (< self-class) class/get-class-name end)
+             null
+             (< self-class) class/get-class-name))))
 
 (define-class <person>
   (inherit <object>)
@@ -532,42 +516,19 @@
     (= k1 (int 1) (jo <int>))
     (= k2 (int 2) (jo <int>)))
   (variable
-    (= age1 (int 111) (jo <int>))
-    (= age2 (int 222) (jo <int>)))
+    (= age (int 13) (jo <int>)))
   (method
     (= grow (jojo dup dot))
     (= grow2 (jojo dup dot))))
 
-(run <object> (jo new) send jo/print)
-(run <person> (jo new) send jo/print)
+(run <object> (: new) jo/print newline list/print newline)
+(run <person> (: new) jo/print newline list/print newline)
 
-(run <object> (: new) jo/print)
-(run <person> (: new) jo/print)
+(run <person> (: new) (=> age) jo/print newline dot newline)
 
-(define-class <object2>
-  (meta-method
-    (= new (jojo (jo <object>-here))))
-  (method
-    (= grow (jojo
-              (string " ><><>< ") string/print
-              (<< self) jo/print
-              (string " ><><>< ") string/print
-              jo/print
-              (string " ><><>< ") string/print))))
-
-(define-class <person2>
-  (inherit <object2>)
-  (meta-variable
-    (= k1 (int 1) (jo <int>))
-    (= k2 (int 2) (jo <int>)))
-  (variable
-    (= age1 (int 111) (jo <int>))
-    (= age2 (int 222) (jo <int>)))
-  (method
-    (= grow2 (jojo dup dot))))
-
-(run (jo kkk) (jo <person2>) (jo grow) send)
-(run (jo kkk) (jo <person2>) (: grow (int 123)) drop)
+(run <person> (: new) over over
+     (int 14) (jo <int>) (<= age)
+     (=> age) jo/print newline dot newline)
 
 (note
   (def new/method (jojo (note method/body method/name -> method) cons))
@@ -611,12 +572,4 @@
  (include <path>)
  (clib <path>))
 
-(run (int 1) (int 2) cons
-     (int 3) null cons
-     cons
-     dup
-     cons
-     dup list/print newline
-     dup list/copy list/print newline
-     dup list/copy list/print newline
-     drop)
+(note  (bye))

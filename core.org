@@ -3,18 +3,10 @@
 
 * todo
 
-  - better syntax about
-    self
-    self-class-name
-    self-class
+  - cat for error message
 
-  - syntax for instance variable
-
-  - simple way to use object
-    is to make it a list of [name object] pair
-
-    - c is only used to implement primitive object ?
-      and to do optimization ?
+  - c is only used to implement primitive object ?
+    and to do optimization ?
 
   - [emacs] bright and dark color theme
 
@@ -35,7 +27,6 @@
       - module 正是用 interface function name 來編碼的
         所以可以設計類似 subtype 的機制
         [考慮 ocaml]
-
 
 * flag
 
@@ -296,85 +287,27 @@
 
 *** note
 
-    #+begin_src jojo
-    (note under :class-name we have
-          method-record
-          [method-record alone for now])
+    - class
+      - one superclass
+        thus single inheritance
+      - meta-variable
+      - meta-method
+        two ways to implement object creation :
+        (1) to use meta class -- class is an object
+        (2) to use meta method -- class is not an object
+        i will use (2)
+      - instance-variable
+        i.e. parts of the object
+      - method-list
+        where super can be used to use an method of superclass
+        to implement a new method to override it
 
-    (note object = :data :class-name
-          i.e. two value on the stack)
-
-    (note when defining a class
-          different interface-generator can be used to generate method list
-          for example
-          inherit
-          low level array like data with free
-          - free must free everything
-          high level list list data using gc)
-
-    (note
-      (class
-        (note basd on one superclass
-              thus single inheritance)
-        (note shared variable list)
-        (note instance variable list
-              i.e. parts of the object)
-        (note class method list)
-        (note object method list
-              where super can be used to use an method of superclass
-              to implement a new method to override it)))
-
-    (note object creation
-
-          two ways to implement this :
-          (1) to use meta class -- class is an object
-          (2) to use meta method -- class is not an object
-
-          i will use (2))
-
-
-    (note syntax in a class
-
-          inheritance
-
-          object variable list
-          (= ...)
-          object method list
-          (: ...)
-
-          class variable list
-          (meta (= ...))
-          class method list
-          (meta (: ...))
-
-          (note syntax in a method
-
-                get and set local variable
-                (< ...)
-                (> ...)
-                (<< ...)
-                (>> ...)
-
-                message to object
-                (: m1: ... m2: ...)
-                get and set object variable
-                (<= ...)
-                (=> ...)
-
-                message to class
-                (: m1: ... m2: ...)
-                get and set class variable
-                (<= ...)
-                (=> ...)))
-
-
-    (note define syntax not by dispatch
-          but by locally alias for keyword
-          push when into the syntax
-          pop when into another syntax
-          push when back to the syntax
-          pop when leave the syntax)
-    #+end_src
+    - interface-generator
+      when defining a class
+      different interface-generator can be used to generate method list
+      for example
+      - low level array like data with free
+      - high level list list data using gc
 
 *** help
 
@@ -587,7 +520,9 @@
         send-to-object))
     #+end_src
 
-*** [keyword] send
+*** >< [keyword] :
+
+    - <object> (: m1: ... m2: ...)
 
     #+begin_src jojo
     (def :
@@ -624,8 +559,62 @@
         (jo send) here))
     #+end_src
 
+*** [keyword] <= and =>
+
+    - syntax for instance-variable
+      simply set and get
+
+    #+begin_src jojo
+    (def get-instance-variable
+      (jojo
+        (note [object name] -> [data tag])
+        (> name)
+        (> class-name)
+        (> instance-variable-list)
+
+        (< instance-variable-list)
+        (< name)
+        assoc/find
+        (if then car dup car swap cdr swap end)
+        (string "- get-instance-variable fail") string/print newline))
+
+    (def =>
+      (keyword
+        (jo instruction/lit) here
+        read/jo here
+        ignore
+        (jo get-instance-variable) here))
+
+
+
+    (def set-instance-variable
+      (jojo
+        (note [object data type name] -> [])
+        (> name)
+        (> type-name)
+        (> data)
+        (> class-name)
+        (> instance-variable-list)
+
+        (< instance-variable-list)
+        (< name)
+        assoc/find
+        (if then (> instance-variable)
+            (< data) (< type-name) cons
+            (< instance-variable) set-car end)
+        (string "- set-instance-variable fail") string/print newline))
+
+    (def <=
+      (keyword
+        (jo instruction/lit) here
+        read/jo here
+        ignore
+        (jo set-instance-variable) here))
+    #+end_src
+
 *** <object>
 
+    - an <object> is two values on the stack [data class-name].
     - the data of an <object> is simply an assoc-list of name and value.
 
     #+begin_src jojo
@@ -648,14 +637,19 @@
         (= k1 (int 1) (jo <int>))
         (= k2 (int 2) (jo <int>)))
       (variable
-        (= age1 (int 111) (jo <int>))
-        (= age2 (int 222) (jo <int>)))
+        (= age (int 13) (jo <int>)))
       (method
         (= grow (jojo dup dot))
         (= grow2 (jojo dup dot))))
 
     (run <object> (: new) jo/print newline list/print newline)
     (run <person> (: new) jo/print newline list/print newline)
+
+    (run <person> (: new) (=> age) jo/print newline dot newline)
+
+    (run <person> (: new) over over
+         (int 14) (jo <int>) (<= age)
+         (=> age) jo/print newline dot newline)
     #+end_src
 
 *** ><><>< defmethod
@@ -687,7 +681,7 @@
 
 * file
 
-*** file
+*** note
 
     #+begin_src jojo
     (note
@@ -719,5 +713,5 @@
 * test
 
   #+begin_src jojo
-
+  (note  (bye))
   #+end_src
