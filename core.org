@@ -1,15 +1,12 @@
 #+property: tangle core.jo
 #+title: core
-
+- sugar for alias-push
+- error [or cat ?] for error message
 * todo
-
-  - sugar for alias-push
 
   - syntax for local helper functions
 
   - primitive objects
-
-  - cat for error message
 
   - c is only used to implement primitive object ?
     and to do optimization ?
@@ -307,6 +304,14 @@
           (jo here) here (loop))))
   #+end_src
 
+* >< alias
+
+  #+begin_src jojo
+  (def alias
+    (keyword
+      ))
+  #+end_src
+
 * object
 
 *** note
@@ -469,6 +474,24 @@
              (esc compile-jojo)
              ins/lit <class>
              ins/lit (< class-name))))
+
+    (note (def define-class/help
+            (keyword
+              read/jo (> class-name)
+              (alias
+                inherit       define-class/keyword/inherit
+                meta-method   define-class/keyword/meta-method-list
+                meta-variable define-class/keyword/meta-variable-list
+                variable      define-class/keyword/variable-list
+                method        define-class/keyword/method-list)
+              (lev null
+                   ins/lit class-name
+                   ins/lit (< class-name)
+                   cons
+                   cons
+                   (esc compile-jojo)
+                   ins/lit <class>
+                   ins/lit (< class-name)))))
 
     (def define-class
       (keyword
@@ -723,7 +746,7 @@
           (: m1: (jo j1) (jo <j1>) m2: (jo j2) (jo <j2>)))
     #+end_src
 
-*** ><><>< defmethod
+*** >< defmethod
 
     #+begin_src jojo
     (note
@@ -750,7 +773,7 @@
           (< class-name) jo-as-var set)))
     #+end_src
 
-* file
+* >< file
 
 *** note
 
@@ -769,7 +792,7 @@
         (string "READM") new/file (:: readable?)))
     #+end_src
 
-* module
+* >< module
 
 *** note
 
@@ -780,9 +803,3 @@
      (include <path>)
      (clib <path>))
     #+end_src
-
-* test
-
-  #+begin_src jojo
-  (note  (bye))
-  #+end_src
