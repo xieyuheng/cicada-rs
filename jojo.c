@@ -917,10 +917,10 @@ void i_jump() {
 }
 
 void export_control() {
-  defprim("instruction/lit", i_lit);
-  defprim("instruction/tail-call", i_tail_call);
-  defprim("instruction/jump-if-false", i_jump_if_false);
-  defprim("instruction/jump", i_jump);
+  defprim("ins/lit", i_lit);
+  defprim("ins/tail-call", i_tail_call);
+  defprim("ins/jump-if-false", i_jump_if_false);
+  defprim("ins/jump", i_jump);
 }
 
 void p_true() {
@@ -1114,7 +1114,7 @@ void k_int() {
       break;
     }
     else {
-      here(str2jo("instruction/lit"));
+      here(str2jo("ins/lit"));
       here(string_to_dec(jo2str(s)));
     }
   }
@@ -1128,7 +1128,7 @@ void k_bin() {
       break;
     }
     else {
-      here(str2jo("instruction/lit)"));
+      here(str2jo("ins/lit"));
       here(string_to_bin(jo2str(s)));
     }
   }
@@ -1138,11 +1138,11 @@ void k_oct() {
   // ([io] -> [compile])
   while (true) {
     jo s = read_jo();
-    if (s == str2jo("")) {
+    if (s == str2jo(")")) {
       break;
     }
     else {
-      here(str2jo("instruction/lit"));
+      here(str2jo("ins/lit"));
       here(string_to_oct(jo2str(s)));
     }
   }
@@ -1156,7 +1156,7 @@ void k_hex() {
       break;
     }
     else {
-      here(str2jo("instruction/lit"));
+      here(str2jo("ins/lit"));
       here(string_to_hex(jo2str(s)));
     }
   }
@@ -1220,7 +1220,7 @@ void p_free () {
 
 void k_address() {
   // ([io] -> [compile])
-  here(str2jo("instruction/lit"));
+  here(str2jo("ins/lit"));
   jo index = read_jo();
   here(&(jotable[index].value));
   k_ignore();
@@ -1515,7 +1515,7 @@ void k_jo() {
       break;
     }
     else {
-      here(str2jo("instruction/lit"));
+      here(str2jo("ins/lit"));
       here(s);
     }
   }
@@ -1575,7 +1575,7 @@ void k_string_one() {
   }
   string str = malloc(cursor);
   strcpy(str, buffer);
-  here(str2jo("instruction/lit"));
+  here(str2jo("ins/lit"));
   here(str);
 }
 
@@ -1993,7 +1993,7 @@ void p_compile_jojo() {
 void k_if() {
   // ([io] -> [compile])
   compile_jojo_until_meet_jo(str2jo("then"));
-  here(str2jo("instruction/jump-if-false"));
+  here(str2jo("ins/jump-if-false"));
   cell* offset_place = compiling_stack_tos();
   compiling_stack_inc();
   p_compile_jojo();
@@ -2003,14 +2003,14 @@ void k_if() {
 void k_tail_call() {
   // ([io] -> [compile])
   // no check for "no compile before define"
-  here(str2jo("instruction/tail-call"));
+  here(str2jo("ins/tail-call"));
   jo s = read_jo();
   here(s);
   k_ignore();
 }
 
 void k_loop() {
-  here(str2jo("instruction/tail-call"));
+  here(str2jo("ins/tail-call"));
   here(def_stack_tos());
   k_ignore();
 }
@@ -2026,48 +2026,48 @@ void p_compiling_stack_tos() {
 
 void k_bare_jojo() {
   // ([io] -> [compile])
-  here(str2jo("instruction/jump"));
+  here(str2jo("ins/jump"));
   cell* offset_place = compiling_stack_tos();
   compiling_stack_inc();
   p_compile_jojo();
   here(str2jo("end"));
   offset_place[0] = compiling_stack_tos();
-  here(str2jo("instruction/lit"));
+  here(str2jo("ins/lit"));
   here(offset_place + 1);
 }
 
 void k_jojo() {
   // ([io] -> [compile])
-  here(str2jo("instruction/jump"));
+  here(str2jo("ins/jump"));
   cell* offset_place = compiling_stack_tos();
   compiling_stack_inc();
   p_compile_jojo();
   here(str2jo("end"));
   offset_place[0] = compiling_stack_tos();
-  here(str2jo("instruction/lit"));
+  here(str2jo("ins/lit"));
   here(offset_place + 1);
-  here(str2jo("instruction/lit"));
+  here(str2jo("ins/lit"));
   here(str2jo("<jojo>"));
 }
 
 void k_keyword() {
   // ([io] -> [compile])
-  here(str2jo("instruction/jump"));
+  here(str2jo("ins/jump"));
   cell* offset_place = compiling_stack_tos();
   compiling_stack_inc();
   p_compile_jojo();
   here(str2jo("end"));
   offset_place[0] = compiling_stack_tos();
-  here(str2jo("instruction/lit"));
+  here(str2jo("ins/lit"));
   here(offset_place + 1);
-  here(str2jo("instruction/lit"));
+  here(str2jo("ins/lit"));
   here(str2jo("<keyword>"));
 }
 
 void k_bare_data() {
   // ([io] -> [compile])
   p_compile_jojo();
-  here(str2jo("instruction/lit"));
+  here(str2jo("ins/lit"));
   here(str2jo("bare-data"));
 }
 
@@ -2160,7 +2160,7 @@ void k_local_in() {
   }
   else {
     k_local_in();
-    here(str2jo("instruction/lit"));
+    here(str2jo("ins/lit"));
     here(s);
     here(str2jo("local-in"));
   }
@@ -2177,7 +2177,7 @@ void k_local_out() {
   }
   else {
     k_local_out();
-    here(str2jo("instruction/lit"));
+    here(str2jo("ins/lit"));
     here(s);
     here(str2jo("local-out"));
   }
@@ -2194,7 +2194,7 @@ void k_local_two_in() {
   }
   else {
     k_local_in();
-    here(str2jo("instruction/lit"));
+    here(str2jo("ins/lit"));
     here(s);
     here(str2jo("local-two-in"));
   }
@@ -2211,7 +2211,7 @@ void k_local_two_out() {
   }
   else {
     k_local_out();
-    here(str2jo("instruction/lit"));
+    here(str2jo("ins/lit"));
     here(s);
     here(str2jo("local-two-out"));
   }

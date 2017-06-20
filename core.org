@@ -300,7 +300,7 @@
           (if dup (jo esc) eq? then
               drop compile-jojo (loop))
           (el jo/apply (jo here) here (loop)))
-      (el (jo instruction/lit) here
+      (el (jo ins/lit) here
           here
           (jo here) here (loop))))
   #+end_src
@@ -357,7 +357,7 @@
     #+begin_src jojo
     (def define-class/keyword/one-variable
       (keyword
-        (lev instruction/lit
+        (lev ins/lit
              (esc read/jo here
                   compile-jojo)
              cons cons cons)))
@@ -377,7 +377,7 @@
             jo/append
             (loop))
         swap (recur) swap
-        (jo instruction/lit) here
+        (jo ins/lit) here
         here
         (jo local-two-in) here))
 
@@ -391,7 +391,7 @@
 
     (def define-class/keyword/one-method
       (keyword
-        (jo instruction/jump) here
+        (jo ins/jump) here
         compiling-stack/tos (> offset-place)
         compiling-stack/inc
         compiling-stack/tos (> bare-jojo-place)
@@ -399,9 +399,9 @@
         compile-jojo
         (jo end) here
         compiling-stack/tos (< offset-place) set
-        (jo instruction/lit) here
+        (jo ins/lit) here
         (< bare-jojo-place) here
-        (jo instruction/lit) here
+        (jo ins/lit) here
         (< message) here
         (jo swap) here
         (jo cons) here
@@ -409,8 +409,8 @@
 
     (def define-class/keyword/inherit
       (keyword
-        (jo instruction/lit) here (jo inherit) here
-        (jo instruction/lit) here read/jo here
+        (jo ins/lit) here (jo inherit) here
+        (jo ins/lit) here read/jo here
         ignore
         (jo cons) here
         (jo cons) here))
@@ -419,7 +419,7 @@
       (keyword
         (jo *) (jo define-class/keyword/one-variable) alias-push
 
-        (jo instruction/lit) here (jo meta-variable) here
+        (jo ins/lit) here (jo meta-variable) here
         (jo null) here
         compile-jojo
         (jo cons) here
@@ -429,7 +429,7 @@
       (keyword
         (jo *) (jo define-class/keyword/one-method) alias-push
 
-        (jo instruction/lit) here (jo meta-method) here
+        (jo ins/lit) here (jo meta-method) here
         (jo null) here
         compile-jojo
         (jo cons) here
@@ -439,7 +439,7 @@
       (keyword
         (jo *) (jo define-class/keyword/one-variable) alias-push
 
-        (jo instruction/lit) here (jo variable) here
+        (jo ins/lit) here (jo variable) here
         (jo null) here
         compile-jojo
         (jo cons) here
@@ -449,7 +449,7 @@
       (keyword
         (jo *) (jo define-class/keyword/one-method) alias-push
 
-        (jo instruction/lit) here (jo method) here
+        (jo ins/lit) here (jo method) here
         (jo null) here
         compile-jojo
         (jo cons) here
@@ -467,18 +467,18 @@
 
         (jo null) here
 
-        (jo instruction/lit) here
+        (jo ins/lit) here
         (jo class-name) here
-        (jo instruction/lit) here
+        (jo ins/lit) here
         (< class-name) here
         (jo cons) here
         (jo cons) here
 
         compile-jojo
-        (jo instruction/lit) here
+        (jo ins/lit) here
         (jo <class>) here
 
-        (jo instruction/lit) here
+        (jo ins/lit) here
         (< class-name) here))
 
     (def define-class
@@ -589,18 +589,18 @@
         (> message)
         (jo :) generate-jo (> object-jo)
 
-        (jo instruction/lit) here
+        (jo ins/lit) here
         (< object-jo) here
         (jo local-two-in) here
 
         bare-jojo
         (jo apply) here
 
-        (jo instruction/lit) here
+        (jo ins/lit) here
         (< object-jo) here
         (jo local-two-out) here
 
-        (jo instruction/lit) here
+        (jo ins/lit) here
         (< message) here
         (jo send) here))
 
@@ -616,14 +616,14 @@
     (def send/sugar/complex
       (keyword
         (note sum-jo -> sum-jo)
-        (jo instruction/jump) here
+        (jo ins/jump) here
         compiling-stack/tos (> offset-place)
         compiling-stack/inc
         compiling-stack/tos (> bare-jojo-place)
         send/sugar/complex/loop
         (jo end) here
         compiling-stack/tos (< offset-place) set
-        (jo instruction/lit) here
+        (jo ins/lit) here
         (< bare-jojo-place) here))
 
     (def :
@@ -634,18 +634,18 @@
 
         (jo :) generate-jo (> object-jo)
 
-        (jo instruction/lit) here
+        (jo ins/lit) here
         (< object-jo) here
         (jo local-two-in) here
 
         send/sugar/complex (> message)
         (jo apply) here
 
-        (jo instruction/lit) here
+        (jo ins/lit) here
         (< object-jo) here
         (jo local-two-out) here
 
-        (jo instruction/lit) here
+        (jo ins/lit) here
         (< message) here
         (jo send) here))
     #+end_src
@@ -671,7 +671,7 @@
 
     (def <=
       (keyword
-        (jo instruction/lit) here
+        (jo ins/lit) here
         read/jo here
         ignore
         (jo get-instance-variable) here))
@@ -696,7 +696,7 @@
 
     (def =>
       (keyword
-        (jo instruction/lit) here
+        (jo ins/lit) here
         read/jo here
         ignore
         (jo set-instance-variable) here))
