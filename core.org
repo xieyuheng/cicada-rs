@@ -3,7 +3,7 @@
 
 * todo
 
-  - better syntax for 'here'
+  - syntax for local helper functions
 
   - primitive objects
 
@@ -287,6 +287,24 @@
            drop))
     #+end_src
 
+* lev
+
+  #+begin_src jojo
+  (def lev
+    (note lev denotes leave-data-here)
+    (keyword
+      read/jo
+      (if dup round-ket eq? then drop end)
+      (if dup round-bar eq? then
+          drop read/jo
+          (if dup (jo esc) eq? then
+              drop compile-jojo (loop))
+          (el jo/apply (jo here) here (loop)))
+      (el (jo instruction/lit) here
+          here
+          (jo here) here (loop))))
+  #+end_src
+
 * object
 
 *** note
@@ -339,11 +357,10 @@
     #+begin_src jojo
     (def define-class/keyword/one-variable
       (keyword
-        (jo instruction/lit) here read/jo here
-        compile-jojo
-        (jo cons) here
-        (jo cons) here
-        (jo cons) here))
+        (lev instruction/lit
+             (esc read/jo here
+                  compile-jojo)
+             cons cons cons)))
 
     (def jo-ending-with-colon?
       (jojo

@@ -256,6 +256,15 @@
     (jo cons) here
     (jo cons) here))
 
+(def define-class/keyword/one-variable
+  (keyword
+    (lev
+      instruction/lit
+      (read/jo))
+    compile-jojo
+    (lev
+      cons cons cons)))
+
 (def jo-ending-with-colon?
   (jojo
     (note jo -> bool)
@@ -271,9 +280,8 @@
         jo/append
         (loop))
     swap (recur) swap
-    (jo instruction/lit) here
-    here
-    (jo local-two-in) here))
+    (lev lit (< jo)
+         local-two-in)))
 
 (def define-class/keyword/one-method/message
   (keyword
@@ -301,6 +309,22 @@
     (jo cons) here
     (jo cons) here))
 
+(def define-class/keyword/one-method
+  (keyword
+    (lev ins/jump)
+    compiling-stack/tos (> offset-place)
+    compiling-stack/inc
+    compiling-stack/tos (> bare-jojo-place)
+    define-class/keyword/one-method/message (> message)
+    compile-jojo
+    (lev end)
+    compiling-stack/tos (< offset-place) set
+    (lev ins/lit (< bare-jojo-place)
+         ins/lit (< message)
+         swap
+         cons
+         cons)))
+
 (def define-class/keyword/inherit
   (keyword
     (jo instruction/lit) here (jo inherit) here
@@ -308,6 +332,15 @@
     ignore
     (jo cons) here
     (jo cons) here))
+
+
+(def define-class/keyword/inherit
+  (keyword
+    (lev ins/lit inherit
+         ins/lit (read/jo))
+    ignore
+    (lev cons
+         cons)))
 
 (def define-class/keyword/meta-variable-list
   (keyword
