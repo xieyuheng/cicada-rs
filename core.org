@@ -3,6 +3,8 @@
 
 * todo
 
+  - sugar for alias-push
+
   - syntax for local helper functions
 
   - primitive objects
@@ -377,9 +379,9 @@
             jo/append
             (loop))
         swap (recur) swap
-        (jo ins/lit) here
-        here
-        (jo local-two-in) here))
+        (lev ins/lit
+             (esc here)
+             local-two-in)))
 
     (def define-class/keyword/one-method/message
       (keyword
@@ -391,69 +393,64 @@
 
     (def define-class/keyword/one-method
       (keyword
-        (jo ins/jump) here
+        (lev ins/jump)
         compiling-stack/tos (> offset-place)
         compiling-stack/inc
         compiling-stack/tos (> bare-jojo-place)
         define-class/keyword/one-method/message (> message)
         compile-jojo
-        (jo end) here
+        (lev end)
         compiling-stack/tos (< offset-place) set
-        (jo ins/lit) here
-        (< bare-jojo-place) here
-        (jo ins/lit) here
-        (< message) here
-        (jo swap) here
-        (jo cons) here
-        (jo cons) here))
+        (lev ins/lit (< bare-jojo-place)
+             ins/lit (< message)
+             swap
+             cons
+             cons)))
 
     (def define-class/keyword/inherit
       (keyword
-        (jo ins/lit) here (jo inherit) here
-        (jo ins/lit) here read/jo here
-        ignore
-        (jo cons) here
-        (jo cons) here))
+        (lev ins/lit inherit
+             ins/lit
+             (esc read/jo here
+                  ignore)
+             cons
+             cons)))
 
     (def define-class/keyword/meta-variable-list
       (keyword
         (jo *) (jo define-class/keyword/one-variable) alias-push
-
-        (jo ins/lit) here (jo meta-variable) here
-        (jo null) here
-        compile-jojo
-        (jo cons) here
-        (jo cons) here))
+        (lev ins/lit meta-variable
+             null
+             (esc compile-jojo)
+             cons
+             cons)))
 
     (def define-class/keyword/meta-method-list
       (keyword
         (jo *) (jo define-class/keyword/one-method) alias-push
-
-        (jo ins/lit) here (jo meta-method) here
-        (jo null) here
-        compile-jojo
-        (jo cons) here
-        (jo cons) here))
+        (lev ins/lit meta-method
+             null
+             (esc compile-jojo)
+             cons
+             cons)))
 
     (def define-class/keyword/variable-list
       (keyword
         (jo *) (jo define-class/keyword/one-variable) alias-push
-
-        (jo ins/lit) here (jo variable) here
-        (jo null) here
-        compile-jojo
-        (jo cons) here
-        (jo cons) here))
+        (lev ins/lit variable
+             null
+             (esc compile-jojo)
+             cons
+             cons)))
 
     (def define-class/keyword/method-list
       (keyword
         (jo *) (jo define-class/keyword/one-method) alias-push
-
-        (jo ins/lit) here (jo method) here
-        (jo null) here
-        compile-jojo
-        (jo cons) here
-        (jo cons) here))
+        (lev ins/lit method
+             null
+             (esc compile-jojo)
+             cons
+             cons)))
 
 
     (def define-class/help
@@ -464,28 +461,20 @@
         (jo meta-variable) (jo define-class/keyword/meta-variable-list) alias-push
         (jo variable) (jo define-class/keyword/variable-list) alias-push
         (jo method) (jo define-class/keyword/method-list) alias-push
-
-        (jo null) here
-
-        (jo ins/lit) here
-        (jo class-name) here
-        (jo ins/lit) here
-        (< class-name) here
-        (jo cons) here
-        (jo cons) here
-
-        compile-jojo
-        (jo ins/lit) here
-        (jo <class>) here
-
-        (jo ins/lit) here
-        (< class-name) here))
+        (lev null
+             ins/lit class-name
+             ins/lit (< class-name)
+             cons
+             cons
+             (esc compile-jojo)
+             ins/lit <class>
+             ins/lit (< class-name))))
 
     (def define-class
       (keyword
         compiling-stack/tos (> begin)
         define-class/help
-        (jo end) here
+        (lev end)
         (< begin) apply
         bind-name))
     #+end_src
@@ -585,24 +574,15 @@
               =>
               (> object) (bare-jojo ...) apply
               (< object) (jo message) send)
-
         (> message)
         (jo :) generate-jo (> object-jo)
-
-        (jo ins/lit) here
-        (< object-jo) here
-        (jo local-two-in) here
-
-        bare-jojo
-        (jo apply) here
-
-        (jo ins/lit) here
-        (< object-jo) here
-        (jo local-two-out) here
-
-        (jo ins/lit) here
-        (< message) here
-        (jo send) here))
+        (lev ins/lit (< object-jo)
+             local-two-in
+             (esc bare-jojo) apply
+             ins/lit (< object-jo)
+             local-two-out
+             ins/lit (< message)
+             send)))
 
     (def send/sugar/complex/loop
       (keyword
@@ -616,38 +596,29 @@
     (def send/sugar/complex
       (keyword
         (note sum-jo -> sum-jo)
-        (jo ins/jump) here
+        (lev ins/jump)
         compiling-stack/tos (> offset-place)
         compiling-stack/inc
         compiling-stack/tos (> bare-jojo-place)
         send/sugar/complex/loop
-        (jo end) here
+        (lev end)
         compiling-stack/tos (< offset-place) set
-        (jo ins/lit) here
-        (< bare-jojo-place) here))
+        (lev ins/lit (< bare-jojo-place))))
 
     (def :
       (keyword
         read/jo
         (if dup jo-ending-with-colon? not then
             send/sugar/simple end)
-
         (jo :) generate-jo (> object-jo)
-
-        (jo ins/lit) here
-        (< object-jo) here
-        (jo local-two-in) here
-
-        send/sugar/complex (> message)
-        (jo apply) here
-
-        (jo ins/lit) here
-        (< object-jo) here
-        (jo local-two-out) here
-
-        (jo ins/lit) here
-        (< message) here
-        (jo send) here))
+        (lev ins/lit (< object-jo)
+             local-two-in
+             (esc send/sugar/complex (> message))
+             apply
+             ins/lit (< object-jo)
+             local-two-out
+             ins/lit (< message)
+             send)))
     #+end_src
 
 *** [keyword] <= and =>
@@ -671,10 +642,10 @@
 
     (def <=
       (keyword
-        (jo ins/lit) here
-        read/jo here
-        ignore
-        (jo get-instance-variable) here))
+        (lev ins/lit
+             (esc read/jo here
+                  ignore)
+             get-instance-variable)))
 
 
     (def set-instance-variable
@@ -696,10 +667,10 @@
 
     (def =>
       (keyword
-        (jo ins/lit) here
-        read/jo here
-        ignore
-        (jo set-instance-variable) here))
+        (lev ins/lit
+             (esc read/jo here
+                  ignore)
+             set-instance-variable)))
     #+end_src
 
 *** <object>
