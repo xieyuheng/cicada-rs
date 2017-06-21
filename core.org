@@ -1,6 +1,6 @@
 #+property: tangle core.jo
 #+title: core
-- sugar for alias-push
+
 - error [or cat ?] for error message
 * todo
 
@@ -309,7 +309,18 @@
   #+begin_src jojo
   (def alias
     (keyword
-      ))
+      read/jo (> nick)
+      (if (< nick) round-ket eq? then end)
+      read/jo (> name)
+      (if (< name) round-ket eq? then
+          (string "- alias meet uneven list") string/print newline
+          (string "  last nick : ") string/print (< nick) jo/print
+          newline
+          end)
+      (el (lev ins/lit (< nick)
+               ins/lit (< name)
+               alias-push)
+          (loop))))
   #+end_src
 
 * object
@@ -423,7 +434,7 @@
 
     (def define-class/keyword/meta-variable-list
       (keyword
-        (jo *) (jo define-class/keyword/one-variable) alias-push
+        (alias * define-class/keyword/one-variable)
         (lev ins/lit meta-variable
              null
              (esc compile-jojo)
@@ -432,7 +443,7 @@
 
     (def define-class/keyword/meta-method-list
       (keyword
-        (jo *) (jo define-class/keyword/one-method) alias-push
+        (alias * define-class/keyword/one-method)
         (lev ins/lit meta-method
              null
              (esc compile-jojo)
@@ -441,7 +452,7 @@
 
     (def define-class/keyword/variable-list
       (keyword
-        (jo *) (jo define-class/keyword/one-variable) alias-push
+        (alias * define-class/keyword/one-variable)
         (lev ins/lit variable
              null
              (esc compile-jojo)
@@ -450,22 +461,22 @@
 
     (def define-class/keyword/method-list
       (keyword
-        (jo *) (jo define-class/keyword/one-method) alias-push
+        (alias * define-class/keyword/one-method)
         (lev ins/lit method
              null
              (esc compile-jojo)
              cons
              cons)))
 
-
     (def define-class/help
       (keyword
         read/jo (> class-name)
-        (jo inherit) (jo define-class/keyword/inherit) alias-push
-        (jo meta-method) (jo define-class/keyword/meta-method-list) alias-push
-        (jo meta-variable) (jo define-class/keyword/meta-variable-list) alias-push
-        (jo variable) (jo define-class/keyword/variable-list) alias-push
-        (jo method) (jo define-class/keyword/method-list) alias-push
+        (alias
+          inherit       define-class/keyword/inherit
+          meta-method   define-class/keyword/meta-method-list
+          meta-variable define-class/keyword/meta-variable-list
+          variable      define-class/keyword/variable-list
+          method        define-class/keyword/method-list)
         (lev null
              ins/lit class-name
              ins/lit (< class-name)
@@ -474,24 +485,6 @@
              (esc compile-jojo)
              ins/lit <class>
              ins/lit (< class-name))))
-
-    (note (def define-class/help
-            (keyword
-              read/jo (> class-name)
-              (alias
-                inherit       define-class/keyword/inherit
-                meta-method   define-class/keyword/meta-method-list
-                meta-variable define-class/keyword/meta-variable-list
-                variable      define-class/keyword/variable-list
-                method        define-class/keyword/method-list)
-              (lev null
-                   ins/lit class-name
-                   ins/lit (< class-name)
-                   cons
-                   cons
-                   (esc compile-jojo)
-                   ins/lit <class>
-                   ins/lit (< class-name)))))
 
     (def define-class
       (keyword
