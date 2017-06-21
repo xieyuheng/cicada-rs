@@ -1106,7 +1106,7 @@ void p_lteq_p() {
 
 jo read_jo();
 
-void k_int() {
+void k_integer() {
   // ([io] -> [compile])
   while (true) {
     jo s = read_jo();
@@ -1120,60 +1120,12 @@ void k_int() {
   }
 }
 
-void k_bin() {
-  // ([io] -> [compile])
-  while (true) {
-    jo s = read_jo();
-    if (s == str2jo(")")) {
-      break;
-    }
-    else {
-      here(str2jo("ins/lit"));
-      here(string_to_bin(jo2str(s)));
-    }
-  }
-}
-
-void k_oct() {
-  // ([io] -> [compile])
-  while (true) {
-    jo s = read_jo();
-    if (s == str2jo(")")) {
-      break;
-    }
-    else {
-      here(str2jo("ins/lit"));
-      here(string_to_oct(jo2str(s)));
-    }
-  }
-}
-
-void k_hex() {
-  // ([io] -> [compile])
-  while (true) {
-    jo s = read_jo();
-    if (s == str2jo(")")) {
-      break;
-    }
-    else {
-      here(str2jo("ins/lit"));
-      here(string_to_hex(jo2str(s)));
-    }
-  }
-}
-
-void p_int_print() { printf("%ld", as_pop()); }
-void p_bin_print() { printf("%ld", as_pop()); }
-void p_oct_print() { printf("%lo", as_pop()); }
-void p_hex_print() { printf("%lx", as_pop()); }
+void p_integer_print() { printf("%ld", as_pop()); }
 
 void p_dot() { printf("%ld ", as_pop()); }
-void p_int_dot() { printf("%ld ", as_pop()); }
-void p_bin_dot() { printf("%ld ", as_pop()); }
-void p_oct_dot() { printf("%lo ", as_pop()); }
-void p_hex_dot() { printf("%lx ", as_pop()); }
+void p_integer_dot() { printf("%ld ", as_pop()); }
 
-void export_int() {
+void export_integer() {
   defprim("add", p_add);
   defprim("sub", p_sub);
 
@@ -1191,21 +1143,12 @@ void export_int() {
   defprim("gteq?", p_gteq_p);
   defprim("lteq?", p_lteq_p);
 
-  defprimkey("int", k_int);
-  defprimkey("bin", k_bin);
-  defprimkey("oct", k_oct);
-  defprimkey("hex", k_hex);
+  defprimkey("integer", k_integer);
 
-  defprim("int/print", p_int_print);
-  defprim("bin/print", p_bin_print);
-  defprim("oct/print", p_oct_print);
-  defprim("hex/print", p_hex_print);
+  defprim("integer/print", p_integer_print);
 
   defprim("dot", p_dot);
-  defprim("int/dot", p_int_dot);
-  defprim("bin/dot", p_bin_dot);
-  defprim("oct/dot", p_oct_dot);
-  defprim("hex/dot", p_hex_dot);
+  defprim("integer/dot", p_integer_dot);
 }
 
 void p_allocate () {
@@ -2403,7 +2346,7 @@ void init_top_repl() {
   export_control();
   export_bool();
   export_bit();
-  export_int();
+  export_integer();
   export_memory();
   export_byte();
   export_jo();

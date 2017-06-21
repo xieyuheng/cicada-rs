@@ -1,18 +1,15 @@
 #+property: tangle core.jo
 #+title: core
-
 - error [or cat ?] for error message
+- example of the use of oo
 * todo
 
   - syntax for local helper functions
-
-  - primitive objects
-
-  - c is only used to implement primitive object ?
+  - [emacs]
+    bright and dark color theme
+  - [ffi]
+    c is only used to implement primitive object ?
     and to do optimization ?
-
-  - [emacs] bright and dark color theme
-
   - [module system]
     - 以 module 爲單位加載別人寫的函數所在的文件
       用 module_record 來記錄已經加載過的 module
@@ -43,13 +40,13 @@
 *** cons
 
     #+begin_src jojo
-    (def cons-size      (bare-data (int 3) cell-size mul))
-    (def cons-area-size (bare-data (int 1024 1024) mul cons-size mul))
+    (def cons-size      (bare-data (integer 3) cell-size mul))
+    (def cons-area-size (bare-data (integer 1024 1024) mul cons-size mul))
     (def cons-area      (bare-data cons-area-size allocate))
     (def cons-area-top  (bare-data cons-area cons-area-size add))
     (def cons-pointer   (bare-data cons-area))
-    (def current-mark   (bare-data (int 1)))
-    (def max-mark       (bare-data (int 1024 1024) mul))
+    (def current-mark   (bare-data (integer 1)))
+    (def max-mark       (bare-data (integer 1024 1024) mul))
 
     (def cons-pointer/next
       (jojo (note -> [cons-pointer])
@@ -72,7 +69,7 @@
       (jojo (note cell -> bool)
         (if dup cons-area lt? then drop false end)
         (if dup cons-area-top gteq? then drop false end)
-        cons-area sub cons-size mod (int 0) eq?))
+        cons-area sub cons-size mod (integer 0) eq?))
 
 
 
@@ -104,7 +101,7 @@
     (def sweep-cons-area/loop
       (jojo (note cons -> [io])
         (if dup cons-area-top eq? then drop end)
-        dup (int 0)  swap set
+        dup (integer 0)  swap set
         cons-size add
         (loop)))
 
@@ -127,7 +124,7 @@
 
     (def mark-cons-area/def-record
       (jojo (note def-record -> [cons-area])
-        (if dup get (int 0) eq? then drop end)
+        (if dup get (integer 0) eq? then drop end)
         dup get mark-cons
         cell-size add
         (loop)))
@@ -143,8 +140,8 @@
       (jojo (note -> [cons-area])
         (if current-mark max-mark eq? then
             sweep-cons-area
-            (int 0) (& current-mark) set)
-        current-mark (int 1) add (& current-mark) set
+            (integer 0) (& current-mark) set)
+        current-mark (integer 1) add (& current-mark) set
         def-record mark-cons-area/def-record
         stack-pointer
         mark-cons-area/argument-stack))
@@ -202,9 +199,9 @@
 
     (note the following tests are for small cons-area)
 
-    (note (test (int 0)
-                (int 1) cons
-                (int 2) cons
+    (note (test (integer 0)
+                (integer 1) cons
+                (integer 2) cons
                 dup car dot
                 dup cdr car dot
                 dup cdr cdr dot
@@ -275,8 +272,8 @@
         cons))
 
     (note
-      (run (int 1) (int 2) cons
-           (int 3) null cons
+      (run (integer 1) (integer 2) cons
+           (integer 3) null cons
            cons
            dup
            cons
@@ -304,7 +301,7 @@
           (jo here) here (loop))))
   #+end_src
 
-* >< alias
+* alias
 
   #+begin_src jojo
   (def alias
@@ -713,7 +710,7 @@
       (meta-variable
         (* language (jo chinese) (jo <jo>)))
       (variable
-        (* age (int 13) (jo <int>)))
+        (* age (integer 13) (jo <int>)))
       (method
         (* grow
            (<< self) (=> age))
@@ -722,14 +719,11 @@
            (<< a2) jo/print newline jo/print newline)))
 
     (run <object> (: new) jo/print newline list/print newline)
-
-
     (run <person> (: new) jo/print newline list/print newline)
-
     (run <person> (: new) (<= age) jo/print newline dot newline)
 
     (run  <person> (: new) 2dup
-          (int 14) (jo <int>) 2swap (=> age)
+          (integer 14) (jo <int>) 2swap (=> age)
           (<= age) jo/print newline dot newline)
 
     (run  <person> (: new)
@@ -764,6 +758,75 @@
           cons
 
           (< class-name) jo-as-var set)))
+    #+end_src
+
+* <int>
+
+*** <int>
+
+    #+begin_src jojo
+    (define-class <int>
+      (method
+        (* print
+           (<< self) drop integer/print)
+        (* write
+           (string "(int ") string/print
+           (<< self) (: print)
+           (string ") ") string/print)))
+    #+end_src
+
+*** [keyword] int
+
+    #+begin_src jojo
+    (def int
+      (keyword
+        (jo integer) jo/apply
+        (lev ins/lit <int>)))
+    #+end_src
+
+*** test
+
+    #+begin_src jojo
+    (run (int 123) 2dup (: print) newline (: write))
+    #+end_src
+
+* <str>
+
+*** <str>
+
+    #+begin_src jojo
+    (define-class <str>
+      (method
+        (* print
+           (<< self) drop string/print)
+        (* write
+           (string "(str ") string/print
+           double-quote jo/print
+           (<< self) (: print)
+           double-quote jo/print
+           (string ") ") string/print)
+        (* length
+           (<< self) drop string/length (jo <int>))))
+    #+end_src
+
+*** [keyword] str
+
+    #+begin_src jojo
+    (def str
+      (keyword
+        (jo string) jo/apply
+        (lev ins/lit <str>)))
+    #+end_src
+
+*** test
+
+    #+begin_src jojo
+    (run (str "k1 k2 k3")
+         2dup (: print) newline
+         2dup (: write) newline
+         2dup (: length) (: print) newline
+         2dup (: length) (: write) newline
+         2drop)
     #+end_src
 
 * >< file
