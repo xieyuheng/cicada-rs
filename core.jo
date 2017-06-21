@@ -236,8 +236,8 @@
   (keyword
     read/jo
     (if dup round-ket eq? then drop end)
-    (if dup round-bar eq? then
-        drop read/jo
+    (if dup round-bar eq? then drop
+        read/jo
         (if dup (jo esc) eq? then
             drop compile-jojo (loop))
         (el jo/apply (jo here) here (loop)))
@@ -648,7 +648,17 @@
 
 (def cat
   (keyword
-    ))
+    read/jo
+    (if dup round-ket eq? then drop end)
+    (if dup double-quote eq? then
+        drop one-string
+        (lev string/print)
+        (loop))
+    (if dup round-bar eq? then drop
+        read/jo jo/apply (loop))
+    (el here (loop))))
+
+(note (run (cat "1 2 3" newline "4 5 6" newline "7 8 9" newline)))
 
 (note
   (def <file> (bare-data empty-class))

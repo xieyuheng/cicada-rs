@@ -1,16 +1,17 @@
 #+property: tangle core.jo
 #+title: core
 
-- cat for printing message
-- example of the use of oo
 * todo
 
-  - syntax for local helper functions
+  - example of the use of oo
+
   - [emacs]
-    bright and dark color theme
-  - [ffi]
-    c is only used to implement primitive object ?
-    and to do optimization ?
+    - write some emacs-lisp lib
+    - bright and dark color theme
+
+  - [testing] assert for embedded testing
+
+  - [maybe] syntax for local helper functions
 
 * flag
 
@@ -275,8 +276,8 @@
     (keyword
       read/jo
       (if dup round-ket eq? then drop end)
-      (if dup round-bar eq? then
-          drop read/jo
+      (if dup round-bar eq? then drop
+          read/jo
           (if dup (jo esc) eq? then
               drop compile-jojo (loop))
           (el jo/apply (jo here) here (loop)))
@@ -791,13 +792,29 @@
     #+end_src
 
 * >< <list>
-* >< [keyword] cat
+* [keyword] cat
 
-  #+begin_src jojo
-  (def cat
-    (keyword
-      ))
-  #+end_src
+*** cat
+
+    #+begin_src jojo
+    (def cat
+      (keyword
+        read/jo
+        (if dup round-ket eq? then drop end)
+        (if dup double-quote eq? then
+            drop one-string
+            (lev string/print)
+            (loop))
+        (if dup round-bar eq? then drop
+            read/jo jo/apply (loop))
+        (el here (loop))))
+    #+end_src
+
+*** test
+
+    #+begin_src jojo
+    (note (run (cat "1 2 3" newline "4 5 6" newline "7 8 9" newline)))
+    #+end_src
 
 * >< <file>
 
@@ -855,3 +872,11 @@
      (include <path>)
      (clib <path>))
     #+end_src
+
+* <clib>
+
+*** note
+
+    - [ffi]
+      c is only used to implement primitive object ?
+      and to do optimization ?

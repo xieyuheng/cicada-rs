@@ -9,8 +9,6 @@
   - [debug] trace
   - [debug] step
 
-  - [test] assert
-
   - [safe] error report for every limited number, jo-max-length
   - [safe] to handle all the error
 
@@ -2156,10 +2154,10 @@
 
 * *string*
 
-*** k_string_one
+*** k_one_string
 
     #+begin_src c
-    void k_string_one() {
+    void k_one_string() {
       // ([io] -> [compile])
       char buffer[1024 * 1024];
       cell cursor = 0;
@@ -2193,7 +2191,7 @@
           return;
         }
         else if (s == str2jo("\"")) {
-          k_string_one();
+          k_one_string();
         }
         else {
           // do nothing
@@ -2258,6 +2256,7 @@
     #+begin_src c
     void export_string() {
       defprimkey("string", k_string);
+      defprimkey("one-string", k_one_string);
       defprim("string/print", p_string_print);
       defprim("string/dot", p_string_dot);
       defprim("string/length", p_string_length);

@@ -1500,7 +1500,7 @@ void export_jo() {
   defprim("generate-jo", p_generate_jo);
 }
 
-void k_string_one() {
+void k_one_string() {
   // ([io] -> [compile])
   char buffer[1024 * 1024];
   cell cursor = 0;
@@ -1530,7 +1530,7 @@ void k_string() {
       return;
     }
     else if (s == str2jo("\"")) {
-      k_string_one();
+      k_one_string();
     }
     else {
       // do nothing
@@ -1571,6 +1571,7 @@ void p_string_last_char() {
 
 void export_string() {
   defprimkey("string", k_string);
+  defprimkey("one-string", k_one_string);
   defprim("string/print", p_string_print);
   defprim("string/dot", p_string_dot);
   defprim("string/length", p_string_length);
