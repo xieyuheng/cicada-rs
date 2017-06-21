@@ -1,6 +1,7 @@
 #+property: tangle core.jo
 #+title: core
-- error [or cat ?] for error message
+
+- cat for printing message
 - example of the use of oo
 * todo
 
@@ -821,33 +822,31 @@
 
 *** note
 
-    - [module.jo] make good use of the separated module.jo
-      - functions to get metadate in module.jo
+    - module is simply a dir of source code files,
+      with a module.jo to store meta data of the module.
 
-    - [tool] what kinds of tools are needed ?
+      a module-record for loaded modules to avoid reload.
+
+    - a package manager to download dependences and install them.
+
+    - command-line interface of module-system :
       install
       uninstall
       reinstall
 
-    - package manager
+    - ~/.jojo/ to store installed modules.
 
-    - [module system]
-      - 以 module 爲單位加載別人寫的函數所在的文件
-        用 module_record 來記錄已經加載過的 module
-        加載過的就不重複加載
-      - 命名
-        - 需要避免命名衝突
-        - 每個函數有實際的唯一的名字
-          module/name
-        - 在每個 module 加載過程中
-          ><
-      - 版本
-        - 需要控制版本
-          module/name
-      - re-export
-        - module 正是用 interface function name 來編碼的
-          所以可以設計類似 subtype 的機制
-          [考慮 ocaml]
+    - namespace
+      to avoid duplicated naming.
+      how is an unique name ?
+      module/version/name ?
+
+    - version of module
+      module/version/name ?
+
+    - the re-export problem
+      is a module encoded by interface function name ?
+      shoud we use sub-module ?
 
     #+begin_src jojo
     (note
