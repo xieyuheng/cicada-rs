@@ -10,23 +10,6 @@
   - [ffi]
     c is only used to implement primitive object ?
     and to do optimization ?
-  - [module system]
-    - 以 module 爲單位加載別人寫的函數所在的文件
-      用 module_record 來記錄已經加載過的 module
-      加載過的就不重複加載
-    - 命名
-      - 需要避免命名衝突
-      - 每個函數有實際的唯一的名字
-        module/name
-      - 在每個 module 加載過程中
-        ><
-    - 版本
-      - 需要控制版本
-        module/name
-    - re-export
-      - module 正是用 interface function name 來編碼的
-        所以可以設計類似 subtype 的機制
-        [考慮 ocaml]
 
 * flag
 
@@ -283,7 +266,7 @@
            drop))
     #+end_src
 
-* lev
+* [keyword] lev
 
   #+begin_src jojo
   (def lev
@@ -301,7 +284,7 @@
           (jo here) here (loop))))
   #+end_src
 
-* alias
+* [keyword] alias
 
   #+begin_src jojo
   (def alias
@@ -686,10 +669,14 @@
              set-instance-variable)))
     #+end_src
 
-*** <object>
+* <object>
+
+*** note
 
     - an <object> is two values on the stack [data class-name].
     - the data of an <object> is simply an assoc-list of name and value.
+
+*** <object>
 
     #+begin_src jojo
     (define-class <object>
@@ -731,33 +718,6 @@
 
     (run  <person> (: new)
           (: m1: (jo j1) (jo <j1>) m2: (jo j2) (jo <j2>)))
-    #+end_src
-
-*** >< defmethod
-
-    #+begin_src jojo
-    (note
-      (def new/method (jojo (note method/body method/name -> method) cons))
-
-      (def defmethod
-        (jojo (note (defmethod :class-name :method-name ...)
-                    =>
-                    (bare-jojo ...) (jo :method-name) new/method
-                    :class-name swap cons
-                    (& :class-name) set)
-
-          read/jo (> class-name)
-          read/jo (> method-name)
-
-          address-of-here (> bare-jojo)
-          compile-jojo
-          (jo end) here
-
-          (< class-name) jo-as-var get
-          (< bare-jojo) (< method-name) new/method
-          cons
-
-          (< class-name) jo-as-var set)))
     #+end_src
 
 * <int>
@@ -829,7 +789,16 @@
          2drop)
     #+end_src
 
-* >< file
+* >< <list>
+* >< [keyword] cat
+
+  #+begin_src jojo
+  (def cat
+    (keyword
+      ))
+  #+end_src
+
+* >< <file>
 
 *** note
 
@@ -848,9 +817,37 @@
         (string "READM") new/file (:: readable?)))
     #+end_src
 
-* >< module
+* >< <module>
 
 *** note
+
+    - [module.jo] make good use of the separated module.jo
+      - functions to get metadate in module.jo
+
+    - [tool] what kinds of tools are needed ?
+      install
+      uninstall
+      reinstall
+
+    - package manager
+
+    - [module system]
+      - 以 module 爲單位加載別人寫的函數所在的文件
+        用 module_record 來記錄已經加載過的 module
+        加載過的就不重複加載
+      - 命名
+        - 需要避免命名衝突
+        - 每個函數有實際的唯一的名字
+          module/name
+        - 在每個 module 加載過程中
+          ><
+      - 版本
+        - 需要控制版本
+          module/name
+      - re-export
+        - module 正是用 interface function name 來編碼的
+          所以可以設計類似 subtype 的機制
+          [考慮 ocaml]
 
     #+begin_src jojo
     (note

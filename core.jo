@@ -1,13 +1,13 @@
 (run testing-flag/on)
 (test top-repl/printing-flag/on)
 
-(def cons-size      (bare-data (int 3) cell-size mul))
-(def cons-area-size (bare-data (int 1024 1024) mul cons-size mul))
+(def cons-size      (bare-data (integer 3) cell-size mul))
+(def cons-area-size (bare-data (integer 1024 1024) mul cons-size mul))
 (def cons-area      (bare-data cons-area-size allocate))
 (def cons-area-top  (bare-data cons-area cons-area-size add))
 (def cons-pointer   (bare-data cons-area))
-(def current-mark   (bare-data (int 1)))
-(def max-mark       (bare-data (int 1024 1024) mul))
+(def current-mark   (bare-data (integer 1)))
+(def max-mark       (bare-data (integer 1024 1024) mul))
 
 (def cons-pointer/next
   (jojo (note -> [cons-pointer])
@@ -30,7 +30,7 @@
   (jojo (note cell -> bool)
     (if dup cons-area lt? then drop false end)
     (if dup cons-area-top gteq? then drop false end)
-    cons-area sub cons-size mod (int 0) eq?))
+    cons-area sub cons-size mod (integer 0) eq?))
 
 
 
@@ -62,7 +62,7 @@
 (def sweep-cons-area/loop
   (jojo (note cons -> [io])
     (if dup cons-area-top eq? then drop end)
-    dup (int 0)  swap set
+    dup (integer 0)  swap set
     cons-size add
     (loop)))
 
@@ -85,7 +85,7 @@
 
 (def mark-cons-area/def-record
   (jojo (note def-record -> [cons-area])
-    (if dup get (int 0) eq? then drop end)
+    (if dup get (integer 0) eq? then drop end)
     dup get mark-cons
     cell-size add
     (loop)))
@@ -101,8 +101,8 @@
   (jojo (note -> [cons-area])
     (if current-mark max-mark eq? then
         sweep-cons-area
-        (int 0) (& current-mark) set)
-    current-mark (int 1) add (& current-mark) set
+        (integer 0) (& current-mark) set)
+    current-mark (integer 1) add (& current-mark) set
     def-record mark-cons-area/def-record
     stack-pointer
     mark-cons-area/argument-stack))
@@ -160,9 +160,9 @@
 
 (note the following tests are for small cons-area)
 
-(note (test (int 0)
-            (int 1) cons
-            (int 2) cons
+(note (test (integer 0)
+            (integer 1) cons
+            (integer 2) cons
             dup car dot
             dup cdr car dot
             dup cdr cdr dot
@@ -221,8 +221,8 @@
     cons))
 
 (note
-  (run (int 1) (int 2) cons
-       (int 3) null cons
+  (run (integer 1) (integer 2) cons
+       (integer 3) null cons
        cons
        dup
        cons
@@ -583,7 +583,7 @@
   (meta-variable
     (* language (jo chinese) (jo <jo>)))
   (variable
-    (* age (int 13) (jo <int>)))
+    (* age (integer 13) (jo <int>)))
   (method
     (* grow
        (<< self) (=> age))
@@ -592,14 +592,11 @@
        (<< a2) jo/print newline jo/print newline)))
 
 (run <object> (: new) jo/print newline list/print newline)
-
-
 (run <person> (: new) jo/print newline list/print newline)
-
 (run <person> (: new) (<= age) jo/print newline dot newline)
 
 (run  <person> (: new) 2dup
-      (int 14) (jo <int>) 2swap (=> age)
+      (integer 14) (jo <int>) 2swap (=> age)
       (<= age) jo/print newline dot newline)
 
 (run  <person> (: new)
@@ -608,28 +605,50 @@
 (run  <person> (: new)
       (: m1: (jo j1) (jo <j1>) m2: (jo j2) (jo <j2>)))
 
-(note
-  (def new/method (jojo (note method/body method/name -> method) cons))
+(define-class <int>
+  (method
+    (* print
+       (<< self) drop integer/print)
+    (* write
+       (string "(int ") string/print
+       (<< self) (: print)
+       (string ") ") string/print)))
 
-  (def defmethod
-    (jojo (note (defmethod :class-name :method-name ...)
-                =>
-                (bare-jojo ...) (jo :method-name) new/method
-                :class-name swap cons
-                (& :class-name) set)
+(def int
+  (keyword
+    (jo integer) jo/apply
+    (lev ins/lit <int>)))
 
-      read/jo (> class-name)
-      read/jo (> method-name)
+(run (int 123) 2dup (: print) newline (: write))
 
-      address-of-here (> bare-jojo)
-      compile-jojo
-      (jo end) here
+(define-class <str>
+  (method
+    (* print
+       (<< self) drop string/print)
+    (* write
+       (string "(str ") string/print
+       double-quote jo/print
+       (<< self) (: print)
+       double-quote jo/print
+       (string ") ") string/print)
+    (* length
+       (<< self) drop string/length (jo <int>))))
 
-      (< class-name) jo-as-var get
-      (< bare-jojo) (< method-name) new/method
-      cons
+(def str
+  (keyword
+    (jo string) jo/apply
+    (lev ins/lit <str>)))
 
-      (< class-name) jo-as-var set)))
+(run (str "k1 k2 k3")
+     2dup (: print) newline
+     2dup (: write) newline
+     2dup (: length) (: print) newline
+     2dup (: length) (: write) newline
+     2drop)
+
+(def cat
+  (keyword
+    ))
 
 (note
   (def <file> (bare-data empty-class))
