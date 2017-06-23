@@ -10,24 +10,28 @@
 (def max-mark       (bare-data (integer 1024 1024) mul))
 
 (def cons-pointer/next
-  (jojo (note -> [cons-pointer])
+  (jojo
+    (note -> [cons-pointer])
     cons-size cons-pointer add
     (& cons-pointer) set))
 
 (def cons-pointer/init
-  (jojo (note -> [cons-pointer])
+  (jojo
+    (note -> [cons-pointer])
     cons-area
     (& cons-pointer) set))
 
 (def cons-pointer/next-free
-  (jojo (note -> [cons-pointer])
+  (jojo
+    (note -> [cons-pointer])
     (if cons-pointer cons-area-top eq? then end)
     (if cons-pointer get current-mark eq? not then end)
     cons-pointer/next
     (loop)))
 
 (def cons?
-  (jojo (note cell -> bool)
+  (jojo
+    (note cell -> bool)
     (if dup cons-area lt? then drop false end)
     (if dup cons-area-top gteq? then drop false end)
     cons-area sub cons-size mod (integer 0) eq?))
@@ -39,7 +43,8 @@
  (cdr (note cons -> cell)))
 
 (def cons-area/report/loop
-  (jojo (note cons -> [io])
+  (jojo
+    (note cons -> [io])
     (if dup cons-area-top eq? then drop end)
     (string "#:") string/print
     dup dot
@@ -54,20 +59,23 @@
     (loop)))
 
 (def cons-area/report
-  (jojo (note -> [io])
+  (jojo
+    (note -> [io])
     cons-area cons-area/report/loop))
 
 
 
 (def sweep-cons-area/loop
-  (jojo (note cons -> [io])
+  (jojo
+    (note cons -> [io])
     (if dup cons-area-top eq? then drop end)
     dup (integer 0)  swap set
     cons-size add
     (loop)))
 
 (def sweep-cons-area
-  (jojo (note -> [cons-area])
+  (jojo
+    (note -> [cons-area])
     cons-area sweep-cons-area/loop))
 
 
@@ -77,28 +85,32 @@
       defbare-data)
 
 (def mark-cons
-  (jojo (note cons -> [cons-area])
+  (jojo
+    (note cons -> [cons-area])
     (if dup cons? not then drop end)
     dup current-mark swap set
     dup car mark-cons
     cdr (loop)))
 
 (def mark-cons-area/def-record
-  (jojo (note def-record -> [cons-area])
+  (jojo
+    (note def-record -> [cons-area])
     (if dup get (integer 0) eq? then drop end)
     dup get mark-cons
     cell-size add
     (loop)))
 
 (def mark-cons-area/argument-stack
-  (jojo (note stack -> [cons-area])
+  (jojo
+    (note stack -> [cons-area])
     (if dup stack-base eq? then drop end)
     cell-size sub
     dup get mark-cons
     (loop)))
 
 (def mark-cons-area
-  (jojo (note -> [cons-area])
+  (jojo
+    (note -> [cons-area])
     (if current-mark max-mark eq? then
         sweep-cons-area
         (integer 0) (& current-mark) set)
@@ -115,7 +127,8 @@
       cdr)
 
 (def new/cons
-  (jojo (note -> cons)
+  (jojo
+    (note -> cons)
     (if cons-pointer cons-area-top eq? then
         mark-cons-area
         cons-pointer/init
@@ -130,29 +143,34 @@
     cons-pointer/next end))
 
 (def set-car
-  (jojo (note cell cons ->)
+  (jojo
+    (note cell cons ->)
     cell-size add
     set))
 
 (def set-cdr
-  (jojo (note cell cons ->)
+  (jojo
+    (note cell cons ->)
     cell-size add
     cell-size add
     set))
 
 (def car
-  (jojo (note cons -> cell)
+  (jojo
+    (note cons -> cell)
     cell-size add
     get))
 
 (def cdr
-  (jojo (note cons -> cell)
+  (jojo
+    (note cons -> cell)
     cell-size add
     cell-size add
     get))
 
 (def cons
-  (jojo (note cdr-cell car-cell -> cons)
+  (jojo
+    (note cdr-cell car-cell -> cons)
     new/cons
     tuck set-car
     tuck set-cdr))
@@ -424,9 +442,9 @@
     (< class) (< message)
     send-to-class/find-meta-method
     (if then
-        local-area-pointer swap
+        current-local-pointer swap
         (< class) (jo self-class) local-in
-        apply-with-local-area-pointer
+        apply-with-local-pointer
         end)
     (string "- send-to-class : can not find message : ") string/print
     (< message) jo/print newline))
@@ -458,9 +476,9 @@
     (< class-name) (< message)
     send-to-object/find-method
     (if then
-        local-area-pointer swap
+        current-local-pointer swap
         (< data) (< class-name) (jo self) local-two-in
-        apply-with-local-area-pointer
+        apply-with-local-pointer
         end)
     (string "- send-to-object : can not find message : ") string/print
     (< message) jo/print newline
@@ -472,23 +490,7 @@
     (if over (jo <class>) eq? then swap drop send-to-class end)
     send-to-object))
 
-(def send/sugar/simple
-  (keyword
-    (note (: message ...)
-          =>
-          (> object) (bare-jojo ...) apply
-          (< object) (jo message) send)
-    (> message)
-    (jo :) generate-jo (> object-jo)
-    (lev ins/lit (< object-jo)
-         local-two-in
-         (esc bare-jojo) apply
-         ins/lit (< object-jo)
-         local-two-out
-         ins/lit (< message)
-         send)))
-
-(def send/sugar/complex/loop
+(def send/sugar/complex
   (keyword
     (note sum-jo -> sum-jo)
     read/jo
@@ -497,28 +499,16 @@
     (if dup jo-ending-with-colon? then jo/append (loop))
     here (loop)))
 
-(def send/sugar/complex
-  (keyword
-    (note sum-jo -> sum-jo)
-    (lev ins/jump)
-    compiling-stack/tos (> offset-place)
-    compiling-stack/inc
-    compiling-stack/tos (> bare-jojo-place)
-    send/sugar/complex/loop
-    (lev end)
-    compiling-stack/tos (< offset-place) set
-    (lev ins/lit (< bare-jojo-place))))
-
 (def :
   (keyword
-    read/jo
-    (if dup jo-ending-with-colon? not then
-        send/sugar/simple end)
     (jo :) generate-jo (> object-jo)
     (lev ins/lit (< object-jo)
          local-two-in
-         (esc send/sugar/complex (> message))
-         apply
+         (esc read/jo
+              (if dup jo-ending-with-colon? not then
+                  (> message) compile-jojo)
+              (if dup jo-ending-with-colon? then
+                  send/sugar/complex (> message)))
          ins/lit (< object-jo)
          local-two-out
          ins/lit (< message)
@@ -537,7 +527,7 @@
     (if then car dup car swap cdr swap end)
     (string "- get-instance-variable fail") string/print newline))
 
-(def <=
+(def @
   (keyword
     (lev ins/lit
          (esc read/jo here
@@ -562,12 +552,26 @@
         (< instance-variable) set-car end)
     (string "- set-instance-variable fail") string/print newline))
 
-(def =>
+(def !
   (keyword
     (lev ins/lit
          (esc read/jo here
               ignore)
          set-instance-variable)))
+
+(def cat
+  (keyword
+    read/jo
+    (if dup round-ket eq? then drop end)
+    (if dup double-quote eq? then
+        drop one-string
+        (lev string/print)
+        (loop))
+    (if dup round-bar eq? then drop
+        read/jo jo/apply (loop))
+    (el here (loop))))
+
+(note (run (cat "1 2 3" newline "4 5 6" newline "7 8 9" newline)))
 
 (define-class <object>
   (meta-method
@@ -578,35 +582,16 @@
        null
        (< self-class) class/get-class-name)))
 
-(define-class <person>
-  (inherit <object>)
-  (meta-variable
-    (* language (jo chinese) (jo <jo>)))
-  (variable
-    (* age (integer 13) (jo <int>)))
-  (method
-    (* grow
-       (<< self) (=> age))
-    (* (: m1: a1 m2: a2)
-       (<< a1) jo/print newline jo/print newline
-       (<< a2) jo/print newline jo/print newline)))
-
-(run <object> (: new) jo/print newline list/print newline)
-(run <person> (: new) jo/print newline list/print newline)
-(run <person> (: new) (<= age) jo/print newline dot newline)
-
-(run  <person> (: new) 2dup
-      (integer 14) (jo <int>) 2swap (=> age)
-      (<= age) jo/print newline dot newline)
-
-(run  <person> (: new)
-      (: m1:m2: (jo j1) (jo <j1>) (jo j2) (jo <j2>)))
-
-(run  <person> (: new)
-      (: m1: (jo j1) (jo <j1>) m2: (jo j2) (jo <j2>)))
-
 (define-class <int>
   (method
+    (* inc
+       (<< self)
+       swap (integer 1) add
+       swap)
+    (* (: add: i)
+       (<< self) drop
+       (<< i) drop
+       add (jo <int>))
     (* print
        (<< self) drop integer/print)
     (* write
@@ -646,35 +631,89 @@
      2dup (: length) (: write) newline
      2drop)
 
-(def cat
-  (keyword
-    read/jo
-    (if dup round-ket eq? then drop end)
-    (if dup double-quote eq? then
-        drop one-string
-        (lev string/print)
+(test current-dir string/print newline)
+
+(test (string "HOME") var-string->env-string
+      string/print newline)
+
+(test (string "PATH") var-string->env-string
+      string/print newline)
+
+(def command-line/print-argument/loop
+  (jojo (note index -> [io])
+    (if dup argument-counter lt? then
+        dup index->argument-string string/print
+        newline
+        (integer 1) add
         (loop))
-    (if dup round-bar eq? then drop
-        read/jo jo/apply (loop))
-    (el here (loop))))
+    drop end))
 
-(note (run (cat "1 2 3" newline "4 5 6" newline "7 8 9" newline)))
+(def command-line/print-argument
+  (jojo (note -> [io])
+    (integer 0) command-line/print-argument/loop))
+
+(test command-line/print-argument)
+
+(note (test def-report))
+
+(define-class <path>
+  )
+
+(define-class <file>
+  )
+
+(test (string "README") file/size dot)
+
+(test (string "README") file/readable? dot)
+
+(test (string "README")
+      dup file/size
+      allocate tuck file/copy-to-buffer
+      drop
+      string/print
+      newline)
 
 (note
-  (def <file> (bare-data empty-class))
+  (module <module-name> function ...)
+  (dep <module-name>)
+  (include <path>)
+  (clib <path>))
 
-  (def new/file
-    (jojo (note string -> <file>)
-      (jo <file>)))
+(define-class <person>
+  (inherit <object>)
+  (variable
+    (* age (int 13))
+    (* language (str "chinese")))
+  (method
+    (* grow
+       (<< self) (@ age) (: inc)
+       (<< self) (! age))
+    (* (: grow-by: years)
+       (<< self) (@ age) (<< years) (: add:)
+       (<< self) (! age))
+    (* report
+       (cat "age: "
+            (<< self) (@ age) (: print) newline
+            "languege: "
+            (<< self) (@ language) (: print) newline))
+    (* (: m1: a1 m2: a2)
+       (<< a1) (: write)
+       (<< a2) (: write))))
 
-  (defmethod <file> readable?
-    (<< self) file/readable?)
+(note (run <object> (: new) jo/print newline list/print newline)
+      (run <person> (: new) jo/print newline list/print newline)
+      (run <person> (: new) (@ age) jo/print newline dot newline))
 
-  (run
-    (string "READM") new/file (:: readable?)))
+(def xieyuheng <person> (: new))
 
-(note
- (module <module-name> function ...)
- (dep <module-name>)
- (include <path>)
- (clib <path>))
+(run xieyuheng (: report)
+     xieyuheng (: grow)
+     xieyuheng (: report)
+     xieyuheng (: grow-by: (int 10))
+     xieyuheng (: report))
+
+(run <person> (: new)
+     (: m1: m2: (int 123) (int 3213123)))
+
+(run <person> (: new)
+     (: m1: (int 123) m2: (str "3213123")))

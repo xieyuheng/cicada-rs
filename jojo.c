@@ -466,7 +466,7 @@ void defprim(string str, primitive fun) {
   jo index = str2jo(str);
   if (used_jo_p(index)) {
     printf("- defprim can not re-define : %s\n", jo2str(index));
-    printf("  it already defined as : %s\n", jo2str(jotable[index].type));
+    printf("  it was defined as : %s\n", jo2str(jotable[index].type));
     k_ignore();
     return;
   }
@@ -480,7 +480,7 @@ void defprimkey(string str, primitive fun) {
   jo index = str2jo(str);
   if (used_jo_p(index)) {
     printf("- defprim can not re-define : %s\n", jo2str(index));
-    printf("  it already defined as : %s\n", jo2str(jotable[index].type));
+    printf("  it was defined as : %s\n", jo2str(jotable[index].type));
     k_ignore();
     return;
   }
@@ -517,7 +517,7 @@ typedef struct {
 } local_point;
 
 local_point local_area[1024 * 1024];
-cell local_area_pointer = 0;
+cell current_local_pointer = 0;
 
 typedef struct {
   jo* array;
@@ -551,7 +551,7 @@ void rs_make_point(jo* array, cell local_pointer) {
 }
 
 void rs_new_point(jo* array) {
-  rs_make_point(array, local_area_pointer);
+  rs_make_point(array, current_local_pointer);
 }
 
 void rs_inc() {
@@ -697,13 +697,34 @@ void p_apply() {
   rs_new_point(as_pop());
 }
 
+void p_apply_with_local_pointer() {
+  jo* jojo = as_pop();
+  cell local_pointer = as_pop();
+  rs_make_point(jojo, local_pointer);
+}
+
 void p_jo_apply() {
   jo_apply(as_pop());
 }
 
+void p_jo_apply_with_local_pointer() {
+  jo jo = as_pop();
+  cell local_pointer = as_pop();
+  jo_apply_with_local_pointer(jo, local_pointer);
+}
+
+void p_jo_replacing_apply_with_last_local_pointer() {
+  jo jo = as_pop();
+  return_point rp = rs_pop();
+  jo_apply_with_local_pointer(jo, rp.local_pointer);
+}
+
 void export_apply() {
   defprim("apply", p_apply);
+  defprim("apply-with-local-pointer", p_apply_with_local_pointer);
   defprim("jo/apply", p_jo_apply);
+  defprim("jo/apply-with-local-pointer", p_jo_apply_with_local_pointer);
+  defprim("jo/replacing-apply-with-last-local-pointer", p_jo_replacing_apply_with_last_local_pointer);
 }
 
 void cell_copy(cell length, cell* from, cell* to) {
@@ -867,7 +888,7 @@ void export_stack_operation() {
 void p_end() {
   // (rs: addr ->)
   return_point rp = rs_pop();
-  local_area_pointer = rp.local_pointer;
+  current_local_pointer = rp.local_pointer;
 }
 
 void p_bye() {
@@ -887,13 +908,6 @@ void i_lit() {
   rs_inc();
   cell jo = *(cell*)rp.array;
   as_push(jo);
-}
-
-void i_tail_call() {
-  // ([rs] -> int)
-  return_point rp = rs_pop();
-  cell jo = *(cell*)rp.array;
-  jo_apply_with_local_pointer(jo, rp.local_pointer);
 }
 
 void i_jump_if_false() {
@@ -918,7 +932,6 @@ void i_jump() {
 
 void export_control() {
   defprim("ins/lit", i_lit);
-  defprim("ins/tail-call", i_tail_call);
   defprim("ins/jump-if-false", i_jump_if_false);
   defprim("ins/jump", i_jump);
 }
@@ -1590,6 +1603,11 @@ bool file_readable_p(string path) {
   }
 }
 
+void p_file_readable_p() {
+  // (file -> bool)
+  as_push(file_readable_p(as_pop()));
+}
+
 bool dir_ok_p(string path) {
   DIR* dir = opendir(path);
   if (!dir) {
@@ -1599,11 +1617,6 @@ bool dir_ok_p(string path) {
     closedir(dir);
     return true;
   }
-}
-
-void p_file_readable_p() {
-  // (file -> bool)
-  as_push(file_readable_p(as_pop()));
 }
 
 void p_dir_ok_p() {
@@ -1751,7 +1764,7 @@ void p_bind_name() {
     printf("- p_bind_name can not bind name : %s\n", jo2str(name));
     printf("  to type : %s\n", jo2str(type));
     printf("  and value : %ld\n", value);
-    printf("  it already has been bound as a %s\n", jo2str(jotable[name].type));
+    printf("  it has been bound as a %s\n", jo2str(jotable[name].type));
     return;
   }
   jotable_set_type_value(name, type, value);
@@ -1762,7 +1775,7 @@ void k_def() {
   jo name = read_jo();
   if (used_jo_p(name) && !declared_jo_p(name)) {
     printf("- (def ...) can not bind name : %s\n", jo2str(name));
-    printf("  it already has been bound as a %s\n", jo2str(jotable[name].type));
+    printf("  it has been bound as a %s\n", jo2str(jotable[name].type));
     // ><><><
     // print what is ignored
     k_ignore();
@@ -1947,15 +1960,16 @@ void k_if() {
 void k_tail_call() {
   // ([io] -> [compile])
   // no check for "no compile before define"
-  here(str2jo("ins/tail-call"));
-  jo s = read_jo();
-  here(s);
+  here(str2jo("ins/lit"));
+  here(read_jo());
+  here(str2jo("jo/replacing-apply-with-last-local-pointer"));
   k_ignore();
 }
 
 void k_loop() {
-  here(str2jo("ins/tail-call"));
+  here(str2jo("ins/lit"));
   here(def_stack_tos());
+  here(str2jo("jo/replacing-apply-with-last-local-pointer"));
   k_ignore();
 }
 
@@ -2019,7 +2033,7 @@ cell local_find(jo name) {
   // return index of local_area
   // -1 -- no found
   return_point rp = rs_tos();
-  cell cursor = local_area_pointer - 1;
+  cell cursor = current_local_pointer - 1;
   while (cursor >= rp.local_pointer) {
     if (local_area[cursor].name == name) {
       return cursor;
@@ -2040,9 +2054,9 @@ void p_local_in() {
     local_area[index].local_value1 = value1;
   }
   else {
-    local_area[local_area_pointer].name = jo;
-    local_area[local_area_pointer].local_value1 = value1;
-    local_area_pointer = local_area_pointer + 1;
+    local_area[current_local_pointer].name = jo;
+    local_area[current_local_pointer].local_value1 = value1;
+    current_local_pointer = current_local_pointer + 1;
   }
 }
 
@@ -2071,10 +2085,10 @@ void p_local_two_in() {
     local_area[index].local_value2 = value2;
   }
   else {
-    local_area[local_area_pointer].name = jo;
-    local_area[local_area_pointer].local_value1 = value1;
-    local_area[local_area_pointer].local_value2 = value2;
-    local_area_pointer = local_area_pointer + 1;
+    local_area[current_local_pointer].name = jo;
+    local_area[current_local_pointer].local_value1 = value1;
+    local_area[current_local_pointer].local_value2 = value2;
+    current_local_pointer = current_local_pointer + 1;
   }
 }
 
@@ -2161,14 +2175,8 @@ void k_local_two_out() {
   }
 }
 
-void p_apply_with_local_area_pointer() {
-  jo* jojo_array = as_pop();
-  cell the_local_area_pointer = as_pop();
-  rs_make_point(jojo_array, the_local_area_pointer);
-}
-
-void p_local_area_pointer() {
-  as_push(local_area_pointer);
+void p_current_local_pointer() {
+  as_push(current_local_pointer);
 }
 
 void export_keyword() {
@@ -2205,8 +2213,7 @@ void export_keyword() {
   defprimkey(">>", k_local_two_in);
   defprimkey("<<", k_local_two_out);
 
-  defprim("local-area-pointer", p_local_area_pointer);
-  defprim("apply-with-local-area-pointer", p_apply_with_local_area_pointer);
+  defprim("current-local-pointer", p_current_local_pointer);
 }
 
 void do_nothing() {
