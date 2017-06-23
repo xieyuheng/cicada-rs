@@ -3,8 +3,6 @@
 
 * todo
 
-  - proper syntax for else
-
   - example of the use of oo
 
   - [emacs]
@@ -601,10 +599,9 @@
         (lev ins/lit (< object-jo)
              local-two-in
              (esc read/jo
-                  (if dup jo-ending-with-colon? not then
-                      (> message) compile-jojo)
-                  (if dup jo-ending-with-colon? then
-                      send/sugar/complex (> message)))
+                  (if dup jo-ending-with-colon? not
+                      then (> message) compile-jojo
+                      else send/sugar/complex (> message)))
              ins/lit (< object-jo)
              local-two-out
              ins/lit (< message)

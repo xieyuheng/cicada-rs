@@ -1776,7 +1776,7 @@ void k_def() {
   if (used_jo_p(name) && !declared_jo_p(name)) {
     printf("- (def ...) can not bind name : %s\n", jo2str(name));
     printf("  it has been bound as a %s\n", jo2str(jotable[name].type));
-    // ><><><
+    // ><
     // print what is ignored
     k_ignore();
     return;
@@ -1930,7 +1930,7 @@ void compile_jojo_until_meet_jo(jo ending_jo) {
     }
     else {
       // no compile before define
-      printf("- 'compile_jojo_until_meet_jo' undefined : %s\n", jo2str(s));
+      printf("- compile_jojo_until_meet_jo undefined : %s\n", jo2str(s));
       k_ignore();
       return;
     }
@@ -1947,14 +1947,70 @@ void p_compile_jojo() {
   compile_jojo_until_meet_jo(str2jo(")"));
 }
 
+jo compile_jojo_until_meet_jo_or_jo(jo ending_jo1, jo ending_jo2) {
+  while (true) {
+    jo s = read_jo();
+    if (s == str2jo("(")) {
+      jo_apply(read_jo());
+    }
+    else if (s == ending_jo1 || s == ending_jo2) {
+      return s;
+    }
+    else if (jotable_entry_used(jotable[s]) ||
+             def_stack_empty_p() ||
+             def_stack_tos() == s) {
+      here(s);
+    }
+    else {
+      // no compile before define
+      printf("- compile_jojo_until_meet_jo_or_jo undefined : %s\n", jo2str(s));
+      printf("- ending_jo1 : %s\n", jo2str(ending_jo1));
+      printf("- ending_jo2 : %s\n", jo2str(ending_jo2));
+      k_ignore();
+      return;
+    }
+  }
+}
+
+// - without else
+//   (if a b p? then c d)
+//   ==>
+//     a b p?
+//     jump_if_false[:end-of-then]
+//     c d
+//   :end-of-then
+
+// - with else
+//   (if a b p? then c d else e f)
+//   ==>
+//     a b p?
+//     jump_if_false[:end-of-then]
+//     c d
+//     jump[:end-of-else]
+//   :end-of-then
+//     e f
+//   :end-of-else
+
 void k_if() {
   // ([io] -> [compile])
   compile_jojo_until_meet_jo(str2jo("then"));
   here(str2jo("ins/jump-if-false"));
-  cell* offset_place = compiling_stack_tos();
+  cell* end_of_then = compiling_stack_tos();
   compiling_stack_inc();
-  p_compile_jojo();
-  offset_place[0] = compiling_stack_tos();
+  jo ending_jo = compile_jojo_until_meet_jo_or_jo(str2jo("else"), str2jo(")"));
+  if (ending_jo == str2jo(")")) {
+    end_of_then[0] = compiling_stack_tos();
+    return;
+  }
+  else {
+    here(str2jo("ins/jump"));
+    cell* end_of_else = compiling_stack_tos();
+    compiling_stack_inc();
+    end_of_then[0] = compiling_stack_tos();
+    p_compile_jojo();
+    end_of_else[0] = compiling_stack_tos();
+    return;
+  }
 }
 
 void k_tail_call() {
