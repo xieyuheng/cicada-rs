@@ -688,20 +688,16 @@
        (<< self) (@ age) (: inc)
        (<< self) (! age))
     (* (: grow-by: years)
-       (<< self) (@ age) (<< years) (: add:)
+       (<< self) (@ age) (: add: (<< years))
+       (<< self) (! age))
+    (* (: grow-by: year1 and-by: year2)
+       (<< self) (@ age) (: add: (<< year1)) (: add: (<< year2))
        (<< self) (! age))
     (* report
        (cat "age: "
             (<< self) (@ age) (: print) newline
             "languege: "
-            (<< self) (@ language) (: print) newline))
-    (* (: m1: a1 m2: a2)
-       (<< a1) (: write)
-       (<< a2) (: write))))
-
-(note (run <object> (: new) jo/print newline list/print newline)
-      (run <person> (: new) jo/print newline list/print newline)
-      (run <person> (: new) (@ age) jo/print newline dot newline))
+            (<< self) (@ language) (: print) newline))))
 
 (def xieyuheng <person> (: new))
 
@@ -709,10 +705,8 @@
      xieyuheng (: grow)
      xieyuheng (: report)
      xieyuheng (: grow-by: (int 10))
+     xieyuheng (: report)
+     xieyuheng (: grow-by: (int 10))
+     xieyuheng (: report)
+     xieyuheng (: grow-by: (int 10) and-by: (int 10))
      xieyuheng (: report))
-
-(run <person> (: new)
-     (: m1: m2: (int 123) (int 3213123)))
-
-(run <person> (: new)
-     (: m1: (int 123) m2: (str "3213123")))

@@ -3,6 +3,8 @@
 
 * todo
 
+  - define-method
+
   - [primitive class] <int>
 
   - [primitive class] <str>
@@ -664,6 +666,14 @@
              set-instance-variable)))
     #+end_src
 
+*** >< [keyword] define-method
+
+    #+begin_src jojo
+    (def define-method
+      (keyword
+        ))
+    #+end_src
+
 * [keyword] cat
 
 *** cat
@@ -818,14 +828,34 @@
     (note (test def-report))
     #+end_src
 
+* <path>
+
+*** <path>
+
+    #+begin_src jojo
+    (define-class <path>
+      (* write
+         (string "(path ") string/print
+         double-quote jo/print
+         (<< self) (: print)
+         double-quote jo/print
+         (string ") ") string/print))
+
+    (note (define-method <str> to-path
+            ))
+    #+end_src
+
+*** test
+
+    #+begin_src jojo
+
+    #+end_src
+
 * >< <file>
 
 *** note
 
     #+begin_src jojo
-    (define-class <path>
-      )
-
     (define-class <file>
       )
     #+end_src
