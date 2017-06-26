@@ -3,8 +3,6 @@
 
 * todo
 
-  - define-method
-
   - [primitive class] <int>
 
   - [primitive class] <str>
@@ -292,6 +290,20 @@
            drop))
     #+end_src
 
+*** set-tail
+
+    #+begin_src jojo
+    (def set-tail
+      (jojo
+        (note element list ->)
+        (if dup cdr null eq? then
+            swap
+            null swap cons
+            swap
+            set-cdr end)
+        (el cdr (loop))))
+    #+end_src
+
 * [keyword] lev
 
   #+begin_src jojo
@@ -328,6 +340,30 @@
                alias-push)
           (loop))))
   #+end_src
+
+* [keyword] cat
+
+*** cat
+
+    #+begin_src jojo
+    (def cat
+      (keyword
+        read/jo
+        (if dup round-ket eq? then drop end)
+        (if dup double-quote eq? then
+            drop one-string
+            (lev string/print)
+            (loop))
+        (if dup round-bar eq? then drop
+            read/jo jo/apply (loop))
+        (el here (loop))))
+    #+end_src
+
+*** test
+
+    #+begin_src jojo
+    (note (run (cat "1 2 3" newline "4 5 6" newline "7 8 9" newline)))
+    #+end_src
 
 * object
 
@@ -413,7 +449,7 @@
         drop read/jo drop
         empty-jo define-class/keyword/one-method/complex-message))
 
-    (def define-class/keyword/one-method
+    (def define-class/keyword/one-method/help
       (keyword
         (lev ins/jump)
         compiling-stack/tos (> offset-place)
@@ -426,8 +462,12 @@
         (lev ins/lit (< bare-jojo-place)
              ins/lit (< message)
              swap
-             cons
              cons)))
+
+    (def define-class/keyword/one-method
+      (keyword
+        define-class/keyword/one-method/help
+        (lev cons)))
 
     (def define-class/keyword/inherit
       (keyword
@@ -666,36 +706,24 @@
              set-instance-variable)))
     #+end_src
 
-*** >< [keyword] define-method
+*** [keyword] add-method
 
     #+begin_src jojo
-    (def define-method
+    (def add-method
       (keyword
-        ))
-    #+end_src
+        read/jo (> class-name)
+        (< class-name) jo/apply drop (> class)
+        compiling-stack/tos (> begin)
+        define-class/keyword/one-method/help
+        (lev end)
+        (< begin) apply (> method)
 
-* [keyword] cat
-
-*** cat
-
-    #+begin_src jojo
-    (def cat
-      (keyword
-        read/jo
-        (if dup round-ket eq? then drop end)
-        (if dup double-quote eq? then
-            drop one-string
-            (lev string/print)
-            (loop))
-        (if dup round-bar eq? then drop
-            read/jo jo/apply (loop))
-        (el here (loop))))
-    #+end_src
-
-*** test
-
-    #+begin_src jojo
-    (note (run (cat "1 2 3" newline "4 5 6" newline "7 8 9" newline)))
+        (if (< class) class/has-method-list? not then
+            (jo method) (< method) cons
+            (< class) set-tail end)
+        (el (< method)
+            (< class) class/get-method-list
+            set-tail)))
     #+end_src
 
 * <object>
@@ -834,21 +862,23 @@
 
     #+begin_src jojo
     (define-class <path>
-      (* write
-         (string "(path ") string/print
-         double-quote jo/print
-         (<< self) (: print)
-         double-quote jo/print
-         (string ") ") string/print))
+      (inherit <str>)
+      (method
+        (* write
+           (string "(path ") string/print
+           double-quote jo/print
+           (<< self) (: print)
+           double-quote jo/print
+           (string ") ") string/print)))
 
-    (note (define-method <str> to-path
-            ))
+    (add-method <str> to-path
+      (<< self) drop (jo <path>))
     #+end_src
 
 *** test
 
     #+begin_src jojo
-
+    (test (str "/home/") (: to-path) (: write))
     #+end_src
 
 * >< <file>

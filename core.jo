@@ -249,6 +249,16 @@
        dup list/copy list/print newline
        drop))
 
+(def set-tail
+  (jojo
+    (note element list ->)
+    (if dup cdr null eq? then
+        swap
+        null swap cons
+        swap
+        set-cdr end)
+    (el cdr (loop))))
+
 (def lev
   (note lev denotes leave-data-here)
   (keyword
@@ -277,6 +287,20 @@
              ins/lit (< name)
              alias-push)
         (loop))))
+
+(def cat
+  (keyword
+    read/jo
+    (if dup round-ket eq? then drop end)
+    (if dup double-quote eq? then
+        drop one-string
+        (lev string/print)
+        (loop))
+    (if dup round-bar eq? then drop
+        read/jo jo/apply (loop))
+    (el here (loop))))
+
+(note (run (cat "1 2 3" newline "4 5 6" newline "7 8 9" newline)))
 
 (def class/get-class-name          (jojo (jo class-name) assq car))
 
@@ -329,7 +353,7 @@
     drop read/jo drop
     empty-jo define-class/keyword/one-method/complex-message))
 
-(def define-class/keyword/one-method
+(def define-class/keyword/one-method/help
   (keyword
     (lev ins/jump)
     compiling-stack/tos (> offset-place)
@@ -342,8 +366,12 @@
     (lev ins/lit (< bare-jojo-place)
          ins/lit (< message)
          swap
-         cons
          cons)))
+
+(def define-class/keyword/one-method
+  (keyword
+    define-class/keyword/one-method/help
+    (lev cons)))
 
 (def define-class/keyword/inherit
   (keyword
@@ -558,19 +586,21 @@
               ignore)
          set-instance-variable)))
 
-(def cat
+(def add-method
   (keyword
-    read/jo
-    (if dup round-ket eq? then drop end)
-    (if dup double-quote eq? then
-        drop one-string
-        (lev string/print)
-        (loop))
-    (if dup round-bar eq? then drop
-        read/jo jo/apply (loop))
-    (el here (loop))))
+    read/jo (> class-name)
+    (< class-name) jo/apply drop (> class)
+    compiling-stack/tos (> begin)
+    define-class/keyword/one-method/help
+    (lev end)
+    (< begin) apply (> method)
 
-(note (run (cat "1 2 3" newline "4 5 6" newline "7 8 9" newline)))
+    (if (< class) class/has-method-list? not then
+        (jo method) (< method) cons
+        (< class) set-tail end)
+    (el (< method)
+        (< class) class/get-method-list
+        set-tail)))
 
 (define-class <object>
   (meta-method
@@ -656,7 +686,19 @@
 (note (test def-report))
 
 (define-class <path>
-  )
+  (inherit <str>)
+  (method
+    (* write
+       (string "(path ") string/print
+       double-quote jo/print
+       (<< self) (: print)
+       double-quote jo/print
+       (string ") ") string/print)))
+
+(add-method <str> to-path
+  (<< self) drop (jo <path>))
+
+(test (str "/home/") (: to-path) (: write))
 
 (define-class <file>
   )
