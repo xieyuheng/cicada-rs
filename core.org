@@ -1,6 +1,8 @@
 #+property: tangle core.jo
 #+title: core
-
+- syntax of variable mirror local
+- <stack>
+- <table>
 * todo
 
   - <str>
@@ -10,6 +12,7 @@
   - to see what <module> needs from <path> and <file>
 
   - example of the use of oo
+    - syntax for super
 
   - [emacs]
     - write some emacs-lisp lib
@@ -49,19 +52,19 @@
       (jojo
         (note -> [cons-pointer])
         cons-size cons-pointer add
-        (& cons-pointer) set))
+        (& cons-pointer) set-cell))
 
     (def cons-pointer/init
       (jojo
         (note -> [cons-pointer])
         cons-area
-        (& cons-pointer) set))
+        (& cons-pointer) set-cell))
 
     (def cons-pointer/next-free
       (jojo
         (note -> [cons-pointer])
         (if cons-pointer cons-area-top eq? then end)
-        (if cons-pointer get current-mark eq? not then end)
+        (if cons-pointer get-cell current-mark eq? not then end)
         cons-pointer/next
         (loop)))
 
@@ -85,7 +88,7 @@
         (string "#:") string/print
         dup dot
         (string "mark: ") string/print
-        dup get dot
+        dup get-cell dot
         (string "car: ") string/print
         dup car dot
         (string "cdr: ") string/print
@@ -105,7 +108,7 @@
       (jojo
         (note cons -> [io])
         (if dup cons-area-top eq? then drop end)
-        dup (integer 0)  swap set
+        dup (integer 0)  swap set-cell
         cons-size add
         (loop)))
 
@@ -124,15 +127,15 @@
       (jojo
         (note cons -> [cons-area])
         (if dup cons? not then drop end)
-        dup current-mark swap set
+        dup current-mark swap set-cell
         dup car mark-cons
         cdr (loop)))
 
     (def mark-cons-area/def-record
       (jojo
         (note def-record -> [cons-area])
-        (if dup get (integer 0) eq? then drop end)
-        dup get mark-cons
+        (if dup get-cell (integer 0) eq? then drop end)
+        dup get-cell mark-cons
         cell-size add
         (loop)))
 
@@ -141,7 +144,7 @@
         (note stack -> [cons-area])
         (if dup stack-base eq? then drop end)
         cell-size sub
-        dup get mark-cons
+        dup get-cell mark-cons
         (loop)))
 
     (def mark-cons-area
@@ -149,8 +152,8 @@
         (note -> [cons-area])
         (if current-mark max-mark eq? then
             sweep-cons-area
-            (integer 0) (& current-mark) set)
-        current-mark (integer 1) add (& current-mark) set
+            (integer 0) (& current-mark) set-cell)
+        current-mark (integer 1) add (& current-mark) set-cell
         def-record mark-cons-area/def-record
         stack-pointer
         mark-cons-area/argument-stack))
@@ -173,7 +176,7 @@
                 (string "fatal error : cons-area is full") string/print
                 newline bye)
             (loop))
-        (if cons-pointer get current-mark eq? then
+        (if cons-pointer get-cell current-mark eq? then
             cons-pointer/next (loop))
         cons-pointer
         cons-pointer/next end))
@@ -182,27 +185,27 @@
       (jojo
         (note cell cons ->)
         cell-size add
-        set))
+        set-cell))
 
     (def set-cdr
       (jojo
         (note cell cons ->)
         cell-size add
         cell-size add
-        set))
+        set-cell))
 
     (def car
       (jojo
         (note cons -> cell)
         cell-size add
-        get))
+        get-cell))
 
     (def cdr
       (jojo
         (note cons -> cell)
         cell-size add
         cell-size add
-        get))
+        get-cell))
 
     (def cons
       (jojo
@@ -373,181 +376,181 @@
     (note (run (cat "1 2 3" newline "4 5 6" newline "7 8 9" newline)))
     #+end_src
 
-* object
+* object note
 
-*** note
+  - class
+    - one superclass
+      thus single inheritance
+    - meta-variable
+    - meta-method
+      two ways to implement object creation :
+      [1] to use meta class -- class is an object
+      [2] to use meta method -- class is not an object
+      i will use [2]
+    - instance-variable
+      i.e. parts of the object
+    - method-list
+      where super can be used to use an method of superclass
+      to implement a new method to override it
 
-    - class
-      - one superclass
-        thus single inheritance
-      - meta-variable
-      - meta-method
-        two ways to implement object creation :
-        [1] to use meta class -- class is an object
-        [2] to use meta method -- class is not an object
-        i will use [2]
-      - instance-variable
-        i.e. parts of the object
-      - method-list
-        where super can be used to use an method of superclass
-        to implement a new method to override it
+  - interface-generator
+    when defining a class
+    different interface-generator can be used to generate method list
+    for example
+    - low level array like data with free
+    - high level list list data using gc
 
-    - interface-generator
-      when defining a class
-      different interface-generator can be used to generate method list
-      for example
-      - low level array like data with free
-      - high level list list data using gc
+* [helper] class
 
-*** help
+  #+begin_src jojo
+  (def class/get-tag                 (jojo (jo tag) assq car))
 
-    #+begin_src jojo
-    (def class/get-tag                 (jojo (jo tag) assq car))
+  (def class/has-superclass?         (jojo (jo inherit) assq null eq? not))
+  (def class/get-super-tag           (jojo (jo inherit) assq car))
 
-    (def class/has-superclass?         (jojo (jo inherit) assq null eq? not))
-    (def class/get-super-tag           (jojo (jo inherit) assq car))
+  (def class/has-meta-variable-list? (jojo (jo meta-variable) assq null eq? not))
+  (def class/get-meta-variable-list  (jojo (jo meta-variable) assq car))
 
-    (def class/has-meta-variable-list? (jojo (jo meta-variable) assq null eq? not))
-    (def class/get-meta-variable-list  (jojo (jo meta-variable) assq car))
+  (def class/has-meta-method-list?   (jojo (jo meta-method) assq null eq? not))
+  (def class/get-meta-method-list    (jojo (jo meta-method) assq car))
 
-    (def class/has-meta-method-list?   (jojo (jo meta-method) assq null eq? not))
-    (def class/get-meta-method-list    (jojo (jo meta-method) assq car))
+  (def class/has-variable-list?      (jojo (jo variable) assq null eq? not))
+  (def class/get-variable-list       (jojo (jo variable) assq car))
 
-    (def class/has-variable-list?      (jojo (jo variable) assq null eq? not))
-    (def class/get-variable-list       (jojo (jo variable) assq car))
+  (def class/has-method-list?        (jojo (jo method) assq null eq? not))
+  (def class/get-method-list         (jojo (jo method) assq car))
+  #+end_src
 
-    (def class/has-method-list?        (jojo (jo method) assq null eq? not))
-    (def class/get-method-list         (jojo (jo method) assq car))
-    #+end_src
+* [keyword] define-class
 
-*** [keyword] define-class
+  #+begin_src jojo
+  (def define-class/keyword/one-variable
+    (keyword
+      (lev ins/lit
+           (esc read/jo here
+                compile-jojo)
+           cons cons cons)))
 
-    #+begin_src jojo
-    (def define-class/keyword/one-variable
-      (keyword
-        (lev ins/lit
-             (esc read/jo here
-                  compile-jojo)
-             cons cons cons)))
+  (def jo-ending-with-colon?
+    (jojo
+      (note jo -> bool)
+      jo->string string/last-char
+      (string ":") string/last-char eq?))
 
-    (def jo-ending-with-colon?
-      (jojo
-        (note jo -> bool)
-        jo->string string/last-char
-        (string ":") string/last-char eq?))
+  (def define-class/keyword/one-method/complex-message
+    (keyword
+      (note sum-jo -> sum-jo)
+      read/jo
+      (if dup round-ket eq? then drop end)
+      (if dup jo-ending-with-colon? then
+          jo/append
+          (loop))
+      swap (recur) swap
+      (lev ins/lit
+           (esc here)
+           local-in)))
 
-    (def define-class/keyword/one-method/complex-message
-      (keyword
-        (note sum-jo -> sum-jo)
-        read/jo
-        (if dup round-ket eq? then drop end)
-        (if dup jo-ending-with-colon? then
-            jo/append
-            (loop))
-        swap (recur) swap
-        (lev ins/lit
-             (esc here)
-             local-in)))
+  (def define-class/keyword/one-method/message
+    (keyword
+      (note -> jo)
+      read/jo
+      (if dup round-bar eq? not then end)
+      drop read/jo drop
+      empty-jo define-class/keyword/one-method/complex-message))
 
-    (def define-class/keyword/one-method/message
-      (keyword
-        (note -> jo)
-        read/jo
-        (if dup round-bar eq? not then end)
-        drop read/jo drop
-        empty-jo define-class/keyword/one-method/complex-message))
+  (def define-class/keyword/one-method/help
+    (keyword
+      (lev ins/jump)
+      compiling-stack/tos (> offset-place)
+      compiling-stack/inc
+      compiling-stack/tos (> bare-jojo-place)
+      define-class/keyword/one-method/message (> message)
+      compile-jojo
+      (lev end)
+      compiling-stack/tos (< offset-place) set-cell
+      (lev ins/lit (< bare-jojo-place)
+           ins/lit (< message)
+           swap
+           cons)))
 
-    (def define-class/keyword/one-method/help
-      (keyword
-        (lev ins/jump)
-        compiling-stack/tos (> offset-place)
-        compiling-stack/inc
-        compiling-stack/tos (> bare-jojo-place)
-        define-class/keyword/one-method/message (> message)
-        compile-jojo
-        (lev end)
-        compiling-stack/tos (< offset-place) set
-        (lev ins/lit (< bare-jojo-place)
-             ins/lit (< message)
-             swap
-             cons)))
+  (def define-class/keyword/one-method
+    (keyword
+      define-class/keyword/one-method/help
+      (lev cons)))
 
-    (def define-class/keyword/one-method
-      (keyword
-        define-class/keyword/one-method/help
-        (lev cons)))
+  (def define-class/keyword/inherit
+    (keyword
+      (lev ins/lit inherit
+           ins/lit
+           (esc read/jo here
+                ignore)
+           cons
+           cons)))
 
-    (def define-class/keyword/inherit
-      (keyword
-        (lev ins/lit inherit
-             ins/lit
-             (esc read/jo here
-                  ignore)
-             cons
-             cons)))
+  (def define-class/keyword/meta-variable-list
+    (keyword
+      (alias * define-class/keyword/one-variable)
+      (lev ins/lit meta-variable
+           null
+           (esc compile-jojo)
+           cons
+           cons)))
 
-    (def define-class/keyword/meta-variable-list
-      (keyword
-        (alias * define-class/keyword/one-variable)
-        (lev ins/lit meta-variable
-             null
-             (esc compile-jojo)
-             cons
-             cons)))
+  (def define-class/keyword/meta-method-list
+    (keyword
+      (alias * define-class/keyword/one-method)
+      (lev ins/lit meta-method
+           null
+           (esc compile-jojo)
+           cons
+           cons)))
 
-    (def define-class/keyword/meta-method-list
-      (keyword
-        (alias * define-class/keyword/one-method)
-        (lev ins/lit meta-method
-             null
-             (esc compile-jojo)
-             cons
-             cons)))
+  (def define-class/keyword/variable-list
+    (keyword
+      (alias * define-class/keyword/one-variable)
+      (lev ins/lit variable
+           null
+           (esc compile-jojo)
+           cons
+           cons)))
 
-    (def define-class/keyword/variable-list
-      (keyword
-        (alias * define-class/keyword/one-variable)
-        (lev ins/lit variable
-             null
-             (esc compile-jojo)
-             cons
-             cons)))
+  (def define-class/keyword/method-list
+    (keyword
+      (alias * define-class/keyword/one-method)
+      (lev ins/lit method
+           null
+           (esc compile-jojo)
+           cons
+           cons)))
 
-    (def define-class/keyword/method-list
-      (keyword
-        (alias * define-class/keyword/one-method)
-        (lev ins/lit method
-             null
-             (esc compile-jojo)
-             cons
-             cons)))
+  (def define-class/help
+    (keyword
+      read/jo (> tag)
+      (alias
+        inherit       define-class/keyword/inherit
+        meta-method   define-class/keyword/meta-method-list
+        meta-variable define-class/keyword/meta-variable-list
+        variable      define-class/keyword/variable-list
+        method        define-class/keyword/method-list)
+      (lev null
+           ins/lit tag
+           ins/lit (< tag)
+           cons
+           cons
+           (esc compile-jojo)
+           ins/lit <class>
+           ins/lit (< tag))))
 
-    (def define-class/help
-      (keyword
-        read/jo (> tag)
-        (alias
-          inherit       define-class/keyword/inherit
-          meta-method   define-class/keyword/meta-method-list
-          meta-variable define-class/keyword/meta-variable-list
-          variable      define-class/keyword/variable-list
-          method        define-class/keyword/method-list)
-        (lev null
-             ins/lit tag
-             ins/lit (< tag)
-             cons
-             cons
-             (esc compile-jojo)
-             ins/lit <class>
-             ins/lit (< tag))))
+  (def define-class
+    (keyword
+      compiling-stack/tos (> begin)
+      define-class/help
+      (lev end)
+      (< begin) apply
+      bind-name))
+  #+end_src
 
-    (def define-class
-      (keyword
-        compiling-stack/tos (> begin)
-        define-class/help
-        (lev end)
-        (< begin) apply
-        bind-name))
-    #+end_src
+* send
 
 *** send-to-class
 
@@ -635,37 +638,36 @@
         send-to-object))
     #+end_src
 
-*** [keyword] :
+* [keyword] :
 
-    #+begin_src jojo
-    (def send/sugar/complex
-      (keyword
-        (note sum-jo -> sum-jo)
-        read/jo
-        (if dup round-ket eq? then drop end)
-        (if dup round-bar eq? then drop read/jo jo/apply (loop))
-        (if dup jo-ending-with-colon? then jo/append (loop))
-        here (loop)))
+  #+begin_src jojo
+  (def send/sugar/complex
+    (keyword
+      (note sum-jo -> sum-jo)
+      read/jo
+      (if dup round-ket eq? then drop end)
+      (if dup round-bar eq? then drop read/jo jo/apply (loop))
+      (if dup jo-ending-with-colon? then jo/append (loop))
+      here (loop)))
 
-    (def :
-      (keyword
-        (jo :) generate-jo (> object-jo)
-        (lev ins/lit (< object-jo)
-             local-in
-             (esc read/jo
-                  (if dup jo-ending-with-colon? not
-                      then (> message) compile-jojo
-                      else send/sugar/complex (> message)))
-             ins/lit (< object-jo)
-             local-out
-             ins/lit (< message)
-             send)))
-    #+end_src
+  (def :
+    (keyword
+      (jo :) generate-jo (> object-jo)
+      (lev ins/lit (< object-jo)
+           local-in
+           (esc read/jo
+                (if dup jo-ending-with-colon? not
+                    then (> message) compile-jojo
+                    else send/sugar/complex (> message)))
+           ins/lit (< object-jo)
+           local-out
+           ins/lit (< message)
+           send)))
+  #+end_src
+
+* syntax for variable
 
 *** [keyword] @ and !
-
-    - syntax for instance-variable
-      simply set and get
 
     #+begin_src jojo
     (def get-instance-variable
@@ -714,25 +716,25 @@
              set-instance-variable)))
     #+end_src
 
-*** [keyword] add-method
+* [keyword] add-method
 
-    #+begin_src jojo
-    (def add-method
-      (keyword
-        read/jo (> tag)
-        (< tag) jo/apply drop (> class)
-        compiling-stack/tos (> begin)
-        define-class/keyword/one-method/help
-        (lev end)
-        (< begin) apply (> method)
+  #+begin_src jojo
+  (def add-method
+    (keyword
+      read/jo (> tag)
+      (< tag) jo/apply drop (> class)
+      compiling-stack/tos (> begin)
+      define-class/keyword/one-method/help
+      (lev end)
+      (< begin) apply (> method)
 
-        (if (< class) class/has-method-list? not then
-            (jo method) (< method) cons
-            (< class) set-tail end)
-        (el (< method)
-            (< class) class/get-method-list
-            set-tail)))
-    #+end_src
+      (if (< class) class/has-method-list? not then
+          (jo method) (< method) cons
+          (< class) set-tail end)
+      (el (< method)
+          (< class) class/get-method-list
+          set-tail)))
+  #+end_src
 
 * <object>
 
@@ -836,7 +838,7 @@
             2drop))
     #+end_src
 
-* >< <jojo>
+* <jojo>
 
 *** note
 
@@ -850,7 +852,31 @@
         (* apply (< self) apply)))
     #+end_src
 
-* >< <list>
+* <table>
+
+*** <table>
+
+    #+begin_src jojo
+    (define-class <table>
+      (method
+        (* find )))
+    #+end_src
+
+* <stack>
+
+*** <stack>
+
+    #+begin_src jojo
+    (note
+      (define-class <stack>
+        (variable
+          (* stack null))
+        (method
+          (* pop
+             )
+          (* (: push: value)
+             ))))
+    #+end_src
 
 * >< <system>
 
@@ -970,22 +996,6 @@
           string/print
           newline)
     #+end_src
-
-* <stack>
-
-*** <stack>
-
-    #+begin_src jojo
-    (note
-      (define-class <stack>
-        (method
-          (* pop
-             )
-          (* (: push:)
-             ))))
-    #+end_src
-
-* <record>
 
 * >< <module>
 

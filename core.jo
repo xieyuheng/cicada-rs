@@ -13,19 +13,19 @@
   (jojo
     (note -> [cons-pointer])
     cons-size cons-pointer add
-    (& cons-pointer) set))
+    (& cons-pointer) set-cell))
 
 (def cons-pointer/init
   (jojo
     (note -> [cons-pointer])
     cons-area
-    (& cons-pointer) set))
+    (& cons-pointer) set-cell))
 
 (def cons-pointer/next-free
   (jojo
     (note -> [cons-pointer])
     (if cons-pointer cons-area-top eq? then end)
-    (if cons-pointer get current-mark eq? not then end)
+    (if cons-pointer get-cell current-mark eq? not then end)
     cons-pointer/next
     (loop)))
 
@@ -49,7 +49,7 @@
     (string "#:") string/print
     dup dot
     (string "mark: ") string/print
-    dup get dot
+    dup get-cell dot
     (string "car: ") string/print
     dup car dot
     (string "cdr: ") string/print
@@ -69,7 +69,7 @@
   (jojo
     (note cons -> [io])
     (if dup cons-area-top eq? then drop end)
-    dup (integer 0)  swap set
+    dup (integer 0)  swap set-cell
     cons-size add
     (loop)))
 
@@ -88,15 +88,15 @@
   (jojo
     (note cons -> [cons-area])
     (if dup cons? not then drop end)
-    dup current-mark swap set
+    dup current-mark swap set-cell
     dup car mark-cons
     cdr (loop)))
 
 (def mark-cons-area/def-record
   (jojo
     (note def-record -> [cons-area])
-    (if dup get (integer 0) eq? then drop end)
-    dup get mark-cons
+    (if dup get-cell (integer 0) eq? then drop end)
+    dup get-cell mark-cons
     cell-size add
     (loop)))
 
@@ -105,7 +105,7 @@
     (note stack -> [cons-area])
     (if dup stack-base eq? then drop end)
     cell-size sub
-    dup get mark-cons
+    dup get-cell mark-cons
     (loop)))
 
 (def mark-cons-area
@@ -113,8 +113,8 @@
     (note -> [cons-area])
     (if current-mark max-mark eq? then
         sweep-cons-area
-        (integer 0) (& current-mark) set)
-    current-mark (integer 1) add (& current-mark) set
+        (integer 0) (& current-mark) set-cell)
+    current-mark (integer 1) add (& current-mark) set-cell
     def-record mark-cons-area/def-record
     stack-pointer
     mark-cons-area/argument-stack))
@@ -137,7 +137,7 @@
             (string "fatal error : cons-area is full") string/print
             newline bye)
         (loop))
-    (if cons-pointer get current-mark eq? then
+    (if cons-pointer get-cell current-mark eq? then
         cons-pointer/next (loop))
     cons-pointer
     cons-pointer/next end))
@@ -146,27 +146,27 @@
   (jojo
     (note cell cons ->)
     cell-size add
-    set))
+    set-cell))
 
 (def set-cdr
   (jojo
     (note cell cons ->)
     cell-size add
     cell-size add
-    set))
+    set-cell))
 
 (def car
   (jojo
     (note cons -> cell)
     cell-size add
-    get))
+    get-cell))
 
 (def cdr
   (jojo
     (note cons -> cell)
     cell-size add
     cell-size add
-    get))
+    get-cell))
 
 (def cons
   (jojo
@@ -362,7 +362,7 @@
     define-class/keyword/one-method/message (> message)
     compile-jojo
     (lev end)
-    compiling-stack/tos (< offset-place) set
+    compiling-stack/tos (< offset-place) set-cell
     (lev ins/lit (< bare-jojo-place)
          ins/lit (< message)
          swap
@@ -668,6 +668,20 @@
   (method
     (* apply (< self) apply)))
 
+(define-class <table>
+  (method
+    (* find )))
+
+(note
+  (define-class <stack>
+    (variable
+      (* stack null))
+    (method
+      (* pop
+         )
+      (* (: push: value)
+         ))))
+
 (test current-dir string/print newline)
 
 (test (string "HOME") var-string->env-string
@@ -760,14 +774,6 @@
       drop
       string/print
       newline)
-
-(note
-  (define-class <stack>
-    (method
-      (* pop
-         )
-      (* (: push:)
-         ))))
 
 (note
   (module module-name [version])

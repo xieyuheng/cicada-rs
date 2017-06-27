@@ -1745,10 +1745,10 @@
     }
     #+end_src
 
-*** p_set
+*** p_set_cell
 
     #+begin_src c
-    void p_set() {
+    void p_set_cell() {
       // (cell address ->)
       cell* address = as_pop();
       cell value = as_pop();
@@ -1756,10 +1756,10 @@
     }
     #+end_src
 
-*** p_get
+*** p_get_cell
 
     #+begin_src c
-    void p_get() {
+    void p_get_cell() {
       // (address -> cell)
       cell* address = as_pop();
       as_push(address[0]);
@@ -1795,8 +1795,8 @@
       defprim("free", p_free);
       defprimkey("&", k_address);
       defprim("jo-as-var", p_jo_as_var);
-      defprim("set", p_set);
-      defprim("get", p_get);
+      defprim("set-cell", p_set_cell);
+      defprim("get-cell", p_get_cell);
       defprim("set-byte", p_set_byte);
       defprim("get-byte", p_get_byte);
     }

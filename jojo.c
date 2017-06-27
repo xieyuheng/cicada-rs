@@ -1209,14 +1209,14 @@ void p_jo_as_var() {
   as_push(&(jotable[jo].value));
 }
 
-void p_set() {
+void p_set_cell() {
   // (cell address ->)
   cell* address = as_pop();
   cell value = as_pop();
   address[0] = value;
 }
 
-void p_get() {
+void p_get_cell() {
   // (address -> cell)
   cell* address = as_pop();
   as_push(address[0]);
@@ -1240,8 +1240,8 @@ void export_memory() {
   defprim("free", p_free);
   defprimkey("&", k_address);
   defprim("jo-as-var", p_jo_as_var);
-  defprim("set", p_set);
-  defprim("get", p_get);
+  defprim("set-cell", p_set_cell);
+  defprim("get-cell", p_get_cell);
   defprim("set-byte", p_set_byte);
   defprim("get-byte", p_get_byte);
 }
