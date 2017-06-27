@@ -326,6 +326,14 @@
               compile-jojo)
          cons cons cons)))
 
+(def define-class/keyword/one-bare-variable
+  (keyword
+    (lev ins/lit
+         (esc read/jo here
+              compile-jojo)
+         ins/lit <bare-data>
+         cons cons cons)))
+
 (def jo-ending-with-colon?
   (jojo
     (note jo -> bool)
@@ -384,7 +392,8 @@
 
 (def define-class/keyword/meta-variable-list
   (keyword
-    (alias * define-class/keyword/one-variable)
+    (alias = define-class/keyword/one-variable
+           - define-class/keyword/one-bare-variable)
     (lev ins/lit meta-variable
          null
          (esc compile-jojo)
@@ -402,7 +411,8 @@
 
 (def define-class/keyword/variable-list
   (keyword
-    (alias * define-class/keyword/one-variable)
+    (alias = define-class/keyword/one-variable
+           - define-class/keyword/one-bare-variable)
     (lev ins/lit variable
          null
          (esc compile-jojo)
@@ -543,48 +553,127 @@
 
 (def get-instance-variable
   (jojo
-    (note [object name] -> [data tag])
+    (note [instance-variable-list tag name] -> [data tag])
     (> name)
     (> tag)
     (> instance-variable-list)
-
     (< instance-variable-list)
     (< name)
     assoc/find
     (if then car dup car swap cdr swap end)
-    (string "- get-instance-variable fail") string/print newline))
+    (el (cat "- get-instance-variable fail" newline
+             "  name : " name jo/print newline
+             "  tag : " (< tag) jo/print newline))))
 
-(def @
+(def get-meta-variable
+  (jojo
+    (note [class (jo <class>) name] -> [data tag])
+    (> name)
+    (> tag)
+    (> class)
+    (if (< class) class/has-meta-variable-list? not then
+        (cat "- get-meta-variable fail" newline
+             "  the class do not has meta-variable-list" newline
+             "  name : " name jo/print newline
+             "  class-name : " (< class) class/get-tag jo/print newline)
+        end)
+    (< class) class/get-meta-variable-list
+    (> meta-variable-list)
+    (< meta-variable-list)
+    (< name)
+    assoc/find
+    (if then car dup car swap cdr swap end)
+    (el (cat "- get-meta-variable fail" newline
+             "  name : " name jo/print newline
+             "  class-name : " (< class) class/get-tag jo/print newline))))
+
+(def get-variable
+  (jojo
+    (note [data tag name] -> [data tag])
+    (if over (jo <class>) eq? not then
+        get-instance-variable end)
+    (el get-meta-variable)))
+
+
+(def get
   (keyword
     (lev ins/lit
          (esc read/jo here
               ignore)
-         get-instance-variable)))
+         get-variable)))
 
+(def get-data
+  (keyword
+    (lev ins/lit
+         (esc read/jo here
+              ignore)
+         get-variable drop)))
+
+(def get-tag
+  (keyword
+    (lev ins/lit
+         (esc read/jo here
+              ignore)
+         get-variable swap drop)))
 
 (def set-instance-variable
   (jojo
-    (note [object data type name] -> [])
+    (note [data tag instance-variable-list source-tag name] -> [])
     (> name)
-    (> tag)
+    (> source-tag)
     (> instance-variable-list)
-    (> type-name)
-    (> data)
-
+    (>> object)
     (< instance-variable-list)
     (< name)
     assoc/find
-    (if then (> instance-variable)
-        (< data) (< type-name) cons
-        (< instance-variable) set-car end)
-    (string "- set-instance-variable fail") string/print newline))
+    (if then (> variable)
+        (<< object) cons
+        (< variable) set-car
+        end)
+    (el (cat "- set-instance-variable fail" newline
+             "  name : " name jo/print newline))))
 
-(def !
+(def set-meta-variable
+  (jojo
+    (note [data tag class (jo <class>) name] -> [])
+    (> name)
+    drop
+    (> class)
+    (>> object)
+    (if (< class) class/has-meta-variable-list? not then
+        (cat "- set-meta-variable fail" newline
+             "  the class do not has meta-variable-list" newline
+             "  name : " name jo/print newline
+             "  class-name : " (< class) class/get-tag jo/print newline)
+        end)
+    (< class) class/get-meta-variable-list
+    (> meta-variable-list)
+    (< meta-variable-list)
+    (< name)
+    assoc/find
+    (if then (> variable)
+        (<< object) cons
+        (< variable) set-car
+        end)
+    (el (cat "- set-meta-variable fail" newline
+             "  name : " name jo/print newline
+             "  class-name : " (< class) class/get-tag jo/print newline))))
+
+(def set-variable
+  (jojo
+    (note [data tag source-data source-tag name] -> [])
+    (if over (jo <class>) eq? not then
+        set-instance-variable end)
+    (el set-meta-variable)))
+
+(def set
   (keyword
     (lev ins/lit
          (esc read/jo here
               ignore)
-         set-instance-variable)))
+         set-variable)))
+
+
 
 (def add-method
   (keyword
@@ -675,7 +764,7 @@
 (note
   (define-class <stack>
     (variable
-      (* stack null))
+      (- stack null))
     (method
       (* pop
          )
@@ -805,24 +894,29 @@
 
 (define-class <person>
   (inherit <object>)
+  (meta-variable
+    (= testing-meta-variable (int 666)))
   (variable
-    (* age (int 13))
-    (* language (str "chinese")))
+    (- bare-age (integer 5))
+    (= age (int 13))
+    (= language (str "chinese")))
   (method
     (* grow
-       (<< self) (@ age) (: inc)
-       (<< self) (! age))
+       (<< self) (get age) (: inc)
+       (<< self) (set age))
     (* (: grow-by: years)
-       (<< self) (@ age) (: add: (<< years))
-       (<< self) (! age))
+       (<< self) (get age) (: add: (<< years))
+       (<< self) (set age))
     (* (: grow-by: year1 and-by: year2)
-       (<< self) (@ age) (: add: (<< year1)) (: add: (<< year2))
-       (<< self) (! age))
+       (<< self) (get age) (: add: (<< year1)) (: add: (<< year2))
+       (<< self) (set age))
     (* report
-       (cat "age: "
-            (<< self) (@ age) (: print) newline
-            "languege: "
-            (<< self) (@ language) (: print) newline))))
+       (cat "bare-age : "
+            (<< self) (get-data bare-age) integer/print newline
+            "age : "
+            (<< self) (get age) (: print) newline
+            "languege : "
+            (<< self) (get language) (: print) newline))))
 
 (def xieyuheng <person> (: new))
 
@@ -835,6 +929,14 @@
      xieyuheng (: report)
      xieyuheng (: grow-by: (int 10) and-by: (int 10))
      xieyuheng (: report))
+
+(run <person> (get testing-meta-variable) (: write)
+     (int 777)
+     <person> (set testing-meta-variable)
+     <person> (get testing-meta-variable) (: write)
+     (int 888)
+     <person> (set testing-meta-variable)
+     <person> (get testing-meta-variable) (: write))
 
 (note (test (string "asd") open-for-reading dot)
       (test (string "README") open-for-reading dot))
