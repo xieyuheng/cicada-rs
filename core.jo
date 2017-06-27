@@ -673,7 +673,123 @@
               ignore)
          set-variable)))
 
+(def set-data-in-instance-variable
+  (jojo
+    (note [data instance-variable-list source-tag name] -> [])
+    (> name)
+    (> source-tag)
+    (> instance-variable-list)
+    (> data)
+    (< instance-variable-list)
+    (< name)
+    assoc/find
+    (if then (> variable)
+        (< variable) car cdr (> tag-in-variable)
+        (< data) (< tag-in-variable) cons
+        (< variable) set-car
+        end)
+    (el (cat "- set-data-in-instance-variable fail" newline
+             "  name : " name jo/print newline))))
 
+(def set-data-in-meta-variable
+  (jojo
+    (note [data class (jo <class>) name] -> [])
+    (> name)
+    drop
+    (> class)
+    (> data)
+    (if (< class) class/has-meta-variable-list? not then
+        (cat "- set-data-in-meta-variable fail" newline
+             "  the class do not has meta-variable-list" newline
+             "  name : " name jo/print newline
+             "  class-name : " (< class) class/get-tag jo/print newline)
+        end)
+    (< class) class/get-meta-variable-list
+    (> meta-variable-list)
+    (< meta-variable-list)
+    (< name)
+    assoc/find
+    (if then (> variable)
+        (< variable) car cdr (> tag-in-variable)
+        (< data) (< tag-in-variable) cons
+        (< variable) set-car
+        end)
+    (el (cat "- set-data-in-meta-variable fail" newline
+             "  name : " name jo/print newline
+             "  class-name : " (< class) class/get-tag jo/print newline))))
+
+(def set-data-in-variable
+  (jojo
+    (note [data source-data source-tag name] -> [])
+    (if over (jo <class>) eq? not then
+        set-data-in-instance-variable end)
+    (el set-data-in-meta-variable)))
+
+(def set-data
+  (keyword
+    (lev ins/lit
+         (esc read/jo here
+              ignore)
+         set-data-in-variable)))
+
+(def set-tag-in-instance-variable
+  (jojo
+    (note [tag instance-variable-list source-tag name] -> [])
+    (> name)
+    (> source-tag)
+    (> instance-variable-list)
+    (> tag)
+    (< instance-variable-list)
+    (< name)
+    assoc/find
+    (if then (> variable)
+        (< variable) car car (> data-in-variable)
+        (< data-in-variable) (< tag) cons
+        (< variable) set-car
+        end)
+    (el (cat "- set-tag-in-instance-variable fail" newline
+             "  name : " name jo/print newline))))
+
+(def set-tag-in-meta-variable
+  (jojo
+    (note [tag class (jo <class>) name] -> [])
+    (> name)
+    drop
+    (> class)
+    (> tag)
+    (if (< class) class/has-meta-variable-list? not then
+        (cat "- set-tag-in-meta-variable fail" newline
+             "  the class do not has meta-variable-list" newline
+             "  name : " name jo/print newline
+             "  class-name : " (< class) class/get-tag jo/print newline)
+        end)
+    (< class) class/get-meta-variable-list
+    (> meta-variable-list)
+    (< meta-variable-list)
+    (< name)
+    assoc/find
+    (if then (> variable)
+        (< variable) car car (> data-in-variable)
+        (< data-in-variable) (< tag) cons
+        (< variable) set-car
+        end)
+    (el (cat "- set-tag-in-meta-variable fail" newline
+             "  name : " name jo/print newline
+             "  class-name : " (< class) class/get-tag jo/print newline))))
+
+(def set-tag-in-variable
+  (jojo
+    (note [tag source-data source-tag name] -> [])
+    (if over (jo <class>) eq? not then
+        set-tag-in-instance-variable end)
+    (el set-tag-in-meta-variable)))
+
+(def set-tag
+  (keyword
+    (lev ins/lit
+         (esc read/jo here
+              ignore)
+         set-tag-in-variable)))
 
 (def add-method
   (keyword
@@ -761,23 +877,21 @@
   (method
     (* find )))
 
-(note
-  (define-class <bare-stack>
-    (inherit <object>)
-    (variable
-      (- stack null))
-    (method
-      (* pop
-         (note -> data)
-         (<< self) (get-data stack)
-         dup car (> data)
-         cdr (<< self) (set-data stack)
-         (< data))
-      (* (: push: data)
-         (<< self) (get-data stack)
-         (< data)
-         cons
-         (<< self) (set-data stack)))))
+(define-class <bare-stack>
+  (inherit <object>)
+  (variable
+    (- stack null))
+  (method
+    (* pop
+       (<< self) (get-data stack)
+       dup car (> data)
+       cdr (<< self) (set-data stack)
+       (< data))
+    (* (: push: data)
+       (<< self) (get-data stack)
+       (< data)
+       cons
+       (<< self) (set-data stack))))
 
 (note
   (define-class <stack>
@@ -961,11 +1075,11 @@
 (note (test (string "asd") open-for-reading dot)
       (test (string "README") open-for-reading dot))
 
-(note (def module-stack <bare-stack> (: new)))
+(def module-stack <bare-stack> (: new))
 
-(note (test module-stack (: push: (data (integer 1)))
-            module-stack (: push: (data (integer 2)))
-            module-stack (: push: (data (integer 3)))
-            module-stack (: pop) integer/print newline
-            module-stack (: pop) integer/print newline
-            module-stack (: pop) integer/print newline))
+(test module-stack (: push: (data (integer 1)))
+      module-stack (: push: (data (integer 2)))
+      module-stack (: push: (data (integer 3)))
+      module-stack (: pop) integer/print newline
+      module-stack (: pop) integer/print newline
+      module-stack (: pop) integer/print newline)
