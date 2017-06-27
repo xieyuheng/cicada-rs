@@ -1,7 +1,5 @@
 #+property: tangle core.jo
 #+title: core
-- syntax for super
-- <stack>
 - has-method? has-meta-method?
 - <table>
 * todo
@@ -52,6 +50,23 @@
     - instance-variable or meta-variable
 
     - variable = [name data tag cons cons]
+
+*** overriding
+
+    - when overriding a superclass' method
+      use keyword 'as' to get superclass' method
+      thus no need to use super
+
+*** lev
+
+    - in esc of lev
+      'here' is needed
+
+*** message sending
+
+    - in the syntax of message sending
+      each parts of the message has an object as argument,
+      keyword 'data' must be used when want to send bare-data as argument.
 
 * flag
 
@@ -1139,6 +1154,7 @@
         (- stack null))
       (method
         (* pop
+           (note -> data)
            (<< self) (get-data stack)
            dup car (> data)
            cdr (<< self) (set-data stack)
@@ -1150,16 +1166,24 @@
            (<< self) (set-data stack))))
     #+end_src
 
-*** >< <stack>
+*** <stack>
 
     #+begin_src jojo
-    (note (define-class <stack>
-            (inherit <bare-stack>)
-            (method
-              (* pop
-                 )
-              (* (: push: value)
-                 ))))
+    (def as
+      (keyword
+        (lev drop
+             ins/lit (esc read/jo here ignore))))
+
+    (define-class <stack>
+      (inherit <bare-stack>)
+      (method
+        (* pop
+           (note -> object)
+           (<< self) (as <bare-stack>) (: pop)
+           dup cdr swap car)
+        (* (: push: object)
+           (<< self) (as <bare-stack>)
+           (: push: (data (<< object) cons)))))
     #+end_src
 
 * >< <system>
@@ -1447,4 +1471,13 @@
         module-stack (: pop) integer/print newline
         module-stack (: pop) integer/print newline
         module-stack (: pop) integer/print newline)
+
+  (def testing-stack <stack> (: new))
+
+  (test testing-stack (: push: (int 1))
+        testing-stack (: push: (int 2))
+        testing-stack (: push: (int 3))
+        testing-stack (: pop) (: write)
+        testing-stack (: pop) (: write)
+        testing-stack (: pop) (: write))
   #+end_src

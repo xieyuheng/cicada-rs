@@ -899,6 +899,7 @@
     (- stack null))
   (method
     (* pop
+       (note -> data)
        (<< self) (get-data stack)
        dup car (> data)
        cdr (<< self) (set-data stack)
@@ -909,13 +910,21 @@
        cons
        (<< self) (set-data stack))))
 
-(note (define-class <stack>
-        (inherit <bare-stack>)
-        (method
-          (* pop
-             )
-          (* (: push: value)
-             ))))
+(def as
+  (keyword
+    (lev drop
+         ins/lit (esc read/jo here ignore))))
+
+(define-class <stack>
+  (inherit <bare-stack>)
+  (method
+    (* pop
+       (note -> object)
+       (<< self) (as <bare-stack>) (: pop)
+       dup cdr swap car)
+    (* (: push: object)
+       (<< self) (as <bare-stack>)
+       (: push: (data (<< object) cons)))))
 
 (test current-dir string/print newline)
 
@@ -1101,3 +1110,12 @@
       module-stack (: pop) integer/print newline
       module-stack (: pop) integer/print newline
       module-stack (: pop) integer/print newline)
+
+(def testing-stack <stack> (: new))
+
+(test testing-stack (: push: (int 1))
+      testing-stack (: push: (int 2))
+      testing-stack (: push: (int 3))
+      testing-stack (: pop) (: write)
+      testing-stack (: pop) (: write)
+      testing-stack (: pop) (: write))
