@@ -438,10 +438,10 @@ void jotable_test() {
   str2jo("testtesttesttestkey3");
   str2jo("testtesttesttestkey4");
 
-  jotable_set_type_value(str2jo("k1"), str2jo("bare-data"), 1);
+  jotable_set_type_value(str2jo("k1"), str2jo("<data>"), 1);
   jotable_report();
 
-  jotable_set_type_value(str2jo("k1"), str2jo("bare-data"), 0);
+  jotable_set_type_value(str2jo("k1"), str2jo("<data>"), 0);
   jotable_report();
 
   // jotable_print();
@@ -653,7 +653,7 @@ void jo_apply(jo jo) {
     alias_stack_pointer = keyword_stack_pop();
   }
 
-  else if (jo_type == str2jo("bare-data")) {
+  else if (jo_type == str2jo("<data>")) {
     cell cell = jotable_get_value(jo);
     as_push(cell);
   }
@@ -2110,11 +2110,11 @@ void k_keyword() {
   here(str2jo("<keyword>"));
 }
 
-void k_bare_data() {
+void k_data() {
   // ([io] -> [compile])
   p_compile_jojo();
   here(str2jo("ins/lit"));
-  here(str2jo("bare-data"));
+  here(str2jo("<data>"));
 }
 
 cell local_find(jo name) {
@@ -2348,7 +2348,7 @@ void export_keyword() {
   defprimkey("loop", k_loop);
   defprimkey("recur", k_recur);
 
-  defprimkey("bare-data", k_bare_data);
+  defprimkey("data", k_data);
   defprimkey("jojo", k_jojo);
   defprimkey("keyword", k_keyword);
 

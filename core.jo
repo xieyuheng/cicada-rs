@@ -1,13 +1,13 @@
 (run testing-flag/on)
 (test top-repl/printing-flag/on)
 
-(def cons-size      (bare-data (integer 3) cell-size mul))
-(def cons-area-size (bare-data (integer 1024 1024) mul cons-size mul))
-(def cons-area      (bare-data cons-area-size allocate))
-(def cons-area-top  (bare-data cons-area cons-area-size add))
-(def cons-pointer   (bare-data cons-area))
-(def current-mark   (bare-data (integer 1)))
-(def max-mark       (bare-data (integer 1024 1024) mul))
+(def cons-size      (data (integer 3) cell-size mul))
+(def cons-area-size (data (integer 1024 1024) mul cons-size mul))
+(def cons-area      (data cons-area-size allocate))
+(def cons-area-top  (data cons-area cons-area-size add))
+(def cons-pointer   (data cons-area))
+(def current-mark   (data (integer 1)))
+(def max-mark       (data (integer 1024 1024) mul))
 
 (def cons-pointer/next
   (jojo
@@ -82,7 +82,7 @@
 
 (note root from :
       stack
-      defbare-data)
+      def)
 
 (def mark-cons
   (jojo
@@ -331,7 +331,7 @@
     (lev ins/lit
          (esc read/jo here
               compile-jojo)
-         ins/lit <bare-data>
+         ins/lit <data>
          cons cons cons)))
 
 (def jo-ending-with-colon?
@@ -762,7 +762,26 @@
     (* find )))
 
 (note
+  (define-class <bare-stack>
+    (inherit <object>)
+    (variable
+      (- stack null))
+    (method
+      (* pop
+         (note -> data)
+         (<< self) (get-data stack)
+         dup car (> data)
+         cdr (<< self) (set-data stack)
+         (< data))
+      (* (: push: data)
+         (<< self) (get-data stack)
+         (< data)
+         cons
+         (<< self) (set-data stack)))))
+
+(note
   (define-class <stack>
+    (inherit <bare-stack>)
     (variable
       (- stack null))
     (method
@@ -916,7 +935,8 @@
             "age : "
             (<< self) (get age) (: print) newline
             "languege : "
-            (<< self) (get language) (: print) newline))))
+            (<< self) (get language) (: print) newline
+            newline))))
 
 (def xieyuheng <person> (: new))
 
@@ -940,3 +960,12 @@
 
 (note (test (string "asd") open-for-reading dot)
       (test (string "README") open-for-reading dot))
+
+(note (def module-stack <bare-stack> (: new)))
+
+(note (test module-stack (: push: (data (integer 1)))
+            module-stack (: push: (data (integer 2)))
+            module-stack (: push: (data (integer 3)))
+            module-stack (: pop) integer/print newline
+            module-stack (: pop) integer/print newline
+            module-stack (: pop) integer/print newline))
