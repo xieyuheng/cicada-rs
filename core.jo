@@ -302,10 +302,10 @@
 
 (note (run (cat "1 2 3" newline "4 5 6" newline "7 8 9" newline)))
 
-(def class/get-class-name          (jojo (jo class-name) assq car))
+(def class/get-tag                 (jojo (jo tag) assq car))
 
 (def class/has-superclass?         (jojo (jo inherit) assq null eq? not))
-(def class/get-superclass-name     (jojo (jo inherit) assq car))
+(def class/get-super-tag           (jojo (jo inherit) assq car))
 
 (def class/has-meta-variable-list? (jojo (jo meta-variable) assq null eq? not))
 (def class/get-meta-variable-list  (jojo (jo meta-variable) assq car))
@@ -420,7 +420,7 @@
 
 (def define-class/help
   (keyword
-    read/jo (> class-name)
+    read/jo (> tag)
     (alias
       inherit       define-class/keyword/inherit
       meta-method   define-class/keyword/meta-method-list
@@ -428,13 +428,13 @@
       variable      define-class/keyword/variable-list
       method        define-class/keyword/method-list)
     (lev null
-         ins/lit class-name
-         ins/lit (< class-name)
+         ins/lit tag
+         ins/lit (< tag)
          cons
          cons
          (esc compile-jojo)
          ins/lit <class>
-         ins/lit (< class-name))))
+         ins/lit (< tag))))
 
 (def define-class
   (keyword
@@ -458,7 +458,7 @@
             true
             end))
     (if (< class) class/has-superclass? then
-        (< class) class/get-superclass-name jo/apply drop
+        (< class) class/get-super-tag jo/apply drop
         (< message)
         (loop))
     false))
@@ -479,10 +479,10 @@
 
 (def send-to-object/find-method
   (jojo
-    (note class-name message -> [bare-jojo true] or [false])
+    (note tag message -> [bare-jojo true] or [false])
     (> message)
-    (> class-name)
-    (< class-name) jo/apply drop (> class)
+    (> tag)
+    (< tag) jo/apply drop (> class)
     (if (< class) class/has-method-list? then
         (< class) class/get-method-list
         (< message) assoc/find
@@ -491,7 +491,7 @@
             true
             end))
     (if (< class) class/has-superclass? then
-        (< class) class/get-superclass-name
+        (< class) class/get-super-tag
         (< message)
         (loop))
     false))
@@ -499,19 +499,20 @@
 (def send-to-object
   (jojo
     (> message)
-    (> class-name)
+    (> tag)
     (> data)
-    (< class-name) (< message)
+    (< tag) (< message)
     send-to-object/find-method
     (if then
         current-local-pointer swap
-        (< data) (< class-name) (jo self) local-two-in
+        (< data) (< tag) (jo self) local-two-in
+        (< data) (< tag) (jo self) local-two-in
         apply-with-local-pointer
         end)
     (string "- send-to-object : can not find message : ") string/print
     (< message) jo/print newline
-    (string "  object/class-name : ") string/print
-    (< class-name) jo/print newline))
+    (string "  object/tag : ") string/print
+    (< tag) jo/print newline))
 
 (def send
   (jojo
@@ -545,7 +546,7 @@
   (jojo
     (note [object name] -> [data tag])
     (> name)
-    (> class-name)
+    (> tag)
     (> instance-variable-list)
 
     (< instance-variable-list)
@@ -566,7 +567,7 @@
   (jojo
     (note [object data type name] -> [])
     (> name)
-    (> class-name)
+    (> tag)
     (> instance-variable-list)
     (> type-name)
     (> data)
@@ -588,8 +589,8 @@
 
 (def add-method
   (keyword
-    read/jo (> class-name)
-    (< class-name) jo/apply drop (> class)
+    read/jo (> tag)
+    (< tag) jo/apply drop (> class)
     compiling-stack/tos (> begin)
     define-class/keyword/one-method/help
     (lev end)
@@ -607,9 +608,9 @@
     (* new
        (if (< self-class) class/has-variable-list? then
            (< self-class) class/get-variable-list list/copy
-           (< self-class) class/get-class-name end)
+           (< self-class) class/get-tag end)
        null
-       (< self-class) class/get-class-name)))
+       (< self-class) class/get-tag)))
 
 (define-class <int>
   (method
@@ -640,37 +641,33 @@
     (jo integer) jo/apply
     (lev ins/lit <int>)))
 
-(run (int 123) 2dup (: print) newline (: write))
-
 (define-class <str>
   (method
-    (* print
-       (<< self) drop string/print)
+    (* print (<< self) drop string/print)
+    (* length (<< self) drop string/length (jo <int>))
     (* write
        (string "(str ") string/print
        double-quote jo/print
        (<< self) (: print)
        double-quote jo/print
-       (string ") ") string/print)
-    (* length
-       (<< self) drop string/length (jo <int>))))
+       (string ") ") string/print)))
 
 (def str
   (keyword
     (jo string) jo/apply
     (lev ins/lit <str>)))
 
-(run (str "k1 k2 k3")
-     2dup (: print) newline
-     2dup (: write) newline
-     2dup (: length) (: print) newline
-     2dup (: length) (: write) newline
-     2drop)
-
 (note
-  (define-class <jojo>
-    (method
-      (* ))))
+  (test (str "k1 k2 k3")
+        2dup (: print) newline
+        2dup (: write) newline
+        2dup (: length) (: print) newline
+        2dup (: length) (: write) newline
+        2drop))
+
+(define-class <jojo>
+  (method
+    (* apply (<< self) drop apply)))
 
 (test current-dir string/print newline)
 
@@ -766,10 +763,32 @@
       newline)
 
 (note
+  (define-class <stack>
+    (method
+      (* pop
+         )
+      (* (: push:)
+         ))))
+
+(note
   (module module-name [version])
   (use module-name [version]
        ...)
   (include "path"))
+
+(note
+  (load-module module-name[version])
+
+  module-stack module-name[version]
+
+  define name
+  def module-name[version].name
+
+  defining-stack name module-name[version].name)
+
+(note
+  (def module-stack
+    ))
 
 (note
   (def module-record
@@ -814,6 +833,3 @@
 
 (note (test (string "asd") open-for-reading dot)
       (test (string "README") open-for-reading dot))
-
-(run (int 123) (: add: (int 123)) (: write))
-(run (int 123) (: mul: (int 123)) (: write))

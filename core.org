@@ -3,9 +3,9 @@
 
 * todo
 
-  - <jojo>
-
   - <str>
+
+  - <jojo>
 
   - to see what <module> needs from <path> and <file>
 
@@ -18,6 +18,12 @@
   - [testing] assert for embedded testing
 
   - [maybe] syntax for local helper functions
+
+* note
+
+*** terminology
+
+    - tag as class-name
 
 * flag
 
@@ -396,10 +402,10 @@
 *** help
 
     #+begin_src jojo
-    (def class/get-class-name          (jojo (jo class-name) assq car))
+    (def class/get-tag                 (jojo (jo tag) assq car))
 
     (def class/has-superclass?         (jojo (jo inherit) assq null eq? not))
-    (def class/get-superclass-name     (jojo (jo inherit) assq car))
+    (def class/get-super-tag           (jojo (jo inherit) assq car))
 
     (def class/has-meta-variable-list? (jojo (jo meta-variable) assq null eq? not))
     (def class/get-meta-variable-list  (jojo (jo meta-variable) assq car))
@@ -518,7 +524,7 @@
 
     (def define-class/help
       (keyword
-        read/jo (> class-name)
+        read/jo (> tag)
         (alias
           inherit       define-class/keyword/inherit
           meta-method   define-class/keyword/meta-method-list
@@ -526,13 +532,13 @@
           variable      define-class/keyword/variable-list
           method        define-class/keyword/method-list)
         (lev null
-             ins/lit class-name
-             ins/lit (< class-name)
+             ins/lit tag
+             ins/lit (< tag)
              cons
              cons
              (esc compile-jojo)
              ins/lit <class>
-             ins/lit (< class-name))))
+             ins/lit (< tag))))
 
     (def define-class
       (keyword
@@ -560,7 +566,7 @@
                 true
                 end))
         (if (< class) class/has-superclass? then
-            (< class) class/get-superclass-name jo/apply drop
+            (< class) class/get-super-tag jo/apply drop
             (< message)
             (loop))
         false))
@@ -585,10 +591,10 @@
     #+begin_src jojo
     (def send-to-object/find-method
       (jojo
-        (note class-name message -> [bare-jojo true] or [false])
+        (note tag message -> [bare-jojo true] or [false])
         (> message)
-        (> class-name)
-        (< class-name) jo/apply drop (> class)
+        (> tag)
+        (< tag) jo/apply drop (> class)
         (if (< class) class/has-method-list? then
             (< class) class/get-method-list
             (< message) assoc/find
@@ -597,7 +603,7 @@
                 true
                 end))
         (if (< class) class/has-superclass? then
-            (< class) class/get-superclass-name
+            (< class) class/get-super-tag
             (< message)
             (loop))
         false))
@@ -605,19 +611,20 @@
     (def send-to-object
       (jojo
         (> message)
-        (> class-name)
+        (> tag)
         (> data)
-        (< class-name) (< message)
+        (< tag) (< message)
         send-to-object/find-method
         (if then
             current-local-pointer swap
-            (< data) (< class-name) (jo self) local-two-in
+            (< data) (< tag) (jo self) local-two-in
+            (< data) (< tag) (jo self) local-two-in
             apply-with-local-pointer
             end)
         (string "- send-to-object : can not find message : ") string/print
         (< message) jo/print newline
-        (string "  object/class-name : ") string/print
-        (< class-name) jo/print newline))
+        (string "  object/tag : ") string/print
+        (< tag) jo/print newline))
     #+end_src
 
 *** send
@@ -666,7 +673,7 @@
       (jojo
         (note [object name] -> [data tag])
         (> name)
-        (> class-name)
+        (> tag)
         (> instance-variable-list)
 
         (< instance-variable-list)
@@ -687,7 +694,7 @@
       (jojo
         (note [object data type name] -> [])
         (> name)
-        (> class-name)
+        (> tag)
         (> instance-variable-list)
         (> type-name)
         (> data)
@@ -713,8 +720,8 @@
     #+begin_src jojo
     (def add-method
       (keyword
-        read/jo (> class-name)
-        (< class-name) jo/apply drop (> class)
+        read/jo (> tag)
+        (< tag) jo/apply drop (> class)
         compiling-stack/tos (> begin)
         define-class/keyword/one-method/help
         (lev end)
@@ -732,7 +739,7 @@
 
 *** note
 
-    - an <object> is two values on the stack [data class-name].
+    - an <object> is two values on the stack [data tag].
     - the data of an <object> is simply an assoc-list of name and value.
 
 *** <object>
@@ -743,9 +750,9 @@
         (* new
            (if (< self-class) class/has-variable-list? then
                (< self-class) class/get-variable-list list/copy
-               (< self-class) class/get-class-name end)
+               (< self-class) class/get-tag end)
            null
-           (< self-class) class/get-class-name)))
+           (< self-class) class/get-tag)))
     #+end_src
 
 * <int>
@@ -787,29 +794,26 @@
         (lev ins/lit <int>)))
     #+end_src
 
-*** test
-
-    #+begin_src jojo
-    (run (int 123) 2dup (: print) newline (: write))
-    #+end_src
-
 * <str>
+
+*** note
+
+    - <str> is static allocated,
+      no gc for this class.
 
 *** <str>
 
     #+begin_src jojo
     (define-class <str>
       (method
-        (* print
-           (<< self) drop string/print)
+        (* print (<< self) drop string/print)
+        (* length (<< self) drop string/length (jo <int>))
         (* write
            (string "(str ") string/print
            double-quote jo/print
            (<< self) (: print)
            double-quote jo/print
-           (string ") ") string/print)
-        (* length
-           (<< self) drop string/length (jo <int>))))
+           (string ") ") string/print)))
     #+end_src
 
 *** [keyword] str
@@ -824,15 +828,16 @@
 *** test
 
     #+begin_src jojo
-    (run (str "k1 k2 k3")
-         2dup (: print) newline
-         2dup (: write) newline
-         2dup (: length) (: print) newline
-         2dup (: length) (: write) newline
-         2drop)
+    (note
+      (test (str "k1 k2 k3")
+            2dup (: print) newline
+            2dup (: write) newline
+            2dup (: length) (: print) newline
+            2dup (: length) (: write) newline
+            2drop))
     #+end_src
 
-* <jojo>
+* >< <jojo>
 
 *** note
 
@@ -841,10 +846,9 @@
 *** <jojo>
 
     #+begin_src jojo
-    (note
-      (define-class <jojo>
-        (method
-          (* ))))
+    (define-class <jojo>
+      (method
+        (* apply (<< self) drop apply)))
     #+end_src
 
 * >< <list>
@@ -953,7 +957,7 @@
             and its associated kernel resources.))
     #+end_src
 
-*** file
+*** test
 
     #+begin_src jojo
     (test (string "README") file/size dot)
@@ -967,6 +971,22 @@
           string/print
           newline)
     #+end_src
+
+* <stack>
+
+*** <stack>
+
+    #+begin_src jojo
+    (note
+      (define-class <stack>
+        (method
+          (* pop
+             )
+          (* (: push:)
+             ))))
+    #+end_src
+
+* <record>
 
 * >< <module>
 
@@ -1001,6 +1021,39 @@
       (use module-name [version]
            ...)
       (include "path"))
+
+    (note
+      (load-module module-name[version])
+
+      module-stack module-name[version]
+
+      define name
+      def module-name[version].name
+
+      defining-stack name module-name[version].name)
+    #+end_src
+
+*** note module
+
+    - x -
+      module-stack for current defining-prefix
+      defining-stack for current names to be prefixed
+
+      - thus in a module
+        one can not use name in core
+
+        when one wants to use a name in core in his module
+        he must prefix his version of this name by '.'
+
+        thus the core must be very small
+        and it must be fixed in early version of the language
+
+*** module-stack
+
+    #+begin_src jojo
+    (note
+      (def module-stack
+        ))
     #+end_src
 
 *** module-record
@@ -1069,7 +1122,4 @@
   #+begin_src jojo
   (note (test (string "asd") open-for-reading dot)
         (test (string "README") open-for-reading dot))
-
-  (run (int 123) (: add: (int 123)) (: write))
-  (run (int 123) (: mul: (int 123)) (: write))
   #+end_src
