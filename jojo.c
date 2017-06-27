@@ -517,8 +517,8 @@ cell as_tos() {
 
 typedef struct {
   jo name;
-  cell local_value1;
-  cell local_value2;
+  cell local_tag;
+  cell local_data;
 } local_point;
 
 local_point local_area[1024 * 1024];
@@ -2133,17 +2133,78 @@ cell local_find(jo name) {
   return -1;
 }
 
-void p_local_in() {
+void p_local_data_in() {
   cell jo = as_pop();
   cell index = local_find(jo);
-  cell value1 = as_pop();
+  cell data = as_pop();
   if (index != -1) {
     local_area[index].name = jo;
-    local_area[index].local_value1 = value1;
+    local_area[index].local_data = data;
   }
   else {
     local_area[current_local_pointer].name = jo;
-    local_area[current_local_pointer].local_value1 = value1;
+    local_area[current_local_pointer].local_data = data;
+    current_local_pointer = current_local_pointer + 1;
+  }
+}
+
+void p_local_data_out() {
+  cell jo = as_pop();
+  cell index = local_find(jo);
+  if (index != -1) {
+    local_point lp = local_area[index];
+    as_push(lp.local_data);
+  }
+  else {
+    printf("- p_local_data_out fatal error\n");
+    printf("  name is not bound\n");
+    printf("  name : %s\n", jo2str(jo));
+  }
+}
+
+void p_local_tag_in() {
+  cell jo = as_pop();
+  cell index = local_find(jo);
+  cell tag = as_pop();
+  if (index != -1) {
+    local_area[index].name = jo;
+    local_area[index].local_tag = tag;
+  }
+  else {
+    local_area[current_local_pointer].name = jo;
+    local_area[current_local_pointer].local_tag = tag;
+    current_local_pointer = current_local_pointer + 1;
+  }
+}
+
+void p_local_tag_out() {
+  cell jo = as_pop();
+  cell index = local_find(jo);
+  if (index != -1) {
+    local_point lp = local_area[index];
+    as_push(lp.local_tag);
+  }
+  else {
+    printf("- p_local_tag_out fatal error\n");
+    printf("  name is not bound\n");
+    printf("  name : %s\n", jo2str(jo));
+  }
+}
+
+void p_local_in() {
+  cell jo = as_pop();
+  cell index = local_find(jo);
+  cell tag = as_pop();
+  cell data = as_pop();
+  if (index != -1) {
+    local_area[index].name = jo;
+    local_area[index].local_tag = tag;
+    local_area[index].local_data = data;
+  }
+  else {
+    local_area[current_local_pointer].name = jo;
+    local_area[current_local_pointer].local_tag = tag;
+    local_area[current_local_pointer].local_data = data;
     current_local_pointer = current_local_pointer + 1;
   }
 }
@@ -2153,7 +2214,8 @@ void p_local_out() {
   cell index = local_find(jo);
   if (index != -1) {
     local_point lp = local_area[index];
-    as_push(lp.local_value1);
+    as_push(lp.local_data);
+    as_push(lp.local_tag);
   }
   else {
     printf("- p_local_out fatal error\n");
@@ -2162,36 +2224,71 @@ void p_local_out() {
   }
 }
 
-void p_local_two_in() {
-  cell jo = as_pop();
-  cell index = local_find(jo);
-  cell value1 = as_pop();
-  cell value2 = as_pop();
-  if (index != -1) {
-    local_area[index].name = jo;
-    local_area[index].local_value1 = value1;
-    local_area[index].local_value2 = value2;
+void k_local_data_in() {
+  jo s = read_jo();
+  if (s == str2jo("(")) {
+    jo_apply(read_jo());
+    k_local_data_in();
+  }
+  else if (s == str2jo(")")) {
+    return;
   }
   else {
-    local_area[current_local_pointer].name = jo;
-    local_area[current_local_pointer].local_value1 = value1;
-    local_area[current_local_pointer].local_value2 = value2;
-    current_local_pointer = current_local_pointer + 1;
+    k_local_data_in();
+    here(str2jo("ins/lit"));
+    here(s);
+    here(str2jo("local-data-in"));
   }
 }
 
-void p_local_two_out() {
-  cell jo = as_pop();
-  cell index = local_find(jo);
-  if (index != -1) {
-    local_point lp = local_area[index];
-    as_push(lp.local_value2);
-    as_push(lp.local_value1);
+void k_local_data_out() {
+  jo s = read_jo();
+  if (s == str2jo("(")) {
+    jo_apply(read_jo());
+    k_local_data_out();
+  }
+  else if (s == str2jo(")")) {
+    return;
   }
   else {
-    printf("- p_local_two_out fatal error\n");
-    printf("  name is not bound\n");
-    printf("  name : %s\n", jo2str(jo));
+    k_local_data_out();
+    here(str2jo("ins/lit"));
+    here(s);
+    here(str2jo("local-data-out"));
+  }
+}
+
+void k_local_tag_in() {
+  jo s = read_jo();
+  if (s == str2jo("(")) {
+    jo_apply(read_jo());
+    k_local_data_in();
+  }
+  else if (s == str2jo(")")) {
+    return;
+  }
+  else {
+    k_local_data_in();
+    here(str2jo("ins/lit"));
+    here(s);
+    here(str2jo("local-tag-in"));
+  }
+}
+
+void k_local_tag_out() {
+  jo s = read_jo();
+  if (s == str2jo("(")) {
+    jo_apply(read_jo());
+    k_local_data_out();
+  }
+  else if (s == str2jo(")")) {
+    return;
+  }
+  else {
+    k_local_data_out();
+    here(str2jo("ins/lit"));
+    here(s);
+    here(str2jo("local-tag-out"));
   }
 }
 
@@ -2199,13 +2296,13 @@ void k_local_in() {
   jo s = read_jo();
   if (s == str2jo("(")) {
     jo_apply(read_jo());
-    k_local_in();
+    k_local_data_in();
   }
   else if (s == str2jo(")")) {
     return;
   }
   else {
-    k_local_in();
+    k_local_data_in();
     here(str2jo("ins/lit"));
     here(s);
     here(str2jo("local-in"));
@@ -2216,50 +2313,16 @@ void k_local_out() {
   jo s = read_jo();
   if (s == str2jo("(")) {
     jo_apply(read_jo());
-    k_local_out();
+    k_local_data_out();
   }
   else if (s == str2jo(")")) {
     return;
   }
   else {
-    k_local_out();
+    k_local_data_out();
     here(str2jo("ins/lit"));
     here(s);
     here(str2jo("local-out"));
-  }
-}
-
-void k_local_two_in() {
-  jo s = read_jo();
-  if (s == str2jo("(")) {
-    jo_apply(read_jo());
-    k_local_in();
-  }
-  else if (s == str2jo(")")) {
-    return;
-  }
-  else {
-    k_local_in();
-    here(str2jo("ins/lit"));
-    here(s);
-    here(str2jo("local-two-in"));
-  }
-}
-
-void k_local_two_out() {
-  jo s = read_jo();
-  if (s == str2jo("(")) {
-    jo_apply(read_jo());
-    k_local_out();
-  }
-  else if (s == str2jo(")")) {
-    return;
-  }
-  else {
-    k_local_out();
-    here(str2jo("ins/lit"));
-    here(s);
-    here(str2jo("local-two-out"));
   }
 }
 
@@ -2291,15 +2354,20 @@ void export_keyword() {
 
   defprimkey("bare-jojo", k_bare_jojo);
 
+  defprim("local-data-in", p_local_data_in);
+  defprim("local-data-out", p_local_data_out);
+  defprimkey(">", k_local_data_in);
+  defprimkey("<", k_local_data_out);
+
+  defprim("local-tag-in", p_local_tag_in);
+  defprim("local-tag-out", p_local_tag_out);
+  defprimkey("%>", k_local_tag_in);
+  defprimkey("<%", k_local_tag_out);
+
   defprim("local-in", p_local_in);
   defprim("local-out", p_local_out);
-  defprimkey(">", k_local_in);
-  defprimkey("<", k_local_out);
-
-  defprim("local-two-in", p_local_two_in);
-  defprim("local-two-out", p_local_two_out);
-  defprimkey(">>", k_local_two_in);
-  defprimkey("<<", k_local_two_out);
+  defprimkey(">>", k_local_in);
+  defprimkey("<<", k_local_out);
 
   defprim("current-local-pointer", p_current_local_pointer);
 }

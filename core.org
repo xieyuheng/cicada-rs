@@ -447,7 +447,7 @@
         swap (recur) swap
         (lev ins/lit
              (esc here)
-             local-two-in)))
+             local-in)))
 
     (def define-class/keyword/one-method/message
       (keyword
@@ -579,7 +579,7 @@
         send-to-class/find-meta-method
         (if then
             current-local-pointer swap
-            (< class) (jo self-class) local-in
+            (< class) (jo self-class) local-data-in
             apply-with-local-pointer
             end)
         (string "- send-to-class : can not find message : ") string/print
@@ -617,8 +617,7 @@
         send-to-object/find-method
         (if then
             current-local-pointer swap
-            (< data) (< tag) (jo self) local-two-in
-            (< data) (< tag) (jo self) local-two-in
+            (< data) (< tag) (jo self) local-in
             apply-with-local-pointer
             end)
         (string "- send-to-object : can not find message : ") string/print
@@ -652,13 +651,13 @@
       (keyword
         (jo :) generate-jo (> object-jo)
         (lev ins/lit (< object-jo)
-             local-two-in
+             local-in
              (esc read/jo
                   (if dup jo-ending-with-colon? not
                       then (> message) compile-jojo
                       else send/sugar/complex (> message)))
              ins/lit (< object-jo)
-             local-two-out
+             local-out
              ins/lit (< message)
              send)))
     #+end_src
@@ -762,24 +761,24 @@
     #+begin_src jojo
     (define-class <int>
       (method
-        (* inc (<< self) drop inc (jo <int>))
-        (* dec (<< self) drop dec (jo <int>))
-        (* neg (<< self) drop neg (jo <int>))
+        (* inc (< self) inc (<% self))
+        (* dec (< self) dec (<% self))
+        (* neg (< self) neg (<% self))
 
-        (* (: add: i) (<< self) drop (<< i) drop add (jo <int>))
-        (* (: sub: i) (<< self) drop (<< i) drop sub (jo <int>))
-        (* (: mul: i) (<< self) drop (<< i) drop mul (jo <int>))
-        (* (: div: i) (<< self) drop (<< i) drop div (jo <int>))
-        (* (: mod: i) (<< self) drop (<< i) drop mod (jo <int>))
+        (* (: add: i) (< self) (< i) add (<% self))
+        (* (: sub: i) (< self) (< i) sub (<% self))
+        (* (: mul: i) (< self) (< i) mul (<% self))
+        (* (: div: i) (< self) (< i) div (<% self))
+        (* (: mod: i) (< self) (< i) mod (<% self))
 
-        (* (: eq?: i) (<< self) drop (<< i) drop eq?)
-        (* (: gt?: i) (<< self) drop (<< i) drop gt?)
-        (* (: lt?: i) (<< self) drop (<< i) drop lt?)
-        (* (: gteq?: i) (<< self) drop (<< i) drop gteq?)
-        (* (: lteq?: i) (<< self) drop (<< i) drop lteq?)
+        (* (: eq?: i) (< self) (< i) eq?)
+        (* (: gt?: i) (< self) (< i) gt?)
+        (* (: lt?: i) (< self) (< i) lt?)
+        (* (: gteq?: i) (< self) (< i) gteq?)
+        (* (: lteq?: i) (< self) (< i) lteq?)
 
-        (* print (<< self) drop integer/print)
-        (* dot (<< self) drop integer/dot)
+        (* print (< self) integer/print)
+        (* dot (< self) integer/dot)
         (* write (string "(int ") string/print
            (<< self) (: print)
            (string ") ") string/print)))
@@ -806,8 +805,8 @@
     #+begin_src jojo
     (define-class <str>
       (method
-        (* print (<< self) drop string/print)
-        (* length (<< self) drop string/length (jo <int>))
+        (* print (< self) string/print)
+        (* length (< self) string/length (jo <int>))
         (* write
            (string "(str ") string/print
            double-quote jo/print
@@ -848,7 +847,7 @@
     #+begin_src jojo
     (define-class <jojo>
       (method
-        (* apply (<< self) drop apply)))
+        (* apply (< self) apply)))
     #+end_src
 
 * >< <list>
@@ -900,7 +899,7 @@
            (string ") ") string/print)))
 
     (add-method <str> to-path
-      (<< self) drop (jo <path>))
+      (< self) (jo <path>))
     #+end_src
 
 *** test
@@ -921,7 +920,7 @@
           (* close)))
 
       (add-method <path> open-for-reading
-        (<< self) drop string/open-for-reading)
+        (< self) string/open-for-reading)
 
       (add-method <path> (: open-for: flags)
         (note fd = open(pathname, flags, mode)
