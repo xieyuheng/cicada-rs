@@ -1,10 +1,8 @@
 #+property: tangle core.jo
 #+title: core
-- fix <object> new for inherited instance-variable-list
-  and inherited meta-variable-list
-- [keyword] has?
 - syntax for super
 - <stack>
+- has-method? has-meta-method?
 - <table>
 * todo
 
@@ -285,7 +283,7 @@
 
     (def assoc/find
       (jojo
-        (note assoc-list value -> [pair true] or [false])
+        (note assoc-list value -> [data true] or [false])
         (if over null eq? then drop drop false end)
         (if over car cdr over eq? then drop car true end)
         swap cdr swap (loop)))
@@ -705,44 +703,118 @@
 
 * keywords for variable
 
+*** variable-tracing meta-variable-tracing
+
+    #+begin_src jojo
+    (def variable->object (jojo car dup car swap cdr swap))
+
+    (def variable-tracing
+      (jojo
+        (note tag name -> [data tag true] or [false])
+        (> name)
+        (> tag)
+        (< tag) jo/apply drop (> class)
+        (if (< class) class/has-variable-list? not then false end)
+        (< class) class/get-variable-list
+        (< name)
+        assoc/find
+        (if then variable->object true end)
+        (if (< class) class/has-superclass? not then false end)
+        (< class) class/get-super-tag
+        (< name)
+        (loop)))
+
+    (def meta-variable-tracing
+      (jojo
+        (note class name -> [data tag true] or [false])
+        (> name)
+        (> class)
+        (if (< class) class/has-meta-variable-list? then
+            (< class) class/get-meta-variable-list
+            (< name)
+            assoc/find
+            (if then variable->object true end)
+            (if (< class) class/has-superclass? then
+                (< class) class/get-super-tag
+                jo/apply drop
+                (< name)
+                (loop)))
+        (el false)))
+    #+end_src
+
+*** has?
+
+    #+begin_src jojo
+    (def has-instance-variable?
+      (jojo
+        (note [box tag name] -> true or false)
+        (> name)
+        (> tag)
+        car (> variable-list)
+        (< variable-list)
+        (< name)
+        assoc/find
+        (if then drop true end)
+        (< tag)
+        (< name)
+        variable-tracing
+        (if then 2drop true end)
+        (el false)))
+
+    (def has-meta-variable?
+      (jojo
+        (note [class (jo <class>) name] -> true or false)
+        swap drop
+        meta-variable-tracing
+        (if then 2drop true end)
+        (el false)))
+
+    (def has-variable?
+      (jojo
+        (note [data tag name] -> true or false)
+        (if over (jo <class>) eq? not then
+            has-instance-variable? end)
+        (el has-meta-variable?)))
+
+    (def has?
+      (keyword
+        (lev ins/lit
+             (esc read/jo here
+                  ignore)
+             has-variable?)))
+    #+end_src
+
 *** get get-data get-tag
 
     #+begin_src jojo
     (def get-instance-variable
       (jojo
-        (note [instance-variable-list tag name] -> [data tag])
+        (note [box tag name] -> [data tag])
         (> name)
         (> tag)
-        (> instance-variable-list)
-        (< instance-variable-list)
+        car (> variable-list)
+        (< variable-list)
         (< name)
         assoc/find
-        (if then car dup car swap cdr swap end)
+        (if then variable->object end)
+        (< tag)
+        (< name)
+        variable-tracing
+        (if then end)
         (el (cat "- get-instance-variable fail" newline
                  "  name : " name jo/print newline
                  "  tag : " (< tag) jo/print newline))))
 
+
     (def get-meta-variable
       (jojo
         (note [class (jo <class>) name] -> [data tag])
-        (> name)
-        (> tag)
-        (> class)
-        (if (< class) class/has-meta-variable-list? not then
-            (cat "- get-meta-variable fail" newline
-                 "  the class do not has meta-variable-list" newline
-                 "  name : " name jo/print newline
-                 "  class-name : " (< class) class/get-tag jo/print newline)
-            end)
-        (< class) class/get-meta-variable-list
-        (> meta-variable-list)
-        (< meta-variable-list)
-        (< name)
-        assoc/find
-        (if then car dup car swap cdr swap end)
-        (el (cat "- get-meta-variable fail" newline
-                 "  name : " name jo/print newline
-                 "  class-name : " (< class) class/get-tag jo/print newline))))
+        swap drop
+        meta-variable-tracing
+        (if then end)
+        (cat "- get-meta-variable fail" newline
+             "  name : " name jo/print newline
+             "  class-name : " (< class) class/get-tag jo/print newline)))
 
     (def get-variable
       (jojo
@@ -774,35 +846,29 @@
              get-variable swap drop)))
     #+end_src
 
-*** >< has?
-
-    #+begin_src jojo
-
-    #+end_src
-
-*** note
-
-    - set will add a variable when can not find one
-
 *** set
+
+    - set will add a variable when can not find one along the inherit-link.
 
     #+begin_src jojo
     (def set-instance-variable
       (jojo
-        (note [data tag instance-variable-list source-tag name] -> [])
+        (note [data tag box source-tag name] -> [])
         (> name)
         (> source-tag)
-        (> instance-variable-list)
+        dup (> box)
+        car (> variable-list)
         (>> object)
-        (< instance-variable-list)
+        (< variable-list)
         (< name)
         assoc/find
         (if then (> variable)
             (<< object) cons
             (< variable) set-car
             end)
-        (el (cat "- set-instance-variable fail" newline
-                 "  name : " name jo/print newline))))
+        (el (< name) (<< object) cons cons
+            (< variable-list) swap cons
+            (< box) set-car)))
 
     (def set-meta-variable
       (jojo
@@ -812,23 +878,25 @@
         (> class)
         (>> object)
         (if (< class) class/has-meta-variable-list? not then
-            (cat "- set-meta-variable fail" newline
-                 "  the class do not has meta-variable-list" newline
-                 "  name : " name jo/print newline
-                 "  class-name : " (< class) class/get-tag jo/print newline)
+            (jo meta-variable)
+            null (< name) (<< object) cons cons
+            cons
+            cons
+            (< class)
+            set-tail
             end)
         (< class) class/get-meta-variable-list
-        (> meta-variable-list)
-        (< meta-variable-list)
+        (> variable-list)
+        (< variable-list)
         (< name)
         assoc/find
         (if then (> variable)
             (<< object) cons
             (< variable) set-car
             end)
-        (el (cat "- set-meta-variable fail" newline
-                 "  name : " name jo/print newline
-                 "  class-name : " (< class) class/get-tag jo/print newline))))
+        (el (< name) (<< object) cons cons
+            (< variable-list)
+            set-tail)))
 
     (def set-variable
       (jojo
@@ -850,48 +918,53 @@
     #+begin_src jojo
     (def set-data-in-instance-variable
       (jojo
-        (note [data instance-variable-list source-tag name] -> [])
+        (note [data box source-tag name] -> [])
         (> name)
         (> source-tag)
-        (> instance-variable-list)
+        (> box)
         (> data)
-        (< instance-variable-list)
+
+        (< box)
+        (< source-tag)
         (< name)
-        assoc/find
-        (if then (> variable)
-            (< variable) car cdr (> tag-in-variable)
-            (< data) (< tag-in-variable) cons
-            (< variable) set-car
-            end)
-        (el (cat "- set-data-in-instance-variable fail" newline
-                 "  name : " name jo/print newline))))
+        has-instance-variable?
+        (if then
+            (< box)
+            (< source-tag)
+            (< name)
+            get-instance-variable
+            swap drop
+            else (jo <data>))
+
+        (< data) swap
+        (< box)
+        (< source-tag)
+        (< name)
+        set-instance-variable))
 
     (def set-data-in-meta-variable
       (jojo
         (note [data class (jo <class>) name] -> [])
         (> name)
-        drop
+        (> tag)
         (> class)
         (> data)
-        (if (< class) class/has-meta-variable-list? not then
-            (cat "- set-data-in-meta-variable fail" newline
-                 "  the class do not has meta-variable-list" newline
-                 "  name : " name jo/print newline
-                 "  class-name : " (< class) class/get-tag jo/print newline)
-            end)
-        (< class) class/get-meta-variable-list
-        (> meta-variable-list)
-        (< meta-variable-list)
+
+        (< class)
+        (< tag)
         (< name)
-        assoc/find
-        (if then (> variable)
-            (< variable) car cdr (> tag-in-variable)
-            (< data) (< tag-in-variable) cons
-            (< variable) set-car
-            end)
-        (el (cat "- set-data-in-meta-variable fail" newline
-                 "  name : " name jo/print newline
-                 "  class-name : " (< class) class/get-tag jo/print newline))))
+        has-meta-variable?
+        (if then
+            (< class)
+            (< tag)
+            (< name)
+            get-meta-variable swap drop
+            else (jo <data>))
+        (< data) swap
+        (< class)
+        (< tag)
+        (< name)
+        set-meta-variable))
 
     (def set-data-in-variable
       (jojo
@@ -906,69 +979,6 @@
              (esc read/jo here
                   ignore)
              set-data-in-variable)))
-    #+end_src
-
-*** set-tag
-
-    #+begin_src jojo
-    (def set-tag-in-instance-variable
-      (jojo
-        (note [tag instance-variable-list source-tag name] -> [])
-        (> name)
-        (> source-tag)
-        (> instance-variable-list)
-        (> tag)
-        (< instance-variable-list)
-        (< name)
-        assoc/find
-        (if then (> variable)
-            (< variable) car car (> data-in-variable)
-            (< data-in-variable) (< tag) cons
-            (< variable) set-car
-            end)
-        (el (cat "- set-tag-in-instance-variable fail" newline
-                 "  name : " name jo/print newline))))
-
-    (def set-tag-in-meta-variable
-      (jojo
-        (note [tag class (jo <class>) name] -> [])
-        (> name)
-        drop
-        (> class)
-        (> tag)
-        (if (< class) class/has-meta-variable-list? not then
-            (cat "- set-tag-in-meta-variable fail" newline
-                 "  the class do not has meta-variable-list" newline
-                 "  name : " name jo/print newline
-                 "  class-name : " (< class) class/get-tag jo/print newline)
-            end)
-        (< class) class/get-meta-variable-list
-        (> meta-variable-list)
-        (< meta-variable-list)
-        (< name)
-        assoc/find
-        (if then (> variable)
-            (< variable) car car (> data-in-variable)
-            (< data-in-variable) (< tag) cons
-            (< variable) set-car
-            end)
-        (el (cat "- set-tag-in-meta-variable fail" newline
-                 "  name : " name jo/print newline
-                 "  class-name : " (< class) class/get-tag jo/print newline))))
-
-    (def set-tag-in-variable
-      (jojo
-        (note [tag source-data source-tag name] -> [])
-        (if over (jo <class>) eq? not then
-            set-tag-in-instance-variable end)
-        (el set-tag-in-meta-variable)))
-
-    (def set-tag
-      (keyword
-        (lev ins/lit
-             (esc read/jo here
-                  ignore)
-             set-tag-in-variable)))
     #+end_src
 
 * [keyword] add-method
@@ -990,25 +1000,6 @@
           (< class) class/get-method-list
           set-tail)))
   #+end_src
-
-* <object>
-
-*** note
-
-    - the data of an <object> is simply an assoc-list of name and value.
-
-*** <object>
-
-    #+begin_src jojo
-    (define-class <object>
-      (meta-method
-        (* new
-           (if (< self) class/has-variable-list? then
-               (< self) class/get-variable-list list/copy
-               (< self) class/get-tag end)
-           null
-           (< self) class/get-tag)))
-    #+end_src
 
 * <int>
 
@@ -1090,6 +1081,27 @@
             2dup (: length) (: print) newline
             2dup (: length) (: write) newline
             2drop))
+    #+end_src
+
+* <object>
+
+*** note
+
+    - initially the data of an <object> is an empty-box.
+      and it will be a box of variable-list,
+      i.e. an assoc-list of name and object.
+      the assoc-list is generated lazily by the keyword 'set'.
+
+*** <object>
+
+    #+begin_src jojo
+    (define-class <object>
+      (meta-variable
+        (= testing-meta-variable-in-<object> (int 26881)))
+      (meta-method
+        (* new
+           null null cons
+           (< self) class/get-tag)))
     #+end_src
 
 * <jojo>
@@ -1375,7 +1387,7 @@
     (method
       (* grow
          (<< self) (get age) (: inc)
-         (<< self) (set age))
+         (<< self) (cat "<here> ") (set age) (cat "<here> "))
       (* (: grow-by: years)
          (<< self) (get age) (: add: (<< years))
          (<< self) (set age))
@@ -1409,7 +1421,12 @@
        <person> (get testing-meta-variable) (: write)
        (int 888)
        <person> (set testing-meta-variable)
-       <person> (get testing-meta-variable) (: write))
+       <person> (get testing-meta-variable) (: write)
+       <person> (get testing-meta-variable-in-<object>) (: write)
+
+       (int 26078)
+       <person> (set testing-meta-variable-0)
+       <person> (get testing-meta-variable-0) (: write))
   #+end_src
 
 * test
