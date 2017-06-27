@@ -613,18 +613,25 @@
 
 (define-class <int>
   (method
-    (* inc
-       (<< self)
-       swap (integer 1) add
-       swap)
-    (* (: add: i)
-       (<< self) drop
-       (<< i) drop
-       add (jo <int>))
-    (* print
-       (<< self) drop integer/print)
-    (* write
-       (string "(int ") string/print
+    (* inc (<< self) drop inc (jo <int>))
+    (* dec (<< self) drop dec (jo <int>))
+    (* neg (<< self) drop neg (jo <int>))
+
+    (* (: add: i) (<< self) drop (<< i) drop add (jo <int>))
+    (* (: sub: i) (<< self) drop (<< i) drop sub (jo <int>))
+    (* (: mul: i) (<< self) drop (<< i) drop mul (jo <int>))
+    (* (: div: i) (<< self) drop (<< i) drop div (jo <int>))
+    (* (: mod: i) (<< self) drop (<< i) drop mod (jo <int>))
+
+    (* (: eq?: i) (<< self) drop (<< i) drop eq?)
+    (* (: gt?: i) (<< self) drop (<< i) drop gt?)
+    (* (: lt?: i) (<< self) drop (<< i) drop lt?)
+    (* (: gteq?: i) (<< self) drop (<< i) drop gteq?)
+    (* (: lteq?: i) (<< self) drop (<< i) drop lteq?)
+
+    (* print (<< self) drop integer/print)
+    (* dot (<< self) drop integer/dot)
+    (* write (string "(int ") string/print
        (<< self) (: print)
        (string ") ") string/print)))
 
@@ -659,6 +666,11 @@
      2dup (: length) (: print) newline
      2dup (: length) (: write) newline
      2drop)
+
+(note
+  (define-class <jojo>
+    (method
+      (* ))))
 
 (test current-dir string/print newline)
 
@@ -700,8 +712,47 @@
 
 (test (str "/home/") (: to-path) (: write))
 
-(define-class <file>
-  )
+(note
+
+  (define-class <file>
+    (method
+      (* close)))
+
+  (add-method <path> open-for-reading
+    (<< self) drop string/open-for-reading)
+
+  (add-method <path> (: open-for: flags)
+    (note fd = open(pathname, flags, mode)
+          if the file doesn’t exist,
+          open() may create it,
+          depending on the settings of the flags bitmask argument.
+          the flags argument also specifies
+          whether the file is to be opened for reading, writing, or both.))
+
+  (add-method <path> (: open-for: flags with: mode)
+    (note the mode argument specifies the permissions
+          to be placed on the file if it is created by this call.
+          If the open() call is not being used to create a file,
+          this argument is ignored and can be omitted))
+
+  (note numread = read(fd, buffer, count)
+        reads at most count bytes from the open file
+        referred to by fd and stores them in buffer.
+        The read() call returns the number of bytes actually read.
+        If no further bytes could be read
+        (i.e., end-of-file was encountered),
+        read() returns 0.)
+
+  (note numwritten = write(fd, buffer, count)
+        writes up to count bytes from buffer to the open file
+        referred to by fd.
+        The write() call returns the number of bytes actually written,
+        which may be less than count.)
+
+  (note status = close(fd)
+        is called after all I/O has been completed,
+        in order to release the file descriptor fd
+        and its associated kernel resources.))
 
 (test (string "README") file/size dot)
 
@@ -715,10 +766,18 @@
       newline)
 
 (note
-  (module <module-name> function ...)
-  (dep <module-name>)
-  (include <path>)
-  (clib <path>))
+  (module module-name [version])
+  (use module-name [version]
+       ...)
+  (include "path"))
+
+(note
+  (def module-record
+    ))
+
+(note
+  (include "path")
+  (clib "path"))
 
 (define-class <person>
   (inherit <object>)
@@ -752,3 +811,9 @@
      xieyuheng (: report)
      xieyuheng (: grow-by: (int 10) and-by: (int 10))
      xieyuheng (: report))
+
+(note (test (string "asd") open-for-reading dot)
+      (test (string "README") open-for-reading dot))
+
+(run (int 123) (: add: (int 123)) (: write))
+(run (int 123) (: mul: (int 123)) (: write))

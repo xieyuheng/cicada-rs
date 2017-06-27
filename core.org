@@ -3,9 +3,11 @@
 
 * todo
 
-  - [primitive class] <int>
+  - <jojo>
 
-  - [primitive class] <str>
+  - <str>
+
+  - to see what <module> needs from <path> and <file>
 
   - example of the use of oo
 
@@ -753,18 +755,25 @@
     #+begin_src jojo
     (define-class <int>
       (method
-        (* inc
-           (<< self)
-           swap (integer 1) add
-           swap)
-        (* (: add: i)
-           (<< self) drop
-           (<< i) drop
-           add (jo <int>))
-        (* print
-           (<< self) drop integer/print)
-        (* write
-           (string "(int ") string/print
+        (* inc (<< self) drop inc (jo <int>))
+        (* dec (<< self) drop dec (jo <int>))
+        (* neg (<< self) drop neg (jo <int>))
+
+        (* (: add: i) (<< self) drop (<< i) drop add (jo <int>))
+        (* (: sub: i) (<< self) drop (<< i) drop sub (jo <int>))
+        (* (: mul: i) (<< self) drop (<< i) drop mul (jo <int>))
+        (* (: div: i) (<< self) drop (<< i) drop div (jo <int>))
+        (* (: mod: i) (<< self) drop (<< i) drop mod (jo <int>))
+
+        (* (: eq?: i) (<< self) drop (<< i) drop eq?)
+        (* (: gt?: i) (<< self) drop (<< i) drop gt?)
+        (* (: lt?: i) (<< self) drop (<< i) drop lt?)
+        (* (: gteq?: i) (<< self) drop (<< i) drop gteq?)
+        (* (: lteq?: i) (<< self) drop (<< i) drop lteq?)
+
+        (* print (<< self) drop integer/print)
+        (* dot (<< self) drop integer/dot)
+        (* write (string "(int ") string/print
            (<< self) (: print)
            (string ") ") string/print)))
     #+end_src
@@ -821,6 +830,21 @@
          2dup (: length) (: print) newline
          2dup (: length) (: write) newline
          2drop)
+    #+end_src
+
+* <jojo>
+
+*** note
+
+    - play with combinators
+
+*** <jojo>
+
+    #+begin_src jojo
+    (note
+      (define-class <jojo>
+        (method
+          (* ))))
     #+end_src
 
 * >< <list>
@@ -886,8 +910,47 @@
 *** note
 
     #+begin_src jojo
-    (define-class <file>
-      )
+    (note
+
+      (define-class <file>
+        (method
+          (* close)))
+
+      (add-method <path> open-for-reading
+        (<< self) drop string/open-for-reading)
+
+      (add-method <path> (: open-for: flags)
+        (note fd = open(pathname, flags, mode)
+              if the file doesn’t exist,
+              open() may create it,
+              depending on the settings of the flags bitmask argument.
+              the flags argument also specifies
+              whether the file is to be opened for reading, writing, or both.))
+
+      (add-method <path> (: open-for: flags with: mode)
+        (note the mode argument specifies the permissions
+              to be placed on the file if it is created by this call.
+              If the open() call is not being used to create a file,
+              this argument is ignored and can be omitted))
+
+      (note numread = read(fd, buffer, count)
+            reads at most count bytes from the open file
+            referred to by fd and stores them in buffer.
+            The read() call returns the number of bytes actually read.
+            If no further bytes could be read
+            (i.e., end-of-file was encountered),
+            read() returns 0.)
+
+      (note numwritten = write(fd, buffer, count)
+            writes up to count bytes from buffer to the open file
+            referred to by fd.
+            The write() call returns the number of bytes actually written,
+            which may be less than count.)
+
+      (note status = close(fd)
+            is called after all I/O has been completed,
+            in order to release the file descriptor fd
+            and its associated kernel resources.))
     #+end_src
 
 *** file
@@ -912,35 +975,40 @@
     - module is simply a dir of source code files,
       with a module.jo to store meta data of the module.
 
-      a module-record for loaded modules to avoid reload.
+    - a module-record for loaded modules to avoid reload.
 
-    - a package manager to download dependences and install them.
+    - install modules to "~/.jojo/module/"
+      as "module-name/version/*"
 
     - command-line interface of module-system :
       install
       uninstall
       reinstall
 
-    - ~/.jojo/ to store installed modules.
+    - module-system helps name to be unique
+      by adding prefix to name
+      prefix is simply "module-name[version]."
 
-    - namespace
-      to avoid duplicated naming.
-      how is an unique name ?
-      module/version/name ?
+    - a package manager to download dependences and install them.
 
-    - version of module
-      module/version/name ?
-
-    - the re-export problem
-      is a module encoded by interface function name ?
-      shoud we use sub-module ?
+    - unique naming is ensured by prefix,
+      thus no export-list,
+      thus all of a module are exposed to a user of the module.
 
     #+begin_src jojo
     (note
-      (module <module-name> function ...)
-      (dep <module-name>)
-      (include <path>)
-      (clib <path>))
+      (module module-name [version])
+      (use module-name [version]
+           ...)
+      (include "path"))
+    #+end_src
+
+*** module-record
+
+    #+begin_src jojo
+    (note
+      (def module-record
+        ))
     #+end_src
 
 * >< <clib>
@@ -950,6 +1018,14 @@
     - [ffi]
       c is only used to implement primitive object ?
       and to do optimization ?
+
+*** example
+
+    #+begin_src jojo
+    (note
+      (include "path")
+      (clib "path"))
+    #+end_src
 
 * test
 
@@ -986,4 +1062,14 @@
        xieyuheng (: report)
        xieyuheng (: grow-by: (int 10) and-by: (int 10))
        xieyuheng (: report))
+  #+end_src
+
+* test
+
+  #+begin_src jojo
+  (note (test (string "asd") open-for-reading dot)
+        (test (string "README") open-for-reading dot))
+
+  (run (int 123) (: add: (int 123)) (: write))
+  (run (int 123) (: mul: (int 123)) (: write))
   #+end_src

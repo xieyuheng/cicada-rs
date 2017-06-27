@@ -1,13 +1,18 @@
+#include <sys/types.h>  /* Type definitions used by many programs */
+#include <stdio.h>      /* Standard I/O functions */
+#include <stdlib.h>     /* Prototypes of commonly used library functions,
+                           plus EXIT_SUCCESS and EXIT_FAILURE constants */
+#include <unistd.h>     /* Prototypes for many system calls */
+#include <errno.h>      /* Declares errno and defines error constants */
+#include <string.h>     /* Commonly used string-handling functions */
+
+#include <fcntl.h>
+
 #include <sys/stat.h>
-#include <sys/types.h>
-#include <stdio.h>
 #include <ctype.h>
-#include <stdlib.h>
 #include <stdint.h>
 #include <setjmp.h>
-#include <string.h>
 #include <dlfcn.h>
-#include <unistd.h>
 #include <dirent.h>
 
 typedef enum { false, true } bool;
@@ -1029,6 +1034,21 @@ void export_bit() {
   // defprim("bit/arithmetic-shift-right", p_bit_arithmetic_shift_right);
 }
 
+void p_inc() {
+  cell a = as_pop();
+  as_push(a + 1);
+}
+
+void p_dec() {
+  cell a = as_pop();
+  as_push(a - 1);
+}
+
+void p_neg() {
+  cell a = as_pop();
+  as_push(- a);
+}
+
 void p_add() {
   // (cell cell -> int)
   cell b = as_pop();
@@ -1139,14 +1159,16 @@ void p_dot() { printf("%ld ", as_pop()); }
 void p_integer_dot() { printf("%ld ", as_pop()); }
 
 void export_integer() {
+  defprim("inc", p_inc);
+  defprim("dec", p_dec);
+  defprim("neg", p_neg);
+
   defprim("add", p_add);
   defprim("sub", p_sub);
 
   defprim("mul", p_mul);
   defprim("div", p_div);
   defprim("mod", p_mod);
-
-  defprim("neg", p_not);
 
   defprim("n-eq?", p_n_eq_p);
 
@@ -1592,6 +1614,15 @@ void export_string() {
   defprim("string/last-char", p_string_last_char);
 }
 
+void p_open_for_reading() {
+  string pathname = as_pop();
+  FILE* fd = open(pathname, O_RDONLY);
+  if (fd == -1) {
+    perror("- p_open_for_reading fail\n");
+  }
+  as_push(fd);
+}
+
 bool file_readable_p(string path) {
   FILE* fp = fopen(path, "r");
   if (!fp) {
@@ -1646,12 +1677,13 @@ void p_file_copy_to_buffer() {
     as_push(0);
     return;
   }
-  cell readed_counter = fread(buffer, 1, limit, fp);
+  cell read_counter = fread(buffer, 1, limit, fp);
   fclose(fp);
-  as_push(readed_counter);
+  as_push(read_counter);
 }
 
 void export_file() {
+  defprim("open-for-reading", p_open_for_reading);
   defprim("file/readable?", p_file_readable_p);
   defprim("dir/ok?", p_dir_ok_p);
   defprim("file/size", p_file_size);
