@@ -476,12 +476,13 @@
 (def send-to-class
   (jojo
     (> message)
+    (> tag)
     (> class)
     (< class) (< message)
     send-to-class/find-meta-method
     (if then
         current-local-pointer swap
-        (< class) (jo self-class) local-data-in
+        (< class) (< tag) (jo self) local-in
         apply-with-local-pointer
         end)
     (string "- send-to-class : can not find message : ") string/print
@@ -525,7 +526,7 @@
 
 (def send
   (jojo
-    (if over (jo <class>) eq? then swap drop send-to-class end)
+    (if over (jo <class>) eq? then send-to-class end)
     send-to-object))
 
 (def send/sugar/complex
@@ -615,6 +616,8 @@
          (esc read/jo here
               ignore)
          get-variable swap drop)))
+
+
 
 (def set-instance-variable
   (jojo
@@ -810,11 +813,11 @@
 (define-class <object>
   (meta-method
     (* new
-       (if (< self-class) class/has-variable-list? then
-           (< self-class) class/get-variable-list list/copy
-           (< self-class) class/get-tag end)
+       (if (< self) class/has-variable-list? then
+           (< self) class/get-variable-list list/copy
+           (< self) class/get-tag end)
        null
-       (< self-class) class/get-tag)))
+       (< self) class/get-tag)))
 
 (define-class <int>
   (method
@@ -893,16 +896,13 @@
        cons
        (<< self) (set-data stack))))
 
-(note
-  (define-class <stack>
-    (inherit <bare-stack>)
-    (variable
-      (- stack null))
-    (method
-      (* pop
-         )
-      (* (: push: value)
-         ))))
+(note (define-class <stack>
+        (inherit <bare-stack>)
+        (method
+          (* pop
+             )
+          (* (: push: value)
+             ))))
 
 (test current-dir string/print newline)
 

@@ -1,11 +1,14 @@
 #+property: tangle core.jo
 #+title: core
-- <stack>
 - fix <object> new for inherited instance-variable-list
   and inherited meta-variable-list
+- [keyword] has?
+- syntax for super
+- <stack>
 - <table>
-- fix the root of gc
 * todo
+
+  - fix the root of gc
 
   - [maybe] (note syntax for (>> name) (<< name) and (> name) (< name))
 
@@ -16,7 +19,6 @@
   - to see what <module> needs from <path> and <file>
 
   - example of the use of oo
-    - syntax for super
 
   - [emacs]
     - write some emacs-lisp lib
@@ -46,6 +48,12 @@
 
     - class on stack :
       [class (jo <class>)]
+
+*** variable
+
+    - instance-variable or meta-variable
+
+    - variable = [name data tag cons cons]
 
 * flag
 
@@ -606,12 +614,13 @@
     (def send-to-class
       (jojo
         (> message)
+        (> tag)
         (> class)
         (< class) (< message)
         send-to-class/find-meta-method
         (if then
             current-local-pointer swap
-            (< class) (jo self-class) local-data-in
+            (< class) (< tag) (jo self) local-in
             apply-with-local-pointer
             end)
         (string "- send-to-class : can not find message : ") string/print
@@ -663,7 +672,7 @@
     #+begin_src jojo
     (def send
       (jojo
-        (if over (jo <class>) eq? then swap drop send-to-class end)
+        (if over (jo <class>) eq? then send-to-class end)
         send-to-object))
     #+end_src
 
@@ -694,9 +703,9 @@
            send)))
   #+end_src
 
-* syntax for variable
+* keywords for variable
 
-*** [keyword] get get-data get-tag
+*** get get-data get-tag
 
     #+begin_src jojo
     (def get-instance-variable
@@ -765,7 +774,17 @@
              get-variable swap drop)))
     #+end_src
 
-*** [keyword] set
+*** >< has?
+
+    #+begin_src jojo
+
+    #+end_src
+
+*** note
+
+    - set will add a variable when can not find one
+
+*** set
 
     #+begin_src jojo
     (def set-instance-variable
@@ -826,7 +845,7 @@
              set-variable)))
     #+end_src
 
-*** [keyword] set-data
+*** set-data
 
     #+begin_src jojo
     (def set-data-in-instance-variable
@@ -889,7 +908,7 @@
              set-data-in-variable)))
     #+end_src
 
-*** [keyword] set-tag
+*** set-tag
 
     #+begin_src jojo
     (def set-tag-in-instance-variable
@@ -976,7 +995,6 @@
 
 *** note
 
-    - an <object> is two values on the stack [data tag].
     - the data of an <object> is simply an assoc-list of name and value.
 
 *** <object>
@@ -985,11 +1003,11 @@
     (define-class <object>
       (meta-method
         (* new
-           (if (< self-class) class/has-variable-list? then
-               (< self-class) class/get-variable-list list/copy
-               (< self-class) class/get-tag end)
+           (if (< self) class/has-variable-list? then
+               (< self) class/get-variable-list list/copy
+               (< self) class/get-tag end)
            null
-           (< self-class) class/get-tag)))
+           (< self) class/get-tag)))
     #+end_src
 
 * <int>
@@ -1118,17 +1136,18 @@
            (< data)
            cons
            (<< self) (set-data stack))))
+    #+end_src
 
-    (note
-      (define-class <stack>
-        (inherit <bare-stack>)
-        (variable
-          (- stack null))
-        (method
-          (* pop
-             )
-          (* (: push: value)
-             ))))
+*** >< <stack>
+
+    #+begin_src jojo
+    (note (define-class <stack>
+            (inherit <bare-stack>)
+            (method
+              (* pop
+                 )
+              (* (: push: value)
+                 ))))
     #+end_src
 
 * >< <system>
