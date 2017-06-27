@@ -824,6 +824,11 @@
         (< class) class/get-method-list
         set-tail)))
 
+(def as
+  (keyword
+    (lev drop
+         ins/lit (esc read/jo here ignore))))
+
 (define-class <int>
   (method
     (* inc (< self) inc (<% self))
@@ -889,10 +894,6 @@
   (method
     (* apply (< self) apply)))
 
-(define-class <table>
-  (method
-    (* find )))
-
 (define-class <bare-stack>
   (inherit <object>)
   (variable
@@ -910,11 +911,6 @@
        cons
        (<< self) (set-data stack))))
 
-(def as
-  (keyword
-    (lev drop
-         ins/lit (esc read/jo here ignore))))
-
 (define-class <stack>
   (inherit <bare-stack>)
   (method
@@ -925,6 +921,11 @@
     (* (: push: object)
        (<< self) (as <bare-stack>)
        (: push: (data (<< object) cons)))))
+
+(note
+  (define-class <table>
+    (method
+      (* find ))))
 
 (test current-dir string/print newline)
 

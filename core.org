@@ -1,16 +1,18 @@
 #+property: tangle core.jo
 #+title: core
+- [testing] assert for embedded testing
+- write test
 - has-method? has-meta-method?
 - <table>
 * todo
 
-  - fix the root of gc
+  - fix the roots of gc
 
   - [maybe] (note syntax for (>> name) (<< name) and (> name) (< name))
 
-  - <str>
+  - dynamic <stream> v.s. static <str>
 
-  - <jojo>
+  - <jojo> and combinators
 
   - to see what <module> needs from <path> and <file>
 
@@ -19,8 +21,6 @@
   - [emacs]
     - write some emacs-lisp lib
     - bright and dark color theme
-
-  - [testing] assert for embedded testing
 
   - [maybe] syntax for local helper functions
 
@@ -67,6 +67,12 @@
     - in the syntax of message sending
       each parts of the message has an object as argument,
       keyword 'data' must be used when want to send bare-data as argument.
+
+*** tests
+
+    - in dynamic language which does not have type check,
+      one should test his functions incrementally.
+      I support this by allowing tests to be embedded in code.
 
 * flag
 
@@ -1016,6 +1022,15 @@
           set-tail)))
   #+end_src
 
+* [keyword] as
+
+  #+begin_src jojo
+  (def as
+    (keyword
+      (lev drop
+           ins/lit (esc read/jo here ignore))))
+  #+end_src
+
 * <int>
 
 *** <int>
@@ -1133,16 +1148,6 @@
         (* apply (< self) apply)))
     #+end_src
 
-* <table>
-
-*** <table>
-
-    #+begin_src jojo
-    (define-class <table>
-      (method
-        (* find )))
-    #+end_src
-
 * <stack>
 
 *** <bare-stack>
@@ -1169,11 +1174,6 @@
 *** <stack>
 
     #+begin_src jojo
-    (def as
-      (keyword
-        (lev drop
-             ins/lit (esc read/jo here ignore))))
-
     (define-class <stack>
       (inherit <bare-stack>)
       (method
@@ -1184,6 +1184,17 @@
         (* (: push: object)
            (<< self) (as <bare-stack>)
            (: push: (data (<< object) cons)))))
+    #+end_src
+
+* <table>
+
+*** <table>
+
+    #+begin_src jojo
+    (note
+      (define-class <table>
+        (method
+          (* find ))))
     #+end_src
 
 * >< <system>
