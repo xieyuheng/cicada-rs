@@ -89,7 +89,7 @@
     (note cons -> [cons-area])
     (if dup cons? not then drop end)
     dup current-mark swap set-cell
-    dup car mark-cons
+    dup car (recur)
     cdr (loop)))
 
 (def mark-cons-area/def-record
@@ -267,7 +267,7 @@
     (if dup round-bar eq? then drop
         read/jo
         (if dup (jo esc) eq? then
-            drop compile-jojo (loop))
+            drop compile-until-round-ket (loop))
         (el jo/apply (jo here) here (loop)))
     (el (jo ins/lit) here
         here
@@ -323,14 +323,14 @@
   (keyword
     (lev ins/lit
          (esc read/jo here
-              compile-jojo)
+              compile-until-round-ket)
          cons cons cons)))
 
 (def define-class/keyword/one-bare-variable
   (keyword
     (lev ins/lit
          (esc read/jo here
-              compile-jojo)
+              compile-until-round-ket)
          ins/lit <data>
          cons cons cons)))
 
@@ -369,7 +369,6 @@
     compiling-stack/tos (> bare-jojo-place)
     define-class/keyword/one-method/message (> message)
     compile-jojo
-    (lev end)
     compiling-stack/tos (< offset-place) set-cell
     (lev ins/lit (< bare-jojo-place)
          ins/lit (< message)
@@ -396,7 +395,7 @@
            - define-class/keyword/one-bare-variable)
     (lev ins/lit meta-variable
          null
-         (esc compile-jojo)
+         (esc compile-until-round-ket)
          cons
          cons)))
 
@@ -405,7 +404,7 @@
     (alias * define-class/keyword/one-method)
     (lev ins/lit meta-method
          null
-         (esc compile-jojo)
+         (esc compile-until-round-ket)
          cons
          cons)))
 
@@ -415,7 +414,7 @@
            - define-class/keyword/one-bare-variable)
     (lev ins/lit variable
          null
-         (esc compile-jojo)
+         (esc compile-until-round-ket)
          cons
          cons)))
 
@@ -424,7 +423,7 @@
     (alias * define-class/keyword/one-method)
     (lev ins/lit method
          null
-         (esc compile-jojo)
+         (esc compile-until-round-ket)
          cons
          cons)))
 
@@ -442,7 +441,7 @@
          ins/lit (< tag)
          cons
          cons
-         (esc compile-jojo)
+         (esc compile-until-round-ket)
          ins/lit <class>
          ins/lit (< tag))))
 
@@ -545,7 +544,7 @@
          local-in
          (esc read/jo
               (if dup jo-ending-with-colon? not
-                  then (> message) compile-jojo
+                  then (> message) compile-until-round-ket
                   else send/sugar/complex (> message)))
          ins/lit (< object-jo)
          local-out
@@ -922,10 +921,11 @@
        (<< self) (as <bare-stack>)
        (: push: (data (<< object) cons)))))
 
-(note
-  (define-class <table>
-    (method
-      (* find ))))
+(define-class <table>
+  (method
+    (* find )
+    (* add )
+    ))
 
 (test current-dir string/print newline)
 
@@ -1020,29 +1020,15 @@
       string/print
       newline)
 
-(note
-  (module module-name [version])
-  (use module-name [version]
-       ...)
-  (include "path"))
 
-(note
-  (load-module module-name[version])
 
-  module-stack module-name[version]
 
-  define name
-  def module-name[version].name
 
-  defining-stack name module-name[version].name)
 
-(note
-  (def module-stack
-    ))
 
-(note
-  (def module-record
-    ))
+
+
+
 
 (note
   (include "path")

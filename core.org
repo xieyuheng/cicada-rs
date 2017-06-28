@@ -1,10 +1,19 @@
 #+property: tangle core.jo
 #+title: core
-- [testing] assert for embedded testing
-- write test
-- has-method? has-meta-method?
+- def a define in core
+  as new interface for module system
+  - only by doing this
+    we can implement the module system in jojo code
+    instead of c code
 - <table>
+- [docs] basic docs about composition
 * todo
+
+  - has-method? has-meta-method?
+
+  - [testing] assert for embedded testing
+
+  - write test
 
   - fix the roots of gc
 
@@ -174,7 +183,7 @@
         (note cons -> [cons-area])
         (if dup cons? not then drop end)
         dup current-mark swap set-cell
-        dup car mark-cons
+        dup car (recur)
         cdr (loop)))
 
     (def mark-cons-area/def-record
@@ -361,44 +370,44 @@
         (el cdr (loop))))
     #+end_src
 
-* [keyword] lev
+* for sugar
 
-  #+begin_src jojo
-  (def lev
-    (note lev denotes leave-data-here)
-    (keyword
-      read/jo
-      (if dup round-ket eq? then drop end)
-      (if dup round-bar eq? then drop
-          read/jo
-          (if dup (jo esc) eq? then
-              drop compile-jojo (loop))
-          (el jo/apply (jo here) here (loop)))
-      (el (jo ins/lit) here
-          here
-          (jo here) here (loop))))
-  #+end_src
+*** lev
 
-* [keyword] alias
+    #+begin_src jojo
+    (def lev
+      (note lev denotes leave-data-here)
+      (keyword
+        read/jo
+        (if dup round-ket eq? then drop end)
+        (if dup round-bar eq? then drop
+            read/jo
+            (if dup (jo esc) eq? then
+                drop compile-until-round-ket (loop))
+            (el jo/apply (jo here) here (loop)))
+        (el (jo ins/lit) here
+            here
+            (jo here) here (loop))))
+    #+end_src
 
-  #+begin_src jojo
-  (def alias
-    (keyword
-      read/jo (> nick)
-      (if (< nick) round-ket eq? then end)
-      read/jo (> name)
-      (if (< name) round-ket eq? then
-          (string "- alias meet uneven list") string/print newline
-          (string "  last nick : ") string/print (< nick) jo/print
-          newline
-          end)
-      (el (lev ins/lit (< nick)
-               ins/lit (< name)
-               alias-push)
-          (loop))))
-  #+end_src
+*** alias
 
-* [keyword] cat
+    #+begin_src jojo
+    (def alias
+      (keyword
+        read/jo (> nick)
+        (if (< nick) round-ket eq? then end)
+        read/jo (> name)
+        (if (< name) round-ket eq? then
+            (string "- alias meet uneven list") string/print newline
+            (string "  last nick : ") string/print (< nick) jo/print
+            newline
+            end)
+        (el (lev ins/lit (< nick)
+                 ins/lit (< name)
+                 alias-push)
+            (loop))))
+    #+end_src
 
 *** cat
 
@@ -422,614 +431,615 @@
     (note (run (cat "1 2 3" newline "4 5 6" newline "7 8 9" newline)))
     #+end_src
 
-* object note
+* oo
 
-  - class
-    - one superclass
-      thus single inheritance
-    - meta-variable
-    - meta-method
-      two ways to implement object creation :
-      [1] to use meta class -- class is an object
-      [2] to use meta method -- class is not an object
-      i will use [2]
-    - instance-variable
-      i.e. parts of the object
-    - method-list
-      where super can be used to use an method of superclass
-      to implement a new method to override it
+*** note
 
-  - interface-generator
-    when defining a class
-    different interface-generator can be used to generate method list
-    for example
-    - low level array like data with free
-    - high level list list data using gc
+    - class
+      - one superclass
+        thus single inheritance
+      - meta-variable
+      - meta-method
+        two ways to implement object creation :
+        [1] to use meta class -- class is an object
+        [2] to use meta method -- class is not an object
+        i will use [2]
+      - instance-variable
+        i.e. parts of the object
+      - method-list
+        where super can be used to use an method of superclass
+        to implement a new method to override it
 
-* [helper] class
+    - interface-generator
+      when defining a class
+      different interface-generator can be used to generate method list
+      for example
+      - low level array like data with free
+      - high level list list data using gc
 
-  #+begin_src jojo
-  (def class/get-tag                 (jojo (jo tag) assq car))
-
-  (def class/has-superclass?         (jojo (jo inherit) assq null eq? not))
-  (def class/get-super-tag           (jojo (jo inherit) assq car))
-
-  (def class/has-meta-variable-list? (jojo (jo meta-variable) assq null eq? not))
-  (def class/get-meta-variable-list  (jojo (jo meta-variable) assq car))
-
-  (def class/has-meta-method-list?   (jojo (jo meta-method) assq null eq? not))
-  (def class/get-meta-method-list    (jojo (jo meta-method) assq car))
-
-  (def class/has-variable-list?      (jojo (jo variable) assq null eq? not))
-  (def class/get-variable-list       (jojo (jo variable) assq car))
-
-  (def class/has-method-list?        (jojo (jo method) assq null eq? not))
-  (def class/get-method-list         (jojo (jo method) assq car))
-  #+end_src
-
-* [keyword] define-class
-
-  #+begin_src jojo
-  (def define-class/keyword/one-variable
-    (keyword
-      (lev ins/lit
-           (esc read/jo here
-                compile-jojo)
-           cons cons cons)))
-
-  (def define-class/keyword/one-bare-variable
-    (keyword
-      (lev ins/lit
-           (esc read/jo here
-                compile-jojo)
-           ins/lit <data>
-           cons cons cons)))
-
-  (def jo-ending-with-colon?
-    (jojo
-      (note jo -> bool)
-      jo->string string/last-char
-      (string ":") string/last-char eq?))
-
-  (def define-class/keyword/one-method/complex-message
-    (keyword
-      (note sum-jo -> sum-jo)
-      read/jo
-      (if dup round-ket eq? then drop end)
-      (if dup jo-ending-with-colon? then
-          jo/append
-          (loop))
-      swap (recur) swap
-      (lev ins/lit
-           (esc here)
-           local-in)))
-
-  (def define-class/keyword/one-method/message
-    (keyword
-      (note -> jo)
-      read/jo
-      (if dup round-bar eq? not then end)
-      drop read/jo drop
-      empty-jo define-class/keyword/one-method/complex-message))
-
-  (def define-class/keyword/one-method/help
-    (keyword
-      (lev ins/jump)
-      compiling-stack/tos (> offset-place)
-      compiling-stack/inc
-      compiling-stack/tos (> bare-jojo-place)
-      define-class/keyword/one-method/message (> message)
-      compile-jojo
-      (lev end)
-      compiling-stack/tos (< offset-place) set-cell
-      (lev ins/lit (< bare-jojo-place)
-           ins/lit (< message)
-           swap
-           cons)))
-
-  (def define-class/keyword/one-method
-    (keyword
-      define-class/keyword/one-method/help
-      (lev cons)))
-
-  (def define-class/keyword/inherit
-    (keyword
-      (lev ins/lit inherit
-           ins/lit
-           (esc read/jo here
-                ignore)
-           cons
-           cons)))
-
-  (def define-class/keyword/meta-variable-list
-    (keyword
-      (alias = define-class/keyword/one-variable
-             - define-class/keyword/one-bare-variable)
-      (lev ins/lit meta-variable
-           null
-           (esc compile-jojo)
-           cons
-           cons)))
-
-  (def define-class/keyword/meta-method-list
-    (keyword
-      (alias * define-class/keyword/one-method)
-      (lev ins/lit meta-method
-           null
-           (esc compile-jojo)
-           cons
-           cons)))
-
-  (def define-class/keyword/variable-list
-    (keyword
-      (alias = define-class/keyword/one-variable
-             - define-class/keyword/one-bare-variable)
-      (lev ins/lit variable
-           null
-           (esc compile-jojo)
-           cons
-           cons)))
-
-  (def define-class/keyword/method-list
-    (keyword
-      (alias * define-class/keyword/one-method)
-      (lev ins/lit method
-           null
-           (esc compile-jojo)
-           cons
-           cons)))
-
-  (def define-class/help
-    (keyword
-      read/jo (> tag)
-      (alias
-        inherit       define-class/keyword/inherit
-        meta-method   define-class/keyword/meta-method-list
-        meta-variable define-class/keyword/meta-variable-list
-        variable      define-class/keyword/variable-list
-        method        define-class/keyword/method-list)
-      (lev null
-           ins/lit tag
-           ins/lit (< tag)
-           cons
-           cons
-           (esc compile-jojo)
-           ins/lit <class>
-           ins/lit (< tag))))
-
-  (def define-class
-    (keyword
-      compiling-stack/tos (> begin)
-      define-class/help
-      (lev end)
-      (< begin) apply
-      bind-name))
-  #+end_src
-
-* send
-
-*** send-to-class
+*** [helper] class
 
     #+begin_src jojo
-    (def send-to-class/find-meta-method
-      (jojo
-        (note class message -> [value <*> true] or [false])
-        (> message)
-        (> class)
-        (if (< class) class/has-meta-method-list? then
-            (< class) class/get-meta-method-list
-            (< message)
-            assoc/find
-            (if then
-                car
-                true
-                end))
-        (if (< class) class/has-superclass? then
-            (< class) class/get-super-tag jo/apply drop
-            (< message)
-            (loop))
-        false))
+    (def class/get-tag                 (jojo (jo tag) assq car))
 
-    (def send-to-class
-      (jojo
-        (> message)
-        (> tag)
-        (> class)
-        (< class) (< message)
-        send-to-class/find-meta-method
-        (if then
-            current-local-pointer swap
-            (< class) (< tag) (jo self) local-in
-            apply-with-local-pointer
-            end)
-        (string "- send-to-class : can not find message : ") string/print
-        (< message) jo/print newline))
+    (def class/has-superclass?         (jojo (jo inherit) assq null eq? not))
+    (def class/get-super-tag           (jojo (jo inherit) assq car))
+
+    (def class/has-meta-variable-list? (jojo (jo meta-variable) assq null eq? not))
+    (def class/get-meta-variable-list  (jojo (jo meta-variable) assq car))
+
+    (def class/has-meta-method-list?   (jojo (jo meta-method) assq null eq? not))
+    (def class/get-meta-method-list    (jojo (jo meta-method) assq car))
+
+    (def class/has-variable-list?      (jojo (jo variable) assq null eq? not))
+    (def class/get-variable-list       (jojo (jo variable) assq car))
+
+    (def class/has-method-list?        (jojo (jo method) assq null eq? not))
+    (def class/get-method-list         (jojo (jo method) assq car))
     #+end_src
 
-*** send-to-object
+*** define-class
 
     #+begin_src jojo
-    (def send-to-object/find-method
-      (jojo
-        (note tag message -> [bare-jojo true] or [false])
-        (> message)
-        (> tag)
-        (< tag) jo/apply drop (> class)
-        (if (< class) class/has-method-list? then
-            (< class) class/get-method-list
-            (< message) assoc/find
-            (if then
-                car
-                true
-                end))
-        (if (< class) class/has-superclass? then
-            (< class) class/get-super-tag
-            (< message)
-            (loop))
-        false))
+    (def define-class/keyword/one-variable
+      (keyword
+        (lev ins/lit
+             (esc read/jo here
+                  compile-until-round-ket)
+             cons cons cons)))
 
-    (def send-to-object
+    (def define-class/keyword/one-bare-variable
+      (keyword
+        (lev ins/lit
+             (esc read/jo here
+                  compile-until-round-ket)
+             ins/lit <data>
+             cons cons cons)))
+
+    (def jo-ending-with-colon?
       (jojo
-        (> message)
-        (> tag)
-        (> data)
-        (< tag) (< message)
-        send-to-object/find-method
-        (if then
-            current-local-pointer swap
-            (< data) (< tag) (jo self) local-in
-            apply-with-local-pointer
-            end)
-        (string "- send-to-object : can not find message : ") string/print
-        (< message) jo/print newline
-        (string "  object/tag : ") string/print
-        (< tag) jo/print newline))
+        (note jo -> bool)
+        jo->string string/last-char
+        (string ":") string/last-char eq?))
+
+    (def define-class/keyword/one-method/complex-message
+      (keyword
+        (note sum-jo -> sum-jo)
+        read/jo
+        (if dup round-ket eq? then drop end)
+        (if dup jo-ending-with-colon? then
+            jo/append
+            (loop))
+        swap (recur) swap
+        (lev ins/lit
+             (esc here)
+             local-in)))
+
+    (def define-class/keyword/one-method/message
+      (keyword
+        (note -> jo)
+        read/jo
+        (if dup round-bar eq? not then end)
+        drop read/jo drop
+        empty-jo define-class/keyword/one-method/complex-message))
+
+    (def define-class/keyword/one-method/help
+      (keyword
+        (lev ins/jump)
+        compiling-stack/tos (> offset-place)
+        compiling-stack/inc
+        compiling-stack/tos (> bare-jojo-place)
+        define-class/keyword/one-method/message (> message)
+        compile-jojo
+        compiling-stack/tos (< offset-place) set-cell
+        (lev ins/lit (< bare-jojo-place)
+             ins/lit (< message)
+             swap
+             cons)))
+
+    (def define-class/keyword/one-method
+      (keyword
+        define-class/keyword/one-method/help
+        (lev cons)))
+
+    (def define-class/keyword/inherit
+      (keyword
+        (lev ins/lit inherit
+             ins/lit
+             (esc read/jo here
+                  ignore)
+             cons
+             cons)))
+
+    (def define-class/keyword/meta-variable-list
+      (keyword
+        (alias = define-class/keyword/one-variable
+               - define-class/keyword/one-bare-variable)
+        (lev ins/lit meta-variable
+             null
+             (esc compile-until-round-ket)
+             cons
+             cons)))
+
+    (def define-class/keyword/meta-method-list
+      (keyword
+        (alias * define-class/keyword/one-method)
+        (lev ins/lit meta-method
+             null
+             (esc compile-until-round-ket)
+             cons
+             cons)))
+
+    (def define-class/keyword/variable-list
+      (keyword
+        (alias = define-class/keyword/one-variable
+               - define-class/keyword/one-bare-variable)
+        (lev ins/lit variable
+             null
+             (esc compile-until-round-ket)
+             cons
+             cons)))
+
+    (def define-class/keyword/method-list
+      (keyword
+        (alias * define-class/keyword/one-method)
+        (lev ins/lit method
+             null
+             (esc compile-until-round-ket)
+             cons
+             cons)))
+
+    (def define-class/help
+      (keyword
+        read/jo (> tag)
+        (alias
+          inherit       define-class/keyword/inherit
+          meta-method   define-class/keyword/meta-method-list
+          meta-variable define-class/keyword/meta-variable-list
+          variable      define-class/keyword/variable-list
+          method        define-class/keyword/method-list)
+        (lev null
+             ins/lit tag
+             ins/lit (< tag)
+             cons
+             cons
+             (esc compile-until-round-ket)
+             ins/lit <class>
+             ins/lit (< tag))))
+
+    (def define-class
+      (keyword
+        compiling-stack/tos (> begin)
+        define-class/help
+        (lev end)
+        (< begin) apply
+        bind-name))
     #+end_src
 
 *** send
 
+***** send-to-class
+
+      #+begin_src jojo
+      (def send-to-class/find-meta-method
+        (jojo
+          (note class message -> [value <*> true] or [false])
+          (> message)
+          (> class)
+          (if (< class) class/has-meta-method-list? then
+              (< class) class/get-meta-method-list
+              (< message)
+              assoc/find
+              (if then
+                  car
+                  true
+                  end))
+          (if (< class) class/has-superclass? then
+              (< class) class/get-super-tag jo/apply drop
+              (< message)
+              (loop))
+          false))
+
+      (def send-to-class
+        (jojo
+          (> message)
+          (> tag)
+          (> class)
+          (< class) (< message)
+          send-to-class/find-meta-method
+          (if then
+              current-local-pointer swap
+              (< class) (< tag) (jo self) local-in
+              apply-with-local-pointer
+              end)
+          (string "- send-to-class : can not find message : ") string/print
+          (< message) jo/print newline))
+      #+end_src
+
+***** send-to-object
+
+      #+begin_src jojo
+      (def send-to-object/find-method
+        (jojo
+          (note tag message -> [bare-jojo true] or [false])
+          (> message)
+          (> tag)
+          (< tag) jo/apply drop (> class)
+          (if (< class) class/has-method-list? then
+              (< class) class/get-method-list
+              (< message) assoc/find
+              (if then
+                  car
+                  true
+                  end))
+          (if (< class) class/has-superclass? then
+              (< class) class/get-super-tag
+              (< message)
+              (loop))
+          false))
+
+      (def send-to-object
+        (jojo
+          (> message)
+          (> tag)
+          (> data)
+          (< tag) (< message)
+          send-to-object/find-method
+          (if then
+              current-local-pointer swap
+              (< data) (< tag) (jo self) local-in
+              apply-with-local-pointer
+              end)
+          (string "- send-to-object : can not find message : ") string/print
+          (< message) jo/print newline
+          (string "  object/tag : ") string/print
+          (< tag) jo/print newline))
+      #+end_src
+
+***** send
+
+      #+begin_src jojo
+      (def send
+        (jojo
+          (if over (jo <class>) eq? then send-to-class end)
+          send-to-object))
+      #+end_src
+
+*** :
+
     #+begin_src jojo
-    (def send
-      (jojo
-        (if over (jo <class>) eq? then send-to-class end)
-        send-to-object))
+    (def send/sugar/complex
+      (keyword
+        (note sum-jo -> sum-jo)
+        read/jo
+        (if dup round-ket eq? then drop end)
+        (if dup round-bar eq? then drop read/jo jo/apply (loop))
+        (if dup jo-ending-with-colon? then jo/append (loop))
+        here (loop)))
+
+    (def :
+      (keyword
+        (jo :) generate-jo (> object-jo)
+        (lev ins/lit (< object-jo)
+             local-in
+             (esc read/jo
+                  (if dup jo-ending-with-colon? not
+                      then (> message) compile-until-round-ket
+                      else send/sugar/complex (> message)))
+             ins/lit (< object-jo)
+             local-out
+             ins/lit (< message)
+             send)))
     #+end_src
 
-* [keyword] :
+*** keywords for variable
 
-  #+begin_src jojo
-  (def send/sugar/complex
-    (keyword
-      (note sum-jo -> sum-jo)
-      read/jo
-      (if dup round-ket eq? then drop end)
-      (if dup round-bar eq? then drop read/jo jo/apply (loop))
-      (if dup jo-ending-with-colon? then jo/append (loop))
-      here (loop)))
+***** variable-tracing meta-variable-tracing
 
-  (def :
-    (keyword
-      (jo :) generate-jo (> object-jo)
-      (lev ins/lit (< object-jo)
-           local-in
-           (esc read/jo
-                (if dup jo-ending-with-colon? not
-                    then (> message) compile-jojo
-                    else send/sugar/complex (> message)))
-           ins/lit (< object-jo)
-           local-out
-           ins/lit (< message)
-           send)))
-  #+end_src
+      #+begin_src jojo
+      (def variable->object (jojo car dup car swap cdr swap))
 
-* keywords for variable
+      (def variable-tracing
+        (jojo
+          (note tag name -> [data tag true] or [false])
+          (> name)
+          (> tag)
+          (< tag) jo/apply drop (> class)
+          (if (< class) class/has-variable-list? not then false end)
+          (< class) class/get-variable-list
+          (< name)
+          assoc/find
+          (if then variable->object true end)
+          (if (< class) class/has-superclass? not then false end)
+          (< class) class/get-super-tag
+          (< name)
+          (loop)))
 
-*** variable-tracing meta-variable-tracing
+      (def meta-variable-tracing
+        (jojo
+          (note class name -> [data tag true] or [false])
+          (> name)
+          (> class)
+          (if (< class) class/has-meta-variable-list? then
+              (< class) class/get-meta-variable-list
+              (< name)
+              assoc/find
+              (if then variable->object true end)
+              (if (< class) class/has-superclass? then
+                  (< class) class/get-super-tag
+                  jo/apply drop
+                  (< name)
+                  (loop)))
+          (el false)))
+      #+end_src
+
+***** has?
+
+      #+begin_src jojo
+      (def has-instance-variable?
+        (jojo
+          (note [box tag name] -> true or false)
+          (> name)
+          (> tag)
+          car (> variable-list)
+          (< variable-list)
+          (< name)
+          assoc/find
+          (if then drop true end)
+          (< tag)
+          (< name)
+          variable-tracing
+          (if then 2drop true end)
+          (el false)))
+
+      (def has-meta-variable?
+        (jojo
+          (note [class (jo <class>) name] -> true or false)
+          swap drop
+          meta-variable-tracing
+          (if then 2drop true end)
+          (el false)))
+
+      (def has-variable?
+        (jojo
+          (note [data tag name] -> true or false)
+          (if over (jo <class>) eq? not then
+              has-instance-variable? end)
+          (el has-meta-variable?)))
+
+      (def has?
+        (keyword
+          (lev ins/lit
+               (esc read/jo here
+                    ignore)
+               has-variable?)))
+      #+end_src
+
+***** get get-data get-tag
+
+      #+begin_src jojo
+      (def get-instance-variable
+        (jojo
+          (note [box tag name] -> [data tag])
+          (> name)
+          (> tag)
+          car (> variable-list)
+          (< variable-list)
+          (< name)
+          assoc/find
+          (if then variable->object end)
+          (< tag)
+          (< name)
+          variable-tracing
+          (if then end)
+          (el (cat "- get-instance-variable fail" newline
+                   "  name : " name jo/print newline
+                   "  tag : " (< tag) jo/print newline))))
+
+
+      (def get-meta-variable
+        (jojo
+          (note [class (jo <class>) name] -> [data tag])
+          swap drop
+          meta-variable-tracing
+          (if then end)
+          (cat "- get-meta-variable fail" newline
+               "  name : " name jo/print newline
+               "  class-name : " (< class) class/get-tag jo/print newline)))
+
+      (def get-variable
+        (jojo
+          (note [data tag name] -> [data tag])
+          (if over (jo <class>) eq? not then
+              get-instance-variable end)
+          (el get-meta-variable)))
+
+
+      (def get
+        (keyword
+          (lev ins/lit
+               (esc read/jo here
+                    ignore)
+               get-variable)))
+
+      (def get-data
+        (keyword
+          (lev ins/lit
+               (esc read/jo here
+                    ignore)
+               get-variable drop)))
+
+      (def get-tag
+        (keyword
+          (lev ins/lit
+               (esc read/jo here
+                    ignore)
+               get-variable swap drop)))
+      #+end_src
+
+***** set
+
+      - set will add a variable when can not find one along the inherit-link.
+
+      #+begin_src jojo
+      (def set-instance-variable
+        (jojo
+          (note [data tag box source-tag name] -> [])
+          (> name)
+          (> source-tag)
+          dup (> box)
+          car (> variable-list)
+          (>> object)
+          (< variable-list)
+          (< name)
+          assoc/find
+          (if then (> variable)
+              (<< object) cons
+              (< variable) set-car
+              end)
+          (el (< name) (<< object) cons cons
+              (< variable-list) swap cons
+              (< box) set-car)))
+
+      (def set-meta-variable
+        (jojo
+          (note [data tag class (jo <class>) name] -> [])
+          (> name)
+          drop
+          (> class)
+          (>> object)
+          (if (< class) class/has-meta-variable-list? not then
+              (jo meta-variable)
+              null (< name) (<< object) cons cons
+              cons
+              cons
+              (< class)
+              set-tail
+              end)
+          (< class) class/get-meta-variable-list
+          (> variable-list)
+          (< variable-list)
+          (< name)
+          assoc/find
+          (if then (> variable)
+              (<< object) cons
+              (< variable) set-car
+              end)
+          (el (< name) (<< object) cons cons
+              (< variable-list)
+              set-tail)))
+
+      (def set-variable
+        (jojo
+          (note [data tag source-data source-tag name] -> [])
+          (if over (jo <class>) eq? not then
+              set-instance-variable end)
+          (el set-meta-variable)))
+
+      (def set
+        (keyword
+          (lev ins/lit
+               (esc read/jo here
+                    ignore)
+               set-variable)))
+      #+end_src
+
+***** set-data
+
+      #+begin_src jojo
+      (def set-data-in-instance-variable
+        (jojo
+          (note [data box source-tag name] -> [])
+          (> name)
+          (> source-tag)
+          (> box)
+          (> data)
+
+          (< box)
+          (< source-tag)
+          (< name)
+          has-instance-variable?
+          (if then
+              (< box)
+              (< source-tag)
+              (< name)
+              get-instance-variable
+              swap drop
+              else (jo <data>))
+
+          (< data) swap
+          (< box)
+          (< source-tag)
+          (< name)
+          set-instance-variable))
+
+      (def set-data-in-meta-variable
+        (jojo
+          (note [data class (jo <class>) name] -> [])
+          (> name)
+          (> tag)
+          (> class)
+          (> data)
+
+          (< class)
+          (< tag)
+          (< name)
+          has-meta-variable?
+          (if then
+              (< class)
+              (< tag)
+              (< name)
+              get-meta-variable swap drop
+              else (jo <data>))
+          (< data) swap
+          (< class)
+          (< tag)
+          (< name)
+          set-meta-variable))
+
+      (def set-data-in-variable
+        (jojo
+          (note [data source-data source-tag name] -> [])
+          (if over (jo <class>) eq? not then
+              set-data-in-instance-variable end)
+          (el set-data-in-meta-variable)))
+
+      (def set-data
+        (keyword
+          (lev ins/lit
+               (esc read/jo here
+                    ignore)
+               set-data-in-variable)))
+      #+end_src
+
+*** add-method
 
     #+begin_src jojo
-    (def variable->object (jojo car dup car swap cdr swap))
-
-    (def variable-tracing
-      (jojo
-        (note tag name -> [data tag true] or [false])
-        (> name)
-        (> tag)
+    (def add-method
+      (keyword
+        read/jo (> tag)
         (< tag) jo/apply drop (> class)
-        (if (< class) class/has-variable-list? not then false end)
-        (< class) class/get-variable-list
-        (< name)
-        assoc/find
-        (if then variable->object true end)
-        (if (< class) class/has-superclass? not then false end)
-        (< class) class/get-super-tag
-        (< name)
-        (loop)))
+        compiling-stack/tos (> begin)
+        define-class/keyword/one-method/help
+        (lev end)
+        (< begin) apply (> method)
 
-    (def meta-variable-tracing
-      (jojo
-        (note class name -> [data tag true] or [false])
-        (> name)
-        (> class)
-        (if (< class) class/has-meta-variable-list? then
-            (< class) class/get-meta-variable-list
-            (< name)
-            assoc/find
-            (if then variable->object true end)
-            (if (< class) class/has-superclass? then
-                (< class) class/get-super-tag
-                jo/apply drop
-                (< name)
-                (loop)))
-        (el false)))
-    #+end_src
-
-*** has?
-
-    #+begin_src jojo
-    (def has-instance-variable?
-      (jojo
-        (note [box tag name] -> true or false)
-        (> name)
-        (> tag)
-        car (> variable-list)
-        (< variable-list)
-        (< name)
-        assoc/find
-        (if then drop true end)
-        (< tag)
-        (< name)
-        variable-tracing
-        (if then 2drop true end)
-        (el false)))
-
-    (def has-meta-variable?
-      (jojo
-        (note [class (jo <class>) name] -> true or false)
-        swap drop
-        meta-variable-tracing
-        (if then 2drop true end)
-        (el false)))
-
-    (def has-variable?
-      (jojo
-        (note [data tag name] -> true or false)
-        (if over (jo <class>) eq? not then
-            has-instance-variable? end)
-        (el has-meta-variable?)))
-
-    (def has?
-      (keyword
-        (lev ins/lit
-             (esc read/jo here
-                  ignore)
-             has-variable?)))
-    #+end_src
-
-*** get get-data get-tag
-
-    #+begin_src jojo
-    (def get-instance-variable
-      (jojo
-        (note [box tag name] -> [data tag])
-        (> name)
-        (> tag)
-        car (> variable-list)
-        (< variable-list)
-        (< name)
-        assoc/find
-        (if then variable->object end)
-        (< tag)
-        (< name)
-        variable-tracing
-        (if then end)
-        (el (cat "- get-instance-variable fail" newline
-                 "  name : " name jo/print newline
-                 "  tag : " (< tag) jo/print newline))))
-
-
-    (def get-meta-variable
-      (jojo
-        (note [class (jo <class>) name] -> [data tag])
-        swap drop
-        meta-variable-tracing
-        (if then end)
-        (cat "- get-meta-variable fail" newline
-             "  name : " name jo/print newline
-             "  class-name : " (< class) class/get-tag jo/print newline)))
-
-    (def get-variable
-      (jojo
-        (note [data tag name] -> [data tag])
-        (if over (jo <class>) eq? not then
-            get-instance-variable end)
-        (el get-meta-variable)))
-
-
-    (def get
-      (keyword
-        (lev ins/lit
-             (esc read/jo here
-                  ignore)
-             get-variable)))
-
-    (def get-data
-      (keyword
-        (lev ins/lit
-             (esc read/jo here
-                  ignore)
-             get-variable drop)))
-
-    (def get-tag
-      (keyword
-        (lev ins/lit
-             (esc read/jo here
-                  ignore)
-             get-variable swap drop)))
-    #+end_src
-
-*** set
-
-    - set will add a variable when can not find one along the inherit-link.
-
-    #+begin_src jojo
-    (def set-instance-variable
-      (jojo
-        (note [data tag box source-tag name] -> [])
-        (> name)
-        (> source-tag)
-        dup (> box)
-        car (> variable-list)
-        (>> object)
-        (< variable-list)
-        (< name)
-        assoc/find
-        (if then (> variable)
-            (<< object) cons
-            (< variable) set-car
-            end)
-        (el (< name) (<< object) cons cons
-            (< variable-list) swap cons
-            (< box) set-car)))
-
-    (def set-meta-variable
-      (jojo
-        (note [data tag class (jo <class>) name] -> [])
-        (> name)
-        drop
-        (> class)
-        (>> object)
-        (if (< class) class/has-meta-variable-list? not then
-            (jo meta-variable)
-            null (< name) (<< object) cons cons
-            cons
-            cons
-            (< class)
-            set-tail
-            end)
-        (< class) class/get-meta-variable-list
-        (> variable-list)
-        (< variable-list)
-        (< name)
-        assoc/find
-        (if then (> variable)
-            (<< object) cons
-            (< variable) set-car
-            end)
-        (el (< name) (<< object) cons cons
-            (< variable-list)
+        (if (< class) class/has-method-list? not then
+            (jo method) (< method) cons
+            (< class) set-tail end)
+        (el (< method)
+            (< class) class/get-method-list
             set-tail)))
-
-    (def set-variable
-      (jojo
-        (note [data tag source-data source-tag name] -> [])
-        (if over (jo <class>) eq? not then
-            set-instance-variable end)
-        (el set-meta-variable)))
-
-    (def set
-      (keyword
-        (lev ins/lit
-             (esc read/jo here
-                  ignore)
-             set-variable)))
     #+end_src
 
-*** set-data
+*** as
 
     #+begin_src jojo
-    (def set-data-in-instance-variable
-      (jojo
-        (note [data box source-tag name] -> [])
-        (> name)
-        (> source-tag)
-        (> box)
-        (> data)
-
-        (< box)
-        (< source-tag)
-        (< name)
-        has-instance-variable?
-        (if then
-            (< box)
-            (< source-tag)
-            (< name)
-            get-instance-variable
-            swap drop
-            else (jo <data>))
-
-        (< data) swap
-        (< box)
-        (< source-tag)
-        (< name)
-        set-instance-variable))
-
-    (def set-data-in-meta-variable
-      (jojo
-        (note [data class (jo <class>) name] -> [])
-        (> name)
-        (> tag)
-        (> class)
-        (> data)
-
-        (< class)
-        (< tag)
-        (< name)
-        has-meta-variable?
-        (if then
-            (< class)
-            (< tag)
-            (< name)
-            get-meta-variable swap drop
-            else (jo <data>))
-        (< data) swap
-        (< class)
-        (< tag)
-        (< name)
-        set-meta-variable))
-
-    (def set-data-in-variable
-      (jojo
-        (note [data source-data source-tag name] -> [])
-        (if over (jo <class>) eq? not then
-            set-data-in-instance-variable end)
-        (el set-data-in-meta-variable)))
-
-    (def set-data
+    (def as
       (keyword
-        (lev ins/lit
-             (esc read/jo here
-                  ignore)
-             set-data-in-variable)))
+        (lev drop
+             ins/lit (esc read/jo here ignore))))
     #+end_src
-
-* [keyword] add-method
-
-  #+begin_src jojo
-  (def add-method
-    (keyword
-      read/jo (> tag)
-      (< tag) jo/apply drop (> class)
-      compiling-stack/tos (> begin)
-      define-class/keyword/one-method/help
-      (lev end)
-      (< begin) apply (> method)
-
-      (if (< class) class/has-method-list? not then
-          (jo method) (< method) cons
-          (< class) set-tail end)
-      (el (< method)
-          (< class) class/get-method-list
-          set-tail)))
-  #+end_src
-
-* [keyword] as
-
-  #+begin_src jojo
-  (def as
-    (keyword
-      (lev drop
-           ins/lit (esc read/jo here ignore))))
-  #+end_src
 
 * <int>
 
@@ -1061,7 +1071,7 @@
            (string ") ") string/print)))
     #+end_src
 
-*** [keyword] int
+*** int
 
     #+begin_src jojo
     (def int
@@ -1092,7 +1102,7 @@
            (string ") ") string/print)))
     #+end_src
 
-*** [keyword] str
+*** str
 
     #+begin_src jojo
     (def str
@@ -1134,7 +1144,7 @@
            (< self) class/get-tag)))
     #+end_src
 
-* <jojo>
+* >< <jojo>
 
 *** note
 
@@ -1186,15 +1196,16 @@
            (: push: (data (<< object) cons)))))
     #+end_src
 
-* <table>
+* >< <table>
 
 *** <table>
 
     #+begin_src jojo
-    (note
       (define-class <table>
         (method
-          (* find ))))
+          (* find )
+          (* add )
+          ))
     #+end_src
 
 * >< <system>
@@ -1228,7 +1239,7 @@
     (note (test def-report))
     #+end_src
 
-* <path>
+* >< <path>
 
 *** <path>
 
@@ -1337,59 +1348,95 @@
       by adding prefix to name
       prefix is simply "module-name[version]."
 
-    - a package manager to download dependences and install them.
-
     - unique naming is ensured by prefix,
       thus no export-list,
       thus all of a module are exposed to a user of the module.
 
-    #+begin_src jojo
-    (note
+    - a package manager to download dependences and install them.
+
+*** note stacks
+
+    - unique-name problem :
+      a name must be resolved to an unique-name.
+
+    - syntax example :
       (module module-name [version])
-      (use module-name [version]
-           ...)
-      (include "path"))
+      (use module-name [version] ...)
+      (include "path")
 
-    (note
-      (load-module module-name[version])
+    - to solve prefix problem of the current loading module
 
-      module-stack module-name[version]
+      - module-stack
+        record current "module[version]." prefix
+        (module ...) push module-stack
+        pop module-stack after loading
 
-      define name
-      def module-name[version].name
+        (def ...) uses this information
 
-      defining-stack name module-name[version].name)
-    #+end_src
+      - defining-stack
+        for current names to be prefixed
+        [name]
+        (def ...) push defining-stack
+        pop defining-stack after loading
 
-*** note module
+        - thus in a module
+          one can not use name in core
 
-    - x -
-      module-stack for current defining-prefix
-      defining-stack for current names to be prefixed
+          when one wants to use a name in core in his module
+          he must prefix his version of this name by '.'
 
-      - thus in a module
-        one can not use name in core
+          thus the core must be very small
+          and it must be fixed in early version of the language
 
-        when one wants to use a name in core in his module
-        he must prefix his version of this name by '.'
+    - to solve prefix problem for dependent modules
 
-        thus the core must be very small
-        and it must be fixed in early version of the language
+      - prefix-stack
+        when loading a module
+        load dependent modules [if not already loaded].
 
-*** module-stack
+        - thus we need to maintain a record of loaded modules
+
+        (use module-name [version] ...) push prefix-stack
+        to make an unique "module[version]." prefix
+        can be used as "module."
+
+        pop prefix-stack after loading
+
+*** module_stack
+
+    - a stack to record current loading module
 
     #+begin_src jojo
-    (note
-      (def module-stack
-        ))
+
     #+end_src
 
-*** module-record
+*** defining_stack
+
+    - a stack of names defined by current loading module
+      such names should be prefix by "module[version]."
 
     #+begin_src jojo
-    (note
-      (def module-record
-        ))
+
+    #+end_src
+
+*** loaded_module_record
+
+    #+begin_src jojo
+
+    #+end_src
+
+*** depending_stack
+
+    - a stack of dependent modules and their prefixes
+
+    #+begin_src jojo
+
+    #+end_src
+
+*** define
+
+    #+begin_src jojo
+
     #+end_src
 
 * >< <clib>

@@ -1,8 +1,4 @@
-* note
-
-  - loading_stack has changed
-
-* *module*
+* >< old *module*
 
 *** module_record
 
@@ -370,86 +366,5 @@
       defprim("dep", k_dep);
       defprim("module", k_module);
       defprim("module/report", module_report);
-    }
-    #+end_src
-
-* *ffi*
-
-*** ccall
-
-    #+begin_src c
-    void ccall (string str, void* lib) {
-      primitive fun = dlsym(lib, str);
-      if (fun == NULL) {
-        printf("can not find %s function lib : %s\n",
-               str, dlerror());
-      };
-      fun();
-    }
-    #+end_src
-
-*** get_clib
-
-    #+begin_src c
-    void* get_clib(string rel_path) {
-      char path[PATH_MAX];
-      real_reading_path(rel_path, path);
-      void* lib = dlopen(path, RTLD_LAZY);
-      if (lib == NULL) {
-        printf("fail to open library : %s : %s\n",
-               path, dlerror());
-      };
-      return lib;
-    }
-    #+end_src
-
-*** k_clib_one
-
-    #+begin_src c
-    void k_clib_one() {
-      // ([io] -> [compile])
-      char buffer[PATH_MAX];
-      cell cursor = 0;
-      while (true) {
-        char c = read_byte();
-        if (c == '"') {
-          buffer[cursor] = 0;
-          cursor++;
-          break;
-        }
-        else {
-          buffer[cursor] = c;
-          cursor++;
-        }
-      }
-      ccall("export", get_clib(buffer));
-    }
-    #+end_src
-
-*** k_clib
-
-    #+begin_src c
-    void k_clib() {
-      // ([io] -> [compile])
-      while (true) {
-        jo s = read_jo();
-        if (s == str2jo(")")) {
-          return;
-        }
-        else if (s == str2jo("\"")) {
-          k_clib_one();
-        }
-        else {
-          // do nothing
-        }
-      }
-    }
-    #+end_src
-
-*** export_ffi
-
-    #+begin_src c
-    void export_ffi() {
-      defprim("clib", k_clib);
     }
     #+end_src
