@@ -259,6 +259,13 @@
         set-cdr end)
     (el cdr (loop))))
 
+(define list/member?
+  (jojo
+    (note element list -> true or false)
+    (if dup null eq? then 2drop false end)
+    (if 2dup car eq? then 2drop true end)
+    (el cdr (loop))))
+
 (define lev
   (note lev denotes leave-data-here)
   (keyword
@@ -275,7 +282,7 @@
 
 (define alias
   (keyword
-    read/jo (> nick)
+    read/raw-jo (> nick)
     (if (< nick) round-ket eq? then end)
     read/jo (> name)
     (if (< name) round-ket eq? then
@@ -290,7 +297,7 @@
 
 (define cat
   (keyword
-    read/jo
+    read/raw-jo
     (if dup round-ket eq? then drop end)
     (if dup double-quote eq? then
         drop one-string
@@ -531,7 +538,7 @@
 (define send/sugar/complex
   (keyword
     (note sum-jo -> sum-jo)
-    read/jo
+    read/raw-jo
     (if dup round-ket eq? then drop end)
     (if dup round-bar eq? then drop read/jo jo/apply (loop))
     (if dup jo-ending-with-colon? then jo/append (loop))
@@ -542,7 +549,7 @@
     (jo :) generate-jo (> object-jo)
     (lev ins/lit (< object-jo)
          local-in
-         (esc read/jo
+         (esc read/raw-jo
               (if dup jo-ending-with-colon? not
                   then (> message) compile-until-round-ket
                   else send/sugar/complex (> message)))
@@ -620,7 +627,7 @@
 (define has?
   (keyword
     (lev ins/lit
-         (esc read/jo here
+         (esc read/raw-jo here
               ignore)
          has-variable?)))
 
@@ -664,21 +671,21 @@
 (define get
   (keyword
     (lev ins/lit
-         (esc read/jo here
+         (esc read/raw-jo here
               ignore)
          get-variable)))
 
 (define get-data
   (keyword
     (lev ins/lit
-         (esc read/jo here
+         (esc read/raw-jo here
               ignore)
          get-variable drop)))
 
 (define get-tag
   (keyword
     (lev ins/lit
-         (esc read/jo here
+         (esc read/raw-jo here
               ignore)
          get-variable swap drop)))
 
@@ -739,7 +746,7 @@
 (define set
   (keyword
     (lev ins/lit
-         (esc read/jo here
+         (esc read/raw-jo here
               ignore)
          set-variable)))
 
@@ -803,7 +810,7 @@
 (define set-data
   (keyword
     (lev ins/lit
-         (esc read/jo here
+         (esc read/raw-jo here
               ignore)
          set-data-in-variable)))
 
@@ -898,12 +905,18 @@
   (variable
     (- stack null))
   (method
+    (* empty?
+       (<< self) (get-data stack) null eq?)
     (* pop
        (note -> data)
        (<< self) (get-data stack)
        dup car (> data)
        cdr (<< self) (set-data stack)
        (< data))
+    (* tos
+       (note -> data)
+       (<< self) (get-data stack)
+       car)
     (* (: push: data)
        (<< self) (get-data stack)
        (< data)
@@ -916,6 +929,10 @@
     (* pop
        (note -> object)
        (<< self) (as <bare-stack>) (: pop)
+       dup cdr swap car)
+    (* tos
+       (note -> object)
+       (<< self) (as <bare-stack>) (: tos)
        dup cdr swap car)
     (* (: push: object)
        (<< self) (as <bare-stack>)
@@ -950,7 +967,7 @@
 
 (test command-line/print-argument)
 
-(note (test core-name-report))
+(note (test name-report))
 
 (define-class <path>
   (inherit <str>)
@@ -1020,19 +1037,60 @@
       string/print
       newline)
 
-(define module-stack <bare-stack> (: new)
-     (note for current loading module))
+(note
+  (module module-name [version])
+  (use module-name [version] ...)
+  (include "path"))
+
+(define module-stack <bare-stack> (: new))
+
+(define binding-filter-for-current-module
+  (jojo
+    (note name -> module[version].name or name)
+    (if module-stack (: empty?) then end)
+    (el module-stack (: tos)
+        (jo .) jo/append
+        swap jo/append)))
+
+(run (jo binding-filter-for-current-module) binding-filter-stack-push)
+
 
 (define loaded-module-record (data null))
 
+
 (define defining-stack <bare-stack> (: new)
-     (note names defined by current loading module
-           such names should be prefix by "module[version]."))
+  (note an element in this stack
+        is a list of names
+        defined by current loading module))
+
+(define binding-hook-for-current-module
+  (jojo
+    (note data tag name -> [defining-stack])
+    (if defining-stack (: empty?) then drop drop drop end)
+    (el swap drop swap drop
+        defining-stack (: pop)
+        swap cons
+        defining-stack (: push))))
+
+(run (jo binding-hook-for-current-module) binding-hook-stack-push)
+
+
+
+(define jo-filter-for-current-module
+  (jojo
+    (note name -> module[version].name or name)
+    (if defining-stack (: empty?) then end)
+    (if dup defining-stack (: tos) list/member? then
+        module-stack (: tos)
+        (jo .) jo/append
+        swap jo/append)))
+
+(run (jo jo-filter-for-current-module) jo-filter-stack-push)
+
 
 (define depending-stack <bare-stack> (: new)
-     (note for depending modules and their prefixes))
-
-
+  (note an element in this stack
+        is a list of pairs of module prefix and unique module-name))
 
 
 
@@ -1112,3 +1170,5 @@
       stack-0 (: pop) (: write)
       stack-0 (: pop) (: write)
       stack-0 (: pop) (: write))
+
+(run bye)

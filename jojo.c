@@ -151,26 +151,14 @@ typedef struct {
   cell orbiton;
 } jotable_entry;
 
-jo str2jo (string str);
-
-jotable_entry proto_jotable_entry(cell index) {
-  jotable_entry e = {
-    .index = index,
-    .key = 0,
-    .tag = str2jo("not-used"),
-    .value = 0,
-    .orbit_length = 0,
-    .orbiton = 0
-  };
-  return e;
-}
+jo JO_NOT_USED;
 
 bool jotable_entry_occured(jotable_entry e) {
   return e.key != 0;
 }
 
 bool jotable_entry_used(jotable_entry e) {
-  return e.tag != str2jo("not-used");
+  return e.tag != JO_NOT_USED;
 }
 
 bool jotable_entry_no_collision(jotable_entry e) {
@@ -348,14 +336,6 @@ string jo2str(cell index) {
   return jotable[index].key;
 }
 
-void init_jotable() {
-  cell i = 0;
-  while (i < jotable_size) {
-    jotable[i] = proto_jotable_entry(i);
-    i++;
-  }
-}
-
 jo jojo_area[1024 * 1024];
 
 typedef jo* compiling_stack_t[1024];
@@ -407,45 +387,46 @@ cell jotable_get_value(cell index) {
   return jotable[index].value;
 }
 
-void jotable_test() {
-  str2jo("testkey0");
-  str2jo("testkey1");
-  str2jo("testkey2");
-  str2jo("testkey3");
-  str2jo("testkey4");
+jo EMPTY_JO;
+jo TAG_PRIM;
+jo TAG_JOJO;
+jo TAG_PRIM_KEYWORD;
+jo TAG_KEYWORD;
+jo TAG_DATA;
 
-  str2jo("testkey0");
-  str2jo("testkey1");
-  str2jo("testkey2");
-  str2jo("testkey3");
-  str2jo("testkey4");
+jo JO_NOT_USED;
+jo JO_DECLARED;
 
-  str2jo("testtestkey0");
-  str2jo("testtestkey1");
-  str2jo("testtestkey2");
-  str2jo("testtestkey3");
-  str2jo("testtestkey4");
+jo ROUND_BAR    ;
+jo ROUND_KET    ;
+jo SQUARE_BAR   ;
+jo SQUARE_KET   ;
+jo FLOWER_BAR   ;
+jo FLOWER_KET   ;
+jo DOUBLE_QUOTE ;
 
-  str2jo("testtesttestkey0");
-  str2jo("testtesttestkey1");
-  str2jo("testtesttestkey2");
-  str2jo("testtesttestkey3");
-  str2jo("testtesttestkey4");
+jo JO_INS_INT;
+jo JO_INS_JUMP;
+jo JO_INS_JUMP_IF_FALSE;
 
-  str2jo("testtesttesttestkey0");
-  str2jo("testtesttesttestkey1");
-  str2jo("testtesttesttestkey2");
-  str2jo("testtesttesttestkey3");
-  str2jo("testtesttesttestkey4");
+jo JO_NULL;
+jo JO_THEN;
+jo JO_ELSE;
 
-  jotable_set_tag_and_value(str2jo("k1"), str2jo("<data>"), 1);
-  jotable_report();
+jo JO_APPLY;
+jo JO_END;
 
-  jotable_set_tag_and_value(str2jo("k1"), str2jo("<data>"), 0);
-  jotable_report();
+jo JO_JO_REPLACING_APPLY_WITH_LAST_LOCAL_POINTER;
+jo JO_REPLACING_APPLY_WITH_LAST_LOCAL_POINTER;
 
-  // jotable_print();
-}
+jo JO_LOCAL_DATA_IN;
+jo JO_LOCAL_DATA_OUT;
+
+jo JO_LOCAL_TAG_IN;
+jo JO_LOCAL_TAG_OUT;
+
+jo JO_LOCAL_IN;
+jo JO_LOCAL_OUT;
 
 typedef cell argument_stack[1024 * 4];
 
@@ -515,23 +496,6 @@ void rs_inc() {
   return_point rp = rs_pop();
   return_point rp1 = {.array = rp.array + 1, .local_pointer = rp.local_pointer};
   rs_push(rp1);
-}
-
-jo core_name_record[64 * 1024];
-cell core_name_record_counter = 0;
-
-void p_core_name_record() {
-  as_push(core_name_record);
-}
-
-void p_core_name_report() {
-  printf("- p_core_name_report // counter : %ld\n", core_name_record_counter);
-  cell i = 0;
-  while (i < core_name_record_counter) {
-    printf("  %s\n", jo2str(core_name_record[i]));
-    i++;
-  }
-  printf("\n");
 }
 
 jo name_record[64 * 1024];
@@ -640,12 +604,12 @@ void run_binding_hook(cell name, jo tag, cell value) {
 
 bool used_jo_p(jo index) {
   return
-    jotable[index].tag != str2jo("not-used");
+    jotable[index].tag != JO_NOT_USED;
 }
 
 bool declared_jo_p(jo index) {
   return
-    jotable[index].tag == str2jo("declared");
+    jotable[index].tag == JO_DECLARED;
 }
 
 void p_bind_name() {
@@ -665,10 +629,6 @@ void p_bind_name() {
 
   run_binding_hook(name, tag, value);
 
-  core_name_record[core_name_record_counter] = name;
-  core_name_record_counter++;
-  core_name_record[core_name_record_counter] = 0;
-
   name_record[name_record_counter] = name;
   name_record_counter++;
   name_record[name_record_counter] = 0;
@@ -677,7 +637,7 @@ void p_bind_name() {
 void define_prim(string str, primitive fun) {
   jo name = str2jo(str);
   as_push(fun);
-  as_push(str2jo("<prim>"));
+  as_push(TAG_PRIM);
   as_push(name);
   p_bind_name();
 }
@@ -685,15 +645,12 @@ void define_prim(string str, primitive fun) {
 void define_primkey(string str, primitive fun) {
   jo name = str2jo(str);
   as_push(fun);
-  as_push(str2jo("<prim-keyword>"));
+  as_push(TAG_PRIM_KEYWORD);
   as_push(name);
   p_bind_name();
 }
 
 void export_bind() {
-  define_prim("core-name-report", p_core_name_report);
-  define_prim("core-name-record", p_core_name_record);
-
   define_prim("name-report", p_name_report);
   define_prim("name-record", p_name_record);
 
@@ -764,22 +721,22 @@ void jo_apply(jo jo) {
   }
   cell tag = jotable[jo].tag;
 
-  if (tag == str2jo("<prim>")) {
+  if (tag == TAG_PRIM) {
     primitive primitive = jotable_get_value(jo);
     primitive();
   }
-  else if (tag == str2jo("<jojo>")) {
+  else if (tag == TAG_JOJO) {
     cell jojo = jotable_get_value(jo);
     rs_new_point(jojo);
   }
 
-  else if (tag == str2jo("<prim-keyword>")) {
+  else if (tag == TAG_PRIM_KEYWORD) {
     keyword_stack_push(alias_stack_pointer);
     primitive primitive = jotable_get_value(jo);
     primitive();
     alias_stack_pointer = keyword_stack_pop();
   }
-  else if (tag == str2jo("<keyword>")) {
+  else if (tag == TAG_KEYWORD) {
     // keywords are always evaled
     keyword_stack_push(alias_stack_pointer);
     cell jojo = jotable_get_value(jo);
@@ -788,7 +745,7 @@ void jo_apply(jo jo) {
     alias_stack_pointer = keyword_stack_pop();
   }
 
-  else if (tag == str2jo("<data>")) {
+  else if (tag == TAG_DATA) {
     cell cell = jotable_get_value(jo);
     as_push(cell);
   }
@@ -801,7 +758,7 @@ void jo_apply(jo jo) {
 
 void jo_apply_now(jo jo) {
   cell tag = jotable[jo].tag;
-  if (tag == str2jo("<jojo>")) {
+  if (tag == TAG_JOJO) {
     cell jojo = jotable_get_value(jo);
     rs_new_point(jojo);
     eval();
@@ -815,7 +772,7 @@ void jo_apply_now(jo jo) {
 
 void jo_apply_with_local_pointer(jo jo, cell local_pointer) {
   cell tag = jotable[jo].tag;
-  if (tag == str2jo("<jojo>")) {
+  if (tag == TAG_JOJO) {
     cell jojo = jotable_get_value(jo);
     rs_make_point(jojo, local_pointer);
     return;
@@ -1294,17 +1251,17 @@ void p_lteq_p() {
   as_push(a <= b);
 }
 
-jo read_jo();
+jo read_raw_jo();
 
 void k_integer() {
   // ([io] -> [compile])
   while (true) {
-    jo s = read_jo();
-    if (s == str2jo(")")) {
+    jo s = read_raw_jo();
+    if (s == ROUND_KET) {
       break;
     }
     else {
-      here(str2jo("ins/lit"));
+      here(JO_INS_INT);
       here(string_to_dec(jo2str(s)));
     }
   }
@@ -1355,8 +1312,8 @@ void p_free () {
 
 void k_address() {
   // ([io] -> [compile])
-  here(str2jo("ins/lit"));
-  jo index = read_jo();
+  here(JO_INS_INT);
+  jo index = read_raw_jo();
   here(&(jotable[index].value));
   k_ignore();
 }
@@ -1613,8 +1570,12 @@ void p_read_jo() {
 }
 
 jo read_jo() {
-  // ([io] -> jo)
   p_read_jo();
+  return as_pop();
+}
+
+jo read_raw_jo() {
+  p_read_raw_jo();
   return as_pop();
 }
 
@@ -1642,7 +1603,7 @@ void p_jo_append() {
 }
 
 void p_empty_jo() {
-  as_push(str2jo(""));
+  as_push(EMPTY_JO);
 }
 
 void p_jo_used_p() {
@@ -1674,21 +1635,21 @@ void p_string_to_jo() {
 }
 
 void p_null() {
-  as_push(str2jo("null"));
+  as_push(JO_NULL);
 }
 
 void k_jo() {
   // ([io] -> [compile])
   while (true) {
     jo s = read_jo();
-    if (s == str2jo("(")) {
+    if (s == ROUND_BAR) {
       jo_apply(read_jo());
     }
-    else if (s == str2jo(")")) {
+    else if (s == ROUND_KET) {
       break;
     }
     else {
-      here(str2jo("ins/lit"));
+      here(JO_INS_INT);
       here(s);
     }
   }
@@ -1755,18 +1716,18 @@ void k_one_string() {
   }
   string str = malloc(cursor);
   strcpy(str, buffer);
-  here(str2jo("ins/lit"));
+  here(JO_INS_INT);
   here(str);
 }
 
 void k_string() {
   // ([io] -> [compile])
   while (true) {
-    jo s = read_jo();
-    if (s == str2jo(")")) {
+    jo s = read_raw_jo();
+    if (s == ROUND_KET) {
       return;
     }
-    else if (s == str2jo("\"")) {
+    else if (s == DOUBLE_QUOTE) {
       k_one_string();
     }
     else {
@@ -1993,10 +1954,10 @@ void k_clib() {
   // ([io] -> [compile])
   while (true) {
     jo s = read_jo();
-    if (s == str2jo(")")) {
+    if (s == ROUND_KET) {
       return;
     }
-    else if (s == str2jo("\"")) {
+    else if (s == DOUBLE_QUOTE) {
       k_clib_one();
     }
     else {
@@ -2018,17 +1979,17 @@ void k_define() {
 
 void k_declare_one() {
   jo index = read_jo();
-  jotable[index].tag = str2jo("declared");
+  jotable[index].tag = JO_DECLARED;
   k_ignore();
 }
 
 void k_declare() {
   while (true) {
     jo s = read_jo();
-    if (s == str2jo(")")) {
+    if (s == ROUND_KET) {
       return;
     }
-    else if (s == str2jo("(")) {
+    else if (s == ROUND_BAR) {
       k_declare_one();
     }
     else {
@@ -2076,7 +2037,7 @@ void p_top_repl() {
   // ([io] -> *)
   while (true) {
     jo s = read_jo();
-    if (s == str2jo("(")) {
+    if (s == ROUND_BAR) {
       jo_apply(read_jo());
       p_as_print_by_flag();
     }
@@ -2113,11 +2074,11 @@ void export_top_level() {
 void k_ignore() {
   // ([io] ->)
   while (true) {
-    jo s = read_jo();
-    if (s == str2jo("(")) {
+    jo s = read_raw_jo();
+    if (s == ROUND_BAR) {
       k_ignore();
     }
-    if (s == str2jo(")")) {
+    if (s == ROUND_KET) {
       break;
     }
   }
@@ -2127,7 +2088,7 @@ void compile_until_meet_jo(jo ending_jo) {
   // ([io] -> [compile])
   while (true) {
     jo s = read_jo();
-    if (s == str2jo("(")) {
+    if (s == ROUND_BAR) {
       jo_apply(read_jo());
     }
     else if (s == ending_jo) {
@@ -2153,7 +2114,7 @@ void p_compile_until_meet_jo() {
 jo compile_until_meet_jo_or_jo(jo ending_jo1, jo ending_jo2) {
   while (true) {
     jo s = read_jo();
-    if (s == str2jo("(")) {
+    if (s == ROUND_BAR) {
       jo_apply(read_jo());
     }
     else if (s == ending_jo1 || s == ending_jo2) {
@@ -2175,7 +2136,7 @@ jo compile_until_meet_jo_or_jo(jo ending_jo1, jo ending_jo2) {
 
 void p_compile_until_round_ket() {
   // ([io] -> [compile])
-  compile_until_meet_jo(str2jo(")"));
+  compile_until_meet_jo(ROUND_KET);
 }
 
 // - without else
@@ -2199,17 +2160,17 @@ void p_compile_until_round_ket() {
 
 void k_if() {
   // ([io] -> [compile])
-  compile_until_meet_jo(str2jo("then"));
-  here(str2jo("ins/jump-if-false"));
+  compile_until_meet_jo(JO_THEN);
+  here(JO_INS_JUMP_IF_FALSE);
   cell* end_of_then = compiling_stack_tos();
   compiling_stack_inc();
-  jo ending_jo = compile_until_meet_jo_or_jo(str2jo("else"), str2jo(")"));
-  if (ending_jo == str2jo(")")) {
+  jo ending_jo = compile_until_meet_jo_or_jo(JO_ELSE, ROUND_KET);
+  if (ending_jo == ROUND_KET) {
     end_of_then[0] = compiling_stack_tos();
     return;
   }
   else {
-    here(str2jo("ins/jump"));
+    here(JO_INS_JUMP);
     cell* end_of_else = compiling_stack_tos();
     compiling_stack_inc();
     end_of_then[0] = compiling_stack_tos();
@@ -2220,11 +2181,10 @@ void k_if() {
 }
 
 void k_tail_call() {
-  // ([io] -> [compile])
   // no check for "no compile before define"
-  here(str2jo("ins/lit"));
+  here(JO_INS_INT);
   here(read_jo());
-  here(str2jo("jo/replacing-apply-with-last-local-pointer"));
+  here(JO_JO_REPLACING_APPLY_WITH_LAST_LOCAL_POINTER);
   k_ignore();
 }
 
@@ -2262,22 +2222,22 @@ void p_compile_jojo() {
   // ([io] -> [compile])
   jo* jojo = compiling_stack_tos();
   current_compiling_jojo_stack_push(jojo);
-  compile_until_meet_jo(str2jo(")"));
-  here(str2jo("end"));
+  compile_until_meet_jo(ROUND_KET);
+  here(JO_END);
   current_compiling_jojo_stack_pop();
 }
 
 void k_loop() {
-  here(str2jo("ins/lit"));
+  here(JO_INS_INT);
   here(current_compiling_jojo_stack_tos());
-  here(str2jo("replacing-apply-with-last-local-pointer"));
+  here(JO_REPLACING_APPLY_WITH_LAST_LOCAL_POINTER);
   k_ignore();
 }
 
 void k_recur() {
-  here(str2jo("ins/lit"));
+  here(JO_INS_INT);
   here(current_compiling_jojo_stack_tos());
-  here(str2jo("apply"));
+  here(JO_APPLY);
   k_ignore();
 }
 
@@ -2287,46 +2247,46 @@ void p_compiling_stack_tos() {
 
 void k_bare_jojo() {
   // ([io] -> [compile])
-  here(str2jo("ins/jump"));
+  here(JO_INS_JUMP);
   cell* offset_place = compiling_stack_tos();
   compiling_stack_inc();
   p_compile_jojo();
   offset_place[0] = compiling_stack_tos();
-  here(str2jo("ins/lit"));
+  here(JO_INS_INT);
   here(offset_place + 1);
 }
 
 void k_jojo() {
   // ([io] -> [compile])
-  here(str2jo("ins/jump"));
+  here(JO_INS_JUMP);
   cell* offset_place = compiling_stack_tos();
   compiling_stack_inc();
   p_compile_jojo();
   offset_place[0] = compiling_stack_tos();
-  here(str2jo("ins/lit"));
+  here(JO_INS_INT);
   here(offset_place + 1);
-  here(str2jo("ins/lit"));
-  here(str2jo("<jojo>"));
+  here(JO_INS_INT);
+  here(TAG_JOJO);
 }
 
 void k_keyword() {
   // ([io] -> [compile])
-  here(str2jo("ins/jump"));
+  here(JO_INS_JUMP);
   cell* offset_place = compiling_stack_tos();
   compiling_stack_inc();
   p_compile_jojo();
   offset_place[0] = compiling_stack_tos();
-  here(str2jo("ins/lit"));
+  here(JO_INS_INT);
   here(offset_place + 1);
-  here(str2jo("ins/lit"));
-  here(str2jo("<keyword>"));
+  here(JO_INS_INT);
+  here(TAG_KEYWORD);
 }
 
 void k_data() {
   // ([io] -> [compile])
   p_compile_until_round_ket();
-  here(str2jo("ins/lit"));
-  here(str2jo("<data>"));
+  here(JO_INS_INT);
+  here(TAG_DATA);
 }
 
 cell local_find(jo name) {
@@ -2437,104 +2397,80 @@ void p_local_out() {
 }
 
 void k_local_data_in() {
-  jo s = read_jo();
-  if (s == str2jo("(")) {
-    jo_apply(read_jo());
-    k_local_data_in();
-  }
-  else if (s == str2jo(")")) {
+  jo s = read_raw_jo();
+  if (s == ROUND_KET) {
     return;
   }
   else {
     k_local_data_in();
-    here(str2jo("ins/lit"));
+    here(JO_INS_INT);
     here(s);
-    here(str2jo("local-data-in"));
+    here(JO_LOCAL_DATA_IN);
   }
 }
 
 void k_local_data_out() {
-  jo s = read_jo();
-  if (s == str2jo("(")) {
-    jo_apply(read_jo());
-    k_local_data_out();
-  }
-  else if (s == str2jo(")")) {
+  jo s = read_raw_jo();
+  if (s == ROUND_KET) {
     return;
   }
   else {
     k_local_data_out();
-    here(str2jo("ins/lit"));
+    here(JO_INS_INT);
     here(s);
-    here(str2jo("local-data-out"));
+    here(JO_LOCAL_DATA_OUT);
   }
 }
 
 void k_local_tag_in() {
-  jo s = read_jo();
-  if (s == str2jo("(")) {
-    jo_apply(read_jo());
-    k_local_data_in();
-  }
-  else if (s == str2jo(")")) {
+  jo s = read_raw_jo();
+  if (s == ROUND_KET) {
     return;
   }
   else {
     k_local_data_in();
-    here(str2jo("ins/lit"));
+    here(JO_INS_INT);
     here(s);
-    here(str2jo("local-tag-in"));
+    here(JO_LOCAL_TAG_IN);
   }
 }
 
 void k_local_tag_out() {
-  jo s = read_jo();
-  if (s == str2jo("(")) {
-    jo_apply(read_jo());
-    k_local_data_out();
-  }
-  else if (s == str2jo(")")) {
+  jo s = read_raw_jo();
+  if (s == ROUND_KET) {
     return;
   }
   else {
     k_local_data_out();
-    here(str2jo("ins/lit"));
+    here(JO_INS_INT);
     here(s);
-    here(str2jo("local-tag-out"));
+    here(JO_LOCAL_TAG_OUT);
   }
 }
 
 void k_local_in() {
-  jo s = read_jo();
-  if (s == str2jo("(")) {
-    jo_apply(read_jo());
-    k_local_data_in();
-  }
-  else if (s == str2jo(")")) {
+  jo s = read_raw_jo();
+  if (s == ROUND_KET) {
     return;
   }
   else {
     k_local_data_in();
-    here(str2jo("ins/lit"));
+    here(JO_INS_INT);
     here(s);
-    here(str2jo("local-in"));
+    here(JO_LOCAL_IN);
   }
 }
 
 void k_local_out() {
-  jo s = read_jo();
-  if (s == str2jo("(")) {
-    jo_apply(read_jo());
-    k_local_data_out();
-  }
-  else if (s == str2jo(")")) {
+  jo s = read_raw_jo();
+  if (s == ROUND_KET) {
     return;
   }
   else {
     k_local_data_out();
-    here(str2jo("ins/lit"));
+    here(JO_INS_INT);
     here(s);
-    here(str2jo("local-out"));
+    here(JO_LOCAL_OUT);
   }
 }
 
@@ -2597,13 +2533,13 @@ void p_address_of_here() {
  as_push(compiling_stack_tos());
 }
 
-void p_round_bar() { as_push(str2jo("(")); }
-void p_round_ket() { as_push(str2jo(")")); }
-void p_square_bar() { as_push(str2jo("[")); }
-void p_square_ket() { as_push(str2jo("]")); }
-void p_flower_bar() { as_push(str2jo("{")); }
-void p_flower_ket() { as_push(str2jo("}")); }
-void p_double_quote() { as_push(str2jo("\"")); }
+void p_round_bar()    { as_push(ROUND_BAR); }
+void p_round_ket()    { as_push(ROUND_KET); }
+void p_square_bar()   { as_push(SQUARE_BAR); }
+void p_square_ket()   { as_push(SQUARE_KET); }
+void p_flower_bar()   { as_push(FLOWER_BAR); }
+void p_flower_ket()   { as_push(FLOWER_KET); }
+void p_double_quote() { as_push(DOUBLE_QUOTE); }
 
 void p_cell_size() {
   // (-> cell)
@@ -2710,10 +2646,78 @@ void load_file(string path) {
   reading_stack_push(rp);
 }
 
+jotable_entry proto_jotable_entry(cell index) {
+  jotable_entry e = {
+    .index = index,
+    .key = 0,
+    .tag = str2jo("not-used"),
+    .value = 0,
+    .orbit_length = 0,
+    .orbiton = 0
+  };
+  return e;
+}
+
+void init_jotable() {
+  cell i = 0;
+  while (i < jotable_size) {
+    jotable[i] = proto_jotable_entry(i);
+    i++;
+  }
+}
+
+void init_literal_jo() {
+  EMPTY_JO = str2jo("");
+
+  TAG_PRIM         = str2jo("<prim>");
+  TAG_JOJO         = str2jo("<jojo>");
+  TAG_PRIM_KEYWORD = str2jo("<prim-keyword>");
+  TAG_KEYWORD      = str2jo("<keyword>");
+  TAG_DATA         = str2jo("<data>");
+
+  JO_NOT_USED = str2jo("not-used");
+  JO_DECLARED = str2jo("declared");
+
+  ROUND_BAR    =   str2jo("(");
+  ROUND_KET    =   str2jo(")");
+  SQUARE_BAR   =   str2jo("[");
+  SQUARE_KET   =   str2jo("]");
+  FLOWER_BAR   =   str2jo("{");
+  FLOWER_KET   =   str2jo("}");
+  DOUBLE_QUOTE =   str2jo("\"");
+
+  JO_INS_INT  = str2jo("ins/lit");
+  JO_INS_JUMP = str2jo("ins/jump");
+  JO_INS_JUMP_IF_FALSE = str2jo("ins/jump-if-false");
+
+  JO_NULL     = str2jo("null");
+  JO_THEN     = str2jo("then");
+  JO_ELSE     = str2jo("else");
+
+  JO_APPLY     = str2jo("apply");
+  JO_END       = str2jo("end");
+
+  JO_JO_REPLACING_APPLY_WITH_LAST_LOCAL_POINTER = str2jo("jo/replacing-apply-with-last-local-pointer");
+  JO_REPLACING_APPLY_WITH_LAST_LOCAL_POINTER = str2jo("replacing-apply-with-last-local-pointer");
+
+  JO_LOCAL_DATA_IN = str2jo("local-data-in");
+  JO_LOCAL_DATA_OUT = str2jo("local-data-out");
+
+  JO_LOCAL_TAG_IN = str2jo("local-tag-in");
+  JO_LOCAL_TAG_OUT = str2jo("local-tag-out");
+
+  JO_LOCAL_IN = str2jo("local-in");
+  JO_LOCAL_OUT = str2jo("local-out");
+}
+
 void init_top_repl() {
+
   init_jotable();
+  init_literal_jo();
+
   init_compiling_stack();
   init_jo_filter_stack();
+
 
   p_empty_jo();
   p_drop();
