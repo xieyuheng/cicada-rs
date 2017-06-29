@@ -447,54 +447,6 @@ void jotable_test() {
   // jotable_print();
 }
 
-jo def_record[64 * 1024];
-cell def_record_counter = 0;
-
-void p_def_record() {
-  as_push(def_record);
-}
-
-void def_report() {
-  printf("- def_report // counter : %ld\n", def_record_counter);
-  cell i = 0;
-  while (i < def_record_counter) {
-    printf("  %s\n", jo2str(def_record[i]));
-    i++;
-  }
-  printf("\n");
-}
-
-void k_ignore();
-bool used_jo_p(jo index);
-
-void defprim(string str, primitive fun) {
-  jo index = str2jo(str);
-  if (used_jo_p(index)) {
-    printf("- defprim can not re-define : %s\n", jo2str(index));
-    printf("  it was defined as : %s\n", jo2str(jotable[index].type));
-    k_ignore();
-    return;
-  }
-  def_record[def_record_counter] = index;
-  def_record_counter++;
-  def_record[def_record_counter] = 0;
-  jotable_set_type_value(index, str2jo("<prim>"), fun);
-}
-
-void defprimkey(string str, primitive fun) {
-  jo index = str2jo(str);
-  if (used_jo_p(index)) {
-    printf("- defprim can not re-define : %s\n", jo2str(index));
-    printf("  it was defined as : %s\n", jo2str(jotable[index].type));
-    k_ignore();
-    return;
-  }
-  def_record[def_record_counter] = index;
-  def_record_counter++;
-  def_record[def_record_counter] = 0;
-  jotable_set_type_value(index, str2jo("<prim-keyword>"), fun);
-}
-
 typedef cell argument_stack[1024 * 4];
 
 argument_stack as;
@@ -563,6 +515,88 @@ void rs_inc() {
   return_point rp = rs_pop();
   return_point rp1 = {.array = rp.array + 1, .local_pointer = rp.local_pointer};
   rs_push(rp1);
+}
+
+jo core_name_record[64 * 1024];
+cell core_name_record_counter = 0;
+
+void p_core_name_record() {
+  as_push(core_name_record);
+}
+
+void p_core_name_report() {
+  printf("- p_core_name_report // counter : %ld\n", core_name_record_counter);
+  cell i = 0;
+  while (i < core_name_record_counter) {
+    printf("  %s\n", jo2str(core_name_record[i]));
+    i++;
+  }
+  printf("\n");
+}
+
+jo name_record[64 * 1024];
+cell name_record_counter = 0;
+
+void p_name_record() {
+  as_push(name_record);
+}
+
+void p_name_report() {
+  printf("- p_name_report // counter : %ld\n", name_record_counter);
+  cell i = 0;
+  while (i < name_record_counter) {
+    printf("  %s\n", jo2str(name_record[i]));
+    i++;
+  }
+  printf("\n");
+}
+
+bool used_jo_p(jo index) {
+  return
+    jotable[index].type != str2jo("not-used");
+}
+
+bool declared_jo_p(jo index) {
+  return
+    jotable[index].type == str2jo("declared");
+}
+
+void p_bind_name() {
+  jo name = as_pop();
+  jo type = as_pop();
+  cell value = as_pop();
+  if (used_jo_p(name) && !declared_jo_p(name)) {
+    printf("- p_bind_name can not bind name : %s\n", jo2str(name));
+    printf("  to type : %s\n", jo2str(type));
+    printf("  and value : %ld\n", value);
+    printf("  it has been bound as a %s\n", jo2str(jotable[name].type));
+    return;
+  }
+  jotable_set_type_value(name, type, value);
+
+  core_name_record[core_name_record_counter] = name;
+  core_name_record_counter++;
+  core_name_record[core_name_record_counter] = 0;
+
+  name_record[name_record_counter] = name;
+  name_record_counter++;
+  name_record[name_record_counter] = 0;
+}
+
+void define_prim(string str, primitive fun) {
+  jo name = str2jo(str);
+  as_push(fun);
+  as_push(str2jo("<prim>"));
+  as_push(name);
+  p_bind_name();
+}
+
+void define_primkey(string str, primitive fun) {
+  jo name = str2jo(str);
+  as_push(fun);
+  as_push(str2jo("<prim-keyword>"));
+  as_push(name);
+  p_bind_name();
 }
 
 typedef cell keyword;
@@ -741,13 +775,13 @@ void p_jo_replacing_apply_with_last_local_pointer() {
 }
 
 void export_apply() {
-  defprim("apply", p_apply);
-  defprim("apply-with-local-pointer", p_apply_with_local_pointer);
-  defprim("replacing-apply-with-last-local-pointer", p_replacing_apply_with_last_local_pointer);
+  define_prim("apply", p_apply);
+  define_prim("apply-with-local-pointer", p_apply_with_local_pointer);
+  define_prim("replacing-apply-with-last-local-pointer", p_replacing_apply_with_last_local_pointer);
 
-  defprim("jo/apply", p_jo_apply);
-  defprim("jo/apply-with-local-pointer", p_jo_apply_with_local_pointer);
-  defprim("jo/replacing-apply-with-last-local-pointer", p_jo_replacing_apply_with_last_local_pointer);
+  define_prim("jo/apply", p_jo_apply);
+  define_prim("jo/apply-with-local-pointer", p_jo_apply_with_local_pointer);
+  define_prim("jo/replacing-apply-with-last-local-pointer", p_jo_replacing_apply_with_last_local_pointer);
 }
 
 void cell_copy(cell length, cell* from, cell* to) {
@@ -892,20 +926,20 @@ void p_stack_pointer() {
 }
 
 void export_stack_operation() {
-  defprim("drop", p_drop);
-  defprim("2drop", p_2drop);
-  defprim("dup", p_dup);
-  defprim("2dup", p_2dup);
-  defprim("over", p_over);
-  defprim("2over", p_2over);
-  defprim("tuck", p_tuck);
-  defprim("2tuck", p_2tuck);
-  defprim("swap", p_swap);
-  defprim("2swap", p_2swap);
-  defprim("xy-swap", p_xy_swap);
-  defprim("as/print", p_as_print);
-  defprim("stack-pointer", p_stack_pointer);
-  defprim("stack-base", p_stack_base);
+  define_prim("drop", p_drop);
+  define_prim("2drop", p_2drop);
+  define_prim("dup", p_dup);
+  define_prim("2dup", p_2dup);
+  define_prim("over", p_over);
+  define_prim("2over", p_2over);
+  define_prim("tuck", p_tuck);
+  define_prim("2tuck", p_2tuck);
+  define_prim("swap", p_swap);
+  define_prim("2swap", p_2swap);
+  define_prim("xy-swap", p_xy_swap);
+  define_prim("as/print", p_as_print);
+  define_prim("stack-pointer", p_stack_pointer);
+  define_prim("stack-base", p_stack_base);
 }
 
 void p_end() {
@@ -921,8 +955,8 @@ void p_bye() {
 }
 
 void export_ending() {
-  defprim("end", p_end);
-  defprim("bye", p_bye);
+  define_prim("end", p_end);
+  define_prim("bye", p_bye);
 }
 
 void i_lit() {
@@ -954,9 +988,9 @@ void i_jump() {
 }
 
 void export_control() {
-  defprim("ins/lit", i_lit);
-  defprim("ins/jump-if-false", i_jump_if_false);
-  defprim("ins/jump", i_jump);
+  define_prim("ins/lit", i_lit);
+  define_prim("ins/jump-if-false", i_jump_if_false);
+  define_prim("ins/jump", i_jump);
 }
 
 void p_true() {
@@ -988,11 +1022,11 @@ void p_or() {
 }
 
 void export_bool() {
-  defprim("true", p_true);
-  defprim("false", p_false);
-  defprim("not", p_not);
-  defprim("and", p_and);
-  defprim("or", p_or);
+  define_prim("true", p_true);
+  define_prim("false", p_false);
+  define_prim("not", p_not);
+  define_prim("and", p_and);
+  define_prim("or", p_or);
 }
 
 void p_true_bit() {
@@ -1041,15 +1075,15 @@ void p_bit_shift_left() {
 }
 
 void export_bit() {
-  defprim("true/bit", p_true_bit);
-  defprim("false/bit", p_false_bit);
-  defprim("bit/not", p_bit_not);
-  defprim("bit/and", p_bit_and);
-  defprim("bit/xor", p_bit_xor);
-  defprim("bit/or", p_bit_or);
-  defprim("bit/shift-left", p_bit_shift_left);
-  // defprim("bit/shift-right", p_bit_shift_right);
-  // defprim("bit/arithmetic-shift-right", p_bit_arithmetic_shift_right);
+  define_prim("true/bit", p_true_bit);
+  define_prim("false/bit", p_false_bit);
+  define_prim("bit/not", p_bit_not);
+  define_prim("bit/and", p_bit_and);
+  define_prim("bit/xor", p_bit_xor);
+  define_prim("bit/or", p_bit_or);
+  define_prim("bit/shift-left", p_bit_shift_left);
+  // define_prim("bit/shift-right", p_bit_shift_right);
+  // define_prim("bit/arithmetic-shift-right", p_bit_arithmetic_shift_right);
 }
 
 void p_inc() {
@@ -1177,31 +1211,31 @@ void p_dot() { printf("%ld ", as_pop()); }
 void p_integer_dot() { printf("%ld ", as_pop()); }
 
 void export_integer() {
-  defprim("inc", p_inc);
-  defprim("dec", p_dec);
-  defprim("neg", p_neg);
+  define_prim("inc", p_inc);
+  define_prim("dec", p_dec);
+  define_prim("neg", p_neg);
 
-  defprim("add", p_add);
-  defprim("sub", p_sub);
+  define_prim("add", p_add);
+  define_prim("sub", p_sub);
 
-  defprim("mul", p_mul);
-  defprim("div", p_div);
-  defprim("mod", p_mod);
+  define_prim("mul", p_mul);
+  define_prim("div", p_div);
+  define_prim("mod", p_mod);
 
-  defprim("n-eq?", p_n_eq_p);
+  define_prim("n-eq?", p_n_eq_p);
 
-  defprim("eq?", p_eq_p);
-  defprim("gt?", p_gt_p);
-  defprim("lt?", p_lt_p);
-  defprim("gteq?", p_gteq_p);
-  defprim("lteq?", p_lteq_p);
+  define_prim("eq?", p_eq_p);
+  define_prim("gt?", p_gt_p);
+  define_prim("lt?", p_lt_p);
+  define_prim("gteq?", p_gteq_p);
+  define_prim("lteq?", p_lteq_p);
 
-  defprimkey("integer", k_integer);
+  define_primkey("integer", k_integer);
 
-  defprim("integer/print", p_integer_print);
+  define_prim("integer/print", p_integer_print);
 
-  defprim("dot", p_dot);
-  defprim("integer/dot", p_integer_dot);
+  define_prim("dot", p_dot);
+  define_prim("integer/dot", p_integer_dot);
 }
 
 void p_allocate () {
@@ -1254,14 +1288,14 @@ void p_get_byte() {
 }
 
 void export_memory() {
-  defprim("allocate", p_allocate);
-  defprim("free", p_free);
-  defprimkey("&", k_address);
-  defprim("jo-as-var", p_jo_as_var);
-  defprim("set-cell", p_set_cell);
-  defprim("get-cell", p_get_cell);
-  defprim("set-byte", p_set_byte);
-  defprim("get-byte", p_get_byte);
+  define_prim("allocate", p_allocate);
+  define_prim("free", p_free);
+  define_primkey("&", k_address);
+  define_prim("jo-as-var", p_jo_as_var);
+  define_prim("set-cell", p_set_cell);
+  define_prim("get-cell", p_get_cell);
+  define_prim("set-byte", p_set_byte);
+  define_prim("get-byte", p_get_byte);
 }
 
 typedef struct {
@@ -1356,9 +1390,9 @@ void p_byte_print() {
 }
 
 void export_byte() {
-  defprim("read/byte", p_read_byte);
-  defprim("byte/unread", p_byte_unread);
-  defprim("byte/print", p_byte_print);
+  define_prim("read/byte", p_read_byte);
+  define_prim("byte/unread", p_byte_unread);
+  define_prim("byte/print", p_byte_print);
 }
 
 void p_alias_push() {
@@ -1575,27 +1609,27 @@ void p_generate_jo() {
 }
 
 void export_jo() {
-  defprim("null", p_null);
+  define_prim("null", p_null);
 
-  defprim("jo-filter-stack-push", p_jo_filter_stack_push);
-  defprim("jo-filter-stack-pop", p_jo_filter_stack_pop);
+  define_prim("jo-filter-stack-push", p_jo_filter_stack_push);
+  define_prim("jo-filter-stack-pop", p_jo_filter_stack_pop);
 
-  defprim("alias-push", p_alias_push);
-  defprim("alias-filter", p_alias_filter);
+  define_prim("alias-push", p_alias_push);
+  define_prim("alias-filter", p_alias_filter);
 
-  defprim("read/jo", p_read_jo);
-  defprim("read/raw-jo", p_read_raw_jo);
+  define_prim("read/jo", p_read_jo);
+  define_prim("read/raw-jo", p_read_raw_jo);
 
-  defprim("jo/used?", p_jo_used_p);
-  defprim("jo/append", p_jo_append);
-  defprim("empty-jo", p_empty_jo);
-  defprim("jo->string", p_jo_to_string);
-  defprim("string->jo", p_string_to_jo);
-  defprim("string/length->jo", p_string_length_to_jo);
-  defprimkey("jo", k_jo);
-  defprim("jo/print", p_jo_print);
-  defprim("jo/dot", p_jo_dot);
-  defprim("generate-jo", p_generate_jo);
+  define_prim("jo/used?", p_jo_used_p);
+  define_prim("jo/append", p_jo_append);
+  define_prim("empty-jo", p_empty_jo);
+  define_prim("jo->string", p_jo_to_string);
+  define_prim("string->jo", p_string_to_jo);
+  define_prim("string/length->jo", p_string_length_to_jo);
+  define_primkey("jo", k_jo);
+  define_prim("jo/print", p_jo_print);
+  define_prim("jo/dot", p_jo_dot);
+  define_prim("generate-jo", p_generate_jo);
 }
 
 void k_one_string() {
@@ -1668,13 +1702,13 @@ void p_string_last_char() {
 }
 
 void export_string() {
-  defprimkey("string", k_string);
-  defprimkey("one-string", k_one_string);
-  defprim("string/print", p_string_print);
-  defprim("string/dot", p_string_dot);
-  defprim("string/length", p_string_length);
-  defprim("string/append-to-buffer", p_string_append_to_buffer);
-  defprim("string/last-char", p_string_last_char);
+  define_primkey("string", k_string);
+  define_primkey("one-string", k_one_string);
+  define_prim("string/print", p_string_print);
+  define_prim("string/dot", p_string_dot);
+  define_prim("string/length", p_string_length);
+  define_prim("string/append-to-buffer", p_string_append_to_buffer);
+  define_prim("string/last-char", p_string_last_char);
 }
 
 void p_open_for_reading() {
@@ -1746,11 +1780,11 @@ void p_file_copy_to_buffer() {
 }
 
 void export_file() {
-  defprim("open-for-reading", p_open_for_reading);
-  defprim("file/readable?", p_file_readable_p);
-  defprim("dir/ok?", p_dir_ok_p);
-  defprim("file/size", p_file_size);
-  defprim("file/copy-to-buffer", p_file_copy_to_buffer);
+  define_prim("open-for-reading", p_open_for_reading);
+  define_prim("file/readable?", p_file_readable_p);
+  define_prim("dir/ok?", p_dir_ok_p);
+  define_prim("file/size", p_file_size);
+  define_prim("file/copy-to-buffer", p_file_copy_to_buffer);
 }
 
 void p_current_dir() {
@@ -1803,12 +1837,12 @@ void p_var_string_to_env_string() {
 }
 
 void export_system() {
-  defprim("current-dir", p_current_dir);
-  defprim("command/run", p_command_run);
-  defprim("n-command/run", p_n_command_run);
-  defprim("argument-counter", p_argument_counter);
-  defprim("index->argument-string", p_index_to_argument_string);
-  defprim("var-string->env-string", p_var_string_to_env_string);
+  define_prim("current-dir", p_current_dir);
+  define_prim("command/run", p_command_run);
+  define_prim("n-command/run", p_n_command_run);
+  define_prim("argument-counter", p_argument_counter);
+  define_prim("index->argument-string", p_index_to_argument_string);
+  define_prim("var-string->env-string", p_var_string_to_env_string);
 }
 
 void ccall (string str, void* lib) {
@@ -1867,83 +1901,14 @@ void k_clib() {
 }
 
 void export_ffi() {
-  defprim("clib", k_clib);
+  define_prim("clib", k_clib);
 }
 
-bool used_jo_p(jo index) {
-  return
-    jotable[index].type != str2jo("not-used");
-}
-
-bool declared_jo_p(jo index) {
-  return
-    jotable[index].type == str2jo("declared");
-}
-
-typedef jo current_compiling_jojo_stack_t[1024];
-
-current_compiling_jojo_stack_t current_compiling_jojo_stack;
-cell current_compiling_jojo_stack_base = 0;
-cell current_compiling_jojo_stack_pointer = 0;
-
-void current_compiling_jojo_stack_push(jo* value) {
-  current_compiling_jojo_stack[current_compiling_jojo_stack_pointer] = value;
-  current_compiling_jojo_stack_pointer++;
-}
-
-jo* current_compiling_jojo_stack_pop() {
-  current_compiling_jojo_stack_pointer--;
-  return current_compiling_jojo_stack[current_compiling_jojo_stack_pointer];
-}
-
-void current_compiling_jojo_stack_inc() {
-  current_compiling_jojo_stack[current_compiling_jojo_stack_pointer - 1] =
-    current_compiling_jojo_stack[current_compiling_jojo_stack_pointer - 1] + 1;
-}
-
-
-jo* current_compiling_jojo_stack_tos() {
-  return current_compiling_jojo_stack[current_compiling_jojo_stack_pointer - 1];
-}
-
-bool current_compiling_jojo_stack_empty_p() {
-  return current_compiling_jojo_stack_pointer == current_compiling_jojo_stack_base;
-}
-
-void p_bind_name() {
-  jo name = as_pop();
-  jo type = as_pop();
-  cell value = as_pop();
-  if (used_jo_p(name) && !declared_jo_p(name)) {
-    printf("- p_bind_name can not bind name : %s\n", jo2str(name));
-    printf("  to type : %s\n", jo2str(type));
-    printf("  and value : %ld\n", value);
-    printf("  it has been bound as a %s\n", jo2str(jotable[name].type));
-    return;
-  }
-  jotable_set_type_value(name, type, value);
-}
-
-void k_def() {
-  // ([io] -> [compile] [jotable])
+void k_define() {
   jo name = read_jo();
-  if (used_jo_p(name) && !declared_jo_p(name)) {
-    printf("- (def ...) can not bind name : %s\n", jo2str(name));
-    printf("  it has been bound as a %s\n", jo2str(jotable[name].type));
-    // ><
-    // print what is ignored
-    k_ignore();
-    return;
-  }
-  def_record[def_record_counter] = name;
-  def_record_counter++;
-  def_record[def_record_counter] = 0;
-
   k_run();
-  jo type = as_pop();
-  cell value = as_pop();
-
-  jotable_set_type_value(name, type, value);
+  as_push(name);
+  p_bind_name();
 }
 
 void k_declare_one() {
@@ -2021,23 +1986,23 @@ void p_top_repl_printing_flag_on() { top_repl_printing_flag = true; }
 void p_top_repl_printing_flag_off() { top_repl_printing_flag = false; }
 
 void export_top_level() {
-  defprimkey("def", k_def);
-  defprimkey("bind-name", p_bind_name);
-  defprimkey("declare", k_declare);
+  define_primkey("define", k_define);
+  define_primkey("bind-name", p_bind_name);
+  define_primkey("declare", k_declare);
 
-  defprimkey("run", k_run);
+  define_primkey("run", k_run);
 
-  defprimkey("test", k_test);
-  defprim("testing-flag", p_testing_flag);
-  defprim("testing-flag/on", p_testing_flag_on);
-  defprim("testing-flag/off", p_testing_flag_off);
+  define_primkey("test", k_test);
+  define_prim("testing-flag", p_testing_flag);
+  define_prim("testing-flag/on", p_testing_flag_on);
+  define_prim("testing-flag/off", p_testing_flag_off);
 
 
-  defprim("as/print-by-flag", p_as_print_by_flag);
-  defprim("top-repl", p_top_repl);
-  defprim("top-repl/printing-flag", p_top_repl_printing_flag);
-  defprim("top-repl/printing-flag/on", p_top_repl_printing_flag_on);
-  defprim("top-repl/printing-flag/off", p_top_repl_printing_flag_off);
+  define_prim("as/print-by-flag", p_as_print_by_flag);
+  define_prim("top-repl", p_top_repl);
+  define_prim("top-repl/printing-flag", p_top_repl_printing_flag);
+  define_prim("top-repl/printing-flag/on", p_top_repl_printing_flag_on);
+  define_prim("top-repl/printing-flag/off", p_top_repl_printing_flag_off);
 }
 
 void k_ignore() {
@@ -2156,6 +2121,36 @@ void k_tail_call() {
   here(read_jo());
   here(str2jo("jo/replacing-apply-with-last-local-pointer"));
   k_ignore();
+}
+
+typedef jo current_compiling_jojo_stack_t[1024];
+
+current_compiling_jojo_stack_t current_compiling_jojo_stack;
+cell current_compiling_jojo_stack_base = 0;
+cell current_compiling_jojo_stack_pointer = 0;
+
+void current_compiling_jojo_stack_push(jo* value) {
+  current_compiling_jojo_stack[current_compiling_jojo_stack_pointer] = value;
+  current_compiling_jojo_stack_pointer++;
+}
+
+jo* current_compiling_jojo_stack_pop() {
+  current_compiling_jojo_stack_pointer--;
+  return current_compiling_jojo_stack[current_compiling_jojo_stack_pointer];
+}
+
+void current_compiling_jojo_stack_inc() {
+  current_compiling_jojo_stack[current_compiling_jojo_stack_pointer - 1] =
+    current_compiling_jojo_stack[current_compiling_jojo_stack_pointer - 1] + 1;
+}
+
+
+jo* current_compiling_jojo_stack_tos() {
+  return current_compiling_jojo_stack[current_compiling_jojo_stack_pointer - 1];
+}
+
+bool current_compiling_jojo_stack_empty_p() {
+  return current_compiling_jojo_stack_pointer == current_compiling_jojo_stack_base;
 }
 
 void p_compile_jojo() {
@@ -2443,47 +2438,47 @@ void p_current_local_pointer() {
 }
 
 void export_keyword() {
-  defprimkey("ignore", k_ignore);
-  defprimkey("note", k_ignore);
+  define_primkey("ignore", k_ignore);
+  define_primkey("note", k_ignore);
 
-  defprim("compiling-stack/tos", p_compiling_stack_tos);
-  defprim("compiling-stack/inc", compiling_stack_inc);
+  define_prim("compiling-stack/tos", p_compiling_stack_tos);
+  define_prim("compiling-stack/inc", compiling_stack_inc);
 
-  defprimkey("if", k_if);
-  defprim("compile-until-meet-jo", p_compile_until_meet_jo);
-  defprim("compile-until-round-ket", p_compile_until_round_ket);
+  define_primkey("if", k_if);
+  define_prim("compile-until-meet-jo", p_compile_until_meet_jo);
+  define_prim("compile-until-round-ket", p_compile_until_round_ket);
 
-  defprimkey("else", p_compile_until_round_ket);
-  defprimkey("el", p_compile_until_round_ket);
+  define_primkey("else", p_compile_until_round_ket);
+  define_primkey("el", p_compile_until_round_ket);
 
-  defprim("compile-jojo", p_compile_jojo);
+  define_prim("compile-jojo", p_compile_jojo);
 
-  defprimkey("tail-call", k_tail_call);
-  defprimkey("loop", k_loop);
-  defprimkey("recur", k_recur);
+  define_primkey("tail-call", k_tail_call);
+  define_primkey("loop", k_loop);
+  define_primkey("recur", k_recur);
 
-  defprimkey("data", k_data);
-  defprimkey("jojo", k_jojo);
-  defprimkey("keyword", k_keyword);
+  define_primkey("data", k_data);
+  define_primkey("jojo", k_jojo);
+  define_primkey("keyword", k_keyword);
 
-  defprimkey("bare-jojo", k_bare_jojo);
+  define_primkey("bare-jojo", k_bare_jojo);
 
-  defprim("local-data-in", p_local_data_in);
-  defprim("local-data-out", p_local_data_out);
-  defprimkey(">", k_local_data_in);
-  defprimkey("<", k_local_data_out);
+  define_prim("local-data-in", p_local_data_in);
+  define_prim("local-data-out", p_local_data_out);
+  define_primkey(">", k_local_data_in);
+  define_primkey("<", k_local_data_out);
 
-  defprim("local-tag-in", p_local_tag_in);
-  defprim("local-tag-out", p_local_tag_out);
-  defprimkey("%>", k_local_tag_in);
-  defprimkey("<%", k_local_tag_out);
+  define_prim("local-tag-in", p_local_tag_in);
+  define_prim("local-tag-out", p_local_tag_out);
+  define_primkey("%>", k_local_tag_in);
+  define_primkey("<%", k_local_tag_out);
 
-  defprim("local-in", p_local_in);
-  defprim("local-out", p_local_out);
-  defprimkey(">>", k_local_in);
-  defprimkey("<<", k_local_out);
+  define_prim("local-in", p_local_in);
+  define_prim("local-out", p_local_out);
+  define_primkey(">>", k_local_in);
+  define_primkey("<<", k_local_out);
 
-  defprim("current-local-pointer", p_current_local_pointer);
+  define_prim("current-local-pointer", p_current_local_pointer);
 }
 
 void do_nothing() {
@@ -2515,23 +2510,27 @@ void p_newline() {
 }
 
 void export_mise() {
-  defprim("here", p_here);
-  defprim("address-of-here", p_address_of_here);
+  define_prim("here", p_here);
+  define_prim("address-of-here", p_address_of_here);
 
-  defprim("jotable/report", jotable_report);
+  define_prim("jotable/report", jotable_report);
 
-  defprim("round-bar", p_round_bar);
-  defprim("round-ket", p_round_ket);
-  defprim("square-bar", p_square_bar);
-  defprim("square-ket", p_square_ket);
-  defprim("flower-bar", p_flower_bar);
-  defprim("flower-ket", p_flower_ket);
-  defprim("double-quote", p_double_quote);
+  define_prim("round-bar", p_round_bar);
+  define_prim("round-ket", p_round_ket);
+  define_prim("square-bar", p_square_bar);
+  define_prim("square-ket", p_square_ket);
+  define_prim("flower-bar", p_flower_bar);
+  define_prim("flower-ket", p_flower_ket);
+  define_prim("double-quote", p_double_quote);
 
-  defprim("cell-size", p_cell_size);
-  defprim("def-report", def_report);
-  defprim("def-record", p_def_record);
-  defprim("newline", p_newline);
+  define_prim("cell-size", p_cell_size);
+  define_prim("core-name-report", p_core_name_report);
+  define_prim("core-name-record", p_core_name_record);
+
+  define_prim("name-report", p_name_report);
+  define_prim("name-record", p_name_record);
+
+  define_prim("newline", p_newline);
 }
 
 void p1() {
@@ -2579,9 +2578,9 @@ void p3() {
 }
 
 void export_play() {
-  defprim("p1", p1);
-  defprim("p2", p2);
-  defprim("p3", p3);
+  define_prim("p1", p1);
+  define_prim("p2", p2);
+  define_prim("p3", p3);
 }
 
 void load_file(string path) {
