@@ -1020,11 +1020,14 @@
       string/print
       newline)
 
+(def module-stack <bare-stack> (: new)
+     (note for current loading module))
 
+(def loaded-module-record (data null))
 
-
-
-
+(def defining-stack <bare-stack> (: new)
+     (note names defined by current loading module
+           such names should be prefix by "module[version]."))
 
 
 
@@ -1089,20 +1092,20 @@
 (note (test (string "asd") open-for-reading dot)
       (test (string "README") open-for-reading dot))
 
-(def module-stack <bare-stack> (: new))
+(def bare-stack-0 <bare-stack> (: new))
 
-(test module-stack (: push: (data (integer 1)))
-      module-stack (: push: (data (integer 2)))
-      module-stack (: push: (data (integer 3)))
-      module-stack (: pop) integer/print newline
-      module-stack (: pop) integer/print newline
-      module-stack (: pop) integer/print newline)
+(test bare-stack-0 (: push: (data (integer 1)))
+      bare-stack-0 (: push: (data (integer 2)))
+      bare-stack-0 (: push: (data (integer 3)))
+      bare-stack-0 (: pop) integer/print newline
+      bare-stack-0 (: pop) integer/print newline
+      bare-stack-0 (: pop) integer/print newline)
 
-(def testing-stack <stack> (: new))
+(def stack-0 <stack> (: new))
 
-(test testing-stack (: push: (int 1))
-      testing-stack (: push: (int 2))
-      testing-stack (: push: (int 3))
-      testing-stack (: pop) (: write)
-      testing-stack (: pop) (: write)
-      testing-stack (: pop) (: write))
+(test stack-0 (: push: (int 1))
+      stack-0 (: push: (int 2))
+      stack-0 (: push: (int 3))
+      stack-0 (: pop) (: write)
+      stack-0 (: pop) (: write)
+      stack-0 (: pop) (: write))

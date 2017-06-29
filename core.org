@@ -1,10 +1,5 @@
 #+property: tangle core.jo
 #+title: core
-- def a define in core
-  as new interface for module system
-  - only by doing this
-    we can implement the module system in jojo code
-    instead of c code
 - <table>
 - [docs] basic docs about composition
 * todo
@@ -1390,42 +1385,37 @@
 
     - to solve prefix problem for dependent modules
 
-      - prefix-stack
+      - depending-stack
         when loading a module
         load dependent modules [if not already loaded].
 
         - thus we need to maintain a record of loaded modules
 
-        (use module-name [version] ...) push prefix-stack
-        to make an unique "module[version]." prefix
-        can be used as "module."
+        (use module-name [version] ...) push depending-stack
+        to let the unique "module[version]." prefix
+        be used as "module."
 
-        pop prefix-stack after loading
+        pop depending-stack after loading
 
-*** module_stack
+*** note how will the first module be loaded ?
 
-    - a stack to record current loading module
+    - x -
+      (use ...) can be used in top level
 
-    #+begin_src jojo
-
-    #+end_src
-
-*** defining_stack
-
-    - a stack of names defined by current loading module
-      such names should be prefix by "module[version]."
+*** stacks
 
     #+begin_src jojo
+    (def module-stack <bare-stack> (: new)
+         (note for current loading module))
 
+    (def loaded-module-record (data null))
+
+    (def defining-stack <bare-stack> (: new)
+         (note names defined by current loading module
+               such names should be prefix by "module[version]."))
     #+end_src
 
-*** loaded_module_record
-
-    #+begin_src jojo
-
-    #+end_src
-
-*** depending_stack
+*** depending-stack
 
     - a stack of dependent modules and their prefixes
 
@@ -1521,21 +1511,21 @@
 * test
 
   #+begin_src jojo
-  (def module-stack <bare-stack> (: new))
+  (def bare-stack-0 <bare-stack> (: new))
 
-  (test module-stack (: push: (data (integer 1)))
-        module-stack (: push: (data (integer 2)))
-        module-stack (: push: (data (integer 3)))
-        module-stack (: pop) integer/print newline
-        module-stack (: pop) integer/print newline
-        module-stack (: pop) integer/print newline)
+  (test bare-stack-0 (: push: (data (integer 1)))
+        bare-stack-0 (: push: (data (integer 2)))
+        bare-stack-0 (: push: (data (integer 3)))
+        bare-stack-0 (: pop) integer/print newline
+        bare-stack-0 (: pop) integer/print newline
+        bare-stack-0 (: pop) integer/print newline)
 
-  (def testing-stack <stack> (: new))
+  (def stack-0 <stack> (: new))
 
-  (test testing-stack (: push: (int 1))
-        testing-stack (: push: (int 2))
-        testing-stack (: push: (int 3))
-        testing-stack (: pop) (: write)
-        testing-stack (: pop) (: write)
-        testing-stack (: pop) (: write))
+  (test stack-0 (: push: (int 1))
+        stack-0 (: push: (int 2))
+        stack-0 (: push: (int 3))
+        stack-0 (: pop) (: write)
+        stack-0 (: pop) (: write)
+        stack-0 (: pop) (: write))
   #+end_src

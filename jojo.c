@@ -565,10 +565,6 @@ void rs_inc() {
   rs_push(rp1);
 }
 
-// typedef struct {
-//   cell keyword;
-//   cell alias_stack_pointer;
-// } keyword;
 typedef cell keyword;
 typedef keyword keyword_stack_t[128];
 keyword_stack_t keyword_stack;
@@ -661,6 +657,20 @@ void jo_apply(jo jo) {
     cell cell = jotable_get_value(jo);
     as_push(cell);
     as_push(jo_type);
+  }
+}
+
+void jo_apply_now(jo jo) {
+  cell jo_type = jotable[jo].type;
+  if (jo_type == str2jo("<jojo>")) {
+    cell jojo = jotable_get_value(jo);
+    rs_new_point(jojo);
+    eval();
+    return;
+  }
+  else {
+    jo_apply(jo);
+    return;
   }
 }
 
@@ -1358,22 +1368,23 @@ void p_alias_push() {
   alias_stack_push(a);
 }
 
-jo alias_find(jo nick) {
-  // return 0 -- not found
+void p_alias_filter() {
+  jo nick = as_pop();
   cell base = keyword_stack_tos();
   cell i = alias_stack_pointer;
   while (i >= base) {
     if (alias_stack[i].nick == nick) {
-      return alias_stack[i].name;
+      as_push(alias_stack[i].name);
+      return;
     }
     else {
       i--;
     }
   }
-  return 0;
+  as_push(nick);
 }
 
-jo read_jo_without_alias() {
+void p_read_raw_jo() {
   // ([io] -> jo)
   byte buf[1024];
   cell cur = 0;
@@ -1408,27 +1419,64 @@ jo read_jo_without_alias() {
     }
   }
   buf[cur] = 0;
-  return str2jo(buf);
+  as_push(str2jo(buf));
 }
 
-void p_read_jo_without_alias() {
-  as_push(read_jo_without_alias());
+typedef jo reading_filter;
+
+typedef reading_filter jo_filter_stack_t[128];
+jo_filter_stack_t jo_filter_stack;
+
+cell jo_filter_stack_base = 0;
+cell jo_filter_stack_pointer = 0;
+
+void jo_filter_stack_push(reading_filter value) {
+  jo_filter_stack[jo_filter_stack_pointer] = value;
+  jo_filter_stack_pointer++;
+}
+
+reading_filter jo_filter_stack_pop() {
+  jo_filter_stack_pointer--;
+  return jo_filter_stack[jo_filter_stack_pointer];
+}
+
+reading_filter jo_filter_stack_tos() {
+  return jo_filter_stack[jo_filter_stack_pointer - 1];
+}
+
+bool jo_filter_stack_empty_p() {
+  return jo_filter_stack_pointer == jo_filter_stack_base;
+}
+
+void p_jo_filter_stack_push() {
+  jo_filter_stack_push(as_pop());
+}
+
+void p_jo_filter_stack_pop() {
+  as_push(jo_filter_stack_pop());
+}
+
+void p_filte_jo() {
+  cell i = jo_filter_stack_pointer;
+  while (i > jo_filter_stack_base) {
+    jo_apply_now(jo_filter_stack[i-1]);
+    i--;
+  }
+}
+
+void init_jo_filter_stack() {
+  jo_filter_stack_push(str2jo("alias-filter"));
+}
+
+void p_read_jo() {
+  p_read_raw_jo();
+  p_filte_jo();
 }
 
 jo read_jo() {
   // ([io] -> jo)
-  jo jo0 = read_jo_without_alias();
-  jo jo1 = alias_find(jo0);
-  if (jo1 != 0) {
-    return jo1;
-  }
-  else {
-    return jo0;
-  }
-}
-
-void p_read_jo() {
-  as_push(read_jo());
+  p_read_jo();
+  return as_pop();
 }
 
 jo cat_2_jo(jo x, jo y) {
@@ -1528,9 +1576,16 @@ void p_generate_jo() {
 
 void export_jo() {
   defprim("null", p_null);
+
+  defprim("jo-filter-stack-push", p_jo_filter_stack_push);
+  defprim("jo-filter-stack-pop", p_jo_filter_stack_pop);
+
   defprim("alias-push", p_alias_push);
+  defprim("alias-filter", p_alias_filter);
+
   defprim("read/jo", p_read_jo);
-  defprim("read/jo-without-alias", p_read_jo_without_alias);
+  defprim("read/raw-jo", p_read_raw_jo);
+
   defprim("jo/used?", p_jo_used_p);
   defprim("jo/append", p_jo_append);
   defprim("empty-jo", p_empty_jo);
@@ -2559,6 +2614,7 @@ void load_file(string path) {
 void init_top_repl() {
   init_jotable();
   init_compiling_stack();
+  init_jo_filter_stack();
 
   p_empty_jo();
   p_drop();
