@@ -551,6 +551,93 @@ void p_name_report() {
   printf("\n");
 }
 
+typedef jo binding_filter;
+
+typedef binding_filter binding_filter_stack_t[128];
+binding_filter_stack_t binding_filter_stack;
+
+cell binding_filter_stack_base = 0;
+cell binding_filter_stack_pointer = 0;
+
+void binding_filter_stack_push(binding_filter value) {
+  binding_filter_stack[binding_filter_stack_pointer] = value;
+  binding_filter_stack_pointer++;
+}
+
+binding_filter binding_filter_stack_pop() {
+  binding_filter_stack_pointer--;
+  return binding_filter_stack[binding_filter_stack_pointer];
+}
+
+binding_filter binding_filter_stack_tos() {
+  return binding_filter_stack[binding_filter_stack_pointer - 1];
+}
+
+bool binding_filter_stack_empty_p() {
+  return binding_filter_stack_pointer == binding_filter_stack_base;
+}
+
+void p_binding_filter_stack_push() {
+  binding_filter_stack_push(as_pop());
+}
+
+void p_binding_filter_stack_pop() {
+  as_push(binding_filter_stack_pop());
+}
+
+void p_filte_binding() {
+  cell i = binding_filter_stack_pointer;
+  while (i > binding_filter_stack_base) {
+    jo_apply_now(binding_filter_stack[i-1]);
+    i--;
+  }
+}
+
+typedef jo binding_hook;
+
+typedef binding_hook binding_hook_stack_t[128];
+binding_hook_stack_t binding_hook_stack;
+
+cell binding_hook_stack_base = 0;
+cell binding_hook_stack_pointer = 0;
+
+void binding_hook_stack_push(binding_hook value) {
+  binding_hook_stack[binding_hook_stack_pointer] = value;
+  binding_hook_stack_pointer++;
+}
+
+binding_hook binding_hook_stack_pop() {
+  binding_hook_stack_pointer--;
+  return binding_hook_stack[binding_hook_stack_pointer];
+}
+
+binding_hook binding_hook_stack_tos() {
+  return binding_hook_stack[binding_hook_stack_pointer - 1];
+}
+
+bool binding_hook_stack_empty_p() {
+  return binding_hook_stack_pointer == binding_hook_stack_base;
+}
+
+void p_binding_hook_stack_push() {
+  binding_hook_stack_push(as_pop());
+}
+
+void p_binding_hook_stack_pop() {
+  as_push(binding_hook_stack_pop());
+}
+
+void run_binding_hook(cell name, jo tag, cell value) {
+  cell i = binding_hook_stack_pointer;
+  while (i > binding_hook_stack_base) {
+    as_push(value);
+    as_push(tag);
+    as_push(name);
+    jo_apply_now(binding_hook_stack[i-1]);
+    i--;
+  }
+}
+
 bool used_jo_p(jo index) {
   return
     jotable[index].type != str2jo("not-used");
@@ -562,17 +649,21 @@ bool declared_jo_p(jo index) {
 }
 
 void p_bind_name() {
+  p_filte_binding();
   jo name = as_pop();
-  jo type = as_pop();
+  jo tag = as_pop();
   cell value = as_pop();
   if (used_jo_p(name) && !declared_jo_p(name)) {
-    printf("- p_bind_name can not bind name : %s\n", jo2str(name));
-    printf("  to type : %s\n", jo2str(type));
-    printf("  and value : %ld\n", value);
+    printf("- p_bind_name can not rebind\n");
+    printf("  name : %s\n", jo2str(name));
+    printf("  tag : %s\n", jo2str(tag));
+    printf("  value : %ld\n", value);
     printf("  it has been bound as a %s\n", jo2str(jotable[name].type));
     return;
   }
-  jotable_set_type_value(name, type, value);
+  jotable_set_type_value(name, tag, value);
+
+  run_binding_hook(name, tag, value);
 
   core_name_record[core_name_record_counter] = name;
   core_name_record_counter++;

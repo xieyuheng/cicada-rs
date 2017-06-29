@@ -1,6 +1,6 @@
 #+property: tangle jojo.c
 #+title:  jojo
-- hook for bind-name
+- [terminology] fix the mis-use of 'type' to 'tag'
 * todo
 
   - [debug] print jojo body
@@ -725,7 +725,7 @@
     }
     #+end_src
 
-* bind_name & define_prim & define_primkey
+* bind_name
 
 *** core_name_record
 
@@ -785,11 +785,132 @@
     }
     #+end_src
 
+*** binding_filter_stack
+
+***** binding_filter_stack
+
+      #+begin_src c
+      typedef jo binding_filter;
+
+      typedef binding_filter binding_filter_stack_t[128];
+      binding_filter_stack_t binding_filter_stack;
+
+      cell binding_filter_stack_base = 0;
+      cell binding_filter_stack_pointer = 0;
+
+      void binding_filter_stack_push(binding_filter value) {
+        binding_filter_stack[binding_filter_stack_pointer] = value;
+        binding_filter_stack_pointer++;
+      }
+
+      binding_filter binding_filter_stack_pop() {
+        binding_filter_stack_pointer--;
+        return binding_filter_stack[binding_filter_stack_pointer];
+      }
+
+      binding_filter binding_filter_stack_tos() {
+        return binding_filter_stack[binding_filter_stack_pointer - 1];
+      }
+
+      bool binding_filter_stack_empty_p() {
+        return binding_filter_stack_pointer == binding_filter_stack_base;
+      }
+      #+end_src
+
+***** p_binding_filter_stack_push
+
+      #+begin_src c
+      void p_binding_filter_stack_push() {
+        binding_filter_stack_push(as_pop());
+      }
+      #+end_src
+
+***** p_binding_filter_stack_pop
+
+      #+begin_src c
+      void p_binding_filter_stack_pop() {
+        as_push(binding_filter_stack_pop());
+      }
+      #+end_src
+
+***** p_filte_binding
+
+      #+begin_src c
+      void p_filte_binding() {
+        cell i = binding_filter_stack_pointer;
+        while (i > binding_filter_stack_base) {
+          jo_apply_now(binding_filter_stack[i-1]);
+          i--;
+        }
+      }
+      #+end_src
+
+*** binding_hook_stack
+
+***** binding_hook_stack
+
+      #+begin_src c
+      typedef jo binding_hook;
+
+      typedef binding_hook binding_hook_stack_t[128];
+      binding_hook_stack_t binding_hook_stack;
+
+      cell binding_hook_stack_base = 0;
+      cell binding_hook_stack_pointer = 0;
+
+      void binding_hook_stack_push(binding_hook value) {
+        binding_hook_stack[binding_hook_stack_pointer] = value;
+        binding_hook_stack_pointer++;
+      }
+
+      binding_hook binding_hook_stack_pop() {
+        binding_hook_stack_pointer--;
+        return binding_hook_stack[binding_hook_stack_pointer];
+      }
+
+      binding_hook binding_hook_stack_tos() {
+        return binding_hook_stack[binding_hook_stack_pointer - 1];
+      }
+
+      bool binding_hook_stack_empty_p() {
+        return binding_hook_stack_pointer == binding_hook_stack_base;
+      }
+      #+end_src
+
+***** p_binding_hook_stack_push
+
+      #+begin_src c
+      void p_binding_hook_stack_push() {
+        binding_hook_stack_push(as_pop());
+      }
+      #+end_src
+
+***** p_binding_hook_stack_pop
+
+      #+begin_src c
+      void p_binding_hook_stack_pop() {
+        as_push(binding_hook_stack_pop());
+      }
+      #+end_src
+
+***** run_binding_hook
+
+      #+begin_src c
+      void run_binding_hook(cell name, jo tag, cell value) {
+        cell i = binding_hook_stack_pointer;
+        while (i > binding_hook_stack_base) {
+          as_push(value);
+          as_push(tag);
+          as_push(name);
+          jo_apply_now(binding_hook_stack[i-1]);
+          i--;
+        }
+      }
+      #+end_src
+
 *** p_bind_name
 
-    - hook
-      before_define (name -> module[version].name)
-      after_define (name -> [set-tail tos of defining-stack])
+    after_define (name -> [set-tail tos of defining-stack])
 
     #+begin_src c
     bool used_jo_p(jo index) {
@@ -803,17 +924,21 @@
     }
 
     void p_bind_name() {
+      p_filte_binding();
       jo name = as_pop();
-      jo type = as_pop();
+      jo tag = as_pop();
       cell value = as_pop();
       if (used_jo_p(name) && !declared_jo_p(name)) {
-        printf("- p_bind_name can not bind name : %s\n", jo2str(name));
-        printf("  to type : %s\n", jo2str(type));
-        printf("  and value : %ld\n", value);
+        printf("- p_bind_name can not rebind\n");
+        printf("  name : %s\n", jo2str(name));
+        printf("  tag : %s\n", jo2str(tag));
+        printf("  value : %ld\n", value);
         printf("  it has been bound as a %s\n", jo2str(jotable[name].type));
         return;
       }
-      jotable_set_type_value(name, type, value);
+      jotable_set_type_value(name, tag, value);
+
+      run_binding_hook(name, tag, value);
 
       core_name_record[core_name_record_counter] = name;
       core_name_record_counter++;
@@ -825,7 +950,7 @@
     }
     #+end_src
 
-*** define_prim & define_primkey
+*** define_prim
 
     #+begin_src c
     void define_prim(string str, primitive fun) {
@@ -835,7 +960,11 @@
       as_push(name);
       p_bind_name();
     }
+    #+end_src
 
+*** define_primkey
+
+    #+begin_src c
     void define_primkey(string str, primitive fun) {
       jo name = str2jo(str);
       as_push(fun);
@@ -2094,69 +2223,71 @@
 
 *** jo_filter_stack
 
-    #+begin_src c
-    typedef jo reading_filter;
+***** jo_filter_stack
 
-    typedef reading_filter jo_filter_stack_t[128];
-    jo_filter_stack_t jo_filter_stack;
+      #+begin_src c
+      typedef jo reading_filter;
 
-    cell jo_filter_stack_base = 0;
-    cell jo_filter_stack_pointer = 0;
+      typedef reading_filter jo_filter_stack_t[128];
+      jo_filter_stack_t jo_filter_stack;
 
-    void jo_filter_stack_push(reading_filter value) {
-      jo_filter_stack[jo_filter_stack_pointer] = value;
-      jo_filter_stack_pointer++;
-    }
+      cell jo_filter_stack_base = 0;
+      cell jo_filter_stack_pointer = 0;
 
-    reading_filter jo_filter_stack_pop() {
-      jo_filter_stack_pointer--;
-      return jo_filter_stack[jo_filter_stack_pointer];
-    }
-
-    reading_filter jo_filter_stack_tos() {
-      return jo_filter_stack[jo_filter_stack_pointer - 1];
-    }
-
-    bool jo_filter_stack_empty_p() {
-      return jo_filter_stack_pointer == jo_filter_stack_base;
-    }
-    #+end_src
-
-*** p_jo_filter_stack_push
-
-    #+begin_src c
-    void p_jo_filter_stack_push() {
-      jo_filter_stack_push(as_pop());
-    }
-    #+end_src
-
-*** p_jo_filter_stack_pop
-
-    #+begin_src c
-    void p_jo_filter_stack_pop() {
-      as_push(jo_filter_stack_pop());
-    }
-    #+end_src
-
-*** p_filte_jo
-
-    #+begin_src c
-    void p_filte_jo() {
-      cell i = jo_filter_stack_pointer;
-      while (i > jo_filter_stack_base) {
-        jo_apply_now(jo_filter_stack[i-1]);
-        i--;
+      void jo_filter_stack_push(reading_filter value) {
+        jo_filter_stack[jo_filter_stack_pointer] = value;
+        jo_filter_stack_pointer++;
       }
-    }
-    #+end_src
 
-*** init_jo_filter_stack
+      reading_filter jo_filter_stack_pop() {
+        jo_filter_stack_pointer--;
+        return jo_filter_stack[jo_filter_stack_pointer];
+      }
 
-    #+begin_src c
-    void init_jo_filter_stack() {
-      jo_filter_stack_push(str2jo("alias-filter"));
-    }
-    #+end_src
+      reading_filter jo_filter_stack_tos() {
+        return jo_filter_stack[jo_filter_stack_pointer - 1];
+      }
+
+      bool jo_filter_stack_empty_p() {
+        return jo_filter_stack_pointer == jo_filter_stack_base;
+      }
+      #+end_src
+
+***** p_jo_filter_stack_push
+
+      #+begin_src c
+      void p_jo_filter_stack_push() {
+        jo_filter_stack_push(as_pop());
+      }
+      #+end_src
+
+***** p_jo_filter_stack_pop
+
+      #+begin_src c
+      void p_jo_filter_stack_pop() {
+        as_push(jo_filter_stack_pop());
+      }
+      #+end_src
+
+***** p_filte_jo
+
+      #+begin_src c
+      void p_filte_jo() {
+        cell i = jo_filter_stack_pointer;
+        while (i > jo_filter_stack_base) {
+          jo_apply_now(jo_filter_stack[i-1]);
+          i--;
+        }
+      }
+      #+end_src
+
+***** init_jo_filter_stack
+
+      #+begin_src c
+      void init_jo_filter_stack() {
+        jo_filter_stack_push(str2jo("alias-filter"));
+      }
+      #+end_src
 
 *** p_read_jo
 
