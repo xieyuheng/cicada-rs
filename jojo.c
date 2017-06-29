@@ -145,7 +145,7 @@ typedef cell bind;
 typedef struct {
   cell index;
   string key;
-  jo type;
+  jo tag;
   bind value;
   cell orbit_length;
   cell orbiton;
@@ -157,7 +157,7 @@ jotable_entry proto_jotable_entry(cell index) {
   jotable_entry e = {
     .index = index,
     .key = 0,
-    .type = str2jo("not-used"),
+    .tag = str2jo("not-used"),
     .value = 0,
     .orbit_length = 0,
     .orbiton = 0
@@ -170,7 +170,7 @@ bool jotable_entry_occured(jotable_entry e) {
 }
 
 bool jotable_entry_used(jotable_entry e) {
-  return e.type != str2jo("not-used");
+  return e.tag != str2jo("not-used");
 }
 
 bool jotable_entry_no_collision(jotable_entry e) {
@@ -278,7 +278,7 @@ cell jotable_search(string key) {
 string jo2str (cell index);
 
 void jotable_entry_print(jotable_entry entry) {
-  printf("%s : ", jo2str(entry.type));
+  printf("%s : ", jo2str(entry.tag));
   printf("%ld", entry.value);
 }
 
@@ -398,8 +398,8 @@ void here(cell n) {
   compiling_stack_push(pointer + 1);
 }
 
-void jotable_set_type_value(cell index, jo type, cell value) {
-  jotable[index].type = type;
+void jotable_set_tag_and_value(cell index, jo tag, cell value) {
+  jotable[index].tag = tag;
   jotable[index].value = value;
 }
 
@@ -438,10 +438,10 @@ void jotable_test() {
   str2jo("testtesttesttestkey3");
   str2jo("testtesttesttestkey4");
 
-  jotable_set_type_value(str2jo("k1"), str2jo("<data>"), 1);
+  jotable_set_tag_and_value(str2jo("k1"), str2jo("<data>"), 1);
   jotable_report();
 
-  jotable_set_type_value(str2jo("k1"), str2jo("<data>"), 0);
+  jotable_set_tag_and_value(str2jo("k1"), str2jo("<data>"), 0);
   jotable_report();
 
   // jotable_print();
@@ -585,7 +585,7 @@ void p_binding_filter_stack_pop() {
   as_push(binding_filter_stack_pop());
 }
 
-void p_filte_binding() {
+void run_binding_filter() {
   cell i = binding_filter_stack_pointer;
   while (i > binding_filter_stack_base) {
     jo_apply_now(binding_filter_stack[i-1]);
@@ -640,16 +640,16 @@ void run_binding_hook(cell name, jo tag, cell value) {
 
 bool used_jo_p(jo index) {
   return
-    jotable[index].type != str2jo("not-used");
+    jotable[index].tag != str2jo("not-used");
 }
 
 bool declared_jo_p(jo index) {
   return
-    jotable[index].type == str2jo("declared");
+    jotable[index].tag == str2jo("declared");
 }
 
 void p_bind_name() {
-  p_filte_binding();
+  run_binding_filter();
   jo name = as_pop();
   jo tag = as_pop();
   cell value = as_pop();
@@ -658,10 +658,10 @@ void p_bind_name() {
     printf("  name : %s\n", jo2str(name));
     printf("  tag : %s\n", jo2str(tag));
     printf("  value : %ld\n", value);
-    printf("  it has been bound as a %s\n", jo2str(jotable[name].type));
+    printf("  it has been bound as a %s\n", jo2str(jotable[name].tag));
     return;
   }
-  jotable_set_type_value(name, tag, value);
+  jotable_set_tag_and_value(name, tag, value);
 
   run_binding_hook(name, tag, value);
 
@@ -688,6 +688,20 @@ void define_primkey(string str, primitive fun) {
   as_push(str2jo("<prim-keyword>"));
   as_push(name);
   p_bind_name();
+}
+
+void export_bind() {
+  define_prim("core-name-report", p_core_name_report);
+  define_prim("core-name-record", p_core_name_record);
+
+  define_prim("name-report", p_name_report);
+  define_prim("name-record", p_name_record);
+
+  define_prim("binding-filter-stack-push", p_binding_filter_stack_push);
+  define_prim("binding-filter-stack-pop", p_binding_filter_stack_pop);
+
+  define_prim("binding-hook-stack-push", p_binding_hook_stack_push);
+  define_prim("binding-hook-stack-pop", p_binding_hook_stack_pop);
 }
 
 typedef cell keyword;
@@ -748,24 +762,24 @@ void jo_apply(jo jo) {
     printf("undefined jo : %s\n", jo2str(jo));
     return;
   }
-  cell jo_type = jotable[jo].type;
+  cell tag = jotable[jo].tag;
 
-  if (jo_type == str2jo("<prim>")) {
+  if (tag == str2jo("<prim>")) {
     primitive primitive = jotable_get_value(jo);
     primitive();
   }
-  else if (jo_type == str2jo("<jojo>")) {
+  else if (tag == str2jo("<jojo>")) {
     cell jojo = jotable_get_value(jo);
     rs_new_point(jojo);
   }
 
-  else if (jo_type == str2jo("<prim-keyword>")) {
+  else if (tag == str2jo("<prim-keyword>")) {
     keyword_stack_push(alias_stack_pointer);
     primitive primitive = jotable_get_value(jo);
     primitive();
     alias_stack_pointer = keyword_stack_pop();
   }
-  else if (jo_type == str2jo("<keyword>")) {
+  else if (tag == str2jo("<keyword>")) {
     // keywords are always evaled
     keyword_stack_push(alias_stack_pointer);
     cell jojo = jotable_get_value(jo);
@@ -774,20 +788,20 @@ void jo_apply(jo jo) {
     alias_stack_pointer = keyword_stack_pop();
   }
 
-  else if (jo_type == str2jo("<data>")) {
+  else if (tag == str2jo("<data>")) {
     cell cell = jotable_get_value(jo);
     as_push(cell);
   }
   else {
     cell cell = jotable_get_value(jo);
     as_push(cell);
-    as_push(jo_type);
+    as_push(tag);
   }
 }
 
 void jo_apply_now(jo jo) {
-  cell jo_type = jotable[jo].type;
-  if (jo_type == str2jo("<jojo>")) {
+  cell tag = jotable[jo].tag;
+  if (tag == str2jo("<jojo>")) {
     cell jojo = jotable_get_value(jo);
     rs_new_point(jojo);
     eval();
@@ -800,8 +814,8 @@ void jo_apply_now(jo jo) {
 }
 
 void jo_apply_with_local_pointer(jo jo, cell local_pointer) {
-  cell jo_type = jotable[jo].type;
-  if (jo_type == str2jo("<jojo>")) {
+  cell tag = jotable[jo].tag;
+  if (tag == str2jo("<jojo>")) {
     cell jojo = jotable_get_value(jo);
     rs_make_point(jojo, local_pointer);
     return;
@@ -1581,7 +1595,7 @@ void p_jo_filter_stack_pop() {
   as_push(jo_filter_stack_pop());
 }
 
-void p_filte_jo() {
+void run_jo_filter() {
   cell i = jo_filter_stack_pointer;
   while (i > jo_filter_stack_base) {
     jo_apply_now(jo_filter_stack[i-1]);
@@ -1595,7 +1609,7 @@ void init_jo_filter_stack() {
 
 void p_read_jo() {
   p_read_raw_jo();
-  p_filte_jo();
+  run_jo_filter();
 }
 
 jo read_jo() {
@@ -2004,7 +2018,7 @@ void k_define() {
 
 void k_declare_one() {
   jo index = read_jo();
-  jotable[index].type = str2jo("declared");
+  jotable[index].tag = str2jo("declared");
   k_ignore();
 }
 
@@ -2615,11 +2629,6 @@ void export_mise() {
   define_prim("double-quote", p_double_quote);
 
   define_prim("cell-size", p_cell_size);
-  define_prim("core-name-report", p_core_name_report);
-  define_prim("core-name-record", p_core_name_record);
-
-  define_prim("name-report", p_name_report);
-  define_prim("name-record", p_name_record);
 
   define_prim("newline", p_newline);
 }
@@ -2709,6 +2718,7 @@ void init_top_repl() {
   p_empty_jo();
   p_drop();
 
+  export_bind();
   export_apply();
   export_stack_operation();
   export_ending();
