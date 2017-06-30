@@ -1,5 +1,7 @@
 #+property: tangle core.jo
 #+title: core
+- depending-stack
+- use
 - <table>
 - [docs] basic docs about composition
 * todo
@@ -91,13 +93,13 @@
       (jojo
         (note -> [cons-pointer])
         cons-size cons-pointer add
-        (& cons-pointer) set-cell))
+        (address cons-pointer) set-cell))
 
     (define cons-pointer/init
       (jojo
         (note -> [cons-pointer])
         cons-area
-        (& cons-pointer) set-cell))
+        (address cons-pointer) set-cell))
 
     (define cons-pointer/next-free
       (jojo
@@ -191,8 +193,8 @@
         (note -> [cons-area])
         (if current-mark max-mark eq? then
             sweep-cons-area
-            (integer 0) (& current-mark) set-cell)
-        current-mark (integer 1) add (& current-mark) set-cell
+            (integer 0) (address current-mark) set-cell)
+        current-mark (integer 1) add (address current-mark) set-cell
         name-record mark-cons-area/name-record
         stack-pointer
         mark-cons-area/argument-stack))
@@ -1385,12 +1387,16 @@
 
         pop depending-stack after loading
 
-*** stacks
+*** module-stack & defining-stack
 
     #+begin_src jojo
     (define module-stack <bare-stack> (: new))
     (define defining-stack <bare-stack> (: new))
+    #+end_src
 
+*** binding-filter-for-current-module
+
+    #+begin_src jojo
     (define binding-filter-for-current-module
       (jojo
         (note name -> module[version].name or name)
@@ -1404,11 +1410,11 @@
             swap jo/append)))
 
     (run (jo binding-filter-for-current-module) binding-filter-stack-push)
+    #+end_src
 
+*** jo-filter-for-current-module
 
-    (define loaded-module-record (data null))
-
-
+    #+begin_src jojo
     (define jo-filter-for-current-module
       (jojo
         (note name -> module[version].name or name)
@@ -1419,8 +1425,11 @@
             swap jo/append)))
 
     (run (jo jo-filter-for-current-module) jo-filter-stack-push)
+    #+end_src
 
+*** depending-stack
 
+    #+begin_src jojo
     (define depending-stack <bare-stack> (: new)
       (note an element in this stack
             is a list of pairs of module prefix and unique module-name))
@@ -1429,6 +1438,8 @@
 *** >< load-module
 
     #+begin_src jojo
+    (define loaded-module-record (data null))
+
     (define load-module
       (jojo
         (note module-name version ->)
@@ -1439,6 +1450,8 @@
         (< version) jo/append
         square-ket  jo/append
         (> prefix)
+
+        (if (< prefix) loaded-module-record list/member? then end)
 
         (jo /home/xyh/.jojo/module/)
         (< module-name)   jo/append
@@ -1451,12 +1464,15 @@
         module-stack   (: push: (data (< prefix)))
         defining-stack (: push: (data null))
 
-        (cat "- before loading : " (< path) string/print newline)
         (< path) load-file
-        (cat "- after  loading : " (< path) string/print newline)
 
         defining-stack (: drop)
-        module-stack   (: drop)))
+        module-stack   (: drop)
+
+        loaded-module-record
+        (< prefix) cons
+        (address loaded-module-record)
+        set-cell))
 
     (run (jo hiya) (jo 0.0.1) load-module)
     (run (string "hiya[0.0.1].hiya") string->jo jo/apply)
