@@ -95,63 +95,6 @@
     }
     #+end_src
 
-*** p_load_file
-
-    #+begin_src c
-    void p_load_file() {
-      // (string -> [reading_stack])
-      load_file(as_pop());
-    }
-    #+end_src
-
-*** k_include_one
-
-    #+begin_src c
-    void k_include_one() {
-      // ([io] -> *)
-      char buffer[PATH_MAX];
-      cell cursor = 0;
-      while (true) {
-        char c = read_byte();
-        if (c == '"') {
-          buffer[cursor] = 0;
-          cursor++;
-          break;
-        }
-        else {
-          buffer[cursor] = c;
-          cursor++;
-        }
-      }
-      char buffer1[PATH_MAX];
-      real_reading_path(buffer, buffer1);
-      load_file(buffer1);
-    }
-    #+end_src
-
-*** k_include
-
-    #+begin_src c
-    void k_include() {
-      // ([io] -> [compile])
-      while (true) {
-        jo s = read_jo();
-        if (s == str2jo(")")) {
-          return;
-        }
-        else if (s == str2jo("(")) {
-          jo_eval(read_jo());
-        }
-        else if (s == str2jo("\"")) {
-          k_include_one();
-        }
-        else {
-          // do nothing
-        }
-      }
-    }
-    #+end_src
-
 *** find_module_file_jo
 
     #+begin_src c
@@ -357,12 +300,9 @@
 
     #+begin_src c
     void export_module() {
-      defprim("load-file", p_load_file);
-
       defprim("find-module-file-jo", p_find_module_file_jo);
       defprim("find-module-dir-jo", p_find_module_dir_jo);
 
-      defprim("include", k_include);
       defprim("dep", k_dep);
       defprim("module", k_module);
       defprim("module/report", module_report);

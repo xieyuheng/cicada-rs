@@ -463,8 +463,7 @@
 (define send-to-class/find-meta-method
   (jojo
     (note class message -> [value <*> true] or [false])
-    (> message)
-    (> class)
+    (> class message)
     (if (< class) class/has-meta-method-list? then
         (< class) class/get-meta-method-list
         (< message)
@@ -481,14 +480,12 @@
 
 (define send-to-class
   (jojo
-    (> message)
-    (> tag)
-    (> class)
-    (< class) (< message)
+    (> class tag message)
+    (< class message)
     send-to-class/find-meta-method
     (if then
         current-local-pointer swap
-        (< class) (< tag) (jo self) local-in
+        (< class tag) (jo self) local-in
         apply-with-local-pointer
         end)
     (string "- send-to-class : can not find message : ") string/print
@@ -497,8 +494,7 @@
 (define send-to-object/find-method
   (jojo
     (note tag message -> [bare-jojo true] or [false])
-    (> message)
-    (> tag)
+    (> tag message)
     (< tag) jo/apply drop (> class)
     (if (< class) class/has-method-list? then
         (< class) class/get-method-list
@@ -515,10 +511,8 @@
 
 (define send-to-object
   (jojo
-    (> message)
-    (> tag)
-    (> data)
-    (< tag) (< message)
+    (> data tag message)
+    (< tag message)
     send-to-object/find-method
     (if then
         current-local-pointer swap
@@ -563,8 +557,7 @@
 (define variable-tracing
   (jojo
     (note tag name -> [data tag true] or [false])
-    (> name)
-    (> tag)
+    (> tag name)
     (< tag) jo/apply drop (> class)
     (if (< class) class/has-variable-list? not then false end)
     (< class) class/get-variable-list
@@ -579,8 +572,7 @@
 (define meta-variable-tracing
   (jojo
     (note class name -> [data tag true] or [false])
-    (> name)
-    (> class)
+    (> class name)
     (if (< class) class/has-meta-variable-list? then
         (< class) class/get-meta-variable-list
         (< name)
@@ -596,15 +588,12 @@
 (define has-instance-variable?
   (jojo
     (note [box tag name] -> true or false)
-    (> name)
-    (> tag)
+    (> tag name)
     car (> variable-list)
-    (< variable-list)
-    (< name)
+    (< variable-list name)
     assoc/find
     (if then drop true end)
-    (< tag)
-    (< name)
+    (< tag name)
     variable-tracing
     (if then 2drop true end)
     (el false)))
@@ -634,15 +623,12 @@
 (define get-instance-variable
   (jojo
     (note [box tag name] -> [data tag])
-    (> name)
-    (> tag)
+    (> tag name)
     car (> variable-list)
-    (< variable-list)
-    (< name)
+    (< variable-list name)
     assoc/find
     (if then variable->object end)
-    (< tag)
-    (< name)
+    (< tag name)
     variable-tracing
     (if then end)
     (el (cat "- get-instance-variable fail" newline
@@ -697,8 +683,7 @@
     dup (> box)
     car (> variable-list)
     (>> object)
-    (< variable-list)
-    (< name)
+    (< variable-list name)
     assoc/find
     (if then (> variable)
         (<< object) cons
@@ -753,19 +738,11 @@
 (define set-data-in-instance-variable
   (jojo
     (note [data box source-tag name] -> [])
-    (> name)
-    (> source-tag)
-    (> box)
-    (> data)
+    (> data box source-tag name)
 
-    (< box)
-    (< source-tag)
-    (< name)
+    (< box source-tag name)
     has-instance-variable?
-    (if then
-        (< box)
-        (< source-tag)
-        (< name)
+    (if then (< box source-tag name)
         get-instance-variable
         swap drop
         else (jo <data>))
@@ -779,14 +756,8 @@
 (define set-data-in-meta-variable
   (jojo
     (note [data class (jo <class>) name] -> [])
-    (> name)
-    (> tag)
-    (> class)
-    (> data)
-
-    (< class)
-    (< tag)
-    (< name)
+    (> data class tag name)
+    (< class tag name)
     has-meta-variable?
     (if then
         (< class)
@@ -917,6 +888,10 @@
        (note -> data)
        (<< self) (get-data stack)
        car)
+    (* drop
+       (note ->)
+       (<< self) (get-data stack)
+       cdr (<< self) (set-data stack))
     (* (: push: data)
        (<< self) (get-data stack)
        (< data)
@@ -1043,12 +1018,17 @@
   (include "path"))
 
 (define module-stack <bare-stack> (: new))
+(define defining-stack <bare-stack> (: new))
 
 (define binding-filter-for-current-module
   (jojo
     (note name -> module[version].name or name)
     (if module-stack (: empty?) then end)
-    (el module-stack (: tos)
+    (el dup
+        defining-stack
+        (: push: (data defining-stack (: pop) swap cons))
+
+        module-stack (: tos)
         (jo .) jo/append
         swap jo/append)))
 
@@ -1056,24 +1036,6 @@
 
 
 (define loaded-module-record (data null))
-
-
-(define defining-stack <bare-stack> (: new)
-  (note an element in this stack
-        is a list of names
-        defined by current loading module))
-
-(define binding-hook-for-current-module
-  (jojo
-    (note data tag name -> [defining-stack])
-    (if defining-stack (: empty?) then drop drop drop end)
-    (el swap drop swap drop
-        defining-stack (: pop)
-        swap cons
-        defining-stack (: push))))
-
-(run (jo binding-hook-for-current-module) binding-hook-stack-push)
-
 
 
 (define jo-filter-for-current-module
@@ -1092,7 +1054,41 @@
   (note an element in this stack
         is a list of pairs of module prefix and unique module-name))
 
+(define load-module
+  (jojo
+    (note module-name version ->)
+    (> module-name version)
 
+    (< module-name)
+    square-bar  jo/append
+    (< version) jo/append
+    square-ket  jo/append
+    (> prefix)
+
+    (jo /home/xyh/.jojo/module/)
+    (< module-name)   jo/append
+    (jo /)            jo/append
+    (< version)       jo/append
+    (jo /module.jo)   jo/append
+    jo->string
+    (> path)
+
+    module-stack   (: push: (data (< prefix)))
+    defining-stack (: push: (data null))
+
+    (cat "- before loading : " (< path) string/print newline)
+    (< path) load-file
+    (cat "- after  loading : " (< path) string/print newline)
+
+    defining-stack (: drop)
+    module-stack   (: drop)))
+
+(run (jo hiya) (jo 0.0.1) load-module)
+(run (jo hiya) jo/print)
+(note (run (jo hiya) (jo 0.0.1) load-module)
+      (run hiya)
+      (run (string "hiya[0.0.1].hiya") string->jo jo/apply)
+      (run (string "hiya[0.0.1]hiya") string->jo jo/apply))
 
 (note
   (include "path")
@@ -1155,12 +1151,19 @@
 
 (define bare-stack-0 <bare-stack> (: new))
 
-(test bare-stack-0 (: push: (data (integer 1)))
+(test bare-stack-0 (: empty?) dup dot dot newline
+      bare-stack-0 (: push: (data (integer 1)))
+      bare-stack-0 (: empty?) dup dot dot newline
       bare-stack-0 (: push: (data (integer 2)))
+      bare-stack-0 (: empty?) dup dot dot newline
       bare-stack-0 (: push: (data (integer 3)))
+      bare-stack-0 (: empty?) dup dot dot newline
       bare-stack-0 (: pop) integer/print newline
+      bare-stack-0 (: empty?) dup dot dot newline
       bare-stack-0 (: pop) integer/print newline
-      bare-stack-0 (: pop) integer/print newline)
+      bare-stack-0 (: empty?) dup dot dot newline
+      bare-stack-0 (: pop) integer/print newline
+      bare-stack-0 (: empty?) dup dot dot newline)
 
 (define stack-0 <stack> (: new))
 
@@ -1170,5 +1173,3 @@
       stack-0 (: pop) (: write)
       stack-0 (: pop) (: write)
       stack-0 (: pop) (: write))
-
-(run bye)

@@ -11,7 +11,7 @@
 #include <sys/stat.h>
 #include <ctype.h>
 #include <stdint.h>
-#include <setjmp.h>
+
 #include <dlfcn.h>
 #include <dirent.h>
 
@@ -783,24 +783,13 @@ void jo_apply_with_local_pointer(jo jo, cell local_pointer) {
   }
 }
 
-jmp_buf eval_jmp_buffer;
-
-bool exit_eval() {
-  longjmp(eval_jmp_buffer, 666);
-}
-
 void eval() {
-  if (666 == setjmp(eval_jmp_buffer)) {
-    return;
-  }
-  else {
-    cell rs_base = rs_pointer;
-    while (rs_pointer >= rs_base) {
-      return_point rp = rs_tos();
-      rs_inc();
-      cell jo = *(cell*)rp.array;
-      jo_apply(jo);
-    }
+  cell rs_base = rs_pointer;
+  while (rs_pointer >= rs_base) {
+    return_point rp = rs_tos();
+    rs_inc();
+    cell jo = *(cell*)rp.array;
+    jo_apply(jo);
   }
 }
 
@@ -1408,22 +1397,35 @@ void real_reading_path(string path, char* buffer) {
   }
 }
 
+bool has_byte_p() {
+  FILE* fd;
+  if (reading_stack_empty_p()) {
+    fd = stdin;
+  }
+  else {
+    fd = reading_stack_tos().file_handle;
+  }
+
+  if (feof(fd) == 0) {
+    return true;
+  }
+  else {
+    return false;
+  }
+}
+
+void p_has_byte_p() {
+  as_push(has_byte_p());
+}
+
+bool exit_repl();
+
 byte read_byte() {
   if (reading_stack_empty_p()) {
     return fgetc(stdin);
   }
   else {
-    char c = fgetc(reading_stack_tos().file_handle);
-    if (c == EOF) {
-      reading_point rp = reading_stack_pop();
-      fclose(rp.file_handle);
-      free(rp.file);
-      free(rp.dir);
-      return read_byte();
-    }
-    else {
-      return c;
-    }
+    return fgetc(reading_stack_tos().file_handle);
   }
 }
 
@@ -1452,6 +1454,7 @@ void p_byte_print() {
 }
 
 void export_byte() {
+  define_prim("has-byte?", p_has_byte_p);
   define_prim("read/byte", p_read_byte);
   define_prim("byte/unread", p_byte_unread);
   define_prim("byte/print", p_byte_print);
@@ -1480,6 +1483,30 @@ void p_alias_filter() {
   as_push(nick);
 }
 
+bool has_jo_p() {
+  byte c;
+  while (true) {
+
+    if (!has_byte_p()) {
+      return false;
+    }
+
+    c = read_byte();
+
+    if (isspace(c)) {
+      // loop
+    }
+    else {
+      byte_unread(c);
+      return true;
+    }
+  }
+}
+
+void p_has_jo_p() {
+  as_push(has_jo_p());
+}
+
 void p_read_raw_jo() {
   // ([io] -> jo)
   byte buf[1024];
@@ -1487,11 +1514,24 @@ void p_read_raw_jo() {
   cell collecting = false;
   byte c;
   byte go = true;
+
   while (go) {
+
+    if (!has_byte_p()) {
+      if (!collecting) {
+        printf("- p_read_raw_jo meet end-of-file\n");
+        return;
+      }
+      else {
+        break;
+      }
+    }
+
     c = read_byte();
+
     if (!collecting) {
       if (isspace(c)) {
-        // do nothing
+        // loop
       }
       else {
         collecting = true;
@@ -1502,6 +1542,7 @@ void p_read_raw_jo() {
         }
       }
     }
+
     else {
       if (isbarcket(c) ||
           isspace(c)) {
@@ -1514,6 +1555,7 @@ void p_read_raw_jo() {
       }
     }
   }
+
   buf[cur] = 0;
   as_push(str2jo(buf));
 }
@@ -1683,8 +1725,10 @@ void export_jo() {
   define_prim("alias-push", p_alias_push);
   define_prim("alias-filter", p_alias_filter);
 
-  define_prim("read/jo", p_read_jo);
+  define_prim("has-jo?", p_has_jo_p);
+
   define_prim("read/raw-jo", p_read_raw_jo);
+  define_prim("read/jo", p_read_jo);
 
   define_prim("jo/used?", p_jo_used_p);
   define_prim("jo/append", p_jo_append);
@@ -1845,12 +1889,104 @@ void p_file_copy_to_buffer() {
   as_push(read_counter);
 }
 
+void load_file(string path) {
+  // [reading_stack]
+  FILE* fp = fopen(path, "r");
+  if(!fp) {
+    perror("File opening failed");
+    printf("load_file fail : %s\n", path);
+    return;
+  }
+  char* file_buffer = malloc(PATH_MAX);
+  char* dir_buffer = malloc(PATH_MAX);
+  realpath(path, file_buffer);
+  realpath(path, dir_buffer);
+  char* dir_addr = dirname(dir_buffer);
+  reading_point rp = {
+    .file_handle = fp,
+    .file = file_buffer,
+    .dir = dir_addr
+  };
+  reading_stack_push(rp);
+
+  // {
+  //   printf("- load_file start\n");
+  //   printf("  fp: %d\n", fp);
+  //   printf("  file: %s\n", file_buffer);
+  //   printf("  dir_buffer: %s #%ld\n", dir_buffer, dir_buffer);
+  //   printf("  dir_addr: %s #%ld\n", dir_addr, dir_addr);
+  // }
+
+  p_top_repl();
+
+  reading_stack_pop();
+  fclose(rp.file_handle);
+  free(rp.file);
+  free(rp.dir);
+
+  // {
+  //   printf("- load_file finished\n");
+  //   printf("  fp: %d\n", fp);
+  //   printf("  file: %s\n", file_buffer);
+  //   printf("  dir_buffer: %s #%ld\n", dir_buffer, dir_buffer);
+  //   printf("  dir_addr: %s #%ld\n", dir_addr, dir_addr);
+  // }
+}
+
+void p_load_file() {
+  load_file(as_pop());
+}
+
+void k_include_one() {
+  // ([io] -> *)
+  char buffer[PATH_MAX];
+  cell cursor = 0;
+  while (true) {
+    char c = read_byte();
+    if (c == '"') {
+      buffer[cursor] = 0;
+      cursor++;
+      break;
+    }
+    else {
+      buffer[cursor] = c;
+      cursor++;
+    }
+  }
+  char buffer1[PATH_MAX];
+  real_reading_path(buffer, buffer1);
+  load_file(buffer1);
+}
+
+void k_include() {
+  // ([io] -> [compile])
+  while (true) {
+    jo s = read_raw_jo();
+    if (s == ROUND_KET) {
+      return;
+    }
+    else if (s == ROUND_BAR) {
+      jo_apply(read_jo());
+    }
+    else if (s == DOUBLE_QUOTE) {
+      k_include_one();
+    }
+    else {
+      // do nothing
+    }
+  }
+}
+
 void export_file() {
   define_prim("open-for-reading", p_open_for_reading);
   define_prim("file/readable?", p_file_readable_p);
   define_prim("dir/ok?", p_dir_ok_p);
   define_prim("file/size", p_file_size);
   define_prim("file/copy-to-buffer", p_file_copy_to_buffer);
+
+  define_prim("load-file", p_load_file);
+
+  define_primkey("include", k_include);
 }
 
 void p_current_dir() {
@@ -2028,21 +2164,20 @@ void p_as_print_by_flag() {
   if (top_repl_printing_flag) {
     p_as_print();
   }
-  else {
-    // do nothing
-  }
 }
 
 void p_top_repl() {
-  // ([io] -> *)
   while (true) {
+    if (!has_jo_p()) {
+      return;
+    }
     jo s = read_jo();
     if (s == ROUND_BAR) {
       jo_apply(read_jo());
       p_as_print_by_flag();
     }
     else {
-      // do nothing
+      // loop
     }
   }
 }
@@ -2403,6 +2538,7 @@ void k_local_data_in() {
   }
   else {
     k_local_data_in();
+
     here(JO_INS_INT);
     here(s);
     here(JO_LOCAL_DATA_IN);
@@ -2415,10 +2551,11 @@ void k_local_data_out() {
     return;
   }
   else {
-    k_local_data_out();
     here(JO_INS_INT);
     here(s);
     here(JO_LOCAL_DATA_OUT);
+
+    k_local_data_out();
   }
 }
 
@@ -2429,6 +2566,7 @@ void k_local_tag_in() {
   }
   else {
     k_local_data_in();
+
     here(JO_INS_INT);
     here(s);
     here(JO_LOCAL_TAG_IN);
@@ -2441,10 +2579,11 @@ void k_local_tag_out() {
     return;
   }
   else {
-    k_local_data_out();
     here(JO_INS_INT);
     here(s);
     here(JO_LOCAL_TAG_OUT);
+
+    k_local_data_out();
   }
 }
 
@@ -2455,6 +2594,7 @@ void k_local_in() {
   }
   else {
     k_local_data_in();
+
     here(JO_INS_INT);
     here(s);
     here(JO_LOCAL_IN);
@@ -2467,10 +2607,11 @@ void k_local_out() {
     return;
   }
   else {
-    k_local_data_out();
     here(JO_INS_INT);
     here(s);
     here(JO_LOCAL_OUT);
+
+    k_local_data_out();
   }
 }
 
@@ -2592,6 +2733,9 @@ void p2() {
   printf("- p2\n");
   printf("  sizeof local_point : %ld\n", sizeof(local_point));
   printf("  sizeof local_area : %ld\n", sizeof(local_area));
+  printf("  sizeof EOF : %ld\n", sizeof(EOF));
+  printf("  sizeof byte : %ld\n", sizeof(byte));
+  printf("  EOF as number : %ld\n", EOF);
 }
 
 cell string_to_sum_test(string str) {
@@ -2617,33 +2761,6 @@ void export_play() {
   define_prim("p1", p1);
   define_prim("p2", p2);
   define_prim("p3", p3);
-}
-
-void load_file(string path) {
-  // [reading_stack]
-  FILE* fp = fopen(path, "r");
-  if(!fp) {
-    perror("File opening failed");
-    printf("load_file fail : %s\n", path);
-    return;
-  }
-  char* file_buffer = malloc(PATH_MAX);
-  char* dir_buffer = malloc(PATH_MAX);
-  realpath(path, file_buffer);
-  realpath(path, dir_buffer);
-  char* dir_addr = dirname(dir_buffer);
-  reading_point rp = {
-    .file_handle = fp,
-    .file = file_buffer,
-    .dir = dir_addr
-  };
-  // { printf("- load_file\n");
-  //   printf("  fp: %d\n", fp);
-  //   printf("  file: %s\n", file_buffer);
-  //   printf("  dir_buffer: %s #%ld\n", dir_buffer, dir_buffer);
-  //   printf("  dir_addr: %s #%ld\n", dir_addr, dir_addr);
-  // }
-  reading_stack_push(rp);
 }
 
 jotable_entry proto_jotable_entry(cell index) {
@@ -2718,7 +2835,6 @@ void init_top_repl() {
   init_compiling_stack();
   init_jo_filter_stack();
 
-
   p_empty_jo();
   p_drop();
 
@@ -2737,7 +2853,6 @@ void init_top_repl() {
   export_file();
   export_keyword();
   export_system();
-  // export_module();
   // export_ffi();
   export_top_level();
   export_mise();
@@ -2745,7 +2860,6 @@ void init_top_repl() {
 }
 
 int main(int argc, string* argv) {
-
   argument_counter = argc;
   argument_string_array = argv;
 
