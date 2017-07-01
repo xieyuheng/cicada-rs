@@ -1556,10 +1556,11 @@ void p_string_find_byte() {
   string s = as_pop();
   byte b = as_pop();
   cell i = 0;
-  while (s[0] == 0) {
-    if (s[0] == b) {
+  while (s[i] != 0) {
+    if (s[i] == b) {
       as_push(i);
       as_push(true);
+      return;
     }
     else {
       i++;
@@ -1843,6 +1844,14 @@ void p_jo_find_byte() {
   p_string_find_byte();
 }
 
+void p_jo_right_part() {
+  // (index jo -> jo)
+  jo jo = as_pop();
+  cell index = as_pop();
+  string s = jo2str(jo);
+  as_push(str2jo(s + index));
+}
+
 void p_jo_left_part() {
   // (index jo -> jo)
   char target[1024];
@@ -1855,15 +1864,7 @@ void p_jo_left_part() {
     i++;
   }
   target[index] = 0;
-  as_push(target);
-}
-
-void p_jo_right_part() {
-  // (index jo -> jo)
-  jo jo = as_pop();
-  cell index = as_pop();
-  string s = jo2str(jo);
-  as_push(str2jo(s + index));
+  as_push(str2jo(target));
 }
 
 void p_jo_part() {
@@ -1879,23 +1880,7 @@ void p_jo_part() {
     i++;
   }
   target[index_end] = 0;
-  as_push(target);
-}
-
-void p_jo_left_part_of_byte() {
-  // (byte jo -> jo)
-  p_tuck();
-  p_jo_find_byte();
-  p_swap();
-  p_jo_left_part();
-}
-
-void p_jo_right_part_of_byte() {
-  // (byte jo -> jo)
-  p_tuck();
-  p_jo_find_byte();
-  p_swap();
-  p_jo_right_part();
+  as_push(str2jo(target + index_begin));
 }
 
 void export_jo() {
@@ -1927,8 +1912,6 @@ void export_jo() {
   define_prim("jo/left-part", p_jo_left_part);
   define_prim("jo/right-part", p_jo_right_part);
   define_prim("jo/part", p_jo_part);
-  define_prim("jo/left-part-of-byte", p_jo_left_part_of_byte);
-  define_prim("jo/right-part-of-byte", p_jo_right_part_of_byte);
 }
 
 void p_open_for_reading() {

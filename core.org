@@ -1,9 +1,10 @@
 #+property: tangle core.jo
 #+title: core
-- cat-jo to replace jo/append
-- depending-stack
 - use
+- <jojo> and combinators
+  to mock a mocking bird
 - [docs] basic docs about composition
+- a package manager to download dependences and install them.
 * todo
 
   - has-method? has-meta-method?
@@ -11,7 +12,6 @@
   - write test
   - fix the roots of gc
   - [maybe] (note syntax for (>> name) (<< name) and (> name) (< name))
-  - <jojo> and combinators
   - to see what <module> needs from <path> and <file>
   - example of the use of oo
   - [emacs]
@@ -298,7 +298,7 @@
 
     (define assoc/find
       (jojo
-        (note assoc-list value -> [data true] or [false])
+        (note assoc-list value -> [pair true] or [false])
         (if over null eq? then drop drop false end)
         (if over car cdr over eq? then drop car true end)
         swap cdr swap (loop)))
@@ -425,6 +425,35 @@
 
     #+begin_src jojo
     (note (run (cat "1 2 3" newline "4 5 6" newline "7 8 9" newline)))
+    #+end_src
+
+* jo
+
+*** jo/left-part-of-byte
+
+    #+begin_src jojo
+    (define jo/left-part-of-byte
+      (jojo
+        (note byte jo -> jo)
+        tuck
+        jo/find-byte
+        (if not then (cat "- jo/left-part-of-byte fail") end)
+        swap
+        jo/left-part))
+    #+end_src
+
+*** jo/right-part-of-byte
+
+    #+begin_src jojo
+    (define jo/right-part-of-byte
+      (jojo
+        (note byte jo -> jo)
+        tuck
+        jo/find-byte
+        (if not then (cat "- jo/left-part-of-byte fail") end)
+        inc
+        swap
+        jo/right-part))
     #+end_src
 
 * oo
@@ -1302,246 +1331,218 @@
 
 * >< module
 
-*** note
+*** note module system
 
     - module is simply a dir of source code files,
       with a module.jo to store meta data of the module.
 
-    - a module-record for loaded modules to avoid reload.
-
-    - install modules to "~/.jojo/module/"
-      as "module-name/version/*"
-
-    - command-line interface of module-system :
+      install modules to "~/.jojo/module/" as "module-name/version/*"
+      by the following command-line interface :
       install
       uninstall
       reinstall
 
-    - module-system helps name to be unique
-      by adding prefix to name
-      prefix is simply "module-name[version]."
-
-    - unique naming is ensured by prefix,
-      thus no export-list,
-      thus all of a module are exposed to a user of the module.
-
-    - a package manager to download dependences and install them.
-
-*** note stacks
+    - reload problem :
+      can simply be solved by a module-record of loaded modules
 
     - unique-name problem :
-      a name must be resolved to an unique-name.
+      a name must be resolved to an unique-name
+      this is ensured by adding prefix to name
+      prefix is simply "module-name[version]."
 
-    - syntax example :
+      thus no export-list
+      thus all of a module are exposed to a user of the module
+
+*** to solve unique-name problem for current loading module
+
+***** module-stack
+
       #+begin_src jojo
-      (note
-        (module module-name [version])
-        (use module-name [version] ...)
-        (include "path"))
+      (define module-stack <bare-stack> (: new)
+        (note of prefix
+              load-module push module-stack
+              bind-name   use  module-stack by binding-filter-for-module
+              load-module pop  module-stack))
       #+end_src
 
-    - to solve prefix problem of the current loading module
+***** defining-stack
 
-      - module-stack
-        record current "module[version]." prefix
-        'module' push module-stack
-        pop module-stack after loading
+      #+begin_src jojo
+      (define defining-stack <bare-stack> (: new)
+        (note of list of names [to be prefixed]
+              load-module push       defining-stack
+              bind-name   set tos of defining-stack by binding-filter-for-module
+              read/jo     use        defining-stack by jo-filter-for-module
+              load-module pop        defining-stack))
 
-        'define' uses this information
+      (note thus in a module
+            one can not use name in core
 
-      - defining-stack
-        for current names to be prefixed
-        [name]
-        'define' push defining-stack
-        pop defining-stack after loading
+            when one wants to use a name in core in his module
+            he must prefix his version of this name by '.'
 
-        - thus in a module
-          one can not use name in core
+            thus the core must be very small
+            and it must be fixed in early version of the language)
+      #+end_src
 
-          when one wants to use a name in core in his module
-          he must prefix his version of this name by '.'
+***** binding-filter-for-module
 
-          thus the core must be very small
-          and it must be fixed in early version of the language
+      #+begin_src jojo
+      (define binding-filter-for-module
+        (jojo
+          (note name -> module[version].name or name)
+          (if module-stack (: empty?) then end)
+          (el dup
+              defining-stack
+              (: push: (data defining-stack (: pop) swap cons))
 
-    - to solve prefix problem for dependent modules
+              module-stack (: tos)
+              (jo .) jo/append
+              swap jo/append)))
 
-      - depending-stack
-        when loading a module
-        load dependent modules [if not already loaded].
+      (run (jo binding-filter-for-module) binding-filter-stack-push)
+      #+end_src
 
-        - thus we need to maintain a record of loaded modules
+***** jo-filter-for-module
 
-        'use' push depending-stack
-        to let the unique "module[version]." prefix
-        be used as "module."
+      #+begin_src jojo
+      (define jo-filter-for-module
+        (jojo
+          (note name -> module[version].name or name)
+          (if defining-stack (: empty?) then end)
+          (if dup defining-stack (: tos) list/member? then
+              module-stack (: tos)
+              (jo .) jo/append
+              swap jo/append)))
 
-        pop depending-stack after loading
+      (run (jo jo-filter-for-module) jo-filter-stack-push)
+      #+end_src
 
-*** module-stack
+*** to solve unique-name problem for dependent modules
 
-    #+begin_src jojo
-    (define module-stack <bare-stack> (: new)
-      (note of prefix))
-    #+end_src
+***** depending-stack
 
-*** defining-stack
+      #+begin_src jojo
+      (define depending-stack <bare-stack> (: new)
+        (note of list of pairs of module prefix and unique module-name
+              load-module push        depending-stack
+              use         set tos of  depending-stack
+              read/jo     use         depending-stack by jo-filter-for-dependence
+              (note module => module[version])
+              load-module pop         depending-stack))
+      #+end_src
 
-    #+begin_src jojo
-    (define defining-stack <bare-stack> (: new)
-      (note of list of name))
-    #+end_src
+***** helper
 
-*** binding-filter-for-current-module
+      #+begin_src jojo
+      (define full-name?
+        (jojo
+          (note jo -> true or false)
+          jo->string (> s)
+          (string ".") string/last-byte (> dot-byte)
 
-    #+begin_src jojo
-    (define binding-filter-for-current-module
-      (jojo
-        (note name -> module[version].name or name)
-        (if module-stack (: empty?) then end)
-        (el dup
-            defining-stack
-            (: push: (data defining-stack (: pop) swap cons))
+          (if (< dot-byte s) string/member? not then false end)
+          (if (< s) string/last-byte (< dot-byte) eq? then false end)
+          (if (< s) string/first-byte (< dot-byte) eq? then false end)
+          true end))
 
-            module-stack (: tos)
-            (jo .) jo/append
-            swap jo/append)))
+      (define full-name->module
+        (jojo
+          (note module.name -> module)
+          (string ".") string/last-byte
+          swap jo/left-part-of-byte))
 
-    (run (jo binding-filter-for-current-module) binding-filter-stack-push)
-    #+end_src
+      (define full-name->name
+        (jojo
+          (note module.name -> name)
+          (string ".") string/last-byte
+          swap jo/right-part-of-byte))
 
-*** jo-filter-for-current-module
+      (define module->prefix
+        (jojo
+          (note module -> module[version])
+          (> module)
+          depending-stack (: tos)
+          (< module) assoc/find
+          (if then car end)
+          (cat "- module->prefix fail" newline
+               "  the following module is not loaded" newline
+               "  module : " (< module) jo/print newline)))
+      #+end_src
 
-    #+begin_src jojo
-    (define jo-filter-for-current-module
-      (jojo
-        (note name -> module[version].name or name)
-        (if defining-stack (: empty?) then end)
-        (if dup defining-stack (: tos) list/member? then
-            module-stack (: tos)
-            (jo .) jo/append
-            swap jo/append)))
+***** jo-filter-for-dependence
 
-    (run (jo jo-filter-for-current-module) jo-filter-stack-push)
-    #+end_src
+      #+begin_src jojo
+      (define jo-filter-for-dependence
+        (jojo
+          (note name -> name)
+          (note module.name -> module[version].name)
+          (if dup full-name? not then end)
 
-*** depending-stack
+          dup full-name->module (> module)
+          full-name->name (> name)
 
-    #+begin_src jojo
-    (define depending-stack <bare-stack> (: new)
-      (note of list of pairs of module prefix and unique module-name))
-    #+end_src
+          (< module) module->prefix
+          (jo .)   jo/append
+          (< name) jo/append))
 
-*** full-name?
+      (run (jo jo-filter-for-dependence) jo-filter-stack-push)
+      #+end_src
 
-    #+begin_src jojo
-    (define full-name?
-      (jojo
-        (note jo -> true or false)
-        jo->string (> s)
-        (string ".") string/last-byte (> dot-byte)
+*** syntax
 
-        (if (< dot-byte s) string/member? not then false end)
-        (if (< s) string/last-byte (< dot-byte) eq? then false end)
-        (if (< s) string/first-byte (< dot-byte) eq? then false end)
-        true end))
-    #+end_src
+***** load-module
 
-*** full-name->module
+      #+begin_src jojo
+      (define loaded-module-record (data null))
 
-    #+begin_src jojo
-    (define full-name->module
-      (jojo
-        (note module.name -> module)
-        (string ".") string/last-byte
-        swap jo/left-part-of-byte))
-    #+end_src
+      (define load-module
+        (jojo
+          (note module-name version ->)
+          (> module-name version)
 
-*** full-name->name
+          (< module-name)
+          square-bar  jo/append
+          (< version) jo/append
+          square-ket  jo/append
+          (> prefix)
 
-    #+begin_src jojo
-    (define full-name->name
-      (jojo
-        (note module.name -> name)
-        (string ".") string/last-byte
-        swap jo/right-part-of-byte))
-    #+end_src
+          (if (< prefix) loaded-module-record list/member? then end)
 
-*** current-module-version
+          (string "/home/xyh/.jojo/module/") string->jo
+          (< module-name)   jo/append
+          (jo /)            jo/append
+          (< version)       jo/append
+          (string "/module.jo") string->jo jo/append
+          jo->string
+          (> path)
 
-    #+begin_src jojo
-    (define current-module-version
-      (jojo
-        (note -> version)
-        (string "[") string/last-byte
-        module-stack (: tos)
-        jo/right-part-of-byte
-        (string "]") string/last-byte
-        swap
-        jo/left-part-of-byte))
-    #+end_src
+          module-stack    (: push: (data (< prefix)))
+          defining-stack  (: push: (data null))
+          depending-stack (: push: (data null))
 
-*** jo-filter-for-dependence
+          (< path) load-file
 
-    #+begin_src jojo
-    (define jo-filter-for-dependence
-      (jojo
-        (note name -> name)
-        (note module.name -> module[version].name)
-        (if dup full-name? not then end)
-        (el (> full-name)
-            (< full-name) full-name->module
-            square-bar jo/append
-            current-module-version jo/append
-            square-ket jo/append
-            (jo .) jo/append
-            (< full-name) full-name->name jo/append)))
+          depending-stack (: drop)
+          defining-stack  (: drop)
+          module-stack    (: drop)
 
-    (run (jo jo-filter-for-dependence) jo-filter-stack-push)
-    #+end_src
+          loaded-module-record
+          (< prefix) cons
+          (address loaded-module-record)
+          set-cell))
 
-*** load-module
+      (run (jo hiya) (string "0.0.1") string->jo load-module)
+      (run (string "hiya[0.0.1].hiya") string->jo jo/apply)
+      #+end_src
 
-    #+begin_src jojo
-    (define loaded-module-record (data null))
+***** use
 
-    (define load-module
-      (jojo
-        (note module-name version ->)
-        (> module-name version)
-
-        (< module-name)
-        square-bar  jo/append
-        (< version) jo/append
-        square-ket  jo/append
-        (> prefix)
-
-        (if (< prefix) loaded-module-record list/member? then end)
-
-        (string "/home/xyh/.jojo/module/") string->jo
-        (< module-name)   jo/append
-        (jo /)            jo/append
-        (< version)       jo/append
-        (string "/module.jo") string->jo jo/append
-        jo->string
-        (> path)
-
-        module-stack   (: push: (data (< prefix)))
-        defining-stack (: push: (data null))
-
-        (< path) load-file
-
-        defining-stack (: drop)
-        module-stack   (: drop)
-
-        loaded-module-record
-        (< prefix) cons
-        (address loaded-module-record)
-        set-cell))
-
-    (run (jo hiya) (string "0.0.1") string->jo load-module)
-    (run (string "hiya[0.0.1].hiya") string->jo jo/apply)
-    #+end_src
+      #+begin_src jojo
+      (define use
+        (keyword
+          ))
+      #+end_src
 
 * >< <clib>
 
@@ -1651,8 +1652,14 @@
         stack-0 (: pop) (: write))
   #+end_src
 
-* (bye)
+* test
 
   #+begin_src jojo
-  (bye)
+  (run
+    depending-stack
+    (: push: (data null
+                   (jo hiya) (string "hiya[0.0.1]") string->jo cons
+                   cons)))
+
+  (run (jo hiya.name) jo/print)
   #+end_src
