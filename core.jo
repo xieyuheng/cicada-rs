@@ -1,13 +1,13 @@
 (run testing-flag/on)
 (test top-repl/printing-flag/on)
 
-(define cons-size      (data (integer 3) cell-size mul))
-(define cons-area-size (data (integer 1024 1024) mul cons-size mul))
+(define cons-size      (data (int 3) cell-size mul))
+(define cons-area-size (data (int 1024 1024) mul cons-size mul))
 (define cons-area      (data cons-area-size allocate))
 (define cons-area-top  (data cons-area cons-area-size add))
 (define cons-pointer   (data cons-area))
-(define current-mark   (data (integer 1)))
-(define max-mark       (data (integer 1024 1024) mul))
+(define current-mark   (data (int 1)))
+(define max-mark       (data (int 1024 1024) mul))
 
 (define cons-pointer/next
   (jojo
@@ -34,7 +34,7 @@
     (note cell -> bool)
     (if dup cons-area lt? then drop false end)
     (if dup cons-area-top gteq? then drop false end)
-    cons-area sub cons-size mod (integer 0) eq?))
+    cons-area sub cons-size mod (int 0) eq?))
 
 
 
@@ -69,7 +69,7 @@
   (jojo
     (note cons -> [io])
     (if dup cons-area-top eq? then drop end)
-    dup (integer 0)  swap set-cell
+    dup (int 0)  swap set-cell
     cons-size add
     (loop)))
 
@@ -95,7 +95,7 @@
 (define mark-cons-area/name-record
   (jojo
     (note name-record -> [cons-area])
-    (if dup get-cell (integer 0) eq? then drop end)
+    (if dup get-cell (int 0) eq? then drop end)
     dup get-cell mark-cons
     cell-size add
     (loop)))
@@ -113,8 +113,8 @@
     (note -> [cons-area])
     (if current-mark max-mark eq? then
         sweep-cons-area
-        (integer 0) (address current-mark) set-cell)
-    current-mark (integer 1) add (address current-mark) set-cell
+        (int 0) (address current-mark) set-cell)
+    current-mark (int 1) add (address current-mark) set-cell
     name-record mark-cons-area/name-record
     stack-pointer
     mark-cons-area/argument-stack))
@@ -178,9 +178,9 @@
 
 (note the following tests are for small cons-area)
 
-(note (test (integer 0)
-            (integer 1) cons
-            (integer 2) cons
+(note (test (int 0)
+            (int 1) cons
+            (int 2) cons
             dup car dot
             dup cdr car dot
             dup cdr cdr dot
@@ -239,8 +239,8 @@
     cons))
 
 (note
-  (run (integer 1) (integer 2) cons
-       (integer 3) null cons
+  (run (int 1) (int 2) cons
+       (int 3) null cons
        cons
        dup
        cons
@@ -269,7 +269,7 @@
 (define string/member?
   (jojo
     (note byte[not 0] string -> true or false)
-    (if dup get-byte (integer 0) eq? then 2drop false end)
+    (if dup get-byte (int 0) eq? then 2drop false end)
     (if 2dup get-byte eq? then 2drop true end)
     (el inc (loop))))
 
@@ -277,7 +277,7 @@
   (jojo
     (note byte string begin-address -> [index true] or [false])
     (> begin-address)
-    (if dup get-byte (integer 0) eq? then 2drop false end)
+    (if dup get-byte (int 0) eq? then 2drop false end)
     (if 2dup get-byte eq? then swap drop (< begin-address) sub true end)
     (el inc (< begin-address) (loop))))
 
@@ -862,15 +862,15 @@
     (* (: gteq?: i) (< self) (< i) gteq?)
     (* (: lteq?: i) (< self) (< i) lteq?)
 
-    (* print (< self) integer/print)
-    (* dot (< self) integer/dot)
+    (* print (< self) int/print)
+    (* dot (< self) int/dot)
     (* write (string "(int ") string/print
        (<< self) (: print)
        (string ") ") string/print)))
 
 (define number
   (keyword
-    (jo integer) jo/apply
+    (jo int) jo/apply
     (lev ins/lit <number>)))
 
 (define-class <str>
@@ -964,13 +964,13 @@
     (if dup argument-counter lt? then
         dup index->argument-string string/print
         newline
-        (integer 1) add
+        (int 1) add
         (loop))
     drop end))
 
 (define command-line/print-argument
   (jojo (note -> [io])
-    (integer 0) command-line/print-argument/loop))
+    (int 0) command-line/print-argument/loop))
 
 (test command-line/print-argument)
 
@@ -1171,7 +1171,7 @@
   (meta-variable
     (= testing-meta-variable (number 666)))
   (variable
-    (- bare-age (integer 5))
+    (- bare-age (int 5))
     (= age (number 13))
     (= language (str "chinese")))
   (method
@@ -1186,7 +1186,7 @@
        (<< self) (set age))
     (* report
        (cat "bare-age : "
-            (<< self) (get-data bare-age) integer/print newline
+            (<< self) (get-data bare-age) int/print newline
             "age : "
             (<< self) (get age) (: print) newline
             "languege : "
@@ -1224,17 +1224,17 @@
 (define bare-stack-0 <bare-stack> (: new))
 
 (test bare-stack-0 (: empty?) dup dot dot newline
-      bare-stack-0 (: push: (data (integer 1)))
+      bare-stack-0 (: push: (data (int 1)))
       bare-stack-0 (: empty?) dup dot dot newline
-      bare-stack-0 (: push: (data (integer 2)))
+      bare-stack-0 (: push: (data (int 2)))
       bare-stack-0 (: empty?) dup dot dot newline
-      bare-stack-0 (: push: (data (integer 3)))
+      bare-stack-0 (: push: (data (int 3)))
       bare-stack-0 (: empty?) dup dot dot newline
-      bare-stack-0 (: pop) integer/print newline
+      bare-stack-0 (: pop) int/print newline
       bare-stack-0 (: empty?) dup dot dot newline
-      bare-stack-0 (: pop) integer/print newline
+      bare-stack-0 (: pop) int/print newline
       bare-stack-0 (: empty?) dup dot dot newline
-      bare-stack-0 (: pop) integer/print newline
+      bare-stack-0 (: pop) int/print newline
       bare-stack-0 (: empty?) dup dot dot newline)
 
 (define stack-0 <stack> (: new))

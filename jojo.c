@@ -1242,7 +1242,7 @@ void p_lteq_p() {
 
 jo read_raw_jo();
 
-void k_integer() {
+void k_int() {
   // ([io] -> [compile])
   while (true) {
     jo s = read_raw_jo();
@@ -1256,12 +1256,12 @@ void k_integer() {
   }
 }
 
-void p_integer_print() { printf("%ld", as_pop()); }
+void p_int_print() { printf("%ld", as_pop()); }
 
 void p_dot() { printf("%ld ", as_pop()); }
-void p_integer_dot() { printf("%ld ", as_pop()); }
+void p_int_dot() { printf("%ld ", as_pop()); }
 
-void export_integer() {
+void export_int() {
   define_prim("inc", p_inc);
   define_prim("dec", p_dec);
   define_prim("neg", p_neg);
@@ -1281,12 +1281,12 @@ void export_integer() {
   define_prim("gteq?", p_gteq_p);
   define_prim("lteq?", p_lteq_p);
 
-  define_primkey("integer", k_integer);
+  define_primkey("int", k_int);
 
-  define_prim("integer/print", p_integer_print);
+  define_prim("int/print", p_int_print);
 
   define_prim("dot", p_dot);
-  define_prim("integer/dot", p_integer_dot);
+  define_prim("int/dot", p_int_dot);
 }
 
 void p_allocate () {
@@ -2851,7 +2851,7 @@ void init_top_repl() {
   export_control();
   export_bool();
   export_bit();
-  export_integer();
+  export_int();
   export_memory();
   export_byte();
   export_jo();

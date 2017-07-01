@@ -1642,7 +1642,7 @@
     }
     #+end_src
 
-* *integer*
+* *int*
 
 *** p_inc
 
@@ -1803,12 +1803,12 @@
     }
     #+end_src
 
-*** k_integer
+*** k_int
 
     #+begin_src c
     jo read_raw_jo();
 
-    void k_integer() {
+    void k_int() {
       // ([io] -> [compile])
       while (true) {
         jo s = read_raw_jo();
@@ -1823,23 +1823,23 @@
     }
     #+end_src
 
-*** p_integer_print
+*** p_int_print
 
     #+begin_src c
-    void p_integer_print() { printf("%ld", as_pop()); }
+    void p_int_print() { printf("%ld", as_pop()); }
     #+end_src
 
-*** p_dot & p_integer_dot
+*** p_dot & p_int_dot
 
     #+begin_src c
     void p_dot() { printf("%ld ", as_pop()); }
-    void p_integer_dot() { printf("%ld ", as_pop()); }
+    void p_int_dot() { printf("%ld ", as_pop()); }
     #+end_src
 
-*** export_integer
+*** export_int
 
     #+begin_src c
-    void export_integer() {
+    void export_int() {
       define_prim("inc", p_inc);
       define_prim("dec", p_dec);
       define_prim("neg", p_neg);
@@ -1859,12 +1859,12 @@
       define_prim("gteq?", p_gteq_p);
       define_prim("lteq?", p_lteq_p);
 
-      define_primkey("integer", k_integer);
+      define_primkey("int", k_int);
 
-      define_prim("integer/print", p_integer_print);
+      define_prim("int/print", p_int_print);
 
       define_prim("dot", p_dot);
-      define_prim("integer/dot", p_integer_dot);
+      define_prim("int/dot", p_int_dot);
     }
     #+end_src
 
@@ -4000,7 +4000,7 @@
       export_control();
       export_bool();
       export_bit();
-      export_integer();
+      export_int();
       export_memory();
       export_byte();
       export_jo();
