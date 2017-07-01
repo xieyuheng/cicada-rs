@@ -15,4 +15,5 @@ typedef void (*primitive)();
 extern void as_push(cell value);
 extern cell as_pop();
 
-extern void defprim(string str, primitive fun);
+extern void define_prim(string str, primitive fun);
+extern void define_primkey(string str, primitive fun);
