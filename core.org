@@ -1,6 +1,7 @@
 #+property: tangle core.jo
 #+title: core
-- use
+- syntax for byte
+  instead of string/last-byte
 - <jojo> and combinators
   to mock a mocking bird
 - [docs] basic docs about composition
@@ -1329,7 +1330,7 @@
           newline)
     #+end_src
 
-* >< module
+* module
 
 *** note module system
 
@@ -1352,7 +1353,7 @@
       prefix is simply "module-name[version]."
 
       thus no export-list,
-      thus all of a module are exposed to a user of the module
+      thus all of a module are exposed to a user of the module.
 
 *** to solve unique-name problem for current loading module
 
@@ -1431,6 +1432,8 @@
               read/jo     use         depending-stack by jo-filter-for-dependence
               (note module => module[version])
               load-module pop         depending-stack))
+
+      (run depending-stack (: push: (data null)))
       #+end_src
 
 ***** helper
@@ -1490,60 +1493,88 @@
       (run (jo jo-filter-for-dependence) jo-filter-stack-push)
       #+end_src
 
-*** syntax
+*** load-module
 
-***** load-module
+    #+begin_src jojo
+    (define loaded-module-record (data null))
 
-      #+begin_src jojo
-      (define loaded-module-record (data null))
+    (define load-module
+      (jojo
+        (note module-name version ->)
+        (> module-name version)
 
-      (define load-module
-        (jojo
-          (note module-name version ->)
-          (> module-name version)
+        (< module-name)
+        square-bar  jo/append
+        (< version) jo/append
+        square-ket  jo/append
+        (> prefix)
 
-          (< module-name)
-          square-bar  jo/append
-          (< version) jo/append
-          square-ket  jo/append
-          (> prefix)
+        (if (< prefix) loaded-module-record list/member? then end)
 
-          (if (< prefix) loaded-module-record list/member? then end)
+        (string "/home/xyh/.jojo/module/") string->jo
+        (< module-name)   jo/append
+        (jo /)            jo/append
+        (< version)       jo/append
+        (string "/module.jo") string->jo jo/append
+        jo->string
+        (> path)
 
-          (string "/home/xyh/.jojo/module/") string->jo
-          (< module-name)   jo/append
-          (jo /)            jo/append
-          (< version)       jo/append
-          (string "/module.jo") string->jo jo/append
-          jo->string
-          (> path)
+        module-stack    (: push: (data (< prefix)))
+        defining-stack  (: push: (data null))
+        depending-stack (: push: (data null))
 
-          module-stack    (: push: (data (< prefix)))
-          defining-stack  (: push: (data null))
-          depending-stack (: push: (data null))
+        (< path) load-file
 
-          (< path) load-file
+        depending-stack (: drop)
+        defining-stack  (: drop)
+        module-stack    (: drop)
 
-          depending-stack (: drop)
-          defining-stack  (: drop)
-          module-stack    (: drop)
+        loaded-module-record
+        (< prefix) cons
+        (address loaded-module-record)
+        set-cell))
+    #+end_src
 
-          loaded-module-record
-          (< prefix) cons
-          (address loaded-module-record)
-          set-cell))
+*** use
 
-      (run (jo hiya) (string "0.0.1") string->jo load-module)
-      (run (string "hiya[0.0.1].hiya") string->jo jo/apply)
-      #+end_src
+    #+begin_src jojo
+    (define use/help
+      (jojo
+        (note module version ->)
+        (note as nick ->)
 
-***** use
+        (if over (raw-jo as) eq? not then
+            (> module version)
 
-      #+begin_src jojo
-      (define use
-        (keyword
-          ))
-      #+end_src
+            (< module)
+            square-bar  jo/append
+            (< version) jo/append
+            square-ket  jo/append (> prefix)
+
+            (if (< prefix) loaded-module-record list/member? not then
+                (< module version) load-module)
+
+            depending-stack (: pop)
+            (< module) (< prefix) cons
+            cons
+            depending-stack (: push: (data))
+            end)
+
+        (el (> nick) drop
+            depending-stack (: pop)
+            dup
+            car car (< nick) swap cons
+            cons
+            depending-stack (: push: (data))
+            end)))
+
+    (define use
+      (keyword
+        read/raw-jo (if dup round-ket eq? then drop end)
+        read/raw-jo (if dup round-ket eq? then 2drop end)
+        use/help
+        (loop)))
+    #+end_src
 
 * >< <clib>
 
@@ -1553,11 +1584,10 @@
       c is only used to implement primitive object ?
       and to do optimization ?
 
-*** example
+*** clib
 
     #+begin_src jojo
     (note
-      (include "path")
       (clib "path"))
     #+end_src
 
@@ -1656,11 +1686,12 @@
 * test
 
   #+begin_src jojo
-  (run
-    depending-stack
-    (: push: (data null
-                   (jo hiya) (string "hiya[0.0.1]") string->jo cons
-                   cons)))
+  (use hiya 0.0.1 as h)
 
-  (run (jo hiya.name) jo/print)
+  (run (raw-jo hiya.name) jo/print newline
+       (jo hiya.name) jo/print newline
+       hiya.hiya
+
+       (jo h.name) jo/print newline
+       h.hiya)
   #+end_src

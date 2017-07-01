@@ -1802,6 +1802,23 @@ void p_null() {
   as_push(JO_NULL);
 }
 
+void k_raw_jo() {
+  // ([io] -> [compile])
+  while (true) {
+    jo s = read_raw_jo();
+    if (s == ROUND_BAR) {
+      jo_apply(read_jo());
+    }
+    else if (s == ROUND_KET) {
+      break;
+    }
+    else {
+      here(JO_INS_INT);
+      here(s);
+    }
+  }
+}
+
 void k_jo() {
   // ([io] -> [compile])
   while (true) {
@@ -1896,6 +1913,8 @@ void export_jo() {
 
   define_prim("read/raw-jo", p_read_raw_jo);
   define_prim("read/jo", p_read_jo);
+  define_primkey("jo", k_jo);
+  define_primkey("raw-jo", k_raw_jo);
 
   define_prim("jo/used?", p_jo_used_p);
   define_prim("jo/append", p_jo_append);
@@ -1903,7 +1922,6 @@ void export_jo() {
   define_prim("jo->string", p_jo_to_string);
   define_prim("string->jo", p_string_to_jo);
   define_prim("string/length->jo", p_string_length_to_jo);
-  define_primkey("jo", k_jo);
   define_prim("jo/print", p_jo_print);
   define_prim("jo/dot", p_jo_dot);
   define_prim("generate-jo", p_generate_jo);

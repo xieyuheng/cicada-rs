@@ -1080,6 +1080,8 @@
         (note module => module[version])
         load-module pop         depending-stack))
 
+(run depending-stack (: push: (data null)))
+
 (define full-name?
   (jojo
     (note jo -> true or false)
@@ -1167,15 +1169,44 @@
     (address loaded-module-record)
     set-cell))
 
-(run (jo hiya) (string "0.0.1") string->jo load-module)
-(run (string "hiya[0.0.1].hiya") string->jo jo/apply)
+(define use/help
+  (jojo
+    (note module version ->)
+    (note as nick ->)
+
+    (if over (raw-jo as) eq? not then
+        (> module version)
+
+        (< module)
+        square-bar  jo/append
+        (< version) jo/append
+        square-ket  jo/append (> prefix)
+
+        (if (< prefix) loaded-module-record list/member? not then
+            (< module version) load-module)
+
+        depending-stack (: pop)
+        (< module) (< prefix) cons
+        cons
+        depending-stack (: push: (data))
+        end)
+
+    (el (> nick) drop
+        depending-stack (: pop)
+        dup
+        car car (< nick) swap cons
+        cons
+        depending-stack (: push: (data))
+        end)))
 
 (define use
   (keyword
-    ))
+    read/raw-jo (if dup round-ket eq? then drop end)
+    read/raw-jo (if dup round-ket eq? then 2drop end)
+    use/help
+    (loop)))
 
 (note
-  (include "path")
   (clib "path"))
 
 (define-class <person>
@@ -1258,10 +1289,11 @@
       stack-0 (: pop) (: write)
       stack-0 (: pop) (: write))
 
-(run
-  depending-stack
-  (: push: (data null
-                 (jo hiya) (string "hiya[0.0.1]") string->jo cons
-                 cons)))
+(use hiya 0.0.1 as h)
 
-(run (jo hiya.name) jo/print)
+(run (raw-jo hiya.name) jo/print newline
+     (jo hiya.name) jo/print newline
+     hiya.hiya
+
+     (jo h.name) jo/print newline
+     h.hiya)
