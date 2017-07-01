@@ -3081,7 +3081,7 @@ j* jotable_insert
     }
     #+end_src
 
-* >< *ffi*
+* *cffi*
 
 *** ccall
 
@@ -3140,7 +3140,7 @@ j* jotable_insert
     void k_clib() {
       // ([io] -> [compile])
       while (true) {
-        jo s = read_jo();
+        jo s = read_raw_jo();
         if (s == ROUND_KET) {
           return;
         }
@@ -3154,10 +3154,10 @@ j* jotable_insert
     }
     #+end_src
 
-*** export_ffi
+*** export_cffi
 
     #+begin_src c
-    void export_ffi() {
+    void export_cffi() {
       define_prim("clib", k_clib);
     }
     #+end_src
@@ -4141,7 +4141,7 @@ j* jotable_insert
       export_file();
       export_keyword();
       export_system();
-      // export_ffi();
+      export_cffi();
       export_top_level();
       export_mise();
       export_play();

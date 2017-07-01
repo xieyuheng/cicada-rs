@@ -2200,7 +2200,7 @@ void k_clib_one() {
 void k_clib() {
   // ([io] -> [compile])
   while (true) {
-    jo s = read_jo();
+    jo s = read_raw_jo();
     if (s == ROUND_KET) {
       return;
     }
@@ -2213,7 +2213,7 @@ void k_clib() {
   }
 }
 
-void export_ffi() {
+void export_cffi() {
   define_prim("clib", k_clib);
 }
 
@@ -2964,7 +2964,7 @@ void init_top_repl() {
   export_file();
   export_keyword();
   export_system();
-  // export_ffi();
+  export_cffi();
   export_top_level();
   export_mise();
   export_play();

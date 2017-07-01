@@ -1,19 +1,21 @@
 #+property: tangle core.jo
 #+title: core
+- fix module about user-jojo-dir and system-jojo-dir
 - syntax for byte
   instead of string/last-byte
 - <jojo> and combinators
-  to mock a mocking bird
+  - syntax for currying
+  - to mock a mocking bird
+- <clib>
 - [docs] basic docs about composition
-- a package manager to download dependences and install them.
 * todo
 
   - has-method? has-meta-method?
   - [testing] assert for embedded testing
-  - write test
+    we should also be able to separate test out of the code
+    to load the code faster
+  - a package manager to download dependences and install them.
   - fix the roots of gc
-  - [maybe] (note syntax for (>> name) (<< name) and (> name) (< name))
-  - to see what <module> needs from <path> and <file>
   - example of the use of oo
   - [emacs]
     - write some emacs-lisp lib
@@ -1686,12 +1688,20 @@
 * test
 
   #+begin_src jojo
-  (use hiya 0.0.1 as h)
+  (note (use hiya 0.0.1 as h)
 
-  (run (raw-jo hiya.name) jo/print newline
-       (jo hiya.name) jo/print newline
-       hiya.hiya
+        (run (raw-jo hiya.name) jo/print newline
+             (jo hiya.name) jo/print newline
+             hiya.hiya
 
-       (jo h.name) jo/print newline
-       h.hiya)
+             (jo h.name) jo/print newline
+             h.hiya))
+
+  (use hi 0.0.1)
+
+  (run hi.hi)
+
+  (use welcome 0.0.1 as w)
+
+  (run w.welcome)
   #+end_src
