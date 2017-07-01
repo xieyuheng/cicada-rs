@@ -1,7 +1,5 @@
 #+property: tangle core.jo
 #+title: core
-- str => text [with utf8-char]
-- string [only as byte string]
 - move functions about string and jo to c code
 - cat-jo to replace jo/append
 - depending-stack
@@ -14,7 +12,6 @@
   - write test
   - fix the roots of gc
   - [maybe] (note syntax for (>> name) (<< name) and (> name) (< name))
-  - dynamic <stream> v.s. static <str>
   - <jojo> and combinators
   - to see what <module> needs from <path> and <file>
   - example of the use of oo
@@ -1121,42 +1118,42 @@
         (lev ins/lit <number>)))
     #+end_src
 
-* <str>
+* <text>
 
 *** note
 
-    - <str> is static allocated,
+    - <text> is static allocated,
       no gc for this class.
 
-*** <str>
+*** <text>
 
     #+begin_src jojo
-    (define-class <str>
+    (define-class <text>
       (method
         (* print (< self) string/print)
         (* length (< self) string/length (jo <number>))
         (* write
-           (string "(str ") string/print
+           (string "(text ") string/print
            double-quote jo/print
            (<< self) (: print)
            double-quote jo/print
            (string ") ") string/print)))
     #+end_src
 
-*** str
+*** text
 
     #+begin_src jojo
-    (define str
+    (define text
       (keyword
         (jo string) jo/apply
-        (lev ins/lit <str>)))
+        (lev ins/lit <text>)))
     #+end_src
 
 *** test
 
     #+begin_src jojo
     (note
-      (test (str "k1 k2 k3")
+      (test (text "k1 k2 k3")
             2dup (: print) newline
             2dup (: write) newline
             2dup (: length) (: print) newline
@@ -1288,7 +1285,7 @@
 
     #+begin_src jojo
     (define-class <path>
-      (inherit <str>)
+      (inherit <text>)
       (method
         (* write
            (string "(path ") string/print
@@ -1297,14 +1294,14 @@
            double-quote jo/print
            (string ") ") string/print)))
 
-    (add-method <str> to-path
+    (add-method <text> to-path
       (< self) (jo <path>))
     #+end_src
 
 *** test
 
     #+begin_src jojo
-    (test (str "/home/") (: to-path) (: write))
+    (test (text "/home/") (: to-path) (: write))
     #+end_src
 
 * >< <file>
@@ -1631,7 +1628,7 @@
     (variable
       (- bare-age (int 5))
       (= age (number 13))
-      (= language (str "chinese")))
+      (= language (text "chinese")))
     (method
       (* grow
          (<< self) (get age) (: inc)

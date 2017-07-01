@@ -873,24 +873,24 @@
     (jo int) jo/apply
     (lev ins/lit <number>)))
 
-(define-class <str>
+(define-class <text>
   (method
     (* print (< self) string/print)
     (* length (< self) string/length (jo <number>))
     (* write
-       (string "(str ") string/print
+       (string "(text ") string/print
        double-quote jo/print
        (<< self) (: print)
        double-quote jo/print
        (string ") ") string/print)))
 
-(define str
+(define text
   (keyword
     (jo string) jo/apply
-    (lev ins/lit <str>)))
+    (lev ins/lit <text>)))
 
 (note
-  (test (str "k1 k2 k3")
+  (test (text "k1 k2 k3")
         2dup (: print) newline
         2dup (: write) newline
         2dup (: length) (: print) newline
@@ -977,7 +977,7 @@
 (note (test name-report))
 
 (define-class <path>
-  (inherit <str>)
+  (inherit <text>)
   (method
     (* write
        (string "(path ") string/print
@@ -986,10 +986,10 @@
        double-quote jo/print
        (string ") ") string/print)))
 
-(add-method <str> to-path
+(add-method <text> to-path
   (< self) (jo <path>))
 
-(test (str "/home/") (: to-path) (: write))
+(test (text "/home/") (: to-path) (: write))
 
 (note
 
@@ -1173,7 +1173,7 @@
   (variable
     (- bare-age (int 5))
     (= age (number 13))
-    (= language (str "chinese")))
+    (= language (text "chinese")))
   (method
     (* grow
        (<< self) (get age) (: inc)
