@@ -1,8 +1,12 @@
 #+property: tangle core.jo
 #+title: core
+- integer => int
+  str => text [with utf8-char]
+  string [only as byte string]
+- move functions about string and jo to c code
+- cat-jo to replace jo/append
 - depending-stack
 - use
-- <table>
 - [docs] basic docs about composition
 * todo
 
@@ -367,6 +371,72 @@
         (el cdr (loop))))
     #+end_src
 
+* string
+
+*** string/member?
+
+    #+begin_src jojo
+    (define string/member?
+      (jojo
+        (note byte[not 0] string -> true or false)
+        (if dup get-byte (integer 0) eq? then 2drop false end)
+        (if 2dup get-byte eq? then 2drop true end)
+        (el inc (loop))))
+    #+end_src
+
+*** string/find-byte
+
+    #+begin_src jojo
+    (define string/find-byte/loop
+      (jojo
+        (note byte string begin-address -> [index true] or [false])
+        (> begin-address)
+        (if dup get-byte (integer 0) eq? then 2drop false end)
+        (if 2dup get-byte eq? then swap drop (< begin-address) sub true end)
+        (el inc (< begin-address) (loop))))
+
+    (define string/find-byte
+      (jojo
+        (note byte string -> [index true] or [false])
+        dup string/find-byte/loop))
+    #+end_src
+
+* jo
+
+*** jo/find-byte
+
+    #+begin_src jojo
+    (define jo/find-byte
+      (jojo
+        (note byte jo -> [index true] or [false])
+        jo->string string/find-byte))
+    #+end_src
+
+*** jo/left-part
+
+    #+begin_src jojo
+    (define jo/left-part
+      (jojo
+        (note index jo -> jo)
+        ))
+    #+end_src
+
+*** jo/right-part
+
+    #+begin_src jojo
+    (define jo/right-part
+      (jojo
+        (note index jo -> jo)))
+    #+end_src
+
+*** jo/part
+
+    #+begin_src jojo
+    (define jo/part
+      (jojo
+        (note index-begin index-end jo -> jo)))
+    #+end_src
+
 * for sugar
 
 *** lev
@@ -496,8 +566,8 @@
     (define jo-ending-with-colon?
       (jojo
         (note jo -> bool)
-        jo->string string/last-char
-        (string ":") string/last-char eq?))
+        jo->string string/last-byte
+        (string ":") string/last-byte eq?))
 
     (define define-class/keyword/one-method/complex-message
       (keyword
@@ -1009,12 +1079,16 @@
              ins/lit (esc read/jo here ignore))))
     #+end_src
 
-* <int>
+* <number>
 
-*** <int>
+*** note
+
+    - will be rational number
+
+*** <number>
 
     #+begin_src jojo
-    (define-class <int>
+    (define-class <number>
       (method
         (* inc (< self) inc (<% self))
         (* dec (< self) dec (<% self))
@@ -1039,13 +1113,13 @@
            (string ") ") string/print)))
     #+end_src
 
-*** int
+*** number
 
     #+begin_src jojo
-    (define int
+    (define number
       (keyword
         (jo integer) jo/apply
-        (lev ins/lit <int>)))
+        (lev ins/lit <number>)))
     #+end_src
 
 * <str>
@@ -1061,7 +1135,7 @@
     (define-class <str>
       (method
         (* print (< self) string/print)
-        (* length (< self) string/length (jo <int>))
+        (* length (< self) string/length (jo <number>))
         (* write
            (string "(str ") string/print
            double-quote jo/print
@@ -1105,7 +1179,7 @@
     #+begin_src jojo
     (define-class <object>
       (meta-variable
-        (= testing-meta-variable-in-<object> (int 26881)))
+        (= testing-meta-variable-in-<object> (number 26881)))
       (meta-method
         (* new
            null null cons
@@ -1176,18 +1250,6 @@
         (* (: push: object)
            (<< self) (as <bare-stack>)
            (: push: (data (<< object) cons)))))
-    #+end_src
-
-* >< <table>
-
-*** <table>
-
-    #+begin_src jojo
-      (define-class <table>
-        (method
-          (* find )
-          (* add )
-          ))
     #+end_src
 
 * >< <system>
@@ -1387,11 +1449,18 @@
 
         pop depending-stack after loading
 
-*** module-stack & defining-stack
+*** module-stack
 
     #+begin_src jojo
-    (define module-stack <bare-stack> (: new))
-    (define defining-stack <bare-stack> (: new))
+    (define module-stack <bare-stack> (: new)
+      (note of prefix))
+    #+end_src
+
+*** defining-stack
+
+    #+begin_src jojo
+    (define defining-stack <bare-stack> (: new)
+      (note of list of name))
     #+end_src
 
 *** binding-filter-for-current-module
@@ -1431,11 +1500,70 @@
 
     #+begin_src jojo
     (define depending-stack <bare-stack> (: new)
-      (note an element in this stack
-            is a list of pairs of module prefix and unique module-name))
+      (note of list of pairs of module prefix and unique module-name))
     #+end_src
 
-*** >< load-module
+*** full-name?
+
+    #+begin_src jojo
+    (define full-name?
+      (jojo
+        (note jo -> true or false)
+        jo->string (> s)
+        (string ".") string/last-byte (> dot-byte)
+
+        (if (< dot-byte s) string/member? not then false end)
+        (if (< s) string/last-byte (< dot-byte) eq? then false end)
+        (if (< s) string/first-byte (< dot-byte) eq? then false end)
+        true end))
+    #+end_src
+
+*** full-name->module
+
+    #+begin_src jojo
+    (define full-name->module
+      (jojo
+        (note module.name -> module)
+        ))
+    #+end_src
+
+*** full-name->name
+
+    #+begin_src jojo
+    (define full-name->name
+      (jojo
+        (note module.name -> name)
+        ))
+    #+end_src
+
+*** current-module-version
+
+    #+begin_src jojo
+    (define current-module-version
+      (jojo
+        (note -> version)))
+    #+end_src
+
+*** jo-filter-for-dependence
+
+    #+begin_src jojo
+    (define jo-filter-for-dependence
+      (jojo
+        (note name -> name)
+        (note module.name -> module[version].name)
+        (if dup full-name? not then end)
+        (el (> full-name)
+            (< full-name) full-name->module
+            square-bar jo/append
+            current-module-version jo/append
+            square-ket jo/append
+            (jo .) jo/append
+            (< full-name) full-name->name jo/append)))
+
+    (run (jo jo-filter-for-dependence) jo-filter-stack-push)
+    #+end_src
+
+*** load-module
 
     #+begin_src jojo
     (define loaded-module-record (data null))
@@ -1453,11 +1581,11 @@
 
         (if (< prefix) loaded-module-record list/member? then end)
 
-        (jo /home/xyh/.jojo/module/)
+        (string "/home/xyh/.jojo/module/") string->jo
         (< module-name)   jo/append
         (jo /)            jo/append
         (< version)       jo/append
-        (jo /module.jo)   jo/append
+        (string "/module.jo") string->jo jo/append
         jo->string
         (> path)
 
@@ -1474,7 +1602,7 @@
         (address loaded-module-record)
         set-cell))
 
-    (run (jo hiya) (jo 0.0.1) load-module)
+    (run (jo hiya) (string "0.0.1") string->jo load-module)
     (run (string "hiya[0.0.1].hiya") string->jo jo/apply)
     #+end_src
 
@@ -1500,10 +1628,10 @@
   (define-class <person>
     (inherit <object>)
     (meta-variable
-      (= testing-meta-variable (int 666)))
+      (= testing-meta-variable (number 666)))
     (variable
       (- bare-age (integer 5))
-      (= age (int 13))
+      (= age (number 13))
       (= language (str "chinese")))
     (method
       (* grow
@@ -1529,23 +1657,23 @@
   (run xieyuheng (: report)
        xieyuheng (: grow)
        xieyuheng (: report)
-       xieyuheng (: grow-by: (int 10))
+       xieyuheng (: grow-by: (number 10))
        xieyuheng (: report)
-       xieyuheng (: grow-by: (int 10))
+       xieyuheng (: grow-by: (number 10))
        xieyuheng (: report)
-       xieyuheng (: grow-by: (int 10) and-by: (int 10))
+       xieyuheng (: grow-by: (number 10) and-by: (number 10))
        xieyuheng (: report))
 
   (run <person> (get testing-meta-variable) (: write)
-       (int 777)
+       (number 777)
        <person> (set testing-meta-variable)
        <person> (get testing-meta-variable) (: write)
-       (int 888)
+       (number 888)
        <person> (set testing-meta-variable)
        <person> (get testing-meta-variable) (: write)
        <person> (get testing-meta-variable-in-<object>) (: write)
 
-       (int 26078)
+       (number 26078)
        <person> (set testing-meta-variable-0)
        <person> (get testing-meta-variable-0) (: write))
   #+end_src
@@ -1578,9 +1706,9 @@
 
   (define stack-0 <stack> (: new))
 
-  (test stack-0 (: push: (int 1))
-        stack-0 (: push: (int 2))
-        stack-0 (: push: (int 3))
+  (test stack-0 (: push: (number 1))
+        stack-0 (: push: (number 2))
+        stack-0 (: push: (number 3))
         stack-0 (: pop) (: write)
         stack-0 (: pop) (: write)
         stack-0 (: pop) (: write))

@@ -1802,7 +1802,12 @@ void p_string_append_to_buffer() {
   strcat(buffer, str);
 }
 
-void p_string_last_char() {
+void p_string_first_byte() {
+  string s = as_pop();
+  as_push(s[0]);
+}
+
+void p_string_last_byte() {
   string s = as_pop();
   cell i = 0;
   while (s[i+1] != 0) {
@@ -1818,7 +1823,8 @@ void export_string() {
   define_prim("string/dot", p_string_dot);
   define_prim("string/length", p_string_length);
   define_prim("string/append-to-buffer", p_string_append_to_buffer);
-  define_prim("string/last-char", p_string_last_char);
+  define_prim("string/first-byte", p_string_first_byte);
+  define_prim("string/last-byte", p_string_last_byte);
 }
 
 void p_open_for_reading() {
