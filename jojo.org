@@ -2119,6 +2119,173 @@
     }
     #+end_src
 
+* *string*
+
+*** k_one_string
+
+    #+begin_src c
+    void k_one_string() {
+      // ([io] -> [compile])
+      char buffer[1024 * 1024];
+      cell cursor = 0;
+      while (true) {
+        char c = read_byte();
+        if (c == '"') {
+          buffer[cursor] = 0;
+          cursor++;
+          break;
+        }
+        else {
+          buffer[cursor] = c;
+          cursor++;
+        }
+      }
+      string str = malloc(cursor);
+      strcpy(str, buffer);
+      here(JO_INS_INT);
+      here(str);
+    }
+    #+end_src
+
+*** k_string
+
+    #+begin_src c
+    void k_string() {
+      // ([io] -> [compile])
+      while (true) {
+        jo s = read_raw_jo();
+        if (s == ROUND_KET) {
+          return;
+        }
+        else if (s == DOUBLE_QUOTE) {
+          k_one_string();
+        }
+        else {
+          // do nothing
+        }
+      }
+    }
+    #+end_src
+
+*** p_string_length
+
+    #+begin_src c
+    void p_string_length() {
+      // (string -> length)
+      as_push(strlen(as_pop()));
+    }
+    #+end_src
+
+*** p_string_print
+
+    #+begin_src c
+    void p_string_print() {
+      // (string -> [io])
+      printf("%s", as_pop());
+    }
+    #+end_src
+
+*** p_string_dot
+
+    #+begin_src c
+    void p_string_dot() {
+      // (string -> [io])
+      printf("\"%s \"", as_pop());
+    }
+    #+end_src
+
+*** p_string_append_to_buffer
+
+    #+begin_src c
+    void p_string_append_to_buffer() {
+      // (buffer, string -> buffer)
+      string str = as_pop();
+      string buffer = as_tos();
+      strcat(buffer, str);
+    }
+    #+end_src
+
+*** p_string_first_byte
+
+    #+begin_src c
+    void p_string_first_byte() {
+      string s = as_pop();
+      as_push(s[0]);
+    }
+    #+end_src
+
+*** p_string_last_byte
+
+    #+begin_src c
+    void p_string_last_byte() {
+      string s = as_pop();
+      cell i = 0;
+      while (s[i+1] != 0) {
+        i++;
+      }
+      as_push(s[i]);
+    }
+    #+end_src
+
+*** p_string_member_p
+
+    #+begin_src c
+    void p_string_member_p() {
+      // (byte[not 0] string -> true or false)
+      string s = as_pop();
+      byte b = as_pop();
+      cell i = 0;
+      while (s[i] != 0) {
+        if (s[i] == b) {
+          as_push(true);
+          return;
+        }
+        else {
+          i++;
+        }
+      }
+      as_push(false);
+    }
+    #+end_src
+
+*** p_string_find_byte
+
+    #+begin_src c
+    void p_string_find_byte() {
+      // (byte string -> [index true] or [false])
+      string s = as_pop();
+      byte b = as_pop();
+      cell i = 0;
+      while (s[0] == 0) {
+        if (s[0] == b) {
+          as_push(i);
+          as_push(true);
+        }
+        else {
+          i++;
+        }
+      }
+      as_push(false);
+    }
+    #+end_src
+
+*** export_string
+
+    #+begin_src c
+    void export_string() {
+      define_primkey("string", k_string);
+      define_primkey("one-string", k_one_string);
+      define_prim("string/print", p_string_print);
+      define_prim("string/dot", p_string_dot);
+      define_prim("string/length", p_string_length);
+      define_prim("string/append-to-buffer", p_string_append_to_buffer);
+      define_prim("string/first-byte", p_string_first_byte);
+      define_prim("string/last-byte", p_string_last_byte);
+      define_prim("string/member?", p_string_member_p);
+      define_prim("string/find-byte", p_string_find_byte);
+    }
+    #+end_src
+
 * *jo*
 
 *** p_alias_push
@@ -2483,6 +2650,91 @@
     }
     #+end_src
 
+*** p_jo_find_byte
+
+    #+begin_src c
+    void p_jo_find_byte() {
+      // (byte jo -> [index true] or [false])
+      p_jo_to_string();
+      p_string_find_byte();
+    }
+    #+end_src
+
+*** p_jo_left_part
+
+    #+begin_src c
+    void p_jo_left_part() {
+      // (index jo -> jo)
+      char target[1024];
+      jo jo = as_pop();
+      cell index = as_pop();
+      string source = jo2str(jo);
+      cell i = 0;
+      while (i < index) {
+        target[i] = source[i];
+        i++;
+      }
+      target[index] = 0;
+      as_push(target);
+    }
+    #+end_src
+
+*** p_jo_right_part
+
+    #+begin_src c
+    void p_jo_right_part() {
+      // (index jo -> jo)
+      jo jo = as_pop();
+      cell index = as_pop();
+      string s = jo2str(jo);
+      as_push(str2jo(s + index));
+    }
+    #+end_src
+
+*** p_jo_part
+
+    #+begin_src c
+    void p_jo_part() {
+      // (index-begin index-end jo -> jo)
+      char target[1024];
+      jo jo = as_pop();
+      cell index_end = as_pop();
+      cell index_begin = as_pop();
+      string source = jo2str(jo);
+      cell i = index_begin;
+      while (i < index_end) {
+        target[i] = source[i];
+        i++;
+      }
+      target[index_end] = 0;
+      as_push(target);
+    }
+    #+end_src
+
+*** p_jo_left_part_of_byte
+
+    #+begin_src c
+    void p_jo_left_part_of_byte() {
+      // (byte jo -> jo)
+      p_tuck();
+      p_jo_find_byte();
+      p_swap();
+      p_jo_left_part();
+    }
+    #+end_src
+
+*** p_jo_right_part_of_byte
+
+    #+begin_src c
+    void p_jo_right_part_of_byte() {
+      // (byte jo -> jo)
+      p_tuck();
+      p_jo_find_byte();
+      p_swap();
+      p_jo_right_part();
+    }
+    #+end_src
+
 *** export_jo
 
     #+begin_src c
@@ -2510,129 +2762,13 @@
       define_prim("jo/print", p_jo_print);
       define_prim("jo/dot", p_jo_dot);
       define_prim("generate-jo", p_generate_jo);
-    }
-    #+end_src
 
-* *string*
-
-*** k_one_string
-
-    #+begin_src c
-    void k_one_string() {
-      // ([io] -> [compile])
-      char buffer[1024 * 1024];
-      cell cursor = 0;
-      while (true) {
-        char c = read_byte();
-        if (c == '"') {
-          buffer[cursor] = 0;
-          cursor++;
-          break;
-        }
-        else {
-          buffer[cursor] = c;
-          cursor++;
-        }
-      }
-      string str = malloc(cursor);
-      strcpy(str, buffer);
-      here(JO_INS_INT);
-      here(str);
-    }
-    #+end_src
-
-*** k_string
-
-    #+begin_src c
-    void k_string() {
-      // ([io] -> [compile])
-      while (true) {
-        jo s = read_raw_jo();
-        if (s == ROUND_KET) {
-          return;
-        }
-        else if (s == DOUBLE_QUOTE) {
-          k_one_string();
-        }
-        else {
-          // do nothing
-        }
-      }
-    }
-    #+end_src
-
-*** p_string_length
-
-    #+begin_src c
-    void p_string_length() {
-      // (string -> length)
-      as_push(strlen(as_pop()));
-    }
-    #+end_src
-
-*** p_string_print
-
-    #+begin_src c
-    void p_string_print() {
-      // (string -> [io])
-      printf("%s", as_pop());
-    }
-    #+end_src
-
-*** p_string_dot
-
-    #+begin_src c
-    void p_string_dot() {
-      // (string -> [io])
-      printf("\"%s \"", as_pop());
-    }
-    #+end_src
-
-*** p_string_append_to_buffer
-
-    #+begin_src c
-    void p_string_append_to_buffer() {
-      // (buffer, string -> buffer)
-      string str = as_pop();
-      string buffer = as_tos();
-      strcat(buffer, str);
-    }
-    #+end_src
-
-*** p_string_first_byte
-
-    #+begin_src c
-    void p_string_first_byte() {
-      string s = as_pop();
-      as_push(s[0]);
-    }
-    #+end_src
-
-*** p_string_last_byte
-
-    #+begin_src c
-    void p_string_last_byte() {
-      string s = as_pop();
-      cell i = 0;
-      while (s[i+1] != 0) {
-        i++;
-      }
-      as_push(s[i]);
-    }
-    #+end_src
-
-*** export_string
-
-    #+begin_src c
-    void export_string() {
-      define_primkey("string", k_string);
-      define_primkey("one-string", k_one_string);
-      define_prim("string/print", p_string_print);
-      define_prim("string/dot", p_string_dot);
-      define_prim("string/length", p_string_length);
-      define_prim("string/append-to-buffer", p_string_append_to_buffer);
-      define_prim("string/first-byte", p_string_first_byte);
-      define_prim("string/last-byte", p_string_last_byte);
+      define_prim("jo/find-byte", p_jo_find_byte);
+      define_prim("jo/left-part", p_jo_left_part);
+      define_prim("jo/right-part", p_jo_right_part);
+      define_prim("jo/part", p_jo_part);
+      define_prim("jo/left-part-of-byte", p_jo_left_part_of_byte);
+      define_prim("jo/right-part-of-byte", p_jo_right_part_of_byte);
     }
     #+end_src
 

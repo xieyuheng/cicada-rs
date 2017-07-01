@@ -266,44 +266,6 @@
     (if 2dup car eq? then 2drop true end)
     (el cdr (loop))))
 
-(define string/member?
-  (jojo
-    (note byte[not 0] string -> true or false)
-    (if dup get-byte (int 0) eq? then 2drop false end)
-    (if 2dup get-byte eq? then 2drop true end)
-    (el inc (loop))))
-
-(define string/find-byte/loop
-  (jojo
-    (note byte string begin-address -> [index true] or [false])
-    (> begin-address)
-    (if dup get-byte (int 0) eq? then 2drop false end)
-    (if 2dup get-byte eq? then swap drop (< begin-address) sub true end)
-    (el inc (< begin-address) (loop))))
-
-(define string/find-byte
-  (jojo
-    (note byte string -> [index true] or [false])
-    dup string/find-byte/loop))
-
-(define jo/find-byte
-  (jojo
-    (note byte jo -> [index true] or [false])
-    jo->string string/find-byte))
-
-(define jo/left-part
-  (jojo
-    (note index jo -> jo)
-    ))
-
-(define jo/right-part
-  (jojo
-    (note index jo -> jo)))
-
-(define jo/part
-  (jojo
-    (note index-begin index-end jo -> jo)))
-
 (define lev
   (note lev denotes leave-data-here)
   (keyword
@@ -1097,16 +1059,24 @@
 (define full-name->module
   (jojo
     (note module.name -> module)
-    ))
+    (string ".") string/last-byte
+    swap jo/left-part-of-byte))
 
 (define full-name->name
   (jojo
     (note module.name -> name)
-    ))
+    (string ".") string/last-byte
+    swap jo/right-part-of-byte))
 
 (define current-module-version
   (jojo
-    (note -> version)))
+    (note -> version)
+    (string "[") string/last-byte
+    module-stack (: tos)
+    jo/right-part-of-byte
+    (string "]") string/last-byte
+    swap
+    jo/left-part-of-byte))
 
 (define jo-filter-for-dependence
   (jojo
@@ -1245,3 +1215,5 @@
       stack-0 (: pop) (: write)
       stack-0 (: pop) (: write)
       stack-0 (: pop) (: write))
+
+(bye)

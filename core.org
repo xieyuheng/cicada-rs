@@ -1,6 +1,5 @@
 #+property: tangle core.jo
 #+title: core
-- move functions about string and jo to c code
 - cat-jo to replace jo/append
 - depending-stack
 - use
@@ -365,72 +364,6 @@
         (if dup null eq? then 2drop false end)
         (if 2dup car eq? then 2drop true end)
         (el cdr (loop))))
-    #+end_src
-
-* string
-
-*** string/member?
-
-    #+begin_src jojo
-    (define string/member?
-      (jojo
-        (note byte[not 0] string -> true or false)
-        (if dup get-byte (int 0) eq? then 2drop false end)
-        (if 2dup get-byte eq? then 2drop true end)
-        (el inc (loop))))
-    #+end_src
-
-*** string/find-byte
-
-    #+begin_src jojo
-    (define string/find-byte/loop
-      (jojo
-        (note byte string begin-address -> [index true] or [false])
-        (> begin-address)
-        (if dup get-byte (int 0) eq? then 2drop false end)
-        (if 2dup get-byte eq? then swap drop (< begin-address) sub true end)
-        (el inc (< begin-address) (loop))))
-
-    (define string/find-byte
-      (jojo
-        (note byte string -> [index true] or [false])
-        dup string/find-byte/loop))
-    #+end_src
-
-* jo
-
-*** jo/find-byte
-
-    #+begin_src jojo
-    (define jo/find-byte
-      (jojo
-        (note byte jo -> [index true] or [false])
-        jo->string string/find-byte))
-    #+end_src
-
-*** jo/left-part
-
-    #+begin_src jojo
-    (define jo/left-part
-      (jojo
-        (note index jo -> jo)
-        ))
-    #+end_src
-
-*** jo/right-part
-
-    #+begin_src jojo
-    (define jo/right-part
-      (jojo
-        (note index jo -> jo)))
-    #+end_src
-
-*** jo/part
-
-    #+begin_src jojo
-    (define jo/part
-      (jojo
-        (note index-begin index-end jo -> jo)))
     #+end_src
 
 * for sugar
@@ -1367,7 +1300,7 @@
           newline)
     #+end_src
 
-* >< <module>
+* >< module
 
 *** note
 
@@ -1520,7 +1453,8 @@
     (define full-name->module
       (jojo
         (note module.name -> module)
-        ))
+        (string ".") string/last-byte
+        swap jo/left-part-of-byte))
     #+end_src
 
 *** full-name->name
@@ -1529,7 +1463,8 @@
     (define full-name->name
       (jojo
         (note module.name -> name)
-        ))
+        (string ".") string/last-byte
+        swap jo/right-part-of-byte))
     #+end_src
 
 *** current-module-version
@@ -1537,7 +1472,13 @@
     #+begin_src jojo
     (define current-module-version
       (jojo
-        (note -> version)))
+        (note -> version)
+        (string "[") string/last-byte
+        module-stack (: tos)
+        jo/right-part-of-byte
+        (string "]") string/last-byte
+        swap
+        jo/left-part-of-byte))
     #+end_src
 
 *** jo-filter-for-dependence
@@ -1708,4 +1649,10 @@
         stack-0 (: pop) (: write)
         stack-0 (: pop) (: write)
         stack-0 (: pop) (: write))
+  #+end_src
+
+* (bye)
+
+  #+begin_src jojo
+  (bye)
   #+end_src
