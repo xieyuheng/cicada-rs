@@ -932,30 +932,45 @@
        (<< self) (as <bare-stack>)
        (: push: (data (<< object) cons)))))
 
-(test current-dir string/print newline)
+(define module-dir-jo  (data (string "/module") string->jo))
+(define module-file-jo (data (string "module.jo") string->jo))
 
-(test (string "HOME") var-string->env-string
-      string/print newline)
+(define has-user-jojo-dir?
+  (jojo
+    (string "USER_JOJO_DIR") get-env-string
+    (int 0) eq? not))
 
-(test (string "PATH") var-string->env-string
-      string/print newline)
+(define get-user-jojo-dir
+  (jojo
+    (string "USER_JOJO_DIR") get-env-string))
 
-(define command-line/print-argument/loop
-  (jojo (note index -> [io])
-    (if dup argument-counter lt? then
-        dup index->argument-string string/print
-        newline
-        (int 1) add
-        (loop))
-    drop end))
+(define default-user-jojo-dir-jo
+  (data
+    (string "HOME") get-env-string string->jo
+    (string "/.jojo") string->jo jo/append))
 
-(define command-line/print-argument
-  (jojo (note -> [io])
-    (int 0) command-line/print-argument/loop))
+(define user-jojo-dir-jo
+  (jojo
+    (if has-user-jojo-dir? then get-user-jojo-dir string->jo end)
+    (el default-user-jojo-dir-jo)))
 
-(test command-line/print-argument)
+(define has-system-jojo-dir?
+  (jojo
+    (string "SYSTEM_JOJO_DIR") get-env-string
+    (int 0) eq? not))
 
-(note (test name-report))
+(define get-system-jojo-dir
+  (jojo
+    (string "SYSTEM_JOJO_DIR") get-env-string))
+
+(define default-system-jojo-dir-jo
+  (data
+    (string "/usr/share/jojo") string->jo))
+
+(define system-jojo-dir-jo
+  (jojo
+    (if has-system-jojo-dir? then get-system-jojo-dir string->jo end)
+    (el default-system-jojo-dir-jo)))
 
 (define-class <path>
   (inherit <text>)
@@ -1056,7 +1071,7 @@
         (: push: (data defining-stack (: pop) swap cons))
 
         module-stack (: tos)
-        (jo .) jo/append
+        (raw-jo .) jo/append
         swap jo/append)))
 
 (run (jo binding-filter-for-module) binding-filter-stack-push)
@@ -1067,7 +1082,7 @@
     (if defining-stack (: empty?) then end)
     (if dup defining-stack (: tos) list/member? then
         module-stack (: tos)
-        (jo .) jo/append
+        (raw-jo .) jo/append
         swap jo/append)))
 
 (run (jo jo-filter-for-module) jo-filter-stack-push)
@@ -1105,14 +1120,14 @@
     (string ".") string/last-byte
     swap jo/right-part-of-byte))
 
-(define module->prefix
+(define current-module->prefix
   (jojo
     (note module -> module[version])
     (> module)
     depending-stack (: tos)
     (< module) assoc/find
     (if then car end)
-    (cat "- module->prefix fail" newline
+    (cat "- current-module->prefix fail" newline
          "  the following module is not loaded" newline
          "  module : " (< module) jo/print newline)))
 
@@ -1125,34 +1140,84 @@
     dup full-name->module (> module)
     full-name->name (> name)
 
-    (< module) module->prefix
-    (jo .)   jo/append
+    (< module) current-module->prefix
+    (raw-jo .) jo/append
     (< name) jo/append))
 
 (run (jo jo-filter-for-dependence) jo-filter-stack-push)
+
+(define module-version->prefix
+  (jojo
+    (note module version -> prefix)
+    (> module version)
+    (< module)
+    square-bar  jo/append
+    (< version) jo/append
+    square-ket  jo/append))
+
+(define load-module/get-user-path
+  (jojo
+    (note module version -> path)
+    (> module version)
+    user-jojo-dir-jo
+    module-dir-jo     jo/append
+    (jo /)            jo/append
+    (< module)        jo/append
+    (jo /)            jo/append
+    (< version)       jo/append
+    (jo /)            jo/append
+    module-file-jo    jo/append
+    jo->string))
+
+(define load-module/get-system-path
+  (jojo
+    (note module version -> path)
+    (> module version)
+    system-jojo-dir-jo
+    module-dir-jo     jo/append
+    (jo /)            jo/append
+    (< module)        jo/append
+    (jo /)            jo/append
+    (< version)       jo/append
+    (jo /)            jo/append
+    module-file-jo    jo/append
+    jo->string))
+
+(define load-module/get-path
+  (jojo
+    (note module version -> path)
+    (> module version)
+
+    (< module version) load-module/get-user-path (> user-path)
+    (< module version) load-module/get-system-path (> system-path)
+
+    (if (< user-path) file/readable? then (< user-path) end)
+    (if (< system-path) file/readable? then (< system-path) end)
+    (cat "- load-module/get-path fail" newline
+         "  module : " (< module) jo/print newline
+         "  version : " (< version) jo/print newline
+         "  in module dir of user : "
+         user-jojo-dir-jo jo/print
+         module-dir-jo jo/print
+         newline
+         "  or in module dir of system : "
+         system-jojo-dir-jo jo/print
+         module-dir-jo jo/print
+         newline
+         (note detailed report about module.jo file))))
 
 (define loaded-module-record (data null))
 
 (define load-module
   (jojo
-    (note module-name version ->)
-    (> module-name version)
+    (note module version ->)
+    (> module version)
 
-    (< module-name)
-    square-bar  jo/append
-    (< version) jo/append
-    square-ket  jo/append
-    (> prefix)
+    (< module version) module-version->prefix (> prefix)
 
     (if (< prefix) loaded-module-record list/member? then end)
 
-    (string "/home/xyh/.jojo/module/") string->jo
-    (< module-name)   jo/append
-    (jo /)            jo/append
-    (< version)       jo/append
-    (string "/module.jo") string->jo jo/append
-    jo->string
-    (> path)
+    (< module version) load-module/get-path (> path)
 
     module-stack    (: push: (data (< prefix)))
     defining-stack  (: push: (data null))
@@ -1177,10 +1242,9 @@
     (if over (raw-jo as) eq? not then
         (> module version)
 
-        (< module)
-        square-bar  jo/append
-        (< version) jo/append
-        square-ket  jo/append (> prefix)
+        (< module version)
+        module-version->prefix
+        (> prefix)
 
         (if (< prefix) loaded-module-record list/member? not then
             (< module version) load-module)
@@ -1205,9 +1269,6 @@
     read/raw-jo (if dup round-ket eq? then 2drop end)
     use/help
     (loop)))
-
-(note
-  (clib "path"))
 
 (define-class <person>
   (inherit <object>)
@@ -1289,11 +1350,44 @@
       stack-0 (: pop) (: write)
       stack-0 (: pop) (: write))
 
-(use hiya 0.0.1 as h)
+(note (use hiya 0.0.1 as h)
 
-(run (raw-jo hiya.name) jo/print newline
-     (jo hiya.name) jo/print newline
-     hiya.hiya
+      (run (raw-jo hiya.name) jo/print newline
+           (jo hiya.name) jo/print newline
+           hiya.hiya
 
-     (jo h.name) jo/print newline
-     h.hiya)
+           (jo h.name) jo/print newline
+           h.hiya))
+
+(use hi 0.0.1)
+
+(run hi.hi)
+
+(use welcome 0.0.1 as w)
+
+(run w.welcome)
+
+(test current-dir string/print newline)
+
+(test (string "HOME") get-env-string
+      string/print newline)
+
+(test (string "PATH") get-env-string
+      string/print newline)
+
+(define command-line/print-argument/loop
+  (jojo (note index -> [io])
+    (if dup argument-counter lt? then
+        dup index->argument-string string/print
+        newline
+        (int 1) add
+        (loop))
+    drop end))
+
+(define command-line/print-argument
+  (jojo (note -> [io])
+    (int 0) command-line/print-argument/loop))
+
+(test command-line/print-argument)
+
+(note (test name-report))

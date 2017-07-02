@@ -1,6 +1,8 @@
 #+property: tangle core.jo
 #+title: core
-- fix system-jojo-dir-jo
+- fix functions about file
+  - such as 'file/readable?'
+- deadly need debuger repl
 - syntax for byte
   instead of string/last-byte
 - <jojo> and combinators
@@ -9,6 +11,8 @@
 - [docs] basic docs about composition
 * todo
 
+  - let message be able to sent to many objects
+    [maybe] extend 'add-method'
   - has-method? has-meta-method?
   - [testing] assert for embedded testing
     we should also be able to separate test out of the code
@@ -1211,9 +1215,64 @@
            (: push: (data (<< object) cons)))))
     #+end_src
 
-* >< <system>
+* system
 
-*** note
+*** note env-string
+
+    - USER_JOJO_DIR    default to  "$HOME/.jojo/"
+    - SYSTEM_JOJO_DIR  default to  "/usr/share/jojo/"
+
+*** helper
+
+    #+begin_src jojo
+    (define module-dir-jo  (data (string "/module") string->jo))
+    (define module-file-jo (data (string "module.jo") string->jo))
+    #+end_src
+
+*** user-jojo-dir-jo
+
+    #+begin_src jojo
+    (define has-user-jojo-dir?
+      (jojo
+        (string "USER_JOJO_DIR") get-env-string
+        (int 0) eq? not))
+
+    (define get-user-jojo-dir
+      (jojo
+        (string "USER_JOJO_DIR") get-env-string))
+
+    (define default-user-jojo-dir-jo
+      (data
+        (string "HOME") get-env-string string->jo
+        (string "/.jojo") string->jo jo/append))
+
+    (define user-jojo-dir-jo
+      (jojo
+        (if has-user-jojo-dir? then get-user-jojo-dir string->jo end)
+        (el default-user-jojo-dir-jo)))
+    #+end_src
+
+*** system-jojo-dir-jo
+
+    #+begin_src jojo
+    (define has-system-jojo-dir?
+      (jojo
+        (string "SYSTEM_JOJO_DIR") get-env-string
+        (int 0) eq? not))
+
+    (define get-system-jojo-dir
+      (jojo
+        (string "SYSTEM_JOJO_DIR") get-env-string))
+
+    (define default-system-jojo-dir-jo
+      (data
+        (string "/usr/share/jojo") string->jo))
+
+    (define system-jojo-dir-jo
+      (jojo
+        (if has-system-jojo-dir? then get-system-jojo-dir string->jo end)
+        (el default-system-jojo-dir-jo)))
+    #+end_src
 
 * >< <path>
 
@@ -1379,7 +1438,7 @@
               (: push: (data defining-stack (: pop) swap cons))
 
               module-stack (: tos)
-              (jo .) jo/append
+              (raw-jo .) jo/append
               swap jo/append)))
 
       (run (jo binding-filter-for-module) binding-filter-stack-push)
@@ -1394,7 +1453,7 @@
           (if defining-stack (: empty?) then end)
           (if dup defining-stack (: tos) list/member? then
               module-stack (: tos)
-              (jo .) jo/append
+              (raw-jo .) jo/append
               swap jo/append)))
 
       (run (jo jo-filter-for-module) jo-filter-stack-push)
@@ -1416,7 +1475,7 @@
       (run depending-stack (: push: (data null)))
       #+end_src
 
-***** helper
+***** full-name? & full-name->module & full-name->name
 
       #+begin_src jojo
       (define full-name?
@@ -1441,15 +1500,19 @@
           (note module.name -> name)
           (string ".") string/last-byte
           swap jo/right-part-of-byte))
+      #+end_src
 
-      (define module->prefix
+***** current-module->prefix
+
+      #+begin_src jojo
+      (define current-module->prefix
         (jojo
           (note module -> module[version])
           (> module)
           depending-stack (: tos)
           (< module) assoc/find
           (if then car end)
-          (cat "- module->prefix fail" newline
+          (cat "- current-module->prefix fail" newline
                "  the following module is not loaded" newline
                "  module : " (< module) jo/print newline)))
       #+end_src
@@ -1466,70 +1529,122 @@
           dup full-name->module (> module)
           full-name->name (> name)
 
-          (< module) module->prefix
-          (jo .)   jo/append
+          (< module) current-module->prefix
+          (raw-jo .) jo/append
           (< name) jo/append))
 
       (run (jo jo-filter-for-dependence) jo-filter-stack-push)
       #+end_src
 
-*** user-jojo-dir-jo
+*** module-version->prefix
 
     #+begin_src jojo
-    (define user-jojo-dir-jo
-      (data (string "HOME") get-env-string string->jo
-            (string "/.jojo/module/") string->jo jo/append))
-    #+end_src
-
-*** >< system-jojo-dir-jo
-
-    #+begin_src jojo
-    (define system-jojo-dir-jo
-      (data (string "HOME") get-env-string string->jo
-            (string "/.jojo/module/") string->jo jo/append))
+    (define module-version->prefix
+      (jojo
+        (note module version -> prefix)
+        (> module version)
+        (< module)
+        square-bar  jo/append
+        (< version) jo/append
+        square-ket  jo/append))
     #+end_src
 
 *** load-module
 
-    #+begin_src jojo
-    (define loaded-module-record (data null))
+***** load-module/get-user-path
 
-    (define load-module
-      (jojo
-        (note module-name version ->)
-        (> module-name version)
+      #+begin_src jojo
+      (define load-module/get-user-path
+        (jojo
+          (note module version -> path)
+          (> module version)
+          user-jojo-dir-jo
+          module-dir-jo     jo/append
+          (jo /)            jo/append
+          (< module)        jo/append
+          (jo /)            jo/append
+          (< version)       jo/append
+          (jo /)            jo/append
+          module-file-jo    jo/append
+          jo->string))
+      #+end_src
 
-        (< module-name)
-        square-bar  jo/append
-        (< version) jo/append
-        square-ket  jo/append
-        (> prefix)
+***** load-module/get-system-path
 
-        (if (< prefix) loaded-module-record list/member? then end)
+      #+begin_src jojo
+      (define load-module/get-system-path
+        (jojo
+          (note module version -> path)
+          (> module version)
+          system-jojo-dir-jo
+          module-dir-jo     jo/append
+          (jo /)            jo/append
+          (< module)        jo/append
+          (jo /)            jo/append
+          (< version)       jo/append
+          (jo /)            jo/append
+          module-file-jo    jo/append
+          jo->string))
+      #+end_src
 
-        user-jojo-dir-jo
-        (< module-name)   jo/append
-        (jo /)            jo/append
-        (< version)       jo/append
-        (string "/module.jo") string->jo jo/append
-        jo->string
-        (> path)
+***** load-module/get-path
 
-        module-stack    (: push: (data (< prefix)))
-        defining-stack  (: push: (data null))
-        depending-stack (: push: (data null))
+      #+begin_src jojo
+      (define load-module/get-path
+        (jojo
+          (note module version -> path)
+          (> module version)
 
-        (< path) load-file
+          (< module version) load-module/get-user-path (> user-path)
+          (< module version) load-module/get-system-path (> system-path)
 
-        depending-stack (: drop)
-        defining-stack  (: drop)
-        module-stack    (: drop)
+          (if (< user-path) file/readable? then (< user-path) end)
+          (if (< system-path) file/readable? then (< system-path) end)
+          (cat "- load-module/get-path fail" newline
+               "  module : " (< module) jo/print newline
+               "  version : " (< version) jo/print newline
+               "  in module dir of user : "
+               user-jojo-dir-jo jo/print
+               module-dir-jo jo/print
+               newline
+               "  or in module dir of system : "
+               system-jojo-dir-jo jo/print
+               module-dir-jo jo/print
+               newline
+               (note detailed report about module.jo file))))
+      #+end_src
 
-        loaded-module-record
-        (< prefix) cons
-        (address loaded-module-record)
-        set-cell))
-    #+end_src
+***** load-module
+
+      #+begin_src jojo
+      (define loaded-module-record (data null))
+
+      (define load-module
+        (jojo
+          (note module version ->)
+          (> module version)
+
+          (< module version) module-version->prefix (> prefix)
+
+          (if (< prefix) loaded-module-record list/member? then end)
+
+          (< module version) load-module/get-path (> path)
+
+          module-stack    (: push: (data (< prefix)))
+          defining-stack  (: push: (data null))
+          depending-stack (: push: (data null))
+
+          (< path) load-file
+
+          depending-stack (: drop)
+          defining-stack  (: drop)
+          module-stack    (: drop)
+
+          loaded-module-record
+          (< prefix) cons
+          (address loaded-module-record)
+          set-cell))
+      #+end_src
 
 *** use
 
@@ -1542,10 +1657,9 @@
         (if over (raw-jo as) eq? not then
             (> module version)
 
-            (< module)
-            square-bar  jo/append
-            (< version) jo/append
-            square-ket  jo/append (> prefix)
+            (< module version)
+            module-version->prefix
+            (> prefix)
 
             (if (< prefix) loaded-module-record list/member? not then
                 (< module version) load-module)

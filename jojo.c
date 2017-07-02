@@ -1953,7 +1953,7 @@ bool file_readable_p(string path) {
 }
 
 void p_file_readable_p() {
-  // (file -> bool)
+  // (path -> bool)
   as_push(file_readable_p(as_pop()));
 }
 
