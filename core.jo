@@ -972,21 +972,6 @@
     (if has-system-jojo-dir? then get-system-jojo-dir string->jo end)
     (el default-system-jojo-dir-jo)))
 
-(define-class <path>
-  (inherit <text>)
-  (method
-    (* write
-       (string "(path ") string/print
-       double-quote jo/print
-       (<< self) (: print)
-       double-quote jo/print
-       (string ") ") string/print)))
-
-(add-method <text> to-path
-  (< self) (jo <path>))
-
-(test (text "/home/") (: to-path) (: write))
-
 (note
 
   (define-class <file>
@@ -1281,7 +1266,7 @@
   (method
     (* grow
        (<< self) (get age) (: inc)
-       (<< self) (cat "<here> ") (set age) (cat "<here> "))
+       (<< self) (set age))
     (* (: grow-by: years)
        (<< self) (get age) (: add: (<< years))
        (<< self) (set age))

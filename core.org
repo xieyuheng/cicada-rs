@@ -2,6 +2,7 @@
 #+title: core
 - fix functions about file
   - such as 'file/readable?'
+- detailed report in 'load-module/get-path'
 - deadly need debuger repl
 - syntax for byte
   instead of string/last-byte
@@ -72,6 +73,16 @@
     - in dynamic language which does not have type check,
       one should test his functions incrementally.
       I support this by allowing tests to be embedded in code.
+
+*** not everything is an object
+
+    - to keep the core simple,
+      the following object-like concepts are not implemented as objects
+      [while modules can implement them as objects] :
+
+      - system
+      - path and file
+      - module
 
 * flag
 
@@ -1274,78 +1285,8 @@
         (el default-system-jojo-dir-jo)))
     #+end_src
 
-* >< <path>
-
-*** <path>
-
-    #+begin_src jojo
-    (define-class <path>
-      (inherit <text>)
-      (method
-        (* write
-           (string "(path ") string/print
-           double-quote jo/print
-           (<< self) (: print)
-           double-quote jo/print
-           (string ") ") string/print)))
-
-    (add-method <text> to-path
-      (< self) (jo <path>))
-    #+end_src
-
-*** test
-
-    #+begin_src jojo
-    (test (text "/home/") (: to-path) (: write))
-    #+end_src
-
-* >< <file>
-
-*** note
-
-    #+begin_src jojo
-    (note
-
-      (define-class <file>
-        (method
-          (* close)))
-
-      (add-method <path> open-for-reading
-        (< self) string/open-for-reading)
-
-      (add-method <path> (: open-for: flags)
-        (note fd = open(pathname, flags, mode)
-              if the file doesn’t exist,
-              open() may create it,
-              depending on the settings of the flags bitmask argument.
-              the flags argument also specifies
-              whether the file is to be opened for reading, writing, or both.))
-
-      (add-method <path> (: open-for: flags with: mode)
-        (note the mode argument specifies the permissions
-              to be placed on the file if it is created by this call.
-              If the open() call is not being used to create a file,
-              this argument is ignored and can be omitted))
-
-      (note numread = read(fd, buffer, count)
-            reads at most count bytes from the open file
-            referred to by fd and stores them in buffer.
-            The read() call returns the number of bytes actually read.
-            If no further bytes could be read
-            (i.e., end-of-file was encountered),
-            read() returns 0.)
-
-      (note numwritten = write(fd, buffer, count)
-            writes up to count bytes from buffer to the open file
-            referred to by fd.
-            The write() call returns the number of bytes actually written,
-            which may be less than count.)
-
-      (note status = close(fd)
-            is called after all I/O has been completed,
-            in order to release the file descriptor fd
-            and its associated kernel resources.))
-    #+end_src
+* >< path
+* >< file
 
 *** test
 
@@ -1700,7 +1641,7 @@
     (method
       (* grow
          (<< self) (get age) (: inc)
-         (<< self) (cat "<here> ") (set age) (cat "<here> "))
+         (<< self) (set age))
       (* (: grow-by: years)
          (<< self) (get age) (: add: (<< years))
          (<< self) (set age))
