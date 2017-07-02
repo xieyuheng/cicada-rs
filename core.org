@@ -1,12 +1,11 @@
 #+property: tangle core.jo
 #+title: core
-- fix module about user-jojo-dir and system-jojo-dir
+- fix system-jojo-dir-jo
 - syntax for byte
   instead of string/last-byte
 - <jojo> and combinators
   - syntax for currying
   - to mock a mocking bird
-- <clib>
 - [docs] basic docs about composition
 * todo
 
@@ -1214,34 +1213,7 @@
 
 * >< <system>
 
-*** system
-
-    #+begin_src jojo
-    (test current-dir string/print newline)
-
-    (test (string "HOME") var-string->env-string
-          string/print newline)
-
-    (test (string "PATH") var-string->env-string
-          string/print newline)
-
-    (define command-line/print-argument/loop
-      (jojo (note index -> [io])
-        (if dup argument-counter lt? then
-            dup index->argument-string string/print
-            newline
-            (int 1) add
-            (loop))
-        drop end))
-
-    (define command-line/print-argument
-      (jojo (note -> [io])
-        (int 0) command-line/print-argument/loop))
-
-    (test command-line/print-argument)
-
-    (note (test name-report))
-    #+end_src
+*** note
 
 * >< <path>
 
@@ -1501,6 +1473,22 @@
       (run (jo jo-filter-for-dependence) jo-filter-stack-push)
       #+end_src
 
+*** user-jojo-dir-jo
+
+    #+begin_src jojo
+    (define user-jojo-dir-jo
+      (data (string "HOME") get-env-string string->jo
+            (string "/.jojo/module/") string->jo jo/append))
+    #+end_src
+
+*** >< system-jojo-dir-jo
+
+    #+begin_src jojo
+    (define system-jojo-dir-jo
+      (data (string "HOME") get-env-string string->jo
+            (string "/.jojo/module/") string->jo jo/append))
+    #+end_src
+
 *** load-module
 
     #+begin_src jojo
@@ -1519,7 +1507,7 @@
 
         (if (< prefix) loaded-module-record list/member? then end)
 
-        (string "/home/xyh/.jojo/module/") string->jo
+        user-jojo-dir-jo
         (< module-name)   jo/append
         (jo /)            jo/append
         (< version)       jo/append
@@ -1582,21 +1570,6 @@
         read/raw-jo (if dup round-ket eq? then 2drop end)
         use/help
         (loop)))
-    #+end_src
-
-* >< <clib>
-
-*** note
-
-    - [ffi]
-      c is only used to implement primitive object ?
-      and to do optimization ?
-
-*** clib
-
-    #+begin_src jojo
-    (note
-      (clib "path"))
     #+end_src
 
 * test
@@ -1710,4 +1683,33 @@
   (use welcome 0.0.1 as w)
 
   (run w.welcome)
+  #+end_src
+
+* test
+
+  #+begin_src jojo
+  (test current-dir string/print newline)
+
+  (test (string "HOME") get-env-string
+        string/print newline)
+
+  (test (string "PATH") get-env-string
+        string/print newline)
+
+  (define command-line/print-argument/loop
+    (jojo (note index -> [io])
+      (if dup argument-counter lt? then
+          dup index->argument-string string/print
+          newline
+          (int 1) add
+          (loop))
+      drop end))
+
+  (define command-line/print-argument
+    (jojo (note -> [io])
+      (int 0) command-line/print-argument/loop))
+
+  (test command-line/print-argument)
+
+  (note (test name-report))
   #+end_src

@@ -2142,7 +2142,7 @@ void p_index_to_argument_string() {
   as_push(argument_string);
 }
 
-void p_var_string_to_env_string() {
+void p_get_env_string() {
   // (string -> string)
   string var_string = as_pop();
   string env_string = getenv(var_string);
@@ -2155,7 +2155,7 @@ void export_system() {
   define_prim("n-command/run", p_n_command_run);
   define_prim("argument-counter", p_argument_counter);
   define_prim("index->argument-string", p_index_to_argument_string);
-  define_prim("var-string->env-string", p_var_string_to_env_string);
+  define_prim("get-env-string", p_get_env_string);
 }
 
 void ccall (string str, void* lib) {
