@@ -1520,8 +1520,8 @@
           (< module version) load-module/get-user-path (> user-path)
           (< module version) load-module/get-system-path (> system-path)
 
-          (if (< user-path) file/readable? then (< user-path) end)
-          (if (< system-path) file/readable? then (< system-path) end)
+          (if (< user-path) path/readable? then (< user-path) end)
+          (if (< system-path) path/readable? then (< system-path) end)
           (cat "- load-module/get-path fail" newline
                "  module : " (< module) jo/print newline
                "  version : " (< version) jo/print newline
@@ -1556,7 +1556,7 @@
           defining-stack  (: push: (data null))
           depending-stack (: push: (data null))
 
-          (< path) load-file
+          (< path) path/load
 
           depending-stack (: drop)
           defining-stack  (: drop)

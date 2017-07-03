@@ -1923,9 +1923,9 @@ void export_jo() {
 }
 
 void p_path_open() {
-  // [flag path] -> [file true] or [errno false]
-  string path = as_pop();
+  // [path flag] -> [file true] or [errno false]
   int flag = as_pop();
+  string path = as_pop();
 
   int fd = open(path, flag);
   if (fd == -1) {
@@ -1939,10 +1939,10 @@ void p_path_open() {
 }
 
 void p_path_create() {
-  // [permission-mode flag path] -> [file true] or [errno false]
-  string path = as_pop();
-  int flag = as_pop();
+  // [path flag permission-mode] -> [file true] or [errno false]
   mode_t permission_mode = as_pop();
+  int flag = as_pop();
+  string path = as_pop();
 
   int fd = open(path, O_CREAT | flag, permission_mode);
   if (fd == -1) {
@@ -1956,14 +1956,14 @@ void p_path_create() {
 }
 
 void p_file_read() {
-  // [requested-bytes buffer file] ->
+  // [file buffer requested-bytes] ->
   // [real-bytes true] or [errno false]
   // - partial read reasons
   //   1. [regular-file] end-of-file is reached
   //   2. [terminal] meets '\n'
-  int fd = as_pop();
-  void* buffer = as_pop();
   size_t want_bytes = as_pop();
+  void* buffer = as_pop();
+  int fd = as_pop();
 
   ssize_t real_bytes = read(fd, buffer, want_bytes);
   if (real_bytes == -1) {
@@ -1977,14 +1977,14 @@ void p_file_read() {
 }
 
 void p_file_write() {
-  // [want-bytes buffer file] ->
+  // [file buffer want-bytes] ->
   // [real-bytes true] or [errno false]
   // - partial write reasons
   //   1. disk was filled
   //   2. the process resource limit on file sizes was reached
-  int fd = as_pop();
-  void* buffer = as_pop();
   size_t want_bytes = as_pop();
+  void* buffer = as_pop();
+  int fd = as_pop();
 
   ssize_t real_bytes = write(fd, buffer, want_bytes);
   if (real_bytes == -1) {
@@ -2017,12 +2017,12 @@ void p_file_close() {
 }
 
 void p_file_seek() {
-  // [offset fd] -> [new-offset]
+  // [fd offset] -> [new-offset]
   // - one should only apply seek to regular-file
   //   I do not expose seek error to jojo
   //   one should check file type before apply seek
-  int fd = as_pop();
   off_t offset = as_pop();
+  int fd = as_pop();
 
   off_t new_offset = lseek(fd, offset, SEEK_CUR);
   if (new_offset == -1) {
@@ -2035,12 +2035,12 @@ void p_file_seek() {
 }
 
 void p_file_seek_from_beginning() {
-  // [offset fd] -> [new-offset]
+  // [fd offset] -> [new-offset]
   // - one should only apply seek to regular-file
   //   I do not expose seek error to jojo
   //   one should check file type before apply seek
-  int fd = as_pop();
   off_t offset = as_pop();
+  int fd = as_pop();
 
   off_t new_offset = lseek(fd, offset, SEEK_SET);
   if (new_offset == -1) {
@@ -2053,12 +2053,12 @@ void p_file_seek_from_beginning() {
 }
 
 void p_file_seek_from_end() {
-  // [offset fd] -> [new-offset]
+  // [fd offset] -> [new-offset]
   // - one should only apply seek to regular-file
   //   I do not expose seek error to jojo
   //   one should check file type before apply seek
-  int fd = as_pop();
   off_t offset = as_pop();
+  int fd = as_pop();
 
   off_t new_offset = lseek(fd, offset, SEEK_END);
   if (new_offset == -1) {
@@ -2070,30 +2070,28 @@ void p_file_seek_from_end() {
   }
 }
 
-bool file_readable_p(string path) {
+void p_path_readable_p() {
+  // path -> bool
+  string path = as_pop();
   FILE* fp = fopen(path, "r");
   if (!fp) {
-    return false;
+    as_push(false);
   }
   else {
     fclose(fp);
-    return true;
+    as_push(true);
   }
-}
-
-void p_file_readable_p() {
-  // path -> bool
-  as_push(file_readable_p(as_pop()));
 }
 
 void p_top_repl();
 
-void load_file(string path) {
-  // [reading_stack]
+void p_path_load() {
+  // path -> {reading_stack}
+  string path = as_pop();
   FILE* fp = fopen(path, "r");
   if(!fp) {
     perror("File opening failed");
-    printf("load_file fail : %s\n", path);
+    printf("p_path_load fail : %s\n", path);
     return;
   }
   char* file_buffer = malloc(PATH_MAX);
@@ -2109,7 +2107,7 @@ void load_file(string path) {
   reading_stack_push(rp);
 
   // {
-  //   printf("- load_file start\n");
+  //   printf("- p_path_load start\n");
   //   printf("  fp: %d\n", fp);
   //   printf("  file: %s\n", file_buffer);
   //   printf("  dir_buffer: %s #%ld\n", dir_buffer, dir_buffer);
@@ -2124,16 +2122,12 @@ void load_file(string path) {
   free(rp.dir);
 
   // {
-  //   printf("- load_file finished\n");
+  //   printf("- p_path_load finished\n");
   //   printf("  fp: %d\n", fp);
   //   printf("  file: %s\n", file_buffer);
   //   printf("  dir_buffer: %s #%ld\n", dir_buffer, dir_buffer);
   //   printf("  dir_addr: %s #%ld\n", dir_addr, dir_addr);
   // }
-}
-
-void p_load_file() {
-  load_file(as_pop());
 }
 
 void k_include_one() {
@@ -2154,7 +2148,8 @@ void k_include_one() {
   }
   char buffer1[PATH_MAX];
   real_reading_path(buffer, buffer1);
-  load_file(buffer1);
+  as_push(buffer1);
+  p_path_load();
 }
 
 void k_include() {
@@ -2188,9 +2183,9 @@ void export_file() {
   define_prim("file/seek-from-beginning", p_file_seek_from_beginning);
   define_prim("file/seek-from-end", p_file_seek_from_end);
 
-  define_prim("file/readable?", p_file_readable_p);
+  define_prim("path/readable?", p_path_readable_p);
 
-  define_prim("load-file", p_load_file);
+  define_prim("path/load", p_path_load);
   define_primkey("include", k_include);
 }
 
@@ -3073,8 +3068,11 @@ int main(int argc, string* argv) {
   init_top_repl();
 
   if (argc != 1) {
-    if (file_readable_p(argv[1])) {
-      load_file(argv[1]);
+    as_push(argv[1]);
+    p_path_readable_p();
+    if (as_pop()) {
+      as_push(argv[1]);
+      p_path_load();
     }
     else {
       printf("- jojo can not load file: %s\n", argv[1]);
