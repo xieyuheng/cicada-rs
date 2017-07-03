@@ -1,7 +1,5 @@
 #+property: tangle core.jo
 #+title: core
-- fix functions about file
-  - such as 'file/readable?'
 - detailed report in 'load-module/get-path'
 - deadly need debuger repl
 - syntax for byte
@@ -44,7 +42,7 @@
 *** class
 
     - class on stack :
-      [class (jo <class>)]
+      [class <class>]
 
 *** variable
 
@@ -1286,24 +1284,6 @@
         (el default-system-jojo-dir-jo)))
     #+end_src
 
-* >< path
-* >< file
-
-*** test
-
-    #+begin_src jojo
-    (test (string "README") file/size dot)
-
-    (test (string "README") file/readable? dot)
-
-    (test (string "README")
-          dup file/size
-          allocate tuck file/copy-to-buffer
-          drop
-          string/print
-          newline)
-    #+end_src
-
 * module
 
 *** note module system
@@ -1338,14 +1318,14 @@
 
 *** to solve unique-name problem for current loading module
 
-***** module-stack
+***** prefix-stack
 
       #+begin_src jojo
-      (define module-stack <bare-stack> (: new)
+      (define prefix-stack <bare-stack> (: new)
         (note of prefix
-              load-module push module-stack
-              bind-name   use  module-stack by binding-filter-for-module
-              load-module pop  module-stack))
+              load-module push prefix-stack
+              bind-name   use  prefix-stack by binding-filter-for-module
+              load-module pop  prefix-stack))
       #+end_src
 
 ***** defining-stack
@@ -1374,12 +1354,12 @@
       (define binding-filter-for-module
         (jojo
           (note name -> module[version].name or name)
-          (if module-stack (: empty?) then end)
+          (if prefix-stack (: empty?) then end)
           (el dup
               defining-stack
               (: push: (data defining-stack (: pop) swap cons))
 
-              module-stack (: tos)
+              prefix-stack (: tos)
               (raw-jo .) jo/append
               swap jo/append)))
 
@@ -1394,7 +1374,7 @@
           (note name -> module[version].name or name)
           (if defining-stack (: empty?) then end)
           (if dup defining-stack (: tos) list/member? then
-              module-stack (: tos)
+              prefix-stack (: tos)
               (raw-jo .) jo/append
               swap jo/append)))
 
@@ -1572,7 +1552,7 @@
 
           (< module version) load-module/get-path (> path)
 
-          module-stack    (: push: (data (< prefix)))
+          prefix-stack    (: push: (data (< prefix)))
           defining-stack  (: push: (data null))
           depending-stack (: push: (data null))
 
@@ -1580,7 +1560,7 @@
 
           depending-stack (: drop)
           defining-stack  (: drop)
-          module-stack    (: drop)
+          prefix-stack    (: drop)
 
           loaded-module-record
           (< prefix) cons
@@ -1682,13 +1662,6 @@
        (number 26078)
        <person> (set testing-meta-variable-0)
        <person> (get testing-meta-variable-0) (: write))
-  #+end_src
-
-* test
-
-  #+begin_src jojo
-  (note (test (string "asd") open-for-reading dot)
-        (test (string "README") open-for-reading dot))
   #+end_src
 
 * test

@@ -972,64 +972,11 @@
     (if has-system-jojo-dir? then get-system-jojo-dir string->jo end)
     (el default-system-jojo-dir-jo)))
 
-(note
-
-  (define-class <file>
-    (method
-      (* close)))
-
-  (add-method <path> open-for-reading
-    (< self) string/open-for-reading)
-
-  (add-method <path> (: open-for: flags)
-    (note fd = open(pathname, flags, mode)
-          if the file doesn’t exist,
-          open() may create it,
-          depending on the settings of the flags bitmask argument.
-          the flags argument also specifies
-          whether the file is to be opened for reading, writing, or both.))
-
-  (add-method <path> (: open-for: flags with: mode)
-    (note the mode argument specifies the permissions
-          to be placed on the file if it is created by this call.
-          If the open() call is not being used to create a file,
-          this argument is ignored and can be omitted))
-
-  (note numread = read(fd, buffer, count)
-        reads at most count bytes from the open file
-        referred to by fd and stores them in buffer.
-        The read() call returns the number of bytes actually read.
-        If no further bytes could be read
-        (i.e., end-of-file was encountered),
-        read() returns 0.)
-
-  (note numwritten = write(fd, buffer, count)
-        writes up to count bytes from buffer to the open file
-        referred to by fd.
-        The write() call returns the number of bytes actually written,
-        which may be less than count.)
-
-  (note status = close(fd)
-        is called after all I/O has been completed,
-        in order to release the file descriptor fd
-        and its associated kernel resources.))
-
-(test (string "README") file/size dot)
-
-(test (string "README") file/readable? dot)
-
-(test (string "README")
-      dup file/size
-      allocate tuck file/copy-to-buffer
-      drop
-      string/print
-      newline)
-
-(define module-stack <bare-stack> (: new)
+(define prefix-stack <bare-stack> (: new)
   (note of prefix
-        load-module push module-stack
-        bind-name   use  module-stack by binding-filter-for-module
-        load-module pop  module-stack))
+        load-module push prefix-stack
+        bind-name   use  prefix-stack by binding-filter-for-module
+        load-module pop  prefix-stack))
 
 (define defining-stack <bare-stack> (: new)
   (note of list of names [to be prefixed]
@@ -1050,12 +997,12 @@
 (define binding-filter-for-module
   (jojo
     (note name -> module[version].name or name)
-    (if module-stack (: empty?) then end)
+    (if prefix-stack (: empty?) then end)
     (el dup
         defining-stack
         (: push: (data defining-stack (: pop) swap cons))
 
-        module-stack (: tos)
+        prefix-stack (: tos)
         (raw-jo .) jo/append
         swap jo/append)))
 
@@ -1066,7 +1013,7 @@
     (note name -> module[version].name or name)
     (if defining-stack (: empty?) then end)
     (if dup defining-stack (: tos) list/member? then
-        module-stack (: tos)
+        prefix-stack (: tos)
         (raw-jo .) jo/append
         swap jo/append)))
 
@@ -1204,7 +1151,7 @@
 
     (< module version) load-module/get-path (> path)
 
-    module-stack    (: push: (data (< prefix)))
+    prefix-stack    (: push: (data (< prefix)))
     defining-stack  (: push: (data null))
     depending-stack (: push: (data null))
 
@@ -1212,7 +1159,7 @@
 
     depending-stack (: drop)
     defining-stack  (: drop)
-    module-stack    (: drop)
+    prefix-stack    (: drop)
 
     loaded-module-record
     (< prefix) cons
@@ -1306,9 +1253,6 @@
      (number 26078)
      <person> (set testing-meta-variable-0)
      <person> (get testing-meta-variable-0) (: write))
-
-(note (test (string "asd") open-for-reading dot)
-      (test (string "README") open-for-reading dot))
 
 (define bare-stack-0 <bare-stack> (: new))
 

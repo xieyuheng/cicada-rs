@@ -7,7 +7,6 @@
 #include <string.h>     /* Commonly used string-handling functions */
 
 #include <fcntl.h>
-
 #include <sys/stat.h>
 #include <ctype.h>
 #include <stdint.h>
@@ -515,25 +514,23 @@ void p_name_report() {
   printf("\n");
 }
 
-typedef jo binding_filter;
-
-typedef binding_filter binding_filter_stack_t[128];
+typedef jo binding_filter_stack_t[128];
 binding_filter_stack_t binding_filter_stack;
 
 cell binding_filter_stack_base = 0;
 cell binding_filter_stack_pointer = 0;
 
-void binding_filter_stack_push(binding_filter value) {
+void binding_filter_stack_push(jo value) {
   binding_filter_stack[binding_filter_stack_pointer] = value;
   binding_filter_stack_pointer++;
 }
 
-binding_filter binding_filter_stack_pop() {
+jo binding_filter_stack_pop() {
   binding_filter_stack_pointer--;
   return binding_filter_stack[binding_filter_stack_pointer];
 }
 
-binding_filter binding_filter_stack_tos() {
+jo binding_filter_stack_tos() {
   return binding_filter_stack[binding_filter_stack_pointer - 1];
 }
 
@@ -549,6 +546,8 @@ void p_binding_filter_stack_pop() {
   as_push(binding_filter_stack_pop());
 }
 
+void jo_apply_now(jo jo);
+
 void run_binding_filter() {
   cell i = binding_filter_stack_pointer;
   while (i > binding_filter_stack_base) {
@@ -557,25 +556,23 @@ void run_binding_filter() {
   }
 }
 
-typedef jo binding_hook;
-
-typedef binding_hook binding_hook_stack_t[128];
+typedef jo binding_hook_stack_t[128];
 binding_hook_stack_t binding_hook_stack;
 
 cell binding_hook_stack_base = 0;
 cell binding_hook_stack_pointer = 0;
 
-void binding_hook_stack_push(binding_hook value) {
+void binding_hook_stack_push(jo value) {
   binding_hook_stack[binding_hook_stack_pointer] = value;
   binding_hook_stack_pointer++;
 }
 
-binding_hook binding_hook_stack_pop() {
+jo binding_hook_stack_pop() {
   binding_hook_stack_pointer--;
   return binding_hook_stack[binding_hook_stack_pointer];
 }
 
-binding_hook binding_hook_stack_tos() {
+jo binding_hook_stack_tos() {
   return binding_hook_stack[binding_hook_stack_pointer - 1];
 }
 
@@ -714,11 +711,14 @@ bool alias_stack_empty_p() {
   return alias_stack_pointer == alias_stack_base;
 }
 
+void eval();
+
 void jo_apply(jo jo) {
-  if (!jotable_entry_used(jotable[jo])) {
-    printf("undefined jo : %s\n", jo2str(jo));
-    return;
-  }
+  // if (!jotable_entry_used(jotable[jo])) {
+  //   printf("undefined jo : %s\n", jo2str(jo));
+  //   return;
+  // }
+
   cell tag = jotable[jo].tag;
 
   if (tag == TAG_PRIM) {
@@ -853,14 +853,14 @@ void p_2drop() {
 }
 
 void p_dup() {
-  // (a a -> a)
+  // a a -> a
   cell a = as_pop();
   as_push(a);
   as_push(a);
 }
 
 void p_2dup() {
-  // (b a -> b a b a)
+  // b a -> b a b a
   cell a = as_pop();
   cell b = as_pop();
   as_push(b);
@@ -870,7 +870,7 @@ void p_2dup() {
 }
 
 void p_over() {
-  // (b a -> b a b)
+  // b a -> b a b
   cell a = as_pop();
   cell b = as_pop();
   as_push(b);
@@ -879,7 +879,7 @@ void p_over() {
 }
 
 void p_2over() {
-  // (d c  b a -> d c  b a  d c)
+  // d c  b a -> d c  b a  d c
   cell a = as_pop();
   cell b = as_pop();
   cell c = as_pop();
@@ -893,7 +893,7 @@ void p_2over() {
 }
 
 void p_tuck() {
-  // (b a -> a b a)
+  // b a -> a b a
   cell a = as_pop();
   cell b = as_pop();
   as_push(a);
@@ -902,7 +902,7 @@ void p_tuck() {
 }
 
 void p_2tuck() {
-  // (d c  b a -> b a  d c  b a)
+  // d c  b a -> b a  d c  b a
   cell a = as_pop();
   cell b = as_pop();
   cell c = as_pop();
@@ -916,7 +916,7 @@ void p_2tuck() {
 }
 
 void p_swap() {
-  // (b a -> a b)
+  // b a -> a b
   cell a = as_pop();
   cell b = as_pop();
   as_push(a);
@@ -924,7 +924,7 @@ void p_swap() {
 }
 
 void p_2swap() {
-  // (d c  b a -> b a  d c)
+  // d c  b a -> b a  d c
   cell a = as_pop();
   cell b = as_pop();
   cell c = as_pop();
@@ -936,7 +936,7 @@ void p_2swap() {
 }
 
 void p_xy_swap() {
-  // (xxx yyy x y -> yyy xxx)
+  // xxx yyy x y -> yyy xxx
   cell y = as_pop();
   cell x = as_pop();
   cell* yp = calloc(y, cell_size);
@@ -950,7 +950,7 @@ void p_xy_swap() {
 }
 
 void p_as_print() {
-  // ([io] ->)
+  // {io} ->
   printf("\n");
   if (as_pointer < as_base) {
     printf("  * %ld *  ", (as_pointer - as_base));
@@ -994,13 +994,11 @@ void export_stack_operation() {
 }
 
 void p_end() {
-  // (rs: addr ->)
   return_point rp = rs_pop();
   current_local_pointer = rp.local_pointer;
 }
 
 void p_bye() {
-  // (-> [exit])
   printf("bye bye ^-^/\n");
   exit(0);
 }
@@ -1011,7 +1009,7 @@ void export_ending() {
 }
 
 void i_lit() {
-  // ([rs] -> int)
+  // {rs} -> int
   return_point rp = rs_tos();
   rs_inc();
   cell jo = *(cell*)rp.array;
@@ -1019,7 +1017,7 @@ void i_lit() {
 }
 
 void i_jump_if_false() {
-  // (bool [rs] -> [rs])
+  // bool {rs} -> {rs}
   return_point rp = rs_tos();
   rs_inc();
   jo* a = *(cell*)rp.array;
@@ -1031,7 +1029,7 @@ void i_jump_if_false() {
 }
 
 void i_jump() {
-  // ([rs] -> [rs])
+  // {rs} -> {rs}
   return_point rp = rs_tos();
   jo* a = *(cell*)rp.array;
   return_point rp1 = rs_pop();
@@ -1053,20 +1051,20 @@ void p_false() {
 }
 
 void p_not() {
-  // (bool -> bool)
+  // bool -> bool
   cell a = as_pop();
   as_push(!a);
 }
 
 void p_and() {
-  // (bool bool -> bool)
+  // bool bool -> bool
   cell a = as_pop();
   cell b = as_pop();
   as_push(a&&b);
 }
 
 void p_or() {
-  // (bool bool -> bool)
+  // bool bool -> bool
   cell a = as_pop();
   cell b = as_pop();
   as_push(a||b);
@@ -1081,45 +1079,45 @@ void export_bool() {
 }
 
 void p_true_bit() {
-  // (-> cell)
+  // -> cell
   cell i = -1;
   as_push(i);
 }
 
 void p_false_bit() {
-  // (-> cell)
+  // -> cell
   as_push(0);
 }
 
 void p_bit_and() {
-  // (cell cell -> cell)
+  // cell cell -> cell
   cell b = as_pop();
   cell a = as_pop();
   as_push(a&b);
 }
 
 void p_bit_or() {
-  // (cell cell -> cell)
+  // cell cell -> cell
   cell b = as_pop();
   cell a = as_pop();
   as_push(a|b);
 }
 
 void p_bit_xor() {
-  // (cell cell -> cell)
+  // cell cell -> cell
   cell b = as_pop();
   cell a = as_pop();
   as_push(a^b);
 }
 
 void p_bit_not() {
-  // (cell -> cell)
+  // cell -> cell
   cell a = as_pop();
   as_push(~a);
 }
 
 void p_bit_shift_left() {
-  // (cell step -> cell)
+  // cell step -> cell
   cell s = as_pop();
   cell a = as_pop();
   as_push(a<<s);
@@ -1153,42 +1151,37 @@ void p_neg() {
 }
 
 void p_add() {
-  // (cell cell -> int)
   cell b = as_pop();
   cell a = as_pop();
   as_push(a + b);
 }
 
 void p_sub() {
-  // (cell cell -> int)
   cell b = as_pop();
   cell a = as_pop();
   as_push(a - b);
 }
 
 void p_mul() {
-  // (cell cell -> int)
   cell b = as_pop();
   cell a = as_pop();
   as_push(a * b);
 }
 
 void p_div() {
-  // (cell cell -> int)
   cell b = as_pop();
   cell a = as_pop();
   as_push(a / b);
 }
 
 void p_mod() {
-  // (cell cell -> int)
   cell b = as_pop();
   cell a = as_pop();
   as_push(a % b);
 }
 
 void p_n_eq_p() {
-  // (a ... b ... n -> bool)
+  // a ... b ... n -> bool
   cell n = as_pop();
   cell old_n = n;
   cell* cursor1 = (as + as_pointer - n);
@@ -1206,35 +1199,30 @@ void p_n_eq_p() {
 }
 
 void p_eq_p() {
-  // (cell cell -> bool)
   cell b = as_pop();
   cell a = as_pop();
   as_push(a == b);
 }
 
 void p_gt_p() {
-  // (cell cell -> bool)
   cell b = as_pop();
   cell a = as_pop();
   as_push(a > b);
 }
 
 void p_lt_p() {
-  // (cell cell -> bool)
   cell b = as_pop();
   cell a = as_pop();
   as_push(a < b);
 }
 
 void p_gteq_p() {
-  // (cell cell -> bool)
   cell b = as_pop();
   cell a = as_pop();
   as_push(a >= b);
 }
 
 void p_lteq_p() {
-  // (cell cell -> bool)
   cell b = as_pop();
   cell a = as_pop();
   as_push(a <= b);
@@ -1243,7 +1231,7 @@ void p_lteq_p() {
 jo read_raw_jo();
 
 void k_int() {
-  // ([io] -> [compile])
+  // {io} -> {compile}
   while (true) {
     jo s = read_raw_jo();
     if (s == ROUND_KET) {
@@ -1290,17 +1278,19 @@ void export_int() {
 }
 
 void p_allocate () {
-  // (size -> addr)
+  // size -> addr
   as_push(calloc(as_pop(), 1));
 }
 
 void p_free () {
-  // (addr ->)
+  // addr ->
   free(as_pop());
 }
 
+void k_ignore();
+
 void k_address() {
-  // ([io] -> [compile])
+  // {io} -> {compile}
   here(JO_INS_INT);
   jo index = read_raw_jo();
   here(&(jotable[index].value));
@@ -1313,27 +1303,27 @@ void p_jo_as_var() {
 }
 
 void p_set_cell() {
-  // (cell address ->)
+  // cell address ->
   cell* address = as_pop();
   cell value = as_pop();
   address[0] = value;
 }
 
 void p_get_cell() {
-  // (address -> cell)
+  // address -> cell
   cell* address = as_pop();
   as_push(address[0]);
 }
 
 void p_set_byte() {
-  // (byte address ->)
+  // byte address ->
   char* address = as_pop();
   cell value = as_pop();
   address[0] = value;
 }
 
 void p_get_byte() {
-  // (address -> byte)
+  // address -> byte
   char* address = as_pop();
   as_push(address[0]);
 }
@@ -1439,17 +1429,17 @@ void byte_unread(byte c) {
 }
 
 void p_read_byte() {
-  // (-> byte)
+  // -> byte
   as_push(read_byte());
 }
 
 void p_byte_unread() {
-  // (byte -> [reading_stack])
+  // byte -> {reading_stack}
   byte_unread(as_pop());
 }
 
 void p_byte_print() {
-  // (byte ->)
+  // byte ->
   printf("%c", as_pop());
 }
 
@@ -1461,7 +1451,7 @@ void export_byte() {
 }
 
 void k_one_string() {
-  // ([io] -> [compile])
+  // {io} -> {compile}
   char buffer[1024 * 1024];
   cell cursor = 0;
   while (true) {
@@ -1483,7 +1473,7 @@ void k_one_string() {
 }
 
 void k_string() {
-  // ([io] -> [compile])
+  // {io} -> {compile}
   while (true) {
     jo s = read_raw_jo();
     if (s == ROUND_KET) {
@@ -1499,22 +1489,22 @@ void k_string() {
 }
 
 void p_string_length() {
-  // (string -> length)
+  // string -> length
   as_push(strlen(as_pop()));
 }
 
 void p_string_print() {
-  // (string -> [io])
+  // string -> {io}
   printf("%s", as_pop());
 }
 
 void p_string_dot() {
-  // (string -> [io])
+  // string -> {io}
   printf("\"%s \"", as_pop());
 }
 
 void p_string_append_to_buffer() {
-  // (buffer, string -> buffer)
+  // buffer string -> buffer
   string str = as_pop();
   string buffer = as_tos();
   strcat(buffer, str);
@@ -1535,7 +1525,7 @@ void p_string_last_byte() {
 }
 
 void p_string_member_p() {
-  // (byte[not 0] string -> true or false)
+  // byte[not 0] string -> true or false
   string s = as_pop();
   byte b = as_pop();
   cell i = 0;
@@ -1552,7 +1542,7 @@ void p_string_member_p() {
 }
 
 void p_string_find_byte() {
-  // (byte string -> [index true] or [false])
+  // byte string -> [index true] or [false]
   string s = as_pop();
   byte b = as_pop();
   cell i = 0;
@@ -1630,7 +1620,7 @@ void p_has_jo_p() {
 }
 
 void p_read_raw_jo() {
-  // ([io] -> jo)
+  // {io} -> jo
   byte buf[1024];
   cell cur = 0;
   cell collecting = false;
@@ -1771,19 +1761,19 @@ void p_empty_jo() {
 }
 
 void p_jo_used_p() {
-  // (jo -> bool)
+  // jo -> bool
   jo jo = as_pop();
   as_push(jotable_entry_used(jotable[jo]));
 }
 
 void p_jo_to_string() {
-  // (jo -> string)
+  // jo -> string
   jo jo = as_pop();
   as_push(jo2str(jo));
 }
 
 void p_string_length_to_jo() {
-  // (string length -> jo)
+  // string length -> jo
   cell len = as_pop();
   cell str = as_pop();
   char buffer[2 * 1024];
@@ -1793,7 +1783,7 @@ void p_string_length_to_jo() {
 }
 
 void p_string_to_jo() {
-  // (string -> jo)
+  // string -> jo
   string str = as_pop();
   as_push(str2jo(str));
 }
@@ -1803,7 +1793,7 @@ void p_null() {
 }
 
 void k_raw_jo() {
-  // ([io] -> [compile])
+  // {io} -> {compile}
   while (true) {
     jo s = read_raw_jo();
     if (s == ROUND_BAR) {
@@ -1820,7 +1810,7 @@ void k_raw_jo() {
 }
 
 void k_jo() {
-  // ([io] -> [compile])
+  // {io} -> {compile}
   while (true) {
     jo s = read_jo();
     if (s == ROUND_BAR) {
@@ -1837,12 +1827,12 @@ void k_jo() {
 }
 
 void p_jo_print() {
-  // (jo -> [io])
+  // jo -> {io}
   printf("%s", jo2str(as_pop()));
 }
 
 void p_jo_dot() {
-  // (jo -> [io])
+  // jo -> {io}
   printf("%s ", jo2str(as_pop()));
 }
 
@@ -1856,13 +1846,13 @@ void p_generate_jo() {
 }
 
 void p_jo_find_byte() {
-  // (byte jo -> [index true] or [false])
+  // byte jo -> [index true] or [false]
   p_jo_to_string();
   p_string_find_byte();
 }
 
 void p_jo_right_part() {
-  // (index jo -> jo)
+  // index jo -> jo
   jo jo = as_pop();
   cell index = as_pop();
   string s = jo2str(jo);
@@ -1870,7 +1860,7 @@ void p_jo_right_part() {
 }
 
 void p_jo_left_part() {
-  // (index jo -> jo)
+  // index jo -> jo
   char target[1024];
   jo jo = as_pop();
   cell index = as_pop();
@@ -1885,7 +1875,7 @@ void p_jo_left_part() {
 }
 
 void p_jo_part() {
-  // (index-begin index-end jo -> jo)
+  // index-begin index-end jo -> jo
   char target[1024];
   jo jo = as_pop();
   cell index_end = as_pop();
@@ -1932,13 +1922,152 @@ void export_jo() {
   define_prim("jo/part", p_jo_part);
 }
 
-void p_open_for_reading() {
-  string pathname = as_pop();
-  FILE* fd = open(pathname, O_RDONLY);
+void p_path_open() {
+  // [flag path] -> [file true] or [errno false]
+  string path = as_pop();
+  int flag = as_pop();
+
+  int fd = open(path, flag);
   if (fd == -1) {
-    perror("- p_open_for_reading fail\n");
+    as_push(errno);
+    as_push(false);
   }
-  as_push(fd);
+  else {
+    as_push(fd);
+    as_push(true);
+  }
+}
+
+void p_path_create() {
+  // [permission-mode flag path] -> [file true] or [errno false]
+  string path = as_pop();
+  int flag = as_pop();
+  mode_t permission_mode = as_pop();
+
+  int fd = open(path, O_CREAT | flag, permission_mode);
+  if (fd == -1) {
+    as_push(errno);
+    as_push(false);
+  }
+  else {
+    as_push(fd);
+    as_push(true);
+  }
+}
+
+void p_file_read() {
+  // [requested-bytes buffer file] ->
+  // [real-bytes true] or [errno false]
+  // - partial read reasons
+  //   1. [regular-file] end-of-file is reached
+  //   2. [terminal] meets '\n'
+  int fd = as_pop();
+  void* buffer = as_pop();
+  size_t want_bytes = as_pop();
+
+  ssize_t real_bytes = read(fd, buffer, want_bytes);
+  if (real_bytes == -1) {
+    as_push(errno);
+    as_push(false);
+  }
+  else {
+    as_push(real_bytes);
+    as_push(false);
+  }
+}
+
+void p_file_write() {
+  // [want-bytes buffer file] ->
+  // [real-bytes true] or [errno false]
+  // - partial write reasons
+  //   1. disk was filled
+  //   2. the process resource limit on file sizes was reached
+  int fd = as_pop();
+  void* buffer = as_pop();
+  size_t want_bytes = as_pop();
+
+  ssize_t real_bytes = write(fd, buffer, want_bytes);
+  if (real_bytes == -1) {
+    as_push(errno);
+    as_push(false);
+  }
+  else {
+    as_push(real_bytes);
+    as_push(false);
+  }
+}
+
+void p_file_close() {
+  // [fd] -> [true] or [errno false]
+  // - error reasons
+  // 1. to close an unopened file descriptor
+  // 2. close the same file descriptor twice
+  // 3. error conditions for specific file system
+  //    to diagnose during a close operation
+  //    - for example, NFS (Network File System)
+  int fd = as_pop();
+
+  if (close(fd) == -1) {
+    as_push(errno);
+    as_push(false);
+  }
+  else {
+    as_push(true);
+  }
+}
+
+void p_file_seek() {
+  // [offset fd] -> [new-offset]
+  // - one should only apply seek to regular-file
+  //   I do not expose seek error to jojo
+  //   one should check file type before apply seek
+  int fd = as_pop();
+  off_t offset = as_pop();
+
+  off_t new_offset = lseek(fd, offset, SEEK_CUR);
+  if (new_offset == -1) {
+    printf("- p_file_seek fail\n");
+    printf("  one should only seek regular-file\n");
+  }
+  else {
+    as_push(new_offset);
+  }
+}
+
+void p_file_seek_from_beginning() {
+  // [offset fd] -> [new-offset]
+  // - one should only apply seek to regular-file
+  //   I do not expose seek error to jojo
+  //   one should check file type before apply seek
+  int fd = as_pop();
+  off_t offset = as_pop();
+
+  off_t new_offset = lseek(fd, offset, SEEK_SET);
+  if (new_offset == -1) {
+    printf("- p_file_seek_from_beginning fail\n");
+    printf("  one should only seek regular-file\n");
+  }
+  else {
+    as_push(new_offset);
+  }
+}
+
+void p_file_seek_from_end() {
+  // [offset fd] -> [new-offset]
+  // - one should only apply seek to regular-file
+  //   I do not expose seek error to jojo
+  //   one should check file type before apply seek
+  int fd = as_pop();
+  off_t offset = as_pop();
+
+  off_t new_offset = lseek(fd, offset, SEEK_END);
+  if (new_offset == -1) {
+    printf("- p_file_seek_from_end fail\n");
+    printf("  one should only seek regular-file\n");
+  }
+  else {
+    as_push(new_offset);
+  }
 }
 
 bool file_readable_p(string path) {
@@ -1953,52 +2082,11 @@ bool file_readable_p(string path) {
 }
 
 void p_file_readable_p() {
-  // (path -> bool)
+  // path -> bool
   as_push(file_readable_p(as_pop()));
 }
 
-bool dir_ok_p(string path) {
-  DIR* dir = opendir(path);
-  if (!dir) {
-    return false;
-  }
-  else {
-    closedir(dir);
-    return true;
-  }
-}
-
-void p_dir_ok_p() {
-  // (dir -> bool)
-  as_push(dir_ok_p(as_pop()));
-}
-
-cell file_size(string file_name) {
-  struct stat st;
-  stat(file_name, &st);
-  return st.st_size;
-}
-
-void p_file_size() {
-  as_push(file_size(as_pop()));
-}
-
-void p_file_copy_to_buffer() {
-  // (file-name addr -> number)
-  cell buffer = as_pop();
-  cell path = as_pop();
-  cell limit = file_size(path);
-  FILE* fp = fopen(path, "r");
-  if(!fp) {
-    printf("- p_file_copy_to_buffer file to open file : %s\n", path);
-    perror("  ");
-    as_push(0);
-    return;
-  }
-  cell read_counter = fread(buffer, 1, limit, fp);
-  fclose(fp);
-  as_push(read_counter);
-}
+void p_top_repl();
 
 void load_file(string path) {
   // [reading_stack]
@@ -2049,7 +2137,7 @@ void p_load_file() {
 }
 
 void k_include_one() {
-  // ([io] -> *)
+  // {io} -> *
   char buffer[PATH_MAX];
   cell cursor = 0;
   while (true) {
@@ -2070,7 +2158,7 @@ void k_include_one() {
 }
 
 void k_include() {
-  // ([io] -> [compile])
+  // {io} -> {compile}
   while (true) {
     jo s = read_raw_jo();
     if (s == ROUND_KET) {
@@ -2089,30 +2177,36 @@ void k_include() {
 }
 
 void export_file() {
-  define_prim("open-for-reading", p_open_for_reading);
+  define_prim("path/open", p_path_open);
+  define_prim("path/create", p_path_create);
+
+  define_prim("file/read", p_file_read);
+  define_prim("file/write", p_file_write);
+  define_prim("file/close", p_file_close);
+
+  define_prim("file/seek", p_file_seek);
+  define_prim("file/seek-from-beginning", p_file_seek_from_beginning);
+  define_prim("file/seek-from-end", p_file_seek_from_end);
+
   define_prim("file/readable?", p_file_readable_p);
-  define_prim("dir/ok?", p_dir_ok_p);
-  define_prim("file/size", p_file_size);
-  define_prim("file/copy-to-buffer", p_file_copy_to_buffer);
 
   define_prim("load-file", p_load_file);
-
   define_primkey("include", k_include);
 }
 
 void p_current_dir() {
-  // (-> string)
+  // -> string
   char buf[1024];
   as_push(getcwd(buf, 1024));
 }
 
 void p_command_run() {
-  // (string -> *)
+  // string -> *
   system(as_pop());
 }
 
 void p_n_command_run() {
-  // (..., string, n -> *)
+  // ... string n -> *
   cell n = as_pop();
   cell i = 0;
   string str = malloc(4 * 1024);
@@ -2129,21 +2223,21 @@ void p_n_command_run() {
 cell argument_counter;
 
 void p_argument_counter() {
-  // (-> argument_counter)
+  // -> argument_counter
   as_push(argument_counter);
 }
 
 string* argument_string_array;
 
 void p_index_to_argument_string() {
-  // (index -> string)
+  // index -> string
   cell index = as_pop();
   string argument_string = argument_string_array[index];
   as_push(argument_string);
 }
 
 void p_get_env_string() {
-  // (string -> string)
+  // string -> string
   string var_string = as_pop();
   string env_string = getenv(var_string);
   as_push(env_string);
@@ -2179,7 +2273,7 @@ void* get_clib(string rel_path) {
 }
 
 void k_clib_one() {
-  // ([io] -> [compile])
+  // {io} -> {compile}
   char buffer[PATH_MAX];
   cell cursor = 0;
   while (true) {
@@ -2198,7 +2292,7 @@ void k_clib_one() {
 }
 
 void k_clib() {
-  // ([io] -> [compile])
+  // {io} -> {compile}
   while (true) {
     jo s = read_raw_jo();
     if (s == ROUND_KET) {
@@ -2216,6 +2310,8 @@ void k_clib() {
 void export_cffi() {
   define_prim("clib", k_clib);
 }
+
+void k_run();
 
 void k_define() {
   jo name = read_jo();
@@ -2248,7 +2344,7 @@ void k_declare() {
 void p_compile_jojo();
 
 void k_run() {
-  // ([io] -> *)
+  // {io} -> *
   jo* jojo = compiling_stack_tos();
   p_compile_jojo();
   rs_new_point(jojo);
@@ -2318,7 +2414,7 @@ void export_top_level() {
 }
 
 void k_ignore() {
-  // ([io] ->)
+  // {io} ->
   while (true) {
     jo s = read_raw_jo();
     if (s == ROUND_BAR) {
@@ -2331,7 +2427,7 @@ void k_ignore() {
 }
 
 void compile_until_meet_jo(jo ending_jo) {
-  // ([io] -> [compile])
+  // {io} -> {compile}
   while (true) {
     jo s = read_jo();
     if (s == ROUND_BAR) {
@@ -2353,7 +2449,7 @@ void compile_until_meet_jo(jo ending_jo) {
 }
 
 void p_compile_until_meet_jo() {
-  // (jo -> [compile])
+  // jo -> {compile}
   compile_until_meet_jo(as_pop());
 }
 
@@ -2375,13 +2471,13 @@ jo compile_until_meet_jo_or_jo(jo ending_jo1, jo ending_jo2) {
       printf("- ending_jo1 : %s\n", jo2str(ending_jo1));
       printf("- ending_jo2 : %s\n", jo2str(ending_jo2));
       k_ignore();
-      return;
+      return JO_NULL;
     }
   }
 }
 
 void p_compile_until_round_ket() {
-  // ([io] -> [compile])
+  // {io} -> {compile}
   compile_until_meet_jo(ROUND_KET);
 }
 
@@ -2405,7 +2501,7 @@ void p_compile_until_round_ket() {
 //   :end-of-else
 
 void k_if() {
-  // ([io] -> [compile])
+  // {io} -> {compile}
   compile_until_meet_jo(JO_THEN);
   here(JO_INS_JUMP_IF_FALSE);
   cell* end_of_then = compiling_stack_tos();
@@ -2465,7 +2561,7 @@ bool current_compiling_jojo_stack_empty_p() {
 }
 
 void p_compile_jojo() {
-  // ([io] -> [compile])
+  // {io} -> {compile}
   jo* jojo = compiling_stack_tos();
   current_compiling_jojo_stack_push(jojo);
   compile_until_meet_jo(ROUND_KET);
@@ -2492,7 +2588,7 @@ void p_compiling_stack_tos() {
 }
 
 void k_bare_jojo() {
-  // ([io] -> [compile])
+  // {io} -> {compile}
   here(JO_INS_JUMP);
   cell* offset_place = compiling_stack_tos();
   compiling_stack_inc();
@@ -2503,7 +2599,7 @@ void k_bare_jojo() {
 }
 
 void k_jojo() {
-  // ([io] -> [compile])
+  // {io} -> {compile}
   here(JO_INS_JUMP);
   cell* offset_place = compiling_stack_tos();
   compiling_stack_inc();
@@ -2516,7 +2612,7 @@ void k_jojo() {
 }
 
 void k_keyword() {
-  // ([io] -> [compile])
+  // {io} -> {compile}
   here(JO_INS_JUMP);
   cell* offset_place = compiling_stack_tos();
   compiling_stack_inc();
@@ -2529,7 +2625,7 @@ void k_keyword() {
 }
 
 void k_data() {
-  // ([io] -> [compile])
+  // {io} -> {compile}
   p_compile_until_round_ket();
   here(JO_INS_INT);
   here(TAG_DATA);
@@ -2794,7 +2890,7 @@ void p_flower_ket()   { as_push(FLOWER_KET); }
 void p_double_quote() { as_push(DOUBLE_QUOTE); }
 
 void p_cell_size() {
-  // (-> cell)
+  // -> cell
   as_push(cell_size);
 }
 
