@@ -1388,15 +1388,15 @@ void real_reading_path(string path, char* buffer) {
 }
 
 bool has_byte_p() {
-  FILE* fd;
+  FILE* file;
   if (reading_stack_empty_p()) {
-    fd = stdin;
+    file = stdin;
   }
   else {
-    fd = reading_stack_tos().file_handle;
+    file = reading_stack_tos().file_handle;
   }
 
-  if (feof(fd) == 0) {
+  if (feof(file) == 0) {
     return true;
   }
   else {
@@ -1927,13 +1927,13 @@ void p_path_open() {
   int flag = as_pop();
   string path = as_pop();
 
-  int fd = open(path, flag);
-  if (fd == -1) {
+  int file = open(path, flag);
+  if (file == -1) {
     as_push(errno);
     as_push(false);
   }
   else {
-    as_push(fd);
+    as_push(file);
     as_push(true);
   }
 }
@@ -1944,13 +1944,13 @@ void p_path_create() {
   int flag = as_pop();
   string path = as_pop();
 
-  int fd = open(path, O_CREAT | flag, permission_mode);
-  if (fd == -1) {
+  int file = open(path, O_CREAT | flag, permission_mode);
+  if (file == -1) {
     as_push(errno);
     as_push(false);
   }
   else {
-    as_push(fd);
+    as_push(file);
     as_push(true);
   }
 }
@@ -1963,9 +1963,9 @@ void p_file_read() {
   //   2. [terminal] meets '\n'
   size_t want_bytes = as_pop();
   void* buffer = as_pop();
-  int fd = as_pop();
+  int file = as_pop();
 
-  ssize_t real_bytes = read(fd, buffer, want_bytes);
+  ssize_t real_bytes = read(file, buffer, want_bytes);
   if (real_bytes == -1) {
     as_push(errno);
     as_push(false);
@@ -1984,9 +1984,9 @@ void p_file_write() {
   //   2. the process resource limit on file sizes was reached
   size_t want_bytes = as_pop();
   void* buffer = as_pop();
-  int fd = as_pop();
+  int file = as_pop();
 
-  ssize_t real_bytes = write(fd, buffer, want_bytes);
+  ssize_t real_bytes = write(file, buffer, want_bytes);
   if (real_bytes == -1) {
     as_push(errno);
     as_push(false);
@@ -1998,16 +1998,16 @@ void p_file_write() {
 }
 
 void p_file_close() {
-  // [fd] -> [true] or [errno false]
+  // [file] -> [true] or [errno false]
   // - error reasons
   // 1. to close an unopened file descriptor
   // 2. close the same file descriptor twice
   // 3. error conditions for specific file system
   //    to diagnose during a close operation
   //    - for example, NFS (Network File System)
-  int fd = as_pop();
+  int file = as_pop();
 
-  if (close(fd) == -1) {
+  if (close(file) == -1) {
     as_push(errno);
     as_push(false);
   }
@@ -2017,14 +2017,14 @@ void p_file_close() {
 }
 
 void p_file_seek() {
-  // [fd offset] -> [new-offset]
+  // [file offset] -> [new-offset]
   // - one should only apply seek to regular-file
   //   I do not expose seek error to jojo
   //   one should check file type before apply seek
   off_t offset = as_pop();
-  int fd = as_pop();
+  int file = as_pop();
 
-  off_t new_offset = lseek(fd, offset, SEEK_CUR);
+  off_t new_offset = lseek(file, offset, SEEK_CUR);
   if (new_offset == -1) {
     printf("- p_file_seek fail\n");
     printf("  one should only seek regular-file\n");
@@ -2035,14 +2035,14 @@ void p_file_seek() {
 }
 
 void p_file_seek_from_beginning() {
-  // [fd offset] -> [new-offset]
+  // [file offset] -> [new-offset]
   // - one should only apply seek to regular-file
   //   I do not expose seek error to jojo
   //   one should check file type before apply seek
   off_t offset = as_pop();
-  int fd = as_pop();
+  int file = as_pop();
 
-  off_t new_offset = lseek(fd, offset, SEEK_SET);
+  off_t new_offset = lseek(file, offset, SEEK_SET);
   if (new_offset == -1) {
     printf("- p_file_seek_from_beginning fail\n");
     printf("  one should only seek regular-file\n");
@@ -2053,14 +2053,14 @@ void p_file_seek_from_beginning() {
 }
 
 void p_file_seek_from_end() {
-  // [fd offset] -> [new-offset]
+  // [file offset] -> [new-offset]
   // - one should only apply seek to regular-file
-  //   I do not expose seek error to jojo
+  //   I do not expose error of this function to jojo
   //   one should check file type before apply seek
   off_t offset = as_pop();
-  int fd = as_pop();
+  int file = as_pop();
 
-  off_t new_offset = lseek(fd, offset, SEEK_END);
+  off_t new_offset = lseek(file, offset, SEEK_END);
   if (new_offset == -1) {
     printf("- p_file_seek_from_end fail\n");
     printf("  one should only seek regular-file\n");
@@ -2070,15 +2070,46 @@ void p_file_seek_from_end() {
   }
 }
 
+// file flag -> true or false
+
+// file flag ->
+
+void p_file_truncate() {
+  // [file length] -> []
+  // - I do not expose error of this function to jojo
+  off_t length = as_pop();
+  int file = as_pop();
+
+  if (ftruncate(file, length) == -1) {
+    perror("- p_file_truncate fail\n");
+  }
+  else {
+    return;
+  }
+}
+
+void p_file_clear() {
+  // [file] -> []
+  // - I do not expose error of this function to jojo
+  int file = as_pop();
+
+  if (ftruncate(file, 0) == -1) {
+    perror("- p_file_clear fail\n");
+  }
+  else {
+    return;
+  }
+}
+
 void p_path_readable_p() {
   // path -> bool
   string path = as_pop();
-  FILE* fp = fopen(path, "r");
-  if (!fp) {
+  FILE* file = fopen(path, "r");
+  if (!file) {
     as_push(false);
   }
   else {
-    fclose(fp);
+    fclose(file);
     as_push(true);
   }
 }
@@ -2088,8 +2119,8 @@ void p_top_repl();
 void p_path_load() {
   // path -> {reading_stack}
   string path = as_pop();
-  FILE* fp = fopen(path, "r");
-  if(!fp) {
+  FILE* file = fopen(path, "r");
+  if(!file) {
     perror("File opening failed");
     printf("p_path_load fail : %s\n", path);
     return;
@@ -2100,7 +2131,7 @@ void p_path_load() {
   realpath(path, dir_buffer);
   char* dir_addr = dirname(dir_buffer);
   reading_point rp = {
-    .file_handle = fp,
+    .file_handle = file,
     .file = file_buffer,
     .dir = dir_addr
   };
@@ -2108,7 +2139,7 @@ void p_path_load() {
 
   // {
   //   printf("- p_path_load start\n");
-  //   printf("  fp: %d\n", fp);
+  //   printf("  file: %d\n", file);
   //   printf("  file: %s\n", file_buffer);
   //   printf("  dir_buffer: %s #%ld\n", dir_buffer, dir_buffer);
   //   printf("  dir_addr: %s #%ld\n", dir_addr, dir_addr);
@@ -2123,7 +2154,7 @@ void p_path_load() {
 
   // {
   //   printf("- p_path_load finished\n");
-  //   printf("  fp: %d\n", fp);
+  //   printf("  file: %d\n", file);
   //   printf("  file: %s\n", file_buffer);
   //   printf("  dir_buffer: %s #%ld\n", dir_buffer, dir_buffer);
   //   printf("  dir_addr: %s #%ld\n", dir_addr, dir_addr);
@@ -2182,6 +2213,9 @@ void export_file() {
   define_prim("file/seek", p_file_seek);
   define_prim("file/seek-from-beginning", p_file_seek_from_beginning);
   define_prim("file/seek-from-end", p_file_seek_from_end);
+
+  define_prim("file/truncate", p_file_truncate);
+  define_prim("file/clear", p_file_clear);
 
   define_prim("path/readable?", p_path_readable_p);
 
