@@ -1,5 +1,6 @@
 #+property: tangle core.jo
 #+title: core
+
 - shadow-the-core
 - deadly need debuger repl
 - syntax for byte
@@ -9,6 +10,7 @@
   - to mock a mocking bird
 - [docs] basic docs about composition
 - [emacs] fix space line in generated html
+
 * todo
 
   - let message be able to sent to many objects
@@ -87,7 +89,7 @@
 
   #+begin_src jojo
   (run testing-flag/on)
-  (test top-repl/printing-flag/on)
+  (test repl/printing-flag/on)
   #+end_src
 
 * list
@@ -1757,4 +1759,16 @@
   (test command-line/print-argument)
 
   (note (test name-report))
+
+  (run (bare-jojo dup dup drop) jojo/print)
+
+
+  (define c1
+    (jojo  dup dup   debug dup        (if argument-counter lt? then
+          dup index->argument-string string/print
+          newline
+          (int 1) add
+          )))
+
+  (run c1 c1 c1)
   #+end_src

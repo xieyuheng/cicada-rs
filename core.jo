@@ -1,1325 +1,1280 @@
-(run testing-flag/on)
-(test top-repl/printing-flag/on)
+  (run testing-flag/on)
+  (test repl/printing-flag/on)
+    (define cons-size      (data (int 3) cell-size mul))
+    (define cons-area-size (data (int 1024 1024) mul cons-size mul))
+    (define cons-area      (data cons-area-size allocate))
+    (define cons-area-top  (data cons-area cons-area-size add))
+    (define cons-pointer   (data cons-area))
+    (define current-mark   (data (int 1)))
+    (define max-mark       (data (int 1024 1024) mul))
 
-(define cons-size      (data (int 3) cell-size mul))
-(define cons-area-size (data (int 1024 1024) mul cons-size mul))
-(define cons-area      (data cons-area-size allocate))
-(define cons-area-top  (data cons-area cons-area-size add))
-(define cons-pointer   (data cons-area))
-(define current-mark   (data (int 1)))
-(define max-mark       (data (int 1024 1024) mul))
+    (define cons-pointer/next
+      (jojo
+        (note -> [cons-pointer])
+        cons-size cons-pointer add
+        (address cons-pointer) set-cell))
 
-(define cons-pointer/next
-  (jojo
-    (note -> [cons-pointer])
-    cons-size cons-pointer add
-    (address cons-pointer) set-cell))
+    (define cons-pointer/init
+      (jojo
+        (note -> [cons-pointer])
+        cons-area
+        (address cons-pointer) set-cell))
 
-(define cons-pointer/init
-  (jojo
-    (note -> [cons-pointer])
-    cons-area
-    (address cons-pointer) set-cell))
+    (define cons-pointer/next-free
+      (jojo
+        (note -> [cons-pointer])
+        (if cons-pointer cons-area-top eq? then end)
+        (if cons-pointer get-cell current-mark eq? not then end)
+        cons-pointer/next
+        (loop)))
 
-(define cons-pointer/next-free
-  (jojo
-    (note -> [cons-pointer])
-    (if cons-pointer cons-area-top eq? then end)
-    (if cons-pointer get-cell current-mark eq? not then end)
-    cons-pointer/next
-    (loop)))
-
-(define cons?
-  (jojo
-    (note cell -> bool)
-    (if dup cons-area lt? then drop false end)
-    (if dup cons-area-top gteq? then drop false end)
-    cons-area sub cons-size mod (int 0) eq?))
-
-
-
-(declare
- (car (note cons -> cell))
- (cdr (note cons -> cell)))
-
-(define cons-area/report/loop
-  (jojo
-    (note cons -> [io])
-    (if dup cons-area-top eq? then drop end)
-    (string "#:") string/print
-    dup dot
-    (string "mark: ") string/print
-    dup get-cell dot
-    (string "car: ") string/print
-    dup car dot
-    (string "cdr: ") string/print
-    dup cdr dot
-    newline
-    cons-size add
-    (loop)))
-
-(define cons-area/report
-  (jojo
-    (note -> [io])
-    cons-area cons-area/report/loop))
+    (define cons?
+      (jojo
+        (note cell -> bool)
+        (if dup cons-area lt? then drop false end)
+        (if dup cons-area-top gteq? then drop false end)
+        cons-area sub cons-size mod (int 0) eq?))
 
 
 
-(define sweep-cons-area/loop
-  (jojo
-    (note cons -> [io])
-    (if dup cons-area-top eq? then drop end)
-    dup (int 0)  swap set-cell
-    cons-size add
-    (loop)))
+    (declare
+     (car (note cons -> cell))
+     (cdr (note cons -> cell)))
 
-(define sweep-cons-area
-  (jojo
-    (note -> [cons-area])
-    cons-area sweep-cons-area/loop))
+    (define cons-area/report/loop
+      (jojo
+        (note cons -> [io])
+        (if dup cons-area-top eq? then drop end)
+        (string "#:") string/print
+        dup dot
+        (string "mark: ") string/print
+        dup get-cell dot
+        (string "car: ") string/print
+        dup car dot
+        (string "cdr: ") string/print
+        dup cdr dot
+        newline
+        cons-size add
+        (loop)))
 
-
-
-(note root from :
-      stack
-      def)
-
-(define mark-cons
-  (jojo
-    (note cons -> [cons-area])
-    (if dup cons? not then drop end)
-    dup current-mark swap set-cell
-    dup car (recur)
-    cdr (loop)))
-
-(define mark-cons-area/name-record
-  (jojo
-    (note name-record -> [cons-area])
-    (if dup get-cell (int 0) eq? then drop end)
-    dup get-cell mark-cons
-    cell-size add
-    (loop)))
-
-(define mark-cons-area/argument-stack
-  (jojo
-    (note stack -> [cons-area])
-    (if dup stack-base eq? then drop end)
-    cell-size sub
-    dup get-cell mark-cons
-    (loop)))
-
-(define mark-cons-area
-  (jojo
-    (note -> [cons-area])
-    (if current-mark max-mark eq? then
-        sweep-cons-area
-        (int 0) (address current-mark) set-cell)
-    current-mark (int 1) add (address current-mark) set-cell
-    name-record mark-cons-area/name-record
-    stack-pointer
-    mark-cons-area/argument-stack))
+    (define cons-area/report
+      (jojo
+        (note -> [io])
+        cons-area cons-area/report/loop))
 
 
 
-(note cons :
-      mark
-      car
-      cdr)
+    (define sweep-cons-area/loop
+      (jojo
+        (note cons -> [io])
+        (if dup cons-area-top eq? then drop end)
+        dup (int 0)  swap set-cell
+        cons-size add
+        (loop)))
 
-(define new/cons
-  (jojo
-    (note -> cons)
-    (if cons-pointer cons-area-top eq? then
-        mark-cons-area
-        cons-pointer/init
-        cons-pointer/next-free
+    (define sweep-cons-area
+      (jojo
+        (note -> [cons-area])
+        cons-area sweep-cons-area/loop))
+
+
+
+    (note root from :
+          stack
+          def)
+
+    (define mark-cons
+      (jojo
+        (note cons -> [cons-area])
+        (if dup cons? not then drop end)
+        dup current-mark swap set-cell
+        dup car (recur)
+        cdr (loop)))
+
+    (define mark-cons-area/name-record
+      (jojo
+        (note name-record -> [cons-area])
+        (if dup get-cell (int 0) eq? then drop end)
+        dup get-cell mark-cons
+        cell-size add
+        (loop)))
+
+    (define mark-cons-area/argument-stack
+      (jojo
+        (note stack -> [cons-area])
+        (if dup stack-base eq? then drop end)
+        cell-size sub
+        dup get-cell mark-cons
+        (loop)))
+
+    (define mark-cons-area
+      (jojo
+        (note -> [cons-area])
+        (if current-mark max-mark eq? then
+            sweep-cons-area
+            (int 0) (address current-mark) set-cell)
+        current-mark (int 1) add (address current-mark) set-cell
+        name-record mark-cons-area/name-record
+        stack-pointer
+        mark-cons-area/argument-stack))
+
+
+
+    (note cons :
+          mark
+          car
+          cdr)
+
+    (define new/cons
+      (jojo
+        (note -> cons)
         (if cons-pointer cons-area-top eq? then
-            (string "fatal error : cons-area is full") string/print
-            newline bye)
-        (loop))
-    (if cons-pointer get-cell current-mark eq? then
-        cons-pointer/next (loop))
-    cons-pointer
-    cons-pointer/next end))
+            mark-cons-area
+            cons-pointer/init
+            cons-pointer/next-free
+            (if cons-pointer cons-area-top eq? then
+                (string "fatal error : cons-area is full") string/print
+                newline bye)
+            (loop))
+        (if cons-pointer get-cell current-mark eq? then
+            cons-pointer/next (loop))
+        cons-pointer
+        cons-pointer/next end))
 
-(define set-car
-  (jojo
-    (note cell cons ->)
-    cell-size add
-    set-cell))
+    (define set-car
+      (jojo
+        (note cell cons ->)
+        cell-size add
+        set-cell))
 
-(define set-cdr
-  (jojo
-    (note cell cons ->)
-    cell-size add
-    cell-size add
-    set-cell))
+    (define set-cdr
+      (jojo
+        (note cell cons ->)
+        cell-size add
+        cell-size add
+        set-cell))
 
-(define car
-  (jojo
-    (note cons -> cell)
-    cell-size add
-    get-cell))
+    (define car
+      (jojo
+        (note cons -> cell)
+        cell-size add
+        get-cell))
 
-(define cdr
-  (jojo
-    (note cons -> cell)
-    cell-size add
-    cell-size add
-    get-cell))
+    (define cdr
+      (jojo
+        (note cons -> cell)
+        cell-size add
+        cell-size add
+        get-cell))
 
-(define cons
-  (jojo
-    (note cdr-cell car-cell -> cons)
-    new/cons
-    tuck set-car
-    tuck set-cdr))
+    (define cons
+      (jojo
+        (note cdr-cell car-cell -> cons)
+        new/cons
+        tuck set-car
+        tuck set-cdr))
 
 
-(note the following tests are for small cons-area)
+    (note the following tests are for small cons-area)
 
-(note (test (int 0)
-            (int 1) cons
-            (int 2) cons
-            dup car dot
-            dup cdr car dot
-            dup cdr cdr dot
+    (note (test (int 0)
+                (int 1) cons
+                (int 2) cons
+                dup car dot
+                dup cdr car dot
+                dup cdr cdr dot
 
-            dup cons? dot
-            dup cdr cons? dot
-            dup car cons? dot
-            dup cdr car cons? dot
-            dup cdr cdr cons? dot
-            dot
+                dup cons? dot
+                dup cdr cons? dot
+                dup car cons? dot
+                dup cdr car cons? dot
+                dup cdr cdr cons? dot
+                dot
 
-            current-mark
-            dot))
+                current-mark
+                dot))
 
-(note (test newline
-            new/cons dot
-            new/cons dot
-            new/cons dot
-            new/cons dot
-            new/cons dot
-            current-mark dot
-            newline
-            cons-area/report
-            newline))
+    (note (test newline
+                new/cons dot
+                new/cons dot
+                new/cons dot
+                new/cons dot
+                new/cons dot
+                current-mark dot
+                newline
+                cons-area/report
+                newline))
+    (define assq
+      (jojo
+        (note assoc-list value -> pair or null)
+        (if over null eq? then drop drop null end)
+        (if over car cdr over eq? then drop car end)
+        swap cdr swap (loop)))
 
-(define assq
-  (jojo
-    (note assoc-list value -> pair or null)
-    (if over null eq? then drop drop null end)
-    (if over car cdr over eq? then drop car end)
-    swap cdr swap (loop)))
-
-(define assoc/find
-  (jojo
-    (note assoc-list value -> [pair true] or [false])
-    (if over null eq? then drop drop false end)
-    (if over car cdr over eq? then drop car true end)
-    swap cdr swap (loop)))
-
-(define list/print
-  (jojo
-    (note list -> [output])
-    (if dup null eq? then drop (jo null) jo/print (string " ") string/print end)
-    (if dup cons? not then dot end)
-    dup cdr (recur)
-    car (recur) (jo cons) jo/print (string " ") string/print))
-
-(define list/copy
-  (jojo
-    (note list -> list)
-    (note circles are not handled)
-    (if dup cons? then end)
-    dup cdr (recur)
-    car (recur)
-    swap
-    cons))
-
-(note
-  (run (int 1) (int 2) cons
-       (int 3) null cons
-       cons
-       dup
-       cons
-       dup list/print newline
-       dup list/copy list/print newline
-       dup list/copy list/print newline
-       drop))
-
-(define set-tail
-  (jojo
-    (note element list ->)
-    (if dup cdr null eq? then
+    (define assoc/find
+      (jojo
+        (note assoc-list value -> [pair true] or [false])
+        (if over null eq? then drop drop false end)
+        (if over car cdr over eq? then drop car true end)
+        swap cdr swap (loop)))
+    (define list/print
+      (jojo
+        (note list -> [output])
+        (if dup null eq? then drop (jo null) jo/print (string " ") string/print end)
+        (if dup cons? not then dot end)
+        dup cdr (recur)
+        car (recur) (jo cons) jo/print (string " ") string/print))
+    (define list/copy
+      (jojo
+        (note list -> list)
+        (note circles are not handled)
+        (if dup cons? then end)
+        dup cdr (recur)
+        car (recur)
         swap
-        null swap cons
-        swap
-        set-cdr end)
-    (el cdr (loop))))
+        cons))
 
-(define list/member?
-  (jojo
-    (note element list -> true or false)
-    (if dup null eq? then 2drop false end)
-    (if 2dup car eq? then 2drop true end)
-    (el cdr (loop))))
-
-(define lev
-  (note lev denotes leave-data-here)
-  (keyword
-    read/jo
-    (if dup round-ket eq? then drop end)
-    (if dup round-bar eq? then drop
+    (note
+      (run (int 1) (int 2) cons
+           (int 3) null cons
+           cons
+           dup
+           cons
+           dup list/print newline
+           dup list/copy list/print newline
+           dup list/copy list/print newline
+           drop))
+    (define set-tail
+      (jojo
+        (note element list ->)
+        (if dup cdr null eq? then
+            swap
+            null swap cons
+            swap
+            set-cdr end)
+        (el cdr (loop))))
+    (define list/member?
+      (jojo
+        (note element list -> true or false)
+        (if dup null eq? then 2drop false end)
+        (if 2dup car eq? then 2drop true end)
+        (el cdr (loop))))
+    (define lev
+      (note lev denotes leave-data-here)
+      (keyword
         read/jo
-        (if dup (jo esc) eq? then
-            drop compile-until-round-ket (loop))
-        (el jo/apply (jo here) here (loop)))
-    (el (jo ins/lit) here
-        here
-        (jo here) here (loop))))
-
-(define alias
-  (keyword
-    read/raw-jo (> nick)
-    (if (< nick) round-ket eq? then end)
-    read/jo (> name)
-    (if (< name) round-ket eq? then
-        (string "- alias meet uneven list") string/print newline
-        (string "  last nick : ") string/print (< nick) jo/print
-        newline
-        end)
-    (el (lev ins/lit (< nick)
-             ins/lit (< name)
-             alias-push)
-        (loop))))
-
-(define cat
-  (keyword
-    read/raw-jo
-    (if dup round-ket eq? then drop end)
-    (if dup double-quote eq? then
-        drop one-string
-        (lev string/print)
-        (loop))
-    (if dup round-bar eq? then drop
-        read/jo jo/apply (loop))
-    (el here (loop))))
-
-(note (run (cat "1 2 3" newline "4 5 6" newline "7 8 9" newline)))
-
-(define jo/left-part-of-byte
-  (jojo
-    (note byte jo -> jo)
-    tuck
-    jo/find-byte
-    (if not then (cat "- jo/left-part-of-byte fail") end)
-    swap
-    jo/left-part))
-
-(define jo/right-part-of-byte
-  (jojo
-    (note byte jo -> jo)
-    tuck
-    jo/find-byte
-    (if not then (cat "- jo/left-part-of-byte fail") end)
-    inc
-    swap
-    jo/right-part))
-
-(define class/get-tag                 (jojo (jo tag) assq car))
-
-(define class/has-superclass?         (jojo (jo inherit) assq null eq? not))
-(define class/get-super-tag           (jojo (jo inherit) assq car))
-
-(define class/has-meta-variable-list? (jojo (jo meta-variable) assq null eq? not))
-(define class/get-meta-variable-list  (jojo (jo meta-variable) assq car))
-
-(define class/has-meta-method-list?   (jojo (jo meta-method) assq null eq? not))
-(define class/get-meta-method-list    (jojo (jo meta-method) assq car))
-
-(define class/has-variable-list?      (jojo (jo variable) assq null eq? not))
-(define class/get-variable-list       (jojo (jo variable) assq car))
-
-(define class/has-method-list?        (jojo (jo method) assq null eq? not))
-(define class/get-method-list         (jojo (jo method) assq car))
-
-(define define-class/keyword/one-variable
-  (keyword
-    (lev ins/lit
-         (esc read/jo here
-              compile-until-round-ket)
-         cons cons cons)))
-
-(define define-class/keyword/one-bare-variable
-  (keyword
-    (lev ins/lit
-         (esc read/jo here
-              compile-until-round-ket)
-         ins/lit <data>
-         cons cons cons)))
-
-(define jo-ending-with-colon?
-  (jojo
-    (note jo -> bool)
-    jo->string string/last-byte
-    (string ":") string/last-byte eq?))
-
-(define define-class/keyword/one-method/complex-message
-  (keyword
-    (note sum-jo -> sum-jo)
-    read/jo
-    (if dup round-ket eq? then drop end)
-    (if dup jo-ending-with-colon? then
-        jo/append
-        (loop))
-    swap (recur) swap
-    (lev ins/lit
-         (esc here)
-         local-in)))
-
-(define define-class/keyword/one-method/message
-  (keyword
-    (note -> jo)
-    read/jo
-    (if dup round-bar eq? not then end)
-    drop read/jo drop
-    empty-jo define-class/keyword/one-method/complex-message))
-
-(define define-class/keyword/one-method/help
-  (keyword
-    (lev ins/jump)
-    compiling-stack/tos (> offset-place)
-    compiling-stack/inc
-    compiling-stack/tos (> bare-jojo-place)
-    define-class/keyword/one-method/message (> message)
-    compile-jojo
-    compiling-stack/tos (< offset-place) set-cell
-    (lev ins/lit (< bare-jojo-place)
-         ins/lit (< message)
-         swap
-         cons)))
-
-(define define-class/keyword/one-method
-  (keyword
-    define-class/keyword/one-method/help
-    (lev cons)))
-
-(define define-class/keyword/inherit
-  (keyword
-    (lev ins/lit inherit
-         ins/lit
-         (esc read/jo here
-              ignore)
-         cons
-         cons)))
-
-(define define-class/keyword/meta-variable-list
-  (keyword
-    (alias = define-class/keyword/one-variable
-           - define-class/keyword/one-bare-variable)
-    (lev ins/lit meta-variable
-         null
-         (esc compile-until-round-ket)
-         cons
-         cons)))
-
-(define define-class/keyword/meta-method-list
-  (keyword
-    (alias * define-class/keyword/one-method)
-    (lev ins/lit meta-method
-         null
-         (esc compile-until-round-ket)
-         cons
-         cons)))
-
-(define define-class/keyword/variable-list
-  (keyword
-    (alias = define-class/keyword/one-variable
-           - define-class/keyword/one-bare-variable)
-    (lev ins/lit variable
-         null
-         (esc compile-until-round-ket)
-         cons
-         cons)))
-
-(define define-class/keyword/method-list
-  (keyword
-    (alias * define-class/keyword/one-method)
-    (lev ins/lit method
-         null
-         (esc compile-until-round-ket)
-         cons
-         cons)))
-
-(define define-class/help
-  (keyword
-    read/jo (> tag)
-    (alias
-      inherit       define-class/keyword/inherit
-      meta-method   define-class/keyword/meta-method-list
-      meta-variable define-class/keyword/meta-variable-list
-      variable      define-class/keyword/variable-list
-      method        define-class/keyword/method-list)
-    (lev null
-         ins/lit tag
-         ins/lit (< tag)
-         cons
-         cons
-         (esc compile-until-round-ket)
-         ins/lit <class>
-         ins/lit (< tag))))
-
-(define define-class
-  (keyword
-    compiling-stack/tos (> begin)
-    define-class/help
-    (lev end)
-    (< begin) apply
-    bind-name))
-
-(define send-to-class/find-meta-method
-  (jojo
-    (note class message -> [value <*> true] or [false])
-    (> class message)
-    (if (< class) class/has-meta-method-list? then
-        (< class) class/get-meta-method-list
-        (< message)
-        assoc/find
-        (if then
-            car
-            true
-            end))
-    (if (< class) class/has-superclass? then
-        (< class) class/get-super-tag jo/apply drop
-        (< message)
-        (loop))
-    false))
-
-(define send-to-class
-  (jojo
-    (> class tag message)
-    (< class message)
-    send-to-class/find-meta-method
-    (if then
-        current-local-pointer swap
-        (< class tag) (jo self) local-in
-        apply-with-local-pointer
-        end)
-    (string "- send-to-class : can not find message : ") string/print
-    (< message) jo/print newline))
-
-(define send-to-object/find-method
-  (jojo
-    (note tag message -> [bare-jojo true] or [false])
-    (> tag message)
-    (< tag) jo/apply drop (> class)
-    (if (< class) class/has-method-list? then
-        (< class) class/get-method-list
-        (< message) assoc/find
-        (if then
-            car
-            true
-            end))
-    (if (< class) class/has-superclass? then
-        (< class) class/get-super-tag
-        (< message)
-        (loop))
-    false))
-
-(define send-to-object
-  (jojo
-    (> data tag message)
-    (< tag message)
-    send-to-object/find-method
-    (if then
-        current-local-pointer swap
-        (< data) (< tag) (jo self) local-in
-        apply-with-local-pointer
-        end)
-    (string "- send-to-object : can not find message : ") string/print
-    (< message) jo/print newline
-    (string "  object/tag : ") string/print
-    (< tag) jo/print newline))
-
-(define send
-  (jojo
-    (if over (jo <class>) eq? then send-to-class end)
-    send-to-object))
-
-(define send/sugar/complex
-  (keyword
-    (note sum-jo -> sum-jo)
-    read/raw-jo
-    (if dup round-ket eq? then drop end)
-    (if dup round-bar eq? then drop read/jo jo/apply (loop))
-    (if dup jo-ending-with-colon? then jo/append (loop))
-    here (loop)))
-
-(define :
-  (keyword
-    (jo :) generate-jo (> object-jo)
-    (lev ins/lit (< object-jo)
-         local-in
-         (esc read/raw-jo
-              (if dup jo-ending-with-colon? not
-                  then (> message) compile-until-round-ket
-                  else send/sugar/complex (> message)))
-         ins/lit (< object-jo)
-         local-out
-         ins/lit (< message)
-         send)))
-
-(define variable->object (jojo car dup car swap cdr swap))
-
-(define variable-tracing
-  (jojo
-    (note tag name -> [data tag true] or [false])
-    (> tag name)
-    (< tag) jo/apply drop (> class)
-    (if (< class) class/has-variable-list? not then false end)
-    (< class) class/get-variable-list
-    (< name)
-    assoc/find
-    (if then variable->object true end)
-    (if (< class) class/has-superclass? not then false end)
-    (< class) class/get-super-tag
-    (< name)
-    (loop)))
-
-(define meta-variable-tracing
-  (jojo
-    (note class name -> [data tag true] or [false])
-    (> class name)
-    (if (< class) class/has-meta-variable-list? then
-        (< class) class/get-meta-variable-list
-        (< name)
-        assoc/find
-        (if then variable->object true end)
-        (if (< class) class/has-superclass? then
-            (< class) class/get-super-tag
-            jo/apply drop
-            (< name)
-            (loop)))
-    (el false)))
-
-(define has-instance-variable?
-  (jojo
-    (note [box tag name] -> true or false)
-    (> tag name)
-    car (> variable-list)
-    (< variable-list name)
-    assoc/find
-    (if then drop true end)
-    (< tag name)
-    variable-tracing
-    (if then 2drop true end)
-    (el false)))
-
-(define has-meta-variable?
-  (jojo
-    (note [class (jo <class>) name] -> true or false)
-    swap drop
-    meta-variable-tracing
-    (if then 2drop true end)
-    (el false)))
-
-(define has-variable?
-  (jojo
-    (note [data tag name] -> true or false)
-    (if over (jo <class>) eq? not then
-        has-instance-variable? end)
-    (el has-meta-variable?)))
-
-(define has?
-  (keyword
-    (lev ins/lit
-         (esc read/raw-jo here
-              ignore)
-         has-variable?)))
-
-(define get-instance-variable
-  (jojo
-    (note [box tag name] -> [data tag])
-    (> tag name)
-    car (> variable-list)
-    (< variable-list name)
-    assoc/find
-    (if then variable->object end)
-    (< tag name)
-    variable-tracing
-    (if then end)
-    (el (cat "- get-instance-variable fail" newline
-             "  name : " name jo/print newline
-             "  tag : " (< tag) jo/print newline))))
-
-
-(define get-meta-variable
-  (jojo
-    (note [class (jo <class>) name] -> [data tag])
-    swap drop
-    meta-variable-tracing
-    (if then end)
-    (cat "- get-meta-variable fail" newline
-         "  name : " name jo/print newline
-         "  class-name : " (< class) class/get-tag jo/print newline)))
-
-(define get-variable
-  (jojo
-    (note [data tag name] -> [data tag])
-    (if over (jo <class>) eq? not then
-        get-instance-variable end)
-    (el get-meta-variable)))
-
-
-(define get
-  (keyword
-    (lev ins/lit
-         (esc read/raw-jo here
-              ignore)
-         get-variable)))
-
-(define get-data
-  (keyword
-    (lev ins/lit
-         (esc read/raw-jo here
-              ignore)
-         get-variable drop)))
-
-(define get-tag
-  (keyword
-    (lev ins/lit
-         (esc read/raw-jo here
-              ignore)
-         get-variable swap drop)))
-
-(define set-instance-variable
-  (jojo
-    (note [data tag box source-tag name] -> [])
-    (> name)
-    (> source-tag)
-    dup (> box)
-    car (> variable-list)
-    (>> object)
-    (< variable-list name)
-    assoc/find
-    (if then (> variable)
-        (<< object) cons
-        (< variable) set-car
-        end)
-    (el (< name) (<< object) cons cons
-        (< variable-list) swap cons
-        (< box) set-car)))
-
-(define set-meta-variable
-  (jojo
-    (note [data tag class (jo <class>) name] -> [])
-    (> name)
-    drop
-    (> class)
-    (>> object)
-    (if (< class) class/has-meta-variable-list? not then
-        (jo meta-variable)
-        null (< name) (<< object) cons cons
-        cons
-        cons
-        (< class)
-        set-tail
-        end)
-    (< class) class/get-meta-variable-list
-    (> variable-list)
-    (< variable-list)
-    (< name)
-    assoc/find
-    (if then (> variable)
-        (<< object) cons
-        (< variable) set-car
-        end)
-    (el (< name) (<< object) cons cons
-        (< variable-list)
-        set-tail)))
-
-(define set-variable
-  (jojo
-    (note [data tag source-data source-tag name] -> [])
-    (if over (jo <class>) eq? not then
-        set-instance-variable end)
-    (el set-meta-variable)))
-
-(define set
-  (keyword
-    (lev ins/lit
-         (esc read/raw-jo here
-              ignore)
-         set-variable)))
-
-(define set-data-in-instance-variable
-  (jojo
-    (note [data box source-tag name] -> [])
-    (> data box source-tag name)
-
-    (< box source-tag name)
-    has-instance-variable?
-    (if then (< box source-tag name)
-        get-instance-variable
-        swap drop
-        else (jo <data>))
-
-    (< data) swap
-    (< box)
-    (< source-tag)
-    (< name)
-    set-instance-variable))
-
-(define set-data-in-meta-variable
-  (jojo
-    (note [data class (jo <class>) name] -> [])
-    (> data class tag name)
-    (< class tag name)
-    has-meta-variable?
-    (if then
-        (< class)
-        (< tag)
-        (< name)
-        get-meta-variable swap drop
-        else (jo <data>))
-    (< data) swap
-    (< class)
-    (< tag)
-    (< name)
-    set-meta-variable))
-
-(define set-data-in-variable
-  (jojo
-    (note [data source-data source-tag name] -> [])
-    (if over (jo <class>) eq? not then
-        set-data-in-instance-variable end)
-    (el set-data-in-meta-variable)))
-
-(define set-data
-  (keyword
-    (lev ins/lit
-         (esc read/raw-jo here
-              ignore)
-         set-data-in-variable)))
-
-(define add-method
-  (keyword
-    read/jo (> tag)
-    (< tag) jo/apply drop (> class)
-    compiling-stack/tos (> begin)
-    define-class/keyword/one-method/help
-    (lev end)
-    (< begin) apply (> method)
-
-    (if (< class) class/has-method-list? not then
-        (jo method) (< method) cons
-        (< class) set-tail end)
-    (el (< method)
-        (< class) class/get-method-list
-        set-tail)))
-
-(define as
-  (keyword
-    (lev drop
-         ins/lit (esc read/jo here ignore))))
-
-(define-class <number>
-  (method
-    (* inc (< self) inc (<% self))
-    (* dec (< self) dec (<% self))
-    (* neg (< self) neg (<% self))
-
-    (* (: add: i) (< self) (< i) add (<% self))
-    (* (: sub: i) (< self) (< i) sub (<% self))
-    (* (: mul: i) (< self) (< i) mul (<% self))
-    (* (: div: i) (< self) (< i) div (<% self))
-    (* (: mod: i) (< self) (< i) mod (<% self))
-
-    (* (: eq?: i) (< self) (< i) eq?)
-    (* (: gt?: i) (< self) (< i) gt?)
-    (* (: lt?: i) (< self) (< i) lt?)
-    (* (: gteq?: i) (< self) (< i) gteq?)
-    (* (: lteq?: i) (< self) (< i) lteq?)
-
-    (* print (< self) int/print)
-    (* dot (< self) int/dot)
-    (* write (string "(int ") string/print
-       (<< self) (: print)
-       (string ") ") string/print)))
-
-(define number
-  (keyword
-    (jo int) jo/apply
-    (lev ins/lit <number>)))
-
-(define-class <text>
-  (method
-    (* print (< self) string/print)
-    (* length (< self) string/length (jo <number>))
-    (* write
-       (string "(text ") string/print
-       double-quote jo/print
-       (<< self) (: print)
-       double-quote jo/print
-       (string ") ") string/print)))
-
-(define text
-  (keyword
-    (jo string) jo/apply
-    (lev ins/lit <text>)))
-
-(note
-  (test (text "k1 k2 k3")
-        2dup (: print) newline
-        2dup (: write) newline
-        2dup (: length) (: print) newline
-        2dup (: length) (: write) newline
-        2drop))
-
-(define-class <object>
-  (meta-variable
-    (= testing-meta-variable-in-<object> (number 26881)))
-  (meta-method
-    (* new
-       null null cons
-       (< self) class/get-tag)))
-
-(define-class <jojo>
-  (method
-    (* apply (< self) apply)))
-
-(define-class <bare-stack>
-  (inherit <object>)
-  (variable
-    (- stack null))
-  (method
-    (* empty?
-       (<< self) (get-data stack) null eq?)
-    (* pop
-       (note -> data)
-       (<< self) (get-data stack)
-       dup car (> data)
-       cdr (<< self) (set-data stack)
-       (< data))
-    (* tos
-       (note -> data)
-       (<< self) (get-data stack)
-       car)
-    (* drop
-       (note ->)
-       (<< self) (get-data stack)
-       cdr (<< self) (set-data stack))
-    (* (: push: data)
-       (<< self) (get-data stack)
-       (< data)
-       cons
-       (<< self) (set-data stack))))
-
-(define-class <stack>
-  (inherit <bare-stack>)
-  (method
-    (* pop
-       (note -> object)
-       (<< self) (as <bare-stack>) (: pop)
-       dup cdr swap car)
-    (* tos
-       (note -> object)
-       (<< self) (as <bare-stack>) (: tos)
-       dup cdr swap car)
-    (* (: push: object)
-       (<< self) (as <bare-stack>)
-       (: push: (data (<< object) cons)))))
-
-(define module-dir-jo  (data (string "/module") string->jo))
-(define module-file-jo (data (string "module.jo") string->jo))
-
-(define has-user-jojo-dir?
-  (jojo
-    (string "USER_JOJO_DIR") get-env-string
-    (int 0) eq? not))
-
-(define get-user-jojo-dir
-  (jojo
-    (string "USER_JOJO_DIR") get-env-string))
-
-(define default-user-jojo-dir-jo
-  (data
-    (string "HOME") get-env-string string->jo
-    (string "/.jojo") string->jo jo/append))
-
-(define user-jojo-dir-jo
-  (jojo
-    (if has-user-jojo-dir? then get-user-jojo-dir string->jo end)
-    (el default-user-jojo-dir-jo)))
-
-(define has-system-jojo-dir?
-  (jojo
-    (string "SYSTEM_JOJO_DIR") get-env-string
-    (int 0) eq? not))
-
-(define get-system-jojo-dir
-  (jojo
-    (string "SYSTEM_JOJO_DIR") get-env-string))
-
-(define default-system-jojo-dir-jo
-  (data
-    (string "/usr/share/jojo") string->jo))
-
-(define system-jojo-dir-jo
-  (jojo
-    (if has-system-jojo-dir? then get-system-jojo-dir string->jo end)
-    (el default-system-jojo-dir-jo)))
-
-(note
-  (shadow-the-core name ...)
-  (use module
-       module as nick
-       module as nick (import name ...)
-       module as nick ><><>< (shadow name ...)))
-
-(define prefix-stack <bare-stack> (: new)
-  (note of prefix
-        load-module push prefix-stack
-        bind-name   use  prefix-stack by binding-filter-for-module
-        load-module pop  prefix-stack))
-
-(define defining-stack <bare-stack> (: new)
-  (note of list of names [to be prefixed]
-        load-module push       defining-stack
-        bind-name   set tos of defining-stack by binding-filter-for-module
-        read/jo     use        defining-stack by jo-filter-for-module
-        load-module pop        defining-stack))
-
-(note thus in a module
-      one can not use name in core
-
-      when one wants to use a name in core in his module
-      he must prefix his version of this name by '.'
-
-      thus the core must be very small
-      and it must be fixed in early version of the language)
-
-(define binding-filter-for-module
-  (jojo
-    (note name -> module[version].name or name)
-    (if prefix-stack (: empty?) then end)
-    (el dup
-        defining-stack
-        (: push: (data defining-stack (: pop) swap cons))
-
-        prefix-stack (: tos)
-        (raw-jo .) jo/append
-        swap jo/append)))
-
-(run (jo binding-filter-for-module) binding-filter-stack-push)
-
-(define jo-filter-for-module
-  (jojo
-    (note name -> module[version].name or name)
-    (if defining-stack (: empty?) then end)
-    (if dup defining-stack (: tos) list/member? then
-        prefix-stack (: tos)
-        (raw-jo .) jo/append
-        swap jo/append)))
-
-(run (jo jo-filter-for-module) jo-filter-stack-push)
-
-(define depending-stack <bare-stack> (: new)
-  (note of list of pairs of module prefix and unique module-name
-        load-module push        depending-stack
-        use         set tos of  depending-stack
-        read/jo     use         depending-stack by jo-filter-for-dependence
-        (note module => module[version])
-        load-module pop         depending-stack))
-
-(run depending-stack (: push: (data null)))
-
-(define full-name?
-  (jojo
-    (note jo -> true or false)
-    jo->string (> s)
-    (string ".") string/last-byte (> dot-byte)
-
-    (if (< dot-byte s) string/member? not then false end)
-    (if (< s) string/last-byte (< dot-byte) eq? then false end)
-    (if (< s) string/first-byte (< dot-byte) eq? then false end)
-    true end))
-
-(define full-name->module
-  (jojo
-    (note module.name -> module)
-    (string ".") string/last-byte
-    swap jo/left-part-of-byte))
-
-(define full-name->name
-  (jojo
-    (note module.name -> name)
-    (string ".") string/last-byte
-    swap jo/right-part-of-byte))
-
-(define current-module->prefix
-  (jojo
-    (note module -> module[version])
-    (> module)
-    depending-stack (: tos)
-    (< module) assoc/find
-    (if then car end)
-    (cat "- current-module->prefix fail" newline
-         "  the following module is not loaded" newline
-         "  module : " (< module) jo/print newline)))
-
-(define jo-filter-for-dependence
-  (jojo
-    (note name -> name)
-    (note module.name -> module[version].name)
-    (if dup full-name? not then end)
-
-    dup full-name->module (> module)
-    full-name->name (> name)
-
-    (< module) current-module->prefix
-    (raw-jo .) jo/append
-    (< name) jo/append))
-
-(run (jo jo-filter-for-dependence) jo-filter-stack-push)
-
-(define module-version->prefix
-  (jojo
-    (note module version -> prefix)
-    (> module version)
-    (< module)
-    square-bar  jo/append
-    (< version) jo/append
-    square-ket  jo/append))
-
-(define load-module/get-user-path
-  (jojo
-    (note module version -> path)
-    (> module version)
-    user-jojo-dir-jo
-    module-dir-jo     jo/append
-    (jo /)            jo/append
-    (< module)        jo/append
-    (jo /)            jo/append
-    (< version)       jo/append
-    (jo /)            jo/append
-    module-file-jo    jo/append
-    jo->string))
-
-(define load-module/get-system-path
-  (jojo
-    (note module version -> path)
-    (> module version)
-    system-jojo-dir-jo
-    module-dir-jo     jo/append
-    (jo /)            jo/append
-    (< module)        jo/append
-    (jo /)            jo/append
-    (< version)       jo/append
-    (jo /)            jo/append
-    module-file-jo    jo/append
-    jo->string))
-
-(define load-module/get-path
-  (jojo
-    (note module version -> path)
-    (> module version)
-
-    (< module version) load-module/get-user-path (> user-path)
-    (< module version) load-module/get-system-path (> system-path)
-
-    (if (< user-path) path/readable? then (< user-path) end)
-    (if (< system-path) path/readable? then (< system-path) end)
-    (cat "- load-module/get-path fail" newline
-         "  module : " (< module) jo/print newline
-         "  version : " (< version) jo/print newline
-         "  in module dir of user : "
-         user-jojo-dir-jo jo/print
-         module-dir-jo jo/print
-         newline
-         "  or in module dir of system : "
-         system-jojo-dir-jo jo/print
-         module-dir-jo jo/print
-         newline
-         (note detailed report about module.jo file))))
-
-(define loaded-module-record (data null))
-
-(define load-module
-  (jojo
-    (note module version ->)
-    (> module version)
-
-    (< module version) module-version->prefix (> prefix)
-
-    (if (< prefix) loaded-module-record list/member? then end)
-
-    (< module version) load-module/get-path (> path)
-
-    prefix-stack    (: push: (data (< prefix)))
-    defining-stack  (: push: (data null))
-    depending-stack (: push: (data null))
-
-    (< path) path/load
-
-    depending-stack (: drop)
-    defining-stack  (: drop)
-    prefix-stack    (: drop)
-
-    loaded-module-record
-    (< prefix) cons
-    (address loaded-module-record)
-    set-cell))
-
-(define use/help
-  (jojo
-    (note module version ->)
-    (note as nick ->)
-
-    (if over (raw-jo as) eq? not then
+        (if dup round-ket eq? then drop end)
+        (if dup round-bar eq? then drop
+            read/jo
+            (if dup (jo esc) eq? then
+                drop compile-until-round-ket (loop))
+            (el jo/apply (jo here) here (loop)))
+        (el (jo ins/lit) here
+            here
+            (jo here) here (loop))))
+    (define alias
+      (keyword
+        read/raw-jo (> nick)
+        (if (< nick) round-ket eq? then end)
+        read/jo (> name)
+        (if (< name) round-ket eq? then
+            (string "- alias meet uneven list") string/print newline
+            (string "  last nick : ") string/print (< nick) jo/print
+            newline
+            end)
+        (el (lev ins/lit (< nick)
+                 ins/lit (< name)
+                 alias-push)
+            (loop))))
+    (define cat
+      (keyword
+        read/raw-jo
+        (if dup round-ket eq? then drop end)
+        (if dup double-quote eq? then
+            drop one-string
+            (lev string/print)
+            (loop))
+        (if dup round-bar eq? then drop
+            read/jo jo/apply (loop))
+        (el here (loop))))
+    (note (run (cat "1 2 3" newline "4 5 6" newline "7 8 9" newline)))
+    (define jo/left-part-of-byte
+      (jojo
+        (note byte jo -> jo)
+        tuck
+        jo/find-byte
+        (if not then (cat "- jo/left-part-of-byte fail") end)
+        swap
+        jo/left-part))
+    (define jo/right-part-of-byte
+      (jojo
+        (note byte jo -> jo)
+        tuck
+        jo/find-byte
+        (if not then (cat "- jo/left-part-of-byte fail") end)
+        inc
+        swap
+        jo/right-part))
+    (define class/get-tag                 (jojo (jo tag) assq car))
+
+    (define class/has-superclass?         (jojo (jo inherit) assq null eq? not))
+    (define class/get-super-tag           (jojo (jo inherit) assq car))
+
+    (define class/has-meta-variable-list? (jojo (jo meta-variable) assq null eq? not))
+    (define class/get-meta-variable-list  (jojo (jo meta-variable) assq car))
+
+    (define class/has-meta-method-list?   (jojo (jo meta-method) assq null eq? not))
+    (define class/get-meta-method-list    (jojo (jo meta-method) assq car))
+
+    (define class/has-variable-list?      (jojo (jo variable) assq null eq? not))
+    (define class/get-variable-list       (jojo (jo variable) assq car))
+
+    (define class/has-method-list?        (jojo (jo method) assq null eq? not))
+    (define class/get-method-list         (jojo (jo method) assq car))
+    (define define-class/keyword/one-variable
+      (keyword
+        (lev ins/lit
+             (esc read/jo here
+                  compile-until-round-ket)
+             cons cons cons)))
+
+    (define define-class/keyword/one-bare-variable
+      (keyword
+        (lev ins/lit
+             (esc read/jo here
+                  compile-until-round-ket)
+             ins/lit <data>
+             cons cons cons)))
+
+    (define jo-ending-with-colon?
+      (jojo
+        (note jo -> bool)
+        jo->string string/last-byte
+        (string ":") string/last-byte eq?))
+
+    (define define-class/keyword/one-method/complex-message
+      (keyword
+        (note sum-jo -> sum-jo)
+        read/jo
+        (if dup round-ket eq? then drop end)
+        (if dup jo-ending-with-colon? then
+            jo/append
+            (loop))
+        swap (recur) swap
+        (lev ins/lit
+             (esc here)
+             local-in)))
+
+    (define define-class/keyword/one-method/message
+      (keyword
+        (note -> jo)
+        read/jo
+        (if dup round-bar eq? not then end)
+        drop read/jo drop
+        empty-jo define-class/keyword/one-method/complex-message))
+
+    (define define-class/keyword/one-method/help
+      (keyword
+        (lev ins/jump)
+        compiling-stack/tos (> offset-place)
+        compiling-stack/inc
+        compiling-stack/tos (> bare-jojo-place)
+        define-class/keyword/one-method/message (> message)
+        compile-jojo
+        compiling-stack/tos (< offset-place) set-cell
+        (lev ins/lit (< bare-jojo-place)
+             ins/lit (< message)
+             swap
+             cons)))
+
+    (define define-class/keyword/one-method
+      (keyword
+        define-class/keyword/one-method/help
+        (lev cons)))
+
+    (define define-class/keyword/inherit
+      (keyword
+        (lev ins/lit inherit
+             ins/lit
+             (esc read/jo here
+                  ignore)
+             cons
+             cons)))
+
+    (define define-class/keyword/meta-variable-list
+      (keyword
+        (alias = define-class/keyword/one-variable
+               - define-class/keyword/one-bare-variable)
+        (lev ins/lit meta-variable
+             null
+             (esc compile-until-round-ket)
+             cons
+             cons)))
+
+    (define define-class/keyword/meta-method-list
+      (keyword
+        (alias * define-class/keyword/one-method)
+        (lev ins/lit meta-method
+             null
+             (esc compile-until-round-ket)
+             cons
+             cons)))
+
+    (define define-class/keyword/variable-list
+      (keyword
+        (alias = define-class/keyword/one-variable
+               - define-class/keyword/one-bare-variable)
+        (lev ins/lit variable
+             null
+             (esc compile-until-round-ket)
+             cons
+             cons)))
+
+    (define define-class/keyword/method-list
+      (keyword
+        (alias * define-class/keyword/one-method)
+        (lev ins/lit method
+             null
+             (esc compile-until-round-ket)
+             cons
+             cons)))
+
+    (define define-class/help
+      (keyword
+        read/jo (> tag)
+        (alias
+          inherit       define-class/keyword/inherit
+          meta-method   define-class/keyword/meta-method-list
+          meta-variable define-class/keyword/meta-variable-list
+          variable      define-class/keyword/variable-list
+          method        define-class/keyword/method-list)
+        (lev null
+             ins/lit tag
+             ins/lit (< tag)
+             cons
+             cons
+             (esc compile-until-round-ket)
+             ins/lit <class>
+             ins/lit (< tag))))
+
+    (define define-class
+      (keyword
+        compiling-stack/tos (> begin)
+        define-class/help
+        (lev end)
+        (< begin) apply
+        bind-name))
+      (define send-to-class/find-meta-method
+        (jojo
+          (note class message -> [value <*> true] or [false])
+          (> class message)
+          (if (< class) class/has-meta-method-list? then
+              (< class) class/get-meta-method-list
+              (< message)
+              assoc/find
+              (if then
+                  car
+                  true
+                  end))
+          (if (< class) class/has-superclass? then
+              (< class) class/get-super-tag jo/apply drop
+              (< message)
+              (loop))
+          false))
+
+      (define send-to-class
+        (jojo
+          (> class tag message)
+          (< class message)
+          send-to-class/find-meta-method
+          (if then
+              current-local-pointer swap
+              (< class tag) (jo self) local-in
+              apply-with-local-pointer
+              end)
+          (string "- send-to-class : can not find message : ") string/print
+          (< message) jo/print newline))
+      (define send-to-object/find-method
+        (jojo
+          (note tag message -> [bare-jojo true] or [false])
+          (> tag message)
+          (< tag) jo/apply drop (> class)
+          (if (< class) class/has-method-list? then
+              (< class) class/get-method-list
+              (< message) assoc/find
+              (if then
+                  car
+                  true
+                  end))
+          (if (< class) class/has-superclass? then
+              (< class) class/get-super-tag
+              (< message)
+              (loop))
+          false))
+
+      (define send-to-object
+        (jojo
+          (> data tag message)
+          (< tag message)
+          send-to-object/find-method
+          (if then
+              current-local-pointer swap
+              (< data) (< tag) (jo self) local-in
+              apply-with-local-pointer
+              end)
+          (string "- send-to-object : can not find message : ") string/print
+          (< message) jo/print newline
+          (string "  object/tag : ") string/print
+          (< tag) jo/print newline))
+      (define send
+        (jojo
+          (if over (jo <class>) eq? then send-to-class end)
+          send-to-object))
+    (define send/sugar/complex
+      (keyword
+        (note sum-jo -> sum-jo)
+        read/raw-jo
+        (if dup round-ket eq? then drop end)
+        (if dup round-bar eq? then drop read/jo jo/apply (loop))
+        (if dup jo-ending-with-colon? then jo/append (loop))
+        here (loop)))
+
+    (define :
+      (keyword
+        (jo :) generate-jo (> object-jo)
+        (lev ins/lit (< object-jo)
+             local-in
+             (esc read/raw-jo
+                  (if dup jo-ending-with-colon? not
+                      then (> message) compile-until-round-ket
+                      else send/sugar/complex (> message)))
+             ins/lit (< object-jo)
+             local-out
+             ins/lit (< message)
+             send)))
+      (define variable->object (jojo car dup car swap cdr swap))
+
+      (define variable-tracing
+        (jojo
+          (note tag name -> [data tag true] or [false])
+          (> tag name)
+          (< tag) jo/apply drop (> class)
+          (if (< class) class/has-variable-list? not then false end)
+          (< class) class/get-variable-list
+          (< name)
+          assoc/find
+          (if then variable->object true end)
+          (if (< class) class/has-superclass? not then false end)
+          (< class) class/get-super-tag
+          (< name)
+          (loop)))
+
+      (define meta-variable-tracing
+        (jojo
+          (note class name -> [data tag true] or [false])
+          (> class name)
+          (if (< class) class/has-meta-variable-list? then
+              (< class) class/get-meta-variable-list
+              (< name)
+              assoc/find
+              (if then variable->object true end)
+              (if (< class) class/has-superclass? then
+                  (< class) class/get-super-tag
+                  jo/apply drop
+                  (< name)
+                  (loop)))
+          (el false)))
+      (define has-instance-variable?
+        (jojo
+          (note [box tag name] -> true or false)
+          (> tag name)
+          car (> variable-list)
+          (< variable-list name)
+          assoc/find
+          (if then drop true end)
+          (< tag name)
+          variable-tracing
+          (if then 2drop true end)
+          (el false)))
+
+      (define has-meta-variable?
+        (jojo
+          (note [class (jo <class>) name] -> true or false)
+          swap drop
+          meta-variable-tracing
+          (if then 2drop true end)
+          (el false)))
+
+      (define has-variable?
+        (jojo
+          (note [data tag name] -> true or false)
+          (if over (jo <class>) eq? not then
+              has-instance-variable? end)
+          (el has-meta-variable?)))
+
+      (define has?
+        (keyword
+          (lev ins/lit
+               (esc read/raw-jo here
+                    ignore)
+               has-variable?)))
+      (define get-instance-variable
+        (jojo
+          (note [box tag name] -> [data tag])
+          (> tag name)
+          car (> variable-list)
+          (< variable-list name)
+          assoc/find
+          (if then variable->object end)
+          (< tag name)
+          variable-tracing
+          (if then end)
+          (el (cat "- get-instance-variable fail" newline
+                   "  name : " name jo/print newline
+                   "  tag : " (< tag) jo/print newline))))
+
+
+      (define get-meta-variable
+        (jojo
+          (note [class (jo <class>) name] -> [data tag])
+          swap drop
+          meta-variable-tracing
+          (if then end)
+          (cat "- get-meta-variable fail" newline
+               "  name : " name jo/print newline
+               "  class-name : " (< class) class/get-tag jo/print newline)))
+
+      (define get-variable
+        (jojo
+          (note [data tag name] -> [data tag])
+          (if over (jo <class>) eq? not then
+              get-instance-variable end)
+          (el get-meta-variable)))
+
+
+      (define get
+        (keyword
+          (lev ins/lit
+               (esc read/raw-jo here
+                    ignore)
+               get-variable)))
+
+      (define get-data
+        (keyword
+          (lev ins/lit
+               (esc read/raw-jo here
+                    ignore)
+               get-variable drop)))
+
+      (define get-tag
+        (keyword
+          (lev ins/lit
+               (esc read/raw-jo here
+                    ignore)
+               get-variable swap drop)))
+      (define set-instance-variable
+        (jojo
+          (note [data tag box source-tag name] -> [])
+          (> name)
+          (> source-tag)
+          dup (> box)
+          car (> variable-list)
+          (>> object)
+          (< variable-list name)
+          assoc/find
+          (if then (> variable)
+              (<< object) cons
+              (< variable) set-car
+              end)
+          (el (< name) (<< object) cons cons
+              (< variable-list) swap cons
+              (< box) set-car)))
+
+      (define set-meta-variable
+        (jojo
+          (note [data tag class (jo <class>) name] -> [])
+          (> name)
+          drop
+          (> class)
+          (>> object)
+          (if (< class) class/has-meta-variable-list? not then
+              (jo meta-variable)
+              null (< name) (<< object) cons cons
+              cons
+              cons
+              (< class)
+              set-tail
+              end)
+          (< class) class/get-meta-variable-list
+          (> variable-list)
+          (< variable-list)
+          (< name)
+          assoc/find
+          (if then (> variable)
+              (<< object) cons
+              (< variable) set-car
+              end)
+          (el (< name) (<< object) cons cons
+              (< variable-list)
+              set-tail)))
+
+      (define set-variable
+        (jojo
+          (note [data tag source-data source-tag name] -> [])
+          (if over (jo <class>) eq? not then
+              set-instance-variable end)
+          (el set-meta-variable)))
+
+      (define set
+        (keyword
+          (lev ins/lit
+               (esc read/raw-jo here
+                    ignore)
+               set-variable)))
+      (define set-data-in-instance-variable
+        (jojo
+          (note [data box source-tag name] -> [])
+          (> data box source-tag name)
+
+          (< box source-tag name)
+          has-instance-variable?
+          (if then (< box source-tag name)
+              get-instance-variable
+              swap drop
+              else (jo <data>))
+
+          (< data) swap
+          (< box)
+          (< source-tag)
+          (< name)
+          set-instance-variable))
+
+      (define set-data-in-meta-variable
+        (jojo
+          (note [data class (jo <class>) name] -> [])
+          (> data class tag name)
+          (< class tag name)
+          has-meta-variable?
+          (if then
+              (< class)
+              (< tag)
+              (< name)
+              get-meta-variable swap drop
+              else (jo <data>))
+          (< data) swap
+          (< class)
+          (< tag)
+          (< name)
+          set-meta-variable))
+
+      (define set-data-in-variable
+        (jojo
+          (note [data source-data source-tag name] -> [])
+          (if over (jo <class>) eq? not then
+              set-data-in-instance-variable end)
+          (el set-data-in-meta-variable)))
+
+      (define set-data
+        (keyword
+          (lev ins/lit
+               (esc read/raw-jo here
+                    ignore)
+               set-data-in-variable)))
+    (define add-method
+      (keyword
+        read/jo (> tag)
+        (< tag) jo/apply drop (> class)
+        compiling-stack/tos (> begin)
+        define-class/keyword/one-method/help
+        (lev end)
+        (< begin) apply (> method)
+
+        (if (< class) class/has-method-list? not then
+            (jo method) (< method) cons
+            (< class) set-tail end)
+        (el (< method)
+            (< class) class/get-method-list
+            set-tail)))
+    (define as
+      (keyword
+        (lev drop
+             ins/lit (esc read/jo here ignore))))
+    (define-class <number>
+      (method
+        (* inc (< self) inc (<% self))
+        (* dec (< self) dec (<% self))
+        (* neg (< self) neg (<% self))
+
+        (* (: add: i) (< self) (< i) add (<% self))
+        (* (: sub: i) (< self) (< i) sub (<% self))
+        (* (: mul: i) (< self) (< i) mul (<% self))
+        (* (: div: i) (< self) (< i) div (<% self))
+        (* (: mod: i) (< self) (< i) mod (<% self))
+
+        (* (: eq?: i) (< self) (< i) eq?)
+        (* (: gt?: i) (< self) (< i) gt?)
+        (* (: lt?: i) (< self) (< i) lt?)
+        (* (: gteq?: i) (< self) (< i) gteq?)
+        (* (: lteq?: i) (< self) (< i) lteq?)
+
+        (* print (< self) int/print)
+        (* dot (< self) int/dot)
+        (* write (string "(int ") string/print
+           (<< self) (: print)
+           (string ") ") string/print)))
+    (define number
+      (keyword
+        (jo int) jo/apply
+        (lev ins/lit <number>)))
+    (define-class <text>
+      (method
+        (* print (< self) string/print)
+        (* length (< self) string/length (jo <number>))
+        (* write
+           (string "(text ") string/print
+           double-quote jo/print
+           (<< self) (: print)
+           double-quote jo/print
+           (string ") ") string/print)))
+    (define text
+      (keyword
+        (jo string) jo/apply
+        (lev ins/lit <text>)))
+    (note
+      (test (text "k1 k2 k3")
+            2dup (: print) newline
+            2dup (: write) newline
+            2dup (: length) (: print) newline
+            2dup (: length) (: write) newline
+            2drop))
+    (define-class <object>
+      (meta-variable
+        (= testing-meta-variable-in-<object> (number 26881)))
+      (meta-method
+        (* new
+           null null cons
+           (< self) class/get-tag)))
+    (define-class <jojo>
+      (method
+        (* apply (< self) apply)))
+    (define-class <bare-stack>
+      (inherit <object>)
+      (variable
+        (- stack null))
+      (method
+        (* empty?
+           (<< self) (get-data stack) null eq?)
+        (* pop
+           (note -> data)
+           (<< self) (get-data stack)
+           dup car (> data)
+           cdr (<< self) (set-data stack)
+           (< data))
+        (* tos
+           (note -> data)
+           (<< self) (get-data stack)
+           car)
+        (* drop
+           (note ->)
+           (<< self) (get-data stack)
+           cdr (<< self) (set-data stack))
+        (* (: push: data)
+           (<< self) (get-data stack)
+           (< data)
+           cons
+           (<< self) (set-data stack))))
+    (define-class <stack>
+      (inherit <bare-stack>)
+      (method
+        (* pop
+           (note -> object)
+           (<< self) (as <bare-stack>) (: pop)
+           dup cdr swap car)
+        (* tos
+           (note -> object)
+           (<< self) (as <bare-stack>) (: tos)
+           dup cdr swap car)
+        (* (: push: object)
+           (<< self) (as <bare-stack>)
+           (: push: (data (<< object) cons)))))
+    (define module-dir-jo  (data (string "/module") string->jo))
+    (define module-file-jo (data (string "module.jo") string->jo))
+    (define has-user-jojo-dir?
+      (jojo
+        (string "USER_JOJO_DIR") get-env-string
+        (int 0) eq? not))
+
+    (define get-user-jojo-dir
+      (jojo
+        (string "USER_JOJO_DIR") get-env-string))
+
+    (define default-user-jojo-dir-jo
+      (data
+        (string "HOME") get-env-string string->jo
+        (string "/.jojo") string->jo jo/append))
+
+    (define user-jojo-dir-jo
+      (jojo
+        (if has-user-jojo-dir? then get-user-jojo-dir string->jo end)
+        (el default-user-jojo-dir-jo)))
+    (define has-system-jojo-dir?
+      (jojo
+        (string "SYSTEM_JOJO_DIR") get-env-string
+        (int 0) eq? not))
+
+    (define get-system-jojo-dir
+      (jojo
+        (string "SYSTEM_JOJO_DIR") get-env-string))
+
+    (define default-system-jojo-dir-jo
+      (data
+        (string "/usr/share/jojo") string->jo))
+
+    (define system-jojo-dir-jo
+      (jojo
+        (if has-system-jojo-dir? then get-system-jojo-dir string->jo end)
+        (el default-system-jojo-dir-jo)))
+      (note
+        (shadow-the-core name ...)
+        (use module
+             module as nick
+             module as nick (import name ...)
+             module as nick ><><>< (shadow name ...)))
+      (define prefix-stack <bare-stack> (: new)
+        (note of prefix
+              load-module push prefix-stack
+              bind-name   use  prefix-stack by binding-filter-for-module
+              load-module pop  prefix-stack))
+      (define defining-stack <bare-stack> (: new)
+        (note of list of names [to be prefixed]
+              load-module push       defining-stack
+              bind-name   set tos of defining-stack by binding-filter-for-module
+              read/jo     use        defining-stack by jo-filter-for-module
+              load-module pop        defining-stack))
+
+      (note thus in a module
+            one can not use name in core
+
+            when one wants to use a name in core in his module
+            he must prefix his version of this name by '.'
+
+            thus the core must be very small
+            and it must be fixed in early version of the language)
+      (define binding-filter-for-module
+        (jojo
+          (note name -> module[version].name or name)
+          (if prefix-stack (: empty?) then end)
+          (el dup
+              defining-stack
+              (: push: (data defining-stack (: pop) swap cons))
+
+              prefix-stack (: tos)
+              (raw-jo .) jo/append
+              swap jo/append)))
+
+      (run (jo binding-filter-for-module) binding-filter-stack-push)
+      (define jo-filter-for-module
+        (jojo
+          (note name -> module[version].name or name)
+          (if defining-stack (: empty?) then end)
+          (if dup defining-stack (: tos) list/member? then
+              prefix-stack (: tos)
+              (raw-jo .) jo/append
+              swap jo/append)))
+
+      (run (jo jo-filter-for-module) jo-filter-stack-push)
+      (define depending-stack <bare-stack> (: new)
+        (note of list of pairs of module prefix and unique module-name
+              load-module push        depending-stack
+              use         set tos of  depending-stack
+              read/jo     use         depending-stack by jo-filter-for-dependence
+              (note module => module[version])
+              load-module pop         depending-stack))
+
+      (run depending-stack (: push: (data null)))
+      (define full-name?
+        (jojo
+          (note jo -> true or false)
+          jo->string (> s)
+          (string ".") string/last-byte (> dot-byte)
+
+          (if (< dot-byte s) string/member? not then false end)
+          (if (< s) string/last-byte (< dot-byte) eq? then false end)
+          (if (< s) string/first-byte (< dot-byte) eq? then false end)
+          true end))
+
+      (define full-name->module
+        (jojo
+          (note module.name -> module)
+          (string ".") string/last-byte
+          swap jo/left-part-of-byte))
+
+      (define full-name->name
+        (jojo
+          (note module.name -> name)
+          (string ".") string/last-byte
+          swap jo/right-part-of-byte))
+      (define current-module->prefix
+        (jojo
+          (note module -> module[version])
+          (> module)
+          depending-stack (: tos)
+          (< module) assoc/find
+          (if then car end)
+          (cat "- current-module->prefix fail" newline
+               "  the following module is not loaded" newline
+               "  module : " (< module) jo/print newline)))
+      (define jo-filter-for-dependence
+        (jojo
+          (note name -> name)
+          (note module.name -> module[version].name)
+          (if dup full-name? not then end)
+
+          dup full-name->module (> module)
+          full-name->name (> name)
+
+          (< module) current-module->prefix
+          (raw-jo .) jo/append
+          (< name) jo/append))
+
+      (run (jo jo-filter-for-dependence) jo-filter-stack-push)
+    (define module-version->prefix
+      (jojo
+        (note module version -> prefix)
         (> module version)
+        (< module)
+        square-bar  jo/append
+        (< version) jo/append
+        square-ket  jo/append))
+      (define load-module/get-user-path
+        (jojo
+          (note module version -> path)
+          (> module version)
+          user-jojo-dir-jo
+          module-dir-jo     jo/append
+          (jo /)            jo/append
+          (< module)        jo/append
+          (jo /)            jo/append
+          (< version)       jo/append
+          (jo /)            jo/append
+          module-file-jo    jo/append
+          jo->string))
+      (define load-module/get-system-path
+        (jojo
+          (note module version -> path)
+          (> module version)
+          system-jojo-dir-jo
+          module-dir-jo     jo/append
+          (jo /)            jo/append
+          (< module)        jo/append
+          (jo /)            jo/append
+          (< version)       jo/append
+          (jo /)            jo/append
+          module-file-jo    jo/append
+          jo->string))
+      (define load-module/get-path
+        (jojo
+          (note module version -> path)
+          (> module version)
 
-        (< module version)
-        module-version->prefix
-        (> prefix)
+          (< module version) load-module/get-user-path (> user-path)
+          (< module version) load-module/get-system-path (> system-path)
 
-        (if (< prefix) loaded-module-record list/member? not then
-            (< module version) load-module)
+          (if (< user-path) path/readable? then (< user-path) end)
+          (if (< system-path) path/readable? then (< system-path) end)
+          (cat "- load-module/get-path fail" newline
+               "  module : " (< module) jo/print newline
+               "  version : " (< version) jo/print newline
+               "  in module dir of user : "
+               user-jojo-dir-jo jo/print
+               module-dir-jo jo/print
+               newline
+               "  or in module dir of system : "
+               system-jojo-dir-jo jo/print
+               module-dir-jo jo/print
+               newline)))
+      (define loaded-module-record (data null))
 
-        depending-stack (: pop)
-        (< module) (< prefix) cons
-        cons
-        depending-stack (: push: (data))
-        end)
+      (define load-module
+        (jojo
+          (note module version ->)
+          (> module version)
 
-    (el (> nick) drop
-        depending-stack (: pop)
-        dup
-        car car (< nick) swap cons
-        cons
-        depending-stack (: push: (data))
-        end)))
+          (< module version) module-version->prefix (> prefix)
 
-(define use
-  (keyword
-    read/raw-jo (if dup round-ket eq? then drop end)
-    read/raw-jo (if dup round-ket eq? then 2drop end)
-    use/help
-    (loop)))
+          (if (< prefix) loaded-module-record list/member? then end)
 
-(define-class <person>
-  (inherit <object>)
-  (meta-variable
-    (= testing-meta-variable (number 666)))
-  (variable
-    (- bare-age (int 5))
-    (= age (number 13))
-    (= language (text "chinese")))
-  (method
-    (* grow
-       (<< self) (get age) (: inc)
-       (<< self) (set age))
-    (* (: grow-by: years)
-       (<< self) (get age) (: add: (<< years))
-       (<< self) (set age))
-    (* (: grow-by: year1 and-by: year2)
-       (<< self) (get age) (: add: (<< year1)) (: add: (<< year2))
-       (<< self) (set age))
-    (* report
-       (cat "bare-age : "
-            (<< self) (get-data bare-age) int/print newline
-            "age : "
-            (<< self) (get age) (: print) newline
-            "languege : "
-            (<< self) (get language) (: print) newline
-            newline))))
+          (< module version) load-module/get-path (> path)
 
-(define xieyuheng <person> (: new))
+          prefix-stack    (: push: (data (< prefix)))
+          defining-stack  (: push: (data null))
+          depending-stack (: push: (data null))
 
-(run xieyuheng (: report)
-     xieyuheng (: grow)
-     xieyuheng (: report)
-     xieyuheng (: grow-by: (number 10))
-     xieyuheng (: report)
-     xieyuheng (: grow-by: (number 10))
-     xieyuheng (: report)
-     xieyuheng (: grow-by: (number 10) and-by: (number 10))
-     xieyuheng (: report))
+          (< path) path/load
 
-(run <person> (get testing-meta-variable) (: write)
-     (number 777)
-     <person> (set testing-meta-variable)
-     <person> (get testing-meta-variable) (: write)
-     (number 888)
-     <person> (set testing-meta-variable)
-     <person> (get testing-meta-variable) (: write)
-     <person> (get testing-meta-variable-in-<object>) (: write)
+          depending-stack (: drop)
+          defining-stack  (: drop)
+          prefix-stack    (: drop)
 
-     (number 26078)
-     <person> (set testing-meta-variable-0)
-     <person> (get testing-meta-variable-0) (: write))
+          loaded-module-record
+          (< prefix) cons
+          (address loaded-module-record)
+          set-cell))
+    (define use/help
+      (jojo
+        (note module version ->)
+        (note as nick ->)
 
-(define bare-stack-0 <bare-stack> (: new))
+        (if over (raw-jo as) eq? not then
+            (> module version)
 
-(test bare-stack-0 (: empty?) dup dot dot newline
-      bare-stack-0 (: push: (data (int 1)))
-      bare-stack-0 (: empty?) dup dot dot newline
-      bare-stack-0 (: push: (data (int 2)))
-      bare-stack-0 (: empty?) dup dot dot newline
-      bare-stack-0 (: push: (data (int 3)))
-      bare-stack-0 (: empty?) dup dot dot newline
-      bare-stack-0 (: pop) int/print newline
-      bare-stack-0 (: empty?) dup dot dot newline
-      bare-stack-0 (: pop) int/print newline
-      bare-stack-0 (: empty?) dup dot dot newline
-      bare-stack-0 (: pop) int/print newline
-      bare-stack-0 (: empty?) dup dot dot newline)
+            (< module version)
+            module-version->prefix
+            (> prefix)
 
-(define stack-0 <stack> (: new))
+            (if (< prefix) loaded-module-record list/member? not then
+                (< module version) load-module)
 
-(test stack-0 (: push: (number 1))
-      stack-0 (: push: (number 2))
-      stack-0 (: push: (number 3))
-      stack-0 (: pop) (: write)
-      stack-0 (: pop) (: write)
-      stack-0 (: pop) (: write))
+            depending-stack (: pop)
+            (< module) (< prefix) cons
+            cons
+            depending-stack (: push: (data))
+            end)
 
-(use hiya 0.0.1 as h)
-(run (raw-jo hiya.name) jo/print newline
-     (jo hiya.name) jo/print newline
-     hiya.hiya
-     (jo h.name) jo/print newline
-     h.hiya)
+        (el (> nick) drop
+            depending-stack (: pop)
+            dup
+            car car (< nick) swap cons
+            cons
+            depending-stack (: push: (data))
+            end)))
 
-(use hi 0.0.1)
-(run hi.hi)
+    (define use
+      (keyword
+        read/raw-jo (if dup round-ket eq? then drop end)
+        read/raw-jo (if dup round-ket eq? then 2drop end)
+        use/help
+        (loop)))
+  (define-class <person>
+    (inherit <object>)
+    (meta-variable
+      (= testing-meta-variable (number 666)))
+    (variable
+      (- bare-age (int 5))
+      (= age (number 13))
+      (= language (text "chinese")))
+    (method
+      (* grow
+         (<< self) (get age) (: inc)
+         (<< self) (set age))
+      (* (: grow-by: years)
+         (<< self) (get age) (: add: (<< years))
+         (<< self) (set age))
+      (* (: grow-by: year1 and-by: year2)
+         (<< self) (get age) (: add: (<< year1)) (: add: (<< year2))
+         (<< self) (set age))
+      (* report
+         (cat "bare-age : "
+              (<< self) (get-data bare-age) int/print newline
+              "age : "
+              (<< self) (get age) (: print) newline
+              "languege : "
+              (<< self) (get language) (: print) newline
+              newline))))
 
-(use welcome 0.0.1 as w)
-(run w.welcome)
+  (define xieyuheng <person> (: new))
 
-(test current-dir string/print newline)
+  (run xieyuheng (: report)
+       xieyuheng (: grow)
+       xieyuheng (: report)
+       xieyuheng (: grow-by: (number 10))
+       xieyuheng (: report)
+       xieyuheng (: grow-by: (number 10))
+       xieyuheng (: report)
+       xieyuheng (: grow-by: (number 10) and-by: (number 10))
+       xieyuheng (: report))
 
-(test (string "HOME") get-env-string
-      string/print newline)
+  (run <person> (get testing-meta-variable) (: write)
+       (number 777)
+       <person> (set testing-meta-variable)
+       <person> (get testing-meta-variable) (: write)
+       (number 888)
+       <person> (set testing-meta-variable)
+       <person> (get testing-meta-variable) (: write)
+       <person> (get testing-meta-variable-in-<object>) (: write)
 
-(test (string "PATH") get-env-string
-      string/print newline)
+       (number 26078)
+       <person> (set testing-meta-variable-0)
+       <person> (get testing-meta-variable-0) (: write))
+  (define bare-stack-0 <bare-stack> (: new))
 
-(define command-line/print-argument/loop
-  (jojo (note index -> [io])
-    (if dup argument-counter lt? then
-        dup index->argument-string string/print
-        newline
-        (int 1) add
-        (loop))
-    drop end))
+  (test bare-stack-0 (: empty?) dup dot dot newline
+        bare-stack-0 (: push: (data (int 1)))
+        bare-stack-0 (: empty?) dup dot dot newline
+        bare-stack-0 (: push: (data (int 2)))
+        bare-stack-0 (: empty?) dup dot dot newline
+        bare-stack-0 (: push: (data (int 3)))
+        bare-stack-0 (: empty?) dup dot dot newline
+        bare-stack-0 (: pop) int/print newline
+        bare-stack-0 (: empty?) dup dot dot newline
+        bare-stack-0 (: pop) int/print newline
+        bare-stack-0 (: empty?) dup dot dot newline
+        bare-stack-0 (: pop) int/print newline
+        bare-stack-0 (: empty?) dup dot dot newline)
 
-(define command-line/print-argument
-  (jojo (note -> [io])
-    (int 0) command-line/print-argument/loop))
+  (define stack-0 <stack> (: new))
 
-(test command-line/print-argument)
+  (test stack-0 (: push: (number 1))
+        stack-0 (: push: (number 2))
+        stack-0 (: push: (number 3))
+        stack-0 (: pop) (: write)
+        stack-0 (: pop) (: write)
+        stack-0 (: pop) (: write))
+  (use hiya 0.0.1 as h)
+  (run (raw-jo hiya.name) jo/print newline
+       (jo hiya.name) jo/print newline
+       hiya.hiya
+       (jo h.name) jo/print newline
+       h.hiya)
 
-(note (test name-report))
+  (use hi 0.0.1)
+  (run hi.hi)
+
+  (use welcome 0.0.1 as w)
+  (run w.welcome)
+  (test current-dir string/print newline)
+
+  (test (string "HOME") get-env-string
+        string/print newline)
+
+  (test (string "PATH") get-env-string
+        string/print newline)
+
+  (define command-line/print-argument/loop
+    (jojo (note index -> [io])
+      (if dup argument-counter lt? then
+          dup index->argument-string string/print
+          newline
+          (int 1) add
+          (loop))
+      drop end))
+
+  (define command-line/print-argument
+    (jojo (note -> [io])
+      (int 0) command-line/print-argument/loop))
+
+  (test command-line/print-argument)
+
+  (note (test name-report))
+
+  (run (bare-jojo dup dup drop) jojo/print)
+
+
+  (define c1
+    (jojo  dup dup   debug dup        (if argument-counter lt? then
+          dup index->argument-string string/print
+          newline
+          (int 1) add
+          )))
+
+  (run c1 c1 c1)

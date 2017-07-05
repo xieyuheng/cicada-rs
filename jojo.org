@@ -1,20 +1,29 @@
 #+property: tangle jojo.c
 #+title:  jojo
-- to used jojo.h
 
-- [debug] debug repl
+- help for debug repl
+- print_return_point
+
+- fix p_current_dir
+
+- [debug] to use debug repl
   can be called by user's function
   or by kernel single
-- [debug] print jojo body
-- [debug] print return-stack
-- [debug] trace
+
+- [debug] trace and untrace a jo
+  by redefine
 
 - [debug] step
+
 - [docs] a rule for type comment in c code
 
 - [core] one level of pointer to the rs and as
   to support cc and dc and language thread
+
 * todo
+
+  - to used libjojo.c and libjojo.h
+    jojo.c as a jojo embedded in c
 
   - [control] full cc and delimited cc
 
@@ -37,16 +46,18 @@
 *** header
 
     #+begin_src c
-    #include <sys/types.h>  /* Type definitions used by many programs */
+    #include <sys/types.h>
+    #include <sys/stat.h>
+    #include <unistd.h>
+
     #include <stdio.h>
-    #include <stdlib.h>     /* Prototypes of commonly used library functions,
-                               plus EXIT_SUCCESS and EXIT_FAILURE constants */
-    #include <unistd.h>     /* Prototypes for many system calls */
-    #include <errno.h>      /* Declares errno and defines error constants */
-    #include <string.h>     /* Commonly used string-handling functions */
+    #include <stdlib.h>
+
+    #include <errno.h>
+    #include <string.h>
 
     #include <fcntl.h>
-    #include <sys/stat.h>
+
     #include <ctype.h>
     #include <stdint.h>
 
@@ -629,7 +640,7 @@ j* jotable_insert
       as_pointer++;
     }
 
-    cell as_pop() {
+    void* as_pop() {
       as_pointer--;
       return as[as_pointer];
     }
@@ -656,7 +667,7 @@ j* jotable_insert
 
     #+begin_src c
     typedef struct {
-      jo* array;
+      jo* jojo;
       cell local_pointer;
     } return_point;
 
@@ -681,7 +692,7 @@ j* jotable_insert
     }
 
     void rs_make_point(jo* array, cell local_pointer) {
-      return_point rp = {.array = array, .local_pointer = local_pointer};
+      return_point rp = {.jojo = array, .local_pointer = local_pointer};
       rs[rs_pointer] = rp;
       rs_pointer++;
     }
@@ -692,7 +703,7 @@ j* jotable_insert
 
     void rs_inc() {
       return_point rp = rs_pop();
-      return_point rp1 = {.array = rp.array + 1, .local_pointer = rp.local_pointer};
+      return_point rp1 = {.jojo = rp.jojo + 1, .local_pointer = rp.local_pointer};
       rs_push(rp1);
     }
     #+end_src
@@ -1095,7 +1106,7 @@ j* jotable_insert
       while (rs_pointer >= rs_base) {
         return_point rp = rs_tos();
         rs_inc();
-        cell jo = *(cell*)rp.array;
+        cell jo = *(cell*)rp.jojo;
         jo_apply(jo);
       }
     }
@@ -1337,10 +1348,10 @@ j* jotable_insert
     }
     #+end_src
 
-*** p_as_print
+*** p_print_argument_stack
 
     #+begin_src c
-    void p_as_print() {
+    void p_print_argument_stack() {
       // {io} ->
       printf("\n");
       if (as_pointer < as_base) {
@@ -1391,7 +1402,7 @@ j* jotable_insert
       define_prim("swap", p_swap);
       define_prim("2swap", p_2swap);
       define_prim("xy-swap", p_xy_swap);
-      define_prim("as/print", p_as_print);
+      define_prim("print-argument-stack", p_print_argument_stack);
       define_prim("stack-pointer", p_stack_pointer);
       define_prim("stack-base", p_stack_base);
     }
@@ -1435,7 +1446,7 @@ j* jotable_insert
       // {rs} -> int
       return_point rp = rs_tos();
       rs_inc();
-      cell jo = *(cell*)rp.array;
+      cell jo = *(cell*)rp.jojo;
       as_push(jo);
     }
     #+end_src
@@ -1447,7 +1458,7 @@ j* jotable_insert
       // bool {rs} -> {rs}
       return_point rp = rs_tos();
       rs_inc();
-      jo* a = *(cell*)rp.array;
+      jo* a = *(cell*)rp.jojo;
       cell b = as_pop();
       if (b == 0) {
         return_point rp1 = rs_pop();
@@ -1462,7 +1473,7 @@ j* jotable_insert
     void i_jump() {
       // {rs} -> {rs}
       return_point rp = rs_tos();
-      jo* a = *(cell*)rp.array;
+      jo* a = *(cell*)rp.jojo;
       return_point rp1 = rs_pop();
       rs_make_point(a, rp1.local_pointer);
     }
@@ -2041,8 +2052,6 @@ j* jotable_insert
 *** read_byte
 
     #+begin_src c
-    bool exit_repl();
-
     byte read_byte() {
       if (reading_stack_empty_p()) {
         return fgetc(stdin);
@@ -3114,10 +3123,34 @@ j* jotable_insert
     }
     #+end_src
 
+*** p_file_print_path
+
+    #+begin_src c
+    void p_file_print_path() {
+      // file -> path
+      FILE* file = as_pop();
+
+      char proclnk[PATH_MAX];
+      char filename[PATH_MAX];
+
+      sprintf(proclnk, "/proc/self/fd/%d", fileno(file));
+
+      ssize_t real_bytes = readlink(proclnk, filename, PATH_MAX);
+      if (real_bytes == -1) {
+        printf("- p_file_print_path fail readlink /proc/self/fd/%d\n", fileno(file));
+        perror("\n");
+      }
+      else {
+        filename[real_bytes] = '\0';
+        printf("%s", filename);
+      }
+    }
+    #+end_src
+
 *** p_path_load
 
     #+begin_src c
-    void p_top_repl();
+    void p_repl();
 
     void p_path_load() {
       // path -> {reading_stack}
@@ -3140,7 +3173,7 @@ j* jotable_insert
       };
       reading_stack_push(rp);
 
-      p_top_repl();
+      p_repl();
 
       reading_stack_pop();
       fclose(rp.file_handle);
@@ -3228,6 +3261,8 @@ j* jotable_insert
       define_prim("path/writable?", p_path_writable_p);
       define_prim("path/executable?", p_path_executable_p);
 
+      define_prim("file/print-path", p_file_print_path);
+
       define_prim("path/load", p_path_load);
       define_primkey("include", k_include);
     }
@@ -3240,8 +3275,8 @@ j* jotable_insert
     #+begin_src c
     void p_current_dir() {
       // -> string
-      char buf[1024];
-      as_push(getcwd(buf, 1024));
+      char buf[PATH_MAX];
+      as_push(getcwd(buf, PATH_MAX));
     }
     #+end_src
 
@@ -3489,18 +3524,18 @@ j* jotable_insert
     }
     #+end_src
 
-*** p_top_repl
+*** p_repl
 
     #+begin_src c
     bool top_repl_printing_flag = false;
 
-    void p_as_print_by_flag() {
+    void p_print_argument_stack_by_flag() {
       if (top_repl_printing_flag) {
-        p_as_print();
+        p_print_argument_stack();
       }
     }
 
-    void p_top_repl() {
+    void p_repl() {
       while (true) {
         if (!has_jo_p()) {
           return;
@@ -3508,7 +3543,7 @@ j* jotable_insert
         jo s = read_jo();
         if (s == ROUND_BAR) {
           jo_apply(read_jo());
-          p_as_print_by_flag();
+          p_print_argument_stack_by_flag();
         }
         else {
           // loop
@@ -3517,12 +3552,116 @@ j* jotable_insert
     }
     #+end_src
 
-*** p_top_repl_printing_flag
+*** p_repl_printing_flag
 
     #+begin_src c
-    void p_top_repl_printing_flag() { as_push(top_repl_printing_flag); }
-    void p_top_repl_printing_flag_on() { top_repl_printing_flag = true; }
-    void p_top_repl_printing_flag_off() { top_repl_printing_flag = false; }
+    void p_repl_printing_flag() { as_push(top_repl_printing_flag); }
+    void p_repl_printing_flag_on() { top_repl_printing_flag = true; }
+    void p_repl_printing_flag_off() { top_repl_printing_flag = false; }
+    #+end_src
+
+*** p_jojo_print
+
+    #+begin_src c
+    void p_jojo_print() {
+      // jojo -> {io}
+      jo* jojo = as_pop();
+      printf("[ ");
+      while (true) {
+        if (jojo[0] == 0 && jojo[1] == 0) {
+          break;
+        }
+        if (jojo[0] == JO_INS_INT ||
+            jojo[0] == JO_INS_JUMP ||
+            jojo[0] == JO_INS_JUMP_IF_FALSE) {
+          printf("%s ", jo2str(jojo[0]));
+          printf("%ld ", jojo[1]);
+          jojo++;
+          jojo++;
+        }
+        else {
+          printf("%s ", jo2str(jojo[0]));
+          jojo++;
+        }
+      }
+      printf("]\n");
+    }
+    #+end_src
+
+*** print_return_point
+
+    #+begin_src c
+    void print_return_point(return_point rp) {
+      as_push(rp.jojo);
+      p_jojo_print();
+    }
+    #+end_src
+
+*** p_print_return_stack
+
+    #+begin_src c
+    void p_print_return_stack() {
+      cell i = rs_base;
+      printf("--- return-stack ---\n");
+      while (i < rs_pointer) {
+        print_return_point(rs[i]);
+        i++;
+      }
+      printf("--- end ---\n");
+    }
+    #+end_src
+
+*** p_debug_repl
+
+    #+begin_src c
+    void p_debug_repl() {
+      while (true) {
+        if (!has_jo_p()) {
+          return;
+        }
+        jo s = read_jo();
+        if (s == str2jo("exit")) {
+          return;
+        }
+        else if (s == ROUND_BAR) {
+          jo_apply(read_jo());
+          p_print_argument_stack();
+          printf("debug> ");
+        }
+        else {
+          // loop
+        }
+      }
+    }
+    #+end_src
+
+*** p_debug
+
+    #+begin_src c
+    void p_debug() {
+      char current_dir[PATH_MAX];
+      getcwd(current_dir, PATH_MAX);
+
+      reading_point rp = {
+        .file_handle = stdin,
+        .file = current_dir,
+        .dir = current_dir
+      };
+      reading_stack_push(rp);
+
+      printf("\n");
+      printf("- in debug-repl >_<!\n");
+      printf("  type 'help' to see available commends.\n");
+      printf("\n");
+      p_print_return_stack();
+      p_print_argument_stack();
+      printf("debug> ");
+      p_debug_repl();
+      printf("- exit debug-repl\n");
+      printf("\n");
+
+      reading_stack_pop();
+    }
     #+end_src
 
 *** export_top_level
@@ -3540,12 +3679,15 @@ j* jotable_insert
       define_prim("testing-flag/on", p_testing_flag_on);
       define_prim("testing-flag/off", p_testing_flag_off);
 
+      define_prim("print-argument-stack/by-flag", p_print_argument_stack_by_flag);
+      define_prim("repl", p_repl);
+      define_prim("repl/printing-flag", p_repl_printing_flag);
+      define_prim("repl/printing-flag/on", p_repl_printing_flag_on);
+      define_prim("repl/printing-flag/off", p_repl_printing_flag_off);
 
-      define_prim("as/print-by-flag", p_as_print_by_flag);
-      define_prim("top-repl", p_top_repl);
-      define_prim("top-repl/printing-flag", p_top_repl_printing_flag);
-      define_prim("top-repl/printing-flag/on", p_top_repl_printing_flag_on);
-      define_prim("top-repl/printing-flag/off", p_top_repl_printing_flag_off);
+      define_prim("jojo/print", p_jojo_print);
+      define_prim("print-return-stack", p_print_return_stack);
+      define_prim("debug", p_debug);
     }
     #+end_src
 
@@ -3739,6 +3881,8 @@ j* jotable_insert
       current_compiling_jojo_stack_push(jojo);
       compile_until_meet_jo(ROUND_KET);
       here(JO_END);
+      here(0);
+      here(0);
       current_compiling_jojo_stack_pop();
     }
     #+end_src
@@ -4354,10 +4498,10 @@ j* jotable_insert
     }
     #+end_src
 
-*** init_top_repl
+*** init_jojo
 
     #+begin_src c
-    void init_top_repl() {
+    void init_jojo() {
 
       init_jotable();
       init_literal_jo();
@@ -4397,7 +4541,7 @@ j* jotable_insert
       argument_counter = argc;
       argument_string_array = argv;
 
-      init_top_repl();
+      init_jojo();
 
       if (argc != 1) {
         as_push(argv[1]);
@@ -4408,11 +4552,12 @@ j* jotable_insert
         }
         else {
           printf("- jojo can not load file: %s\n", argv[1]);
-          printf("  it is not readable\n");
+          printf("  it is not a readable file\n");
+          printf("  bye bye ^-^/\n");
           return 69;
         }
       }
 
-      p_top_repl();
+      p_repl();
     }
     #+end_src
