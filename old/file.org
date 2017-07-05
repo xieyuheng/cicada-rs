@@ -1,180 +1,100 @@
-* p_open_for_reading
+* >< p_file_seek
 
   #+begin_src c
-  void p_open_for_reading() {
-    string pathname = as_pop();
-    FILE* fd = open(pathname, O_RDONLY);
-    if (fd == -1) {
-      perror("- p_open_for_reading fail\n");
-    }
-    as_push(fd);
-  }
-  #+end_src
+  void p_file_seek() {
+    // [file offset] -> [new-offset]
+    // - one should only apply seek to regular-file
+    //   I do not expose seek error to jojo
+    //   one should check file type before apply seek
+    off_t offset = as_pop();
+    int file = as_pop();
 
-* path_file_size
-
-  - abstract "struct stat" out
-
-  #+begin_src c
-  cell path_file_size(string file_name) {
-    struct stat st;
-    stat(file_name, &st);
-    return st.st_size;
-  }
-  #+end_src
-
-* p_path_file_size
-
-  #+begin_src c
-  void p_path_file_size() {
-    as_push(path_file_size(as_pop()));
-  }
-  #+end_src
-
-* dir_ok_p
-
-  #+begin_src c
-  bool dir_ok_p(string path) {
-    DIR* dir = opendir(path);
-    if (!dir) {
-      return false;
+    off_t new_offset = lseek(file, offset, SEEK_CUR);
+    if (new_offset == -1) {
+      printf("- p_file_seek fail\n");
+      printf("  one should only seek regular-file\n");
     }
     else {
-      closedir(dir);
-      return true;
+      as_push(new_offset);
     }
   }
   #+end_src
 
-* p_dir_ok_p
+* >< p_file_seek_from_beginning
 
   #+begin_src c
-  void p_dir_ok_p() {
-    // (dir -> bool)
-    as_push(dir_ok_p(as_pop()));
+  void p_file_seek_from_beginning() {
+    // [file offset] -> [new-offset]
+    // - one should only apply seek to regular-file
+    //   I do not expose seek error to jojo
+    //   one should check file type before apply seek
+    off_t offset = as_pop();
+    int file = as_pop();
+
+    off_t new_offset = lseek(file, offset, SEEK_SET);
+    if (new_offset == -1) {
+      printf("- p_file_seek_from_beginning fail\n");
+      printf("  one should only seek regular-file\n");
+    }
+    else {
+      as_push(new_offset);
+    }
   }
   #+end_src
 
-* p_file_copy_to_buffer
+* >< p_file_seek_from_end
 
   #+begin_src c
-  void p_file_copy_to_buffer() {
-    // (file-name addr -> number)
-    cell buffer = as_pop();
-    cell path = as_pop();
-    cell limit = path_file_size(path);
-    FILE* fp = fopen(path, "r");
-    if(!fp) {
-      printf("- p_file_copy_to_buffer file to open file : %s\n", path);
-      perror("  ");
-      as_push(0);
+  void p_file_seek_from_end() {
+    // [file offset] -> [new-offset]
+    // - one should only apply seek to regular-file
+    //   I do not expose error of this function to jojo
+    //   one should check file type before apply seek
+    off_t offset = as_pop();
+    int file = as_pop();
+
+    off_t new_offset = lseek(file, offset, SEEK_END);
+    if (new_offset == -1) {
+      printf("- p_file_seek_from_end fail\n");
+      printf("  one should only seek regular-file\n");
+    }
+    else {
+      as_push(new_offset);
+    }
+  }
+  #+end_src
+
+* >< p_file_truncate
+
+  #+begin_src c
+  void p_file_truncate() {
+    // [file length] -> []
+    // - I do not expose error of this function to jojo
+    off_t length = as_pop();
+    int file = as_pop();
+
+    if (ftruncate(file, length) == -1) {
+      perror("- p_file_truncate fail\n");
+    }
+    else {
       return;
     }
-    cell read_counter = fread(buffer, 1, limit, fp);
-    fclose(fp);
-    as_push(read_counter);
   }
   #+end_src
 
-* ><
+* >< p_file_clear
 
-*** >< p_file_seek
+  #+begin_src c
+  void p_file_clear() {
+    // [file] -> []
+    // - I do not expose error of this function to jojo
+    int file = as_pop();
 
-    #+begin_src c
-    void p_file_seek() {
-      // [file offset] -> [new-offset]
-      // - one should only apply seek to regular-file
-      //   I do not expose seek error to jojo
-      //   one should check file type before apply seek
-      off_t offset = as_pop();
-      int file = as_pop();
-
-      off_t new_offset = lseek(file, offset, SEEK_CUR);
-      if (new_offset == -1) {
-        printf("- p_file_seek fail\n");
-        printf("  one should only seek regular-file\n");
-      }
-      else {
-        as_push(new_offset);
-      }
+    if (ftruncate(file, 0) == -1) {
+      perror("- p_file_clear fail\n");
     }
-    #+end_src
-
-*** >< p_file_seek_from_beginning
-
-    #+begin_src c
-    void p_file_seek_from_beginning() {
-      // [file offset] -> [new-offset]
-      // - one should only apply seek to regular-file
-      //   I do not expose seek error to jojo
-      //   one should check file type before apply seek
-      off_t offset = as_pop();
-      int file = as_pop();
-
-      off_t new_offset = lseek(file, offset, SEEK_SET);
-      if (new_offset == -1) {
-        printf("- p_file_seek_from_beginning fail\n");
-        printf("  one should only seek regular-file\n");
-      }
-      else {
-        as_push(new_offset);
-      }
+    else {
+      return;
     }
-    #+end_src
-
-*** >< p_file_seek_from_end
-
-    #+begin_src c
-    void p_file_seek_from_end() {
-      // [file offset] -> [new-offset]
-      // - one should only apply seek to regular-file
-      //   I do not expose error of this function to jojo
-      //   one should check file type before apply seek
-      off_t offset = as_pop();
-      int file = as_pop();
-
-      off_t new_offset = lseek(file, offset, SEEK_END);
-      if (new_offset == -1) {
-        printf("- p_file_seek_from_end fail\n");
-        printf("  one should only seek regular-file\n");
-      }
-      else {
-        as_push(new_offset);
-      }
-    }
-    #+end_src
-
-*** >< p_file_truncate
-
-    #+begin_src c
-    void p_file_truncate() {
-      // [file length] -> []
-      // - I do not expose error of this function to jojo
-      off_t length = as_pop();
-      int file = as_pop();
-
-      if (ftruncate(file, length) == -1) {
-        perror("- p_file_truncate fail\n");
-      }
-      else {
-        return;
-      }
-    }
-    #+end_src
-
-*** >< p_file_clear
-
-    #+begin_src c
-    void p_file_clear() {
-      // [file] -> []
-      // - I do not expose error of this function to jojo
-      int file = as_pop();
-
-      if (ftruncate(file, 0) == -1) {
-        perror("- p_file_clear fail\n");
-      }
-      else {
-        return;
-      }
-    }
-    #+end_src
+  }
+  #+end_src

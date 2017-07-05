@@ -1920,6 +1920,12 @@ void export_jo() {
   define_prim("jo/part", p_jo_part);
 }
 
+void p_error_number_print() {
+  // errno -> {io}
+  int no = as_pop();
+  printf("%s", strerror(no));
+}
+
 void p_path_open_read() {
   // [path] -> [file true] or [errno false]
   char* path = as_pop();
@@ -2058,15 +2064,136 @@ void p_file_write() {
   }
 }
 
-void p_path_readable_p() {
-  // path -> bool
+void p_file_size() {
+  // file -> int
+  FILE* file = as_pop();
+  struct stat file_state;
+  fstat(fileno(file), &file_state);
+  as_push(file_state.st_size);
+}
+
+void p_file_regular_file_p() {
+  // file -> true or false
+  FILE* file = as_pop();
+  struct stat file_state;
+  fstat(fileno(file), &file_state);
+  if ((file_state.st_mode & S_IFMT) == S_IFREG) {
+    as_push(true);
+  }
+  else {
+    as_push(false);
+  }
+}
+
+void p_file_directory_p() {
+  // file -> true or false
+  FILE* file = as_pop();
+  struct stat file_state;
+  fstat(fileno(file), &file_state);
+  if ((file_state.st_mode & S_IFMT) == S_IFDIR) {
+    as_push(true);
+  }
+  else {
+    as_push(false);
+  }
+}
+
+void p_file_character_device_p() {
+  // file -> true or false
+  FILE* file = as_pop();
+  struct stat file_state;
+  fstat(fileno(file), &file_state);
+  if ((file_state.st_mode & S_IFMT) == S_IFCHR) {
+    as_push(true);
+  }
+  else {
+    as_push(false);
+  }
+}
+
+void p_file_block_device_p() {
+  // file -> true or false
+  FILE* file = as_pop();
+  struct stat file_state;
+  fstat(fileno(file), &file_state);
+  if ((file_state.st_mode & S_IFMT) == S_IFBLK) {
+    as_push(true);
+  }
+  else {
+    as_push(false);
+  }
+}
+
+void p_file_fifo_p() {
+  // file -> true or false
+  FILE* file = as_pop();
+  struct stat file_state;
+  fstat(fileno(file), &file_state);
+  if ((file_state.st_mode & S_IFMT) == S_IFIFO) {
+    as_push(true);
+  }
+  else {
+    as_push(false);
+  }
+}
+
+void p_file_socket_p() {
+  // file -> true or false
+  FILE* file = as_pop();
+  struct stat file_state;
+  fstat(fileno(file), &file_state);
+  if ((file_state.st_mode & S_IFMT) == S_IFSOCK) {
+    as_push(true);
+  }
+  else {
+    as_push(false);
+  }
+}
+
+void p_path_exist_p() {
+  // path -> true or false
   char* path = as_pop();
-  FILE* file = fopen(path, "r");
-  if (!file) {
+
+  if (access(path, F_OK) == -1) {
     as_push(false);
   }
   else {
-    fclose(file);
+    as_push(true);
+  }
+}
+
+void p_path_readable_p() {
+  // path -> true or false
+  char* path = as_pop();
+
+  if (access(path, R_OK) == -1) {
+    as_push(false);
+  }
+  else {
+    as_push(true);
+  }
+}
+
+void p_path_writable_p() {
+  // path -> true or false
+  char* path = as_pop();
+
+  if (access(path, W_OK) == -1) {
+    as_push(false);
+  }
+  else {
+    as_push(true);
+  }
+}
+
+void p_path_executable_p() {
+  // path -> true or false
+  char* path = as_pop();
+
+  if (access(path, X_OK) == -1) {
+    as_push(false);
+  }
+  else {
     as_push(true);
   }
 }
@@ -2077,9 +2204,9 @@ void p_path_load() {
   // path -> {reading_stack}
   char* path = as_pop();
   FILE* file = fopen(path, "r");
-  if(!file) {
+  if(file == NULL) {
+    printf("- p_path_load fail : %s\n", path);
     perror("File opening failed");
-    printf("p_path_load fail : %s\n", path);
     return;
   }
   char* file_buffer = malloc(PATH_MAX);
@@ -2094,28 +2221,12 @@ void p_path_load() {
   };
   reading_stack_push(rp);
 
-  // {
-  //   printf("- p_path_load start\n");
-  //   printf("  file: %d\n", file);
-  //   printf("  file: %s\n", file_buffer);
-  //   printf("  dir_buffer: %s #%ld\n", dir_buffer, dir_buffer);
-  //   printf("  dir_addr: %s #%ld\n", dir_addr, dir_addr);
-  // }
-
   p_top_repl();
 
   reading_stack_pop();
   fclose(rp.file_handle);
   free(rp.file);
   free(rp.dir);
-
-  // {
-  //   printf("- p_path_load finished\n");
-  //   printf("  file: %d\n", file);
-  //   printf("  file: %s\n", file_buffer);
-  //   printf("  dir_buffer: %s #%ld\n", dir_buffer, dir_buffer);
-  //   printf("  dir_addr: %s #%ld\n", dir_addr, dir_addr);
-  // }
 }
 
 void k_include_one() {
@@ -2160,6 +2271,8 @@ void k_include() {
 }
 
 void export_file() {
+  define_prim("error-number/print", p_error_number_print);
+
   define_prim("path/open/read", p_path_open_read);
   define_prim("path/open/write", p_path_open_write);
   define_prim("path/open/create", p_path_open_create);
@@ -2170,7 +2283,19 @@ void export_file() {
   define_prim("file/read", p_file_read);
   define_prim("file/write", p_file_write);
 
+  define_prim("file/size", p_file_size);
+
+  define_prim("file/regular-file?", p_file_regular_file_p);
+  define_prim("file/directory?", p_file_directory_p);
+  define_prim("file/character-device?", p_file_character_device_p);
+  define_prim("file/block-device?", p_file_block_device_p);
+  define_prim("file/fifo?", p_file_fifo_p);
+  define_prim("file/socket?", p_file_socket_p);
+
+  define_prim("path/exist?", p_path_exist_p);
   define_prim("path/readable?", p_path_readable_p);
+  define_prim("path/writable?", p_path_writable_p);
+  define_prim("path/executable?", p_path_executable_p);
 
   define_prim("path/load", p_path_load);
   define_primkey("include", k_include);
