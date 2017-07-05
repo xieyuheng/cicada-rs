@@ -1,5 +1,6 @@
 #+property: tangle jojo.c
 #+title:  jojo
+
 - [debug] debug repl
   can be called by user's function
   or by kernel single
@@ -137,16 +138,10 @@
 
 *** string
 
-***** string
-
-      #+begin_src c
-      typedef char* string;
-      #+end_src
-
 ***** string_equal
 
       #+begin_src c
-      bool string_equal(string s1, string s2) {
+      bool string_equal(char* s1, char* s2) {
         if (strcmp(s1, s2) == 0) {
           return true;
         }
@@ -159,7 +154,7 @@
 ***** nat_string_p
 
       #+begin_src c
-      bool nat_string_p(string str) {
+      bool nat_string_p(char* str) {
         cell i = 0;
         while (str[i] != 0) {
           if (!isdigit(str[i])) {
@@ -174,7 +169,7 @@
 ***** int_string_p
 
       #+begin_src c
-      bool int_string_p(string str) {
+      bool int_string_p(char* str) {
         if (str[0] == '-' ||
             str[0] == '+') {
           return nat_string_p(str + 1);
@@ -188,7 +183,7 @@
 ***** string_to_based_[nat|int]
 
       #+begin_src c
-      cell string_to_based_nat(string str, cell base) {
+      cell string_to_based_nat(char* str, cell base) {
         cell result = 0;
         cell len = strlen(str);
         cell i = 0;
@@ -199,7 +194,7 @@
         return result;
       }
 
-      cell string_to_based_int(string str, cell base) {
+      cell string_to_based_int(char* str, cell base) {
         if (str[0] == '-') {
           return - string_to_based_nat(str, base);
         }
@@ -212,10 +207,10 @@
 ***** string_to_[dec|bin|oct|hex]
 
       #+begin_src c
-      cell string_to_dec(string str) { return string_to_based_int(str, 10); }
-      cell string_to_bin(string str) { return string_to_based_int(str,  2); }
-      cell string_to_oct(string str) { return string_to_based_int(str,  8); }
-      cell string_to_hex(string str) { return string_to_based_int(str, 16); }
+      cell string_to_dec(char* str) { return string_to_based_int(str, 10); }
+      cell string_to_bin(char* str) { return string_to_based_int(str,  2); }
+      cell string_to_oct(char* str) { return string_to_based_int(str,  8); }
+      cell string_to_hex(char* str) { return string_to_based_int(str, 16); }
       #+end_src
 
 * jotable
@@ -244,7 +239,7 @@
 
     typedef struct {
       cell index;
-      string key;
+      char* key;
       jo tag;
       bind value;
       cell orbit_length;
@@ -288,7 +283,7 @@
 *** string_to_sum
 
     #+begin_src c
-    cell string_to_sum(string str) {
+    cell string_to_sum(char* str) {
       cell sum = 0;
       cell max_step = 10;
       cell i = 0;
@@ -303,7 +298,7 @@
 *** jotable_keyeq
 
     #+begin_src c
-    bool jotable_keyeq(string k1, string k2) {
+    bool jotable_keyeq(char* k1, char* k2) {
       return string_equal(k1, k2);
     }
     #+end_src
@@ -311,7 +306,7 @@
 *** jotable_hash
 
     #+begin_src c
-    cell jotable_hash(string key, cell counter) {
+    cell jotable_hash(char* key, cell counter) {
       return (counter + string_to_sum(key)) % jotable_size;
     }
     #+end_src
@@ -326,7 +321,7 @@
 *** copy_to_string_area
 
     #+begin_src c
-    string copy_to_string_area(string str) {
+    char* copy_to_string_area(char* str) {
       char *str1;
       cell i = 0;
       str1 = (string_area + string_area_counter);
@@ -350,7 +345,7 @@ j* jotable_insert
 
     #+begin_src c
     // -1 denotes the hash_table is filled
-    cell jotable_insert(string key) {
+    cell jotable_insert(char* key) {
       cell orbit_index = jotable_hash(key, 0);
       cell counter = 0;
       while (true) {
@@ -380,7 +375,7 @@ j* jotable_insert
 
     #+begin_src c
     // -1 denotes key not occured
-    cell jotable_search(string key) {
+    cell jotable_search(char* key) {
       cell counter = 0;
       while (true) {
         cell index = jotable_hash(key, counter);
@@ -403,7 +398,7 @@ j* jotable_insert
 *** jotable_entry_print
 
     #+begin_src c
-    string jo2str (cell index);
+    char* jo2str (cell index);
 
     void jotable_entry_print(jotable_entry entry) {
       printf("%s : ", jo2str(entry.tag));
@@ -416,7 +411,7 @@ j* jotable_insert
     #+begin_src c
     void jotable_report_orbit(cell index, cell counter) {
       while (counter < jotable[index].orbit_length) {
-        string key = jotable[index].key;
+        char* key = jotable[index].key;
         cell next_index = jotable_hash(key, counter);
         if (index == jotable[next_index].orbiton) {
           printf("  | %ld %s\n", next_index, jotable[next_index].key);
@@ -484,11 +479,11 @@ j* jotable_insert
 *** str2jo & jo2str
 
     #+begin_src c
-    jo str2jo(string str) {
+    jo str2jo(char* str) {
       return jotable_insert(str);
     }
 
-    string jo2str(cell index) {
+    char* jo2str(cell index) {
       return jotable[index].key;
     }
     #+end_src
@@ -894,7 +889,7 @@ j* jotable_insert
 *** define_prim
 
     #+begin_src c
-    void define_prim(string str, primitive fun) {
+    void define_prim(char* str, primitive fun) {
       jo name = str2jo(str);
       as_push(fun);
       as_push(TAG_PRIM);
@@ -906,7 +901,7 @@ j* jotable_insert
 *** define_primkey
 
     #+begin_src c
-    void define_primkey(string str, primitive fun) {
+    void define_primkey(char* str, primitive fun) {
       jo name = str2jo(str);
       as_push(fun);
       as_push(TAG_PRIM_KEYWORD);
@@ -1962,8 +1957,8 @@ j* jotable_insert
     #+begin_src c
     typedef struct {
       FILE* file_handle;
-      string file;
-      string dir;
+      char* file;
+      char* dir;
     } reading_point;
 
     typedef reading_point reading_stack_t[64];
@@ -1994,7 +1989,7 @@ j* jotable_insert
 *** real_reading_path
 
     #+begin_src c
-    void real_reading_path(string path, char* buffer) {
+    void real_reading_path(char* path, char* buffer) {
       if (path[0] == '/') {
         realpath(path, buffer);
         return;
@@ -2129,7 +2124,7 @@ j* jotable_insert
           cursor++;
         }
       }
-      string str = malloc(cursor);
+      char* str = malloc(cursor);
       strcpy(str, buffer);
       here(JO_INS_INT);
       here(str);
@@ -2188,8 +2183,8 @@ j* jotable_insert
     #+begin_src c
     void p_string_append_to_buffer() {
       // buffer string -> buffer
-      string str = as_pop();
-      string buffer = as_tos();
+      char* str = as_pop();
+      char* buffer = as_tos();
       strcat(buffer, str);
     }
     #+end_src
@@ -2198,7 +2193,7 @@ j* jotable_insert
 
     #+begin_src c
     void p_string_first_byte() {
-      string s = as_pop();
+      char* s = as_pop();
       as_push(s[0]);
     }
     #+end_src
@@ -2207,7 +2202,7 @@ j* jotable_insert
 
     #+begin_src c
     void p_string_last_byte() {
-      string s = as_pop();
+      char* s = as_pop();
       cell i = 0;
       while (s[i+1] != 0) {
         i++;
@@ -2221,7 +2216,7 @@ j* jotable_insert
     #+begin_src c
     void p_string_member_p() {
       // byte[not 0] string -> true or false
-      string s = as_pop();
+      char* s = as_pop();
       byte b = as_pop();
       cell i = 0;
       while (s[i] != 0) {
@@ -2242,7 +2237,7 @@ j* jotable_insert
     #+begin_src c
     void p_string_find_byte() {
       // byte string -> [index true] or [false]
-      string s = as_pop();
+      char* s = as_pop();
       byte b = as_pop();
       cell i = 0;
       while (s[i] != 0) {
@@ -2575,7 +2570,7 @@ j* jotable_insert
     #+begin_src c
     void p_string_to_jo() {
       // string -> jo
-      string str = as_pop();
+      char* str = as_pop();
       as_push(str2jo(str));
     }
     #+end_src
@@ -2653,7 +2648,7 @@ j* jotable_insert
     #+begin_src c
     cell p_generate_jo_counter = 0;
     void p_generate_jo() {
-      string s = as_pop();
+      char* s = as_pop();
       char buffer [1024];
       sprintf(buffer, "%s:generated-jo#%ld", jo2str(s), p_generate_jo_counter);
       p_generate_jo_counter++;
@@ -2678,7 +2673,7 @@ j* jotable_insert
       // index jo -> jo
       jo jo = as_pop();
       cell index = as_pop();
-      string s = jo2str(jo);
+      char* s = jo2str(jo);
       as_push(str2jo(s + index));
     }
     #+end_src
@@ -2691,7 +2686,7 @@ j* jotable_insert
       char target[1024];
       jo jo = as_pop();
       cell index = as_pop();
-      string source = jo2str(jo);
+      char* source = jo2str(jo);
       cell i = 0;
       while (i < index) {
         target[i] = source[i];
@@ -2711,7 +2706,7 @@ j* jotable_insert
       jo jo = as_pop();
       cell index_end = as_pop();
       cell index_begin = as_pop();
-      string source = jo2str(jo);
+      char* source = jo2str(jo);
       cell i = index_begin;
       while (i < index_end) {
         target[i] = source[i];
@@ -2765,7 +2760,7 @@ j* jotable_insert
     #+begin_src c
     void p_path_open_read() {
       // [path] -> [file true] or [errno false]
-      string path = as_pop();
+      char* path = as_pop();
 
       FILE* file = fopen(path, "r");
       if (file == NULL) {
@@ -2784,7 +2779,7 @@ j* jotable_insert
     #+begin_src c
     void p_path_open_write() {
       // [path] -> [file true] or [errno false]
-      string path = as_pop();
+      char* path = as_pop();
 
       FILE* file = fopen(path, "wx");
       if (file == NULL) {
@@ -2803,7 +2798,7 @@ j* jotable_insert
     #+begin_src c
     void p_path_open_read_and_write() {
       // [path] -> [file true] or [errno false]
-      string path = as_pop();
+      char* path = as_pop();
 
       FILE* file = fopen(path, "r+");
       if (file == NULL) {
@@ -2822,7 +2817,7 @@ j* jotable_insert
     #+begin_src c
     void p_path_open_create() {
       // [path] -> [file true] or [errno false]
-      string path = as_pop();
+      char* path = as_pop();
 
       FILE* file = fopen(path, "w+");
       if (file == NULL) {
@@ -2935,7 +2930,7 @@ j* jotable_insert
     #+begin_src c
     void p_path_readable_p() {
       // path -> bool
-      string path = as_pop();
+      char* path = as_pop();
       FILE* file = fopen(path, "r");
       if (!file) {
         as_push(false);
@@ -2954,7 +2949,7 @@ j* jotable_insert
 
     void p_path_load() {
       // path -> {reading_stack}
-      string path = as_pop();
+      char* path = as_pop();
       FILE* file = fopen(path, "r");
       if(!file) {
         perror("File opening failed");
@@ -3096,7 +3091,7 @@ j* jotable_insert
       // ... string n -> *
       cell n = as_pop();
       cell i = 0;
-      string str = malloc(4 * 1024);
+      char* str = malloc(4 * 1024);
       str[0] = 0;
       while (i < n) {
         strcat(str, as[as_pointer - n + i]);
@@ -3122,12 +3117,12 @@ j* jotable_insert
 *** p_index_to_argument_string
 
     #+begin_src c
-    string* argument_string_array;
+    char** argument_string_array;
 
     void p_index_to_argument_string() {
       // index -> string
       cell index = as_pop();
-      string argument_string = argument_string_array[index];
+      char* argument_string = argument_string_array[index];
       as_push(argument_string);
     }
     #+end_src
@@ -3137,8 +3132,8 @@ j* jotable_insert
     #+begin_src c
     void p_get_env_string() {
       // string -> string
-      string var_string = as_pop();
-      string env_string = getenv(var_string);
+      char* var_string = as_pop();
+      char* env_string = getenv(var_string);
       as_push(env_string);
     }
     #+end_src
@@ -3161,7 +3156,7 @@ j* jotable_insert
 *** ccall
 
     #+begin_src c
-    void ccall (string str, void* lib) {
+    void ccall (char* str, void* lib) {
       primitive fun = dlsym(lib, str);
       if (fun == NULL) {
         printf("can not find %s function lib : %s\n",
@@ -3174,7 +3169,7 @@ j* jotable_insert
 *** get_clib
 
     #+begin_src c
-    void* get_clib(string rel_path) {
+    void* get_clib(char* rel_path) {
       char path[PATH_MAX];
       real_reading_path(rel_path, path);
       void* lib = dlopen(path, RTLD_LAZY);
@@ -4085,7 +4080,7 @@ j* jotable_insert
 *** p3
 
     #+begin_src c
-    cell string_to_sum_test(string str) {
+    cell string_to_sum_test(char* str) {
       cell sum = 0;
       cell max_step = 10;
       cell i = 0;
@@ -4228,7 +4223,7 @@ j* jotable_insert
 *** main
 
     #+begin_src c
-    int main(int argc, string* argv) {
+    int main(int argc, char** argv) {
       argument_counter = argc;
       argument_string_array = argv;
 

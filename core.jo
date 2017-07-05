@@ -972,6 +972,13 @@
     (if has-system-jojo-dir? then get-system-jojo-dir string->jo end)
     (el default-system-jojo-dir-jo)))
 
+(note
+  (shadow-the-core name ...)
+  (use module
+       module as nick
+       module as nick (import name ...)
+       module as nick ><><>< (shadow name ...)))
+
 (define prefix-stack <bare-stack> (: new)
   (note of prefix
         load-module push prefix-stack
@@ -1279,21 +1286,17 @@
       stack-0 (: pop) (: write)
       stack-0 (: pop) (: write))
 
-(note (use hiya 0.0.1 as h)
-
-      (run (raw-jo hiya.name) jo/print newline
-           (jo hiya.name) jo/print newline
-           hiya.hiya
-
-           (jo h.name) jo/print newline
-           h.hiya))
+(use hiya 0.0.1 as h)
+(run (raw-jo hiya.name) jo/print newline
+     (jo hiya.name) jo/print newline
+     hiya.hiya
+     (jo h.name) jo/print newline
+     h.hiya)
 
 (use hi 0.0.1)
-
 (run hi.hi)
 
 (use welcome 0.0.1 as w)
-
 (run w.welcome)
 
 (test current-dir string/print newline)

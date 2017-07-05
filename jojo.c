@@ -73,9 +73,7 @@ cell char_to_nat(char c) {
   }
 }
 
-typedef char* string;
-
-bool string_equal(string s1, string s2) {
+bool string_equal(char* s1, char* s2) {
   if (strcmp(s1, s2) == 0) {
     return true;
   }
@@ -84,7 +82,7 @@ bool string_equal(string s1, string s2) {
   }
 }
 
-bool nat_string_p(string str) {
+bool nat_string_p(char* str) {
   cell i = 0;
   while (str[i] != 0) {
     if (!isdigit(str[i])) {
@@ -95,7 +93,7 @@ bool nat_string_p(string str) {
   return true;
 }
 
-bool int_string_p(string str) {
+bool int_string_p(char* str) {
   if (str[0] == '-' ||
       str[0] == '+') {
     return nat_string_p(str + 1);
@@ -105,7 +103,7 @@ bool int_string_p(string str) {
   }
 }
 
-cell string_to_based_nat(string str, cell base) {
+cell string_to_based_nat(char* str, cell base) {
   cell result = 0;
   cell len = strlen(str);
   cell i = 0;
@@ -116,7 +114,7 @@ cell string_to_based_nat(string str, cell base) {
   return result;
 }
 
-cell string_to_based_int(string str, cell base) {
+cell string_to_based_int(char* str, cell base) {
   if (str[0] == '-') {
     return - string_to_based_nat(str, base);
   }
@@ -125,10 +123,10 @@ cell string_to_based_int(string str, cell base) {
   }
 }
 
-cell string_to_dec(string str) { return string_to_based_int(str, 10); }
-cell string_to_bin(string str) { return string_to_based_int(str,  2); }
-cell string_to_oct(string str) { return string_to_based_int(str,  8); }
-cell string_to_hex(string str) { return string_to_based_int(str, 16); }
+cell string_to_dec(char* str) { return string_to_based_int(str, 10); }
+cell string_to_bin(char* str) { return string_to_based_int(str,  2); }
+cell string_to_oct(char* str) { return string_to_based_int(str,  8); }
+cell string_to_hex(char* str) { return string_to_based_int(str, 16); }
 
 typedef void (*primitive)();
 
@@ -143,7 +141,7 @@ typedef cell bind;
 
 typedef struct {
   cell index;
-  string key;
+  char* key;
   jo tag;
   bind value;
   cell orbit_length;
@@ -175,7 +173,7 @@ bool jotable_entry_no_collision(jotable_entry e) {
 jotable_entry jotable[jotable_size];
 cell jotable_counter = 0;
 
-cell string_to_sum(string str) {
+cell string_to_sum(char* str) {
   cell sum = 0;
   cell max_step = 10;
   cell i = 0;
@@ -186,18 +184,18 @@ cell string_to_sum(string str) {
   return sum;
 }
 
-bool jotable_keyeq(string k1, string k2) {
+bool jotable_keyeq(char* k1, char* k2) {
   return string_equal(k1, k2);
 }
 
-cell jotable_hash(string key, cell counter) {
+cell jotable_hash(char* key, cell counter) {
   return (counter + string_to_sum(key)) % jotable_size;
 }
 
 char string_area[4 * 1024 * 1024];
 cell string_area_counter = 0;
 
-string copy_to_string_area(string str) {
+char* copy_to_string_area(char* str) {
   char *str1;
   cell i = 0;
   str1 = (string_area + string_area_counter);
@@ -217,7 +215,7 @@ string copy_to_string_area(string str) {
 }
 
 // -1 denotes the hash_table is filled
-cell jotable_insert(string key) {
+cell jotable_insert(char* key) {
   cell orbit_index = jotable_hash(key, 0);
   cell counter = 0;
   while (true) {
@@ -243,7 +241,7 @@ cell jotable_insert(string key) {
 }
 
 // -1 denotes key not occured
-cell jotable_search(string key) {
+cell jotable_search(char* key) {
   cell counter = 0;
   while (true) {
     cell index = jotable_hash(key, counter);
@@ -262,7 +260,7 @@ cell jotable_search(string key) {
   }
 }
 
-string jo2str (cell index);
+char* jo2str (cell index);
 
 void jotable_entry_print(jotable_entry entry) {
   printf("%s : ", jo2str(entry.tag));
@@ -271,7 +269,7 @@ void jotable_entry_print(jotable_entry entry) {
 
 void jotable_report_orbit(cell index, cell counter) {
   while (counter < jotable[index].orbit_length) {
-    string key = jotable[index].key;
+    char* key = jotable[index].key;
     cell next_index = jotable_hash(key, counter);
     if (index == jotable[next_index].orbiton) {
       printf("  | %ld %s\n", next_index, jotable[next_index].key);
@@ -327,11 +325,11 @@ void jotable_print() {
   printf("- free : %ld\n", jotable_size - jotable_counter);
 }
 
-jo str2jo(string str) {
+jo str2jo(char* str) {
   return jotable_insert(str);
 }
 
-string jo2str(cell index) {
+char* jo2str(cell index) {
   return jotable[index].key;
 }
 
@@ -631,7 +629,7 @@ void p_bind_name() {
   name_record[name_record_counter] = 0;
 }
 
-void define_prim(string str, primitive fun) {
+void define_prim(char* str, primitive fun) {
   jo name = str2jo(str);
   as_push(fun);
   as_push(TAG_PRIM);
@@ -639,7 +637,7 @@ void define_prim(string str, primitive fun) {
   p_bind_name();
 }
 
-void define_primkey(string str, primitive fun) {
+void define_primkey(char* str, primitive fun) {
   jo name = str2jo(str);
   as_push(fun);
   as_push(TAG_PRIM_KEYWORD);
@@ -1341,8 +1339,8 @@ void export_memory() {
 
 typedef struct {
   FILE* file_handle;
-  string file;
-  string dir;
+  char* file;
+  char* dir;
 } reading_point;
 
 typedef reading_point reading_stack_t[64];
@@ -1369,7 +1367,7 @@ bool reading_stack_empty_p() {
   return reading_stack_pointer == reading_stack_base;
 }
 
-void real_reading_path(string path, char* buffer) {
+void real_reading_path(char* path, char* buffer) {
   if (path[0] == '/') {
     realpath(path, buffer);
     return;
@@ -1466,7 +1464,7 @@ void k_one_string() {
       cursor++;
     }
   }
-  string str = malloc(cursor);
+  char* str = malloc(cursor);
   strcpy(str, buffer);
   here(JO_INS_INT);
   here(str);
@@ -1505,18 +1503,18 @@ void p_string_dot() {
 
 void p_string_append_to_buffer() {
   // buffer string -> buffer
-  string str = as_pop();
-  string buffer = as_tos();
+  char* str = as_pop();
+  char* buffer = as_tos();
   strcat(buffer, str);
 }
 
 void p_string_first_byte() {
-  string s = as_pop();
+  char* s = as_pop();
   as_push(s[0]);
 }
 
 void p_string_last_byte() {
-  string s = as_pop();
+  char* s = as_pop();
   cell i = 0;
   while (s[i+1] != 0) {
     i++;
@@ -1526,7 +1524,7 @@ void p_string_last_byte() {
 
 void p_string_member_p() {
   // byte[not 0] string -> true or false
-  string s = as_pop();
+  char* s = as_pop();
   byte b = as_pop();
   cell i = 0;
   while (s[i] != 0) {
@@ -1543,7 +1541,7 @@ void p_string_member_p() {
 
 void p_string_find_byte() {
   // byte string -> [index true] or [false]
-  string s = as_pop();
+  char* s = as_pop();
   byte b = as_pop();
   cell i = 0;
   while (s[i] != 0) {
@@ -1784,7 +1782,7 @@ void p_string_length_to_jo() {
 
 void p_string_to_jo() {
   // string -> jo
-  string str = as_pop();
+  char* str = as_pop();
   as_push(str2jo(str));
 }
 
@@ -1838,7 +1836,7 @@ void p_jo_dot() {
 
 cell p_generate_jo_counter = 0;
 void p_generate_jo() {
-  string s = as_pop();
+  char* s = as_pop();
   char buffer [1024];
   sprintf(buffer, "%s:generated-jo#%ld", jo2str(s), p_generate_jo_counter);
   p_generate_jo_counter++;
@@ -1855,7 +1853,7 @@ void p_jo_right_part() {
   // index jo -> jo
   jo jo = as_pop();
   cell index = as_pop();
-  string s = jo2str(jo);
+  char* s = jo2str(jo);
   as_push(str2jo(s + index));
 }
 
@@ -1864,7 +1862,7 @@ void p_jo_left_part() {
   char target[1024];
   jo jo = as_pop();
   cell index = as_pop();
-  string source = jo2str(jo);
+  char* source = jo2str(jo);
   cell i = 0;
   while (i < index) {
     target[i] = source[i];
@@ -1880,7 +1878,7 @@ void p_jo_part() {
   jo jo = as_pop();
   cell index_end = as_pop();
   cell index_begin = as_pop();
-  string source = jo2str(jo);
+  char* source = jo2str(jo);
   cell i = index_begin;
   while (i < index_end) {
     target[i] = source[i];
@@ -1924,7 +1922,7 @@ void export_jo() {
 
 void p_path_open_read() {
   // [path] -> [file true] or [errno false]
-  string path = as_pop();
+  char* path = as_pop();
 
   FILE* file = fopen(path, "r");
   if (file == NULL) {
@@ -1939,7 +1937,7 @@ void p_path_open_read() {
 
 void p_path_open_write() {
   // [path] -> [file true] or [errno false]
-  string path = as_pop();
+  char* path = as_pop();
 
   FILE* file = fopen(path, "wx");
   if (file == NULL) {
@@ -1954,7 +1952,7 @@ void p_path_open_write() {
 
 void p_path_open_read_and_write() {
   // [path] -> [file true] or [errno false]
-  string path = as_pop();
+  char* path = as_pop();
 
   FILE* file = fopen(path, "r+");
   if (file == NULL) {
@@ -1969,7 +1967,7 @@ void p_path_open_read_and_write() {
 
 void p_path_open_create() {
   // [path] -> [file true] or [errno false]
-  string path = as_pop();
+  char* path = as_pop();
 
   FILE* file = fopen(path, "w+");
   if (file == NULL) {
@@ -2062,7 +2060,7 @@ void p_file_write() {
 
 void p_path_readable_p() {
   // path -> bool
-  string path = as_pop();
+  char* path = as_pop();
   FILE* file = fopen(path, "r");
   if (!file) {
     as_push(false);
@@ -2077,7 +2075,7 @@ void p_top_repl();
 
 void p_path_load() {
   // path -> {reading_stack}
-  string path = as_pop();
+  char* path = as_pop();
   FILE* file = fopen(path, "r");
   if(!file) {
     perror("File opening failed");
@@ -2193,7 +2191,7 @@ void p_n_command_run() {
   // ... string n -> *
   cell n = as_pop();
   cell i = 0;
-  string str = malloc(4 * 1024);
+  char* str = malloc(4 * 1024);
   str[0] = 0;
   while (i < n) {
     strcat(str, as[as_pointer - n + i]);
@@ -2211,19 +2209,19 @@ void p_argument_counter() {
   as_push(argument_counter);
 }
 
-string* argument_string_array;
+char** argument_string_array;
 
 void p_index_to_argument_string() {
   // index -> string
   cell index = as_pop();
-  string argument_string = argument_string_array[index];
+  char* argument_string = argument_string_array[index];
   as_push(argument_string);
 }
 
 void p_get_env_string() {
   // string -> string
-  string var_string = as_pop();
-  string env_string = getenv(var_string);
+  char* var_string = as_pop();
+  char* env_string = getenv(var_string);
   as_push(env_string);
 }
 
@@ -2236,7 +2234,7 @@ void export_system() {
   define_prim("get-env-string", p_get_env_string);
 }
 
-void ccall (string str, void* lib) {
+void ccall (char* str, void* lib) {
   primitive fun = dlsym(lib, str);
   if (fun == NULL) {
     printf("can not find %s function lib : %s\n",
@@ -2245,7 +2243,7 @@ void ccall (string str, void* lib) {
   fun();
 }
 
-void* get_clib(string rel_path) {
+void* get_clib(char* rel_path) {
   char path[PATH_MAX];
   real_reading_path(rel_path, path);
   void* lib = dlopen(path, RTLD_LAZY);
@@ -2929,7 +2927,7 @@ void p2() {
   printf("  EOF as number : %ld\n", EOF);
 }
 
-cell string_to_sum_test(string str) {
+cell string_to_sum_test(char* str) {
   cell sum = 0;
   cell max_step = 10;
   cell i = 0;
@@ -3050,7 +3048,7 @@ void init_top_repl() {
   export_play();
 }
 
-int main(int argc, string* argv) {
+int main(int argc, char** argv) {
   argument_counter = argc;
   argument_string_array = argv;
 
