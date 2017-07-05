@@ -1,6 +1,7 @@
 #+property: tangle core.jo
 #+title: core
 - detailed report in 'load-module/get-path'
+- shadow-the-core
 - deadly need debuger repl
 - syntax for byte
   instead of string/last-byte
@@ -1285,6 +1286,27 @@
     #+end_src
 
 * module
+
+*** note implementation
+
+    - in jotable,
+      all defined name as unique-name "module[version].name"
+
+    - import a module name
+      import a module's binding name
+
+      #+begin_src jojo
+      (note
+        (shadow-the-core name ...)
+        (use module
+             module as nick
+             module as nick (import name ...)
+             module as nick ><><>< (shadow name ...)))
+      #+end_src
+
+    - two ways to use module
+      1. with module as 'prefix', without export-list and import-list
+      2. without module as 'prefix', with export-list and import-list
 
 *** note module system
 

@@ -75,3 +75,106 @@
     as_push(read_counter);
   }
   #+end_src
+
+* ><
+
+*** >< p_file_seek
+
+    #+begin_src c
+    void p_file_seek() {
+      // [file offset] -> [new-offset]
+      // - one should only apply seek to regular-file
+      //   I do not expose seek error to jojo
+      //   one should check file type before apply seek
+      off_t offset = as_pop();
+      int file = as_pop();
+
+      off_t new_offset = lseek(file, offset, SEEK_CUR);
+      if (new_offset == -1) {
+        printf("- p_file_seek fail\n");
+        printf("  one should only seek regular-file\n");
+      }
+      else {
+        as_push(new_offset);
+      }
+    }
+    #+end_src
+
+*** >< p_file_seek_from_beginning
+
+    #+begin_src c
+    void p_file_seek_from_beginning() {
+      // [file offset] -> [new-offset]
+      // - one should only apply seek to regular-file
+      //   I do not expose seek error to jojo
+      //   one should check file type before apply seek
+      off_t offset = as_pop();
+      int file = as_pop();
+
+      off_t new_offset = lseek(file, offset, SEEK_SET);
+      if (new_offset == -1) {
+        printf("- p_file_seek_from_beginning fail\n");
+        printf("  one should only seek regular-file\n");
+      }
+      else {
+        as_push(new_offset);
+      }
+    }
+    #+end_src
+
+*** >< p_file_seek_from_end
+
+    #+begin_src c
+    void p_file_seek_from_end() {
+      // [file offset] -> [new-offset]
+      // - one should only apply seek to regular-file
+      //   I do not expose error of this function to jojo
+      //   one should check file type before apply seek
+      off_t offset = as_pop();
+      int file = as_pop();
+
+      off_t new_offset = lseek(file, offset, SEEK_END);
+      if (new_offset == -1) {
+        printf("- p_file_seek_from_end fail\n");
+        printf("  one should only seek regular-file\n");
+      }
+      else {
+        as_push(new_offset);
+      }
+    }
+    #+end_src
+
+*** >< p_file_truncate
+
+    #+begin_src c
+    void p_file_truncate() {
+      // [file length] -> []
+      // - I do not expose error of this function to jojo
+      off_t length = as_pop();
+      int file = as_pop();
+
+      if (ftruncate(file, length) == -1) {
+        perror("- p_file_truncate fail\n");
+      }
+      else {
+        return;
+      }
+    }
+    #+end_src
+
+*** >< p_file_clear
+
+    #+begin_src c
+    void p_file_clear() {
+      // [file] -> []
+      // - I do not expose error of this function to jojo
+      int file = as_pop();
+
+      if (ftruncate(file, 0) == -1) {
+        perror("- p_file_clear fail\n");
+      }
+      else {
+        return;
+      }
+    }
+    #+end_src

@@ -1,5 +1,5 @@
 #include <sys/types.h>  /* Type definitions used by many programs */
-#include <stdio.h>      /* Standard I/O functions */
+#include <stdio.h>
 #include <stdlib.h>     /* Prototypes of commonly used library functions,
                            plus EXIT_SUCCESS and EXIT_FAILURE constants */
 #include <unistd.h>     /* Prototypes for many system calls */
@@ -1388,7 +1388,7 @@ void real_reading_path(string path, char* buffer) {
 }
 
 bool has_byte_p() {
-  FILE* file;
+FILE* file;
   if (reading_stack_empty_p()) {
     file = stdin;
   }
@@ -1922,13 +1922,12 @@ void export_jo() {
   define_prim("jo/part", p_jo_part);
 }
 
-void p_path_open() {
-  // [path flag] -> [file true] or [errno false]
-  int flag = as_pop();
+void p_path_open_read() {
+  // [path] -> [file true] or [errno false]
   string path = as_pop();
 
-  int file = open(path, flag);
-  if (file == -1) {
+  FILE* file = fopen(path, "r");
+  if (file == NULL) {
     as_push(errno);
     as_push(false);
   }
@@ -1938,14 +1937,12 @@ void p_path_open() {
   }
 }
 
-void p_path_create() {
-  // [path flag permission-mode] -> [file true] or [errno false]
-  mode_t permission_mode = as_pop();
-  int flag = as_pop();
+void p_path_open_write() {
+  // [path] -> [file true] or [errno false]
   string path = as_pop();
 
-  int file = open(path, O_CREAT | flag, permission_mode);
-  if (file == -1) {
+  FILE* file = fopen(path, "wx");
+  if (file == NULL) {
     as_push(errno);
     as_push(false);
   }
@@ -1955,45 +1952,33 @@ void p_path_create() {
   }
 }
 
-void p_file_read() {
-  // [file buffer requested-bytes] ->
-  // [real-bytes true] or [errno false]
-  // - partial read reasons
-  //   1. [regular-file] end-of-file is reached
-  //   2. [terminal] meets '\n'
-  size_t want_bytes = as_pop();
-  void* buffer = as_pop();
-  int file = as_pop();
+void p_path_open_read_and_write() {
+  // [path] -> [file true] or [errno false]
+  string path = as_pop();
 
-  ssize_t real_bytes = read(file, buffer, want_bytes);
-  if (real_bytes == -1) {
+  FILE* file = fopen(path, "r+");
+  if (file == NULL) {
     as_push(errno);
     as_push(false);
   }
   else {
-    as_push(real_bytes);
-    as_push(false);
+    as_push(file);
+    as_push(true);
   }
 }
 
-void p_file_write() {
-  // [file buffer want-bytes] ->
-  // [real-bytes true] or [errno false]
-  // - partial write reasons
-  //   1. disk was filled
-  //   2. the process resource limit on file sizes was reached
-  size_t want_bytes = as_pop();
-  void* buffer = as_pop();
-  int file = as_pop();
+void p_path_open_create() {
+  // [path] -> [file true] or [errno false]
+  string path = as_pop();
 
-  ssize_t real_bytes = write(file, buffer, want_bytes);
-  if (real_bytes == -1) {
+  FILE* file = fopen(path, "w+");
+  if (file == NULL) {
     as_push(errno);
     as_push(false);
   }
   else {
-    as_push(real_bytes);
-    as_push(false);
+    as_push(file);
+    as_push(true);
   }
 }
 
@@ -2005,9 +1990,9 @@ void p_file_close() {
   // 3. error conditions for specific file system
   //    to diagnose during a close operation
   //    - for example, NFS (Network File System)
-  int file = as_pop();
+  FILE* file = as_pop();
 
-  if (close(file) == -1) {
+  if (fclose(file) == EOF) {
     as_push(errno);
     as_push(false);
   }
@@ -2016,88 +2001,62 @@ void p_file_close() {
   }
 }
 
-void p_file_seek() {
-  // [file offset] -> [new-offset]
-  // - one should only apply seek to regular-file
-  //   I do not expose seek error to jojo
-  //   one should check file type before apply seek
-  off_t offset = as_pop();
-  int file = as_pop();
+void p_file_end_p() {
+  // file -> true or false
+  FILE* file = as_pop();
 
-  off_t new_offset = lseek(file, offset, SEEK_CUR);
-  if (new_offset == -1) {
-    printf("- p_file_seek fail\n");
-    printf("  one should only seek regular-file\n");
+  if (feof(file)) {
+    as_push(true);
   }
   else {
-    as_push(new_offset);
+    as_push(false);
   }
 }
 
-void p_file_seek_from_beginning() {
-  // [file offset] -> [new-offset]
-  // - one should only apply seek to regular-file
-  //   I do not expose seek error to jojo
-  //   one should check file type before apply seek
-  off_t offset = as_pop();
-  int file = as_pop();
+void p_file_read() {
+  // [file buffer requested-bytes] ->
+  // [real-bytes true] or [errno false]
+  // - partial read reasons
+  //   1. [regular-file] end-of-file is reached
+  //   2. [terminal] meets '\n'
+  size_t want_bytes = as_pop();
+  void* buffer = as_pop();
+  FILE* file = as_pop();
 
-  off_t new_offset = lseek(file, offset, SEEK_SET);
-  if (new_offset == -1) {
-    printf("- p_file_seek_from_beginning fail\n");
-    printf("  one should only seek regular-file\n");
+  size_t real_bytes = fread(buffer, 1, file, want_bytes);
+  if (real_bytes != want_bytes) {
+    if (ferror(file)) {
+      as_push(errno);
+      as_push(false);
+    }
+    else {
+      as_push(real_bytes);
+      as_push(true);
+    }
   }
   else {
-    as_push(new_offset);
+    as_push(real_bytes);
+    as_push(true);
   }
 }
 
-void p_file_seek_from_end() {
-  // [file offset] -> [new-offset]
-  // - one should only apply seek to regular-file
-  //   I do not expose error of this function to jojo
-  //   one should check file type before apply seek
-  off_t offset = as_pop();
-  int file = as_pop();
+void p_file_write() {
+  // [file buffer want-bytes] ->
+  // [true] or [errno false]
+  // - partial write reasons
+  //   1. disk was filled
+  //   2. the process resource limit on file sizes was reached
+  size_t want_bytes = as_pop();
+  void* buffer = as_pop();
+  FILE* file = as_pop();
 
-  off_t new_offset = lseek(file, offset, SEEK_END);
-  if (new_offset == -1) {
-    printf("- p_file_seek_from_end fail\n");
-    printf("  one should only seek regular-file\n");
+  ssize_t real_bytes = fwrite(buffer, 1, want_bytes, file);
+  if (real_bytes != want_bytes) {
+    as_push(errno);
+    as_push(false);
   }
   else {
-    as_push(new_offset);
-  }
-}
-
-// file flag -> true or false
-
-// file flag ->
-
-void p_file_truncate() {
-  // [file length] -> []
-  // - I do not expose error of this function to jojo
-  off_t length = as_pop();
-  int file = as_pop();
-
-  if (ftruncate(file, length) == -1) {
-    perror("- p_file_truncate fail\n");
-  }
-  else {
-    return;
-  }
-}
-
-void p_file_clear() {
-  // [file] -> []
-  // - I do not expose error of this function to jojo
-  int file = as_pop();
-
-  if (ftruncate(file, 0) == -1) {
-    perror("- p_file_clear fail\n");
-  }
-  else {
-    return;
+    as_push(true);
   }
 }
 
@@ -2203,19 +2162,15 @@ void k_include() {
 }
 
 void export_file() {
-  define_prim("path/open", p_path_open);
-  define_prim("path/create", p_path_create);
+  define_prim("path/open/read", p_path_open_read);
+  define_prim("path/open/write", p_path_open_write);
+  define_prim("path/open/create", p_path_open_create);
+  define_prim("path/open/read-and-write", p_path_open_read_and_write);
+
+  define_prim("file/close", p_file_close);
 
   define_prim("file/read", p_file_read);
   define_prim("file/write", p_file_write);
-  define_prim("file/close", p_file_close);
-
-  define_prim("file/seek", p_file_seek);
-  define_prim("file/seek-from-beginning", p_file_seek_from_beginning);
-  define_prim("file/seek-from-end", p_file_seek_from_end);
-
-  define_prim("file/truncate", p_file_truncate);
-  define_prim("file/clear", p_file_clear);
 
   define_prim("path/readable?", p_path_readable_p);
 
