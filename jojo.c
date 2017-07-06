@@ -405,6 +405,10 @@
     cell as_tos() {
       return as[as_pointer - 1];
     }
+
+    bool as_empty_p() {
+      return as_base == as_pointer;
+    }
     typedef struct {
       jo name;
       cell local_tag;
@@ -436,6 +440,10 @@
 
     return_point rs_tos() {
       return rs[rs_pointer - 1];
+    }
+
+    bool rs_empty_p() {
+      return rs_base == rs_pointer;
     }
 
     void rs_make_point(jo* jojo, cell local_pointer) {
@@ -651,12 +659,13 @@
       return alias_stack_pointer == alias_stack_base;
     }
     void eval();
+    void p_debug();
 
     void jo_apply(jo jo) {
-      // if (!jotable_entry_used(jotable[jo])) {
-      //   printf("undefined jo : %s\n", jo2str(jo));
-      //   return;
-      // }
+      if (!jotable_entry_used(jotable[jo])) {
+        printf("- jo_apply meet undefined jo : %s\n", jo2str(jo));
+        p_debug();
+      }
 
       cell tag = jotable[jo].tag;
 
@@ -719,6 +728,10 @@
         return;
       }
     }
+    bool step_flag = false;
+
+    void stepper();
+
     void eval() {
       cell rs_base = rs_pointer;
       while (rs_pointer >= rs_base) {
@@ -726,6 +739,9 @@
         rs_inc();
         cell jo = *(cell*)rp.jojo;
         jo_apply(jo);
+        if (step_flag == true) {
+          stepper();
+        }
       }
     }
     void p_apply() {
@@ -2348,7 +2364,7 @@
       p_jojo_print();
       printf("\n");
 
-      if (rs[i].local_pointer == rs[i+1].local_pointer) {
+      if (rs[i].local_pointer == current_local_pointer) {
       }
       else {
         printf("      ");
@@ -2406,6 +2422,31 @@
 
       reading_stack_pop();
     }
+    cell stepper_counter = 0;
+
+    void stepper() {
+      printf("- stepper\n");
+      if (rs_empty_p()) {
+        step_flag = false;
+        printf("- exit stepper for return-stack is empty\n");
+        return;
+      }
+
+      jo jo = read_raw_jo();
+      if (jo == str2jo("exit")) {
+        step_flag = false;
+      }
+      else if (jo == str2jo("bye")) {
+        p_bye();
+      }
+      else {
+        p_print_return_stack();
+        p_print_argument_stack();
+      }
+    }
+    void p_step() {
+      step_flag = true;
+    }
     void export_top_level() {
       define_primkey("define", k_define);
       define_primkey("bind-name", p_bind_name);
@@ -2427,6 +2468,8 @@
       define_prim("jojo/print", p_jojo_print);
       define_prim("print-return-stack", p_print_return_stack);
       define_prim("debug", p_debug);
+
+      define_prim("step", p_step);
     }
     void k_ignore() {
       // {io} ->
@@ -2457,6 +2500,7 @@
           // no compile before define
           printf("- compile_until_meet_jo undefined : %s\n", jo2str(s));
           k_ignore();
+          p_debug();
           return;
         }
       }
@@ -2483,7 +2527,8 @@
           printf("- ending_jo1 : %s\n", jo2str(ending_jo1));
           printf("- ending_jo2 : %s\n", jo2str(ending_jo2));
           k_ignore();
-          return JO_NULL;
+          p_debug();
+          return JO_NULL; // this is to fool the compiler
         }
       }
     }
@@ -2896,55 +2941,6 @@
 
       define_prim("newline", p_newline);
     }
-    void p1() {
-      printf("- p1\n");
-      printf("  %ld %ld %ld\n", sizeof(void*), cell_size, sizeof(unsigned));
-      printf("  %ld %ld\n", sizeof((cell)-1), sizeof(-1));
-      printf("  %x %x\n", 1<<cell_size, 32>>6);
-      printf("  %x %x %x\n", -1>>2, (cell)-1>>2, (unsigned)-1>>2);
-      printf("  %ld %ld\n", string_to_bin("1000"), string_to_hex("ffff"));
-      printf("  %ld %ld %ld %ld\n", '0', '1', 'A', 'a');
-
-      printf("  %ld\n", EOF);
-      printf("  %ld\n", PATH_MAX);
-
-      struct stat st;
-      stat("READM", &st);
-      printf("  file-size of README : %ld\n", st.st_size);
-      printf("  sizeof &st : %ld\n", sizeof(&st));
-      printf("  sizeof st : %ld\n", sizeof(st));
-    }
-    void p2() {
-      printf("- p2\n");
-      printf("  sizeof local_point : %ld\n", sizeof(local_point));
-      printf("  sizeof local_area : %ld\n", sizeof(local_area));
-      printf("  sizeof EOF : %ld\n", sizeof(EOF));
-      printf("  sizeof byte : %ld\n", sizeof(byte));
-      printf("  EOF as number : %ld\n", EOF);
-    }
-    cell string_to_sum_test(char* str) {
-      cell sum = 0;
-      cell max_step = 10;
-      cell i = 0;
-      while (i < strlen(str)) {
-        sum = sum + ((unsigned char) str[i]) * (2 << min(i, max_step));
-        printf("| char: %ld | unsigned char: %ld | sum: %ld |\n", str[i], (unsigned char) str[i], sum);
-        i++;
-      }
-      return sum;
-    }
-
-    void p3() {
-      printf("- p3\n");
-      printf("  %ld\n", string_to_sum_test("abcabcabc"));
-      printf("  %ld\n", string_to_sum_test("中中"));
-      printf("  %ld\n", string_to_sum_test("中中中"));
-    }
-    void export_play() {
-      define_prim("p1", p1);
-      define_prim("p2", p2);
-      define_prim("p3", p3);
-    }
     jotable_entry proto_jotable_entry(cell index) {
       jotable_entry e = {
         .index = index,
@@ -3036,7 +3032,6 @@
       export_cffi();
       export_top_level();
       export_mise();
-      export_play();
     }
     int main(int argc, char** argv) {
       argument_counter = argc;

@@ -1267,24 +1267,31 @@
 
   (run (bare-jojo dup dup drop) jojo/print)
 
+  (note
+    (define c1
+      (jojo
+        dup dup debug dup
+        (if argument-counter lt? then
+            dup index->argument-string string/print
+            newline
+            (int 1) add)))
 
-  (define c1
-    (jojo  dup dup   debug dup        (if argument-counter lt? then
-          dup index->argument-string string/print
-          newline
-          (int 1) add
-          )))
+    (run c1 c1 c1)
 
-  (run c1 c1 c1)
+    (define c3
+      (jojo
+        dup (> k1)
+        dup (> k2)
+        debug
+        debug
+        debug
+        (jojo dup dup)
+        (< k2)
+        (< k2))))
 
-  (define c3
+
+  (define square
     (jojo
-      dup (> k1)
-      dup (> k2)
-      debug
-      debug
-      debug
-      (jojo dup dup)
-      (< k2)
-      (< k2)))
+      step dup mul))
 
+  (note (run (int 12) square))
