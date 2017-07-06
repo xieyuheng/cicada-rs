@@ -1123,7 +1123,7 @@
     jo read_raw_jo();
 
     void k_int() {
-      // {reading_stack} {compile}
+      // (int ...)
       while (true) {
         jo s = read_raw_jo();
         if (s == ROUND_KET) {
@@ -2339,7 +2339,7 @@
 
     void p_print_return_stack() {
       cell i = return_stack_base;
-      printf("  - return-stack\n");
+      printf("  - return-stack :\n");
 
       while (i < return_stack_pointer -1) {
 
@@ -2427,25 +2427,69 @@
       reading_stack_pop();
     }
     cell stepper_counter = 0;
+    cell pending_steps = 0;
+
+    void exit_stepper() {
+      step_flag = false;
+      stepper_counter = 0;
+      pending_steps = 0;
+      printf("- exit stepper\n");
+    }
 
     void stepper() {
-      printf("- stepper\n");
-      if (return_stack_empty_p()) {
-        step_flag = false;
-        printf("- exit stepper for return-stack is empty\n");
-        return;
-      }
+      printf("stepper> ");
+      while (true) {
 
-      jo jo = read_raw_jo();
-      if (jo == str2jo("exit")) {
-        step_flag = false;
-      }
-      else if (jo == str2jo("bye")) {
-        p_bye();
-      }
-      else {
-        p_print_return_stack();
-        p_print_data_stack();
+        if (return_stack_empty_p()) {
+          printf("\n");
+          printf("- the return-stack is empty\n");
+          exit_stepper();
+          return;
+        }
+
+        if (pending_steps > 0) {
+          p_print_return_stack();
+          p_print_data_stack();
+          stepper_counter++;
+          printf("- stepper counting : %ld\n", stepper_counter);
+          pending_steps--;
+          return;
+        }
+
+        jo jo = read_raw_jo();
+        if (jo == str2jo("help")) {
+          printf("- stepper usage :\n");
+          printf("  type '.' to execute one step\n");
+          printf("  type a numebr to execute the number of steps\n");
+          printf("  - available commands in stepper :\n");
+          printf("    help exit bye\n");
+        }
+        else if (jo == str2jo(".")) {
+          p_print_return_stack();
+          p_print_data_stack();
+          stepper_counter++;
+          printf("- stepper counting : %ld\n", stepper_counter);
+          return;
+        }
+        else if (nat_string_p(jo2str(jo))) {
+          p_print_return_stack();
+          p_print_data_stack();
+          stepper_counter++;
+          printf("- stepper counting : %ld\n", stepper_counter);
+          pending_steps = string_to_dec(jo2str(jo)) - 1;
+          return;
+        }
+        else if (jo == str2jo("exit")) {
+          exit_stepper();
+          return;
+        }
+        else if (jo == str2jo("bye")) {
+          p_bye();
+          return;
+        }
+        else {
+          // loop
+        }
       }
     }
     void p_step() {

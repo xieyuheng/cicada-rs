@@ -6,8 +6,8 @@ build:
 	$(CC) -O2 -w -ldl jojo.c -o jojo -rdynamic
 
 play:
-	$(CC) -w -ldl jojo.c -o jojo -rdynamic
 	./tangle.js
+	$(CC) -w -ldl jojo.c -o jojo -rdynamic
 	./jojo core.org
 
 clean:

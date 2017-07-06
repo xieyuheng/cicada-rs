@@ -1,14 +1,10 @@
 #+property: tangle jojo.c
 #+title:  jojo
 
-- ui of stepper
+- use 'debug' to handle kernel signal
 
 - to used libjojo.c and libjojo.h
   jojo.c as a jojo embedded in c
-
-- [debug] to use debug repl
-  can be called by user's function
-  or by kernel signal
 
 - fix reading_point
   what should be .file in stdin ?
@@ -22,15 +18,12 @@
 - [debug] trace and untrace a jo
   by redefine
 
-- [core] one level of pointer to the return_stack and data_stack
-  to support cc and dc and language thread
+- delimited continuation
+  to control return_stack [and data_stack]
 
 * todo
 
-  - [control] full cc and delimited cc
-
-  - [safe] error report for every limited number, jo-max-length
-  - [safe] to handle low-level errors
+  - [docs] for every limited number, jo-max-length
 
   - [maybe]
     all read_byte or read_jo should ask has_byte_p or has_jo_p first
@@ -39,6 +32,10 @@
   - [maybe] [for print return stack]
     - jump shoud use offset instead of address
     - local should distinguish 1-value-local from 2-value-local
+
+  - concurrent
+    use list to implement return_stack and data_stack in jojo
+    thus each group of stacks is a light weight process
 
 * note
 
@@ -72,7 +69,7 @@
 
     - type comment in jojo and c code :
       1. change of data_stack -- [...] -> [...]
-      3. other effect -- {}
+      2. other effect -- {}
          which can occur in any position in a type comment
 
     - the type comment in the code suggest a static type system.
@@ -82,6 +79,16 @@
       might be implemented,
 
       but an untyped and a dynamic typed level are also important.
+
+*** levels of languages
+
+    1. untyped -- ffi to c [thus as low as c]
+    2. dynamic typed -- debug and test
+    3. static typed
+    4. logic
+    5. concurrent
+    6. dependent type -- type as proof
+    7. algebraic topology and combinatorial topology
 
 * helper
 
@@ -3654,7 +3661,7 @@ j* jotable_insert
 
     void p_print_return_stack() {
       cell i = return_stack_base;
-      printf("  - return-stack\n");
+      printf("  - return-stack :\n");
 
       while (i < return_stack_pointer -1) {
 
@@ -3757,25 +3764,69 @@ j* jotable_insert
 
     #+begin_src c
     cell stepper_counter = 0;
+    cell pending_steps = 0;
+
+    void exit_stepper() {
+      step_flag = false;
+      stepper_counter = 0;
+      pending_steps = 0;
+      printf("- exit stepper\n");
+    }
 
     void stepper() {
-      printf("- stepper\n");
-      if (return_stack_empty_p()) {
-        step_flag = false;
-        printf("- exit stepper for return-stack is empty\n");
-        return;
-      }
+      printf("stepper> ");
+      while (true) {
 
-      jo jo = read_raw_jo();
-      if (jo == str2jo("exit")) {
-        step_flag = false;
-      }
-      else if (jo == str2jo("bye")) {
-        p_bye();
-      }
-      else {
-        p_print_return_stack();
-        p_print_data_stack();
+        if (return_stack_empty_p()) {
+          printf("\n");
+          printf("- the return-stack is empty\n");
+          exit_stepper();
+          return;
+        }
+
+        if (pending_steps > 0) {
+          p_print_return_stack();
+          p_print_data_stack();
+          stepper_counter++;
+          printf("- stepper counting : %ld\n", stepper_counter);
+          pending_steps--;
+          return;
+        }
+
+        jo jo = read_raw_jo();
+        if (jo == str2jo("help")) {
+          printf("- stepper usage :\n");
+          printf("  type '.' to execute one step\n");
+          printf("  type a numebr to execute the number of steps\n");
+          printf("  - available commands in stepper :\n");
+          printf("    help exit bye\n");
+        }
+        else if (jo == str2jo(".")) {
+          p_print_return_stack();
+          p_print_data_stack();
+          stepper_counter++;
+          printf("- stepper counting : %ld\n", stepper_counter);
+          return;
+        }
+        else if (nat_string_p(jo2str(jo))) {
+          p_print_return_stack();
+          p_print_data_stack();
+          stepper_counter++;
+          printf("- stepper counting : %ld\n", stepper_counter);
+          pending_steps = string_to_dec(jo2str(jo)) - 1;
+          return;
+        }
+        else if (jo == str2jo("exit")) {
+          exit_stepper();
+          return;
+        }
+        else if (jo == str2jo("bye")) {
+          p_bye();
+          return;
+        }
+        else {
+          // loop
+        }
       }
     }
     #+end_src
