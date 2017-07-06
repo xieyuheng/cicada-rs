@@ -5,10 +5,9 @@ CC = gcc
 build:
 	$(CC) -O2 -w -ldl jojo.c -o jojo -rdynamic
 
-run:
-	./jojo
-
-test:
+play:
+	$(CC) -w -ldl jojo.c -o jojo -rdynamic
+	./tangle.js
 	./jojo core.org
 
 clean:

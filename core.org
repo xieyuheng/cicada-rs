@@ -197,7 +197,7 @@
         cell-size add
         (loop)))
 
-    (define mark-cons-area/argument-stack
+    (define mark-cons-area/data-stack
       (jojo
         (note stack -> [cons-area])
         (if dup stack-base eq? then drop end)
@@ -214,9 +214,7 @@
         current-mark (int 1) add (address current-mark) set-cell
         name-record mark-cons-area/name-record
         stack-pointer
-        mark-cons-area/argument-stack))
-
-
+        mark-cons-area/data-stack))
 
     (note cons :
           mark

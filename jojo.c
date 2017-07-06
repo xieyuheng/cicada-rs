@@ -386,28 +386,28 @@
 
     jo JO_LOCAL_IN;
     jo JO_LOCAL_OUT;
-    typedef cell argument_stack[1024 * 4];
+    typedef cell data_stack_t[1024 * 4];
 
-    argument_stack as;
-    cell as_base = 64;
-    cell as_pointer = 64;
+    data_stack_t data_stack;
+    cell data_stack_base = 64;
+    cell data_stack_pointer = 64;
 
-    void as_push(cell value) {
-      as[as_pointer] = value;
-      as_pointer++;
+    void data_stack_push(cell value) {
+      data_stack[data_stack_pointer] = value;
+      data_stack_pointer++;
     }
 
-    void* as_pop() {
-      as_pointer--;
-      return as[as_pointer];
+    void* data_stack_pop() {
+      data_stack_pointer--;
+      return data_stack[data_stack_pointer];
     }
 
-    cell as_tos() {
-      return as[as_pointer - 1];
+    cell data_stack_tos() {
+      return data_stack[data_stack_pointer - 1];
     }
 
-    bool as_empty_p() {
-      return as_base == as_pointer;
+    bool data_stack_empty_p() {
+      return data_stack_base == data_stack_pointer;
     }
     typedef struct {
       jo name;
@@ -422,49 +422,49 @@
       cell local_pointer;
     } return_point;
 
-    typedef return_point return_stack[1024 * 4];
+    typedef return_point return_stack_t[1024 * 4];
 
-    return_stack rs;
-    cell rs_base = 64;
-    cell rs_pointer = 64;
+    return_stack_t return_stack;
+    cell return_stack_base = 64;
+    cell return_stack_pointer = 64;
 
-    void rs_push(return_point value) {
-      rs[rs_pointer] = value;
-      rs_pointer++;
+    void return_stack_push(return_point value) {
+      return_stack[return_stack_pointer] = value;
+      return_stack_pointer++;
     }
 
-    return_point rs_pop() {
-      rs_pointer--;
-      return rs[rs_pointer];
+    return_point return_stack_pop() {
+      return_stack_pointer--;
+      return return_stack[return_stack_pointer];
     }
 
-    return_point rs_tos() {
-      return rs[rs_pointer - 1];
+    return_point return_stack_tos() {
+      return return_stack[return_stack_pointer - 1];
     }
 
-    bool rs_empty_p() {
-      return rs_base == rs_pointer;
+    bool return_stack_empty_p() {
+      return return_stack_base == return_stack_pointer;
     }
 
-    void rs_make_point(jo* jojo, cell local_pointer) {
+    void return_stack_make_point(jo* jojo, cell local_pointer) {
       return_point rp = {.jojo = jojo, .local_pointer = local_pointer};
-      rs[rs_pointer] = rp;
-      rs_pointer++;
+      return_stack[return_stack_pointer] = rp;
+      return_stack_pointer++;
     }
 
-    void rs_new_point(jo* jojo) {
-      rs_make_point(jojo, current_local_pointer);
+    void return_stack_new_point(jo* jojo) {
+      return_stack_make_point(jojo, current_local_pointer);
     }
 
-    void rs_inc() {
-      return_point rp = rs_pop();
+    void return_stack_inc() {
+      return_point rp = return_stack_pop();
       return_point rp1 = {.jojo = rp.jojo + 1, .local_pointer = rp.local_pointer};
-      rs_push(rp1);
+      return_stack_push(rp1);
     }
     jo name_record[64 * 1024];
     cell name_record_counter = 0;
     void p_name_record() {
-      as_push(name_record);
+      data_stack_push(name_record);
     }
     void p_name_report() {
       printf("- p_name_report // counter : %ld\n", name_record_counter);
@@ -499,10 +499,10 @@
         return binding_filter_stack_pointer == binding_filter_stack_base;
       }
       void p_binding_filter_stack_push() {
-        binding_filter_stack_push(as_pop());
+        binding_filter_stack_push(data_stack_pop());
       }
       void p_binding_filter_stack_pop() {
-        as_push(binding_filter_stack_pop());
+        data_stack_push(binding_filter_stack_pop());
       }
       void jo_apply_now(jo jo);
 
@@ -537,17 +537,17 @@
         return binding_hook_stack_pointer == binding_hook_stack_base;
       }
       void p_binding_hook_stack_push() {
-        binding_hook_stack_push(as_pop());
+        binding_hook_stack_push(data_stack_pop());
       }
       void p_binding_hook_stack_pop() {
-        as_push(binding_hook_stack_pop());
+        data_stack_push(binding_hook_stack_pop());
       }
       void run_binding_hook(cell name, jo tag, cell value) {
         cell i = binding_hook_stack_pointer;
         while (i > binding_hook_stack_base) {
-          as_push(value);
-          as_push(tag);
-          as_push(name);
+          data_stack_push(value);
+          data_stack_push(tag);
+          data_stack_push(name);
           jo_apply_now(binding_hook_stack[i-1]);
           i--;
         }
@@ -564,9 +564,9 @@
 
     void p_bind_name() {
       run_binding_filter();
-      jo name = as_pop();
-      jo tag = as_pop();
-      cell value = as_pop();
+      jo name = data_stack_pop();
+      jo tag = data_stack_pop();
+      cell value = data_stack_pop();
       if (used_jo_p(name) && !declared_jo_p(name)) {
         printf("- p_bind_name can not rebind\n");
         printf("  name : %s\n", jo2str(name));
@@ -585,16 +585,16 @@
     }
     void define_prim(char* str, primitive fun) {
       jo name = str2jo(str);
-      as_push(fun);
-      as_push(TAG_PRIM);
-      as_push(name);
+      data_stack_push(fun);
+      data_stack_push(TAG_PRIM);
+      data_stack_push(name);
       p_bind_name();
     }
     void define_primkey(char* str, primitive fun) {
       jo name = str2jo(str);
-      as_push(fun);
-      as_push(TAG_PRIM_KEYWORD);
-      as_push(name);
+      data_stack_push(fun);
+      data_stack_push(TAG_PRIM_KEYWORD);
+      data_stack_push(name);
       p_bind_name();
     }
     void export_bind() {
@@ -675,7 +675,7 @@
       }
       else if (tag == TAG_JOJO) {
         cell jojo = jotable_get_value(jo);
-        rs_new_point(jojo);
+        return_stack_new_point(jojo);
       }
 
       else if (tag == TAG_PRIM_KEYWORD) {
@@ -688,26 +688,26 @@
         // keywords are always evaled
         keyword_stack_push(alias_stack_pointer);
         cell jojo = jotable_get_value(jo);
-        rs_new_point(jojo);
+        return_stack_new_point(jojo);
         eval();
         alias_stack_pointer = keyword_stack_pop();
       }
 
       else if (tag == TAG_DATA) {
         cell cell = jotable_get_value(jo);
-        as_push(cell);
+        data_stack_push(cell);
       }
       else {
         cell cell = jotable_get_value(jo);
-        as_push(cell);
-        as_push(tag);
+        data_stack_push(cell);
+        data_stack_push(tag);
       }
     }
     void jo_apply_now(jo jo) {
       cell tag = jotable[jo].tag;
       if (tag == TAG_JOJO) {
         cell jojo = jotable_get_value(jo);
-        rs_new_point(jojo);
+        return_stack_new_point(jojo);
         eval();
         return;
       }
@@ -720,7 +720,7 @@
       cell tag = jotable[jo].tag;
       if (tag == TAG_JOJO) {
         cell jojo = jotable_get_value(jo);
-        rs_make_point(jojo, local_pointer);
+        return_stack_make_point(jojo, local_pointer);
         return;
       }
       else {
@@ -733,10 +733,10 @@
     void stepper();
 
     void eval() {
-      cell rs_base = rs_pointer;
-      while (rs_pointer >= rs_base) {
-        return_point rp = rs_tos();
-        rs_inc();
+      cell return_stack_base = return_stack_pointer;
+      while (return_stack_pointer >= return_stack_base) {
+        return_point rp = return_stack_tos();
+        return_stack_inc();
         cell jo = *(cell*)rp.jojo;
         jo_apply(jo);
         if (step_flag == true) {
@@ -745,29 +745,29 @@
       }
     }
     void p_apply() {
-      rs_new_point(as_pop());
+      return_stack_new_point(data_stack_pop());
     }
     void p_apply_with_local_pointer() {
-      jo* jojo = as_pop();
-      cell local_pointer = as_pop();
-      rs_make_point(jojo, local_pointer);
+      jo* jojo = data_stack_pop();
+      cell local_pointer = data_stack_pop();
+      return_stack_make_point(jojo, local_pointer);
     }
     void p_replacing_apply_with_last_local_pointer() {
-      jo jojo = as_pop();
-      return_point rp = rs_pop();
-      rs_make_point(jojo, rp.local_pointer);
+      jo jojo = data_stack_pop();
+      return_point rp = return_stack_pop();
+      return_stack_make_point(jojo, rp.local_pointer);
     }
     void p_jo_apply() {
-      jo_apply(as_pop());
+      jo_apply(data_stack_pop());
     }
     void p_jo_apply_with_local_pointer() {
-      jo jo = as_pop();
-      cell local_pointer = as_pop();
+      jo jo = data_stack_pop();
+      cell local_pointer = data_stack_pop();
       jo_apply_with_local_pointer(jo, local_pointer);
     }
     void p_jo_replacing_apply_with_last_local_pointer() {
-      jo jo = as_pop();
-      return_point rp = rs_pop();
+      jo jo = data_stack_pop();
+      return_point rp = return_stack_pop();
       jo_apply_with_local_pointer(jo, rp.local_pointer);
     }
     void export_apply() {
@@ -787,122 +787,122 @@
       }
     }
     void p_drop() {
-      as_pop();
+      data_stack_pop();
     }
     void p_2drop() {
-      as_pop();
-      as_pop();
+      data_stack_pop();
+      data_stack_pop();
     }
     void p_dup() {
       // a a -> a
-      cell a = as_pop();
-      as_push(a);
-      as_push(a);
+      cell a = data_stack_pop();
+      data_stack_push(a);
+      data_stack_push(a);
     }
     void p_2dup() {
       // b a -> b a b a
-      cell a = as_pop();
-      cell b = as_pop();
-      as_push(b);
-      as_push(a);
-      as_push(b);
-      as_push(a);
+      cell a = data_stack_pop();
+      cell b = data_stack_pop();
+      data_stack_push(b);
+      data_stack_push(a);
+      data_stack_push(b);
+      data_stack_push(a);
     }
     void p_over() {
       // b a -> b a b
-      cell a = as_pop();
-      cell b = as_pop();
-      as_push(b);
-      as_push(a);
-      as_push(b);
+      cell a = data_stack_pop();
+      cell b = data_stack_pop();
+      data_stack_push(b);
+      data_stack_push(a);
+      data_stack_push(b);
     }
     void p_2over() {
       // d c  b a -> d c  b a  d c
-      cell a = as_pop();
-      cell b = as_pop();
-      cell c = as_pop();
-      cell d = as_pop();
-      as_push(d);
-      as_push(c);
-      as_push(b);
-      as_push(a);
-      as_push(d);
-      as_push(c);
+      cell a = data_stack_pop();
+      cell b = data_stack_pop();
+      cell c = data_stack_pop();
+      cell d = data_stack_pop();
+      data_stack_push(d);
+      data_stack_push(c);
+      data_stack_push(b);
+      data_stack_push(a);
+      data_stack_push(d);
+      data_stack_push(c);
     }
     void p_tuck() {
       // b a -> a b a
-      cell a = as_pop();
-      cell b = as_pop();
-      as_push(a);
-      as_push(b);
-      as_push(a);
+      cell a = data_stack_pop();
+      cell b = data_stack_pop();
+      data_stack_push(a);
+      data_stack_push(b);
+      data_stack_push(a);
     }
     void p_2tuck() {
       // d c  b a -> b a  d c  b a
-      cell a = as_pop();
-      cell b = as_pop();
-      cell c = as_pop();
-      cell d = as_pop();
-      as_push(b);
-      as_push(a);
-      as_push(d);
-      as_push(c);
-      as_push(b);
-      as_push(a);
+      cell a = data_stack_pop();
+      cell b = data_stack_pop();
+      cell c = data_stack_pop();
+      cell d = data_stack_pop();
+      data_stack_push(b);
+      data_stack_push(a);
+      data_stack_push(d);
+      data_stack_push(c);
+      data_stack_push(b);
+      data_stack_push(a);
     }
     void p_swap() {
       // b a -> a b
-      cell a = as_pop();
-      cell b = as_pop();
-      as_push(a);
-      as_push(b);
+      cell a = data_stack_pop();
+      cell b = data_stack_pop();
+      data_stack_push(a);
+      data_stack_push(b);
     }
     void p_2swap() {
       // d c  b a -> b a  d c
-      cell a = as_pop();
-      cell b = as_pop();
-      cell c = as_pop();
-      cell d = as_pop();
-      as_push(b);
-      as_push(a);
-      as_push(d);
-      as_push(c);
+      cell a = data_stack_pop();
+      cell b = data_stack_pop();
+      cell c = data_stack_pop();
+      cell d = data_stack_pop();
+      data_stack_push(b);
+      data_stack_push(a);
+      data_stack_push(d);
+      data_stack_push(c);
     }
     void p_xy_swap() {
       // xxx yyy x y -> yyy xxx
-      cell y = as_pop();
-      cell x = as_pop();
+      cell y = data_stack_pop();
+      cell x = data_stack_pop();
       cell* yp = calloc(y, cell_size);
       cell* xp = calloc(x, cell_size);
-      cell_copy(y, (as + (as_pointer - y)), yp);
-      cell_copy(x, (as + (as_pointer - y - x)), xp);
-      cell_copy(y, yp, (as + (as_pointer - y - x)));
-      cell_copy(x, xp, (as + (as_pointer - x)));
+      cell_copy(y, (data_stack + (data_stack_pointer - y)), yp);
+      cell_copy(x, (data_stack + (data_stack_pointer - y - x)), xp);
+      cell_copy(y, yp, (data_stack + (data_stack_pointer - y - x)));
+      cell_copy(x, xp, (data_stack + (data_stack_pointer - x)));
       free(yp);
       free(xp);
     }
-    void p_print_argument_stack() {
+    void p_print_data_stack() {
       // {io} ->
-      if (as_pointer < as_base) {
-        printf("  * %ld *  ", (as_pointer - as_base));
+      if (data_stack_pointer < data_stack_base) {
+        printf("  * %ld *  ", (data_stack_pointer - data_stack_base));
         printf("-- below the stack --\n");
       }
       else {
-        printf("  * %ld *  ", (as_pointer - as_base));
+        printf("  * %ld *  ", (data_stack_pointer - data_stack_base));
         printf("-- ");
-        cell i = as_base;
-        while (i < as_pointer) {
-          printf("%ld ", as[i]);
+        cell i = data_stack_base;
+        while (i < data_stack_pointer) {
+          printf("%ld ", data_stack[i]);
           i++;
         }
         printf("--\n");
       }
     }
     void p_stack_base() {
-      as_push(as + as_base);
+      data_stack_push(data_stack + data_stack_base);
     }
     void p_stack_pointer() {
-      as_push(as + as_pointer);
+      data_stack_push(data_stack + data_stack_pointer);
     }
     void export_stack_operation() {
       define_prim("drop", p_drop);
@@ -916,12 +916,12 @@
       define_prim("swap", p_swap);
       define_prim("2swap", p_2swap);
       define_prim("xy-swap", p_xy_swap);
-      define_prim("print-argument-stack", p_print_argument_stack);
+      define_prim("print-data-stack", p_print_data_stack);
       define_prim("stack-pointer", p_stack_pointer);
       define_prim("stack-base", p_stack_base);
     }
     void p_end() {
-      return_point rp = rs_pop();
+      return_point rp = return_stack_pop();
       current_local_pointer = rp.local_pointer;
     }
     void p_bye() {
@@ -934,28 +934,28 @@
     }
     void i_lit() {
       // {rs} -> int
-      return_point rp = rs_tos();
-      rs_inc();
+      return_point rp = return_stack_tos();
+      return_stack_inc();
       cell jo = *(cell*)rp.jojo;
-      as_push(jo);
+      data_stack_push(jo);
     }
     void i_jump_if_false() {
       // bool {rs} -> {rs}
-      return_point rp = rs_tos();
-      rs_inc();
+      return_point rp = return_stack_tos();
+      return_stack_inc();
       jo* a = *(cell*)rp.jojo;
-      cell b = as_pop();
+      cell b = data_stack_pop();
       if (b == 0) {
-        return_point rp1 = rs_pop();
-        rs_make_point(a, rp1.local_pointer);
+        return_point rp1 = return_stack_pop();
+        return_stack_make_point(a, rp1.local_pointer);
       }
     }
     void i_jump() {
       // {rs} -> {rs}
-      return_point rp = rs_tos();
+      return_point rp = return_stack_tos();
       jo* a = *(cell*)rp.jojo;
-      return_point rp1 = rs_pop();
-      rs_make_point(a, rp1.local_pointer);
+      return_point rp1 = return_stack_pop();
+      return_stack_make_point(a, rp1.local_pointer);
     }
     void export_control() {
       define_prim("ins/lit", i_lit);
@@ -963,27 +963,27 @@
       define_prim("ins/jump", i_jump);
     }
     void p_true() {
-      as_push(1);
+      data_stack_push(1);
     }
     void p_false() {
-      as_push(0);
+      data_stack_push(0);
     }
     void p_not() {
       // bool -> bool
-      cell a = as_pop();
-      as_push(!a);
+      cell a = data_stack_pop();
+      data_stack_push(!a);
     }
     void p_and() {
       // bool bool -> bool
-      cell a = as_pop();
-      cell b = as_pop();
-      as_push(a&&b);
+      cell a = data_stack_pop();
+      cell b = data_stack_pop();
+      data_stack_push(a&&b);
     }
     void p_or() {
       // bool bool -> bool
-      cell a = as_pop();
-      cell b = as_pop();
-      as_push(a||b);
+      cell a = data_stack_pop();
+      cell b = data_stack_pop();
+      data_stack_push(a||b);
     }
     void export_bool() {
       define_prim("true", p_true);
@@ -995,40 +995,40 @@
     void p_true_bit() {
       // -> cell
       cell i = -1;
-      as_push(i);
+      data_stack_push(i);
     }
     void p_false_bit() {
       // -> cell
-      as_push(0);
+      data_stack_push(0);
     }
     void p_bit_and() {
       // cell cell -> cell
-      cell b = as_pop();
-      cell a = as_pop();
-      as_push(a&b);
+      cell b = data_stack_pop();
+      cell a = data_stack_pop();
+      data_stack_push(a&b);
     }
     void p_bit_or() {
       // cell cell -> cell
-      cell b = as_pop();
-      cell a = as_pop();
-      as_push(a|b);
+      cell b = data_stack_pop();
+      cell a = data_stack_pop();
+      data_stack_push(a|b);
     }
     void p_bit_xor() {
       // cell cell -> cell
-      cell b = as_pop();
-      cell a = as_pop();
-      as_push(a^b);
+      cell b = data_stack_pop();
+      cell a = data_stack_pop();
+      data_stack_push(a^b);
     }
     void p_bit_not() {
       // cell -> cell
-      cell a = as_pop();
-      as_push(~a);
+      cell a = data_stack_pop();
+      data_stack_push(~a);
     }
     void p_bit_shift_left() {
       // cell step -> cell
-      cell s = as_pop();
-      cell a = as_pop();
-      as_push(a<<s);
+      cell s = data_stack_pop();
+      cell a = data_stack_pop();
+      data_stack_push(a<<s);
     }
     void export_bit() {
       define_prim("true/bit", p_true_bit);
@@ -1042,83 +1042,83 @@
       // define_prim("bit/arithmetic-shift-right", p_bit_arithmetic_shift_right);
     }
     void p_inc() {
-      cell a = as_pop();
-      as_push(a + 1);
+      cell a = data_stack_pop();
+      data_stack_push(a + 1);
     }
     void p_dec() {
-      cell a = as_pop();
-      as_push(a - 1);
+      cell a = data_stack_pop();
+      data_stack_push(a - 1);
     }
     void p_neg() {
-      cell a = as_pop();
-      as_push(- a);
+      cell a = data_stack_pop();
+      data_stack_push(- a);
     }
     void p_add() {
-      cell b = as_pop();
-      cell a = as_pop();
-      as_push(a + b);
+      cell b = data_stack_pop();
+      cell a = data_stack_pop();
+      data_stack_push(a + b);
     }
     void p_sub() {
-      cell b = as_pop();
-      cell a = as_pop();
-      as_push(a - b);
+      cell b = data_stack_pop();
+      cell a = data_stack_pop();
+      data_stack_push(a - b);
     }
     void p_mul() {
-      cell b = as_pop();
-      cell a = as_pop();
-      as_push(a * b);
+      cell b = data_stack_pop();
+      cell a = data_stack_pop();
+      data_stack_push(a * b);
     }
     void p_div() {
-      cell b = as_pop();
-      cell a = as_pop();
-      as_push(a / b);
+      cell b = data_stack_pop();
+      cell a = data_stack_pop();
+      data_stack_push(a / b);
     }
     void p_mod() {
-      cell b = as_pop();
-      cell a = as_pop();
-      as_push(a % b);
+      cell b = data_stack_pop();
+      cell a = data_stack_pop();
+      data_stack_push(a % b);
     }
     void p_n_eq_p() {
       // a ... b ... n -> bool
-      cell n = as_pop();
+      cell n = data_stack_pop();
       cell old_n = n;
-      cell* cursor1 = (as + as_pointer - n);
-      cell* cursor2 = (as + as_pointer - n - n);
+      cell* cursor1 = (data_stack + data_stack_pointer - n);
+      cell* cursor2 = (data_stack + data_stack_pointer - n - n);
       while (n > 0) {
         if (cursor1[n-1] != cursor2[n-1]) {
-          as_pointer = as_pointer - old_n - old_n;
-          as_push(false);
+          data_stack_pointer = data_stack_pointer - old_n - old_n;
+          data_stack_push(false);
           return;
         }
         n--;
       }
-      as_pointer = as_pointer - old_n - old_n;
-      as_push(true);
+      data_stack_pointer = data_stack_pointer - old_n - old_n;
+      data_stack_push(true);
     }
     void p_eq_p() {
-      cell b = as_pop();
-      cell a = as_pop();
-      as_push(a == b);
+      cell b = data_stack_pop();
+      cell a = data_stack_pop();
+      data_stack_push(a == b);
     }
     void p_gt_p() {
-      cell b = as_pop();
-      cell a = as_pop();
-      as_push(a > b);
+      cell b = data_stack_pop();
+      cell a = data_stack_pop();
+      data_stack_push(a > b);
     }
     void p_lt_p() {
-      cell b = as_pop();
-      cell a = as_pop();
-      as_push(a < b);
+      cell b = data_stack_pop();
+      cell a = data_stack_pop();
+      data_stack_push(a < b);
     }
     void p_gteq_p() {
-      cell b = as_pop();
-      cell a = as_pop();
-      as_push(a >= b);
+      cell b = data_stack_pop();
+      cell a = data_stack_pop();
+      data_stack_push(a >= b);
     }
     void p_lteq_p() {
-      cell b = as_pop();
-      cell a = as_pop();
-      as_push(a <= b);
+      cell b = data_stack_pop();
+      cell a = data_stack_pop();
+      data_stack_push(a <= b);
     }
     jo read_raw_jo();
 
@@ -1135,9 +1135,9 @@
         }
       }
     }
-    void p_int_print() { printf("%ld", as_pop()); }
-    void p_dot() { printf("%ld ", as_pop()); }
-    void p_int_dot() { printf("%ld ", as_pop()); }
+    void p_int_print() { printf("%ld", data_stack_pop()); }
+    void p_dot() { printf("%ld ", data_stack_pop()); }
+    void p_int_dot() { printf("%ld ", data_stack_pop()); }
     void export_int() {
       define_prim("inc", p_inc);
       define_prim("dec", p_dec);
@@ -1167,11 +1167,11 @@
     }
     void p_allocate () {
       // size -> addr
-      as_push(calloc(as_pop(), 1));
+      data_stack_push(calloc(data_stack_pop(), 1));
     }
     void p_free () {
       // addr ->
-      free(as_pop());
+      free(data_stack_pop());
     }
     void k_ignore();
 
@@ -1183,30 +1183,30 @@
       k_ignore();
     }
     void p_jo_as_var() {
-      jo jo = as_pop();
-      as_push(&(jotable[jo].value));
+      jo jo = data_stack_pop();
+      data_stack_push(&(jotable[jo].value));
     }
     void p_set_cell() {
       // cell address ->
-      cell* address = as_pop();
-      cell value = as_pop();
+      cell* address = data_stack_pop();
+      cell value = data_stack_pop();
       address[0] = value;
     }
     void p_get_cell() {
       // address -> cell
-      cell* address = as_pop();
-      as_push(address[0]);
+      cell* address = data_stack_pop();
+      data_stack_push(address[0]);
     }
     void p_set_byte() {
       // byte address ->
-      char* address = as_pop();
-      cell value = as_pop();
+      char* address = data_stack_pop();
+      cell value = data_stack_pop();
       address[0] = value;
     }
     void p_get_byte() {
       // address -> byte
-      char* address = as_pop();
-      as_push(address[0]);
+      char* address = data_stack_pop();
+      data_stack_push(address[0]);
     }
     void export_memory() {
       define_prim("allocate", p_allocate);
@@ -1281,7 +1281,7 @@
       }
     }
     void p_has_byte_p() {
-      as_push(has_byte_p());
+      data_stack_push(has_byte_p());
     }
     byte read_byte() {
       if (reading_stack_empty_p()) {
@@ -1301,15 +1301,15 @@
     }
     void p_read_byte() {
       // -> byte
-      as_push(read_byte());
+      data_stack_push(read_byte());
     }
     void p_byte_unread() {
       // byte -> {reading_stack}
-      byte_unread(as_pop());
+      byte_unread(data_stack_pop());
     }
     void p_byte_print() {
       // byte ->
-      printf("%c", as_pop());
+      printf("%c", data_stack_pop());
     }
     void export_byte() {
       define_prim("has-byte?", p_has_byte_p);
@@ -1355,66 +1355,66 @@
     }
     void p_string_length() {
       // string -> length
-      as_push(strlen(as_pop()));
+      data_stack_push(strlen(data_stack_pop()));
     }
     void p_string_print() {
       // string -> {io}
-      printf("%s", as_pop());
+      printf("%s", data_stack_pop());
     }
     void p_string_dot() {
       // string -> {io}
-      printf("\"%s \"", as_pop());
+      printf("\"%s \"", data_stack_pop());
     }
     void p_string_append_to_buffer() {
       // buffer string -> buffer
-      char* str = as_pop();
-      char* buffer = as_tos();
+      char* str = data_stack_pop();
+      char* buffer = data_stack_tos();
       strcat(buffer, str);
     }
     void p_string_first_byte() {
-      char* s = as_pop();
-      as_push(s[0]);
+      char* s = data_stack_pop();
+      data_stack_push(s[0]);
     }
     void p_string_last_byte() {
-      char* s = as_pop();
+      char* s = data_stack_pop();
       cell i = 0;
       while (s[i+1] != 0) {
         i++;
       }
-      as_push(s[i]);
+      data_stack_push(s[i]);
     }
     void p_string_member_p() {
       // byte[not 0] string -> true or false
-      char* s = as_pop();
-      byte b = as_pop();
+      char* s = data_stack_pop();
+      byte b = data_stack_pop();
       cell i = 0;
       while (s[i] != 0) {
         if (s[i] == b) {
-          as_push(true);
+          data_stack_push(true);
           return;
         }
         else {
           i++;
         }
       }
-      as_push(false);
+      data_stack_push(false);
     }
     void p_string_find_byte() {
       // byte string -> [index true] or [false]
-      char* s = as_pop();
-      byte b = as_pop();
+      char* s = data_stack_pop();
+      byte b = data_stack_pop();
       cell i = 0;
       while (s[i] != 0) {
         if (s[i] == b) {
-          as_push(i);
-          as_push(true);
+          data_stack_push(i);
+          data_stack_push(true);
           return;
         }
         else {
           i++;
         }
       }
-      as_push(false);
+      data_stack_push(false);
     }
     void export_string() {
       define_primkey("string", k_string);
@@ -1429,25 +1429,25 @@
       define_prim("string/find-byte", p_string_find_byte);
     }
     void p_alias_push() {
-      jo name = as_pop();
-      jo nick = as_pop();
+      jo name = data_stack_pop();
+      jo nick = data_stack_pop();
       alias a = {.nick = nick, .name = name};
       alias_stack_push(a);
     }
     void p_alias_filter() {
-      jo nick = as_pop();
+      jo nick = data_stack_pop();
       cell base = keyword_stack_tos();
       cell i = alias_stack_pointer;
       while (i >= base) {
         if (alias_stack[i].nick == nick) {
-          as_push(alias_stack[i].name);
+          data_stack_push(alias_stack[i].name);
           return;
         }
         else {
           i--;
         }
       }
-      as_push(nick);
+      data_stack_push(nick);
     }
     bool has_jo_p() {
       byte c;
@@ -1469,7 +1469,7 @@
       }
     }
     void p_has_jo_p() {
-      as_push(has_jo_p());
+      data_stack_push(has_jo_p());
     }
     void p_read_raw_jo() {
       // {io} -> jo
@@ -1521,7 +1521,7 @@
       }
 
       buf[cur] = 0;
-      as_push(str2jo(buf));
+      data_stack_push(str2jo(buf));
     }
       typedef jo reading_filter;
 
@@ -1549,10 +1549,10 @@
         return jo_filter_stack_pointer == jo_filter_stack_base;
       }
       void p_jo_filter_stack_push() {
-        jo_filter_stack_push(as_pop());
+        jo_filter_stack_push(data_stack_pop());
       }
       void p_jo_filter_stack_pop() {
-        as_push(jo_filter_stack_pop());
+        data_stack_push(jo_filter_stack_pop());
       }
       void run_jo_filter() {
         cell i = jo_filter_stack_pointer;
@@ -1570,11 +1570,11 @@
     }
     jo read_jo() {
       p_read_jo();
-      return as_pop();
+      return data_stack_pop();
     }
     jo read_raw_jo() {
       p_read_raw_jo();
-      return as_pop();
+      return data_stack_pop();
     }
     jo cat_2_jo(jo x, jo y) {
       char str[2 * 1024];
@@ -1592,39 +1592,39 @@
       return str2jo(str);
     }
     void p_jo_append() {
-      jo jo2 = as_pop();
-      jo jo1 = as_pop();
-      as_push(cat_2_jo(jo1, jo2));
+      jo jo2 = data_stack_pop();
+      jo jo1 = data_stack_pop();
+      data_stack_push(cat_2_jo(jo1, jo2));
     }
     void p_empty_jo() {
-      as_push(EMPTY_JO);
+      data_stack_push(EMPTY_JO);
     }
     void p_jo_used_p() {
       // jo -> bool
-      jo jo = as_pop();
-      as_push(jotable_entry_used(jotable[jo]));
+      jo jo = data_stack_pop();
+      data_stack_push(jotable_entry_used(jotable[jo]));
     }
     void p_jo_to_string() {
       // jo -> string
-      jo jo = as_pop();
-      as_push(jo2str(jo));
+      jo jo = data_stack_pop();
+      data_stack_push(jo2str(jo));
     }
     void p_string_length_to_jo() {
       // string length -> jo
-      cell len = as_pop();
-      cell str = as_pop();
+      cell len = data_stack_pop();
+      cell str = data_stack_pop();
       char buffer[2 * 1024];
       strncpy(buffer, str, len);
       buffer[len] = 0;
-      as_push(str2jo(buffer));
+      data_stack_push(str2jo(buffer));
     }
     void p_string_to_jo() {
       // string -> jo
-      char* str = as_pop();
-      as_push(str2jo(str));
+      char* str = data_stack_pop();
+      data_stack_push(str2jo(str));
     }
     void p_null() {
-      as_push(JO_NULL);
+      data_stack_push(JO_NULL);
     }
     void k_raw_jo() {
       // {io} -> {compile}
@@ -1660,19 +1660,19 @@
     }
     void p_jo_print() {
       // jo -> {io}
-      printf("%s", jo2str(as_pop()));
+      printf("%s", jo2str(data_stack_pop()));
     }
     void p_jo_dot() {
       // jo -> {io}
-      printf("%s ", jo2str(as_pop()));
+      printf("%s ", jo2str(data_stack_pop()));
     }
     cell p_generate_jo_counter = 0;
     void p_generate_jo() {
-      char* s = as_pop();
+      char* s = data_stack_pop();
       char buffer [1024];
       sprintf(buffer, "%s:generated-jo#%ld", jo2str(s), p_generate_jo_counter);
       p_generate_jo_counter++;
-      as_push(str2jo(buffer));
+      data_stack_push(str2jo(buffer));
     }
     void p_jo_find_byte() {
       // byte jo -> [index true] or [false]
@@ -1681,16 +1681,16 @@
     }
     void p_jo_right_part() {
       // index jo -> jo
-      jo jo = as_pop();
-      cell index = as_pop();
+      jo jo = data_stack_pop();
+      cell index = data_stack_pop();
       char* s = jo2str(jo);
-      as_push(str2jo(s + index));
+      data_stack_push(str2jo(s + index));
     }
     void p_jo_left_part() {
       // index jo -> jo
       char target[1024];
-      jo jo = as_pop();
-      cell index = as_pop();
+      jo jo = data_stack_pop();
+      cell index = data_stack_pop();
       char* source = jo2str(jo);
       cell i = 0;
       while (i < index) {
@@ -1698,14 +1698,14 @@
         i++;
       }
       target[index] = 0;
-      as_push(str2jo(target));
+      data_stack_push(str2jo(target));
     }
     void p_jo_part() {
       // index-begin index-end jo -> jo
       char target[1024];
-      jo jo = as_pop();
-      cell index_end = as_pop();
-      cell index_begin = as_pop();
+      jo jo = data_stack_pop();
+      cell index_end = data_stack_pop();
+      cell index_begin = data_stack_pop();
       char* source = jo2str(jo);
       cell i = index_begin;
       while (i < index_end) {
@@ -1713,7 +1713,7 @@
         i++;
       }
       target[index_end] = 0;
-      as_push(str2jo(target + index_begin));
+      data_stack_push(str2jo(target + index_begin));
     }
     void export_jo() {
       define_prim("null", p_null);
@@ -1748,63 +1748,63 @@
     }
     void p_error_number_print() {
       // errno -> {io}
-      int no = as_pop();
+      int no = data_stack_pop();
       printf("%s", strerror(no));
     }
     void p_path_open_read() {
       // [path] -> [file true] or [errno false]
-      char* path = as_pop();
+      char* path = data_stack_pop();
 
       FILE* file = fopen(path, "r");
       if (file == NULL) {
-        as_push(errno);
-        as_push(false);
+        data_stack_push(errno);
+        data_stack_push(false);
       }
       else {
-        as_push(file);
-        as_push(true);
+        data_stack_push(file);
+        data_stack_push(true);
       }
     }
     void p_path_open_write() {
       // [path] -> [file true] or [errno false]
-      char* path = as_pop();
+      char* path = data_stack_pop();
 
       FILE* file = fopen(path, "wx");
       if (file == NULL) {
-        as_push(errno);
-        as_push(false);
+        data_stack_push(errno);
+        data_stack_push(false);
       }
       else {
-        as_push(file);
-        as_push(true);
+        data_stack_push(file);
+        data_stack_push(true);
       }
     }
     void p_path_open_read_and_write() {
       // [path] -> [file true] or [errno false]
-      char* path = as_pop();
+      char* path = data_stack_pop();
 
       FILE* file = fopen(path, "r+");
       if (file == NULL) {
-        as_push(errno);
-        as_push(false);
+        data_stack_push(errno);
+        data_stack_push(false);
       }
       else {
-        as_push(file);
-        as_push(true);
+        data_stack_push(file);
+        data_stack_push(true);
       }
     }
     void p_path_open_create() {
       // [path] -> [file true] or [errno false]
-      char* path = as_pop();
+      char* path = data_stack_pop();
 
       FILE* file = fopen(path, "w+");
       if (file == NULL) {
-        as_push(errno);
-        as_push(false);
+        data_stack_push(errno);
+        data_stack_push(false);
       }
       else {
-        as_push(file);
-        as_push(true);
+        data_stack_push(file);
+        data_stack_push(true);
       }
     }
     void p_file_close() {
@@ -1815,25 +1815,25 @@
       // 3. error conditions for specific file system
       //    to diagnose during a close operation
       //    - for example, NFS (Network File System)
-      FILE* file = as_pop();
+      FILE* file = data_stack_pop();
 
       if (fclose(file) == EOF) {
-        as_push(errno);
-        as_push(false);
+        data_stack_push(errno);
+        data_stack_push(false);
       }
       else {
-        as_push(true);
+        data_stack_push(true);
       }
     }
     void p_file_end_p() {
       // file -> true or false
-      FILE* file = as_pop();
+      FILE* file = data_stack_pop();
 
       if (feof(file)) {
-        as_push(true);
+        data_stack_push(true);
       }
       else {
-        as_push(false);
+        data_stack_push(false);
       }
     }
     void p_file_read() {
@@ -1842,24 +1842,24 @@
       // - partial read reasons
       //   1. [regular-file] end-of-file is reached
       //   2. [terminal] meets '\n'
-      size_t want_bytes = as_pop();
-      void* buffer = as_pop();
-      FILE* file = as_pop();
+      size_t want_bytes = data_stack_pop();
+      void* buffer = data_stack_pop();
+      FILE* file = data_stack_pop();
 
       size_t real_bytes = fread(buffer, 1, file, want_bytes);
       if (real_bytes != want_bytes) {
         if (ferror(file)) {
-          as_push(errno);
-          as_push(false);
+          data_stack_push(errno);
+          data_stack_push(false);
         }
         else {
-          as_push(real_bytes);
-          as_push(true);
+          data_stack_push(real_bytes);
+          data_stack_push(true);
         }
       }
       else {
-        as_push(real_bytes);
-        as_push(true);
+        data_stack_push(real_bytes);
+        data_stack_push(true);
       }
     }
     void p_file_write() {
@@ -1868,145 +1868,145 @@
       // - partial write reasons
       //   1. disk was filled
       //   2. the process resource limit on file sizes was reached
-      size_t want_bytes = as_pop();
-      void* buffer = as_pop();
-      FILE* file = as_pop();
+      size_t want_bytes = data_stack_pop();
+      void* buffer = data_stack_pop();
+      FILE* file = data_stack_pop();
 
       ssize_t real_bytes = fwrite(buffer, 1, want_bytes, file);
       if (real_bytes != want_bytes) {
-        as_push(errno);
-        as_push(false);
+        data_stack_push(errno);
+        data_stack_push(false);
       }
       else {
-        as_push(true);
+        data_stack_push(true);
       }
     }
     void p_file_size() {
       // file -> int
-      FILE* file = as_pop();
+      FILE* file = data_stack_pop();
       struct stat file_state;
       fstat(fileno(file), &file_state);
-      as_push(file_state.st_size);
+      data_stack_push(file_state.st_size);
     }
     void p_file_regular_file_p() {
       // file -> true or false
-      FILE* file = as_pop();
+      FILE* file = data_stack_pop();
       struct stat file_state;
       fstat(fileno(file), &file_state);
       if ((file_state.st_mode & S_IFMT) == S_IFREG) {
-        as_push(true);
+        data_stack_push(true);
       }
       else {
-        as_push(false);
+        data_stack_push(false);
       }
     }
     void p_file_directory_p() {
       // file -> true or false
-      FILE* file = as_pop();
+      FILE* file = data_stack_pop();
       struct stat file_state;
       fstat(fileno(file), &file_state);
       if ((file_state.st_mode & S_IFMT) == S_IFDIR) {
-        as_push(true);
+        data_stack_push(true);
       }
       else {
-        as_push(false);
+        data_stack_push(false);
       }
     }
     void p_file_character_device_p() {
       // file -> true or false
-      FILE* file = as_pop();
+      FILE* file = data_stack_pop();
       struct stat file_state;
       fstat(fileno(file), &file_state);
       if ((file_state.st_mode & S_IFMT) == S_IFCHR) {
-        as_push(true);
+        data_stack_push(true);
       }
       else {
-        as_push(false);
+        data_stack_push(false);
       }
     }
     void p_file_block_device_p() {
       // file -> true or false
-      FILE* file = as_pop();
+      FILE* file = data_stack_pop();
       struct stat file_state;
       fstat(fileno(file), &file_state);
       if ((file_state.st_mode & S_IFMT) == S_IFBLK) {
-        as_push(true);
+        data_stack_push(true);
       }
       else {
-        as_push(false);
+        data_stack_push(false);
       }
     }
     void p_file_fifo_p() {
       // file -> true or false
-      FILE* file = as_pop();
+      FILE* file = data_stack_pop();
       struct stat file_state;
       fstat(fileno(file), &file_state);
       if ((file_state.st_mode & S_IFMT) == S_IFIFO) {
-        as_push(true);
+        data_stack_push(true);
       }
       else {
-        as_push(false);
+        data_stack_push(false);
       }
     }
     void p_file_socket_p() {
       // file -> true or false
-      FILE* file = as_pop();
+      FILE* file = data_stack_pop();
       struct stat file_state;
       fstat(fileno(file), &file_state);
       if ((file_state.st_mode & S_IFMT) == S_IFSOCK) {
-        as_push(true);
+        data_stack_push(true);
       }
       else {
-        as_push(false);
+        data_stack_push(false);
       }
     }
     void p_path_exist_p() {
       // path -> true or false
-      char* path = as_pop();
+      char* path = data_stack_pop();
 
       if (access(path, F_OK) == -1) {
-        as_push(false);
+        data_stack_push(false);
       }
       else {
-        as_push(true);
+        data_stack_push(true);
       }
     }
     void p_path_readable_p() {
       // path -> true or false
-      char* path = as_pop();
+      char* path = data_stack_pop();
 
       if (access(path, R_OK) == -1) {
-        as_push(false);
+        data_stack_push(false);
       }
       else {
-        as_push(true);
+        data_stack_push(true);
       }
     }
     void p_path_writable_p() {
       // path -> true or false
-      char* path = as_pop();
+      char* path = data_stack_pop();
 
       if (access(path, W_OK) == -1) {
-        as_push(false);
+        data_stack_push(false);
       }
       else {
-        as_push(true);
+        data_stack_push(true);
       }
     }
     void p_path_executable_p() {
       // path -> true or false
-      char* path = as_pop();
+      char* path = data_stack_pop();
 
       if (access(path, X_OK) == -1) {
-        as_push(false);
+        data_stack_push(false);
       }
       else {
-        as_push(true);
+        data_stack_push(true);
       }
     }
     void p_file_print_path() {
       // file -> path
-      FILE* file = as_pop();
+      FILE* file = data_stack_pop();
 
       char proclnk[PATH_MAX];
       char filename[PATH_MAX];
@@ -2027,7 +2027,7 @@
 
     void p_path_load() {
       // path -> {reading_stack}
-      char* path = as_pop();
+      char* path = data_stack_pop();
       FILE* file = fopen(path, "r");
       if(file == NULL) {
         printf("- p_path_load fail : %s\n", path);
@@ -2071,7 +2071,7 @@
       }
       char buffer1[PATH_MAX];
       real_reading_path(buffer, buffer1);
-      as_push(buffer1);
+      data_stack_push(buffer1);
       p_path_load();
     }
     void k_include() {
@@ -2127,23 +2127,23 @@
     void p_current_dir() {
       // -> string
       char buf[PATH_MAX];
-      as_push(getcwd(buf, PATH_MAX));
+      data_stack_push(getcwd(buf, PATH_MAX));
     }
     void p_command_run() {
       // string -> *
-      system(as_pop());
+      system(data_stack_pop());
     }
     void p_n_command_run() {
       // ... string n -> *
-      cell n = as_pop();
+      cell n = data_stack_pop();
       cell i = 0;
       char* str = malloc(4 * 1024);
       str[0] = 0;
       while (i < n) {
-        strcat(str, as[as_pointer - n + i]);
+        strcat(str, data_stack[data_stack_pointer - n + i]);
         i++;
       }
-      as_pointer = as_pointer - n;
+      data_stack_pointer = data_stack_pointer - n;
       system(str);
       free(str);
     }
@@ -2151,21 +2151,21 @@
 
     void p_argument_counter() {
       // -> argument_counter
-      as_push(argument_counter);
+      data_stack_push(argument_counter);
     }
     char** argument_string_array;
 
     void p_index_to_argument_string() {
       // index -> string
-      cell index = as_pop();
+      cell index = data_stack_pop();
       char* argument_string = argument_string_array[index];
-      as_push(argument_string);
+      data_stack_push(argument_string);
     }
     void p_get_env_string() {
       // string -> string
-      char* var_string = as_pop();
+      char* var_string = data_stack_pop();
       char* env_string = getenv(var_string);
-      as_push(env_string);
+      data_stack_push(env_string);
     }
     void export_system() {
       define_prim("current-dir", p_current_dir);
@@ -2234,7 +2234,7 @@
     void k_define() {
       jo name = read_jo();
       k_run();
-      as_push(name);
+      data_stack_push(name);
       p_bind_name();
     }
       void k_declare_one() {
@@ -2262,11 +2262,11 @@
       // {io} -> *
       jo* jojo = compiling_stack_tos();
       p_compile_jojo();
-      rs_new_point(jojo);
+      return_stack_new_point(jojo);
       eval();
     }
     bool testing_flag = false;
-    void p_testing_flag() { as_push(testing_flag); }
+    void p_testing_flag() { data_stack_push(testing_flag); }
     void p_testing_flag_on() { testing_flag = true; }
     void p_testing_flag_off() { testing_flag = false; }
     void k_test() {
@@ -2279,9 +2279,9 @@
     }
     bool top_repl_printing_flag = false;
 
-    void p_print_argument_stack_by_flag() {
+    void p_print_data_stack_by_flag() {
       if (top_repl_printing_flag) {
-        p_print_argument_stack();
+        p_print_data_stack();
       }
     }
 
@@ -2293,19 +2293,19 @@
         jo s = read_jo();
         if (s == ROUND_BAR) {
           jo_apply(read_jo());
-          p_print_argument_stack_by_flag();
+          p_print_data_stack_by_flag();
         }
         else {
           // loop
         }
       }
     }
-    void p_repl_printing_flag() { as_push(top_repl_printing_flag); }
+    void p_repl_printing_flag() { data_stack_push(top_repl_printing_flag); }
     void p_repl_printing_flag_on() { top_repl_printing_flag = true; }
     void p_repl_printing_flag_off() { top_repl_printing_flag = false; }
     void p_jojo_print() {
       // jojo -> {io}
-      jo* jojo = as_pop();
+      jo* jojo = data_stack_pop();
       printf("[ ");
       while (true) {
         if (jojo[0] == 0 && jojo[1] == 0) {
@@ -2338,21 +2338,23 @@
     }
 
     void p_print_return_stack() {
-      cell i = rs_base;
+      cell i = return_stack_base;
       printf("  - return-stack\n");
 
-      while (i < rs_pointer -1) {
+      while (i < return_stack_pointer -1) {
 
         printf("    - ");
-        as_push(rs[i].jojo);
+        data_stack_push(return_stack[i].jojo);
         p_jojo_print();
         printf("\n");
 
-        if (rs[i].local_pointer == rs[i+1].local_pointer) {
+        if (return_stack[i].local_pointer ==
+            return_stack[i+1].local_pointer) {
         }
         else {
           printf("      ");
-          point_local(rs[i].local_pointer, rs[i+1].local_pointer);
+          point_local(return_stack[i].local_pointer,
+                      return_stack[i+1].local_pointer);
           printf("\n");
         }
 
@@ -2360,15 +2362,17 @@
       }
 
       printf("    - ");
-      as_push(rs[i].jojo);
+      data_stack_push(return_stack[i].jojo);
       p_jojo_print();
       printf("\n");
 
-      if (rs[i].local_pointer == current_local_pointer) {
+      if (return_stack[i].local_pointer ==
+          current_local_pointer) {
       }
       else {
         printf("      ");
-        point_local(rs[i].local_pointer, current_local_pointer);
+        point_local(return_stack[i].local_pointer,
+                    current_local_pointer);
         printf("\n");
       }
     }
@@ -2389,7 +2393,7 @@
         }
         else if (s == ROUND_BAR) {
           jo_apply(read_jo());
-          p_print_argument_stack();
+          p_print_data_stack();
           printf("debug[%ld]> ", debug_repl_level);
         }
         else {
@@ -2412,7 +2416,7 @@
       printf("- in debug-repl [level %ld] >_<!\n", debug_repl_level);
       printf("  available commends : exit bye\n");
       p_print_return_stack();
-      p_print_argument_stack();
+      p_print_data_stack();
       printf("debug[%ld]> ", debug_repl_level);
       debug_repl_level++;
       p_debug_repl();
@@ -2426,7 +2430,7 @@
 
     void stepper() {
       printf("- stepper\n");
-      if (rs_empty_p()) {
+      if (return_stack_empty_p()) {
         step_flag = false;
         printf("- exit stepper for return-stack is empty\n");
         return;
@@ -2441,7 +2445,7 @@
       }
       else {
         p_print_return_stack();
-        p_print_argument_stack();
+        p_print_data_stack();
       }
     }
     void p_step() {
@@ -2459,7 +2463,7 @@
       define_prim("testing-flag/on", p_testing_flag_on);
       define_prim("testing-flag/off", p_testing_flag_off);
 
-      define_prim("print-argument-stack/by-flag", p_print_argument_stack_by_flag);
+      define_prim("print-data-stack/by-flag", p_print_data_stack_by_flag);
       define_prim("repl", p_repl);
       define_prim("repl/printing-flag", p_repl_printing_flag);
       define_prim("repl/printing-flag/on", p_repl_printing_flag_on);
@@ -2507,7 +2511,7 @@
     }
     void p_compile_until_meet_jo() {
       // jo -> {compile}
-      compile_until_meet_jo(as_pop());
+      compile_until_meet_jo(data_stack_pop());
     }
     jo compile_until_meet_jo_or_jo(jo ending_jo1, jo ending_jo2) {
       while (true) {
@@ -2635,7 +2639,7 @@
       k_ignore();
     }
     void p_compiling_stack_tos() {
-      as_push(compiling_stack_tos());
+      data_stack_push(compiling_stack_tos());
     }
     void k_bare_jojo() {
       // {io} -> {compile}
@@ -2680,7 +2684,7 @@
     cell local_find(jo name) {
       // return index of local_area
       // -1 -- no found
-      return_point rp = rs_tos();
+      return_point rp = return_stack_tos();
       cell cursor = current_local_pointer - 1;
       while (cursor >= rp.local_pointer) {
         if (local_area[cursor].name == name) {
@@ -2693,9 +2697,9 @@
       return -1;
     }
     void p_local_data_in() {
-      cell jo = as_pop();
+      cell jo = data_stack_pop();
       cell index = local_find(jo);
-      cell data = as_pop();
+      cell data = data_stack_pop();
       if (index != -1) {
         local_area[index].name = jo;
         local_area[index].local_data = data;
@@ -2707,11 +2711,11 @@
       }
     }
     void p_local_data_out() {
-      cell jo = as_pop();
+      cell jo = data_stack_pop();
       cell index = local_find(jo);
       if (index != -1) {
         local_point lp = local_area[index];
-        as_push(lp.local_data);
+        data_stack_push(lp.local_data);
       }
       else {
         printf("- p_local_data_out fatal error\n");
@@ -2720,9 +2724,9 @@
       }
     }
     void p_local_tag_in() {
-      cell jo = as_pop();
+      cell jo = data_stack_pop();
       cell index = local_find(jo);
-      cell tag = as_pop();
+      cell tag = data_stack_pop();
       if (index != -1) {
         local_area[index].name = jo;
         local_area[index].local_tag = tag;
@@ -2734,11 +2738,11 @@
       }
     }
     void p_local_tag_out() {
-      cell jo = as_pop();
+      cell jo = data_stack_pop();
       cell index = local_find(jo);
       if (index != -1) {
         local_point lp = local_area[index];
-        as_push(lp.local_tag);
+        data_stack_push(lp.local_tag);
       }
       else {
         printf("- p_local_tag_out fatal error\n");
@@ -2747,10 +2751,10 @@
       }
     }
     void p_local_in() {
-      cell jo = as_pop();
+      cell jo = data_stack_pop();
       cell index = local_find(jo);
-      cell tag = as_pop();
-      cell data = as_pop();
+      cell tag = data_stack_pop();
+      cell data = data_stack_pop();
       if (index != -1) {
         local_area[index].name = jo;
         local_area[index].local_tag = tag;
@@ -2764,12 +2768,12 @@
       }
     }
     void p_local_out() {
-      cell jo = as_pop();
+      cell jo = data_stack_pop();
       cell index = local_find(jo);
       if (index != -1) {
         local_point lp = local_area[index];
-        as_push(lp.local_data);
-        as_push(lp.local_tag);
+        data_stack_push(lp.local_data);
+        data_stack_push(lp.local_tag);
       }
       else {
         printf("- p_local_out fatal error\n");
@@ -2856,7 +2860,7 @@
       }
     }
     void p_current_local_pointer() {
-      as_push(current_local_pointer);
+      data_stack_push(current_local_pointer);
     }
     void export_keyword() {
       define_primkey("ignore", k_ignore);
@@ -2904,21 +2908,21 @@
     void do_nothing() {
     }
     void p_here() {
-      here(as_pop());
+      here(data_stack_pop());
     }
     void p_address_of_here() {
-     as_push(compiling_stack_tos());
+     data_stack_push(compiling_stack_tos());
     }
-    void p_round_bar()    { as_push(ROUND_BAR); }
-    void p_round_ket()    { as_push(ROUND_KET); }
-    void p_square_bar()   { as_push(SQUARE_BAR); }
-    void p_square_ket()   { as_push(SQUARE_KET); }
-    void p_flower_bar()   { as_push(FLOWER_BAR); }
-    void p_flower_ket()   { as_push(FLOWER_KET); }
-    void p_double_quote() { as_push(DOUBLE_QUOTE); }
+    void p_round_bar()    { data_stack_push(ROUND_BAR); }
+    void p_round_ket()    { data_stack_push(ROUND_KET); }
+    void p_square_bar()   { data_stack_push(SQUARE_BAR); }
+    void p_square_ket()   { data_stack_push(SQUARE_KET); }
+    void p_flower_bar()   { data_stack_push(FLOWER_BAR); }
+    void p_flower_ket()   { data_stack_push(FLOWER_KET); }
+    void p_double_quote() { data_stack_push(DOUBLE_QUOTE); }
     void p_cell_size() {
       // -> cell
-      as_push(cell_size);
+      data_stack_push(cell_size);
     }
     void p_newline() {
       printf("\n");
@@ -3040,10 +3044,10 @@
       init_jojo();
 
       if (argc != 1) {
-        as_push(argv[1]);
+        data_stack_push(argv[1]);
         p_path_readable_p();
-        if (as_pop()) {
-          as_push(argv[1]);
+        if (data_stack_pop()) {
+          data_stack_push(argv[1]);
           p_path_load();
         }
         else {
