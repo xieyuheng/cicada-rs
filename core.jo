@@ -1242,8 +1242,6 @@
 
   (use welcome 0.0.1 as w)
   (run w.welcome)
-  (test current-dir string/print newline)
-
   (test (string "HOME") get-env-string
         string/print newline)
 
@@ -1278,3 +1276,15 @@
           )))
 
   (run c1 c1 c1)
+
+  (define c3
+    (jojo
+      dup (> k1)
+      dup (> k2)
+      debug
+      debug
+      debug
+      (jojo dup dup)
+      (< k2)
+      (< k2)))
+

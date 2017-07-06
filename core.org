@@ -3,13 +3,13 @@
 
 - shadow-the-core
 - deadly need debuger repl
+
 - syntax for byte
   instead of string/last-byte
 - <jojo> and combinators
   - syntax for currying
   - to mock a mocking bird
 - [docs] basic docs about composition
-- [emacs] fix space line in generated html
 
 * todo
 
@@ -21,9 +21,6 @@
     to load the code faster
   - fix the roots of gc
   - example of the use of oo
-  - [emacs]
-    - write some emacs-lisp lib
-    - bright and dark color theme
   - [maybe] syntax for local helper functions
   - syntax-check by another interpreter written in jojo
 
@@ -32,6 +29,10 @@
 *** terminology
 
     - tag as class-name
+
+*** ><><>< jojo as return value
+
+    - no closure ?
 
 *** object
 
@@ -1735,8 +1736,6 @@
 * test
 
   #+begin_src jojo
-  (test current-dir string/print newline)
-
   (test (string "HOME") get-env-string
         string/print newline)
 
@@ -1771,4 +1770,16 @@
           )))
 
   (run c1 c1 c1)
+
+  (define c3
+    (jojo
+      dup (> k1)
+      dup (> k2)
+      debug
+      debug
+      debug
+      (jojo dup dup)
+      (< k2)
+      (< k2)))
+
   #+end_src

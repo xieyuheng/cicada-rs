@@ -120,11 +120,6 @@
       cell string_to_hex(char* str) { return string_to_based_int(str, 16); }
     typedef void (*primitive)();
     typedef cell jo;
-
-    typedef struct {
-      cell size;
-      jo* array;
-    } jojo;
     typedef cell bind;
 
     typedef struct {
@@ -443,14 +438,14 @@
       return rs[rs_pointer - 1];
     }
 
-    void rs_make_point(jo* array, cell local_pointer) {
-      return_point rp = {.jojo = array, .local_pointer = local_pointer};
+    void rs_make_point(jo* jojo, cell local_pointer) {
+      return_point rp = {.jojo = jojo, .local_pointer = local_pointer};
       rs[rs_pointer] = rp;
       rs_pointer++;
     }
 
-    void rs_new_point(jo* array) {
-      rs_make_point(array, current_local_pointer);
+    void rs_new_point(jo* jojo) {
+      rs_make_point(jojo, current_local_pointer);
     }
 
     void rs_inc() {
@@ -872,7 +867,6 @@
     }
     void p_print_argument_stack() {
       // {io} ->
-      printf("\n");
       if (as_pointer < as_base) {
         printf("  * %ld *  ", (as_pointer - as_base));
         printf("-- below the stack --\n");
@@ -2314,21 +2308,56 @@
           jojo++;
         }
       }
-      printf("]\n");
+      printf("] ");
     }
-    void print_return_point(return_point rp) {
-      as_push(rp.jojo);
-      p_jojo_print();
-    }
-    void p_print_return_stack() {
-      cell i = rs_base;
-      printf("--- return-stack ---\n");
-      while (i < rs_pointer) {
-        print_return_point(rs[i]);
+    void point_local(cell begin, cell end) {
+      cell i = begin;
+      while (i < end) {
+        printf("{%s = %ld %s} "
+               , jo2str(local_area[i].name)
+               , local_area[i].local_data
+               , jo2str(local_area[i].local_tag));
         i++;
       }
-      printf("--- end ---\n");
     }
+
+    void p_print_return_stack() {
+      cell i = rs_base;
+      printf("  - return-stack\n");
+
+      while (i < rs_pointer -1) {
+
+        printf("    - ");
+        as_push(rs[i].jojo);
+        p_jojo_print();
+        printf("\n");
+
+        if (rs[i].local_pointer == rs[i+1].local_pointer) {
+        }
+        else {
+          printf("      ");
+          point_local(rs[i].local_pointer, rs[i+1].local_pointer);
+          printf("\n");
+        }
+
+        i++;
+      }
+
+      printf("    - ");
+      as_push(rs[i].jojo);
+      p_jojo_print();
+      printf("\n");
+
+      if (rs[i].local_pointer == rs[i+1].local_pointer) {
+      }
+      else {
+        printf("      ");
+        point_local(rs[i].local_pointer, current_local_pointer);
+        printf("\n");
+      }
+    }
+    cell debug_repl_level = 0;
+
     void p_debug_repl() {
       while (true) {
         if (!has_jo_p()) {
@@ -2338,10 +2367,14 @@
         if (s == str2jo("exit")) {
           return;
         }
+        if (s == str2jo("bye")) {
+          p_bye();
+          return;
+        }
         else if (s == ROUND_BAR) {
           jo_apply(read_jo());
           p_print_argument_stack();
-          printf("debug> ");
+          printf("debug[%ld]> ", debug_repl_level);
         }
         else {
           // loop
@@ -2360,14 +2393,15 @@
       reading_stack_push(rp);
 
       printf("\n");
-      printf("- in debug-repl >_<!\n");
-      printf("  type 'help' to see available commends.\n");
-      printf("\n");
+      printf("- in debug-repl [level %ld] >_<!\n", debug_repl_level);
+      printf("  available commends : exit bye\n");
       p_print_return_stack();
       p_print_argument_stack();
-      printf("debug> ");
+      printf("debug[%ld]> ", debug_repl_level);
+      debug_repl_level++;
       p_debug_repl();
-      printf("- exit debug-repl\n");
+      debug_repl_level--;
+      printf("- exit debug-repl [level %ld]\n", debug_repl_level);
       printf("\n");
 
       reading_stack_pop();
