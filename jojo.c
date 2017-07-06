@@ -882,7 +882,7 @@
       free(xp);
     }
     void p_print_data_stack() {
-      // {io} ->
+      // {terminal-output}
       if (data_stack_pointer < data_stack_base) {
         printf("  * %ld *  ", (data_stack_pointer - data_stack_base));
         printf("-- below the stack --\n");
@@ -933,14 +933,14 @@
       define_prim("bye", p_bye);
     }
     void i_lit() {
-      // {rs} -> int
+      // [] -> [cell] {return_stack}
       return_point rp = return_stack_tos();
       return_stack_inc();
       cell jo = *(cell*)rp.jojo;
       data_stack_push(jo);
     }
     void i_jump_if_false() {
-      // bool {rs} -> {rs}
+      // [bool] -> {return_stack}
       return_point rp = return_stack_tos();
       return_stack_inc();
       jo* a = *(cell*)rp.jojo;
@@ -951,7 +951,7 @@
       }
     }
     void i_jump() {
-      // {rs} -> {rs}
+      // {return_stack}
       return_point rp = return_stack_tos();
       jo* a = *(cell*)rp.jojo;
       return_point rp1 = return_stack_pop();
@@ -1123,7 +1123,7 @@
     jo read_raw_jo();
 
     void k_int() {
-      // {io} -> {compile}
+      // {reading_stack} {compile}
       while (true) {
         jo s = read_raw_jo();
         if (s == ROUND_KET) {
@@ -1176,7 +1176,7 @@
     void k_ignore();
 
     void k_address() {
-      // {io} -> {compile}
+      // (address ...)
       here(JO_INS_INT);
       jo index = read_raw_jo();
       here(&(jotable[index].value));
@@ -1318,7 +1318,7 @@
       define_prim("byte/print", p_byte_print);
     }
     void k_one_string() {
-      // {io} -> {compile}
+      // "..."
       char buffer[1024 * 1024];
       cell cursor = 0;
       while (true) {
@@ -1339,7 +1339,7 @@
       here(str);
     }
     void k_string() {
-      // {io} -> {compile}
+      // (string "...")
       while (true) {
         jo s = read_raw_jo();
         if (s == ROUND_KET) {
@@ -1358,11 +1358,11 @@
       data_stack_push(strlen(data_stack_pop()));
     }
     void p_string_print() {
-      // string -> {io}
+      // string -> {terminal-output}
       printf("%s", data_stack_pop());
     }
     void p_string_dot() {
-      // string -> {io}
+      // string -> {terminal-output}
       printf("\"%s \"", data_stack_pop());
     }
     void p_string_append_to_buffer() {
@@ -1384,7 +1384,7 @@
       data_stack_push(s[i]);
     }
     void p_string_member_p() {
-      // byte[not 0] string -> true or false
+      // non-zero-byte string -> true or false
       char* s = data_stack_pop();
       byte b = data_stack_pop();
       cell i = 0;
@@ -1472,7 +1472,7 @@
       data_stack_push(has_jo_p());
     }
     void p_read_raw_jo() {
-      // {io} -> jo
+      // {reading_stack} -> jo
       byte buf[1024];
       cell cur = 0;
       cell collecting = false;
@@ -1627,7 +1627,7 @@
       data_stack_push(JO_NULL);
     }
     void k_raw_jo() {
-      // {io} -> {compile}
+      // (raw-jo ...)
       while (true) {
         jo s = read_raw_jo();
         if (s == ROUND_BAR) {
@@ -1643,7 +1643,7 @@
       }
     }
     void k_jo() {
-      // {io} -> {compile}
+      // (jo ...)
       while (true) {
         jo s = read_jo();
         if (s == ROUND_BAR) {
@@ -1659,11 +1659,11 @@
       }
     }
     void p_jo_print() {
-      // jo -> {io}
+      // jo -> {terminal-output}
       printf("%s", jo2str(data_stack_pop()));
     }
     void p_jo_dot() {
-      // jo -> {io}
+      // jo -> {terminal-output}
       printf("%s ", jo2str(data_stack_pop()));
     }
     cell p_generate_jo_counter = 0;
@@ -1747,7 +1747,7 @@
       define_prim("jo/part", p_jo_part);
     }
     void p_error_number_print() {
-      // errno -> {io}
+      // errno -> {terminal-output}
       int no = data_stack_pop();
       printf("%s", strerror(no));
     }
@@ -2054,7 +2054,7 @@
       free(rp.dir);
     }
     void k_include_one() {
-      // {io} -> *
+      // "..."
       char buffer[PATH_MAX];
       cell cursor = 0;
       while (true) {
@@ -2075,7 +2075,7 @@
       p_path_load();
     }
     void k_include() {
-      // {io} -> {compile}
+      // (include "..." ...)
       while (true) {
         jo s = read_raw_jo();
         if (s == ROUND_KET) {
@@ -2130,7 +2130,7 @@
       data_stack_push(getcwd(buf, PATH_MAX));
     }
     void p_command_run() {
-      // string -> *
+      // string -> {*}
       system(data_stack_pop());
     }
     void p_n_command_run() {
@@ -2194,7 +2194,7 @@
       return lib;
     }
     void k_clib_one() {
-      // {io} -> {compile}
+      // "..."
       char buffer[PATH_MAX];
       cell cursor = 0;
       while (true) {
@@ -2212,7 +2212,7 @@
       ccall("export", get_clib(buffer));
     }
     void k_clib() {
-      // {io} -> {compile}
+      // (clib "..." ...)
       while (true) {
         jo s = read_raw_jo();
         if (s == ROUND_KET) {
@@ -2259,7 +2259,7 @@
     void p_compile_jojo();
 
     void k_run() {
-      // {io} -> *
+      // (run ...)
       jo* jojo = compiling_stack_tos();
       p_compile_jojo();
       return_stack_new_point(jojo);
@@ -2304,7 +2304,7 @@
     void p_repl_printing_flag_on() { top_repl_printing_flag = true; }
     void p_repl_printing_flag_off() { top_repl_printing_flag = false; }
     void p_jojo_print() {
-      // jojo -> {io}
+      // jojo -> {terminal-output}
       jo* jojo = data_stack_pop();
       printf("[ ");
       while (true) {
@@ -2476,7 +2476,6 @@
       define_prim("step", p_step);
     }
     void k_ignore() {
-      // {io} ->
       while (true) {
         jo s = read_raw_jo();
         if (s == ROUND_BAR) {
@@ -2488,7 +2487,6 @@
       }
     }
     void compile_until_meet_jo(jo ending_jo) {
-      // {io} -> {compile}
       while (true) {
         jo s = read_jo();
         if (s == ROUND_BAR) {
@@ -2510,7 +2508,6 @@
       }
     }
     void p_compile_until_meet_jo() {
-      // jo -> {compile}
       compile_until_meet_jo(data_stack_pop());
     }
     jo compile_until_meet_jo_or_jo(jo ending_jo1, jo ending_jo2) {
@@ -2537,7 +2534,6 @@
       }
     }
     void p_compile_until_round_ket() {
-      // {io} -> {compile}
       compile_until_meet_jo(ROUND_KET);
     }
     // - without else
@@ -2560,7 +2556,6 @@
     //   :end-of-else
 
     void k_if() {
-      // {io} -> {compile}
       compile_until_meet_jo(JO_THEN);
       here(JO_INS_JUMP_IF_FALSE);
       cell* end_of_then = compiling_stack_tos();
@@ -2617,7 +2612,6 @@
       return current_compiling_jojo_stack_pointer == current_compiling_jojo_stack_base;
     }
     void p_compile_jojo() {
-      // {io} -> {compile}
       jo* jojo = compiling_stack_tos();
       current_compiling_jojo_stack_push(jojo);
       compile_until_meet_jo(ROUND_KET);
@@ -2642,7 +2636,7 @@
       data_stack_push(compiling_stack_tos());
     }
     void k_bare_jojo() {
-      // {io} -> {compile}
+      // (bare-jojo ...)
       here(JO_INS_JUMP);
       cell* offset_place = compiling_stack_tos();
       compiling_stack_inc();
@@ -2652,7 +2646,7 @@
       here(offset_place + 1);
     }
     void k_jojo() {
-      // {io} -> {compile}
+      // (jojo ...)
       here(JO_INS_JUMP);
       cell* offset_place = compiling_stack_tos();
       compiling_stack_inc();
@@ -2664,7 +2658,7 @@
       here(TAG_JOJO);
     }
     void k_keyword() {
-      // {io} -> {compile}
+      // (keyword ...)
       here(JO_INS_JUMP);
       cell* offset_place = compiling_stack_tos();
       compiling_stack_inc();
@@ -2676,7 +2670,7 @@
       here(TAG_KEYWORD);
     }
     void k_data() {
-      // {io} -> {compile}
+      // (data ...)
       p_compile_until_round_ket();
       here(JO_INS_INT);
       here(TAG_DATA);
