@@ -15,6 +15,8 @@
 
     #include <dlfcn.h>
     #include <dirent.h>
+
+    #include <signal.h>
     typedef enum { false, true } bool;
     typedef intptr_t cell;
     #define cell_size (sizeof(cell))
@@ -2412,7 +2414,6 @@
       };
       reading_stack_push(rp);
 
-      printf("\n");
       printf("- in debug-repl [level %ld] >_<!\n", debug_repl_level);
       printf("  available commends : exit bye\n");
       p_print_return_stack();
@@ -2422,7 +2423,6 @@
       p_debug_repl();
       debug_repl_level--;
       printf("- exit debug-repl [level %ld]\n", debug_repl_level);
-      printf("\n");
 
       reading_stack_pop();
     }
@@ -2495,6 +2495,39 @@
     void p_step() {
       step_flag = true;
     }
+      void kernel_signal_handler(int sig, siginfo_t *siginfo, void *ucontext) {
+        fflush(stdin);
+        fflush(stdout);
+        fflush(stderr);
+
+        printf("- kernel_signal_handler\n");
+        psiginfo(siginfo, "  signal ");
+
+        int errno_backup;
+        errno_backup = errno;
+
+        p_debug();
+
+        errno = errno_backup;
+      }
+      void init_kernel_signal_handler() {
+        struct sigaction kernel_signal_action;
+
+        sigemptyset(&kernel_signal_action.sa_mask);
+
+        kernel_signal_action.sa_flags = SA_SIGINFO | SA_NODEFER | SA_RESTART;
+        kernel_signal_action.sa_sigaction = kernel_signal_handler;
+
+        int sig_array[] = {SIGSEGV};
+        int sig_array_length = sizeof(sig_array)/sizeof(sig_array[0]);
+        cell i = 0;
+        while (i < sig_array_length) {
+          if (sigaction(SIGSEGV, &kernel_signal_action, NULL) == -1) {
+            perror("- init_kernel_signal_handler fail");
+          }
+          i++;
+        }
+      }
     void export_top_level() {
       define_primkey("define", k_define);
       define_primkey("bind-name", p_bind_name);
@@ -3052,6 +3085,7 @@
 
       init_compiling_stack();
       init_jo_filter_stack();
+      init_kernel_signal_handler();
 
       p_empty_jo();
       p_drop();

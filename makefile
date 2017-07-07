@@ -3,11 +3,11 @@ CC = gcc
 # CC = clang
 
 build:
-	$(CC) -O2 -w -ldl jojo.c -o jojo -rdynamic
+	$(CC) -w -O2 -ldl jojo.c -o jojo -rdynamic
 
 play:
-	./tangle.js
-	$(CC) -w -ldl jojo.c -o jojo -rdynamic
+	./tangle.js &&\
+	$(CC) -w -O2 -ldl jojo.c -o jojo -rdynamic &&\
 	./jojo core.org
 
 clean:

@@ -1,12 +1,10 @@
 #+property: tangle jojo.c
 #+title:  jojo
 
-- use 'debug' to handle kernel signal
-
 - to used libjojo.c and libjojo.h
   jojo.c as a jojo embedded in c
 
-- fix reading_point
+- fix the structure of reading_point
   what should be .file in stdin ?
 
 - fix p_current_dir
@@ -118,6 +116,8 @@
 
     #include <dlfcn.h>
     #include <dirent.h>
+
+    #include <signal.h>
     #+end_src
 
 *** bool
@@ -3750,7 +3750,6 @@ j* jotable_insert
       };
       reading_stack_push(rp);
 
-      printf("\n");
       printf("- in debug-repl [level %ld] >_<!\n", debug_repl_level);
       printf("  available commends : exit bye\n");
       p_print_return_stack();
@@ -3760,7 +3759,6 @@ j* jotable_insert
       p_debug_repl();
       debug_repl_level--;
       printf("- exit debug-repl [level %ld]\n", debug_repl_level);
-      printf("\n");
 
       reading_stack_pop();
     }
@@ -3844,6 +3842,87 @@ j* jotable_insert
       step_flag = true;
     }
     #+end_src
+
+*** to handle kernel signal
+
+***** note
+
+      - A function is said to be reentrant
+        if it can safely be simultaneously executed
+        by multiple threads of execution in the same process.
+        In this context, “safe” means that
+        the function achieves its expected result,
+        regardless of the state of execution
+        of any other thread of execution.
+
+        Because a signal handler may asynchronously interrupt
+        the execution of a program at any point in time,
+        the main program and the signal handler
+        in effect form two independent
+        (although not concurrent) threads of execution
+        within the same process.
+
+        -- quote from (2010) (michael kerrisk) the linux programming interface
+
+      - thus single handler must be reentrant.
+
+      - since nonreentrant functions in many C libraries [specially stdio],
+        and we can call such functions in the debug repl of jojo,
+        we should not simply call the debug repl in the kernel_signal_handler.
+
+      - but except introducing runtime overhead,
+        I can think of not solutions to this problem.
+
+        thus, after exited the debug repl,
+        possibly unnecessary errors that induced by nonreentrant functions,
+        might lead you into the debug repl again.
+
+        thus, the debug repl is not reliable to enable you
+        to recover from any errors which trigger kernel signal.
+        [the debug repl can only debug them.]
+
+***** kernel_signal_handler
+
+      #+begin_src c
+      void kernel_signal_handler(int sig, siginfo_t *siginfo, void *ucontext) {
+        fflush(stdin);
+        fflush(stdout);
+        fflush(stderr);
+
+        printf("- kernel_signal_handler\n");
+        psiginfo(siginfo, "  signal ");
+
+        int errno_backup;
+        errno_backup = errno;
+
+        p_debug();
+
+        errno = errno_backup;
+      }
+      #+end_src
+
+***** init_kernel_signal_handler
+
+      #+begin_src c
+      void init_kernel_signal_handler() {
+        struct sigaction kernel_signal_action;
+
+        sigemptyset(&kernel_signal_action.sa_mask);
+
+        kernel_signal_action.sa_flags = SA_SIGINFO | SA_NODEFER | SA_RESTART;
+        kernel_signal_action.sa_sigaction = kernel_signal_handler;
+
+        int sig_array[] = {SIGSEGV};
+        int sig_array_length = sizeof(sig_array)/sizeof(sig_array[0]);
+        cell i = 0;
+        while (i < sig_array_length) {
+          if (sigaction(SIGSEGV, &kernel_signal_action, NULL) == -1) {
+            perror("- init_kernel_signal_handler fail");
+          }
+          i++;
+        }
+      }
+      #+end_src
 
 *** export_top_level
 
@@ -4616,6 +4695,7 @@ j* jotable_insert
 
       init_compiling_stack();
       init_jo_filter_stack();
+      init_kernel_signal_handler();
 
       p_empty_jo();
       p_drop();
