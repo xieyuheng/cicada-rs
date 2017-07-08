@@ -1222,7 +1222,6 @@
     }
     typedef struct {
       FILE* file_handle;
-      char* file;
       char* dir;
     } reading_point;
 
@@ -2036,14 +2035,13 @@
         perror("File opening failed");
         return;
       }
-      char* file_buffer = malloc(PATH_MAX);
+
       char* dir_buffer = malloc(PATH_MAX);
-      realpath(path, file_buffer);
       realpath(path, dir_buffer);
       char* dir_addr = dirname(dir_buffer);
+
       reading_point rp = {
         .file_handle = file,
-        .file = file_buffer,
         .dir = dir_addr
       };
       reading_stack_push(rp);
@@ -2052,7 +2050,6 @@
 
       reading_stack_pop();
       fclose(rp.file_handle);
-      free(rp.file);
       free(rp.dir);
     }
     void k_include_one() {
@@ -2409,7 +2406,6 @@
 
       reading_point rp = {
         .file_handle = stdin,
-        .file = current_dir,
         .dir = current_dir
       };
       reading_stack_push(rp);
@@ -3120,7 +3116,6 @@
 
       reading_point rp = {
         .file_handle = core_file,
-        .file = current_dir,
         .dir = current_dir
       };
       reading_stack_push(rp);
