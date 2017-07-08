@@ -3110,26 +3110,30 @@
       export_top_level();
       export_mise();
     }
+    #include "core.h";
+
+    void init_core() {
+      FILE* core_file = fmemopen(core_jo, core_jo_len, "r");
+
+      char current_dir[PATH_MAX];
+      getcwd(current_dir, PATH_MAX);
+
+      reading_point rp = {
+        .file_handle = core_file,
+        .file = current_dir,
+        .dir = current_dir
+      };
+      reading_stack_push(rp);
+
+      p_repl();
+
+      reading_stack_pop();
+      fclose(rp.file_handle);
+    }
     int main(int argc, char** argv) {
       argument_counter = argc;
       argument_string_array = argv;
-
       init_jojo();
-
-      if (argc != 1) {
-        data_stack_push(argv[1]);
-        p_path_readable_p();
-        if (data_stack_pop()) {
-          data_stack_push(argv[1]);
-          p_path_load();
-        }
-        else {
-          printf("- jojo can not load file: %s\n", argv[1]);
-          printf("  it is not a readable file\n");
-          printf("  bye bye ^-^/\n");
-          return 69;
-        }
-      }
-
+      init_core();
       p_repl();
     }

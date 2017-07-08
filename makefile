@@ -3,17 +3,15 @@ CC = gcc
 # CC = clang
 
 build:
-	$(CC) -w -O2 -ldl jojo.c -o jojo -rdynamic
-
-play:
+	@
 	./tangle.js &&\
+	echo "- xxd : core.jo -> core.h"  &&\
+	xxd -i core.jo > core.h &&\
+	echo "- compile : jojo.c -> jojo"  &&\
 	$(CC) -w -O2 -ldl jojo.c -o jojo -rdynamic &&\
-	./jojo core.org
+	echo "- finish ^-^"
 
 clean:
 	@
-	echo -e "\e[33;1m"
-	echo "* clean"
-	echo -e "\e[0m"
 	rm jojo
 	rm -f *~ */*~ */*/*~ */*/*/*~ */*/*/*/*~ */*/*/*/*/*~

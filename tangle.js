@@ -29,7 +29,10 @@ function tangle (input_file_name, output_file_name) {
       // do nothing
     }
   }
-  console.log("- tangle to :", output_file_name);
+  console.log("- tangle :",
+              input_file_name,
+              "->",
+              output_file_name);
   fs.writeFileSync(
     output_file_name,
     line_array_to_string(result_array));
