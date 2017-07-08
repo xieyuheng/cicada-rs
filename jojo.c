@@ -2300,7 +2300,7 @@
     void p_repl_printing_flag() { data_stack_push(top_repl_printing_flag); }
     void p_repl_printing_flag_on() { top_repl_printing_flag = true; }
     void p_repl_printing_flag_off() { top_repl_printing_flag = false; }
-    void p_jojo_print() {
+    void p_bare_jojo_print() {
       // jojo -> {terminal-output}
       jo* jojo = data_stack_pop();
       printf("[ ");
@@ -2342,7 +2342,7 @@
 
         printf("    - ");
         data_stack_push(return_stack[i].jojo);
-        p_jojo_print();
+        p_bare_jojo_print();
         printf("\n");
 
         if (return_stack[i].local_pointer ==
@@ -2360,7 +2360,7 @@
 
       printf("    - ");
       data_stack_push(return_stack[i].jojo);
-      p_jojo_print();
+      p_bare_jojo_print();
       printf("\n");
 
       if (return_stack[i].local_pointer ==
@@ -2541,7 +2541,7 @@
       define_prim("repl/printing-flag/on", p_repl_printing_flag_on);
       define_prim("repl/printing-flag/off", p_repl_printing_flag_off);
 
-      define_prim("jojo/print", p_jojo_print);
+      define_prim("bare-jojo/print", p_bare_jojo_print);
       define_prim("print-return-stack", p_print_return_stack);
       define_prim("debug", p_debug);
 

@@ -295,6 +295,12 @@
         (if dup round-bar eq? then drop
             read/jo jo/apply (loop))
         (el here (loop))))
+
+    (note
+      example
+      (run (cat "1 2 3" newline
+                "4 5 6" newline
+                "7 8 9" newline)))
     (define ignore-untildouble-quote
       (jojo
         read/raw-jo
@@ -314,7 +320,25 @@
         (if dup double-quote eq? then
             drop one-byte (loop))
         (el drop (loop))))
-    (note (run (cat "1 2 3" newline "4 5 6" newline "7 8 9" newline)))
+    (define orz
+      (keyword
+        cat (lev debug)))
+    (define read/bare-jojo
+      (jojo
+        (lev ins/jump)
+        compiling-stack/tos (> offset-place)
+        compiling-stack/inc
+        compiling-stack/tos (> bare-jojo)
+        compile-jojo
+        compiling-stack/tos (< offset-place) set-cell
+        (< bare-jojo)))
+
+    (define assert
+      (keyword
+        read/bare-jojo (> bare-jojo)
+        (< bare-jojo) apply
+        (if then end)
+        (orz "- assert fail on : " (< bare-jojo) bare-jojo/print newline)))
     (define jo/left-part-of-byte
       (jojo
         (note byte jo -> jo)
@@ -387,11 +411,11 @@
         (lev ins/jump)
         compiling-stack/tos (> offset-place)
         compiling-stack/inc
-        compiling-stack/tos (> bare-jojo-place)
+        compiling-stack/tos (> bare-jojo)
         define-class/keyword/one-method/message (> message)
         compile-jojo
         compiling-stack/tos (< offset-place) set-cell
-        (lev ins/lit (< bare-jojo-place)
+        (lev ins/lit (< bare-jojo)
              ins/lit (< message)
              swap
              cons)))
@@ -1254,7 +1278,8 @@
         string/print newline)
 
   (define command-line/print-argument/loop
-    (jojo (note index -> [io])
+    (jojo
+      (note index -> [io])
       (if dup argument-counter lt? then
           dup index->argument-string string/print
           newline
@@ -1263,14 +1288,15 @@
       drop end))
 
   (define command-line/print-argument
-    (jojo (note -> [io])
+    (jojo
+      (note -> [io])
       (int 0) command-line/print-argument/loop))
 
   (test command-line/print-argument)
 
   (note (test name-report))
 
-  (run (bare-jojo dup dup drop) jojo/print)
+  (run (bare-jojo dup dup drop) bare-jojo/print)
 
   (note
     (define c1
