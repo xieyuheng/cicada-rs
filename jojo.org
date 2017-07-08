@@ -1,36 +1,26 @@
 #+property: tangle jojo.c
 #+title:  jojo
 
-- use the core to give runtime docs about function
-
-- how to load the core ?
-
-- to used libjojo.c and libjojo.h
-  jojo.c as a jojo embedded in c
-
-- fix p_current_dir
-  the buffer in it will be overrided by another call of
-  p_current_dir
-  - no gc for string is a problem
-    we should write a text editor to test the use of <text>
-
-- [debug] trace and untrace a jo
-  by redefine
-
-- delimited continuation
-  to control return_stack [and data_stack]
-
 * todo
+
+  - to used libjojo.c and libjojo.h
+    jojo.c as a jojo embedded in c
+
+  - [debug] trace and untrace a jo
+    by redefine
+
+  - delimited continuation
+    to control return_stack [and data_stack]
+
+  - [for print return stack]
+    - jump shoud use offset instead of address
+    - local should distinguish 1-value-local from 2-value-local
 
   - [docs] for every limited number, jo-max-length, etc.
 
   - [maybe]
     all read_byte or read_jo should ask has_byte_p or has_jo_p first
     - ohterwise bar-ket are assumed to be balanced
-
-  - [maybe] [for print return stack]
-    - jump shoud use offset instead of address
-    - local should distinguish 1-value-local from 2-value-local
 
   - concurrent
     use list to implement return_stack and data_stack in jojo
@@ -2165,6 +2155,15 @@ j* jotable_insert
     }
     #+end_src
 
+*** k_byte
+
+    #+begin_src c
+    void k_byte() {
+      // (byte ...)
+
+    }
+    #+end_src
+
 *** export_byte
 
     #+begin_src c
@@ -3331,16 +3330,6 @@ j* jotable_insert
 
 * *system*
 
-*** p_current_dir
-
-    #+begin_src c
-    void p_current_dir() {
-      // -> string
-      char buf[PATH_MAX];
-      data_stack_push(getcwd(buf, PATH_MAX));
-    }
-    #+end_src
-
 *** p_command_run
 
     #+begin_src c
@@ -3408,7 +3397,6 @@ j* jotable_insert
 
     #+begin_src c
     void export_system() {
-      define_prim("current-dir", p_current_dir);
       define_prim("command/run", p_command_run);
       define_prim("n-command/run", p_n_command_run);
       define_prim("argument-counter", p_argument_counter);

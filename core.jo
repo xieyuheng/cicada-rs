@@ -336,14 +336,6 @@
                   compile-until-round-ket)
              cons cons cons)))
 
-    (define define-class/keyword/one-bare-variable
-      (keyword
-        (lev ins/lit
-             (esc read/jo here
-                  compile-until-round-ket)
-             ins/lit <data>
-             cons cons cons)))
-
     (define jo-ending-with-colon?
       (jojo
         (note jo -> bool)
@@ -401,8 +393,7 @@
 
     (define define-class/keyword/meta-variable-list
       (keyword
-        (alias = define-class/keyword/one-variable
-               - define-class/keyword/one-bare-variable)
+        (alias = define-class/keyword/one-variable)
         (lev ins/lit meta-variable
              null
              (esc compile-until-round-ket)
@@ -420,8 +411,7 @@
 
     (define define-class/keyword/variable-list
       (keyword
-        (alias = define-class/keyword/one-variable
-               - define-class/keyword/one-bare-variable)
+        (alias = define-class/keyword/one-variable)
         (lev ins/lit variable
              null
              (esc compile-until-round-ket)
@@ -537,9 +527,9 @@
         (if dup jo-ending-with-colon? then jo/append (loop))
         here (loop)))
 
-    (define :
+    (define ~
       (keyword
-        (jo :) generate-jo (> object-jo)
+        (jo send/sugar) generate-jo (> object-jo)
         (lev ins/lit (< object-jo)
              local-in
              (esc read/raw-jo
@@ -803,22 +793,22 @@
         (* dec (< self) dec (<% self))
         (* neg (< self) neg (<% self))
 
-        (* (: add: i) (< self) (< i) add (<% self))
-        (* (: sub: i) (< self) (< i) sub (<% self))
-        (* (: mul: i) (< self) (< i) mul (<% self))
-        (* (: div: i) (< self) (< i) div (<% self))
-        (* (: mod: i) (< self) (< i) mod (<% self))
+        (* (~ add: i) (< self) (< i) add (<% self))
+        (* (~ sub: i) (< self) (< i) sub (<% self))
+        (* (~ mul: i) (< self) (< i) mul (<% self))
+        (* (~ div: i) (< self) (< i) div (<% self))
+        (* (~ mod: i) (< self) (< i) mod (<% self))
 
-        (* (: eq?: i) (< self) (< i) eq?)
-        (* (: gt?: i) (< self) (< i) gt?)
-        (* (: lt?: i) (< self) (< i) lt?)
-        (* (: gteq?: i) (< self) (< i) gteq?)
-        (* (: lteq?: i) (< self) (< i) lteq?)
+        (* (~ eq?: i) (< self) (< i) eq?)
+        (* (~ gt?: i) (< self) (< i) gt?)
+        (* (~ lt?: i) (< self) (< i) lt?)
+        (* (~ gteq?: i) (< self) (< i) gteq?)
+        (* (~ lteq?: i) (< self) (< i) lteq?)
 
         (* print (< self) int/print)
         (* dot (< self) int/dot)
         (* write (string "(int ") string/print
-           (<< self) (: print)
+           (<< self) (~ print)
            (string ") ") string/print)))
     (define number
       (keyword
@@ -831,7 +821,7 @@
         (* write
            (string "(text ") string/print
            double-quote jo/print
-           (<< self) (: print)
+           (<< self) (~ print)
            double-quote jo/print
            (string ") ") string/print)))
     (define text
@@ -840,10 +830,10 @@
         (lev ins/lit <text>)))
     (note
       (test (text "k1 k2 k3")
-            2dup (: print) newline
-            2dup (: write) newline
-            2dup (: length) (: print) newline
-            2dup (: length) (: write) newline
+            2dup (~ print) newline
+            2dup (~ write) newline
+            2dup (~ length) (~ print) newline
+            2dup (~ length) (~ write) newline
             2drop))
     (define-class <object>
       (meta-variable
@@ -858,7 +848,7 @@
     (define-class <bare-stack>
       (inherit <object>)
       (variable
-        (- stack null))
+        (= stack (data null)))
       (method
         (* empty?
            (<< self) (get-data stack) null eq?)
@@ -876,7 +866,7 @@
            (note ->)
            (<< self) (get-data stack)
            cdr (<< self) (set-data stack))
-        (* (: push: data)
+        (* (~ push: data)
            (<< self) (get-data stack)
            (< data)
            cons
@@ -886,15 +876,15 @@
       (method
         (* pop
            (note -> object)
-           (<< self) (as <bare-stack>) (: pop)
+           (<< self) (as <bare-stack>) (~ pop)
            dup cdr swap car)
         (* tos
            (note -> object)
-           (<< self) (as <bare-stack>) (: tos)
+           (<< self) (as <bare-stack>) (~ tos)
            dup cdr swap car)
-        (* (: push: object)
+        (* (~ push: object)
            (<< self) (as <bare-stack>)
-           (: push: (data (<< object) cons)))))
+           (~ push: (data (<< object) cons)))))
     (define module-dir-jo  (data (string "/module") string->jo))
     (define module-file-jo (data (string "module.jo") string->jo))
     (define has-user-jojo-dir?
@@ -938,12 +928,12 @@
              module as nick
              module as nick (import name ...)
              module as nick ><><>< (shadow name ...)))
-      (define prefix-stack <bare-stack> (: new)
+      (define prefix-stack <bare-stack> (~ new)
         (note of prefix
               load-module push prefix-stack
               bind-name   use  prefix-stack by binding-filter-for-module
               load-module pop  prefix-stack))
-      (define defining-stack <bare-stack> (: new)
+      (define defining-stack <bare-stack> (~ new)
         (note of list of names [to be prefixed]
               load-module push       defining-stack
               bind-name   set tos of defining-stack by binding-filter-for-module
@@ -961,12 +951,12 @@
       (define binding-filter-for-module
         (jojo
           (note name -> module[version].name or name)
-          (if prefix-stack (: empty?) then end)
+          (if prefix-stack (~ empty?) then end)
           (el dup
               defining-stack
-              (: push: (data defining-stack (: pop) swap cons))
+              (~ push: (data defining-stack (~ pop) swap cons))
 
-              prefix-stack (: tos)
+              prefix-stack (~ tos)
               (raw-jo .) jo/append
               swap jo/append)))
 
@@ -974,14 +964,14 @@
       (define jo-filter-for-module
         (jojo
           (note name -> module[version].name or name)
-          (if defining-stack (: empty?) then end)
-          (if dup defining-stack (: tos) list/member? then
-              prefix-stack (: tos)
+          (if defining-stack (~ empty?) then end)
+          (if dup defining-stack (~ tos) list/member? then
+              prefix-stack (~ tos)
               (raw-jo .) jo/append
               swap jo/append)))
 
       (run (jo jo-filter-for-module) jo-filter-stack-push)
-      (define depending-stack <bare-stack> (: new)
+      (define depending-stack <bare-stack> (~ new)
         (note of list of pairs of module prefix and unique module-name
               load-module push        depending-stack
               use         set tos of  depending-stack
@@ -989,7 +979,7 @@
               (note module => module[version])
               load-module pop         depending-stack))
 
-      (run depending-stack (: push: (data null)))
+      (run depending-stack (~ push: (data null)))
       (define full-name?
         (jojo
           (note jo -> true or false)
@@ -1016,7 +1006,7 @@
         (jojo
           (note module -> module[version])
           (> module)
-          depending-stack (: tos)
+          depending-stack (~ tos)
           (< module) assoc/find
           (if then car end)
           (cat "- current-module->prefix fail" newline
@@ -1104,15 +1094,15 @@
 
           (< module version) load-module/get-path (> path)
 
-          prefix-stack    (: push: (data (< prefix)))
-          defining-stack  (: push: (data null))
-          depending-stack (: push: (data null))
+          prefix-stack    (~ push: (data (< prefix)))
+          defining-stack  (~ push: (data null))
+          depending-stack (~ push: (data null))
 
           (< path) path/load
 
-          depending-stack (: drop)
-          defining-stack  (: drop)
-          prefix-stack    (: drop)
+          depending-stack (~ drop)
+          defining-stack  (~ drop)
+          prefix-stack    (~ drop)
 
           loaded-module-record
           (< prefix) cons
@@ -1133,18 +1123,18 @@
             (if (< prefix) loaded-module-record list/member? not then
                 (< module version) load-module)
 
-            depending-stack (: pop)
+            depending-stack (~ pop)
             (< module) (< prefix) cons
             cons
-            depending-stack (: push: (data))
+            depending-stack (~ push: (data))
             end)
 
         (el (> nick) drop
-            depending-stack (: pop)
+            depending-stack (~ pop)
             dup
             car car (< nick) swap cons
             cons
-            depending-stack (: push: (data))
+            depending-stack (~ push: (data))
             end)))
 
     (define use
@@ -1158,76 +1148,76 @@
     (meta-variable
       (= testing-meta-variable (number 666)))
     (variable
-      (- bare-age (int 5))
+      (= bare-age (data (int 5)))
       (= age (number 13))
       (= language (text "chinese")))
     (method
       (* grow
-         (<< self) (get age) (: inc)
+         (<< self) (get age) (~ inc)
          (<< self) (set age))
-      (* (: grow-by: years)
-         (<< self) (get age) (: add: (<< years))
+      (* (~ grow-by: years)
+         (<< self) (get age) (~ add: (<< years))
          (<< self) (set age))
-      (* (: grow-by: year1 and-by: year2)
-         (<< self) (get age) (: add: (<< year1)) (: add: (<< year2))
+      (* (~ grow-by: year1 and-by: year2)
+         (<< self) (get age) (~ add: (<< year1)) (~ add: (<< year2))
          (<< self) (set age))
       (* report
          (cat "bare-age : "
               (<< self) (get-data bare-age) int/print newline
               "age : "
-              (<< self) (get age) (: print) newline
+              (<< self) (get age) (~ print) newline
               "languege : "
-              (<< self) (get language) (: print) newline
+              (<< self) (get language) (~ print) newline
               newline))))
 
-  (define xieyuheng <person> (: new))
+  (define xieyuheng <person> (~ new))
 
-  (run xieyuheng (: report)
-       xieyuheng (: grow)
-       xieyuheng (: report)
-       xieyuheng (: grow-by: (number 10))
-       xieyuheng (: report)
-       xieyuheng (: grow-by: (number 10))
-       xieyuheng (: report)
-       xieyuheng (: grow-by: (number 10) and-by: (number 10))
-       xieyuheng (: report))
+  (run xieyuheng (~ report)
+       xieyuheng (~ grow)
+       xieyuheng (~ report)
+       xieyuheng (~ grow-by: (number 10))
+       xieyuheng (~ report)
+       xieyuheng (~ grow-by: (number 10))
+       xieyuheng (~ report)
+       xieyuheng (~ grow-by: (number 10) and-by: (number 10))
+       xieyuheng (~ report))
 
-  (run <person> (get testing-meta-variable) (: write)
+  (run <person> (get testing-meta-variable) (~ write)
        (number 777)
        <person> (set testing-meta-variable)
-       <person> (get testing-meta-variable) (: write)
+       <person> (get testing-meta-variable) (~ write)
        (number 888)
        <person> (set testing-meta-variable)
-       <person> (get testing-meta-variable) (: write)
-       <person> (get testing-meta-variable-in-<object>) (: write)
+       <person> (get testing-meta-variable) (~ write)
+       <person> (get testing-meta-variable-in-<object>) (~ write)
 
        (number 26078)
        <person> (set testing-meta-variable-0)
-       <person> (get testing-meta-variable-0) (: write))
-  (define bare-stack-0 <bare-stack> (: new))
+       <person> (get testing-meta-variable-0) (~ write))
+  (define bare-stack-0 <bare-stack> (~ new))
 
-  (test bare-stack-0 (: empty?) dup dot dot newline
-        bare-stack-0 (: push: (data (int 1)))
-        bare-stack-0 (: empty?) dup dot dot newline
-        bare-stack-0 (: push: (data (int 2)))
-        bare-stack-0 (: empty?) dup dot dot newline
-        bare-stack-0 (: push: (data (int 3)))
-        bare-stack-0 (: empty?) dup dot dot newline
-        bare-stack-0 (: pop) int/print newline
-        bare-stack-0 (: empty?) dup dot dot newline
-        bare-stack-0 (: pop) int/print newline
-        bare-stack-0 (: empty?) dup dot dot newline
-        bare-stack-0 (: pop) int/print newline
-        bare-stack-0 (: empty?) dup dot dot newline)
+  (test bare-stack-0 (~ empty?) dup dot dot newline
+        bare-stack-0 (~ push: (data (int 1)))
+        bare-stack-0 (~ empty?) dup dot dot newline
+        bare-stack-0 (~ push: (data (int 2)))
+        bare-stack-0 (~ empty?) dup dot dot newline
+        bare-stack-0 (~ push: (data (int 3)))
+        bare-stack-0 (~ empty?) dup dot dot newline
+        bare-stack-0 (~ pop) int/print newline
+        bare-stack-0 (~ empty?) dup dot dot newline
+        bare-stack-0 (~ pop) int/print newline
+        bare-stack-0 (~ empty?) dup dot dot newline
+        bare-stack-0 (~ pop) int/print newline
+        bare-stack-0 (~ empty?) dup dot dot newline)
 
-  (define stack-0 <stack> (: new))
+  (define stack-0 <stack> (~ new))
 
-  (test stack-0 (: push: (number 1))
-        stack-0 (: push: (number 2))
-        stack-0 (: push: (number 3))
-        stack-0 (: pop) (: write)
-        stack-0 (: pop) (: write)
-        stack-0 (: pop) (: write))
+  (test stack-0 (~ push: (number 1))
+        stack-0 (~ push: (number 2))
+        stack-0 (~ push: (number 3))
+        stack-0 (~ pop) (~ write)
+        stack-0 (~ pop) (~ write)
+        stack-0 (~ pop) (~ write))
   (use hiya 0.0.1 as h)
   (run (raw-jo hiya.name) jo/print newline
        (jo hiya.name) jo/print newline

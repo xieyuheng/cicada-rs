@@ -1312,6 +1312,10 @@
       // byte ->
       printf("%c", data_stack_pop());
     }
+    void k_byte() {
+      // (byte ...)
+
+    }
     void export_byte() {
       define_prim("has-byte?", p_has_byte_p);
       define_prim("read/byte", p_read_byte);
@@ -2123,11 +2127,6 @@
       define_prim("path/load", p_path_load);
       define_primkey("include", k_include);
     }
-    void p_current_dir() {
-      // -> string
-      char buf[PATH_MAX];
-      data_stack_push(getcwd(buf, PATH_MAX));
-    }
     void p_command_run() {
       // string -> {*}
       system(data_stack_pop());
@@ -2167,7 +2166,6 @@
       data_stack_push(env_string);
     }
     void export_system() {
-      define_prim("current-dir", p_current_dir);
       define_prim("command/run", p_command_run);
       define_prim("n-command/run", p_n_command_run);
       define_prim("argument-counter", p_argument_counter);
