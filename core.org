@@ -1,9 +1,6 @@
 #+property: tangle core.jo
 #+title: core
 
-- syntax for byte
-  instead of string/last-byte
-
 - shadow-the-core
 
 - import for module
@@ -451,6 +448,29 @@
     #+end_src
 
 *** (byte)
+
+    #+begin_src jojo
+    (define ignore-untildouble-quote
+      (jojo
+        read/raw-jo
+        (if dup double-quote eq? then drop end)
+        (el drop (loop))))
+
+    (define one-byte
+      (keyword
+        read/byte (> byte)
+        ignore-untildouble-quote
+        (lev ins/lit (< byte))))
+
+    (define byte
+      (keyword
+        read/raw-jo
+        (if dup round-ket eq? then drop end)
+        (if dup double-quote eq? then
+            drop one-byte (loop))
+        (el drop (loop))))
+    #+end_src
+
 *** test
 
     #+begin_src jojo
@@ -547,7 +567,7 @@
       (jojo
         (note jo -> bool)
         jo->string string/last-byte
-        (string ":") string/last-byte eq?))
+        (byte ":") eq?))
 
     (define define-class/keyword/one-method/complex-message
       (keyword
@@ -1430,7 +1450,7 @@
         (jojo
           (note jo -> true or false)
           jo->string (> s)
-          (string ".") string/last-byte (> dot-byte)
+          (byte ".") (> dot-byte)
 
           (if (< dot-byte s) string/member? not then false end)
           (if (< s) string/last-byte (< dot-byte) eq? then false end)
@@ -1440,14 +1460,12 @@
       (define full-name->module
         (jojo
           (note module.name -> module)
-          (string ".") string/last-byte
-          swap jo/left-part-of-byte))
+          (byte ".") swap jo/left-part-of-byte))
 
       (define full-name->name
         (jojo
           (note module.name -> name)
-          (string ".") string/last-byte
-          swap jo/right-part-of-byte))
+          (byte ".") swap jo/right-part-of-byte))
       #+end_src
 
 ***** current-module->prefix

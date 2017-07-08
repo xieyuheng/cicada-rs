@@ -2056,7 +2056,7 @@
       fclose(rp.file_handle);
       free(rp.dir);
     }
-    void k_include_one() {
+    void k_one_include() {
       // "..."
       char buffer[PATH_MAX];
       cell cursor = 0;
@@ -2088,7 +2088,7 @@
           jo_apply(read_jo());
         }
         else if (s == DOUBLE_QUOTE) {
-          k_include_one();
+          k_one_include();
         }
         else {
           // do nothing
