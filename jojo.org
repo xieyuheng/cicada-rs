@@ -3912,11 +3912,12 @@ j* jotable_insert
         kernel_signal_action.sa_flags = SA_SIGINFO | SA_NODEFER | SA_RESTART;
         kernel_signal_action.sa_sigaction = kernel_signal_handler;
 
-        int sig_array[] = {SIGSEGV};
+        int sig_array[] = { SIGSEGV, SIGBUS, SIGFPE, SIGILL,
+                            SIGPIPE, SIGSYS, SIGXCPU, SIGXFSZ};
         int sig_array_length = sizeof(sig_array)/sizeof(sig_array[0]);
         cell i = 0;
         while (i < sig_array_length) {
-          if (sigaction(SIGSEGV, &kernel_signal_action, NULL) == -1) {
+          if (sigaction(sig_array[i], &kernel_signal_action, NULL) == -1) {
             perror("- init_kernel_signal_handler fail");
           }
           i++;
