@@ -17,6 +17,8 @@
     #include <dirent.h>
 
     #include <signal.h>
+
+    #include <limits.h>
     typedef enum { false, true } bool;
     typedef intptr_t cell;
     #define cell_size (sizeof(cell))
@@ -667,6 +669,7 @@
       if (!jotable_entry_used(jotable[jo])) {
         printf("- jo_apply meet undefined jo : %s\n", jo2str(jo));
         p_debug();
+        return;
       }
 
       cell tag = jotable[jo].tag;
@@ -1220,49 +1223,67 @@
       define_prim("set-byte", p_set_byte);
       define_prim("get-byte", p_get_byte);
     }
-    typedef struct {
-      FILE* file_handle;
-      char* dir;
-    } reading_point;
-
-    typedef reading_point reading_stack_t[64];
+    typedef FILE* reading_stack_t[64];
 
     reading_stack_t reading_stack;
     cell reading_stack_base = 0;
     cell reading_stack_pointer = 0;
 
-    void reading_stack_push(reading_point value) {
+    void reading_stack_push(FILE* value) {
       reading_stack[reading_stack_pointer] = value;
       reading_stack_pointer++;
     }
 
-    reading_point reading_stack_pop() {
+    FILE* reading_stack_pop() {
       reading_stack_pointer--;
       return reading_stack[reading_stack_pointer];
     }
 
-    reading_point reading_stack_tos() {
+    FILE* reading_stack_tos() {
       return reading_stack[reading_stack_pointer - 1];
     }
 
     bool reading_stack_empty_p() {
       return reading_stack_pointer == reading_stack_base;
     }
-    void real_reading_path(char* path, char* buffer) {
-      if (path[0] == '/') {
-        realpath(path, buffer);
-        return;
+    void erase_real_path_to_dir(char* path) {
+      cell cursor = strlen(path);
+      while (path[cursor] != '/') {
+        path[cursor] = '\0';
+        cursor--;
       }
-      else if (reading_stack_empty_p()) {
-        realpath(path, buffer);
-        return;
+      path[cursor] = '\0';
+    }
+
+    char* get_real_reading_path(char* path) {
+      // caller of this function
+      // should free its return value
+      char* real_reading_path = malloc(PATH_MAX);
+      if (path[0] == '/' ||
+          reading_stack_empty_p() ||
+          reading_stack_tos() == stdin) {
+        realpath(path, real_reading_path);
+        return real_reading_path;
       }
       else {
-        buffer[0] = 0;
-        strcat(buffer, reading_stack_tos().dir);
-        strcat(buffer, "/");
-        strcat(buffer, path);
-        return;
+        char* proc_link_path = malloc(PATH_MAX);
+        sprintf(proc_link_path, "/proc/self/fd/%d", fileno(reading_stack_tos()));
+        ssize_t real_bytes = readlink(proc_link_path, real_reading_path, PATH_MAX);
+        if (real_bytes == -1) {
+          printf("- get_real_reading_path fail to readlink\n");
+          printf("  proc_link_path : %s\n", proc_link_path);
+          perror("  readlink : ");
+          free(proc_link_path);
+          free(real_reading_path);
+          p_debug();
+          return NULL; // to fool the compiler
+        }
+        free(proc_link_path);
+        real_reading_path[real_bytes] = '\0';
+        erase_real_path_to_dir(real_reading_path);
+        strcat(real_reading_path, "/");
+        strcat(real_reading_path, path);
+        return real_reading_path;
       }
     }
     bool has_byte_p() {
@@ -1271,7 +1292,7 @@
         file = stdin;
       }
       else {
-        file = reading_stack_tos().file_handle;
+        file = reading_stack_tos();
       }
 
       if (feof(file) == 0) {
@@ -1289,7 +1310,7 @@
         return fgetc(stdin);
       }
       else {
-        return fgetc(reading_stack_tos().file_handle);
+        return fgetc(reading_stack_tos());
       }
     }
     void byte_unread(byte c) {
@@ -1297,7 +1318,7 @@
         ungetc(c, stdin);
       }
       else {
-        ungetc(c, reading_stack_tos().file_handle);
+        ungetc(c, reading_stack_tos());
       }
     }
     void p_read_byte() {
@@ -2013,12 +2034,12 @@
       // file -> path
       FILE* file = data_stack_pop();
 
-      char proclnk[PATH_MAX];
+      char proc_link_path[PATH_MAX];
       char filename[PATH_MAX];
 
-      sprintf(proclnk, "/proc/self/fd/%d", fileno(file));
+      sprintf(proc_link_path, "/proc/self/fd/%d", fileno(file));
 
-      ssize_t real_bytes = readlink(proclnk, filename, PATH_MAX);
+      ssize_t real_bytes = readlink(proc_link_path, filename, PATH_MAX);
       if (real_bytes == -1) {
         printf("- p_file_print_path fail readlink /proc/self/fd/%d\n", fileno(file));
         perror("\n");
@@ -2036,46 +2057,35 @@
       FILE* file = fopen(path, "r");
       if(file == NULL) {
         printf("- p_path_load fail : %s\n", path);
-        perror("File opening failed");
+        perror("file open failed");
         return;
       }
-
-      char* dir_buffer = malloc(PATH_MAX);
-      realpath(path, dir_buffer);
-      char* dir_addr = dirname(dir_buffer);
-
-      reading_point rp = {
-        .file_handle = file,
-        .dir = dir_addr
-      };
-      reading_stack_push(rp);
-
+      reading_stack_push(file);
       p_repl();
-
       reading_stack_pop();
-      fclose(rp.file_handle);
-      free(rp.dir);
+      fclose(file);
     }
     void k_one_include() {
       // "..."
-      char buffer[PATH_MAX];
+      char* path = malloc(PATH_MAX);
       cell cursor = 0;
       while (true) {
         char c = read_byte();
         if (c == '"') {
-          buffer[cursor] = 0;
+          path[cursor] = 0;
           cursor++;
           break;
         }
         else {
-          buffer[cursor] = c;
+          path[cursor] = c;
           cursor++;
         }
       }
-      char buffer1[PATH_MAX];
-      real_reading_path(buffer, buffer1);
-      data_stack_push(buffer1);
+      char* real_read_path = get_real_reading_path(path);
+      free(path);
+      data_stack_push(real_read_path);
       p_path_load();
+      free(real_read_path);
     }
     void k_include() {
       // (include "..." ...)
@@ -2172,41 +2182,43 @@
       define_prim("index->argument-string", p_index_to_argument_string);
       define_prim("get-env-string", p_get_env_string);
     }
-    void ccall (char* str, void* lib) {
-      primitive fun = dlsym(lib, str);
+    void ccall (char* function_name, void* lib) {
+      primitive fun = dlsym(lib, function_name);
       if (fun == NULL) {
-        printf("can not find %s function lib : %s\n",
-               str, dlerror());
+        printf("- ccall fail\n");
+        printf("  function_name : %s\n", function_name);
+        printf("  dynamic link error : %s\n", dlerror());
       };
       fun();
     }
-    void* get_clib(char* rel_path) {
-      char path[PATH_MAX];
-      real_reading_path(rel_path, path);
-      void* lib = dlopen(path, RTLD_LAZY);
-      if (lib == NULL) {
-        printf("fail to open library : %s : %s\n",
-               path, dlerror());
-      };
-      return lib;
-    }
     void k_clib_one() {
       // "..."
-      char buffer[PATH_MAX];
+      char* path = malloc(PATH_MAX);
       cell cursor = 0;
       while (true) {
         char c = read_byte();
         if (c == '"') {
-          buffer[cursor] = 0;
+          path[cursor] = 0;
           cursor++;
           break;
         }
         else {
-          buffer[cursor] = c;
+          path[cursor] = c;
           cursor++;
         }
       }
-      ccall("export", get_clib(buffer));
+      char* real_read_path = get_real_reading_path(path);
+      free(path);
+      void* lib = dlopen(real_read_path, RTLD_LAZY);
+      if (lib == NULL) {
+        printf("- k_clib_one fail to open library\n");
+        printf("  real_read_path : %s\n", real_read_path);
+        printf("  dynamic link error : %s\n", dlerror());
+        p_debug();
+        return;
+      };
+      free(real_read_path);
+      ccall("export", lib);
     }
     void k_clib() {
       // (clib "..." ...)
@@ -2399,14 +2411,7 @@
       }
     }
     void p_debug() {
-      char current_dir[PATH_MAX];
-      getcwd(current_dir, PATH_MAX);
-
-      reading_point rp = {
-        .file_handle = stdin,
-        .dir = current_dir
-      };
-      reading_stack_push(rp);
+      reading_stack_push(stdin);
 
       printf("- in debug-repl [level %ld] >_<!\n", debug_repl_level);
       printf("  available commends : exit bye\n");
@@ -2601,7 +2606,7 @@
           printf("- ending_jo2 : %s\n", jo2str(ending_jo2));
           k_ignore();
           p_debug();
-          return JO_NULL; // this is to fool the compiler
+          return JO_NULL; // to fool the compiler
         }
       }
     }
@@ -3011,6 +3016,12 @@
 
       define_prim("newline", p_newline);
     }
+    void p_stdin() {
+      data_stack_push(stdin);
+    }
+    void export_play() {
+      define_prim("stdin", p_stdin);
+    }
     jotable_entry proto_jotable_entry(cell index) {
       jotable_entry e = {
         .index = index,
@@ -3103,25 +3114,17 @@
       export_cffi();
       export_top_level();
       export_mise();
+
+      export_play();
     }
     #include "core.h";
 
     void init_core() {
       FILE* core_file = fmemopen(core_jo, core_jo_len, "r");
-
-      char current_dir[PATH_MAX];
-      getcwd(current_dir, PATH_MAX);
-
-      reading_point rp = {
-        .file_handle = core_file,
-        .dir = current_dir
-      };
-      reading_stack_push(rp);
-
+      reading_stack_push(core_file);
       p_repl();
-
       reading_stack_pop();
-      fclose(rp.file_handle);
+      fclose(core_file);
     }
     int main(int argc, char** argv) {
       argument_counter = argc;

@@ -113,7 +113,7 @@
         (if current-mark max-mark eq? then
             sweep-cons-area
             (int 0) (address current-mark) set-cell)
-        current-mark (int 1) add (address current-mark) set-cell
+        current-mark inc (address current-mark) set-cell
         name-record mark-cons-area/name-record
         stack-pointer
         mark-cons-area/data-stack))
@@ -171,37 +171,6 @@
         new/cons
         tuck set-car
         tuck set-cdr))
-
-
-    (note the following tests are for small cons-area)
-
-    (note (test (int 0)
-                (int 1) cons
-                (int 2) cons
-                dup car dot
-                dup cdr car dot
-                dup cdr cdr dot
-
-                dup cons? dot
-                dup cdr cons? dot
-                dup car cons? dot
-                dup cdr car cons? dot
-                dup cdr cdr cons? dot
-                dot
-
-                current-mark
-                dot))
-
-    (note (test newline
-                new/cons dot
-                new/cons dot
-                new/cons dot
-                new/cons dot
-                new/cons dot
-                current-mark dot
-                newline
-                cons-area/report
-                newline))
     (define assq
       (jojo
         (note assoc-list value -> pair or null)
@@ -231,17 +200,6 @@
         car (recur)
         swap
         cons))
-
-    (note
-      (run (int 1) (int 2) cons
-           (int 3) null cons
-           cons
-           dup
-           cons
-           dup list/print newline
-           dup list/copy list/print newline
-           dup list/copy list/print newline
-           drop))
     (define set-tail
       (jojo
         (note element list ->)
@@ -295,12 +253,6 @@
         (if dup round-bar eq? then drop
             read/jo jo/apply (loop))
         (el here (loop))))
-
-    (note
-      example
-      (run (cat "1 2 3" newline
-                "4 5 6" newline
-                "7 8 9" newline)))
     (define ignore-untildouble-quote
       (jojo
         read/raw-jo
@@ -871,13 +823,6 @@
       (keyword
         (jo string) jo/apply
         (lev ins/lit <text>)))
-    (note
-      (test (text "k1 k2 k3")
-            2dup (~ print) newline
-            2dup (~ write) newline
-            2dup (~ length) (~ print) newline
-            2dup (~ length) (~ write) newline
-            2drop))
     (define-class <object>
       (meta-variable
         (= testing-meta-variable-in-<object> (number 26881)))
@@ -970,7 +915,7 @@
         (use module
              module as nick
              module as nick (import name ...)
-             module as nick ><><>< (shadow name ...)))
+             module as nick (import-all) (shadow name ...)))
       (define prefix-stack <bare-stack> (~ new)
         (note of prefix
               load-module push prefix-stack
@@ -1107,6 +1052,8 @@
           (> module version)
 
           (< module version) load-module/get-user-path (> user-path)
+          (< user-path) end
+
           (< module version) load-module/get-system-path (> system-path)
 
           (if (< user-path) path/readable? then (< user-path) end)
@@ -1283,7 +1230,7 @@
       (if dup argument-counter lt? then
           dup index->argument-string string/print
           newline
-          (int 1) add
+          inc
           (loop))
       drop end))
 
@@ -1305,7 +1252,7 @@
         (if argument-counter lt? then
             dup index->argument-string string/print
             newline
-            (int 1) add)))
+            inc)))
 
     (run c1 c1 c1)
 

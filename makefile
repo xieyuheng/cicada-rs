@@ -1,6 +1,6 @@
 .ONESHELL:
-CC = gcc
-# CC = clang
+#CC = gcc
+CC = clang
 
 build:
 	@
@@ -8,7 +8,7 @@ build:
 	echo "- xxd : core.jo -> core.h"  &&\
 	xxd -i core.jo > core.h &&\
 	echo "- compile : jojo.c -> jojo"  &&\
-	$(CC) -w -O2 -ldl jojo.c -o jojo -rdynamic &&\
+	$(CC) -O2 -w -ldl jojo.c -o jojo -rdynamic &&\
 	echo "- finish ^-^"
 
 clean:
