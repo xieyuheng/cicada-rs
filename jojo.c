@@ -2321,15 +2321,23 @@
           break;
         }
         if (jojo[0] == JO_INS_INT) {
-          printf("{%s ", jo2str(jojo[0]));
-          printf("%ld} ", jojo[1]);
+          printf("(int %ld) "
+                 , jo2str(jojo[0])
+                 , jojo[1]);
           jojo++;
           jojo++;
         }
-        if (jojo[0] == JO_INS_JUMP ||
-            jojo[0] == JO_INS_JUMP_IF_FALSE) {
-          printf("{%s ", jo2str(jojo[0]));
-          printf("%ld} ", ((jo*)jojo[1] - jojo));
+        if (jojo[0] == JO_INS_JUMP_IF_FALSE) {
+          printf("(jump-if-false %ld) "
+                 , jo2str(jojo[0])
+                 , ((jo*)jojo[1] - jojo));
+          jojo++;
+          jojo++;
+        }
+        if (jojo[0] == JO_INS_JUMP) {
+          printf("(jump %ld) "
+                 , jo2str(jojo[0])
+                 , ((jo*)jojo[1] - jojo));
           jojo++;
           jojo++;
         }
@@ -2378,15 +2386,20 @@
         if (!has_jo_p()) {
           return;
         }
-        jo s = read_jo();
-        if (s == str2jo("exit")) {
+        jo jo = read_raw_jo();
+        if (jo == str2jo("help")) {
+          printf("- debug-repl usage :\n");
+          printf("  - available commands :\n");
+          printf("    help exit bye\n");
+        }
+        else if (jo == str2jo("exit")) {
           return;
         }
-        if (s == str2jo("bye")) {
+        else if (jo == str2jo("bye")) {
           p_bye();
           return;
         }
-        else if (s == ROUND_BAR) {
+        else if (jo == ROUND_BAR) {
           jo_apply(read_jo());
           p_print_data_stack();
           printf("debug[%ld]> ", debug_repl_level);
@@ -2400,7 +2413,6 @@
       reading_stack_push(stdin);
 
       printf("- in debug-repl [level %ld] >_<!\n", debug_repl_level);
-      printf("  available commends : exit bye\n");
       p_print_return_stack();
       p_print_data_stack();
       printf("debug[%ld]> ", debug_repl_level);
@@ -2446,7 +2458,7 @@
           printf("- stepper usage :\n");
           printf("  type '.' to execute one step\n");
           printf("  type a numebr to execute the number of steps\n");
-          printf("  - available commands in stepper :\n");
+          printf("  - available commands :\n");
           printf("    help exit bye\n");
         }
         else if (jo == str2jo(".")) {
