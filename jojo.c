@@ -1479,6 +1479,9 @@
       }
       data_stack_push(false);
     }
+    void p_string_equal_p() {
+      data_stack_push(string_equal(data_stack_pop(), data_stack_pop()));
+    }
     void export_string() {
       define_primkey("string", k_string);
       define_primkey("one-string", k_one_string);
@@ -1490,6 +1493,7 @@
       define_prim("string/last-byte", p_string_last_byte);
       define_prim("string/member?", p_string_member_p);
       define_prim("string/find-byte", p_string_find_byte);
+      define_prim("string/equal?", p_string_equal_p);
     }
     void p_alias_push() {
       jo name = data_stack_pop();
@@ -2072,18 +2076,18 @@
       FILE* file = data_stack_pop();
 
       char proc_link_path[PATH_MAX];
-      char filename[PATH_MAX];
+      char file_path[PATH_MAX];
 
       sprintf(proc_link_path, "/proc/self/fd/%d", fileno(file));
 
-      ssize_t real_bytes = readlink(proc_link_path, filename, PATH_MAX);
+      ssize_t real_bytes = readlink(proc_link_path, file_path, PATH_MAX);
       if (real_bytes == -1) {
         printf("- p_file_print_path fail readlink /proc/self/fd/%d\n", fileno(file));
         perror("\n");
       }
       else {
-        filename[real_bytes] = '\0';
-        printf("%s", filename);
+        file_path[real_bytes] = '\0';
+        printf("%s", file_path);
       }
     }
     void p_repl();
@@ -2192,19 +2196,19 @@
       system(str);
       free(str);
     }
-    cell argument_counter;
+    cell cmd_number;
 
-    void p_argument_counter() {
-      // -> argument_counter
-      data_stack_push(argument_counter);
+    void p_cmd_number() {
+      // -> cmd_number
+      data_stack_push(cmd_number);
     }
-    char** argument_string_array;
+    char** cmd_string_array;
 
-    void p_index_to_argument_string() {
+    void p_index_to_cmd_string() {
       // index -> string
       cell index = data_stack_pop();
-      char* argument_string = argument_string_array[index];
-      data_stack_push(argument_string);
+      char* cmd_string = cmd_string_array[index];
+      data_stack_push(cmd_string);
     }
     void p_get_env_string() {
       // string -> string
@@ -2215,8 +2219,8 @@
     void export_system() {
       define_prim("command/run", p_command_run);
       define_prim("n-command/run", p_n_command_run);
-      define_prim("argument-counter", p_argument_counter);
-      define_prim("index->argument-string", p_index_to_argument_string);
+      define_prim("cmd-number", p_cmd_number);
+      define_prim("index->cmd-string", p_index_to_cmd_string);
       define_prim("get-env-string", p_get_env_string);
     }
     void ccall (char* function_name, void* lib) {
@@ -2311,25 +2315,23 @@
       return_stack_new_point(jojo);
       eval();
     }
-    bool testing_flag = false;
-    void p_testing_flag() { data_stack_push(testing_flag); }
-    void p_testing_flag_on() { testing_flag = true; }
-    void p_testing_flag_off() { testing_flag = false; }
+    bool test_flag = false;
+    void p_test_flag() { data_stack_push(test_flag); }
+    void p_test_flag_on() { test_flag = true; }
+    void p_test_flag_off() { test_flag = false; }
+
     void k_test() {
-      if (testing_flag) {
+      if (test_flag) {
         k_run();
       }
       else {
         k_ignore();
       }
     }
-    bool top_repl_printing_flag = false;
-
-    void p_print_data_stack_by_flag() {
-      if (top_repl_printing_flag) {
-        p_print_data_stack();
-      }
-    }
+    bool repl_flag = false;
+    void p_repl_flag() { data_stack_push(repl_flag); }
+    void p_repl_flag_on() { repl_flag = true; }
+    void p_repl_flag_off() { repl_flag = false; }
 
     void p_repl() {
       while (true) {
@@ -2339,16 +2341,15 @@
         jo s = read_jo();
         if (s == ROUND_BAR) {
           jo_apply(read_jo());
-          p_print_data_stack_by_flag();
+          if (repl_flag) {
+            p_print_data_stack();
+          }
         }
         else {
           // loop
         }
       }
     }
-    void p_repl_printing_flag() { data_stack_push(top_repl_printing_flag); }
-    void p_repl_printing_flag_on() { top_repl_printing_flag = true; }
-    void p_repl_printing_flag_off() { top_repl_printing_flag = false; }
     void p_bare_jojo_print() {
       // jojo -> {terminal-output}
       jo* jojo = data_stack_pop();
@@ -2580,15 +2581,14 @@
       define_primkey("run", k_run);
 
       define_primkey("test", k_test);
-      define_prim("testing-flag", p_testing_flag);
-      define_prim("testing-flag/on", p_testing_flag_on);
-      define_prim("testing-flag/off", p_testing_flag_off);
+      define_prim("test-flag", p_test_flag);
+      define_prim("test-flag/on", p_test_flag_on);
+      define_prim("test-flag/off", p_test_flag_off);
 
-      define_prim("print-data-stack/by-flag", p_print_data_stack_by_flag);
       define_prim("repl", p_repl);
-      define_prim("repl/printing-flag", p_repl_printing_flag);
-      define_prim("repl/printing-flag/on", p_repl_printing_flag_on);
-      define_prim("repl/printing-flag/off", p_repl_printing_flag_off);
+      define_prim("repl-flag", p_repl_flag);
+      define_prim("repl-flag/on", p_repl_flag_on);
+      define_prim("repl-flag/off", p_repl_flag_off);
 
       define_prim("bare-jojo/print", p_bare_jojo_print);
       define_prim("print-return-stack", p_print_return_stack);
@@ -3171,8 +3171,8 @@
       fclose(core_file);
     }
     int main(int argc, char** argv) {
-      argument_counter = argc;
-      argument_string_array = argv;
+      cmd_number = argc;
+      cmd_string_array = argv;
       init_jojo();
       init_core();
       p_repl();

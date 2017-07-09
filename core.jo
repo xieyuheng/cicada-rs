@@ -1,5 +1,3 @@
-  (run testing-flag/on)
-  (test repl/printing-flag/on)
     (define cons-size      (data (int 3) cell-size mul))
     (define cons-area-size (data (int 1024 1024) mul cons-size mul))
     (define cons-area      (data cons-area-size allocate))
@@ -892,7 +890,8 @@
         (if has-system-jojo-dir? then get-system-jojo-dir string->jo end)
         (el default-system-jojo-dir-jo)))
       (note
-        (shadow-the-core name ...)
+        (core-shadow name ...)
+        (core-shadow-all)
         (use module
              module as nick
              module as nick (import name ...)
@@ -1112,144 +1111,48 @@
         read/raw-jo (if dup round-ket eq? then 2drop end)
         use/help
         (loop)))
-  (define-class <person>
-    (inherit <object>)
-    (meta-variable
-      (= testing-meta-variable (number 666)))
-    (variable
-      (= bare-age (data (int 5)))
-      (= age (number 13))
-      (= language (text "chinese")))
-    (method
-      (* grow
-         (<< self) (get age) (~ inc)
-         (<< self) (set age))
-      (* (~ grow-by: years)
-         (<< self) (get age) (~ add: (<< years))
-         (<< self) (set age))
-      (* (~ grow-by: year1 and-by: year2)
-         (<< self) (get age) (~ add: (<< year1)) (~ add: (<< year2))
-         (<< self) (set age))
-      (* report
-         (cat "bare-age : "
-              (<< self) (get-data bare-age) int/print newline
-              "age : "
-              (<< self) (get age) (~ print) newline
-              "languege : "
-              (<< self) (get language) (~ print) newline
-              newline))))
-
-  (define xieyuheng <person> (~ new))
-
-  (run xieyuheng (~ report)
-       xieyuheng (~ grow)
-       xieyuheng (~ report)
-       xieyuheng (~ grow-by: (number 10))
-       xieyuheng (~ report)
-       xieyuheng (~ grow-by: (number 10))
-       xieyuheng (~ report)
-       xieyuheng (~ grow-by: (number 10) and-by: (number 10))
-       xieyuheng (~ report))
-
-  (run <person> (get testing-meta-variable) (~ write)
-       (number 777)
-       <person> (set testing-meta-variable)
-       <person> (get testing-meta-variable) (~ write)
-       (number 888)
-       <person> (set testing-meta-variable)
-       <person> (get testing-meta-variable) (~ write)
-       <person> (get testing-meta-variable-in-<object>) (~ write)
-
-       (number 26078)
-       <person> (set testing-meta-variable-0)
-       <person> (get testing-meta-variable-0) (~ write))
-  (define bare-stack-0 <bare-stack> (~ new))
-
-  (test bare-stack-0 (~ empty?) dup dot dot newline
-        bare-stack-0 (~ push: (data (int 1)))
-        bare-stack-0 (~ empty?) dup dot dot newline
-        bare-stack-0 (~ push: (data (int 2)))
-        bare-stack-0 (~ empty?) dup dot dot newline
-        bare-stack-0 (~ push: (data (int 3)))
-        bare-stack-0 (~ empty?) dup dot dot newline
-        bare-stack-0 (~ pop) int/print newline
-        bare-stack-0 (~ empty?) dup dot dot newline
-        bare-stack-0 (~ pop) int/print newline
-        bare-stack-0 (~ empty?) dup dot dot newline
-        bare-stack-0 (~ pop) int/print newline
-        bare-stack-0 (~ empty?) dup dot dot newline)
-
-  (define stack-0 <stack> (~ new))
-
-  (test stack-0 (~ push: (number 1))
-        stack-0 (~ push: (number 2))
-        stack-0 (~ push: (number 3))
-        stack-0 (~ pop) (~ write)
-        stack-0 (~ pop) (~ write)
-        stack-0 (~ pop) (~ write))
-  (use hiya 0.0.1 as h)
-  (run (raw-jo hiya.name) jo/print newline
-       (jo hiya.name) jo/print newline
-       hiya.hiya
-       (jo h.name) jo/print newline
-       h.hiya)
-
-  (use hi 0.0.1)
-  (run hi.hi)
-
-  (use welcome 0.0.1 as w)
-  (run w.welcome)
-  (test (string "HOME") get-env-string
-        string/print newline)
-
-  (test (string "PATH") get-env-string
-        string/print newline)
-
-  (define command-line/print-argument/loop
-    (jojo
-      (note index -> [io])
-      (if dup argument-counter lt? then
-          dup index->argument-string string/print
-          newline
-          inc
-          (loop))
-      drop end))
-
-  (define command-line/print-argument
-    (jojo
-      (note -> [io])
-      (int 0) command-line/print-argument/loop))
-
-  (test command-line/print-argument)
-
-  (note (test name-report))
-
-  (run (bare-jojo dup dup drop) bare-jojo/print)
-
-  (note
-    (define c1
+    (define welcome-to-jojo
       (jojo
-        dup (> x) dup debug dup (< x)
-        (if argument-counter lt? then
-            dup index->argument-string string/print
-            (byte "a" "b" "c")
-            newline
-            (string "123")
-            inc)))
-
-    (run c1 c1 c1)
-
-    (define c3
+        repl-flag/on
+        (cat "welcome-to-jojo ^-^/" newline)))
+    (define set-cmd-flag/loop
       (jojo
-        dup (> k1)
-        dup (> k2)
-        debug
-        debug
-        debug
-        (jojo dup dup)
-        (< k2)
-        (< k2))))
+        (note index -> {set flag})
+        (if dup cmd-number eq? then drop end)
+        dup index->cmd-string
+        (if dup (string "--test") string/equal? then test-flag/on)
+        (if dup (string "--repl") string/equal? then repl-flag/on)
+        drop inc (loop)))
 
-  (define square (jojo dup mul))
-  (define power4 (jojo step square square))
-  (note (run (int 2) power4))
+    (define set-cmd-flag
+      (jojo
+        (int 1) set-cmd-flag/loop))
+    (define string/flag?
+      (jojo
+        (note string -> true or false)
+        string/first-byte (byte "-") eq?))
+
+    (define load-cmd-path/loop
+      (jojo
+        (note index -> {load path})
+        (if dup cmd-number eq? then drop end)
+        dup index->cmd-string
+        (if dup string/flag? then drop inc (loop))
+        (if dup path/readable? then path/load inc (loop))
+        (el (cat "- load-cmd-path fall" newline
+                 "  path : " string/print newline
+                 "  cmd index : " int/print newline
+                 "  is not readable" newline)
+            debug)))
+
+    (define load-cmd-path
+      (jojo
+        (int 1) load-cmd-path/loop))
+    (define the-story-begin
+      (jojo
+        (if cmd-number (int 1) eq? then
+            welcome-to-jojo end)
+        (el set-cmd-flag
+            load-cmd-path)))
+
+    (run the-story-begin)

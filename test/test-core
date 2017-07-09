@@ -1,0 +1,121 @@
+#!/usr/bin/env jojo
+
+* test
+
+  #+begin_src jojo
+  (define-class <person>
+    (inherit <object>)
+    (meta-variable
+      (= testing-meta-variable (number 666)))
+    (variable
+      (= bare-age (data (int 5)))
+      (= age (number 13))
+      (= language (text "chinese")))
+    (method
+      (* grow
+         (<< self) (get age) (~ inc)
+         (<< self) (set age))
+      (* (~ grow-by: years)
+         (<< self) (get age) (~ add: (<< years))
+         (<< self) (set age))
+      (* (~ grow-by: year1 and-by: year2)
+         (<< self) (get age) (~ add: (<< year1)) (~ add: (<< year2))
+         (<< self) (set age))
+      (* report
+         (cat "bare-age : "
+              (<< self) (get-data bare-age) int/print newline
+              "age : "
+              (<< self) (get age) (~ print) newline
+              "languege : "
+              (<< self) (get language) (~ print) newline
+              newline))))
+
+  (define xieyuheng <person> (~ new))
+
+  (run xieyuheng (~ report)
+       xieyuheng (~ grow)
+       xieyuheng (~ report)
+       xieyuheng (~ grow-by: (number 10))
+       xieyuheng (~ report)
+       xieyuheng (~ grow-by: (number 10))
+       xieyuheng (~ report)
+       xieyuheng (~ grow-by: (number 10) and-by: (number 10))
+       xieyuheng (~ report))
+
+  (run <person> (get testing-meta-variable) (~ write)
+       (number 777)
+       <person> (set testing-meta-variable)
+       <person> (get testing-meta-variable) (~ write)
+       (number 888)
+       <person> (set testing-meta-variable)
+       <person> (get testing-meta-variable) (~ write)
+       <person> (get testing-meta-variable-in-<object>) (~ write)
+
+       (number 26078)
+       <person> (set testing-meta-variable-0)
+       <person> (get testing-meta-variable-0) (~ write))
+  #+end_src
+
+* test
+
+  #+begin_src jojo
+  (define bare-stack-0 <bare-stack> (~ new))
+
+  (test bare-stack-0 (~ empty?) dup dot dot newline
+        bare-stack-0 (~ push: (data (int 1)))
+        bare-stack-0 (~ empty?) dup dot dot newline
+        bare-stack-0 (~ push: (data (int 2)))
+        bare-stack-0 (~ empty?) dup dot dot newline
+        bare-stack-0 (~ push: (data (int 3)))
+        bare-stack-0 (~ empty?) dup dot dot newline
+        bare-stack-0 (~ pop) int/print newline
+        bare-stack-0 (~ empty?) dup dot dot newline
+        bare-stack-0 (~ pop) int/print newline
+        bare-stack-0 (~ empty?) dup dot dot newline
+        bare-stack-0 (~ pop) int/print newline
+        bare-stack-0 (~ empty?) dup dot dot newline)
+
+  (define stack-0 <stack> (~ new))
+
+  (test stack-0 (~ push: (number 1))
+        stack-0 (~ push: (number 2))
+        stack-0 (~ push: (number 3))
+        stack-0 (~ pop) (~ write)
+        stack-0 (~ pop) (~ write)
+        stack-0 (~ pop) (~ write))
+  #+end_src
+
+* test
+
+  #+begin_src jojo
+  (use hiya 0.0.1 as h)
+  (run (raw-jo hiya.name) jo/print newline
+       (jo hiya.name) jo/print newline
+       hiya.hiya
+       (jo h.name) jo/print newline
+       h.hiya)
+
+  (use hi 0.0.1)
+  (run hi.hi)
+
+  (use welcome 0.0.1 as w)
+  (run w.welcome)
+  #+end_src
+
+* test
+
+  #+begin_src jojo
+  (test (string "HOME") get-env-string
+        string/print newline)
+
+  (test (string "PATH") get-env-string
+        string/print newline)
+
+  (note (test name-report))
+
+  (run (bare-jojo dup dup drop) bare-jojo/print)
+
+  (define square (jojo dup mul))
+  (define power4 (jojo step square square))
+  (note (run (int 2) power4))
+  #+end_src
