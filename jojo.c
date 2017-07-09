@@ -2335,54 +2335,32 @@
       }
       printf("] ");
     }
-    void point_local(cell begin, cell end) {
-      cell i = begin;
-      while (i < end) {
-        printf("{%s = %ld %s} "
-               , jo2str(local_area[i].name)
-               , local_area[i].local_data
-               , jo2str(local_area[i].local_tag));
-        i++;
-      }
-    }
-
-    void p_print_return_stack() {
-      cell i = return_stack_base;
-      printf("  - return-stack :\n");
-
-      while (i < return_stack_pointer -1) {
-
-        printf("    - ");
-        data_stack_push(return_stack[i].jojo);
-        p_bare_jojo_print();
-        printf("\n");
-
-        if (return_stack[i].local_pointer ==
-            return_stack[i+1].local_pointer) {
-        }
-        else {
-          printf("      ");
-          point_local(return_stack[i].local_pointer,
-                      return_stack[i+1].local_pointer);
-          printf("\n");
-        }
-
-        i++;
-      }
-
+    void point_return_point(cell i) {
       printf("    - ");
       data_stack_push(return_stack[i].jojo);
       p_bare_jojo_print();
       printf("\n");
 
-      if (return_stack[i].local_pointer ==
-          current_local_pointer) {
+      cell cursor = return_stack[i].local_pointer;
+      cell end = return_stack[i+1].local_pointer;
+      if (i = return_stack_pointer -1) {
+        end = current_local_pointer;
       }
-      else {
-        printf("      ");
-        point_local(return_stack[i].local_pointer,
-                    current_local_pointer);
-        printf("\n");
+
+      while (end > cursor) {
+        printf("      %s = %ld %s\n"
+               , jo2str(local_area[cursor].name)
+               , local_area[cursor].local_data
+               , jo2str(local_area[cursor].local_tag));
+        cursor++;
+      }
+    }
+    void p_print_return_stack() {
+      cell i = return_stack_base;
+      printf("  - return-stack :\n");
+      while (i < return_stack_pointer) {
+        point_return_point(i);
+        i++;
       }
     }
     cell debug_repl_level = 0;
@@ -3016,11 +2994,8 @@
 
       define_prim("newline", p_newline);
     }
-    void p_stdin() {
-      data_stack_push(stdin);
-    }
     void export_play() {
-      define_prim("stdin", p_stdin);
+
     }
     jotable_entry proto_jotable_entry(cell index) {
       jotable_entry e = {

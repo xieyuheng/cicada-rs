@@ -1248,7 +1248,7 @@
   (note
     (define c1
       (jojo
-        dup dup debug dup
+        dup (> x) dup debug dup (< x)
         (if argument-counter lt? then
             dup index->argument-string string/print
             newline
@@ -1267,7 +1267,6 @@
         (< k2)
         (< k2))))
 
-  (define square
-    (jojo step dup mul))
-
-  (note (run (int 12) square))
+  (define square (jojo dup mul))
+  (define power4 (jojo step square square))
+  (note (run (int 2) power4))
