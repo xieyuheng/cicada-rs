@@ -1,7 +1,6 @@
 #+property: tangle jojo.c
 #+title:  jojo
 - [for print return stack]
-  - to print each jo head of jojo body [except for bottom jojo]
   - print offset instead of address for jump and jump_if_false
   - local should distinguish 1-value-local from 2-value-local
   - to print them readably, all core literal need their own ins
@@ -3649,6 +3648,9 @@ j* jotable_insert
     #+begin_src c
     void point_return_point(cell i) {
       printf("    - ");
+      if (i != return_stack_pointer -1) {
+        printf("{ %s } ", jo2str(*(return_stack[i].jojo - 1)));
+      }
       data_stack_push(return_stack[i].jojo);
       p_bare_jojo_print();
       printf("\n");

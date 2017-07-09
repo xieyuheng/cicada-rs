@@ -2337,6 +2337,9 @@
     }
     void point_return_point(cell i) {
       printf("    - ");
+      if (i != return_stack_pointer -1) {
+        printf("{ %s } <- ", jo2str(*(return_stack[i].jojo - 1)));
+      }
       data_stack_push(return_stack[i].jojo);
       p_bare_jojo_print();
       printf("\n");
