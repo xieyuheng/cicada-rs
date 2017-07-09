@@ -1,7 +1,6 @@
 #+property: tangle jojo.c
 #+title:  jojo
 - [for print return stack]
-  - print offset instead of address for jump and jump_if_false
   - local should distinguish 1-value-local from 2-value-local
   - to print them readably, all core literal need their own ins
 * todo
@@ -3626,11 +3625,16 @@ j* jotable_insert
         if (jojo[0] == 0 && jojo[1] == 0) {
           break;
         }
-        if (jojo[0] == JO_INS_INT ||
-            jojo[0] == JO_INS_JUMP ||
+        if (jojo[0] == JO_INS_INT) {
+          printf("{%s ", jo2str(jojo[0]));
+          printf("%ld} ", jojo[1]);
+          jojo++;
+          jojo++;
+        }
+        if (jojo[0] == JO_INS_JUMP ||
             jojo[0] == JO_INS_JUMP_IF_FALSE) {
-          printf("%s ", jo2str(jojo[0]));
-          printf("%ld ", jojo[1]);
+          printf("{%s ", jo2str(jojo[0]));
+          printf("%ld} ", ((jo*)jojo[1] - jojo));
           jojo++;
           jojo++;
         }

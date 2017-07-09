@@ -2320,11 +2320,16 @@
         if (jojo[0] == 0 && jojo[1] == 0) {
           break;
         }
-        if (jojo[0] == JO_INS_INT ||
-            jojo[0] == JO_INS_JUMP ||
+        if (jojo[0] == JO_INS_INT) {
+          printf("{%s ", jo2str(jojo[0]));
+          printf("%ld} ", jojo[1]);
+          jojo++;
+          jojo++;
+        }
+        if (jojo[0] == JO_INS_JUMP ||
             jojo[0] == JO_INS_JUMP_IF_FALSE) {
-          printf("%s ", jo2str(jojo[0]));
-          printf("%ld ", jojo[1]);
+          printf("{%s ", jo2str(jojo[0]));
+          printf("%ld} ", ((jo*)jojo[1] - jojo));
           jojo++;
           jojo++;
         }
@@ -2338,7 +2343,7 @@
     void point_return_point(cell i) {
       printf("    - ");
       if (i != return_stack_pointer -1) {
-        printf("{ %s } <- ", jo2str(*(return_stack[i].jojo - 1)));
+        printf("{ %s } ", jo2str(*(return_stack[i].jojo - 1)));
       }
       data_stack_push(return_stack[i].jojo);
       p_bare_jojo_print();
