@@ -369,6 +369,9 @@
     jo DOUBLE_QUOTE ;
 
     jo JO_INS_INT;
+    jo JO_INS_JO;
+    jo JO_INS_STRING;
+    jo JO_INS_BYTE;
     jo JO_INS_JUMP;
     jo JO_INS_JUMP_IF_FALSE;
 
@@ -962,8 +965,11 @@
       return_point rp1 = return_stack_pop();
       return_stack_make_point(a, rp1.local_pointer);
     }
-    void export_control() {
+    void export_instruction() {
       define_prim("ins/lit", i_lit);
+      define_prim("ins/jo", i_lit);
+      define_prim("ins/string", i_lit);
+      define_prim("ins/byte", i_lit);
       define_prim("ins/jump-if-false", i_jump_if_false);
       define_prim("ins/jump", i_jump);
     }
@@ -1333,15 +1339,46 @@
       // byte ->
       printf("%c", data_stack_pop());
     }
+    void p_ignore_until_double_quote() {
+      while (true) {
+        jo jo = read_raw_jo();
+        if (jo == DOUBLE_QUOTE) {
+          return;
+        }
+        else {
+          // loop
+        }
+      }
+    }
+    void k_one_byte() {
+      byte byte = read_byte();
+      p_ignore_until_double_quote();
+      here(JO_INS_BYTE);
+      here(byte);
+    }
     void k_byte() {
       // (byte ...)
-
+      while (true) {
+        jo jo = read_raw_jo();
+        if (jo == ROUND_KET) {
+          return;
+        }
+        else if (jo == DOUBLE_QUOTE) {
+          k_one_byte();
+          // loop
+        }
+        else {
+          // loop
+        }
+      }
     }
     void export_byte() {
       define_prim("has-byte?", p_has_byte_p);
       define_prim("read/byte", p_read_byte);
       define_prim("byte/unread", p_byte_unread);
       define_prim("byte/print", p_byte_print);
+      define_prim("ignore-until-double-quote", p_ignore_until_double_quote);
+      define_primkey("byte", k_byte);
     }
     void k_one_string() {
       // "..."
@@ -1361,7 +1398,7 @@
       }
       char* str = malloc(cursor);
       strcpy(str, buffer);
-      here(JO_INS_INT);
+      here(JO_INS_STRING);
       here(str);
     }
     void k_string() {
@@ -1679,7 +1716,7 @@
           break;
         }
         else {
-          here(JO_INS_INT);
+          here(JO_INS_JO);
           here(s);
         }
       }
@@ -2320,24 +2357,33 @@
         if (jojo[0] == 0 && jojo[1] == 0) {
           break;
         }
-        if (jojo[0] == JO_INS_INT) {
-          printf("(int %ld) "
-                 , jo2str(jojo[0])
-                 , jojo[1]);
+        else if (jojo[0] == JO_INS_INT) {
+          printf("(int %ld) ", jojo[1]);
           jojo++;
           jojo++;
         }
-        if (jojo[0] == JO_INS_JUMP_IF_FALSE) {
-          printf("(jump-if-false %ld) "
-                 , jo2str(jojo[0])
-                 , ((jo*)jojo[1] - jojo));
+        else if (jojo[0] == JO_INS_JO) {
+          printf("(jo %s) ", jo2str(jojo[1]));
           jojo++;
           jojo++;
         }
-        if (jojo[0] == JO_INS_JUMP) {
-          printf("(jump %ld) "
-                 , jo2str(jojo[0])
-                 , ((jo*)jojo[1] - jojo));
+        else if (jojo[0] == JO_INS_STRING) {
+          printf("(string \"%s\") ", (char*)jojo[1]);
+          jojo++;
+          jojo++;
+        }
+        else if (jojo[0] == JO_INS_BYTE) {
+          printf("(btye \"%c\") ", (char)jojo[1]);
+          jojo++;
+          jojo++;
+        }
+        else if (jojo[0] == JO_INS_JUMP_IF_FALSE) {
+          printf("(jump-if-false %ld) ", ((jo*)jojo[1] - jojo));
+          jojo++;
+          jojo++;
+        }
+        else if (jojo[0] == JO_INS_JUMP) {
+          printf("(jump %ld) ", ((jo*)jojo[1] - jojo));
           jojo++;
           jojo++;
         }
@@ -3057,6 +3103,9 @@
       DOUBLE_QUOTE =   str2jo("\"");
 
       JO_INS_INT  = str2jo("ins/lit");
+      JO_INS_JO   = str2jo("ins/jo");
+      JO_INS_STRING = str2jo("ins/string");
+      JO_INS_BYTE = str2jo("ins/byte");
       JO_INS_JUMP = str2jo("ins/jump");
       JO_INS_JUMP_IF_FALSE = str2jo("ins/jump-if-false");
 
@@ -3095,7 +3144,7 @@
       export_apply();
       export_stack_operation();
       export_ending();
-      export_control();
+      export_instruction();
       export_bool();
       export_bit();
       export_int();

@@ -403,30 +403,6 @@
         (el here (loop))))
     #+end_src
 
-*** (byte)
-
-    #+begin_src jojo
-    (define ignore-untildouble-quote
-      (jojo
-        read/raw-jo
-        (if dup double-quote eq? then drop end)
-        (el drop (loop))))
-
-    (define one-byte
-      (keyword
-        read/byte (> byte)
-        ignore-untildouble-quote
-        (lev ins/lit (< byte))))
-
-    (define byte
-      (keyword
-        read/raw-jo
-        (if dup round-ket eq? then drop end)
-        (if dup double-quote eq? then
-            drop one-byte (loop))
-        (el drop (loop))))
-    #+end_src
-
 *** (orz)
 
     #+begin_src jojo
@@ -1761,7 +1737,9 @@
         dup (> x) dup debug dup (< x)
         (if argument-counter lt? then
             dup index->argument-string string/print
+            (byte "a" "b" "c")
             newline
+            (string "123")
             inc)))
 
     (run c1 c1 c1)

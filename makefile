@@ -1,6 +1,6 @@
 .ONESHELL:
-CC = gcc
-#CC = clang
+#CC = gcc
+CC = clang
 
 build:
 	@
