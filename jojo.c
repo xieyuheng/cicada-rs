@@ -2698,6 +2698,16 @@
     void p_compile_until_round_ket() {
       compile_until_meet_jo(ROUND_KET);
     }
+    void k_jump() {
+      here(JO_INS_JUMP);
+      here(string_to_dec(jo2str(read_raw_jo())));
+      k_ignore();
+    }
+    void k_jump_if_false() {
+      here(JO_INS_JUMP_IF_FALSE);
+      here(string_to_dec(jo2str(read_raw_jo())));
+      k_ignore();
+    }
     // - without else
     //   (if a b p? then c d)
     //   ==>
@@ -3018,10 +3028,13 @@
       define_prim("compiling-stack/tos", p_compiling_stack_tos);
       define_prim("compiling-stack/inc", compiling_stack_inc);
 
-      define_primkey("if", k_if);
       define_prim("compile-until-meet-jo", p_compile_until_meet_jo);
       define_prim("compile-until-round-ket", p_compile_until_round_ket);
 
+      define_primkey("jump", k_jump);
+      define_primkey("jump-if-false", k_jump_if_false);
+
+      define_primkey("if", k_if);
       define_primkey("else", p_compile_until_round_ket);
       define_primkey("el", p_compile_until_round_ket);
 
