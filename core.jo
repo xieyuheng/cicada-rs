@@ -889,13 +889,6 @@
       (jojo
         (if has-system-jojo-dir? then get-system-jojo-dir string->jo end)
         (el default-system-jojo-dir-jo)))
-      (note
-        (core-shadow name ...)
-        (core-shadow-all)
-        (use module
-             module as nick
-             module as nick (import name ...)
-             module as nick (import-all) (shadow name ...)))
       (define prefix-stack <bare-stack> (~ new)
         (note of prefix
               load-module push prefix-stack
@@ -982,10 +975,14 @@
         (jojo
           (note name -> name)
           (note module.name -> module[version].name)
+          (note core.name -> name)
+
           (if dup full-name? not then end)
 
           dup full-name->module (> module)
           full-name->name (> name)
+
+          (if (< module) (raw-jo core) eq? then (< name) end)
 
           (< module) current-module->prefix
           (raw-jo .) jo/append

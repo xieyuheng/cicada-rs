@@ -1,6 +1,8 @@
 #+property: tangle core.jo
 #+title: core
 
+- system-jojo-module-dir
+
 - <jojo> and combinators
   - to mock a mocking bird
 
@@ -8,9 +10,6 @@
   - note about gc
   - re-test the gc
   - fix the roots of gc
-
-- core-shadow core-shadow-all
-- import for module
 
 * todo
 
@@ -1246,28 +1245,6 @@
 
 * module
 
-*** note implementation
-
-    - in jotable,
-      all defined name as unique-name "module[version].name"
-
-    - import a module name
-      import a module's binding name
-
-      #+begin_src jojo
-      (note
-        (core-shadow name ...)
-        (core-shadow-all)
-        (use module
-             module as nick
-             module as nick (import name ...)
-             module as nick (import-all) (shadow name ...)))
-      #+end_src
-
-    - two ways to use module
-      1. with module-as-prefix, without export-list and import-list
-      2. without module-as-prefix, with export-list and import-list
-
 *** note module system
 
     - module is simply a dir of source code files,
@@ -1297,6 +1274,14 @@
 
       thus no export-list,
       thus all of a module are exposed to a user of the module.
+
+    - thus, in jotable,
+      all defined name are unique as "module[version].name"
+      [except for core]
+
+      when you use a name in core,
+      it will be shadowed in your module.
+      you must use it as core.name after it is shadowed.
 
 *** to solve unique-name problem for current loading module
 
@@ -1426,10 +1411,14 @@
         (jojo
           (note name -> name)
           (note module.name -> module[version].name)
+          (note core.name -> name)
+
           (if dup full-name? not then end)
 
           dup full-name->module (> module)
           full-name->name (> name)
+
+          (if (< module) (raw-jo core) eq? then (< name) end)
 
           (< module) current-module->prefix
           (raw-jo .) jo/append
@@ -1601,7 +1590,6 @@
              "- version : 0.0.1" newline
              "- source  : https://github.com/xieyuheng/jojo" newline)))
     #+end_src
-
 
 *** set-cmd-flag
 
