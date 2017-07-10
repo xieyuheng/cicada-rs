@@ -3,9 +3,11 @@
 
 - to print them readably, (loop) (recur) (tail-call) need their own ins
   we also add (jump) and (jump-if-false)
+  (bare-jojo ...)
 
 - trace and untrace a jo
   by rebind-name and redefine
+  also defined?
 
 - note about jotable
 - [docs] for every limited number, jo-max-length, etc.
@@ -84,6 +86,20 @@
     5. concurrent
     6. dependent type -- type as proof
     7. algebraic topology and combinatorial topology
+
+*** apply and scope
+
+    - apply will create new scope of local names.
+
+    - thus
+      p_compile_jojo will create new scope of local names.
+
+    - by the following we can add pre-setted name to a scope :
+      current-local-pointer swap
+      (< data) (< tag) (jo self) local-in
+      apply-with-local-pointer
+
+    - but we can not use old names in the scope outside this scope.
 
 * helper
 
@@ -1187,6 +1203,7 @@ j* jotable_insert
 
     #+begin_src c
     void p_apply_with_local_pointer() {
+      // [local_pointer jojo] -> [*]
       jo* jojo = data_stack_pop();
       cell local_pointer = data_stack_pop();
       return_stack_make_point(jojo, local_pointer);
@@ -2746,7 +2763,7 @@ j* jotable_insert
           break;
         }
         else {
-          here(JO_INS_INT);
+          here(JO_INS_JO);
           here(s);
         }
       }
@@ -3448,14 +3465,20 @@ j* jotable_insert
     }
     #+end_src
 
-*** p_get_env_string
+*** p_find_env_string
 
     #+begin_src c
-    void p_get_env_string() {
-      // string -> string
+    void p_find_env_string() {
+      // string -> [env-string true] or [false]
       char* var_string = data_stack_pop();
       char* env_string = getenv(var_string);
-      data_stack_push(env_string);
+      if (env_string == NULL) {
+        data_stack_push(false);
+      }
+      else {
+        data_stack_push(env_string);
+        data_stack_push(true);
+      }
     }
     #+end_src
 
@@ -3467,7 +3490,7 @@ j* jotable_insert
       define_prim("n-command/run", p_n_command_run);
       define_prim("cmd-number", p_cmd_number);
       define_prim("index->cmd-string", p_index_to_cmd_string);
-      define_prim("get-env-string", p_get_env_string);
+      define_prim("find-env-string", p_find_env_string);
     }
     #+end_src
 
@@ -4242,7 +4265,7 @@ j* jotable_insert
       offset_place[0] = compiling_stack_tos();
       here(JO_INS_INT);
       here(offset_place + 1);
-      here(JO_INS_INT);
+      here(JO_INS_JO);
       here(TAG_JOJO);
     }
     #+end_src
@@ -4259,18 +4282,21 @@ j* jotable_insert
       offset_place[0] = compiling_stack_tos();
       here(JO_INS_INT);
       here(offset_place + 1);
-      here(JO_INS_INT);
+      here(JO_INS_JO);
       here(TAG_KEYWORD);
     }
     #+end_src
 
 *** k_data
 
+    - the semantic of this keyword has limitation,
+      there can be not 'end' in it.
+
     #+begin_src c
     void k_data() {
       // (data ...)
       p_compile_until_round_ket();
-      here(JO_INS_INT);
+      here(JO_INS_JO);
       here(TAG_DATA);
     }
     #+end_src
@@ -4328,6 +4354,7 @@ j* jotable_insert
         printf("- p_local_data_out fatal error\n");
         printf("  name is not bound\n");
         printf("  name : %s\n", jo2str(jo));
+        p_debug();
       }
     }
     #+end_src
@@ -4365,6 +4392,7 @@ j* jotable_insert
         printf("- p_local_tag_out fatal error\n");
         printf("  name is not bound\n");
         printf("  name : %s\n", jo2str(jo));
+        p_debug();
       }
     }
     #+end_src
@@ -4406,6 +4434,7 @@ j* jotable_insert
         printf("- p_local_out fatal error\n");
         printf("  name is not bound\n");
         printf("  name : %s\n", jo2str(jo));
+        p_debug();
       }
     }
     #+end_src
@@ -4421,7 +4450,7 @@ j* jotable_insert
       else {
         k_local_data_in();
 
-        here(JO_INS_INT);
+        here(JO_INS_JO);
         here(s);
         here(JO_LOCAL_DATA_IN);
       }
@@ -4437,7 +4466,7 @@ j* jotable_insert
         return;
       }
       else {
-        here(JO_INS_INT);
+        here(JO_INS_JO);
         here(s);
         here(JO_LOCAL_DATA_OUT);
 
@@ -4457,7 +4486,7 @@ j* jotable_insert
       else {
         k_local_data_in();
 
-        here(JO_INS_INT);
+        here(JO_INS_JO);
         here(s);
         here(JO_LOCAL_TAG_IN);
       }
@@ -4473,7 +4502,7 @@ j* jotable_insert
         return;
       }
       else {
-        here(JO_INS_INT);
+        here(JO_INS_JO);
         here(s);
         here(JO_LOCAL_TAG_OUT);
 
@@ -4493,7 +4522,7 @@ j* jotable_insert
       else {
         k_local_data_in();
 
-        here(JO_INS_INT);
+        here(JO_INS_JO);
         here(s);
         here(JO_LOCAL_IN);
       }
@@ -4509,7 +4538,7 @@ j* jotable_insert
         return;
       }
       else {
-        here(JO_INS_INT);
+        here(JO_INS_JO);
         here(s);
         here(JO_LOCAL_OUT);
 
@@ -4523,6 +4552,15 @@ j* jotable_insert
     #+begin_src c
     void p_current_local_pointer() {
       data_stack_push(current_local_pointer);
+    }
+    #+end_src
+
+*** p_last_local_pointer
+
+    #+begin_src c
+    void p_last_local_pointer() {
+      return_point rp = return_stack_tos();
+      data_stack_push(rp.local_pointer);
     }
     #+end_src
 
@@ -4571,6 +4609,7 @@ j* jotable_insert
       define_primkey("<<", k_local_out);
 
       define_prim("current-local-pointer", p_current_local_pointer);
+      define_prim("last-local-pointer", p_last_local_pointer);
     }
     #+end_src
 

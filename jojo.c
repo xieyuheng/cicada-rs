@@ -756,6 +756,7 @@
       return_stack_new_point(data_stack_pop());
     }
     void p_apply_with_local_pointer() {
+      // [local_pointer jojo] -> [*]
       jo* jojo = data_stack_pop();
       cell local_pointer = data_stack_pop();
       return_stack_make_point(jojo, local_pointer);
@@ -1704,7 +1705,7 @@
           break;
         }
         else {
-          here(JO_INS_INT);
+          here(JO_INS_JO);
           here(s);
         }
       }
@@ -2210,18 +2211,24 @@
       char* cmd_string = cmd_string_array[index];
       data_stack_push(cmd_string);
     }
-    void p_get_env_string() {
-      // string -> string
+    void p_find_env_string() {
+      // string -> [env-string true] or [false]
       char* var_string = data_stack_pop();
       char* env_string = getenv(var_string);
-      data_stack_push(env_string);
+      if (env_string == NULL) {
+        data_stack_push(false);
+      }
+      else {
+        data_stack_push(env_string);
+        data_stack_push(true);
+      }
     }
     void expose_system() {
       define_prim("command/run", p_command_run);
       define_prim("n-command/run", p_n_command_run);
       define_prim("cmd-number", p_cmd_number);
       define_prim("index->cmd-string", p_index_to_cmd_string);
-      define_prim("get-env-string", p_get_env_string);
+      define_prim("find-env-string", p_find_env_string);
     }
     void ccall (char* function_name, void* lib) {
       primitive fun = dlsym(lib, function_name);
@@ -2775,7 +2782,7 @@
       offset_place[0] = compiling_stack_tos();
       here(JO_INS_INT);
       here(offset_place + 1);
-      here(JO_INS_INT);
+      here(JO_INS_JO);
       here(TAG_JOJO);
     }
     void k_keyword() {
@@ -2787,13 +2794,13 @@
       offset_place[0] = compiling_stack_tos();
       here(JO_INS_INT);
       here(offset_place + 1);
-      here(JO_INS_INT);
+      here(JO_INS_JO);
       here(TAG_KEYWORD);
     }
     void k_data() {
       // (data ...)
       p_compile_until_round_ket();
-      here(JO_INS_INT);
+      here(JO_INS_JO);
       here(TAG_DATA);
     }
     cell local_find(jo name) {
@@ -2836,6 +2843,7 @@
         printf("- p_local_data_out fatal error\n");
         printf("  name is not bound\n");
         printf("  name : %s\n", jo2str(jo));
+        p_debug();
       }
     }
     void p_local_tag_in() {
@@ -2863,6 +2871,7 @@
         printf("- p_local_tag_out fatal error\n");
         printf("  name is not bound\n");
         printf("  name : %s\n", jo2str(jo));
+        p_debug();
       }
     }
     void p_local_in() {
@@ -2894,6 +2903,7 @@
         printf("- p_local_out fatal error\n");
         printf("  name is not bound\n");
         printf("  name : %s\n", jo2str(jo));
+        p_debug();
       }
     }
     void k_local_data_in() {
@@ -2904,7 +2914,7 @@
       else {
         k_local_data_in();
 
-        here(JO_INS_INT);
+        here(JO_INS_JO);
         here(s);
         here(JO_LOCAL_DATA_IN);
       }
@@ -2915,7 +2925,7 @@
         return;
       }
       else {
-        here(JO_INS_INT);
+        here(JO_INS_JO);
         here(s);
         here(JO_LOCAL_DATA_OUT);
 
@@ -2930,7 +2940,7 @@
       else {
         k_local_data_in();
 
-        here(JO_INS_INT);
+        here(JO_INS_JO);
         here(s);
         here(JO_LOCAL_TAG_IN);
       }
@@ -2941,7 +2951,7 @@
         return;
       }
       else {
-        here(JO_INS_INT);
+        here(JO_INS_JO);
         here(s);
         here(JO_LOCAL_TAG_OUT);
 
@@ -2956,7 +2966,7 @@
       else {
         k_local_data_in();
 
-        here(JO_INS_INT);
+        here(JO_INS_JO);
         here(s);
         here(JO_LOCAL_IN);
       }
@@ -2967,7 +2977,7 @@
         return;
       }
       else {
-        here(JO_INS_INT);
+        here(JO_INS_JO);
         here(s);
         here(JO_LOCAL_OUT);
 
@@ -2976,6 +2986,10 @@
     }
     void p_current_local_pointer() {
       data_stack_push(current_local_pointer);
+    }
+    void p_last_local_pointer() {
+      return_point rp = return_stack_tos();
+      data_stack_push(rp.local_pointer);
     }
     void expose_keyword() {
       define_primkey("ignore", k_ignore);
@@ -3019,6 +3033,7 @@
       define_primkey("<<", k_local_out);
 
       define_prim("current-local-pointer", p_current_local_pointer);
+      define_prim("last-local-pointer", p_last_local_pointer);
     }
     void do_nothing() {
     }

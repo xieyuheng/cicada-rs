@@ -223,7 +223,7 @@
             (if dup (jo esc) eq? then
                 drop compile-until-round-ket (loop))
             (el jo/apply (jo here) here (loop)))
-        (el (jo ins/lit) here
+        (el (jo ins/jo) here
             here
             (jo here) here (loop))))
     (define alias
@@ -236,8 +236,8 @@
             (string "  last nick : ") string/print (< nick) jo/print
             newline
             end)
-        (el (lev ins/lit (< nick)
-                 ins/lit (< name)
+        (el (lev ins/jo (< nick)
+                 ins/jo (< name)
                  alias-push)
             (loop))))
     (define cat
@@ -305,7 +305,7 @@
     (define class/get-method-list         (jojo (jo method) assq car))
     (define define-class/keyword/one-variable
       (keyword
-        (lev ins/lit
+        (lev ins/jo
              (esc read/jo here
                   compile-until-round-ket)
              cons cons cons)))
@@ -325,7 +325,7 @@
             jo/append
             (loop))
         swap (recur) swap
-        (lev ins/lit
+        (lev ins/jo
              (esc here)
              local-in)))
 
@@ -347,7 +347,7 @@
         compile-jojo
         compiling-stack/tos (< offset-place) set-cell
         (lev ins/lit (< bare-jojo)
-             ins/lit (< message)
+             ins/jo (< message)
              swap
              cons)))
 
@@ -358,8 +358,8 @@
 
     (define define-class/keyword/inherit
       (keyword
-        (lev ins/lit inherit
-             ins/lit
+        (lev ins/jo inherit
+             ins/jo
              (esc read/jo here
                   ignore)
              cons
@@ -368,7 +368,7 @@
     (define define-class/keyword/meta-variable-list
       (keyword
         (alias = define-class/keyword/one-variable)
-        (lev ins/lit meta-variable
+        (lev ins/jo meta-variable
              null
              (esc compile-until-round-ket)
              cons
@@ -377,7 +377,7 @@
     (define define-class/keyword/meta-method-list
       (keyword
         (alias * define-class/keyword/one-method)
-        (lev ins/lit meta-method
+        (lev ins/jo meta-method
              null
              (esc compile-until-round-ket)
              cons
@@ -386,7 +386,7 @@
     (define define-class/keyword/variable-list
       (keyword
         (alias = define-class/keyword/one-variable)
-        (lev ins/lit variable
+        (lev ins/jo variable
              null
              (esc compile-until-round-ket)
              cons
@@ -395,7 +395,7 @@
     (define define-class/keyword/method-list
       (keyword
         (alias * define-class/keyword/one-method)
-        (lev ins/lit method
+        (lev ins/jo method
              null
              (esc compile-until-round-ket)
              cons
@@ -411,13 +411,13 @@
           variable      define-class/keyword/variable-list
           method        define-class/keyword/method-list)
         (lev null
-             ins/lit tag
-             ins/lit (< tag)
+             ins/jo tag
+             ins/jo (< tag)
              cons
              cons
              (esc compile-until-round-ket)
-             ins/lit <class>
-             ins/lit (< tag))))
+             ins/jo <class>
+             ins/jo (< tag))))
 
     (define define-class
       (keyword
@@ -504,15 +504,15 @@
     (define ~
       (keyword
         (jo send/sugar) generate-jo (> object-jo)
-        (lev ins/lit (< object-jo)
+        (lev ins/jo (< object-jo)
              local-in
              (esc read/raw-jo
                   (if dup jo-ending-with-colon? not
                       then (> message) compile-until-round-ket
                       else send/sugar/complex (> message)))
-             ins/lit (< object-jo)
+             ins/jo (< object-jo)
              local-out
-             ins/lit (< message)
+             ins/jo (< message)
              send)))
       (define variable->object (jojo car dup car swap cdr swap))
 
@@ -576,7 +576,7 @@
 
       (define has?
         (keyword
-          (lev ins/lit
+          (lev ins/jo
                (esc read/raw-jo here
                     ignore)
                has-variable?)))
@@ -616,21 +616,21 @@
 
       (define get
         (keyword
-          (lev ins/lit
+          (lev ins/jo
                (esc read/raw-jo here
                     ignore)
                get-variable)))
 
       (define get-data
         (keyword
-          (lev ins/lit
+          (lev ins/jo
                (esc read/raw-jo here
                     ignore)
                get-variable drop)))
 
       (define get-tag
         (keyword
-          (lev ins/lit
+          (lev ins/jo
                (esc read/raw-jo here
                     ignore)
                get-variable swap drop)))
@@ -689,7 +689,7 @@
 
       (define set
         (keyword
-          (lev ins/lit
+          (lev ins/jo
                (esc read/raw-jo here
                     ignore)
                set-variable)))
@@ -738,7 +738,7 @@
 
       (define set-data
         (keyword
-          (lev ins/lit
+          (lev ins/jo
                (esc read/raw-jo here
                     ignore)
                set-data-in-variable)))
@@ -760,7 +760,7 @@
     (define as
       (keyword
         (lev drop
-             ins/lit (esc read/jo here ignore))))
+             ins/jo (esc read/jo here ignore))))
     (define-class <number>
       (method
         (* inc (< self) inc (<% self))
@@ -787,7 +787,7 @@
     (define number
       (keyword
         (jo int) jo/apply
-        (lev ins/lit <number>)))
+        (lev ins/jo <number>)))
     (define-class <text>
       (method
         (* print (< self) string/print)
@@ -801,7 +801,7 @@
     (define text
       (keyword
         (jo string) jo/apply
-        (lev ins/lit <text>)))
+        (lev ins/jo <text>)))
     (define-class <object>
       (meta-variable
         (= testing-meta-variable-in-<object> (number 26881)))
@@ -854,40 +854,26 @@
            (~ push: (data (<< object) cons)))))
     (define module-dir-jo  (data (string "/module") string->jo))
     (define module-file-jo (data (string "module.jo") string->jo))
-    (define has-user-jojo-dir?
-      (jojo
-        (string "USER_JOJO_DIR") get-env-string
-        (int 0) eq? not))
-
-    (define get-user-jojo-dir
-      (jojo
-        (string "USER_JOJO_DIR") get-env-string))
-
     (define default-user-jojo-dir-jo
       (data
-        (string "HOME") get-env-string string->jo
-        (string "/.jojo") string->jo jo/append))
+        (string "HOME") find-env-string
+        (if then string->jo (string "/.jojo") string->jo jo/append
+            else (cat "- default-user-jojo-dir-jo fali" newline
+                      "  HOME env-string is empty" newline) debug)))
 
     (define user-jojo-dir-jo
       (jojo
-        (if has-user-jojo-dir? then get-user-jojo-dir string->jo end)
+        (string "USER_JOJO_DIR") find-env-string
+        (if then string->jo end)
         (el default-user-jojo-dir-jo)))
-    (define has-system-jojo-dir?
-      (jojo
-        (string "SYSTEM_JOJO_DIR") get-env-string
-        (int 0) eq? not))
-
-    (define get-system-jojo-dir
-      (jojo
-        (string "SYSTEM_JOJO_DIR") get-env-string))
-
     (define default-system-jojo-dir-jo
       (data
-        (string "/usr/share/jojo") string->jo))
+        (string "/usr/local/lib/jojo") string->jo))
 
     (define system-jojo-dir-jo
       (jojo
-        (if has-system-jojo-dir? then get-system-jojo-dir string->jo end)
+        (string "SYSTEM_JOJO_DIR") find-env-string
+        (if then string->jo end)
         (el default-system-jojo-dir-jo)))
       (define prefix-stack <bare-stack> (~ new)
         (note of prefix
