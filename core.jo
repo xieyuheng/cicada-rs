@@ -254,19 +254,9 @@
     (define orz
       (keyword
         cat (lev debug)))
-    (define read/bare-jojo
-      (jojo
-        (lev ins/jump)
-        compiling-stack/tos (> offset-place)
-        compiling-stack/inc
-        compiling-stack/tos (> bare-jojo)
-        compile-jojo
-        compiling-stack/tos (< offset-place) set-cell
-        (< bare-jojo)))
-
     (define assert
       (keyword
-        read/bare-jojo (> bare-jojo)
+        bare-jojo (> bare-jojo)
         (< bare-jojo) apply
         (if then end)
         (orz "- assert fail on : " (< bare-jojo) bare-jojo/print newline)))
@@ -332,22 +322,22 @@
     (define define-class/keyword/one-method/message
       (keyword
         (note -> jo)
-        read/jo
+        read/raw-jo
         (if dup round-bar eq? not then end)
-        drop read/jo drop
+        drop read/raw-jo drop
         empty-jo define-class/keyword/one-method/complex-message))
 
     (define define-class/keyword/one-method/help
       (keyword
-        (lev ins/jump)
+        (lev ins/bare-jojo)
         compiling-stack/tos (> offset-place)
         compiling-stack/inc
-        compiling-stack/tos (> bare-jojo)
         define-class/keyword/one-method/message (> message)
         compile-jojo
-        compiling-stack/tos (< offset-place) set-cell
-        (lev ins/lit (< bare-jojo)
-             ins/jo (< message)
+        compiling-stack/tos (< offset-place) sub
+        cell-size div
+        (< offset-place) set-cell
+        (lev ins/jo (< message)
              swap
              cons)))
 
@@ -403,7 +393,7 @@
 
     (define define-class/help
       (keyword
-        read/jo (> tag)
+        read/jo (> class-mame)
         (alias
           inherit       define-class/keyword/inherit
           meta-method   define-class/keyword/meta-method-list
@@ -412,12 +402,12 @@
           method        define-class/keyword/method-list)
         (lev null
              ins/jo tag
-             ins/jo (< tag)
+             ins/jo (< class-mame)
              cons
              cons
              (esc compile-until-round-ket)
              ins/jo <class>
-             ins/jo (< tag))))
+             ins/jo (< class-mame))))
 
     (define define-class
       (keyword

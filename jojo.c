@@ -372,6 +372,9 @@
     jo JO_INS_JO;
     jo JO_INS_STRING;
     jo JO_INS_BYTE;
+    jo JO_INS_BARE_JOJO;
+    jo JO_INS_ADDRESS;
+
     jo JO_INS_JUMP;
     jo JO_INS_JUMP_IF_FALSE;
 
@@ -465,7 +468,8 @@
 
     void return_stack_inc() {
       return_point rp = return_stack_pop();
-      return_point rp1 = {.jojo = rp.jojo + 1, .local_pointer = rp.local_pointer};
+      return_point rp1 = {.jojo = rp.jojo + 1,
+                          .local_pointer = rp.local_pointer};
       return_stack_push(rp1);
     }
     jo name_record[64 * 1024];
@@ -745,7 +749,8 @@
       while (return_stack_pointer >= return_stack_base) {
         return_point rp = return_stack_tos();
         return_stack_inc();
-        cell jo = *(cell*)rp.jojo;
+        jo* jojo = rp.jojo;
+        jo jo = jojo[0];
         jo_apply(jo);
         if (step_flag == true) {
           stepper();
@@ -945,40 +950,56 @@
       // [] -> [cell] {return_stack}
       return_point rp = return_stack_tos();
       return_stack_inc();
-      cell jo = *(cell*)rp.jojo;
+      jo* jojo = rp.jojo;
+      jo jo = jojo[0];
       data_stack_push(jo);
+    }
+    void i_bare_jojo() {
+      return_point rp = return_stack_pop();
+      jo* jojo = rp.jojo;
+      cell offset = jojo[0];
+      return_point rp1 = {.jojo = jojo + offset,
+                          .local_pointer = rp.local_pointer};
+      return_stack_push(rp1);
+      data_stack_push(jojo + 1);
     }
     void i_jump_if_false() {
       // [bool] -> {return_stack}
       return_point rp = return_stack_tos();
       return_stack_inc();
-      jo* a = *(cell*)rp.jojo;
+      jo* jojo = rp.jojo;
+      cell offset = jojo[0];
       cell b = data_stack_pop();
-      if (b == 0) {
+      if (b == false) {
         return_point rp1 = return_stack_pop();
-        return_stack_make_point(a, rp1.local_pointer);
+        return_stack_make_point(jojo + offset, rp1.local_pointer);
       }
     }
     void i_jump() {
       // {return_stack}
       return_point rp = return_stack_tos();
-      jo* a = *(cell*)rp.jojo;
+      jo* jojo = rp.jojo;
+      cell offset = jojo[0];
       return_point rp1 = return_stack_pop();
-      return_stack_make_point(a, rp1.local_pointer);
+      return_stack_make_point(jojo + offset, rp1.local_pointer);
     }
     void expose_instruction() {
       define_prim("ins/lit", i_lit);
       define_prim("ins/jo", i_lit);
       define_prim("ins/string", i_lit);
       define_prim("ins/byte", i_lit);
+      define_prim("ins/address", i_lit);
+
+      define_prim("ins/bare-jojo", i_bare_jojo);
+
       define_prim("ins/jump-if-false", i_jump_if_false);
       define_prim("ins/jump", i_jump);
     }
     void p_true() {
-      data_stack_push(1);
+      data_stack_push(true);
     }
     void p_false() {
-      data_stack_push(0);
+      data_stack_push(false);
     }
     void p_not() {
       // bool -> bool
@@ -1189,9 +1210,9 @@
 
     void k_address() {
       // (address ...)
-      here(JO_INS_INT);
-      jo index = read_raw_jo();
-      here(&(jotable[index].value));
+      here(JO_INS_ADDRESS);
+      jo name = read_raw_jo();
+      here(&(jotable[name].value));
       k_ignore();
     }
     void p_jo_as_var() {
@@ -2385,13 +2406,26 @@
           jojo++;
           jojo++;
         }
+        else if (jojo[0] == JO_INS_BARE_JOJO) {
+          printf("(bare-jojo ");
+          data_stack_push(jojo + 2);
+          p_bare_jojo_print();
+          printf(") ");
+          jojo = jojo + jojo[1];
+          jojo++;
+        }
+        else if (jojo[0] == JO_INS_ADDRESS) {
+          printf("(address %ld) ", jojo[1]);
+          jojo++;
+          jojo++;
+        }
         else if (jojo[0] == JO_INS_JUMP_IF_FALSE) {
-          printf("(jump-if-false %ld) ", ((jo*)jojo[1] - jojo));
+          printf("(jump-if-false %ld) ", jojo[1]);
           jojo++;
           jojo++;
         }
         else if (jojo[0] == JO_INS_JUMP) {
-          printf("(jump %ld) ", ((jo*)jojo[1] - jojo));
+          printf("(jump %ld) ", jojo[1]);
           jojo++;
           jojo++;
         }
@@ -2690,16 +2724,16 @@
       compiling_stack_inc();
       jo ending_jo = compile_until_meet_jo_or_jo(JO_ELSE, ROUND_KET);
       if (ending_jo == ROUND_KET) {
-        end_of_then[0] = compiling_stack_tos();
+        end_of_then[0] = compiling_stack_tos() - end_of_then;
         return;
       }
       else {
         here(JO_INS_JUMP);
         cell* end_of_else = compiling_stack_tos();
         compiling_stack_inc();
-        end_of_then[0] = compiling_stack_tos();
+        end_of_then[0] = compiling_stack_tos() - end_of_then;
         p_compile_until_round_ket();
-        end_of_else[0] = compiling_stack_tos();
+        end_of_else[0] = compiling_stack_tos() - end_of_else;
         return;
       }
     }
@@ -2765,35 +2799,21 @@
     }
     void k_bare_jojo() {
       // (bare-jojo ...)
-      here(JO_INS_JUMP);
+      here(JO_INS_BARE_JOJO);
       cell* offset_place = compiling_stack_tos();
       compiling_stack_inc();
       p_compile_jojo();
-      offset_place[0] = compiling_stack_tos();
-      here(JO_INS_INT);
-      here(offset_place + 1);
+      offset_place[0] = (compiling_stack_tos() - offset_place);
     }
     void k_jojo() {
       // (jojo ...)
-      here(JO_INS_JUMP);
-      cell* offset_place = compiling_stack_tos();
-      compiling_stack_inc();
-      p_compile_jojo();
-      offset_place[0] = compiling_stack_tos();
-      here(JO_INS_INT);
-      here(offset_place + 1);
+      k_bare_jojo();
       here(JO_INS_JO);
       here(TAG_JOJO);
     }
     void k_keyword() {
       // (keyword ...)
-      here(JO_INS_JUMP);
-      cell* offset_place = compiling_stack_tos();
-      compiling_stack_inc();
-      p_compile_jojo();
-      offset_place[0] = compiling_stack_tos();
-      here(JO_INS_INT);
-      here(offset_place + 1);
+      k_bare_jojo();
       here(JO_INS_JO);
       here(TAG_KEYWORD);
     }
@@ -3121,6 +3141,9 @@
       JO_INS_JO   = str2jo("ins/jo");
       JO_INS_STRING = str2jo("ins/string");
       JO_INS_BYTE = str2jo("ins/byte");
+      JO_INS_BARE_JOJO = str2jo("ins/bare-jojo");
+      JO_INS_ADDRESS = str2jo("ins/address");
+
       JO_INS_JUMP = str2jo("ins/jump");
       JO_INS_JUMP_IF_FALSE = str2jo("ins/jump-if-false");
 
