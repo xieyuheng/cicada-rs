@@ -80,7 +80,7 @@ void set_y_cursor() {
   move(y, x0);
 }
 
-void export() {
+void expose() {
   defprim("text-ui/init", text_ui_init);
   defprim("text-ui/end", endwin);
   defprim("text-ui/refresh", refresh);

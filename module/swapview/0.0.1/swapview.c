@@ -148,6 +148,6 @@ void swapview(){
   free(stotal);
 }
 
-void export() {
-  defprim("swapview", swapview);
+void expose() {
+  define_prim("swapview", swapview);
 }

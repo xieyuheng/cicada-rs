@@ -5,6 +5,6 @@ void p_welcome() {
   printf("  welcome to jojo ^-^/\n");
 }
 
-void export() {
+void expose() {
   define_prim("welcome", p_welcome);
 }

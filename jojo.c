@@ -604,7 +604,7 @@
       data_stack_push(name);
       p_bind_name();
     }
-    void export_bind() {
+    void expose_bind() {
       define_prim("name-report", p_name_report);
       define_prim("name-record", p_name_record);
 
@@ -778,7 +778,7 @@
       return_point rp = return_stack_pop();
       jo_apply_with_local_pointer(jo, rp.local_pointer);
     }
-    void export_apply() {
+    void expose_apply() {
       define_prim("apply", p_apply);
       define_prim("apply-with-local-pointer", p_apply_with_local_pointer);
       define_prim("replacing-apply-with-last-local-pointer", p_replacing_apply_with_last_local_pointer);
@@ -912,7 +912,7 @@
     void p_stack_pointer() {
       data_stack_push(data_stack + data_stack_pointer);
     }
-    void export_stack_operation() {
+    void expose_stack_operation() {
       define_prim("drop", p_drop);
       define_prim("2drop", p_2drop);
       define_prim("dup", p_dup);
@@ -936,7 +936,7 @@
       printf("bye bye ^-^/\n");
       exit(0);
     }
-    void export_ending() {
+    void expose_ending() {
       define_prim("end", p_end);
       define_prim("bye", p_bye);
     }
@@ -965,7 +965,7 @@
       return_point rp1 = return_stack_pop();
       return_stack_make_point(a, rp1.local_pointer);
     }
-    void export_instruction() {
+    void expose_instruction() {
       define_prim("ins/lit", i_lit);
       define_prim("ins/jo", i_lit);
       define_prim("ins/string", i_lit);
@@ -996,7 +996,7 @@
       cell b = data_stack_pop();
       data_stack_push(a||b);
     }
-    void export_bool() {
+    void expose_bool() {
       define_prim("true", p_true);
       define_prim("false", p_false);
       define_prim("not", p_not);
@@ -1041,7 +1041,7 @@
       cell a = data_stack_pop();
       data_stack_push(a<<s);
     }
-    void export_bit() {
+    void expose_bit() {
       define_prim("true/bit", p_true_bit);
       define_prim("false/bit", p_false_bit);
       define_prim("bit/not", p_bit_not);
@@ -1149,7 +1149,7 @@
     void p_int_print() { printf("%ld", data_stack_pop()); }
     void p_dot() { printf("%ld ", data_stack_pop()); }
     void p_int_dot() { printf("%ld ", data_stack_pop()); }
-    void export_int() {
+    void expose_int() {
       define_prim("inc", p_inc);
       define_prim("dec", p_dec);
       define_prim("neg", p_neg);
@@ -1219,7 +1219,7 @@
       char* address = data_stack_pop();
       data_stack_push(address[0]);
     }
-    void export_memory() {
+    void expose_memory() {
       define_prim("allocate", p_allocate);
       define_prim("free", p_free);
       define_primkey("address", k_address);
@@ -1372,7 +1372,7 @@
         }
       }
     }
-    void export_byte() {
+    void expose_byte() {
       define_prim("has-byte?", p_has_byte_p);
       define_prim("read/byte", p_read_byte);
       define_prim("byte/unread", p_byte_unread);
@@ -1482,7 +1482,7 @@
     void p_string_equal_p() {
       data_stack_push(string_equal(data_stack_pop(), data_stack_pop()));
     }
-    void export_string() {
+    void expose_string() {
       define_primkey("string", k_string);
       define_primkey("one-string", k_one_string);
       define_prim("string/print", p_string_print);
@@ -1782,7 +1782,7 @@
       target[index_end] = 0;
       data_stack_push(str2jo(target + index_begin));
     }
-    void export_jo() {
+    void expose_jo() {
       define_prim("null", p_null);
 
       define_prim("jo-filter-stack-push", p_jo_filter_stack_push);
@@ -2146,7 +2146,7 @@
         }
       }
     }
-    void export_file() {
+    void expose_file() {
       define_prim("error-number/print", p_error_number_print);
 
       define_prim("path/open/read", p_path_open_read);
@@ -2216,7 +2216,7 @@
       char* env_string = getenv(var_string);
       data_stack_push(env_string);
     }
-    void export_system() {
+    void expose_system() {
       define_prim("command/run", p_command_run);
       define_prim("n-command/run", p_n_command_run);
       define_prim("cmd-number", p_cmd_number);
@@ -2259,7 +2259,7 @@
         return;
       };
       free(real_read_path);
-      ccall("export", lib);
+      ccall("expose", lib);
     }
     void k_clib() {
       // (clib "..." ...)
@@ -2276,7 +2276,7 @@
         }
       }
     }
-    void export_cffi() {
+    void expose_cffi() {
       define_prim("clib", k_clib);
     }
     void k_run();
@@ -2573,7 +2573,7 @@
           i++;
         }
       }
-    void export_top_level() {
+    void expose_top_level() {
       define_primkey("define", k_define);
       define_primkey("bind-name", p_bind_name);
       define_primkey("declare", k_declare);
@@ -2977,7 +2977,7 @@
     void p_current_local_pointer() {
       data_stack_push(current_local_pointer);
     }
-    void export_keyword() {
+    void expose_keyword() {
       define_primkey("ignore", k_ignore);
       define_primkey("note", k_ignore);
 
@@ -3042,7 +3042,7 @@
     void p_newline() {
       printf("\n");
     }
-    void export_mise() {
+    void expose_mise() {
       define_prim("here", p_here);
       define_prim("address-of-here", p_address_of_here);
 
@@ -3060,7 +3060,7 @@
 
       define_prim("newline", p_newline);
     }
-    void export_play() {
+    void expose_play() {
 
     }
     jotable_entry proto_jotable_entry(cell index) {
@@ -3140,26 +3140,26 @@
       p_empty_jo();
       p_drop();
 
-      export_bind();
-      export_apply();
-      export_stack_operation();
-      export_ending();
-      export_instruction();
-      export_bool();
-      export_bit();
-      export_int();
-      export_memory();
-      export_byte();
-      export_jo();
-      export_string();
-      export_file();
-      export_keyword();
-      export_system();
-      export_cffi();
-      export_top_level();
-      export_mise();
+      expose_bind();
+      expose_apply();
+      expose_stack_operation();
+      expose_ending();
+      expose_instruction();
+      expose_bool();
+      expose_bit();
+      expose_int();
+      expose_memory();
+      expose_byte();
+      expose_jo();
+      expose_string();
+      expose_file();
+      expose_keyword();
+      expose_system();
+      expose_cffi();
+      expose_top_level();
+      expose_mise();
 
-      export_play();
+      expose_play();
     }
     #include "core.h";
 
