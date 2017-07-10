@@ -1114,40 +1114,41 @@
     (define welcome-to-jojo
       (jojo
         repl-flag/on
-        (cat "welcome-to-jojo ^-^/" newline)))
-    (define set-cmd-flag/loop
+        (cat "welcome to jojo ^-^/" newline)))
+    (define help
       (jojo
-        (note index -> {set flag})
-        (if dup cmd-number eq? then drop end)
-        dup index->cmd-string
-        (if dup (string "--test") string/equal? then test-flag/on)
-        (if dup (string "--repl") string/equal? then repl-flag/on)
-        drop inc (loop)))
-
+        (cat "hihi" newline)))
     (define set-cmd-flag
       (jojo
-        (int 1) set-cmd-flag/loop))
+        (jojo
+          (note index -> {set flag})
+          (if dup cmd-number eq? then drop end)
+          dup index->cmd-string
+          (if dup (string "--test") string/equal? then test-flag/on)
+          (if dup (string "--repl") string/equal? then repl-flag/on)
+          drop inc (loop))
+        (>> loop)
+        (int 1) (<< loop) (~ apply)))
     (define string/flag?
       (jojo
         (note string -> true or false)
         string/first-byte (byte "-") eq?))
 
-    (define load-cmd-path/loop
-      (jojo
-        (note index -> {load path})
-        (if dup cmd-number eq? then drop end)
-        dup index->cmd-string
-        (if dup string/flag? then drop inc (loop))
-        (if dup path/readable? then path/load inc (loop))
-        (el (cat "- load-cmd-path fall" newline
-                 "  path : " string/print newline
-                 "  cmd index : " int/print newline
-                 "  is not readable" newline)
-            debug)))
-
     (define load-cmd-path
       (jojo
-        (int 1) load-cmd-path/loop))
+        (jojo
+          (note index -> {load path})
+          (if dup cmd-number eq? then drop end)
+          dup index->cmd-string
+          (if dup string/flag? then drop inc (loop))
+          (if dup path/readable? then path/load inc (loop))
+          (el (cat "- load-cmd-path fall" newline
+                   "  path : " string/print newline
+                   "  cmd index : " int/print newline
+                   "  is not readable" newline)
+              debug))
+        (>> loop)
+        (int 1) (<< loop) (~ apply)))
     (define the-story-begin
       (jojo
         (if cmd-number (int 1) eq? then
