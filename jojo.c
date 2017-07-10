@@ -378,15 +378,16 @@
     jo JO_INS_JUMP;
     jo JO_INS_JUMP_IF_FALSE;
 
+    jo JO_INS_TAIL_CALL;
+    jo JO_INS_LOOP;
+    jo JO_INS_RECUR;
+
     jo JO_NULL;
     jo JO_THEN;
     jo JO_ELSE;
 
     jo JO_APPLY;
     jo JO_END;
-
-    jo JO_JO_REPLACING_APPLY_WITH_LAST_LOCAL_POINTER;
-    jo JO_REPLACING_APPLY_WITH_LAST_LOCAL_POINTER;
 
     jo JO_LOCAL_DATA_IN;
     jo JO_LOCAL_DATA_OUT;
@@ -766,11 +767,6 @@
       cell local_pointer = data_stack_pop();
       return_stack_make_point(jojo, local_pointer);
     }
-    void p_replacing_apply_with_last_local_pointer() {
-      jo jojo = data_stack_pop();
-      return_point rp = return_stack_pop();
-      return_stack_make_point(jojo, rp.local_pointer);
-    }
     void p_jo_apply() {
       jo_apply(data_stack_pop());
     }
@@ -779,19 +775,12 @@
       cell local_pointer = data_stack_pop();
       jo_apply_with_local_pointer(jo, local_pointer);
     }
-    void p_jo_replacing_apply_with_last_local_pointer() {
-      jo jo = data_stack_pop();
-      return_point rp = return_stack_pop();
-      jo_apply_with_local_pointer(jo, rp.local_pointer);
-    }
     void expose_apply() {
       define_prim("apply", p_apply);
       define_prim("apply-with-local-pointer", p_apply_with_local_pointer);
-      define_prim("replacing-apply-with-last-local-pointer", p_replacing_apply_with_last_local_pointer);
 
       define_prim("jo/apply", p_jo_apply);
       define_prim("jo/apply-with-local-pointer", p_jo_apply_with_local_pointer);
-      define_prim("jo/replacing-apply-with-last-local-pointer", p_jo_replacing_apply_with_last_local_pointer);
     }
     void cell_copy(cell length, cell* from, cell* to) {
       cell i = 0;
@@ -946,7 +935,7 @@
       define_prim("end", p_end);
       define_prim("bye", p_bye);
     }
-    void i_lit() {
+    void i_int() {
       // [] -> [cell] {return_stack}
       return_point rp = return_stack_tos();
       return_stack_inc();
@@ -984,11 +973,11 @@
       return_stack_make_point(jojo + offset, rp1.local_pointer);
     }
     void expose_instruction() {
-      define_prim("ins/lit", i_lit);
-      define_prim("ins/jo", i_lit);
-      define_prim("ins/string", i_lit);
-      define_prim("ins/byte", i_lit);
-      define_prim("ins/address", i_lit);
+      define_prim("ins/int", i_int);
+      define_prim("ins/jo", i_int);
+      define_prim("ins/string", i_int);
+      define_prim("ins/byte", i_int);
+      define_prim("ins/address", i_int);
 
       define_prim("ins/bare-jojo", i_bare_jojo);
 
@@ -2429,6 +2418,21 @@
           jojo++;
           jojo++;
         }
+        else if (jojo[0] == JO_INS_LOOP) {
+          printf("(loop) ");
+          jojo++;
+          jojo++;
+        }
+        else if (jojo[0] == JO_INS_RECUR) {
+          printf("(recur) ");
+          jojo++;
+          jojo++;
+        }
+        else if (jojo[0] == JO_INS_TAIL_CALL) {
+          printf("(tail-call %s) ", jo2str(jojo[1]));
+          jojo++;
+          jojo++;
+        }
         else {
           printf("%s ", jo2str(jojo[0]));
           jojo++;
@@ -2747,13 +2751,6 @@
         return;
       }
     }
-    void k_tail_call() {
-      // no check for "no compile before define"
-      here(JO_INS_INT);
-      here(read_jo());
-      here(JO_JO_REPLACING_APPLY_WITH_LAST_LOCAL_POINTER);
-      k_ignore();
-    }
     typedef jo current_compiling_jojo_stack_t[1024];
 
     current_compiling_jojo_stack_t current_compiling_jojo_stack;
@@ -2792,16 +2789,39 @@
       here(0);
       current_compiling_jojo_stack_pop();
     }
-    void k_loop() {
-      here(JO_INS_INT);
-      here(current_compiling_jojo_stack_tos());
-      here(JO_REPLACING_APPLY_WITH_LAST_LOCAL_POINTER);
+    void i_tail_call() {
+      return_point rp = return_stack_pop();
+      jo* jojo = rp.jojo;
+      jo jo = jojo[0];
+      jo_apply_with_local_pointer(jo, rp.local_pointer);
+    }
+    void k_tail_call() {
+      // no check for "no compile before define"
+      here(JO_INS_TAIL_CALL);
+      here(read_jo());
       k_ignore();
     }
-    void k_recur() {
-      here(JO_INS_INT);
+    void i_loop() {
+      return_point rp = return_stack_pop();
+      jo* jojo = rp.jojo;
+      jo* jojo_self = jojo[0];
+      return_stack_make_point(jojo_self, rp.local_pointer);
+    }
+    void k_loop() {
+      here(JO_INS_LOOP);
       here(current_compiling_jojo_stack_tos());
-      here(JO_APPLY);
+      k_ignore();
+    }
+    void i_recur() {
+      return_point rp = return_stack_tos();
+      return_stack_inc();
+      jo* jojo = rp.jojo;
+      jo* jojo_self = jojo[0];
+      return_stack_new_point(jojo_self);
+    }
+    void k_recur() {
+      here(JO_INS_RECUR);
+      here(current_compiling_jojo_stack_tos());
       k_ignore();
     }
     void p_compiling_stack_tos() {
@@ -3040,8 +3060,11 @@
 
       define_prim("compile-jojo", p_compile_jojo);
 
+      define_prim("ins/tail-call", i_tail_call);
       define_primkey("tail-call", k_tail_call);
+      define_prim("ins/loop", i_loop);
       define_primkey("loop", k_loop);
+      define_prim("ins/recur", i_recur);
       define_primkey("recur", k_recur);
 
       define_primkey("data", k_data);
@@ -3150,7 +3173,7 @@
       FLOWER_KET   =   str2jo("}");
       DOUBLE_QUOTE =   str2jo("\"");
 
-      JO_INS_INT  = str2jo("ins/lit");
+      JO_INS_INT  = str2jo("ins/int");
       JO_INS_JO   = str2jo("ins/jo");
       JO_INS_STRING = str2jo("ins/string");
       JO_INS_BYTE = str2jo("ins/byte");
@@ -3160,15 +3183,16 @@
       JO_INS_JUMP = str2jo("ins/jump");
       JO_INS_JUMP_IF_FALSE = str2jo("ins/jump-if-false");
 
+      JO_INS_TAIL_CALL = str2jo("ins/tail-call");
+      JO_INS_LOOP = str2jo("ins/loop");
+      JO_INS_RECUR = str2jo("ins/recur");
+
       JO_NULL     = str2jo("null");
       JO_THEN     = str2jo("then");
       JO_ELSE     = str2jo("else");
 
       JO_APPLY     = str2jo("apply");
       JO_END       = str2jo("end");
-
-      JO_JO_REPLACING_APPLY_WITH_LAST_LOCAL_POINTER = str2jo("jo/replacing-apply-with-last-local-pointer");
-      JO_REPLACING_APPLY_WITH_LAST_LOCAL_POINTER = str2jo("replacing-apply-with-last-local-pointer");
 
       JO_LOCAL_DATA_IN = str2jo("local-data-in");
       JO_LOCAL_DATA_OUT = str2jo("local-data-out");
