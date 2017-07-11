@@ -1,27 +1,14 @@
 #+property: tangle libjojo.c
 #+title:  jojo
 
-- interface for embedded in c
-
-- re-structure c code
-
-- move something out to module
-
 - trace and untrace a jo
   by rebind-name and redefine
   also defined?
-
-- note about jotable
-  make it do not need init
 
 * todo
 
   - delimited continuation
     to control return_stack [and data_stack]
-
-  - [maybe]
-    all read_byte or read_jo should ask has_byte_p or has_jo_p first
-    - ohterwise bar-ket are assumed to be balanced
 
   - concurrent
     use list to implement return_stack and data_stack in jojo
@@ -1306,82 +1293,6 @@
     }
     #+end_src
 
-* *instruction*
-
-*** i_int
-
-    #+begin_src c
-    i_int() {
-      // [] -> [cell] {return_stack}
-      return_point rp = return_stack_tos();
-      return_stack_inc();
-      jo* jojo = rp.jojo;
-      jo jo = jojo[0];
-      data_stack_push(jo);
-    }
-    #+end_src
-
-*** i_bare_jojo
-
-    #+begin_src c
-    i_bare_jojo() {
-      return_point rp = return_stack_pop();
-      jo* jojo = rp.jojo;
-      cell offset = jojo[0];
-      return_point rp1 = {.jojo = jojo + offset,
-                          .local_pointer = rp.local_pointer};
-      return_stack_push(rp1);
-      data_stack_push(jojo + 1);
-    }
-    #+end_src
-
-*** i_jump_if_false
-
-    #+begin_src c
-    i_jump_if_false() {
-      // [bool] -> {return_stack}
-      return_point rp = return_stack_tos();
-      return_stack_inc();
-      jo* jojo = rp.jojo;
-      cell offset = jojo[0];
-      cell b = data_stack_pop();
-      if (b == false) {
-        return_point rp1 = return_stack_pop();
-        return_stack_make_point(jojo + offset, rp1.local_pointer);
-      }
-    }
-    #+end_src
-
-*** i_jump
-
-    #+begin_src c
-    i_jump() {
-      // {return_stack}
-      return_point rp = return_stack_tos();
-      jo* jojo = rp.jojo;
-      cell offset = jojo[0];
-      return_point rp1 = return_stack_pop();
-      return_stack_make_point(jojo + offset, rp1.local_pointer);
-    }
-    #+end_src
-
-*** expose_instruction
-
-    #+begin_src c
-    expose_instruction() {
-      define_prim("ins/int", i_int);
-      define_prim("ins/jo", i_int);
-      define_prim("ins/string", i_int);
-      define_prim("ins/byte", i_int);
-      define_prim("ins/address", i_int);
-
-      define_prim("ins/bare-jojo", i_bare_jojo);
-
-      define_prim("ins/jump-if-false", i_jump_if_false);
-      define_prim("ins/jump", i_jump);
-    }
-    #+end_src
-
 * *bool*
 
 *** p_true
@@ -1595,6 +1506,19 @@
     }
     #+end_src
 
+*** i_int
+
+    #+begin_src c
+    i_int() {
+      // [] -> [cell] {return_stack}
+      return_point rp = return_stack_tos();
+      return_stack_inc();
+      jo* jojo = rp.jojo;
+      jo jo = jojo[0];
+      data_stack_push(jo);
+    }
+    #+end_src
+
 *** k_int
 
     #+begin_src c
@@ -1651,6 +1575,7 @@
       define_prim("gteq?", p_gteq_p);
       define_prim("lteq?", p_lteq_p);
 
+      define_prim("ins/int", i_int);
       define_primkey("int", k_int);
 
       define_prim("int/print", p_int_print);
@@ -1751,7 +1676,10 @@
     expose_memory() {
       define_prim("allocate", p_allocate);
       define_prim("free", p_free);
+
+      define_prim("ins/address", i_int);
       define_primkey("address", k_address);
+
       define_prim("jo-as-var", p_jo_as_var);
       define_prim("set-cell", p_set_cell);
       define_prim("get-cell", p_get_cell);
@@ -1974,6 +1902,8 @@
       define_prim("byte/unread", p_byte_unread);
       define_prim("byte/print", p_byte_print);
       define_prim("ignore-until-double-quote", p_ignore_until_double_quote);
+
+      define_prim("ins/byte", i_int);
       define_primkey("byte", k_byte);
     }
     #+end_src
@@ -2141,6 +2071,7 @@
 
     #+begin_src c
     expose_string() {
+      define_prim("ins/string", i_int);
       define_primkey("string", k_string);
       define_primkey("one-string", k_one_string);
       define_prim("string/print", p_string_print);
@@ -2617,6 +2548,8 @@
 
       define_prim("read/raw-jo", p_read_raw_jo);
       define_prim("read/jo", p_read_jo);
+
+      define_prim("ins/jo", i_int);
       define_primkey("jo", k_jo);
       define_primkey("raw-jo", k_raw_jo);
 
@@ -3850,6 +3783,19 @@
     }
     #+end_src
 
+*** i_jump
+
+    #+begin_src c
+    i_jump() {
+      // {return_stack}
+      return_point rp = return_stack_tos();
+      jo* jojo = rp.jojo;
+      cell offset = jojo[0];
+      return_point rp1 = return_stack_pop();
+      return_stack_make_point(jojo + offset, rp1.local_pointer);
+    }
+    #+end_src
+
 *** k_jump
 
     #+begin_src c
@@ -3857,6 +3803,23 @@
       here(JO_INS_JUMP);
       here(string_to_int(jo2str(read_raw_jo())));
       k_ignore();
+    }
+    #+end_src
+
+*** i_jump_if_false
+
+    #+begin_src c
+    i_jump_if_false() {
+      // [bool] -> {return_stack}
+      return_point rp = return_stack_tos();
+      return_stack_inc();
+      jo* jojo = rp.jojo;
+      cell offset = jojo[0];
+      cell b = data_stack_pop();
+      if (b == false) {
+        return_point rp1 = return_stack_pop();
+        return_stack_make_point(jojo + offset, rp1.local_pointer);
+      }
     }
     #+end_src
 
@@ -4032,6 +3995,20 @@
     #+begin_src c
     p_compiling_stack_tos() {
       data_stack_push(compiling_stack_tos());
+    }
+    #+end_src
+
+*** i_bare_jojo
+
+    #+begin_src c
+    i_bare_jojo() {
+      return_point rp = return_stack_pop();
+      jo* jojo = rp.jojo;
+      cell offset = jojo[0];
+      return_point rp1 = {.jojo = jojo + offset,
+                          .local_pointer = rp.local_pointer};
+      return_stack_push(rp1);
+      data_stack_push(jojo + 1);
     }
     #+end_src
 
@@ -4360,7 +4337,11 @@
       define_prim("compile-until-meet-jo", p_compile_until_meet_jo);
       define_prim("compile-until-round-ket", p_compile_until_round_ket);
 
+
+      define_prim("ins/jump", i_jump);
       define_primkey("jump", k_jump);
+
+      define_prim("ins/jump-if-false", i_jump_if_false);
       define_primkey("jump-if-false", k_jump_if_false);
 
       define_primkey("if", k_if);
@@ -4380,6 +4361,7 @@
       define_primkey("jojo", k_jojo);
       define_primkey("keyword", k_keyword);
 
+      define_prim("ins/bare-jojo", i_bare_jojo);
       define_primkey("bare-jojo", k_bare_jojo);
 
       define_prim("local-data-in", p_local_data_in);
@@ -4471,20 +4453,10 @@
 
 * *play*
 
-*** p1
-
-    #+begin_src c
-    p1() {
-      printf("sizeof(void*) : %ld\n", sizeof(void*));
-      printf("sizeof(cell) : %ld\n", sizeof(cell));
-    }
-    #+end_src
-
 *** expose_play
 
     #+begin_src c
     expose_play() {
-      define_prim("p1", p1);
     }
     #+end_src
 
@@ -4494,7 +4466,6 @@
 
     #+begin_src c
     init_jotable() {
-      cell i = 0;
       bzero(jotable, jotable_size * sizeof(jotable_entry));
     }
     #+end_src
@@ -4557,7 +4528,6 @@
 
     #+begin_src c
     init_jojo() {
-
       init_jotable();
       init_literal_jo();
 
@@ -4572,7 +4542,6 @@
       expose_apply();
       expose_stack_operation();
       expose_ending();
-      expose_instruction();
       expose_bool();
       expose_int();
       expose_memory();
