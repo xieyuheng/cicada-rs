@@ -154,11 +154,6 @@
     jotable_entry jotable[jotable_size];
 
     // thus (jotable + index) is jo
-    // jo JO_NOT_USED;
-    // bool used_jo_p(jo jo) {
-    //   return jo->tag != JO_NOT_USED;
-    // }
-
     bool used_jo_p(jo jo) {
       return jo->tag != 0;
     }
@@ -217,7 +212,6 @@
     jo TAG_KEYWORD;
     jo TAG_DATA;
 
-    jo JO_NOT_USED;
     jo JO_DECLARED;
 
     jo ROUND_BAR;
@@ -2949,8 +2943,12 @@
 
       define_prim("newline", p_newline);
     }
+    p1() {
+      printf("sizeof(void*) : %ld\n", sizeof(void*));
+      printf("sizeof(cell) : %ld\n", sizeof(cell));
+    }
     expose_play() {
-
+      define_prim("p1", p1);
     }
     init_jotable() {
       cell i = 0;
@@ -2965,7 +2963,6 @@
       TAG_KEYWORD      = str2jo("<keyword>");
       TAG_DATA         = str2jo("<data>");
 
-      JO_NOT_USED = str2jo("not-used");
       JO_DECLARED = str2jo("declared");
 
       ROUND_BAR    =   str2jo("(");
@@ -3038,7 +3035,7 @@
 
       expose_play();
     }
-    #include "core.h";
+    #include "core.h"
 
     init_core() {
       FILE* core_file = fmemopen(core_jo, core_jo_len, "r");
