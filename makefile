@@ -1,16 +1,16 @@
 .ONESHELL:
 CC = gcc
+COPY = rsync --recursive --links --perms --times --group --owner --devices --specials --verbose --human-readable
 
 build:
-	@
-	./tangle.js &&\
-	echo "- xxd : core.jo -> core.h"  &&\
-	xxd -i core.jo > core.h &&\
-	echo "- compile : jojo.c -> jojo"  &&\
-	$(CC) -O2 -w -ldl jojo.c -o jojo -rdynamic &&\
-	echo "- finish ^-^"
+	./tool/tangle.js &&\
+	xxd -i core/0.0.1/core.jo > core/0.0.1/core.h &&\
+	$(CC) -O2 -w -ldl jojo.c -o jojo -rdynamic
+
+user-install:
+	$(COPY) core ~/.jojo/
+	$(COPY) module ~/.jojo/
 
 clean:
-	@
 	rm jojo
 	rm -f *~ */*~ */*/*~ */*/*/*~ */*/*/*/*~ */*/*/*/*/*~

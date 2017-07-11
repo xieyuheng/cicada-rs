@@ -1,5 +1,6 @@
 #include <stdio.h>
-#include "libjojo.h"
+
+#include "../../../core/0.0.1/libjojo.h"
 
 void p_welcome() {
   printf("  welcome to jojo ^-^/\n");

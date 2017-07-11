@@ -29,10 +29,10 @@ function tangle (input_file_name, output_file_name) {
       // do nothing
     }
   }
-  console.log("- tangle :",
-              input_file_name,
-              "->",
-              output_file_name);
+//   console.log("- tangle :",
+//               input_file_name,
+//               "->",
+//               output_file_name);
   fs.writeFileSync(
     output_file_name,
     line_array_to_string(result_array));
@@ -46,5 +46,8 @@ function line_array_to_string (line_array) {
   return result_string;
 }
 
-tangle("core.org", "core.jo");
+// tangle("../core/0.0.1/core.org", "../core/0.0.1/core.jo");
+// tangle("../jojo.org", "../jojo.c");
+
+tangle("core/0.0.1/core.org", "core/0.0.1/core.jo");
 tangle("jojo.org", "jojo.c");

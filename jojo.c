@@ -3041,10 +3041,13 @@
 
       expose_play();
     }
-    #include "core.h"
+    #include "core/0.0.1/core.h"
 
     init_core() {
-      FILE* core_file = fmemopen(core_jo, core_jo_len, "r");
+      FILE* core_file =
+        fmemopen(core_0_0_1_core_jo,
+                 core_0_0_1_core_jo_len,
+                 "r");
       reading_stack_push(core_file);
       p_repl();
       reading_stack_pop();
