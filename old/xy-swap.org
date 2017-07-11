@@ -1,0 +1,29 @@
+* cell_copy
+
+  #+begin_src c
+  cell_copy(cell length, cell* from, cell* to) {
+    cell i = 0;
+    while (i < length) {
+      to[i] = from[i];
+      i++;
+    }
+  }
+  #+end_src
+
+* p_xy_swap
+
+  #+begin_src c
+  p_xy_swap() {
+    // xxx yyy x y -> yyy xxx
+    cell y = data_stack_pop();
+    cell x = data_stack_pop();
+    cell* yp = calloc(y, CELL_SIZE);
+    cell* xp = calloc(x, CELL_SIZE);
+    cell_copy(y, (data_stack + (data_stack_pointer - y)), yp);
+    cell_copy(x, (data_stack + (data_stack_pointer - y - x)), xp);
+    cell_copy(y, yp, (data_stack + (data_stack_pointer - y - x)));
+    cell_copy(x, xp, (data_stack + (data_stack_pointer - x)));
+    free(yp);
+    free(xp);
+  }
+  #+end_src

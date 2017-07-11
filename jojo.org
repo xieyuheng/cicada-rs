@@ -1,6 +1,13 @@
 #+property: tangle jojo.c
 #+title:  jojo
 
+- to used libjojo.c and libjojo.h
+  jojo.c as a jojo embedded in c
+
+- interface for embedded in c
+
+- re-structure c code
+
 - move something out to module
 
 - trace and untrace a jo
@@ -8,14 +15,9 @@
   also defined?
 
 - note about jotable
-- [docs] for every limited number, jo-max-length, etc.
+  make it do not need init
 
 * todo
-
-  - re-structure c code
-
-  - to used libjojo.c and libjojo.h
-    jojo.c as a jojo embedded in c
 
   - delimited continuation
     to control return_stack [and data_stack]
@@ -101,46 +103,58 @@
 
     - but we can not use old names in the scope outside this scope.
 
-* helper
+*** limits
 
-*** header
+    | name                 | length      | unit          |
+    |----------------------+-------------+---------------|
+    | string_area          | 1024 * 1024 | byte          |
+    | jotable              | 97 * 1024   | jotable_entry |
+    | compiling_stack      | 1024        | jo*           |
+    | jojo_area            | 1024 * 1024 | jo            |
+    |----------------------+-------------+---------------|
+    | data_stack           | 4 * 1024    | cell          |
+    | return_stack         | 4 * 1024    | return_point  |
+    | local_area           | 1024 * 1024 | local_point   |
+    |----------------------+-------------+---------------|
+    | name_record          | 16 * 1024   | jo            |
+    | binding_filter_stack | 128         | jo            |
+    | binding_hook_stack   | 128         | jo            |
+    | keyword_stack        | 128         | jo            |
+    | alias_stack          | 1024        | alias         |
+    | reading_stack        | 64          | FILE*         |
+    | jo_filter_stack      | 128         | jo            |
 
-    #+begin_src c
-    #include <sys/types.h>
-    #include <sys/stat.h>
-    #include <unistd.h>
+* header
 
-    #include <stdio.h>
-    #include <stdlib.h>
+  #+begin_src c
+  #include <sys/types.h>
+  #include <sys/stat.h>
+  #include <unistd.h>
+  #include <stdio.h>
+  #include <stdlib.h>
+  #include <errno.h>
+  #include <string.h>
+  #include <fcntl.h>
+  #include <ctype.h>
+  #include <stdint.h>
+  #include <dlfcn.h>
+  #include <dirent.h>
+  #include <signal.h>
+  #include <limits.h>
+  #+end_src
 
-    #include <errno.h>
-    #include <string.h>
+* type
 
-    #include <fcntl.h>
+  #+begin_src c
+  typedef enum { false, true } bool;
+  typedef intptr_t cell;
+  typedef unsigned char byte;
+  typedef void (*primitive)();
 
-    #include <ctype.h>
-    #include <stdint.h>
+  #define CELL_SIZE (sizeof(cell))
+  #+end_src
 
-    #include <dlfcn.h>
-    #include <dirent.h>
-
-    #include <signal.h>
-
-    #include <limits.h>
-    #+end_src
-
-*** bool
-
-    #+begin_src c
-    typedef enum { false, true } bool;
-    #+end_src
-
-*** cell
-
-    #+begin_src c
-    typedef intptr_t cell;
-    #define cell_size (sizeof(cell))
-    #+end_src
+* utility
 
 *** int
 
@@ -171,12 +185,6 @@
       }
       return result;
     }
-    #+end_src
-
-*** byte
-
-    #+begin_src c
-    typedef unsigned char byte;
     #+end_src
 
 *** char
@@ -256,7 +264,7 @@
       }
       #+end_src
 
-***** string_to_based_[nat|int]
+***** string_to_based_nat & string_to_based_int & string_to_int
 
       #+begin_src c
       cell string_to_based_nat(char* str, cell base) {
@@ -278,114 +286,16 @@
           return string_to_based_nat(str, base);
         }
       }
+
+      cell string_to_int(char* str) { return string_to_based_int(str, 10); }
       #+end_src
 
-***** string_to_[dec|bin|oct|hex]
-
-      #+begin_src c
-      cell string_to_dec(char* str) { return string_to_based_int(str, 10); }
-      cell string_to_bin(char* str) { return string_to_based_int(str,  2); }
-      cell string_to_oct(char* str) { return string_to_based_int(str,  8); }
-      cell string_to_hex(char* str) { return string_to_based_int(str, 16); }
-      #+end_src
-
-* jotable
-
-*** primitive
-
-    #+begin_src c
-    typedef void (*primitive)();
-    #+end_src
-
-*** jo
-
-    #+begin_src c
-    typedef cell jo;
-    #+end_src
-
-*** bind & jotable_entry
-
-    #+begin_src c
-    typedef cell bind;
-
-    typedef struct {
-      cell index;
-      char* key;
-      jo tag;
-      bind value;
-      cell orbit_length;
-      cell orbiton;
-    } jotable_entry;
-    #+end_src
-
-*** jotable_entry_[occured|entry_used|no_collision]
-
-    #+begin_src c
-    jo JO_NOT_USED;
-
-    bool jotable_entry_occured(jotable_entry e) {
-      return e.key != 0;
-    }
-
-    bool jotable_entry_used(jotable_entry e) {
-      return e.tag != JO_NOT_USED;
-    }
-
-    bool jotable_entry_no_collision(jotable_entry e) {
-      return e.index == e.orbiton;
-    }
-    #+end_src
-
-*** jotable
-
-    #+begin_src c
-    // prime table size
-    //   1000003   about 976 k
-    //   1000033
-    //   1000333
-    //   100003    about 97 k
-    //   100333
-    //   997
-    #define jotable_size 100003
-    jotable_entry jotable[jotable_size];
-    cell jotable_counter = 0;
-    #+end_src
-
-*** string_to_sum
-
-    #+begin_src c
-    cell string_to_sum(char* str) {
-      cell sum = 0;
-      cell max_step = 10;
-      cell i = 0;
-      while (i < strlen(str)) {
-        sum = sum + ((byte) str[i]) * (2 << min(i, max_step));
-        i++;
-      }
-      return sum;
-    }
-    #+end_src
-
-*** jotable_keyeq
-
-    #+begin_src c
-    bool jotable_keyeq(char* k1, char* k2) {
-      return string_equal(k1, k2);
-    }
-    #+end_src
-
-*** jotable_hash
-
-    #+begin_src c
-    cell jotable_hash(char* key, cell counter) {
-      return (counter + string_to_sum(key)) % jotable_size;
-    }
-    #+end_src
+* string_area
 
 *** string_area
 
     #+begin_src c
-    char string_area[4 * 1024 * 1024];
+    char string_area[1024 * 1024];
     cell string_area_counter = 0;
     #+end_src
 
@@ -412,229 +322,115 @@
     }
     #+end_src
 
-j* jotable_insert
+* jotable
+
+*** type
 
     #+begin_src c
-    // -1 denotes the hash_table is filled
-    cell jotable_insert(char* key) {
-      cell orbit_index = jotable_hash(key, 0);
+    typedef struct jo_entry {
+      char *key;
+      struct jo_entry *tag;
+      cell value;
+    } jotable_entry;
+
+    typedef jotable_entry *jo;
+
+    // prime table size
+    //   1000003   about 976 k
+    //   1000033
+    //   1000333
+    //   100003    about 97 k
+    //   100333
+    //   997
+    #define jotable_size 100003
+    jotable_entry jotable[jotable_size];
+
+    // thus (jotable + index) is jo
+    #+end_src
+
+*** jotable_entry_[occured|entry_used|no_collision]
+
+    #+begin_src c
+    // jo JO_NOT_USED;
+    // bool used_jo_p(jo jo) {
+    //   return jo->tag != JO_NOT_USED;
+    // }
+
+    bool used_jo_p(jo jo) {
+      return jo->tag != 0;
+    }
+    #+end_src
+
+*** string_to_sum
+
+    #+begin_src c
+    cell string_to_sum(char* str) {
+      cell sum = 0;
+      cell max_step = 10;
+      cell i = 0;
+      while (i < strlen(str)) {
+        sum = sum + ((byte) str[i]) * (2 << min(i, max_step));
+        i++;
+      }
+      return sum;
+    }
+    #+end_src
+
+*** jotable_hash
+
+    #+begin_src c
+    // get hash value is index into jotable
+    cell jotable_hash(cell sum, cell counter) {
+      return (counter + sum) % jotable_size;
+    }
+    #+end_src
+
+*** jotable_insert
+
+    #+begin_src c
+    p_debug();
+
+    jo jotable_insert(char* key) {
+      // in C : [string] -> [jo]
+      cell sum = string_to_sum(key);
       cell counter = 0;
       while (true) {
-        cell index = jotable_hash(key, counter);
-        if (!jotable_entry_occured(jotable[index])) {
+        cell index = jotable_hash(sum, counter);
+        jo jo = (jotable + index);
+        if (jo->key == 0) {
           key = copy_to_string_area(key);
-          jotable[index].key = key;
-          jotable[index].orbiton = orbit_index;
-          jotable[orbit_index].orbit_length = 1 + counter;
-          jotable_counter = 1 + jotable_counter;
-          return index;
+          jo->key = key;
+          return jo;
         }
-        else if (jotable_keyeq(key, jotable[index].key)) {
-          return index;
+        else if (string_equal(key, jo->key)) {
+          return jo;
         }
         else if (counter == jotable_size) {
-          return -1;
+          printf("- jotable_insert fail\n");
+          printf("  the hash_table is filled\n");
+          p_debug();
+          return NULL;
         }
         else {
-          counter = 1 + counter;
+          counter++;
         }
       }
     }
     #+end_src
 
-*** jotable_search
-
-    #+begin_src c
-    // -1 denotes key not occured
-    cell jotable_search(char* key) {
-      cell counter = 0;
-      while (true) {
-        cell index = jotable_hash(key, counter);
-        if (!jotable_entry_occured(jotable[index])) {
-          return -1;
-        }
-        else if (jotable_keyeq(key, jotable[index].key)) {
-          return index;
-        }
-        else if (counter == jotable_size) {
-          return -1;
-        }
-        else {
-          counter = 1 + counter;
-        }
-      }
-    }
-    #+end_src
-
-*** jotable_entry_print
-
-    #+begin_src c
-    char* jo2str (cell index);
-
-    void jotable_entry_print(jotable_entry entry) {
-      printf("%s : ", jo2str(entry.tag));
-      printf("%ld", entry.value);
-    }
-    #+end_src
-
-*** jotable_report_orbit
-
-    #+begin_src c
-    void jotable_report_orbit(cell index, cell counter) {
-      while (counter < jotable[index].orbit_length) {
-        char* key = jotable[index].key;
-        cell next_index = jotable_hash(key, counter);
-        if (index == jotable[next_index].orbiton) {
-          printf("  | %ld %s\n", next_index, jotable[next_index].key);
-        }
-        if (jotable_entry_used(jotable[next_index])) {
-          printf("    = ");
-          jotable_entry_print(jotable[next_index]);
-          printf("\n");
-        }
-        counter = 1 + counter;
-      }
-    }
-    #+end_src
-
-*** jotable_report
-
-    #+begin_src c
-    void jotable_report() {
-      printf("\n");
-      printf("- jotable_report\n");
-      printf("  : <index> <key> // <orbit-length>\n");
-      cell index = 0;
-      while (index < jotable_size) {
-        if (jotable_entry_occured(jotable[index]) &&
-            jotable_entry_no_collision(jotable[index])) {
-          printf("  - %ld %s // %ld\n",
-                 index, jotable[index].key, jotable[index].orbit_length);
-          if (jotable_entry_used(jotable[index])) {
-            printf("    = ");
-            jotable_entry_print(jotable[index]);
-            printf("\n");
-          }
-          jotable_report_orbit(index, 1);
-        }
-        index = 1 + index;
-      }
-      printf("  : <index> <key> // <orbit-length>\n");
-      printf("\n");
-      printf("- used : %ld\n", jotable_counter);
-      printf("- free : %ld\n", jotable_size - jotable_counter);
-    }
-    #+end_src
-
-*** jotable_print
-
-    #+begin_src c
-    void jotable_print() {
-      printf("\n");
-      printf("- jotable_print\n");
-      cell index = 0;
-      while (index < jotable_size) {
-        printf("  - %ld %s %ld // %ld\n",
-               index,
-               jotable[index].key,
-               jotable[index].value,
-               jotable[index].orbit_length);
-        index = 1 + index;
-      }
-      printf("\n");
-      printf("- used : %ld\n", jotable_counter);
-      printf("- free : %ld\n", jotable_size - jotable_counter);
-    }
-    #+end_src
-
-*** str2jo & jo2str
+*** str2jo
 
     #+begin_src c
     jo str2jo(char* str) {
       return jotable_insert(str);
     }
-
-    char* jo2str(cell index) {
-      return jotable[index].key;
-    }
     #+end_src
 
-*** jojo_area
+*** jo2str
 
     #+begin_src c
-    jo jojo_area[1024 * 1024];
-    #+end_src
-
-*** here
-
-***** compiling_stack
-
-      - to redirect compiling location
-
-      #+begin_src c
-      typedef jo* compiling_stack_t[1024];
-
-      compiling_stack_t compiling_stack;
-      cell compiling_stack_base = 0;
-      cell compiling_stack_pointer = 0;
-
-      void compiling_stack_push(jo* value) {
-        compiling_stack[compiling_stack_pointer] = value;
-        compiling_stack_pointer++;
-      }
-
-      jo* compiling_stack_pop() {
-        compiling_stack_pointer--;
-        return compiling_stack[compiling_stack_pointer];
-      }
-
-      void compiling_stack_inc() {
-        compiling_stack[compiling_stack_pointer - 1] =
-          compiling_stack[compiling_stack_pointer - 1] + 1;
-      }
-
-
-      jo* compiling_stack_tos() {
-        return compiling_stack[compiling_stack_pointer - 1];
-      }
-
-      bool compiling_stack_empty_p() {
-        return compiling_stack_pointer == compiling_stack_base;
-      }
-      #+end_src
-
-***** init_compiling_stack
-
-      #+begin_src c
-      void init_compiling_stack() {
-        compiling_stack_push(jojo_area);
-      }
-      #+end_src
-
-***** here
-
-      #+begin_src c
-      void here(cell n) {
-        jo* pointer = compiling_stack_pop();
-        pointer[0] = n;
-        compiling_stack_push(pointer + 1);
-      }
-      #+end_src
-
-*** jotable_set_tag_and_value
-
-    #+begin_src c
-    void jotable_set_tag_and_value(cell index, jo tag, cell value) {
-      jotable[index].tag = tag;
-      jotable[index].value = value;
-    }
-    #+end_src
-
-*** jotable_get_value
-
-    #+begin_src c
-    cell jotable_get_value(cell index) {
-      return jotable[index].value;
+    char* jo2str(jo jo) {
+      return jo->key;
     }
     #+end_src
 
@@ -651,13 +447,13 @@ j* jotable_insert
     jo JO_NOT_USED;
     jo JO_DECLARED;
 
-    jo ROUND_BAR    ;
-    jo ROUND_KET    ;
-    jo SQUARE_BAR   ;
-    jo SQUARE_KET   ;
-    jo FLOWER_BAR   ;
-    jo FLOWER_KET   ;
-    jo DOUBLE_QUOTE ;
+    jo ROUND_BAR;
+    jo ROUND_KET;
+    jo SQUARE_BAR;
+    jo SQUARE_KET;
+    jo FLOWER_BAR;
+    jo FLOWER_KET;
+    jo DOUBLE_QUOTE;
 
     jo JO_INS_INT;
     jo JO_INS_JO;
@@ -690,6 +486,64 @@ j* jotable_insert
     jo JO_LOCAL_OUT;
     #+end_src
 
+* compiling_stack & here
+
+*** compiling_stack
+
+    - to redirect compiling location
+
+    #+begin_src c
+    typedef jo* compiling_stack_t[1024];
+
+    compiling_stack_t compiling_stack;
+    cell compiling_stack_base = 0;
+    cell compiling_stack_pointer = 0;
+
+    compiling_stack_push(jo* value) {
+      compiling_stack[compiling_stack_pointer] = value;
+      compiling_stack_pointer++;
+    }
+
+    jo* compiling_stack_pop() {
+      compiling_stack_pointer--;
+      return compiling_stack[compiling_stack_pointer];
+    }
+
+    compiling_stack_inc() {
+      compiling_stack[compiling_stack_pointer - 1] =
+        compiling_stack[compiling_stack_pointer - 1] + 1;
+    }
+
+
+    jo* compiling_stack_tos() {
+      return compiling_stack[compiling_stack_pointer - 1];
+    }
+
+    bool compiling_stack_empty_p() {
+      return compiling_stack_pointer == compiling_stack_base;
+    }
+    #+end_src
+
+*** here
+
+    #+begin_src c
+    here(cell n) {
+      jo* pointer = compiling_stack_pop();
+      pointer[0] = n;
+      compiling_stack_push(pointer + 1);
+    }
+    #+end_src
+
+*** jojo_area & init_compiling_stack
+
+    #+begin_src c
+    jo jojo_area[1024 * 1024];
+
+    init_compiling_stack() {
+      compiling_stack_push(jojo_area);
+    }
+    #+end_src
+
 * data_stack & return_stack
 
 *** data_stack
@@ -701,7 +555,7 @@ j* jotable_insert
     cell data_stack_base = 64;
     cell data_stack_pointer = 64;
 
-    void data_stack_push(cell value) {
+    data_stack_push(cell value) {
       data_stack[data_stack_pointer] = value;
       data_stack_pointer++;
     }
@@ -747,7 +601,7 @@ j* jotable_insert
     cell return_stack_base = 64;
     cell return_stack_pointer = 64;
 
-    void return_stack_push(return_point value) {
+    return_stack_push(return_point value) {
       return_stack[return_stack_pointer] = value;
       return_stack_pointer++;
     }
@@ -765,17 +619,17 @@ j* jotable_insert
       return return_stack_base == return_stack_pointer;
     }
 
-    void return_stack_make_point(jo* jojo, cell local_pointer) {
+    return_stack_make_point(jo* jojo, cell local_pointer) {
       return_point rp = {.jojo = jojo, .local_pointer = local_pointer};
       return_stack[return_stack_pointer] = rp;
       return_stack_pointer++;
     }
 
-    void return_stack_new_point(jo* jojo) {
+    return_stack_new_point(jo* jojo) {
       return_stack_make_point(jojo, current_local_pointer);
     }
 
-    void return_stack_inc() {
+    return_stack_inc() {
       return_point rp = return_stack_pop();
       return_point rp1 = {.jojo = rp.jojo + 1,
                           .local_pointer = rp.local_pointer};
@@ -788,14 +642,14 @@ j* jotable_insert
 *** name_record
 
     #+begin_src c
-    jo name_record[64 * 1024];
+    jo name_record[16 * 1024];
     cell name_record_counter = 0;
     #+end_src
 
 *** p_name_record
 
     #+begin_src c
-    void p_name_record() {
+    p_name_record() {
       data_stack_push(name_record);
     }
     #+end_src
@@ -803,7 +657,7 @@ j* jotable_insert
 *** p_name_report
 
     #+begin_src c
-    void p_name_report() {
+    p_name_report() {
       printf("- p_name_report // counter : %ld\n", name_record_counter);
       cell i = 0;
       while (i < name_record_counter) {
@@ -825,7 +679,7 @@ j* jotable_insert
       cell binding_filter_stack_base = 0;
       cell binding_filter_stack_pointer = 0;
 
-      void binding_filter_stack_push(jo value) {
+      binding_filter_stack_push(jo value) {
         binding_filter_stack[binding_filter_stack_pointer] = value;
         binding_filter_stack_pointer++;
       }
@@ -847,7 +701,7 @@ j* jotable_insert
 ***** p_binding_filter_stack_push
 
       #+begin_src c
-      void p_binding_filter_stack_push() {
+      p_binding_filter_stack_push() {
         binding_filter_stack_push(data_stack_pop());
       }
       #+end_src
@@ -855,7 +709,7 @@ j* jotable_insert
 ***** p_binding_filter_stack_pop
 
       #+begin_src c
-      void p_binding_filter_stack_pop() {
+      p_binding_filter_stack_pop() {
         data_stack_push(binding_filter_stack_pop());
       }
       #+end_src
@@ -863,9 +717,9 @@ j* jotable_insert
 ***** run_binding_filter
 
       #+begin_src c
-      void jo_apply_now(jo jo);
+      jo_apply_now(jo jo);
 
-      void run_binding_filter() {
+      run_binding_filter() {
         cell i = binding_filter_stack_pointer;
         while (i > binding_filter_stack_base) {
           jo_apply_now(binding_filter_stack[i-1]);
@@ -885,7 +739,7 @@ j* jotable_insert
       cell binding_hook_stack_base = 0;
       cell binding_hook_stack_pointer = 0;
 
-      void binding_hook_stack_push(jo value) {
+      binding_hook_stack_push(jo value) {
         binding_hook_stack[binding_hook_stack_pointer] = value;
         binding_hook_stack_pointer++;
       }
@@ -907,7 +761,7 @@ j* jotable_insert
 ***** p_binding_hook_stack_push
 
       #+begin_src c
-      void p_binding_hook_stack_push() {
+      p_binding_hook_stack_push() {
         binding_hook_stack_push(data_stack_pop());
       }
       #+end_src
@@ -915,7 +769,7 @@ j* jotable_insert
 ***** p_binding_hook_stack_pop
 
       #+begin_src c
-      void p_binding_hook_stack_pop() {
+      p_binding_hook_stack_pop() {
         data_stack_push(binding_hook_stack_pop());
       }
       #+end_src
@@ -923,7 +777,7 @@ j* jotable_insert
 ***** run_binding_hook
 
       #+begin_src c
-      void run_binding_hook(cell name, jo tag, cell value) {
+      run_binding_hook(cell name, jo tag, cell value) {
         cell i = binding_hook_stack_pointer;
         while (i > binding_hook_stack_base) {
           data_stack_push(value);
@@ -940,17 +794,11 @@ j* jotable_insert
     after_define (name -> [set-tail tos of defining-stack])
 
     #+begin_src c
-    bool used_jo_p(jo index) {
-      return
-        jotable[index].tag != JO_NOT_USED;
+    bool declared_jo_p(jo jo) {
+      return jo->tag == JO_DECLARED;
     }
 
-    bool declared_jo_p(jo index) {
-      return
-        jotable[index].tag == JO_DECLARED;
-    }
-
-    void p_bind_name() {
+    p_bind_name() {
       run_binding_filter();
       jo name = data_stack_pop();
       jo tag = data_stack_pop();
@@ -960,10 +808,11 @@ j* jotable_insert
         printf("  name : %s\n", jo2str(name));
         printf("  tag : %s\n", jo2str(tag));
         printf("  value : %ld\n", value);
-        printf("  it has been bound as a %s\n", jo2str(jotable[name].tag));
+        printf("  it has been bound as a %s\n", jo2str(name->tag));
         return;
       }
-      jotable_set_tag_and_value(name, tag, value);
+      name->tag = tag;
+      name->value = value;
 
       run_binding_hook(name, tag, value);
 
@@ -976,7 +825,7 @@ j* jotable_insert
 *** define_prim
 
     #+begin_src c
-    void define_prim(char* str, primitive fun) {
+    define_prim(char* str, primitive fun) {
       jo name = str2jo(str);
       data_stack_push(fun);
       data_stack_push(TAG_PRIM);
@@ -988,7 +837,7 @@ j* jotable_insert
 *** define_primkey
 
     #+begin_src c
-    void define_primkey(char* str, primitive fun) {
+    define_primkey(char* str, primitive fun) {
       jo name = str2jo(str);
       data_stack_push(fun);
       data_stack_push(TAG_PRIM_KEYWORD);
@@ -1002,7 +851,7 @@ j* jotable_insert
 *** expose_bind
 
     #+begin_src c
-    void expose_bind() {
+    expose_bind() {
       define_prim("name-report", p_name_report);
       define_prim("name-record", p_name_record);
 
@@ -1031,24 +880,23 @@ j* jotable_insert
 *** keyword_stack
 
     #+begin_src c
-    typedef cell keyword;
-    typedef keyword keyword_stack_t[128];
+    typedef jo keyword_stack_t[128];
     keyword_stack_t keyword_stack;
 
     cell keyword_stack_base = 0;
     cell keyword_stack_pointer = 0;
 
-    void keyword_stack_push(keyword value) {
+    keyword_stack_push(jo value) {
       keyword_stack[keyword_stack_pointer] = value;
       keyword_stack_pointer++;
     }
 
-    keyword keyword_stack_pop() {
+    jo keyword_stack_pop() {
       keyword_stack_pointer--;
       return keyword_stack[keyword_stack_pointer];
     }
 
-    keyword keyword_stack_tos() {
+    jo keyword_stack_tos() {
       return keyword_stack[keyword_stack_pointer - 1];
     }
 
@@ -1070,7 +918,7 @@ j* jotable_insert
     cell alias_stack_base = 0;
     cell alias_stack_pointer = 0;
 
-    void alias_stack_push(alias value) {
+    alias_stack_push(alias value) {
       alias_stack[alias_stack_pointer] = value;
       alias_stack_pointer++;
     }
@@ -1092,48 +940,48 @@ j* jotable_insert
 *** jo_apply
 
     #+begin_src c
-    void eval();
-    void p_debug();
+    eval();
+    p_debug();
 
-    void jo_apply(jo jo) {
-      if (!jotable_entry_used(jotable[jo])) {
+    jo_apply(jo jo) {
+      if (!used_jo_p(jo)) {
         printf("- jo_apply meet undefined jo : %s\n", jo2str(jo));
         p_debug();
         return;
       }
 
-      cell tag = jotable[jo].tag;
+      cell tag = jo->tag;
 
       if (tag == TAG_PRIM) {
-        primitive primitive = jotable_get_value(jo);
+        primitive primitive = jo->value;
         primitive();
       }
       else if (tag == TAG_JOJO) {
-        cell jojo = jotable_get_value(jo);
+        cell jojo = jo->value;
         return_stack_new_point(jojo);
       }
 
       else if (tag == TAG_PRIM_KEYWORD) {
         keyword_stack_push(alias_stack_pointer);
-        primitive primitive = jotable_get_value(jo);
+        primitive primitive = jo->value;
         primitive();
         alias_stack_pointer = keyword_stack_pop();
       }
       else if (tag == TAG_KEYWORD) {
         // keywords are always evaled
         keyword_stack_push(alias_stack_pointer);
-        cell jojo = jotable_get_value(jo);
+        cell jojo = jo->value;
         return_stack_new_point(jojo);
         eval();
         alias_stack_pointer = keyword_stack_pop();
       }
 
       else if (tag == TAG_DATA) {
-        cell cell = jotable_get_value(jo);
+        cell cell = jo->value;
         data_stack_push(cell);
       }
       else {
-        cell cell = jotable_get_value(jo);
+        cell cell = jo->value;
         data_stack_push(cell);
         data_stack_push(tag);
       }
@@ -1143,10 +991,10 @@ j* jotable_insert
 *** jo_apply_now
 
     #+begin_src c
-    void jo_apply_now(jo jo) {
-      cell tag = jotable[jo].tag;
+    jo_apply_now(jo jo) {
+      cell tag = jo->tag;
       if (tag == TAG_JOJO) {
-        cell jojo = jotable_get_value(jo);
+        cell jojo = jo->value;
         return_stack_new_point(jojo);
         eval();
         return;
@@ -1161,10 +1009,10 @@ j* jotable_insert
 *** jo_apply_with_local_pointer
 
     #+begin_src c
-    void jo_apply_with_local_pointer(jo jo, cell local_pointer) {
-      cell tag = jotable[jo].tag;
+    jo_apply_with_local_pointer(jo jo, cell local_pointer) {
+      cell tag = jo->tag;
       if (tag == TAG_JOJO) {
-        cell jojo = jotable_get_value(jo);
+        cell jojo = jo->value;
         return_stack_make_point(jojo, local_pointer);
         return;
       }
@@ -1180,9 +1028,9 @@ j* jotable_insert
     #+begin_src c
     bool step_flag = false;
 
-    void stepper();
+    stepper();
 
-    void eval() {
+    eval() {
       cell return_stack_base = return_stack_pointer;
       while (return_stack_pointer >= return_stack_base) {
         return_point rp = return_stack_tos();
@@ -1200,7 +1048,7 @@ j* jotable_insert
 *** p_apply
 
     #+begin_src c
-    void p_apply() {
+    p_apply() {
       return_stack_new_point(data_stack_pop());
     }
     #+end_src
@@ -1208,7 +1056,7 @@ j* jotable_insert
 *** p_apply_with_local_pointer
 
     #+begin_src c
-    void p_apply_with_local_pointer() {
+    p_apply_with_local_pointer() {
       // [local_pointer jojo] -> [*]
       jo* jojo = data_stack_pop();
       cell local_pointer = data_stack_pop();
@@ -1219,7 +1067,7 @@ j* jotable_insert
 *** p_jo_apply
 
     #+begin_src c
-    void p_jo_apply() {
+    p_jo_apply() {
       jo_apply(data_stack_pop());
     }
     #+end_src
@@ -1227,7 +1075,7 @@ j* jotable_insert
 *** p_jo_apply_with_local_pointer
 
     #+begin_src c
-    void p_jo_apply_with_local_pointer() {
+    p_jo_apply_with_local_pointer() {
       jo jo = data_stack_pop();
       cell local_pointer = data_stack_pop();
       jo_apply_with_local_pointer(jo, local_pointer);
@@ -1237,7 +1085,7 @@ j* jotable_insert
 *** expose_apply
 
     #+begin_src c
-    void expose_apply() {
+    expose_apply() {
       define_prim("apply", p_apply);
       define_prim("apply-with-local-pointer", p_apply_with_local_pointer);
 
@@ -1248,22 +1096,10 @@ j* jotable_insert
 
 * *stack_operation*
 
-*** cell_copy
-
-    #+begin_src c
-    void cell_copy(cell length, cell* from, cell* to) {
-      cell i = 0;
-      while (i < length) {
-        to[i] = from[i];
-        i++;
-      }
-    }
-    #+end_src
-
 *** p_drop
 
     #+begin_src c
-    void p_drop() {
+    p_drop() {
       data_stack_pop();
     }
     #+end_src
@@ -1271,7 +1107,7 @@ j* jotable_insert
 *** p_2drop
 
     #+begin_src c
-    void p_2drop() {
+    p_2drop() {
       data_stack_pop();
       data_stack_pop();
     }
@@ -1280,7 +1116,7 @@ j* jotable_insert
 *** p_dup
 
     #+begin_src c
-    void p_dup() {
+    p_dup() {
       // a a -> a
       cell a = data_stack_pop();
       data_stack_push(a);
@@ -1291,7 +1127,7 @@ j* jotable_insert
 *** p_2dup
 
     #+begin_src c
-    void p_2dup() {
+    p_2dup() {
       // b a -> b a b a
       cell a = data_stack_pop();
       cell b = data_stack_pop();
@@ -1305,7 +1141,7 @@ j* jotable_insert
 *** p_over
 
     #+begin_src c
-    void p_over() {
+    p_over() {
       // b a -> b a b
       cell a = data_stack_pop();
       cell b = data_stack_pop();
@@ -1318,7 +1154,7 @@ j* jotable_insert
 *** p_2over
 
     #+begin_src c
-    void p_2over() {
+    p_2over() {
       // d c  b a -> d c  b a  d c
       cell a = data_stack_pop();
       cell b = data_stack_pop();
@@ -1336,7 +1172,7 @@ j* jotable_insert
 *** p_tuck
 
     #+begin_src c
-    void p_tuck() {
+    p_tuck() {
       // b a -> a b a
       cell a = data_stack_pop();
       cell b = data_stack_pop();
@@ -1349,7 +1185,7 @@ j* jotable_insert
 *** p_2tuck
 
     #+begin_src c
-    void p_2tuck() {
+    p_2tuck() {
       // d c  b a -> b a  d c  b a
       cell a = data_stack_pop();
       cell b = data_stack_pop();
@@ -1367,7 +1203,7 @@ j* jotable_insert
 *** p_swap
 
     #+begin_src c
-    void p_swap() {
+    p_swap() {
       // b a -> a b
       cell a = data_stack_pop();
       cell b = data_stack_pop();
@@ -1379,7 +1215,7 @@ j* jotable_insert
 *** p_2swap
 
     #+begin_src c
-    void p_2swap() {
+    p_2swap() {
       // d c  b a -> b a  d c
       cell a = data_stack_pop();
       cell b = data_stack_pop();
@@ -1392,28 +1228,10 @@ j* jotable_insert
     }
     #+end_src
 
-*** p_xy_swap
-
-    #+begin_src c
-    void p_xy_swap() {
-      // xxx yyy x y -> yyy xxx
-      cell y = data_stack_pop();
-      cell x = data_stack_pop();
-      cell* yp = calloc(y, cell_size);
-      cell* xp = calloc(x, cell_size);
-      cell_copy(y, (data_stack + (data_stack_pointer - y)), yp);
-      cell_copy(x, (data_stack + (data_stack_pointer - y - x)), xp);
-      cell_copy(y, yp, (data_stack + (data_stack_pointer - y - x)));
-      cell_copy(x, xp, (data_stack + (data_stack_pointer - x)));
-      free(yp);
-      free(xp);
-    }
-    #+end_src
-
 *** p_print_data_stack
 
     #+begin_src c
-    void p_print_data_stack() {
+    p_print_data_stack() {
       // {terminal-output}
       if (data_stack_pointer < data_stack_base) {
         printf("  * %ld *  ", (data_stack_pointer - data_stack_base));
@@ -1435,7 +1253,7 @@ j* jotable_insert
 *** p_stack_base
 
     #+begin_src c
-    void p_stack_base() {
+    p_stack_base() {
       data_stack_push(data_stack + data_stack_base);
     }
     #+end_src
@@ -1443,7 +1261,7 @@ j* jotable_insert
 *** p_stack_pointer
 
     #+begin_src c
-    void p_stack_pointer() {
+    p_stack_pointer() {
       data_stack_push(data_stack + data_stack_pointer);
     }
     #+end_src
@@ -1451,7 +1269,7 @@ j* jotable_insert
 *** expose_stack_operation
 
     #+begin_src c
-    void expose_stack_operation() {
+    expose_stack_operation() {
       define_prim("drop", p_drop);
       define_prim("2drop", p_2drop);
       define_prim("dup", p_dup);
@@ -1462,7 +1280,6 @@ j* jotable_insert
       define_prim("2tuck", p_2tuck);
       define_prim("swap", p_swap);
       define_prim("2swap", p_2swap);
-      define_prim("xy-swap", p_xy_swap);
       define_prim("print-data-stack", p_print_data_stack);
       define_prim("stack-pointer", p_stack_pointer);
       define_prim("stack-base", p_stack_base);
@@ -1474,7 +1291,7 @@ j* jotable_insert
 *** p_end
 
     #+begin_src c
-    void p_end() {
+    p_end() {
       return_point rp = return_stack_pop();
       current_local_pointer = rp.local_pointer;
     }
@@ -1483,7 +1300,7 @@ j* jotable_insert
 *** p_bye
 
     #+begin_src c
-    void p_bye() {
+    p_bye() {
       printf("bye bye ^-^/\n");
       exit(0);
     }
@@ -1492,7 +1309,7 @@ j* jotable_insert
 *** expose_ending
 
     #+begin_src c
-    void expose_ending() {
+    expose_ending() {
       define_prim("end", p_end);
       define_prim("bye", p_bye);
     }
@@ -1503,7 +1320,7 @@ j* jotable_insert
 *** i_int
 
     #+begin_src c
-    void i_int() {
+    i_int() {
       // [] -> [cell] {return_stack}
       return_point rp = return_stack_tos();
       return_stack_inc();
@@ -1516,7 +1333,7 @@ j* jotable_insert
 *** i_bare_jojo
 
     #+begin_src c
-    void i_bare_jojo() {
+    i_bare_jojo() {
       return_point rp = return_stack_pop();
       jo* jojo = rp.jojo;
       cell offset = jojo[0];
@@ -1530,7 +1347,7 @@ j* jotable_insert
 *** i_jump_if_false
 
     #+begin_src c
-    void i_jump_if_false() {
+    i_jump_if_false() {
       // [bool] -> {return_stack}
       return_point rp = return_stack_tos();
       return_stack_inc();
@@ -1547,7 +1364,7 @@ j* jotable_insert
 *** i_jump
 
     #+begin_src c
-    void i_jump() {
+    i_jump() {
       // {return_stack}
       return_point rp = return_stack_tos();
       jo* jojo = rp.jojo;
@@ -1560,7 +1377,7 @@ j* jotable_insert
 *** expose_instruction
 
     #+begin_src c
-    void expose_instruction() {
+    expose_instruction() {
       define_prim("ins/int", i_int);
       define_prim("ins/jo", i_int);
       define_prim("ins/string", i_int);
@@ -1579,7 +1396,7 @@ j* jotable_insert
 *** p_true
 
     #+begin_src c
-    void p_true() {
+    p_true() {
       data_stack_push(true);
     }
     #+end_src
@@ -1587,7 +1404,7 @@ j* jotable_insert
 *** p_false
 
     #+begin_src c
-    void p_false() {
+    p_false() {
       data_stack_push(false);
     }
     #+end_src
@@ -1595,7 +1412,7 @@ j* jotable_insert
 *** p_not
 
     #+begin_src c
-    void p_not() {
+    p_not() {
       // bool -> bool
       cell a = data_stack_pop();
       data_stack_push(!a);
@@ -1605,7 +1422,7 @@ j* jotable_insert
 *** p_and
 
     #+begin_src c
-    void p_and() {
+    p_and() {
       // bool bool -> bool
       cell a = data_stack_pop();
       cell b = data_stack_pop();
@@ -1616,7 +1433,7 @@ j* jotable_insert
 *** p_or
 
     #+begin_src c
-    void p_or() {
+    p_or() {
       // bool bool -> bool
       cell a = data_stack_pop();
       cell b = data_stack_pop();
@@ -1627,7 +1444,7 @@ j* jotable_insert
 *** expose_bool
 
     #+begin_src c
-    void expose_bool() {
+    expose_bool() {
       define_prim("true", p_true);
       define_prim("false", p_false);
       define_prim("not", p_not);
@@ -1636,107 +1453,12 @@ j* jotable_insert
     }
     #+end_src
 
-* *bit*
-
-*** p_true_bit
-
-    #+begin_src c
-    void p_true_bit() {
-      // -> cell
-      cell i = -1;
-      data_stack_push(i);
-    }
-    #+end_src
-
-*** p_false_bit
-
-    #+begin_src c
-    void p_false_bit() {
-      // -> cell
-      data_stack_push(0);
-    }
-    #+end_src
-
-*** p_bit_and
-
-    #+begin_src c
-    void p_bit_and() {
-      // cell cell -> cell
-      cell b = data_stack_pop();
-      cell a = data_stack_pop();
-      data_stack_push(a&b);
-    }
-    #+end_src
-
-*** p_bit_or
-
-    #+begin_src c
-    void p_bit_or() {
-      // cell cell -> cell
-      cell b = data_stack_pop();
-      cell a = data_stack_pop();
-      data_stack_push(a|b);
-    }
-    #+end_src
-
-*** p_bit_xor
-
-    #+begin_src c
-    void p_bit_xor() {
-      // cell cell -> cell
-      cell b = data_stack_pop();
-      cell a = data_stack_pop();
-      data_stack_push(a^b);
-    }
-    #+end_src
-
-*** p_bit_not
-
-    #+begin_src c
-    void p_bit_not() {
-      // cell -> cell
-      cell a = data_stack_pop();
-      data_stack_push(~a);
-    }
-    #+end_src
-
-*** p_bit_shift_left
-
-    #+begin_src c
-    void p_bit_shift_left() {
-      // cell step -> cell
-      cell s = data_stack_pop();
-      cell a = data_stack_pop();
-      data_stack_push(a<<s);
-    }
-    #+end_src
-
-*** note shift_right & arithmetic_shift_right
-
-    - must not use >> because its meaning is not sure in c
-
-*** expose_bit
-
-    #+begin_src c
-    void expose_bit() {
-      define_prim("true/bit", p_true_bit);
-      define_prim("false/bit", p_false_bit);
-      define_prim("bit/not", p_bit_not);
-      define_prim("bit/and", p_bit_and);
-      define_prim("bit/xor", p_bit_xor);
-      define_prim("bit/or", p_bit_or);
-      define_prim("bit/shift-left", p_bit_shift_left);
-      // define_prim("bit/shift-right", p_bit_shift_right);
-      // define_prim("bit/arithmetic-shift-right", p_bit_arithmetic_shift_right);
-    }
-    #+end_src
-
 * *int*
 
 *** p_inc
 
     #+begin_src c
-    void p_inc() {
+    p_inc() {
       cell a = data_stack_pop();
       data_stack_push(a + 1);
     }
@@ -1745,7 +1467,7 @@ j* jotable_insert
 *** p_dec
 
     #+begin_src c
-    void p_dec() {
+    p_dec() {
       cell a = data_stack_pop();
       data_stack_push(a - 1);
     }
@@ -1754,7 +1476,7 @@ j* jotable_insert
 *** p_neg
 
     #+begin_src c
-    void p_neg() {
+    p_neg() {
       cell a = data_stack_pop();
       data_stack_push(- a);
     }
@@ -1763,7 +1485,7 @@ j* jotable_insert
 *** p_add
 
     #+begin_src c
-    void p_add() {
+    p_add() {
       cell b = data_stack_pop();
       cell a = data_stack_pop();
       data_stack_push(a + b);
@@ -1773,7 +1495,7 @@ j* jotable_insert
 *** p_sub
 
     #+begin_src c
-    void p_sub() {
+    p_sub() {
       cell b = data_stack_pop();
       cell a = data_stack_pop();
       data_stack_push(a - b);
@@ -1783,7 +1505,7 @@ j* jotable_insert
 *** p_mul
 
     #+begin_src c
-    void p_mul() {
+    p_mul() {
       cell b = data_stack_pop();
       cell a = data_stack_pop();
       data_stack_push(a * b);
@@ -1793,7 +1515,7 @@ j* jotable_insert
 *** p_div
 
     #+begin_src c
-    void p_div() {
+    p_div() {
       cell b = data_stack_pop();
       cell a = data_stack_pop();
       data_stack_push(a / b);
@@ -1803,7 +1525,7 @@ j* jotable_insert
 *** p_mod
 
     #+begin_src c
-    void p_mod() {
+    p_mod() {
       cell b = data_stack_pop();
       cell a = data_stack_pop();
       data_stack_push(a % b);
@@ -1813,7 +1535,7 @@ j* jotable_insert
 *** p_n_eq_p
 
     #+begin_src c
-    void p_n_eq_p() {
+    p_n_eq_p() {
       // a ... b ... n -> bool
       cell n = data_stack_pop();
       cell old_n = n;
@@ -1835,7 +1557,7 @@ j* jotable_insert
 *** p_eq_p
 
     #+begin_src c
-    void p_eq_p() {
+    p_eq_p() {
       cell b = data_stack_pop();
       cell a = data_stack_pop();
       data_stack_push(a == b);
@@ -1845,7 +1567,7 @@ j* jotable_insert
 *** p_gt_p
 
     #+begin_src c
-    void p_gt_p() {
+    p_gt_p() {
       cell b = data_stack_pop();
       cell a = data_stack_pop();
       data_stack_push(a > b);
@@ -1855,7 +1577,7 @@ j* jotable_insert
 *** p_lt_p
 
     #+begin_src c
-    void p_lt_p() {
+    p_lt_p() {
       cell b = data_stack_pop();
       cell a = data_stack_pop();
       data_stack_push(a < b);
@@ -1865,7 +1587,7 @@ j* jotable_insert
 *** p_gteq_p
 
     #+begin_src c
-    void p_gteq_p() {
+    p_gteq_p() {
       cell b = data_stack_pop();
       cell a = data_stack_pop();
       data_stack_push(a >= b);
@@ -1875,7 +1597,7 @@ j* jotable_insert
 *** p_lteq_p
 
     #+begin_src c
-    void p_lteq_p() {
+    p_lteq_p() {
       cell b = data_stack_pop();
       cell a = data_stack_pop();
       data_stack_push(a <= b);
@@ -1887,7 +1609,7 @@ j* jotable_insert
     #+begin_src c
     jo read_raw_jo();
 
-    void k_int() {
+    k_int() {
       // (int ...)
       while (true) {
         jo s = read_raw_jo();
@@ -1896,7 +1618,7 @@ j* jotable_insert
         }
         else {
           here(JO_INS_INT);
-          here(string_to_dec(jo2str(s)));
+          here(string_to_int(jo2str(s)));
         }
       }
     }
@@ -1905,20 +1627,20 @@ j* jotable_insert
 *** p_int_print
 
     #+begin_src c
-    void p_int_print() { printf("%ld", data_stack_pop()); }
+    p_int_print() { printf("%ld", data_stack_pop()); }
     #+end_src
 
 *** p_dot & p_int_dot
 
     #+begin_src c
-    void p_dot() { printf("%ld ", data_stack_pop()); }
-    void p_int_dot() { printf("%ld ", data_stack_pop()); }
+    p_dot() { printf("%ld ", data_stack_pop()); }
+    p_int_dot() { printf("%ld ", data_stack_pop()); }
     #+end_src
 
 *** expose_int
 
     #+begin_src c
-    void expose_int() {
+    expose_int() {
       define_prim("inc", p_inc);
       define_prim("dec", p_dec);
       define_prim("neg", p_neg);
@@ -1952,7 +1674,7 @@ j* jotable_insert
 *** p_allocate
 
     #+begin_src c
-    void p_allocate () {
+    p_allocate () {
       // size -> addr
       data_stack_push(calloc(data_stack_pop(), 1));
     }
@@ -1961,7 +1683,7 @@ j* jotable_insert
 *** p_free
 
     #+begin_src c
-    void p_free () {
+    p_free () {
       // addr ->
       free(data_stack_pop());
     }
@@ -1970,13 +1692,13 @@ j* jotable_insert
 *** k_address
 
     #+begin_src c
-    void k_ignore();
+    k_ignore();
 
-    void k_address() {
+    k_address() {
       // (address ...)
       here(JO_INS_ADDRESS);
       jo name = read_raw_jo();
-      here(&(jotable[name].value));
+      here(&(name->value));
       k_ignore();
     }
     #+end_src
@@ -1984,16 +1706,16 @@ j* jotable_insert
 *** p_jo_as_var
 
     #+begin_src c
-    void p_jo_as_var() {
+    p_jo_as_var() {
       jo jo = data_stack_pop();
-      data_stack_push(&(jotable[jo].value));
+      data_stack_push(&(jo->value));
     }
     #+end_src
 
 *** p_set_cell
 
     #+begin_src c
-    void p_set_cell() {
+    p_set_cell() {
       // cell address ->
       cell* address = data_stack_pop();
       cell value = data_stack_pop();
@@ -2004,7 +1726,7 @@ j* jotable_insert
 *** p_get_cell
 
     #+begin_src c
-    void p_get_cell() {
+    p_get_cell() {
       // address -> cell
       cell* address = data_stack_pop();
       data_stack_push(address[0]);
@@ -2014,7 +1736,7 @@ j* jotable_insert
 *** p_set_byte
 
     #+begin_src c
-    void p_set_byte() {
+    p_set_byte() {
       // byte address ->
       char* address = data_stack_pop();
       cell value = data_stack_pop();
@@ -2025,7 +1747,7 @@ j* jotable_insert
 *** p_get_byte
 
     #+begin_src c
-    void p_get_byte() {
+    p_get_byte() {
       // address -> byte
       char* address = data_stack_pop();
       data_stack_push(address[0]);
@@ -2035,7 +1757,7 @@ j* jotable_insert
 *** expose_memory
 
     #+begin_src c
-    void expose_memory() {
+    expose_memory() {
       define_prim("allocate", p_allocate);
       define_prim("free", p_free);
       define_primkey("address", k_address);
@@ -2058,7 +1780,7 @@ j* jotable_insert
     cell reading_stack_base = 0;
     cell reading_stack_pointer = 0;
 
-    void reading_stack_push(FILE* value) {
+    reading_stack_push(FILE* value) {
       reading_stack[reading_stack_pointer] = value;
       reading_stack_pointer++;
     }
@@ -2080,7 +1802,7 @@ j* jotable_insert
 *** get_real_reading_path
 
     #+begin_src c
-    void erase_real_path_to_dir(char* path) {
+    erase_real_path_to_dir(char* path) {
       cell cursor = strlen(path);
       while (path[cursor] != '/') {
         path[cursor] = '\0';
@@ -2146,7 +1868,7 @@ j* jotable_insert
 *** p_has_byte_p
 
     #+begin_src c
-    void p_has_byte_p() {
+    p_has_byte_p() {
       data_stack_push(has_byte_p());
     }
     #+end_src
@@ -2167,7 +1889,7 @@ j* jotable_insert
 *** byte_unread
 
     #+begin_src c
-    void byte_unread(byte c) {
+    byte_unread(byte c) {
       if (reading_stack_empty_p()) {
         ungetc(c, stdin);
       }
@@ -2180,7 +1902,7 @@ j* jotable_insert
 *** p_read_byte
 
     #+begin_src c
-    void p_read_byte() {
+    p_read_byte() {
       // -> byte
       data_stack_push(read_byte());
     }
@@ -2189,7 +1911,7 @@ j* jotable_insert
 *** p_byte_unread
 
     #+begin_src c
-    void p_byte_unread() {
+    p_byte_unread() {
       // byte -> {reading_stack}
       byte_unread(data_stack_pop());
     }
@@ -2198,7 +1920,7 @@ j* jotable_insert
 *** p_byte_print
 
     #+begin_src c
-    void p_byte_print() {
+    p_byte_print() {
       // byte ->
       printf("%c", data_stack_pop());
     }
@@ -2207,7 +1929,7 @@ j* jotable_insert
 *** p_ignore_until_double_quote
 
     #+begin_src c
-    void p_ignore_until_double_quote() {
+    p_ignore_until_double_quote() {
       while (true) {
         jo jo = read_raw_jo();
         if (jo == DOUBLE_QUOTE) {
@@ -2223,7 +1945,7 @@ j* jotable_insert
 *** k_one_byte
 
     #+begin_src c
-    void k_one_byte() {
+    k_one_byte() {
       byte byte = read_byte();
       p_ignore_until_double_quote();
       here(JO_INS_BYTE);
@@ -2234,7 +1956,7 @@ j* jotable_insert
 *** k_byte
 
     #+begin_src c
-    void k_byte() {
+    k_byte() {
       // (byte ...)
       while (true) {
         jo jo = read_raw_jo();
@@ -2255,7 +1977,7 @@ j* jotable_insert
 *** expose_byte
 
     #+begin_src c
-    void expose_byte() {
+    expose_byte() {
       define_prim("has-byte?", p_has_byte_p);
       define_prim("read/byte", p_read_byte);
       define_prim("byte/unread", p_byte_unread);
@@ -2270,7 +1992,7 @@ j* jotable_insert
 *** k_one_string
 
     #+begin_src c
-    void k_one_string() {
+    k_one_string() {
       // "..."
       char buffer[1024 * 1024];
       cell cursor = 0;
@@ -2296,7 +2018,7 @@ j* jotable_insert
 *** k_string
 
     #+begin_src c
-    void k_string() {
+    k_string() {
       // (string "...")
       while (true) {
         jo s = read_raw_jo();
@@ -2316,7 +2038,7 @@ j* jotable_insert
 *** p_string_length
 
     #+begin_src c
-    void p_string_length() {
+    p_string_length() {
       // string -> length
       data_stack_push(strlen(data_stack_pop()));
     }
@@ -2325,7 +2047,7 @@ j* jotable_insert
 *** p_string_print
 
     #+begin_src c
-    void p_string_print() {
+    p_string_print() {
       // string -> {terminal-output}
       printf("%s", data_stack_pop());
     }
@@ -2334,7 +2056,7 @@ j* jotable_insert
 *** p_string_dot
 
     #+begin_src c
-    void p_string_dot() {
+    p_string_dot() {
       // string -> {terminal-output}
       printf("\"%s \"", data_stack_pop());
     }
@@ -2343,7 +2065,7 @@ j* jotable_insert
 *** p_string_append_to_buffer
 
     #+begin_src c
-    void p_string_append_to_buffer() {
+    p_string_append_to_buffer() {
       // buffer string -> buffer
       char* str = data_stack_pop();
       char* buffer = data_stack_tos();
@@ -2354,7 +2076,7 @@ j* jotable_insert
 ***** p_string_first_byte
 
     #+begin_src c
-    void p_string_first_byte() {
+    p_string_first_byte() {
       char* s = data_stack_pop();
       data_stack_push(s[0]);
     }
@@ -2363,7 +2085,7 @@ j* jotable_insert
 *** p_string_last_byte
 
     #+begin_src c
-    void p_string_last_byte() {
+    p_string_last_byte() {
       char* s = data_stack_pop();
       cell i = 0;
       while (s[i+1] != 0) {
@@ -2376,7 +2098,7 @@ j* jotable_insert
 *** p_string_member_p
 
     #+begin_src c
-    void p_string_member_p() {
+    p_string_member_p() {
       // non-zero-byte string -> true or false
       char* s = data_stack_pop();
       byte b = data_stack_pop();
@@ -2397,7 +2119,7 @@ j* jotable_insert
 *** p_string_find_byte
 
     #+begin_src c
-    void p_string_find_byte() {
+    p_string_find_byte() {
       // byte string -> [index true] or [false]
       char* s = data_stack_pop();
       byte b = data_stack_pop();
@@ -2419,7 +2141,7 @@ j* jotable_insert
 *** p_string_equal_p
 
     #+begin_src c
-    void p_string_equal_p() {
+    p_string_equal_p() {
       data_stack_push(string_equal(data_stack_pop(), data_stack_pop()));
     }
     #+end_src
@@ -2427,7 +2149,7 @@ j* jotable_insert
 *** expose_string
 
     #+begin_src c
-    void expose_string() {
+    expose_string() {
       define_primkey("string", k_string);
       define_primkey("one-string", k_one_string);
       define_prim("string/print", p_string_print);
@@ -2447,7 +2169,7 @@ j* jotable_insert
 *** p_alias_push
 
     #+begin_src c
-    void p_alias_push() {
+    p_alias_push() {
       jo name = data_stack_pop();
       jo nick = data_stack_pop();
       alias a = {.nick = nick, .name = name};
@@ -2458,7 +2180,7 @@ j* jotable_insert
 *** p_alias_filter
 
     #+begin_src c
-    void p_alias_filter() {
+    p_alias_filter() {
       jo nick = data_stack_pop();
       cell base = keyword_stack_tos();
       cell i = alias_stack_pointer;
@@ -2502,7 +2224,7 @@ j* jotable_insert
 *** p_has_jo_p
 
     #+begin_src c
-    void p_has_jo_p() {
+    p_has_jo_p() {
       data_stack_push(has_jo_p());
     }
     #+end_src
@@ -2510,7 +2232,7 @@ j* jotable_insert
 *** p_read_raw_jo
 
     #+begin_src c
-    void p_read_raw_jo() {
+    p_read_raw_jo() {
       // {reading_stack} -> jo
       byte buf[1024];
       cell cur = 0;
@@ -2577,7 +2299,7 @@ j* jotable_insert
       cell jo_filter_stack_base = 0;
       cell jo_filter_stack_pointer = 0;
 
-      void jo_filter_stack_push(reading_filter value) {
+      jo_filter_stack_push(reading_filter value) {
         jo_filter_stack[jo_filter_stack_pointer] = value;
         jo_filter_stack_pointer++;
       }
@@ -2599,7 +2321,7 @@ j* jotable_insert
 ***** p_jo_filter_stack_push
 
       #+begin_src c
-      void p_jo_filter_stack_push() {
+      p_jo_filter_stack_push() {
         jo_filter_stack_push(data_stack_pop());
       }
       #+end_src
@@ -2607,7 +2329,7 @@ j* jotable_insert
 ***** p_jo_filter_stack_pop
 
       #+begin_src c
-      void p_jo_filter_stack_pop() {
+      p_jo_filter_stack_pop() {
         data_stack_push(jo_filter_stack_pop());
       }
       #+end_src
@@ -2615,7 +2337,7 @@ j* jotable_insert
 ***** run_jo_filter
 
       #+begin_src c
-      void run_jo_filter() {
+      run_jo_filter() {
         cell i = jo_filter_stack_pointer;
         while (i > jo_filter_stack_base) {
           jo_apply_now(jo_filter_stack[i-1]);
@@ -2627,7 +2349,7 @@ j* jotable_insert
 ***** init_jo_filter_stack
 
       #+begin_src c
-      void init_jo_filter_stack() {
+      init_jo_filter_stack() {
         jo_filter_stack_push(str2jo("alias-filter"));
       }
       #+end_src
@@ -2635,7 +2357,7 @@ j* jotable_insert
 *** p_read_jo
 
     #+begin_src c
-    void p_read_jo() {
+    p_read_jo() {
       p_read_raw_jo();
       run_jo_filter();
     }
@@ -2687,7 +2409,7 @@ j* jotable_insert
 *** p_jo_append
 
     #+begin_src c
-    void p_jo_append() {
+    p_jo_append() {
       jo jo2 = data_stack_pop();
       jo jo1 = data_stack_pop();
       data_stack_push(cat_2_jo(jo1, jo2));
@@ -2697,7 +2419,7 @@ j* jotable_insert
 *** p_empty_jo
 
     #+begin_src c
-    void p_empty_jo() {
+    p_empty_jo() {
       data_stack_push(EMPTY_JO);
     }
     #+end_src
@@ -2705,17 +2427,17 @@ j* jotable_insert
 *** p_jo_used_p
 
     #+begin_src c
-    void p_jo_used_p() {
+    p_jo_used_p() {
       // jo -> bool
       jo jo = data_stack_pop();
-      data_stack_push(jotable_entry_used(jotable[jo]));
+      data_stack_push(used_jo_p(jo));
     }
     #+end_src
 
 *** p_jo_to_string
 
     #+begin_src c
-    void p_jo_to_string() {
+    p_jo_to_string() {
       // jo -> string
       jo jo = data_stack_pop();
       data_stack_push(jo2str(jo));
@@ -2725,7 +2447,7 @@ j* jotable_insert
 *** p_string_length_to_jo
 
     #+begin_src c
-    void p_string_length_to_jo() {
+    p_string_length_to_jo() {
       // string length -> jo
       cell len = data_stack_pop();
       cell str = data_stack_pop();
@@ -2739,7 +2461,7 @@ j* jotable_insert
 *** p_string_to_jo
 
     #+begin_src c
-    void p_string_to_jo() {
+    p_string_to_jo() {
       // string -> jo
       char* str = data_stack_pop();
       data_stack_push(str2jo(str));
@@ -2749,7 +2471,7 @@ j* jotable_insert
 *** p_null
 
     #+begin_src c
-    void p_null() {
+    p_null() {
       data_stack_push(JO_NULL);
     }
     #+end_src
@@ -2757,7 +2479,7 @@ j* jotable_insert
 *** k_raw_jo
 
     #+begin_src c
-    void k_raw_jo() {
+    k_raw_jo() {
       // (raw-jo ...)
       while (true) {
         jo s = read_raw_jo();
@@ -2778,7 +2500,7 @@ j* jotable_insert
 *** k_jo
 
     #+begin_src c
-    void k_jo() {
+    k_jo() {
       // (jo ...)
       while (true) {
         jo s = read_jo();
@@ -2799,7 +2521,7 @@ j* jotable_insert
 *** p_jo_print
 
     #+begin_src c
-    void p_jo_print() {
+    p_jo_print() {
       // jo -> {terminal-output}
       printf("%s", jo2str(data_stack_pop()));
     }
@@ -2808,7 +2530,7 @@ j* jotable_insert
 *** p_jo_dot
 
     #+begin_src c
-    void p_jo_dot() {
+    p_jo_dot() {
       // jo -> {terminal-output}
       printf("%s ", jo2str(data_stack_pop()));
     }
@@ -2818,7 +2540,7 @@ j* jotable_insert
 
     #+begin_src c
     cell p_generate_jo_counter = 0;
-    void p_generate_jo() {
+    p_generate_jo() {
       char* s = data_stack_pop();
       char buffer [1024];
       sprintf(buffer, "%s:generated-jo#%ld", jo2str(s), p_generate_jo_counter);
@@ -2830,7 +2552,7 @@ j* jotable_insert
 *** p_jo_find_byte
 
     #+begin_src c
-    void p_jo_find_byte() {
+    p_jo_find_byte() {
       // byte jo -> [index true] or [false]
       p_jo_to_string();
       p_string_find_byte();
@@ -2840,7 +2562,7 @@ j* jotable_insert
 *** p_jo_right_part
 
     #+begin_src c
-    void p_jo_right_part() {
+    p_jo_right_part() {
       // index jo -> jo
       jo jo = data_stack_pop();
       cell index = data_stack_pop();
@@ -2852,7 +2574,7 @@ j* jotable_insert
 *** p_jo_left_part
 
     #+begin_src c
-    void p_jo_left_part() {
+    p_jo_left_part() {
       // index jo -> jo
       char target[1024];
       jo jo = data_stack_pop();
@@ -2871,7 +2593,7 @@ j* jotable_insert
 *** p_jo_part
 
     #+begin_src c
-    void p_jo_part() {
+    p_jo_part() {
       // index-begin index-end jo -> jo
       char target[1024];
       jo jo = data_stack_pop();
@@ -2891,7 +2613,7 @@ j* jotable_insert
 *** expose_jo
 
     #+begin_src c
-    void expose_jo() {
+    expose_jo() {
       define_prim("null", p_null);
 
       define_prim("jo-filter-stack-push", p_jo_filter_stack_push);
@@ -2929,7 +2651,7 @@ j* jotable_insert
 *** p_error_number_print
 
     #+begin_src c
-    void p_error_number_print() {
+    p_error_number_print() {
       // errno -> {terminal-output}
       int no = data_stack_pop();
       printf("%s", strerror(no));
@@ -2939,7 +2661,7 @@ j* jotable_insert
 *** p_path_open_read
 
     #+begin_src c
-    void p_path_open_read() {
+    p_path_open_read() {
       // [path] -> [file true] or [errno false]
       char* path = data_stack_pop();
 
@@ -2958,7 +2680,7 @@ j* jotable_insert
 *** p_path_open_write
 
     #+begin_src c
-    void p_path_open_write() {
+    p_path_open_write() {
       // [path] -> [file true] or [errno false]
       char* path = data_stack_pop();
 
@@ -2977,7 +2699,7 @@ j* jotable_insert
 *** p_path_open_read_and_write
 
     #+begin_src c
-    void p_path_open_read_and_write() {
+    p_path_open_read_and_write() {
       // [path] -> [file true] or [errno false]
       char* path = data_stack_pop();
 
@@ -2996,7 +2718,7 @@ j* jotable_insert
 *** p_path_open_create
 
     #+begin_src c
-    void p_path_open_create() {
+    p_path_open_create() {
       // [path] -> [file true] or [errno false]
       char* path = data_stack_pop();
 
@@ -3015,7 +2737,7 @@ j* jotable_insert
 *** p_file_close
 
     #+begin_src c
-    void p_file_close() {
+    p_file_close() {
       // [file] -> [true] or [errno false]
       // - error reasons
       // 1. to close an unopened file descriptor
@@ -3038,7 +2760,7 @@ j* jotable_insert
 *** p_file_end_p
 
     #+begin_src c
-    void p_file_end_p() {
+    p_file_end_p() {
       // file -> true or false
       FILE* file = data_stack_pop();
 
@@ -3054,7 +2776,7 @@ j* jotable_insert
 *** p_file_read
 
     #+begin_src c
-    void p_file_read() {
+    p_file_read() {
       // [file buffer requested-bytes] ->
       // [real-bytes true] or [errno false]
       // - partial read reasons
@@ -3085,7 +2807,7 @@ j* jotable_insert
 *** p_file_write
 
     #+begin_src c
-    void p_file_write() {
+    p_file_write() {
       // [file buffer want-bytes] ->
       // [true] or [errno false]
       // - partial write reasons
@@ -3109,7 +2831,7 @@ j* jotable_insert
 *** p_file_size
 
     #+begin_src c
-    void p_file_size() {
+    p_file_size() {
       // file -> int
       FILE* file = data_stack_pop();
       struct stat file_state;
@@ -3121,7 +2843,7 @@ j* jotable_insert
 *** p_file_regular_file_p
 
     #+begin_src c
-    void p_file_regular_file_p() {
+    p_file_regular_file_p() {
       // file -> true or false
       FILE* file = data_stack_pop();
       struct stat file_state;
@@ -3138,7 +2860,7 @@ j* jotable_insert
 *** p_file_directory_p
 
     #+begin_src c
-    void p_file_directory_p() {
+    p_file_directory_p() {
       // file -> true or false
       FILE* file = data_stack_pop();
       struct stat file_state;
@@ -3155,7 +2877,7 @@ j* jotable_insert
 *** p_file_character_device_p
 
     #+begin_src c
-    void p_file_character_device_p() {
+    p_file_character_device_p() {
       // file -> true or false
       FILE* file = data_stack_pop();
       struct stat file_state;
@@ -3172,7 +2894,7 @@ j* jotable_insert
 *** p_file_block_device_p
 
     #+begin_src c
-    void p_file_block_device_p() {
+    p_file_block_device_p() {
       // file -> true or false
       FILE* file = data_stack_pop();
       struct stat file_state;
@@ -3189,7 +2911,7 @@ j* jotable_insert
 *** p_file_fifo_p
 
     #+begin_src c
-    void p_file_fifo_p() {
+    p_file_fifo_p() {
       // file -> true or false
       FILE* file = data_stack_pop();
       struct stat file_state;
@@ -3206,7 +2928,7 @@ j* jotable_insert
 *** p_file_socket_p
 
     #+begin_src c
-    void p_file_socket_p() {
+    p_file_socket_p() {
       // file -> true or false
       FILE* file = data_stack_pop();
       struct stat file_state;
@@ -3223,7 +2945,7 @@ j* jotable_insert
 *** p_path_exist_p
 
     #+begin_src c
-    void p_path_exist_p() {
+    p_path_exist_p() {
       // path -> true or false
       char* path = data_stack_pop();
 
@@ -3239,7 +2961,7 @@ j* jotable_insert
 *** p_path_readable_p
 
     #+begin_src c
-    void p_path_readable_p() {
+    p_path_readable_p() {
       // path -> true or false
       char* path = data_stack_pop();
 
@@ -3255,7 +2977,7 @@ j* jotable_insert
 *** p_path_writable_p
 
     #+begin_src c
-    void p_path_writable_p() {
+    p_path_writable_p() {
       // path -> true or false
       char* path = data_stack_pop();
 
@@ -3271,7 +2993,7 @@ j* jotable_insert
 *** p_path_executable_p
 
     #+begin_src c
-    void p_path_executable_p() {
+    p_path_executable_p() {
       // path -> true or false
       char* path = data_stack_pop();
 
@@ -3287,7 +3009,7 @@ j* jotable_insert
 *** p_file_print_path
 
     #+begin_src c
-    void p_file_print_path() {
+    p_file_print_path() {
       // file -> path
       FILE* file = data_stack_pop();
 
@@ -3311,9 +3033,9 @@ j* jotable_insert
 *** p_path_load
 
     #+begin_src c
-    void p_repl();
+    p_repl();
 
-    void p_path_load() {
+    p_path_load() {
       // path -> {reading_stack}
       char* path = data_stack_pop();
       FILE* file = fopen(path, "r");
@@ -3332,7 +3054,7 @@ j* jotable_insert
 *** k_one_include
 
     #+begin_src c
-    void k_one_include() {
+    k_one_include() {
       // "..."
       char* path = malloc(PATH_MAX);
       cell cursor = 0;
@@ -3359,7 +3081,7 @@ j* jotable_insert
 *** k_include
 
     #+begin_src c
-    void k_include() {
+    k_include() {
       // (include "..." ...)
       while (true) {
         jo s = read_raw_jo();
@@ -3382,7 +3104,7 @@ j* jotable_insert
 *** expose_file
 
     #+begin_src c
-    void expose_file() {
+    expose_file() {
       define_prim("error-number/print", p_error_number_print);
 
       define_prim("path/open/read", p_path_open_read);
@@ -3421,7 +3143,7 @@ j* jotable_insert
 *** p_command_run
 
     #+begin_src c
-    void p_command_run() {
+    p_command_run() {
       // string -> {*}
       system(data_stack_pop());
     }
@@ -3430,7 +3152,7 @@ j* jotable_insert
 *** p_n_command_run
 
     #+begin_src c
-    void p_n_command_run() {
+    p_n_command_run() {
       // ... string n -> *
       cell n = data_stack_pop();
       cell i = 0;
@@ -3451,7 +3173,7 @@ j* jotable_insert
     #+begin_src c
     cell cmd_number;
 
-    void p_cmd_number() {
+    p_cmd_number() {
       // -> cmd_number
       data_stack_push(cmd_number);
     }
@@ -3462,7 +3184,7 @@ j* jotable_insert
     #+begin_src c
     char** cmd_string_array;
 
-    void p_index_to_cmd_string() {
+    p_index_to_cmd_string() {
       // index -> string
       cell index = data_stack_pop();
       char* cmd_string = cmd_string_array[index];
@@ -3473,7 +3195,7 @@ j* jotable_insert
 *** p_find_env_string
 
     #+begin_src c
-    void p_find_env_string() {
+    p_find_env_string() {
       // string -> [env-string true] or [false]
       char* var_string = data_stack_pop();
       char* env_string = getenv(var_string);
@@ -3490,7 +3212,7 @@ j* jotable_insert
 *** expose_system
 
     #+begin_src c
-    void expose_system() {
+    expose_system() {
       define_prim("command/run", p_command_run);
       define_prim("n-command/run", p_n_command_run);
       define_prim("cmd-number", p_cmd_number);
@@ -3504,7 +3226,7 @@ j* jotable_insert
 *** ccall
 
     #+begin_src c
-    void ccall (char* function_name, void* lib) {
+    ccall (char* function_name, void* lib) {
       primitive fun = dlsym(lib, function_name);
       if (fun == NULL) {
         printf("- ccall fail\n");
@@ -3518,7 +3240,7 @@ j* jotable_insert
 *** k_clib_one
 
     #+begin_src c
-    void k_clib_one() {
+    k_clib_one() {
       // "..."
       char* path = malloc(PATH_MAX);
       cell cursor = 0;
@@ -3552,7 +3274,7 @@ j* jotable_insert
 *** k_clib
 
     #+begin_src c
-    void k_clib() {
+    k_clib() {
       // (clib "..." ...)
       while (true) {
         jo s = read_raw_jo();
@@ -3572,7 +3294,7 @@ j* jotable_insert
 *** expose_cffi
 
     #+begin_src c
-    void expose_cffi() {
+    expose_cffi() {
       define_prim("clib", k_clib);
     }
     #+end_src
@@ -3582,9 +3304,9 @@ j* jotable_insert
 *** k_define
 
     #+begin_src c
-    void k_run();
+    k_run();
 
-    void k_define() {
+    k_define() {
       jo name = read_jo();
       k_run();
       data_stack_push(name);
@@ -3602,9 +3324,9 @@ j* jotable_insert
 ***** k_declare_one
 
       #+begin_src c
-      void k_declare_one() {
-        jo index = read_jo();
-        jotable[index].tag = JO_DECLARED;
+      k_declare_one() {
+        jo jo = read_jo();
+        jo->tag = JO_DECLARED;
         k_ignore();
       }
       #+end_src
@@ -3612,7 +3334,7 @@ j* jotable_insert
 ***** k_declare
 
       #+begin_src c
-      void k_declare() {
+      k_declare() {
         while (true) {
           jo s = read_jo();
           if (s == ROUND_KET) {
@@ -3631,9 +3353,9 @@ j* jotable_insert
 *** k_run
 
     #+begin_src c
-    void p_compile_jojo();
+    p_compile_jojo();
 
-    void k_run() {
+    k_run() {
       // (run ...)
       jo* jojo = compiling_stack_tos();
       p_compile_jojo();
@@ -3646,11 +3368,11 @@ j* jotable_insert
 
     #+begin_src c
     bool test_flag = false;
-    void p_test_flag() { data_stack_push(test_flag); }
-    void p_test_flag_on() { test_flag = true; }
-    void p_test_flag_off() { test_flag = false; }
+    p_test_flag() { data_stack_push(test_flag); }
+    p_test_flag_on() { test_flag = true; }
+    p_test_flag_off() { test_flag = false; }
 
-    void k_test() {
+    k_test() {
       if (test_flag) {
         k_run();
       }
@@ -3664,11 +3386,11 @@ j* jotable_insert
 
     #+begin_src c
     bool repl_flag = false;
-    void p_repl_flag() { data_stack_push(repl_flag); }
-    void p_repl_flag_on() { repl_flag = true; }
-    void p_repl_flag_off() { repl_flag = false; }
+    p_repl_flag() { data_stack_push(repl_flag); }
+    p_repl_flag_on() { repl_flag = true; }
+    p_repl_flag_off() { repl_flag = false; }
 
-    void p_repl() {
+    p_repl() {
       while (true) {
         if (!has_jo_p()) {
           return;
@@ -3690,7 +3412,7 @@ j* jotable_insert
 *** p_bare_jojo_print
 
     #+begin_src c
-    void p_bare_jojo_print() {
+    p_bare_jojo_print() {
       // jojo -> {terminal-output}
       jo* jojo = data_stack_pop();
       printf("[ ");
@@ -3723,7 +3445,7 @@ j* jotable_insert
           data_stack_push(jojo + 2);
           p_bare_jojo_print();
           printf(") ");
-          jojo = jojo + jojo[1];
+          jojo = jojo + (cell)jojo[1];
           jojo++;
         }
         else if (jojo[0] == JO_INS_ADDRESS) {
@@ -3768,7 +3490,7 @@ j* jotable_insert
 *** point_return_point
 
     #+begin_src c
-    void point_return_point(cell i) {
+    point_return_point(cell i) {
       printf("    - ");
       if (i != return_stack_pointer -1) {
         printf("{ %s } ", jo2str(*(return_stack[i].jojo - 1)));
@@ -3796,7 +3518,7 @@ j* jotable_insert
 *** p_print_return_stack
 
     #+begin_src c
-    void p_print_return_stack() {
+    p_print_return_stack() {
       cell i = return_stack_base;
       printf("  - return-stack :\n");
       while (i < return_stack_pointer) {
@@ -3811,7 +3533,7 @@ j* jotable_insert
     #+begin_src c
     cell debug_repl_level = 0;
 
-    void p_debug_repl() {
+    p_debug_repl() {
       while (true) {
         if (!has_jo_p()) {
           return;
@@ -3844,7 +3566,7 @@ j* jotable_insert
 *** p_debug
 
     #+begin_src c
-    void p_debug() {
+    p_debug() {
       reading_stack_push(stdin);
 
       printf("- in debug-repl [level %ld] >_<!\n", debug_repl_level);
@@ -3866,14 +3588,14 @@ j* jotable_insert
     cell stepper_counter = 0;
     cell pending_steps = 0;
 
-    void exit_stepper() {
+    exit_stepper() {
       step_flag = false;
       stepper_counter = 0;
       pending_steps = 0;
       printf("- exit stepper\n");
     }
 
-    void stepper() {
+    stepper() {
       printf("stepper> ");
       while (true) {
 
@@ -3913,7 +3635,7 @@ j* jotable_insert
           p_print_data_stack();
           stepper_counter++;
           printf("- stepper counting : %ld\n", stepper_counter);
-          pending_steps = string_to_dec(jo2str(jo)) - 1;
+          pending_steps = string_to_int(jo2str(jo)) - 1;
           return;
         }
         else if (jo == str2jo("exit")) {
@@ -3934,7 +3656,7 @@ j* jotable_insert
 *** p_step
 
     #+begin_src c
-    void p_step() {
+    p_step() {
       step_flag = true;
     }
     #+end_src
@@ -3980,7 +3702,7 @@ j* jotable_insert
 ***** kernel_signal_handler
 
       #+begin_src c
-      void kernel_signal_handler(int sig, siginfo_t *siginfo, void *ucontext) {
+      kernel_signal_handler(int sig, siginfo_t *siginfo, void *ucontext) {
         fflush(stdin);
         fflush(stdout);
         fflush(stderr);
@@ -4000,7 +3722,7 @@ j* jotable_insert
 ***** init_kernel_signal_handler
 
       #+begin_src c
-      void init_kernel_signal_handler() {
+      init_kernel_signal_handler() {
         struct sigaction kernel_signal_action;
 
         sigemptyset(&kernel_signal_action.sa_mask);
@@ -4024,7 +3746,7 @@ j* jotable_insert
 *** expose_top_level
 
     #+begin_src c
-    void expose_top_level() {
+    expose_top_level() {
       define_primkey("define", k_define);
       define_primkey("bind-name", p_bind_name);
       define_primkey("declare", k_declare);
@@ -4054,7 +3776,7 @@ j* jotable_insert
 *** k_ignore
 
     #+begin_src c
-    void k_ignore() {
+    k_ignore() {
       while (true) {
         jo s = read_raw_jo();
         if (s == ROUND_BAR) {
@@ -4070,21 +3792,21 @@ j* jotable_insert
 *** compile_until_meet_jo
 
     #+begin_src c
-    void compile_until_meet_jo(jo ending_jo) {
+    compile_until_meet_jo(jo ending_jo) {
       while (true) {
-        jo s = read_jo();
-        if (s == ROUND_BAR) {
+        jo jo = read_jo();
+        if (jo == ROUND_BAR) {
           jo_apply(read_jo());
         }
-        else if (s == ending_jo) {
+        else if (jo == ending_jo) {
           break;
         }
-        else if (jotable_entry_used(jotable[s])) {
-          here(s);
+        else if (used_jo_p(jo)) {
+          here(jo);
         }
         else {
           // no compile before define
-          printf("- compile_until_meet_jo undefined : %s\n", jo2str(s));
+          printf("- compile_until_meet_jo undefined : %s\n", jo2str(jo));
           k_ignore();
           p_debug();
           return;
@@ -4096,7 +3818,7 @@ j* jotable_insert
 *** p_compile_until_meet_jo
 
     #+begin_src c
-    void p_compile_until_meet_jo() {
+    p_compile_until_meet_jo() {
       compile_until_meet_jo(data_stack_pop());
     }
     #+end_src
@@ -4106,19 +3828,19 @@ j* jotable_insert
     #+begin_src c
     jo compile_until_meet_jo_or_jo(jo ending_jo1, jo ending_jo2) {
       while (true) {
-        jo s = read_jo();
-        if (s == ROUND_BAR) {
+        jo jo = read_jo();
+        if (jo == ROUND_BAR) {
           jo_apply(read_jo());
         }
-        else if (s == ending_jo1 || s == ending_jo2) {
-          return s;
+        else if (jo == ending_jo1 || jo == ending_jo2) {
+          return jo;
         }
-        else if (jotable_entry_used(jotable[s])) {
-          here(s);
+        else if (used_jo_p(jo)) {
+          here(jo);
         }
         else {
           // no compile before define
-          printf("- compile_until_meet_jo_or_jo undefined : %s\n", jo2str(s));
+          printf("- compile_until_meet_jo_or_jo undefined : %s\n", jo2str(jo));
           printf("- ending_jo1 : %s\n", jo2str(ending_jo1));
           printf("- ending_jo2 : %s\n", jo2str(ending_jo2));
           k_ignore();
@@ -4132,7 +3854,7 @@ j* jotable_insert
 *** p_compile_until_round_ket
 
     #+begin_src c
-    void p_compile_until_round_ket() {
+    p_compile_until_round_ket() {
       compile_until_meet_jo(ROUND_KET);
     }
     #+end_src
@@ -4140,9 +3862,9 @@ j* jotable_insert
 *** k_jump
 
     #+begin_src c
-    void k_jump() {
+    k_jump() {
       here(JO_INS_JUMP);
-      here(string_to_dec(jo2str(read_raw_jo())));
+      here(string_to_int(jo2str(read_raw_jo())));
       k_ignore();
     }
     #+end_src
@@ -4150,9 +3872,9 @@ j* jotable_insert
 *** k_jump_if_false
 
     #+begin_src c
-    void k_jump_if_false() {
+    k_jump_if_false() {
       here(JO_INS_JUMP_IF_FALSE);
-      here(string_to_dec(jo2str(read_raw_jo())));
+      here(string_to_int(jo2str(read_raw_jo())));
       k_ignore();
     }
     #+end_src
@@ -4179,10 +3901,10 @@ j* jotable_insert
     //     e f
     //   :end-of-else
 
-    void k_if() {
+    k_if() {
       compile_until_meet_jo(JO_THEN);
       here(JO_INS_JUMP_IF_FALSE);
-      cell* end_of_then = compiling_stack_tos();
+      jo* end_of_then = compiling_stack_tos();
       compiling_stack_inc();
       jo ending_jo = compile_until_meet_jo_or_jo(JO_ELSE, ROUND_KET);
       if (ending_jo == ROUND_KET) {
@@ -4191,7 +3913,7 @@ j* jotable_insert
       }
       else {
         here(JO_INS_JUMP);
-        cell* end_of_else = compiling_stack_tos();
+        jo* end_of_else = compiling_stack_tos();
         compiling_stack_inc();
         end_of_then[0] = compiling_stack_tos() - end_of_then;
         p_compile_until_round_ket();
@@ -4210,7 +3932,7 @@ j* jotable_insert
     cell current_compiling_jojo_stack_base = 0;
     cell current_compiling_jojo_stack_pointer = 0;
 
-    void current_compiling_jojo_stack_push(jo* value) {
+    current_compiling_jojo_stack_push(jo* value) {
       current_compiling_jojo_stack[current_compiling_jojo_stack_pointer] = value;
       current_compiling_jojo_stack_pointer++;
     }
@@ -4220,7 +3942,7 @@ j* jotable_insert
       return current_compiling_jojo_stack[current_compiling_jojo_stack_pointer];
     }
 
-    void current_compiling_jojo_stack_inc() {
+    current_compiling_jojo_stack_inc() {
       current_compiling_jojo_stack[current_compiling_jojo_stack_pointer - 1] =
         current_compiling_jojo_stack[current_compiling_jojo_stack_pointer - 1] + 1;
     }
@@ -4238,7 +3960,7 @@ j* jotable_insert
 *** p_compile_jojo
 
     #+begin_src c
-    void p_compile_jojo() {
+    p_compile_jojo() {
       jo* jojo = compiling_stack_tos();
       current_compiling_jojo_stack_push(jojo);
       compile_until_meet_jo(ROUND_KET);
@@ -4252,7 +3974,7 @@ j* jotable_insert
 *** i_tail_call
 
     #+begin_src c
-    void i_tail_call() {
+    i_tail_call() {
       return_point rp = return_stack_pop();
       jo* jojo = rp.jojo;
       jo jo = jojo[0];
@@ -4263,7 +3985,7 @@ j* jotable_insert
 *** k_tail_call
 
     #+begin_src c
-    void k_tail_call() {
+    k_tail_call() {
       // no check for "no compile before define"
       here(JO_INS_TAIL_CALL);
       here(read_jo());
@@ -4274,7 +3996,7 @@ j* jotable_insert
 *** i_loop
 
     #+begin_src c
-    void i_loop() {
+    i_loop() {
       return_point rp = return_stack_pop();
       jo* jojo = rp.jojo;
       jo* jojo_self = jojo[0];
@@ -4285,7 +4007,7 @@ j* jotable_insert
 *** k_loop
 
     #+begin_src c
-    void k_loop() {
+    k_loop() {
       here(JO_INS_LOOP);
       here(current_compiling_jojo_stack_tos());
       k_ignore();
@@ -4295,7 +4017,7 @@ j* jotable_insert
 *** i_recur
 
     #+begin_src c
-    void i_recur() {
+    i_recur() {
       return_point rp = return_stack_tos();
       return_stack_inc();
       jo* jojo = rp.jojo;
@@ -4307,7 +4029,7 @@ j* jotable_insert
 *** k_recur
 
     #+begin_src c
-    void k_recur() {
+    k_recur() {
       here(JO_INS_RECUR);
       here(current_compiling_jojo_stack_tos());
       k_ignore();
@@ -4317,7 +4039,7 @@ j* jotable_insert
 *** p_compiling_stack_tos
 
     #+begin_src c
-    void p_compiling_stack_tos() {
+    p_compiling_stack_tos() {
       data_stack_push(compiling_stack_tos());
     }
     #+end_src
@@ -4325,20 +4047,20 @@ j* jotable_insert
 *** k_bare_jojo
 
     #+begin_src c
-    void k_bare_jojo() {
+    k_bare_jojo() {
       // (bare-jojo ...)
       here(JO_INS_BARE_JOJO);
-      cell* offset_place = compiling_stack_tos();
+      jo* beginning = compiling_stack_tos();
       compiling_stack_inc();
       p_compile_jojo();
-      offset_place[0] = (compiling_stack_tos() - offset_place);
+      beginning[0] = (compiling_stack_tos() - beginning);
     }
     #+end_src
 
 *** k_jojo
 
     #+begin_src c
-    void k_jojo() {
+    k_jojo() {
       // (jojo ...)
       k_bare_jojo();
       here(JO_INS_JO);
@@ -4349,7 +4071,7 @@ j* jotable_insert
 *** k_keyword
 
     #+begin_src c
-    void k_keyword() {
+    k_keyword() {
       // (keyword ...)
       k_bare_jojo();
       here(JO_INS_JO);
@@ -4363,7 +4085,7 @@ j* jotable_insert
       there can be not 'end' in it.
 
     #+begin_src c
-    void k_data() {
+    k_data() {
       // (data ...)
       p_compile_until_round_ket();
       here(JO_INS_JO);
@@ -4394,7 +4116,7 @@ j* jotable_insert
 *** p_local_data_in
 
     #+begin_src c
-    void p_local_data_in() {
+    p_local_data_in() {
       cell jo = data_stack_pop();
       cell index = local_find(jo);
       cell data = data_stack_pop();
@@ -4413,7 +4135,7 @@ j* jotable_insert
 *** p_local_data_out
 
     #+begin_src c
-    void p_local_data_out() {
+    p_local_data_out() {
       cell jo = data_stack_pop();
       cell index = local_find(jo);
       if (index != -1) {
@@ -4432,7 +4154,7 @@ j* jotable_insert
 *** p_local_tag_in
 
     #+begin_src c
-    void p_local_tag_in() {
+    p_local_tag_in() {
       cell jo = data_stack_pop();
       cell index = local_find(jo);
       cell tag = data_stack_pop();
@@ -4451,7 +4173,7 @@ j* jotable_insert
 *** p_local_tag_out
 
     #+begin_src c
-    void p_local_tag_out() {
+    p_local_tag_out() {
       cell jo = data_stack_pop();
       cell index = local_find(jo);
       if (index != -1) {
@@ -4470,7 +4192,7 @@ j* jotable_insert
 *** p_local_in
 
     #+begin_src c
-    void p_local_in() {
+    p_local_in() {
       cell jo = data_stack_pop();
       cell index = local_find(jo);
       cell tag = data_stack_pop();
@@ -4492,7 +4214,7 @@ j* jotable_insert
 *** p_local_out
 
     #+begin_src c
-    void p_local_out() {
+    p_local_out() {
       cell jo = data_stack_pop();
       cell index = local_find(jo);
       if (index != -1) {
@@ -4512,7 +4234,7 @@ j* jotable_insert
 *** k_local_data_in
 
     #+begin_src c
-    void k_local_data_in() {
+    k_local_data_in() {
       jo s = read_raw_jo();
       if (s == ROUND_KET) {
         return;
@@ -4530,7 +4252,7 @@ j* jotable_insert
 *** k_local_data_out
 
     #+begin_src c
-    void k_local_data_out() {
+    k_local_data_out() {
       jo s = read_raw_jo();
       if (s == ROUND_KET) {
         return;
@@ -4548,7 +4270,7 @@ j* jotable_insert
 *** k_local_tag_in
 
     #+begin_src c
-    void k_local_tag_in() {
+    k_local_tag_in() {
       jo s = read_raw_jo();
       if (s == ROUND_KET) {
         return;
@@ -4566,7 +4288,7 @@ j* jotable_insert
 *** k_local_tag_out
 
     #+begin_src c
-    void k_local_tag_out() {
+    k_local_tag_out() {
       jo s = read_raw_jo();
       if (s == ROUND_KET) {
         return;
@@ -4584,7 +4306,7 @@ j* jotable_insert
 *** k_local_in
 
     #+begin_src c
-    void k_local_in() {
+    k_local_in() {
       jo s = read_raw_jo();
       if (s == ROUND_KET) {
         return;
@@ -4602,7 +4324,7 @@ j* jotable_insert
 *** k_local_out
 
     #+begin_src c
-    void k_local_out() {
+    k_local_out() {
       jo s = read_raw_jo();
       if (s == ROUND_KET) {
         return;
@@ -4620,7 +4342,7 @@ j* jotable_insert
 *** p_current_local_pointer
 
     #+begin_src c
-    void p_current_local_pointer() {
+    p_current_local_pointer() {
       data_stack_push(current_local_pointer);
     }
     #+end_src
@@ -4628,7 +4350,7 @@ j* jotable_insert
 *** p_last_local_pointer
 
     #+begin_src c
-    void p_last_local_pointer() {
+    p_last_local_pointer() {
       return_point rp = return_stack_tos();
       data_stack_push(rp.local_pointer);
     }
@@ -4637,7 +4359,7 @@ j* jotable_insert
 *** expose_keyword
 
     #+begin_src c
-    void expose_keyword() {
+    expose_keyword() {
       define_primkey("ignore", k_ignore);
       define_primkey("note", k_ignore);
 
@@ -4691,17 +4413,10 @@ j* jotable_insert
 
 * *misc*
 
-*** do_nothing
-
-    #+begin_src c
-    void do_nothing() {
-    }
-    #+end_src
-
 *** p_here
 
     #+begin_src c
-    void p_here() {
+    p_here() {
       here(data_stack_pop());
     }
     #+end_src
@@ -4709,7 +4424,7 @@ j* jotable_insert
 *** p_address_of_here
 
     #+begin_src c
-    void p_address_of_here() {
+    p_address_of_here() {
      data_stack_push(compiling_stack_tos());
     }
     #+end_src
@@ -4717,28 +4432,27 @@ j* jotable_insert
 *** bar and ket
 
     #+begin_src c
-    void p_round_bar()    { data_stack_push(ROUND_BAR); }
-    void p_round_ket()    { data_stack_push(ROUND_KET); }
-    void p_square_bar()   { data_stack_push(SQUARE_BAR); }
-    void p_square_ket()   { data_stack_push(SQUARE_KET); }
-    void p_flower_bar()   { data_stack_push(FLOWER_BAR); }
-    void p_flower_ket()   { data_stack_push(FLOWER_KET); }
-    void p_double_quote() { data_stack_push(DOUBLE_QUOTE); }
+    p_round_bar()    { data_stack_push(ROUND_BAR); }
+    p_round_ket()    { data_stack_push(ROUND_KET); }
+    p_square_bar()   { data_stack_push(SQUARE_BAR); }
+    p_square_ket()   { data_stack_push(SQUARE_KET); }
+    p_flower_bar()   { data_stack_push(FLOWER_BAR); }
+    p_flower_ket()   { data_stack_push(FLOWER_KET); }
+    p_double_quote() { data_stack_push(DOUBLE_QUOTE); }
     #+end_src
 
 *** p_cell_size
 
     #+begin_src c
-    void p_cell_size() {
-      // -> cell
-      data_stack_push(cell_size);
+    p_cell_size() {
+      data_stack_push(CELL_SIZE);
     }
     #+end_src
 
 *** p_newline
 
     #+begin_src c
-    void p_newline() {
+    p_newline() {
       printf("\n");
     }
     #+end_src
@@ -4746,11 +4460,9 @@ j* jotable_insert
 *** expose_mise
 
     #+begin_src c
-    void expose_mise() {
+    expose_mise() {
       define_prim("here", p_here);
       define_prim("address-of-here", p_address_of_here);
-
-      define_prim("jotable/report", jotable_report);
 
       define_prim("round-bar", p_round_bar);
       define_prim("round-ket", p_round_ket);
@@ -4771,7 +4483,7 @@ j* jotable_insert
 *** expose_play
 
     #+begin_src c
-    void expose_play() {
+    expose_play() {
 
     }
     #+end_src
@@ -4781,31 +4493,16 @@ j* jotable_insert
 *** init_jotable
 
     #+begin_src c
-    jotable_entry proto_jotable_entry(cell index) {
-      jotable_entry e = {
-        .index = index,
-        .key = 0,
-        .tag = str2jo("not-used"),
-        .value = 0,
-        .orbit_length = 0,
-        .orbiton = 0
-      };
-      return e;
-    }
-
-    void init_jotable() {
+    init_jotable() {
       cell i = 0;
-      while (i < jotable_size) {
-        jotable[i] = proto_jotable_entry(i);
-        i++;
-      }
+      bzero(jotable, jotable_size * sizeof(jotable_entry));
     }
     #+end_src
 
 *** init_literal_jo
 
     #+begin_src c
-    void init_literal_jo() {
+    init_literal_jo() {
       EMPTY_JO = str2jo("");
 
       TAG_PRIM         = str2jo("<prim>");
@@ -4860,7 +4557,7 @@ j* jotable_insert
 *** init_jojo
 
     #+begin_src c
-    void init_jojo() {
+    init_jojo() {
 
       init_jotable();
       init_literal_jo();
@@ -4878,7 +4575,6 @@ j* jotable_insert
       expose_ending();
       expose_instruction();
       expose_bool();
-      expose_bit();
       expose_int();
       expose_memory();
       expose_byte();
@@ -4900,7 +4596,7 @@ j* jotable_insert
     #+begin_src c
     #include "core.h";
 
-    void init_core() {
+    init_core() {
       FILE* core_file = fmemopen(core_jo, core_jo_len, "r");
       reading_stack_push(core_file);
       p_repl();
@@ -4912,7 +4608,7 @@ j* jotable_insert
 *** main
 
     #+begin_src c
-    int main(int argc, char** argv) {
+    main(int argc, char** argv) {
       cmd_number = argc;
       cmd_string_array = argv;
       init_jojo();

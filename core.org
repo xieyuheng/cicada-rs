@@ -6,8 +6,9 @@
 
 - about gc
   - note about gc
-  - re-test the gc
+  - move gc to c code
   - fix the roots of gc
+  - re-test the gc
 
 * todo
 
@@ -17,6 +18,8 @@
     [maybe] extend (add-method)
 
   - has-method? has-meta-method?
+
+  - [maybe] mode object system to c code
 
   - syntax-check by another interpreter written in jojo
 
@@ -440,7 +443,7 @@
         jo/right-part))
     #+end_src
 
-* oo
+* object system
 
 *** note
 
@@ -466,7 +469,7 @@
       - low level array like data with free
       - high level list list data using gc
 
-*** [helper] class
+*** struct of class
 
     #+begin_src jojo
     (define class/get-tag                 (jojo (jo tag) assq car))
@@ -1179,7 +1182,7 @@
     - USER_JOJO_DIR    default to  "$HOME/.jojo/"
     - SYSTEM_JOJO_DIR  default to  "/usr/local/lib/jojo"
 
-*** helper
+*** jo about module
 
     #+begin_src jojo
     (define module-dir-jo  (data (string "/module") string->jo))
