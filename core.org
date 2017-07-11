@@ -1,10 +1,6 @@
 #+property: tangle core.jo
 #+title: core
 
-- binding-filter-for-module
-  to make sure when defining
-  the name is not prefixed with "module."
-
 - <jojo> and combinators
   - to mock a mocking bird
 
@@ -1304,10 +1300,7 @@
           (note name -> module[version].name or name
                 cons tos of defining-stack)
           (if prefix-stack (~ empty?) then end)
-          (el dup
-              defining-stack
-              (~ push: (data defining-stack (~ pop) swap cons))
-
+          (el dup defining-stack (~ push: (data defining-stack (~ pop) swap cons))
               prefix-stack (~ tos)
               (raw-jo .) jo/append
               swap jo/append)))
@@ -1353,11 +1346,9 @@
         (jojo
           (note jo -> true or false)
           jo->string (> s)
-          (byte ".") (> dot-byte)
-
-          (if (< dot-byte s) string/member? not then false end)
-          (if (< s) string/last-byte (< dot-byte) eq? then false end)
-          (if (< s) string/first-byte (< dot-byte) eq? then false end)
+          (if (byte ".") (< s) string/member? not then false end)
+          (if (< s) string/last-byte (byte ".") eq? then false end)
+          (if (< s) string/first-byte (byte ".") eq? then false end)
           true end))
 
       (define full-name->module
@@ -1383,7 +1374,8 @@
           (if then car end)
           (cat "- current-module->prefix fail" newline
                "  the following module is not loaded" newline
-               "  module : " (< module) jo/print newline)))
+               "  module : " (< module) jo/print newline
+               debug)))
       #+end_src
 
 ***** jo-filter-for-dependence

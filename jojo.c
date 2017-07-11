@@ -430,23 +430,6 @@
         return true;
       }
     }
-    p_rebind_name() {
-      // [data tag name] -> {set-jotable}
-      run_binding_filter();
-
-      jo name = data_stack_pop();
-      jo tag = data_stack_pop();
-      cell data = data_stack_pop();
-
-      if (!used_jo_p(name)) {
-        name_record[name_record_counter] = name;
-        name_record_counter++;
-        name_record[name_record_counter] = 0;
-      }
-
-      name->tag = tag;
-      name->value = data;
-    }
     p_bind_name() {
       // [data tag name] -> {set-jotable}
       run_binding_filter();
@@ -471,6 +454,23 @@
       name->tag = tag;
       name->value = data;
     }
+    p_rebind_name() {
+      // [data tag name] -> {set-jotable}
+      run_binding_filter();
+
+      jo name = data_stack_pop();
+      jo tag = data_stack_pop();
+      cell data = data_stack_pop();
+
+      if (!used_jo_p(name)) {
+        name_record[name_record_counter] = name;
+        name_record_counter++;
+        name_record[name_record_counter] = 0;
+      }
+
+      name->tag = tag;
+      name->value = data;
+    }
     define_prim(char* str, primitive fun) {
       jo name = str2jo(str);
       data_stack_push(fun);
@@ -485,7 +485,10 @@
       data_stack_push(name);
       p_bind_name();
     }
-    expose_bind() {
+    expose_name() {
+      define_prim("bind-name", p_bind_name);
+      define_prim("rebind-name", p_rebind_name);
+
       define_prim("name-report", p_name_report);
       define_prim("name-record", p_name_record);
 
@@ -2074,6 +2077,17 @@
       data_stack_push(name);
       p_bind_name();
     }
+    k_redefine() {
+      jo name = read_jo();
+      k_run();
+      data_stack_push(name);
+      p_rebind_name();
+    }
+    p_defined_p() {
+      // [name] -> true or false
+      jo name = data_stack_pop();
+      data_stack_push(used_jo_p(name));
+    }
       k_declare_one() {
         jo jo = read_jo();
         jo->tag = JO_DECLARED;
@@ -2093,6 +2107,16 @@
           }
         }
       }
+    p_declared_p() {
+      // [name] -> true or false
+      jo name = data_stack_pop();
+      if (name->tag == JO_DECLARED) {
+        data_stack_push(true);
+      }
+      else {
+        data_stack_push(false);
+      }
+    }
     p_compile_jojo();
 
     k_run() {
@@ -2390,8 +2414,11 @@
       }
     expose_top_level() {
       define_primkey("define", k_define);
-      define_primkey("bind-name", p_bind_name);
+      define_primkey("redefine", k_redefine);
+      define_prim("defined?", p_defined_p);
+
       define_primkey("declare", k_declare);
+      define_prim("declared?", p_declared_p);
 
       define_primkey("run", k_run);
 
@@ -2995,7 +3022,7 @@
       p_empty_jo();
       p_drop();
 
-      expose_bind();
+      expose_name();
       expose_apply();
       expose_stack_operation();
       expose_ending();
