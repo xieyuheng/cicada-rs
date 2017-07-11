@@ -1,6 +1,10 @@
 #+property: tangle core.jo
 #+title: core
 
+- binding-filter-for-module
+  to make sure when defining
+  the name is not prefixed with "module."
+
 - <jojo> and combinators
   - to mock a mocking bird
 
@@ -1297,7 +1301,8 @@
       #+begin_src jojo
       (define binding-filter-for-module
         (jojo
-          (note name -> module[version].name or name)
+          (note name -> module[version].name or name
+                cons tos of defining-stack)
           (if prefix-stack (~ empty?) then end)
           (el dup
               defining-stack

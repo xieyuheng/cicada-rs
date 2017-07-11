@@ -167,7 +167,7 @@
       }
       return sum;
     }
-    // get hash value is index into jotable
+    // a hash an index into jotable
     cell jotable_hash(cell sum, cell counter) {
       return (counter + sum) % jotable_size;
     }
@@ -412,76 +412,64 @@
       jo_apply_now(jo jo);
 
       run_binding_filter() {
+        // [name] -> [name]
         cell i = binding_filter_stack_pointer;
         while (i > binding_filter_stack_base) {
           jo_apply_now(binding_filter_stack[i-1]);
           i--;
         }
       }
-      typedef jo binding_hook_stack_t[128];
-      binding_hook_stack_t binding_hook_stack;
-
-      cell binding_hook_stack_base = 0;
-      cell binding_hook_stack_pointer = 0;
-
-      binding_hook_stack_push(jo value) {
-        binding_hook_stack[binding_hook_stack_pointer] = value;
-        binding_hook_stack_pointer++;
+    bool name_can_bind_p(jo name) {
+      if (name->tag == JO_DECLARED) {
+        return true;
       }
-
-      jo binding_hook_stack_pop() {
-        binding_hook_stack_pointer--;
-        return binding_hook_stack[binding_hook_stack_pointer];
+      else if (used_jo_p(name)) {
+        return false;
       }
-
-      jo binding_hook_stack_tos() {
-        return binding_hook_stack[binding_hook_stack_pointer - 1];
+      else {
+        return true;
       }
-
-      bool binding_hook_stack_empty_p() {
-        return binding_hook_stack_pointer == binding_hook_stack_base;
-      }
-      p_binding_hook_stack_push() {
-        binding_hook_stack_push(data_stack_pop());
-      }
-      p_binding_hook_stack_pop() {
-        data_stack_push(binding_hook_stack_pop());
-      }
-      run_binding_hook(cell name, jo tag, cell value) {
-        cell i = binding_hook_stack_pointer;
-        while (i > binding_hook_stack_base) {
-          data_stack_push(value);
-          data_stack_push(tag);
-          data_stack_push(name);
-          jo_apply_now(binding_hook_stack[i-1]);
-          i--;
-        }
-      }
-    bool declared_jo_p(jo jo) {
-      return jo->tag == JO_DECLARED;
     }
-
-    p_bind_name() {
+    p_rebind_name() {
+      // [data tag name] -> {set-jotable}
       run_binding_filter();
+
       jo name = data_stack_pop();
       jo tag = data_stack_pop();
-      cell value = data_stack_pop();
-      if (used_jo_p(name) && !declared_jo_p(name)) {
+      cell data = data_stack_pop();
+
+      if (!used_jo_p(name)) {
+        name_record[name_record_counter] = name;
+        name_record_counter++;
+        name_record[name_record_counter] = 0;
+      }
+
+      name->tag = tag;
+      name->value = data;
+    }
+    p_bind_name() {
+      // [data tag name] -> {set-jotable}
+      run_binding_filter();
+
+      jo name = data_stack_pop();
+      jo tag = data_stack_pop();
+      cell data = data_stack_pop();
+
+      if (!name_can_bind_p(name)) {
         printf("- p_bind_name can not rebind\n");
         printf("  name : %s\n", jo2str(name));
         printf("  tag : %s\n", jo2str(tag));
-        printf("  value : %ld\n", value);
+        printf("  data : %ld\n", data);
         printf("  it has been bound as a %s\n", jo2str(name->tag));
         return;
       }
-      name->tag = tag;
-      name->value = value;
-
-      run_binding_hook(name, tag, value);
 
       name_record[name_record_counter] = name;
       name_record_counter++;
       name_record[name_record_counter] = 0;
+
+      name->tag = tag;
+      name->value = data;
     }
     define_prim(char* str, primitive fun) {
       jo name = str2jo(str);
@@ -503,9 +491,6 @@
 
       define_prim("binding-filter-stack-push", p_binding_filter_stack_push);
       define_prim("binding-filter-stack-pop", p_binding_filter_stack_pop);
-
-      define_prim("binding-hook-stack-push", p_binding_hook_stack_push);
-      define_prim("binding-hook-stack-pop", p_binding_hook_stack_pop);
     }
     typedef jo keyword_stack_t[128];
     keyword_stack_t keyword_stack;

@@ -1,9 +1,12 @@
 #+property: tangle libjojo.c
 #+title:  jojo
 
-- trace and untrace a jo
-  by rebind-name and redefine
+- rebind-name and redefine
   also defined?
+
+- trace and untrace a jo
+
+- fix to let step-ed function be used in file
 
 * todo
 
@@ -102,7 +105,6 @@
     |----------------------+-------------+---------------|
     | name_record          | 16 * 1024   | jo            |
     | binding_filter_stack | 128         | jo            |
-    | binding_hook_stack   | 128         | jo            |
     | keyword_stack        | 128         | jo            |
     | alias_stack          | 1024        | alias         |
     | reading_stack        | 64          | FILE*         |
@@ -358,7 +360,7 @@
 *** jotable_hash
 
     #+begin_src c
-    // get hash value is index into jotable
+    // a hash an index into jotable
     cell jotable_hash(cell sum, cell counter) {
       return (counter + sum) % jotable_size;
     }
@@ -615,7 +617,7 @@
     }
     #+end_src
 
-* bind_name
+* name
 
 *** name_record
 
@@ -698,6 +700,7 @@
       jo_apply_now(jo jo);
 
       run_binding_filter() {
+        // [name] -> [name]
         cell i = binding_filter_stack_pointer;
         while (i > binding_filter_stack_base) {
           jo_apply_now(binding_filter_stack[i-1]);
@@ -706,97 +709,70 @@
       }
       #+end_src
 
-*** binding_hook_stack
+*** name_can_bind_p
 
-***** binding_hook_stack
+    #+begin_src c
+    bool name_can_bind_p(jo name) {
+      if (name->tag == JO_DECLARED) {
+        return true;
+      }
+      else if (used_jo_p(name)) {
+        return false;
+      }
+      else {
+        return true;
+      }
+    }
+    #+end_src
 
-      #+begin_src c
-      typedef jo binding_hook_stack_t[128];
-      binding_hook_stack_t binding_hook_stack;
+*** p_rebind_name
 
-      cell binding_hook_stack_base = 0;
-      cell binding_hook_stack_pointer = 0;
+    #+begin_src c
+    p_rebind_name() {
+      // [data tag name] -> {set-jotable}
+      run_binding_filter();
 
-      binding_hook_stack_push(jo value) {
-        binding_hook_stack[binding_hook_stack_pointer] = value;
-        binding_hook_stack_pointer++;
+      jo name = data_stack_pop();
+      jo tag = data_stack_pop();
+      cell data = data_stack_pop();
+
+      if (!used_jo_p(name)) {
+        name_record[name_record_counter] = name;
+        name_record_counter++;
+        name_record[name_record_counter] = 0;
       }
 
-      jo binding_hook_stack_pop() {
-        binding_hook_stack_pointer--;
-        return binding_hook_stack[binding_hook_stack_pointer];
-      }
-
-      jo binding_hook_stack_tos() {
-        return binding_hook_stack[binding_hook_stack_pointer - 1];
-      }
-
-      bool binding_hook_stack_empty_p() {
-        return binding_hook_stack_pointer == binding_hook_stack_base;
-      }
-      #+end_src
-
-***** p_binding_hook_stack_push
-
-      #+begin_src c
-      p_binding_hook_stack_push() {
-        binding_hook_stack_push(data_stack_pop());
-      }
-      #+end_src
-
-***** p_binding_hook_stack_pop
-
-      #+begin_src c
-      p_binding_hook_stack_pop() {
-        data_stack_push(binding_hook_stack_pop());
-      }
-      #+end_src
-
-***** run_binding_hook
-
-      #+begin_src c
-      run_binding_hook(cell name, jo tag, cell value) {
-        cell i = binding_hook_stack_pointer;
-        while (i > binding_hook_stack_base) {
-          data_stack_push(value);
-          data_stack_push(tag);
-          data_stack_push(name);
-          jo_apply_now(binding_hook_stack[i-1]);
-          i--;
-        }
-      }
-      #+end_src
+      name->tag = tag;
+      name->value = data;
+    }
+    #+end_src
 
 *** p_bind_name
 
-    after_define (name -> [set-tail tos of defining-stack])
-
     #+begin_src c
-    bool declared_jo_p(jo jo) {
-      return jo->tag == JO_DECLARED;
-    }
-
     p_bind_name() {
+      // [data tag name] -> {set-jotable}
       run_binding_filter();
+
       jo name = data_stack_pop();
       jo tag = data_stack_pop();
-      cell value = data_stack_pop();
-      if (used_jo_p(name) && !declared_jo_p(name)) {
+      cell data = data_stack_pop();
+
+      if (!name_can_bind_p(name)) {
         printf("- p_bind_name can not rebind\n");
         printf("  name : %s\n", jo2str(name));
         printf("  tag : %s\n", jo2str(tag));
-        printf("  value : %ld\n", value);
+        printf("  data : %ld\n", data);
         printf("  it has been bound as a %s\n", jo2str(name->tag));
         return;
       }
-      name->tag = tag;
-      name->value = value;
-
-      run_binding_hook(name, tag, value);
 
       name_record[name_record_counter] = name;
       name_record_counter++;
       name_record[name_record_counter] = 0;
+
+      name->tag = tag;
+      name->value = data;
     }
     #+end_src
 
@@ -835,9 +811,6 @@
 
       define_prim("binding-filter-stack-push", p_binding_filter_stack_push);
       define_prim("binding-filter-stack-pop", p_binding_filter_stack_pop);
-
-      define_prim("binding-hook-stack-push", p_binding_hook_stack_push);
-      define_prim("binding-hook-stack-pop", p_binding_hook_stack_pop);
     }
     #+end_src
 
