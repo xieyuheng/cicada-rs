@@ -1,0 +1,21 @@
+*** p_n_eq_p
+
+    #+begin_src c
+    p_n_eq_p() {
+      // a ... b ... n -> bool
+      cell n = data_stack_pop();
+      cell old_n = n;
+      cell* cursor1 = (data_stack + data_stack_pointer - n);
+      cell* cursor2 = (data_stack + data_stack_pointer - n - n);
+      while (n > 0) {
+        if (cursor1[n-1] != cursor2[n-1]) {
+          data_stack_pointer = data_stack_pointer - old_n - old_n;
+          data_stack_push(false);
+          return;
+        }
+        n--;
+      }
+      data_stack_pointer = data_stack_pointer - old_n - old_n;
+      data_stack_push(true);
+    }
+    #+end_src
