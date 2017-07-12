@@ -2,7 +2,7 @@
 #+title:  jojo
 - bstk
 - all functions about reading
-  use reading_stack as an implicit argument
+  should use reading_stack as an implicit argument
 - writing_stack
 - fix point_return_point
 * todo
@@ -1807,184 +1807,6 @@
     }
     #+end_src
 
-* *string*
-
-*** k_one_string
-
-    #+begin_src c
-    k_one_string() {
-      // "..."
-      char buffer[1024 * 1024];
-      cell cursor = 0;
-      while (true) {
-        char c = read_byte();
-        if (c == '"') {
-          buffer[cursor] = 0;
-          cursor++;
-          break;
-        }
-        else {
-          buffer[cursor] = c;
-          cursor++;
-        }
-      }
-      char* str = malloc(cursor);
-      strcpy(str, buffer);
-      here(JO_INS_STRING);
-      here(str);
-    }
-    #+end_src
-
-*** k_string
-
-    #+begin_src c
-    k_string() {
-      // (string "...")
-      while (true) {
-        jo s = read_raw_jo();
-        if (s == ROUND_KET) {
-          return;
-        }
-        else if (s == DOUBLE_QUOTE) {
-          k_one_string();
-        }
-        else {
-          // do nothing
-        }
-      }
-    }
-    #+end_src
-
-*** p_string_length
-
-    #+begin_src c
-    p_string_length() {
-      // string -> length
-      data_stack_push(strlen(data_stack_pop()));
-    }
-    #+end_src
-
-*** p_string_print
-
-    #+begin_src c
-    p_string_print() {
-      // string -> {terminal-output}
-      printf("%s", data_stack_pop());
-    }
-    #+end_src
-
-*** p_string_dot
-
-    #+begin_src c
-    p_string_dot() {
-      // string -> {terminal-output}
-      printf("\"%s \"", data_stack_pop());
-    }
-    #+end_src
-
-*** p_string_append_to_buffer
-
-    #+begin_src c
-    p_string_append_to_buffer() {
-      // buffer string -> buffer
-      char* str = data_stack_pop();
-      char* buffer = data_stack_tos();
-      strcat(buffer, str);
-    }
-    #+end_src
-
-***** p_string_first_byte
-
-    #+begin_src c
-    p_string_first_byte() {
-      char* s = data_stack_pop();
-      data_stack_push(s[0]);
-    }
-    #+end_src
-
-*** p_string_last_byte
-
-    #+begin_src c
-    p_string_last_byte() {
-      char* s = data_stack_pop();
-      cell i = 0;
-      while (s[i+1] != 0) {
-        i++;
-      }
-      data_stack_push(s[i]);
-    }
-    #+end_src
-
-*** p_string_member_p
-
-    #+begin_src c
-    p_string_member_p() {
-      // non-zero-byte string -> true or false
-      char* s = data_stack_pop();
-      byte b = data_stack_pop();
-      cell i = 0;
-      while (s[i] != 0) {
-        if (s[i] == b) {
-          data_stack_push(true);
-          return;
-        }
-        else {
-          i++;
-        }
-      }
-      data_stack_push(false);
-    }
-    #+end_src
-
-*** p_string_find_byte
-
-    #+begin_src c
-    p_string_find_byte() {
-      // byte string -> [index true] or [false]
-      char* s = data_stack_pop();
-      byte b = data_stack_pop();
-      cell i = 0;
-      while (s[i] != 0) {
-        if (s[i] == b) {
-          data_stack_push(i);
-          data_stack_push(true);
-          return;
-        }
-        else {
-          i++;
-        }
-      }
-      data_stack_push(false);
-    }
-    #+end_src
-
-*** p_string_equal_p
-
-    #+begin_src c
-    p_string_equal_p() {
-      data_stack_push(string_equal(data_stack_pop(), data_stack_pop()));
-    }
-    #+end_src
-
-*** expose_string
-
-    #+begin_src c
-    expose_string() {
-      define_prim("ins/string", i_int);
-      define_primkey("string", k_string);
-      define_primkey("one-string", k_one_string);
-      define_prim("string/print", p_string_print);
-      define_prim("string/dot", p_string_dot);
-      define_prim("string/length", p_string_length);
-      define_prim("string/append-to-buffer", p_string_append_to_buffer);
-      define_prim("string/first-byte", p_string_first_byte);
-      define_prim("string/last-byte", p_string_last_byte);
-      define_prim("string/member?", p_string_member_p);
-      define_prim("string/find-byte", p_string_find_byte);
-      define_prim("string/equal?", p_string_equal_p);
-    }
-    #+end_src
-
 * *jo*
 
 *** p_alias_add
@@ -2436,6 +2258,184 @@
       define_prim("jo/left-part", p_jo_left_part);
       define_prim("jo/right-part", p_jo_right_part);
       define_prim("jo/part", p_jo_part);
+    }
+    #+end_src
+
+* *string*
+
+*** k_one_string
+
+    #+begin_src c
+    k_one_string() {
+      // "..."
+      char buffer[1024 * 1024];
+      cell cursor = 0;
+      while (true) {
+        char c = read_byte();
+        if (c == '"') {
+          buffer[cursor] = 0;
+          cursor++;
+          break;
+        }
+        else {
+          buffer[cursor] = c;
+          cursor++;
+        }
+      }
+      char* str = malloc(cursor);
+      strcpy(str, buffer);
+      here(JO_INS_STRING);
+      here(str);
+    }
+    #+end_src
+
+*** k_string
+
+    #+begin_src c
+    k_string() {
+      // (string "...")
+      while (true) {
+        jo s = read_raw_jo();
+        if (s == ROUND_KET) {
+          return;
+        }
+        else if (s == DOUBLE_QUOTE) {
+          k_one_string();
+        }
+        else {
+          // do nothing
+        }
+      }
+    }
+    #+end_src
+
+*** p_string_length
+
+    #+begin_src c
+    p_string_length() {
+      // string -> length
+      data_stack_push(strlen(data_stack_pop()));
+    }
+    #+end_src
+
+*** p_string_print
+
+    #+begin_src c
+    p_string_print() {
+      // string -> {terminal-output}
+      printf("%s", data_stack_pop());
+    }
+    #+end_src
+
+*** p_string_dot
+
+    #+begin_src c
+    p_string_dot() {
+      // string -> {terminal-output}
+      printf("\"%s \"", data_stack_pop());
+    }
+    #+end_src
+
+*** p_string_append_to_buffer
+
+    #+begin_src c
+    p_string_append_to_buffer() {
+      // buffer string -> buffer
+      char* str = data_stack_pop();
+      char* buffer = data_stack_tos();
+      strcat(buffer, str);
+    }
+    #+end_src
+
+***** p_string_first_byte
+
+    #+begin_src c
+    p_string_first_byte() {
+      char* s = data_stack_pop();
+      data_stack_push(s[0]);
+    }
+    #+end_src
+
+*** p_string_last_byte
+
+    #+begin_src c
+    p_string_last_byte() {
+      char* s = data_stack_pop();
+      cell i = 0;
+      while (s[i+1] != 0) {
+        i++;
+      }
+      data_stack_push(s[i]);
+    }
+    #+end_src
+
+*** p_string_member_p
+
+    #+begin_src c
+    p_string_member_p() {
+      // non-zero-byte string -> true or false
+      char* s = data_stack_pop();
+      byte b = data_stack_pop();
+      cell i = 0;
+      while (s[i] != 0) {
+        if (s[i] == b) {
+          data_stack_push(true);
+          return;
+        }
+        else {
+          i++;
+        }
+      }
+      data_stack_push(false);
+    }
+    #+end_src
+
+*** p_string_find_byte
+
+    #+begin_src c
+    p_string_find_byte() {
+      // byte string -> [index true] or [false]
+      char* s = data_stack_pop();
+      byte b = data_stack_pop();
+      cell i = 0;
+      while (s[i] != 0) {
+        if (s[i] == b) {
+          data_stack_push(i);
+          data_stack_push(true);
+          return;
+        }
+        else {
+          i++;
+        }
+      }
+      data_stack_push(false);
+    }
+    #+end_src
+
+*** p_string_equal_p
+
+    #+begin_src c
+    p_string_equal_p() {
+      data_stack_push(string_equal(data_stack_pop(), data_stack_pop()));
+    }
+    #+end_src
+
+*** expose_string
+
+    #+begin_src c
+    expose_string() {
+      define_prim("ins/string", i_int);
+      define_primkey("string", k_string);
+      define_primkey("one-string", k_one_string);
+      define_prim("string/print", p_string_print);
+      define_prim("string/dot", p_string_dot);
+      define_prim("string/length", p_string_length);
+      define_prim("string/append-to-buffer", p_string_append_to_buffer);
+      define_prim("string/first-byte", p_string_first_byte);
+      define_prim("string/last-byte", p_string_last_byte);
+      define_prim("string/member?", p_string_member_p);
+      define_prim("string/find-byte", p_string_find_byte);
+      define_prim("string/equal?", p_string_equal_p);
     }
     #+end_src
 

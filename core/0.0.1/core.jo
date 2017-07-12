@@ -1087,39 +1087,41 @@
         (cat "welcome to jojo's programming adventure ^-^/" newline
              "- source  : https://github.com/xieyuheng/jojo" newline
              "- version : 0.0.1" newline)))
+    (define set-cmd-flag/loop
+      (jojo
+        (note index -> {set flag})
+        (> index)
+        (if (< index) cmd-number eq? then end)
+        (< index) index->cmd-string
+        (if dup (string "--test") string/equal? then test-flag/on)
+        (if dup (string "--repl") string/equal? then repl-flag/on)
+        drop (< index) inc (loop)))
+
     (define set-cmd-flag
       (jojo
-        (jojo
-          (note index -> {set flag})
-          (> index)
-          (if (< index) cmd-number eq? then end)
-          (< index) index->cmd-string
-          (if dup (string "--test") string/equal? then test-flag/on)
-          (if dup (string "--repl") string/equal? then repl-flag/on)
-          drop (< index) inc (loop))
-        (>> loop)
-        (int 1) (<< loop) (~ apply)))
+        (int 1) (tail-call set-cmd-flag/loop)))
     (define string/flag?
       (jojo
         (note string -> true or false)
         string/first-byte (byte "-") eq?))
 
+    (define load-cmd-path/loop
+      (jojo
+        (note index -> {load path})
+        (> index)
+        (if (< index) cmd-number eq? then end)
+        (< index) index->cmd-string
+        (if dup string/flag? then drop (< index) inc (loop))
+        (if dup path/readable? then path/load (< index) inc (loop))
+        (el (cat "- load-cmd-path fall" newline
+                 "  path : " string/print newline
+                 "  cmd index : " (< index) int/print newline
+                 "  is not readable" newline)
+            debug)))
+
     (define load-cmd-path
       (jojo
-        (jojo
-          (note index -> {load path})
-          (> index)
-          (if (< index) cmd-number eq? then end)
-          (< index) index->cmd-string
-          (if dup string/flag? then drop (< index) inc (loop))
-          (if dup path/readable? then path/load (< index) inc (loop))
-          (el (cat "- load-cmd-path fall" newline
-                   "  path : " string/print newline
-                   "  cmd index : " (< index) int/print newline
-                   "  is not readable" newline)
-              debug))
-        (>> loop)
-        (int 1) (<< loop) (~ apply)))
+        (int 1) (tail-call load-cmd-path/loop)))
     (define the-story-begin
       (jojo
         (if cmd-number (int 1) eq? then
