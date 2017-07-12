@@ -114,66 +114,6 @@
       }
 
       cell string_to_int(char* str) { return string_to_based_int(str, 10); }
-    typedef struct {
-      cell size;
-      cell pointer;
-      cell* stack;
-    } stk_t;
-    typedef stk_t* stk;
-
-    stk new_stk(cell size) {
-      stk stack = (stk_t*)malloc(sizeof(stk_t));
-      stack->size = size;
-      stack->pointer = 0;
-      stack->stack = (cell*)malloc(sizeof(cell) * size);
-      return stack;
-    }
-
-    stk_free(stk stack) {
-      free(stack->stack);
-      free(stack);
-    }
-
-    cell pop(stk stack) {
-      stack->pointer--;
-      return stack->stack[stack->pointer];
-    };
-
-    cell tos(stk stack) {
-      return stack->stack[stack->pointer - 1];
-    };
-
-    drop(stk stack) {
-      stack->pointer--;
-    };
-
-    push(stk stack, cell data) {
-      stack->stack[stack->pointer] = data;
-      stack->pointer++;
-    };
-
-    cell stk_ref(stk stack, cell index) {
-      return stack->stack[index];
-    }
-
-    bool stk_empty_p(stk stack) {
-      return stack->pointer == 0;
-    }
-    typedef struct {
-      cell size;
-      cell pointer;
-      cell* bstack;
-    } bstk_t;
-    typedef bstk_t* bstk;
-
-    // new_bstk
-    // open_bstk
-    // bstk_free
-    // bstk_pop
-    // bstk_tos
-    // bstk_drop
-    // bstk_push
-    // bstk_empty_p
     char string_area[1024 * 1024];
     cell string_area_counter = 0;
     char* copy_to_string_area(char* str) {
@@ -310,6 +250,66 @@
 
     jo JO_LOCAL_IN;
     jo JO_LOCAL_OUT;
+    typedef struct {
+      cell size;
+      cell pointer;
+      cell* stack;
+    } stk_t;
+    typedef stk_t* stk;
+
+    stk new_stk(cell size) {
+      stk stack = (stk_t*)malloc(sizeof(stk_t));
+      stack->size = size;
+      stack->pointer = 0;
+      stack->stack = (cell*)malloc(sizeof(cell) * size);
+      return stack;
+    }
+
+    stk_free(stk stack) {
+      free(stack->stack);
+      free(stack);
+    }
+
+    cell pop(stk stack) {
+      stack->pointer--;
+      return stack->stack[stack->pointer];
+    };
+
+    cell tos(stk stack) {
+      return stack->stack[stack->pointer - 1];
+    };
+
+    drop(stk stack) {
+      stack->pointer--;
+    };
+
+    push(stk stack, cell data) {
+      stack->stack[stack->pointer] = data;
+      stack->pointer++;
+    };
+
+    cell stk_ref(stk stack, cell index) {
+      return stack->stack[index];
+    }
+
+    bool stk_empty_p(stk stack) {
+      return stack->pointer == 0;
+    }
+    typedef struct {
+      cell type;
+      cell size;
+      cell pointer;
+      cell* bstack;
+    } bstk_t;
+    typedef bstk_t* bstk;
+
+    // open_bstk
+    // bstk_free
+    // bstk_pop
+    // bstk_tos
+    // bstk_drop
+    // bstk_push
+    // bstk_empty_p
     stk compiling_stack; // of jojo
 
     p_compiling_stack_inc() {
@@ -586,10 +586,11 @@
     bool step_flag = false;
 
     stepper();
+    exit_stepper();
 
     eval() {
-      cell return_stack_base = return_stack_pointer;
-      while (return_stack_pointer >= return_stack_base) {
+      cell base = return_stack_pointer;
+      while (return_stack_pointer >= base) {
         return_point rp = return_stack_tos();
         return_stack_inc();
         jo* jojo = rp.jojo;
@@ -598,6 +599,10 @@
         if (step_flag == true) {
           stepper();
         }
+      }
+      if (step_flag == true) {
+        printf("- the stepped jojo is finished\n");
+        exit_stepper();
       }
     }
     p_apply() {
@@ -971,7 +976,6 @@
       // should free its return value
       char* real_reading_path = malloc(PATH_MAX);
       if (path[0] == '/' ||
-          stk_empty_p(reading_stack) ||
           tos(reading_stack) == stdin) {
         realpath(path, real_reading_path);
         return real_reading_path;
@@ -998,14 +1002,7 @@
       }
     }
     bool has_byte_p() {
-    FILE* file;
-      if (stk_empty_p(reading_stack)) {
-        file = stdin;
-      }
-      else {
-        file = tos(reading_stack);
-      }
-
+      FILE* file = tos(reading_stack);
       if (feof(file) == 0) {
         return true;
       }
@@ -1017,20 +1014,10 @@
       data_stack_push(has_byte_p());
     }
     byte read_byte() {
-      if (stk_empty_p(reading_stack)) {
-        return fgetc(stdin);
-      }
-      else {
-        return fgetc(tos(reading_stack));
-      }
+      return fgetc(tos(reading_stack));
     }
     byte_unread(byte c) {
-      if (stk_empty_p(reading_stack)) {
-        ungetc(c, stdin);
-      }
-      else {
-        ungetc(c, tos(reading_stack));
-      }
+      ungetc(c, tos(reading_stack));
     }
     p_read_byte() {
       // -> byte
@@ -2144,19 +2131,19 @@
       p_bare_jojo_print();
       printf("\n");
 
-      cell cursor = return_stack[i].local_pointer;
-      cell end = return_stack[i+1].local_pointer;
-      if (i = return_stack_pointer -1) {
-        end = current_local_pointer;
-      }
+    //   cell cursor = return_stack[i].local_pointer;
+    //   cell end = return_stack[i+1].local_pointer;
+    //   if (i = return_stack_pointer -1) {
+    //     end = current_local_pointer;
+    //   }
 
-      while (end > cursor) {
-        printf("      %s = %ld %s\n"
-               , jo2str(local_record[cursor].name)
-               , local_record[cursor].local_data
-               , jo2str(local_record[cursor].local_tag));
-        cursor++;
-      }
+    //   while (end > cursor) {
+    //     printf("      %s = %ld %s\n"
+    //            , jo2str(local_record[cursor].name)
+    //            , local_record[cursor].local_data
+    //            , jo2str(local_record[cursor].local_tag));
+    //     cursor++;
+    //   }
     }
     p_print_return_stack() {
       cell i = return_stack_base;
@@ -2213,23 +2200,20 @@
     cell stepper_counter = 0;
     cell pending_steps = 0;
 
+    // return will not exit stepper
+    // set step_flag to exit stepper
     exit_stepper() {
       step_flag = false;
       stepper_counter = 0;
       pending_steps = 0;
       printf("- exit stepper\n");
+      pop(reading_stack);
     }
 
     stepper() {
+      push(reading_stack, stdin);
       printf("stepper> ");
       while (true) {
-
-        if (return_stack_empty_p()) {
-          printf("\n");
-          printf("- the return-stack is empty\n");
-          exit_stepper();
-          return;
-        }
 
         if (pending_steps > 0) {
           p_print_return_stack();
@@ -2901,6 +2885,7 @@
       current_compiling_jojo_stack = new_stk(1024);
 
       push(compiling_stack, jojo_area);
+      push(reading_stack, stdin);
       push(jo_filter_stack, str2jo("alias-filter"));
     }
     init_jojo() {
