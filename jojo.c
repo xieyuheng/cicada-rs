@@ -129,7 +129,7 @@
       return stack;
     }
 
-    release(stk stack) {
+    stk_free(stk stack) {
       free(stack->stack);
       free(stack);
     }
@@ -152,9 +152,28 @@
       stack->pointer++;
     };
 
-    bool empty_p(stk stack) {
+    cell stk_ref(stk stack, cell index) {
+      return stack->stack[index];
+    }
+
+    bool stk_empty_p(stk stack) {
       return stack->pointer == 0;
     }
+    typedef struct {
+      cell size;
+      cell pointer;
+      cell* bstack;
+    } bstk_t;
+    typedef bstk_t* bstk;
+
+    // new_bstk
+    // open_bstk
+    // bstk_free
+    // bstk_pop
+    // bstk_tos
+    // bstk_drop
+    // bstk_push
+    // bstk_empty_p
     char string_area[1024 * 1024];
     cell string_area_counter = 0;
     char* copy_to_string_area(char* str) {
@@ -405,7 +424,7 @@
         // [name] -> [name]
         cell i = binding_filter_stack->pointer;
         while (i > 0) {
-          jo_apply_now(binding_filter_stack->stack[i-1]);
+          jo_apply_now(stk_ref(binding_filter_stack, i-1));
           i--;
         }
       }
@@ -952,7 +971,7 @@
       // should free its return value
       char* real_reading_path = malloc(PATH_MAX);
       if (path[0] == '/' ||
-          empty_p(reading_stack) ||
+          stk_empty_p(reading_stack) ||
           tos(reading_stack) == stdin) {
         realpath(path, real_reading_path);
         return real_reading_path;
@@ -980,7 +999,7 @@
     }
     bool has_byte_p() {
     FILE* file;
-      if (empty_p(reading_stack)) {
+      if (stk_empty_p(reading_stack)) {
         file = stdin;
       }
       else {
@@ -998,7 +1017,7 @@
       data_stack_push(has_byte_p());
     }
     byte read_byte() {
-      if (empty_p(reading_stack)) {
+      if (stk_empty_p(reading_stack)) {
         return fgetc(stdin);
       }
       else {
@@ -1006,7 +1025,7 @@
       }
     }
     byte_unread(byte c) {
-      if (empty_p(reading_stack)) {
+      if (stk_empty_p(reading_stack)) {
         ungetc(c, stdin);
       }
       else {
@@ -1291,7 +1310,7 @@
       run_jo_filter() {
         cell i = jo_filter_stack->pointer;
         while (i > 0) {
-          jo_apply_now(jo_filter_stack->stack[i-1]);
+          jo_apply_now(stk_ref(jo_filter_stack, i-1));
           i--;
         }
       }
@@ -2450,43 +2469,15 @@
         return;
       }
     }
-    typedef jo current_compiling_jojo_stack_t[1024];
-
-    current_compiling_jojo_stack_t current_compiling_jojo_stack;
-    cell current_compiling_jojo_stack_base = 0;
-    cell current_compiling_jojo_stack_pointer = 0;
-
-    current_compiling_jojo_stack_push(jo* value) {
-      current_compiling_jojo_stack[current_compiling_jojo_stack_pointer] = value;
-      current_compiling_jojo_stack_pointer++;
-    }
-
-    jo* current_compiling_jojo_stack_pop() {
-      current_compiling_jojo_stack_pointer--;
-      return current_compiling_jojo_stack[current_compiling_jojo_stack_pointer];
-    }
-
-    current_compiling_jojo_stack_inc() {
-      current_compiling_jojo_stack[current_compiling_jojo_stack_pointer - 1] =
-        current_compiling_jojo_stack[current_compiling_jojo_stack_pointer - 1] + 1;
-    }
-
-
-    jo* current_compiling_jojo_stack_tos() {
-      return current_compiling_jojo_stack[current_compiling_jojo_stack_pointer - 1];
-    }
-
-    bool current_compiling_jojo_stack_empty_p() {
-      return current_compiling_jojo_stack_pointer == current_compiling_jojo_stack_base;
-    }
+    stk current_compiling_jojo_stack; // of jo
     p_compile_jojo() {
       jo* jojo = tos(compiling_stack);
-      current_compiling_jojo_stack_push(jojo);
+      push(current_compiling_jojo_stack, jojo);
       compile_until_meet_jo(ROUND_KET);
       here(JO_END);
       here(0);
       here(0);
-      current_compiling_jojo_stack_pop();
+      pop(current_compiling_jojo_stack);
     }
     i_tail_call() {
       return_point rp = return_stack_pop();
@@ -2508,7 +2499,7 @@
     }
     k_loop() {
       here(JO_INS_LOOP);
-      here(current_compiling_jojo_stack_tos());
+      here(tos(current_compiling_jojo_stack));
       k_ignore();
     }
     i_recur() {
@@ -2520,7 +2511,7 @@
     }
     k_recur() {
       here(JO_INS_RECUR);
-      here(current_compiling_jojo_stack_tos());
+      here(tos(current_compiling_jojo_stack));
       k_ignore();
     }
     p_compiling_stack_tos() {
@@ -2841,7 +2832,7 @@
       printf("- %ld\n", pop(tt_stack));
       push(tt_stack, "asdf");
       printf("- %s\n", pop(tt_stack));
-      release(tt_stack);
+      stk_free(tt_stack);
     }
     expose_play() {
       tt_stack = new_stk(1024);
@@ -2907,6 +2898,7 @@
       binding_filter_stack  = new_stk(1024);
       keyword_stack         = new_stk(1024);
       jo_filter_stack       = new_stk(1024);
+      current_compiling_jojo_stack = new_stk(1024);
 
       push(compiling_stack, jojo_area);
       push(jo_filter_stack, str2jo("alias-filter"));

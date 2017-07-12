@@ -3,7 +3,6 @@ cc = gcc
 copy = rsync --recursive --links --perms --times --group --owner --devices --specials --verbose --human-readable
 l = -ldl
 f = -w -rdynamic -O2
-#f = -w -rdynamic
 
 build:
 	./tool/tangle.js &&\
