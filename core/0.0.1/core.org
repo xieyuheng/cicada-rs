@@ -34,7 +34,7 @@
   - fix the roots of gc
   - re-test the gc
 
-* todo
+* [todo-list]
 
   - [docs] start from composition
 
@@ -47,7 +47,7 @@
 
   - syntax-check by another interpreter written in jojo
 
-* note
+* [note]
 
 *** terminology
 
@@ -479,7 +479,7 @@
 
 * object system
 
-*** note
+*** [note]
 
     - class
       - one superclass
@@ -1050,7 +1050,7 @@
 
 * <number>
 
-*** note
+*** [note]
 
     - will be rational number
 
@@ -1093,7 +1093,7 @@
 
 * <text>
 
-*** note
+*** [note]
 
     - <text> is static allocated,
       no gc for this class.
@@ -1124,7 +1124,7 @@
 
 * <object>
 
-*** note
+*** [note]
 
     - initially the data of an <object> is an empty-box.
       and it will be a box of variable-list,
@@ -1145,7 +1145,7 @@
 
 * <jojo>
 
-*** note
+*** [note]
 
     - play with combinators
 
@@ -1211,7 +1211,7 @@
 
 * system
 
-*** note env-string
+*** [note] env-string
 
     - USER_JOJO_DIR    default to  "$HOME/.jojo/"
     - SYSTEM_JOJO_DIR  default to  "/usr/local/lib/jojo"
@@ -1256,7 +1256,7 @@
 
 * module
 
-*** note module system
+*** [note] module system
 
     - module is simply a dir of source code files,
       with a module.jo to store meta data of the module.
@@ -1347,7 +1347,9 @@
       #+begin_src jojo
       (define jo-filter-for-module
         (jojo
-          (note name -> module[version].name or name)
+          (note name -> module[version].name)
+          (note name -> name)
+
           (if defining-stack (~ empty?) then end)
           (if dup defining-stack (~ tos) list/member? then
               prefix-stack (~ tos)
@@ -1413,6 +1415,10 @@
       #+end_src
 
 ***** jo-filter-for-dependence
+
+      - to shadow core name
+        'jo-filter-for-dependence'
+        must run after 'jo-filter-for-module'
 
       #+begin_src jojo
       (define jo-filter-for-dependence

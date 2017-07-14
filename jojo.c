@@ -16,7 +16,7 @@
   // typedef intptr_t cell;
   typedef intmax_t cell;
   typedef unsigned char byte;
-  typedef void (*primitive)();
+  typedef void (* primitive)();
     cell max(cell a, cell b) {
       if (a < b) {
         return b;
@@ -134,9 +134,9 @@
       string_area_counter = i + string_area_counter;
       return str1;
     }
-    typedef struct jo_entry {
+    typedef struct _jotable_entry {
       char *key;
-      struct jo_entry *tag;
+      struct _jotable_entry *tag;
       cell value;
     } jotable_entry;
 
@@ -250,67 +250,212 @@
 
     jo JO_LOCAL_IN;
     jo JO_LOCAL_OUT;
-    typedef struct {
-      cell size;
-      cell pointer;
-      cell* stack;
-    } stk_t;
-    typedef stk_t* stk;
+  typedef struct _stack_link__t {
+    cell* stack;
+    struct _stack_link__t* link;
+  } stack_link__t;
+  typedef stack_link__t* stack_link;
 
-    stk new_stk(cell size) {
-      stk stack = (stk_t*)malloc(sizeof(stk_t));
-      stack->size = size;
+  typedef struct {
+    char* name;
+    cell pointer;
+    cell* stack;
+    stack_link link;
+  } stack__t;
+  typedef stack__t* stack;
+
+  #define STACK_BLOCK_SIZE 1024
+
+  stack new_stack(char* name) {
+    stack stack = (stack__t*)malloc(sizeof(stack__t));
+    stack->name = name;
+    stack->pointer = 0;
+    stack->stack = (cell*)malloc(sizeof(cell) * STACK_BLOCK_SIZE);
+    stack->link = NULL;
+    return stack;
+  }
+
+  stack_free_link(stack_link link) {
+    if (link == NULL) {
+      return;
+    }
+    else {
+      stack_free_link(link->link);
+      free(link->stack);
+      free(link);
+    }
+  }
+
+  // ><><><
+  // stack->name is not freed
+  stack_free(stack stack) {
+    stack_free_link(stack->link);
+    free(stack->stack);
+    free(stack);
+  }
+
+  stack_block_underflow_check(stack stack) {
+    if (stack->pointer > 0) {
+      return;
+    }
+    else if (stack->link != NULL) {
+      stack->stack = stack->link->stack;
+      stack->link = stack->link->link;
+      stack->pointer = STACK_BLOCK_SIZE;
+      return;
+    }
+    else {
+      printf("- %s underflow\n", stack->name);
+      p_debug();
+    }
+  }
+
+  cell pop(stack stack) {
+    stack_block_underflow_check(stack);
+    stack->pointer--;
+    return stack->stack[stack->pointer];
+  }
+
+  cell tos(stack stack) {
+    stack_block_underflow_check(stack);
+    return stack->stack[stack->pointer - 1];
+  }
+
+  drop(stack stack) {
+    stack_block_underflow_check(stack);
+    stack->pointer--;
+  }
+
+  stack_block_overflow_check(stack stack) {
+    if (stack->pointer < STACK_BLOCK_SIZE) {
+      return;
+    }
+    else {
+      stack_link new_link = (stack_link__t*)malloc(sizeof(stack_link__t));
+      new_link->stack = (cell*)malloc(sizeof(cell) * STACK_BLOCK_SIZE);
+      new_link->link = stack->link;
+      stack->link = new_link;
       stack->pointer = 0;
-      stack->stack = (cell*)malloc(sizeof(cell) * size);
-      return stack;
     }
+  }
 
-    stk_free(stk stack) {
-      free(stack->stack);
-      free(stack);
+  push(stack stack, cell data) {
+    stack_block_overflow_check(stack);
+    stack->stack[stack->pointer] = data;
+    stack->pointer++;
+  }
+
+
+  stack_traverse_from_top_help(cell cursor,
+                               stack stack,
+                               void fun(cell)) {
+    while (cursor > 0) {
+      fun(stack->stack[cursor - 1]);
+      cursor--;
     }
-
-    cell pop(stk stack) {
-      stack->pointer--;
-      return stack->stack[stack->pointer];
-    };
-
-    cell tos(stk stack) {
-      return stack->stack[stack->pointer - 1];
-    };
-
-    drop(stk stack) {
-      stack->pointer--;
-    };
-
-    push(stk stack, cell data) {
-      stack->stack[stack->pointer] = data;
-      stack->pointer++;
-    };
-
-    cell stk_ref(stk stack, cell index) {
-      return stack->stack[index];
+    if (stack->link != NULL) {
+      stack_traverse_from_top_help(STACK_BLOCK_SIZE,
+                                   (stack->link)->stack,
+                                   fun);
     }
+  }
 
-    bool stk_empty_p(stk stack) {
-      return stack->pointer == 0;
+  stack_traverse_from_top(stack stack, void fun(cell)) {
+    stack_traverse_from_top_help(stack->pointer,
+                                 stack,
+                                 fun);
+  }
+
+  stack_traverse_from_bottom_help(cell cursor,
+                                  stack stack,
+                                  void fun(cell)) {
+    if (stack->link != NULL) {
+      stack_traverse_from_bottom_help(STACK_BLOCK_SIZE,
+                                      (stack->link)->stack,
+                                      fun);
     }
+    cell i = 0;
+    while (i < cursor) {
+      fun(stack->stack[i]);
+      i++;
+    }
+  }
+
+  stack_traverse_from_bottom(stack stack, void fun(cell)) {
+    stack_traverse_from_bottom_help(stack->pointer, stack, fun);
+  }
+
+  bool stack_empty_p(stack stack) {
+    return
+      stack->pointer == 0 &&
+      stack->link == NULL;
+  }
+    enum stack_type {
+      REGULAR_FILE, // cache
+      STRING,       // no cache needed
+      TERMINAL,     // no cache
+    };
     typedef struct {
-      cell type;
-      cell size;
       cell pointer;
-      cell* bstack;
-    } bstk_t;
-    typedef bstk_t* bstk;
+      byte* stack;
+      int stack_type;
+      union {
+        int   file;
+        char* string;
+        int   terminal;
+      };
+      cell string_pointer;
+    } input_stack__t;
+    typedef input_stack__t* input_stack;
 
-    // open_bstk
-    // bstk_free
-    // bstk_pop
-    // bstk_tos
-    // bstk_drop
-    // bstk_push
-    // bstk_empty_p
-    stk compiling_stack; // of jojo
+    #define INPUT_STACK_BLOCK_SIZE (4 * 1024)
+
+    input_stack input_stack_new(int stack_type) {
+      input_stack input_stack = (input_stack__t*)malloc(sizeof(input_stack__t));
+      input_stack->pointer = 0;
+      input_stack->stack = (byte*)malloc(INPUT_STACK_BLOCK_SIZE);
+      input_stack->stack_type = stack_type;
+      return input_stack;
+    }
+
+    // readable check before call input_stack_file
+    input_stack input_stack_file(int file) {
+      input_stack input_stack = input_stack_new(REGULAR_FILE);
+      input_stack->file = file;
+      return input_stack;
+    }
+
+    input_stack input_stack_string(char* string) {
+      input_stack input_stack = input_stack_new(STRING);
+      input_stack->string = string;
+      input_stack->string_pointer = 0;
+      return input_stack;
+    }
+
+    input_stack input_stack_terminal() {
+      input_stack input_stack = input_stack_new(TERMINAL);
+      return input_stack;
+    }
+
+    input_stack_free(input_stack input_stack) {
+    }
+
+    byte input_stack_pop(input_stack input_stack) {
+    }
+
+    byte input_stack_tos(input_stack input_stack) {
+    }
+
+    input_stack_drop(input_stack input_stack) {
+    }
+
+    input_stack_push(input_stack input_stack, byte byte) {
+    }
+
+    bool input_stack_empty_p(input_stack input_stack) {
+    }
+
+    stack compiling_stack; // of jojo
 
     p_compiling_stack_inc() {
       jo* jojo = pop(compiling_stack);
@@ -411,7 +556,7 @@
       }
       printf("\n");
     }
-      stk binding_filter_stack; // of jo
+      stack binding_filter_stack; // of jo
       p_binding_filter_stack_push() {
         push(binding_filter_stack, data_stack_pop());
       }
@@ -422,11 +567,7 @@
 
       run_binding_filter() {
         // [name] -> [name]
-        cell i = binding_filter_stack->pointer;
-        while (i > 0) {
-          jo_apply_now(stk_ref(binding_filter_stack, i-1));
-          i--;
-        }
+        stack_traverse_from_bottom(binding_filter_stack, jo_apply_now);
       }
     bool name_can_bind_p(jo name) {
       if (name->tag == JO_DECLARED) {
@@ -504,7 +645,7 @@
       define_prim("binding-filter-stack-push", p_binding_filter_stack_push);
       define_prim("binding-filter-stack-pop", p_binding_filter_stack_pop);
     }
-    stk keyword_stack; // of jo
+    stack keyword_stack; // of alias_pointer
     typedef struct {
       jo nick;
       jo name;
@@ -961,7 +1102,7 @@
       define_prim("set-byte", p_set_byte);
       define_prim("get-byte", p_get_byte);
     }
-    stk reading_stack; // of FILE*
+    stack reading_stack; // of FILE*
     erase_real_path_to_dir(char* path) {
       cell cursor = strlen(path);
       while (path[cursor] != '/') {
@@ -1083,6 +1224,9 @@
     }
     p_alias_filter() {
       // nick -> name
+      if (stack_empty_p(keyword_stack)) {
+        return;
+      }
       jo nick = data_stack_pop();
       cell base = tos(keyword_stack);
       cell i = current_alias_pointer;
@@ -1171,7 +1315,7 @@
       buf[cur] = 0;
       data_stack_push(str2jo(buf));
     }
-      stk jo_filter_stack; // of jo
+      stack jo_filter_stack; // of jo
       p_jo_filter_stack_push() {
         push(jo_filter_stack, data_stack_pop());
       }
@@ -1179,11 +1323,7 @@
         data_stack_push(pop(jo_filter_stack));
       }
       run_jo_filter() {
-        cell i = jo_filter_stack->pointer;
-        while (i > 0) {
-          jo_apply_now(stk_ref(jo_filter_stack, i-1));
-          i--;
-        }
+        stack_traverse_from_bottom(jo_filter_stack, jo_apply_now);
       }
     p_read_jo() {
       p_read_raw_jo();
@@ -1775,7 +1915,7 @@
       }
       push(reading_stack, file);
       p_repl();
-      pop(reading_stack);
+      drop(reading_stack);
       fclose(file);
     }
     k_one_include() {
@@ -2195,7 +2335,7 @@
       debug_repl_level--;
       printf("- exit debug-repl [level %ld]\n", debug_repl_level);
 
-      pop(reading_stack);
+      drop(reading_stack);
     }
     cell stepper_counter = 0;
     cell pending_steps = 0;
@@ -2207,7 +2347,7 @@
       stepper_counter = 0;
       pending_steps = 0;
       printf("- exit stepper\n");
-      pop(reading_stack);
+      drop(reading_stack);
     }
 
     stepper() {
@@ -2453,7 +2593,7 @@
         return;
       }
     }
-    stk current_compiling_jojo_stack; // of jo
+    stack current_compiling_jojo_stack; // of jo
     p_compile_jojo() {
       jo* jojo = tos(compiling_stack);
       push(current_compiling_jojo_stack, jojo);
@@ -2461,7 +2601,7 @@
       here(JO_END);
       here(0);
       here(0);
-      pop(current_compiling_jojo_stack);
+      drop(current_compiling_jojo_stack);
     }
     i_tail_call() {
       return_point rp = return_stack_pop();
@@ -2805,22 +2945,8 @@
 
       define_prim("newline", p_newline);
     }
-    stk tt_stack;
-
-    p1() {
-      push(tt_stack, 1);
-      push(tt_stack, 2);
-      push(tt_stack, 3);
-      printf("- %ld\n", pop(tt_stack));
-      printf("- %ld\n", pop(tt_stack));
-      printf("- %ld\n", pop(tt_stack));
-      push(tt_stack, "asdf");
-      printf("- %s\n", pop(tt_stack));
-      stk_free(tt_stack);
-    }
     expose_play() {
-      tt_stack = new_stk(1024);
-      define_prim("p1", p1);
+
     }
     init_jotable() {
       bzero(jotable, jotable_size * sizeof(jotable_entry));
@@ -2877,12 +3003,12 @@
     jo jojo_area[1024 * 1024];
 
     init_stacks() {
-      compiling_stack       = new_stk(1024);
-      reading_stack         = new_stk(1024);
-      binding_filter_stack  = new_stk(1024);
-      keyword_stack         = new_stk(1024);
-      jo_filter_stack       = new_stk(1024);
-      current_compiling_jojo_stack = new_stk(1024);
+      compiling_stack              = new_stack("compiling_stack");
+      reading_stack                = new_stack("reading_stack");
+      binding_filter_stack         = new_stack("binding_filter_stack");
+      keyword_stack                = new_stack("keyword_stack");
+      jo_filter_stack              = new_stack("jo_filter_stack");
+      current_compiling_jojo_stack = new_stack("current_compiling_jojo_stack");
 
       push(compiling_stack, jojo_area);
       push(reading_stack, stdin);
@@ -2925,13 +3051,13 @@
                  "r");
       push(reading_stack, core_file);
       p_repl();
-      pop(reading_stack);
+      drop(reading_stack);
       fclose(core_file);
     }
-    main(int argc, char** argv) {
-      cmd_number = argc;
-      cmd_string_array = argv;
-      init_jojo();
-      init_core();
-      p_repl();
-    }
+  main(int argc, char** argv) {
+    cmd_number = argc;
+    cmd_string_array = argv;
+    init_jojo();
+    init_core();
+    p_repl();
+  }

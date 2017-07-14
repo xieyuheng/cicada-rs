@@ -1,24 +1,40 @@
 #+property: tangle libjojo.c
 #+title:  jojo
-- bstk
-- all functions about reading
-  should use reading_stack as an implicit argument
-- writing_stack
 - fix point_return_point
-* todo
+* [todo-stack]
+
+  - input_stack and output_stack
+
+  - all functions about io
+    should respect reading_stack and writing_stack
+    [to use them as an implicit argument]
+
+  - unread
+
+  - low-level syntax macro
+    [at reader level]
+
+  - multiple-dispatch
+    c-like struct
+
+* [todo-list]
+
+  - safe stack in c
+
+  - by c struct, stack in c is easy.
+    the c-like syntax we designed for jojo
+    also shall let us implement stack in jojo easily.
 
   - trace and untrace a jo
 
   - delimited continuation
     to control return_stack [and data_stack]
 
-  - [maybe] safe stack by signal ?
-
   - concurrent
     use list to implement return_stack and data_stack in jojo
     thus each group of stacks is a light weight process
 
-* note
+* [note]
 
 *** interface convention
 
@@ -93,7 +109,6 @@
 
 *** limits
 
-
     | name                 | length      | unit          |
     |----------------------+-------------+---------------|
     | string_area          | 1024 * 1024 | byte          |
@@ -106,19 +121,16 @@
     | local_record         | 4 * 1024    | local_point   |
     | alias_record         | 1024        | alias_point   |
     |----------------------+-------------+---------------|
-    | compiling_stack      | 1024        | jo*           |
-    | binding_filter_stack | 1024        | jo            |
-    | keyword_stack        | 1024        | jo            |
-    | reading_stack        | 1024        | FILE*         |
-    | jo_filter_stack      | 1024        | jo            |
+    | compiling_stack      |             | jo*           |
+    | binding_filter_stack |             | jo            |
+    | keyword_stack        |             | alias_pointer |
+    | reading_stack        |             | FILE*         |
+    | jo_filter_stack      |             | jo            |
 
-*** stk and bstk
+*** minimalism
 
-    - stk[stack] and bstk[byte-stack]
-      are only to be used in c code.
-
-      interface functions of them
-      will not be exposed to jojo.
+    - to keep the core minimal,
+      I only implement the features needed to load other modules.
 
 * header
 
@@ -146,7 +158,7 @@
   // typedef intptr_t cell;
   typedef intmax_t cell;
   typedef unsigned char byte;
-  typedef void (*primitive)();
+  typedef void (* primitive)();
   #+end_src
 
 * utility
@@ -322,9 +334,9 @@
 *** type
 
     #+begin_src c
-    typedef struct jo_entry {
+    typedef struct _jotable_entry {
       char *key;
-      struct jo_entry *tag;
+      struct _jotable_entry *tag;
       cell value;
     } jotable_entry;
 
@@ -475,76 +487,244 @@
     jo JO_LOCAL_OUT;
     #+end_src
 
-* stk & bstk
+* stack
 
-*** stk
+  #+begin_src c
+  typedef struct _stack_link__t {
+    cell* stack;
+    struct _stack_link__t* link;
+  } stack_link__t;
+  typedef stack_link__t* stack_link;
+
+  typedef struct {
+    char* name;
+    cell pointer;
+    cell* stack;
+    stack_link link;
+  } stack__t;
+  typedef stack__t* stack;
+
+  #define STACK_BLOCK_SIZE 1024
+
+  stack new_stack(char* name) {
+    stack stack = (stack__t*)malloc(sizeof(stack__t));
+    stack->name = name;
+    stack->pointer = 0;
+    stack->stack = (cell*)malloc(sizeof(cell) * STACK_BLOCK_SIZE);
+    stack->link = NULL;
+    return stack;
+  }
+
+  stack_free_link(stack_link link) {
+    if (link == NULL) {
+      return;
+    }
+    else {
+      stack_free_link(link->link);
+      free(link->stack);
+      free(link);
+    }
+  }
+
+  // ><><><
+  // stack->name is not freed
+  stack_free(stack stack) {
+    stack_free_link(stack->link);
+    free(stack->stack);
+    free(stack);
+  }
+
+  stack_block_underflow_check(stack stack) {
+    if (stack->pointer > 0) {
+      return;
+    }
+    else if (stack->link != NULL) {
+      stack->stack = stack->link->stack;
+      stack->link = stack->link->link;
+      stack->pointer = STACK_BLOCK_SIZE;
+      return;
+    }
+    else {
+      printf("- %s underflow\n", stack->name);
+      p_debug();
+    }
+  }
+
+  cell pop(stack stack) {
+    stack_block_underflow_check(stack);
+    stack->pointer--;
+    return stack->stack[stack->pointer];
+  }
+
+  cell tos(stack stack) {
+    stack_block_underflow_check(stack);
+    return stack->stack[stack->pointer - 1];
+  }
+
+  drop(stack stack) {
+    stack_block_underflow_check(stack);
+    stack->pointer--;
+  }
+
+  stack_block_overflow_check(stack stack) {
+    if (stack->pointer < STACK_BLOCK_SIZE) {
+      return;
+    }
+    else {
+      stack_link new_link = (stack_link__t*)malloc(sizeof(stack_link__t));
+      new_link->stack = (cell*)malloc(sizeof(cell) * STACK_BLOCK_SIZE);
+      new_link->link = stack->link;
+      stack->link = new_link;
+      stack->pointer = 0;
+    }
+  }
+
+  push(stack stack, cell data) {
+    stack_block_overflow_check(stack);
+    stack->stack[stack->pointer] = data;
+    stack->pointer++;
+  }
+
+
+  stack_traverse_from_top_help(cell cursor,
+                               stack stack,
+                               void fun(cell)) {
+    while (cursor > 0) {
+      fun(stack->stack[cursor - 1]);
+      cursor--;
+    }
+    if (stack->link != NULL) {
+      stack_traverse_from_top_help(STACK_BLOCK_SIZE,
+                                   (stack->link)->stack,
+                                   fun);
+    }
+  }
+
+  stack_traverse_from_top(stack stack, void fun(cell)) {
+    stack_traverse_from_top_help(stack->pointer,
+                                 stack,
+                                 fun);
+  }
+
+  stack_traverse_from_bottom_help(cell cursor,
+                                  stack stack,
+                                  void fun(cell)) {
+    if (stack->link != NULL) {
+      stack_traverse_from_bottom_help(STACK_BLOCK_SIZE,
+                                      (stack->link)->stack,
+                                      fun);
+    }
+    cell i = 0;
+    while (i < cursor) {
+      fun(stack->stack[i]);
+      i++;
+    }
+  }
+
+  stack_traverse_from_bottom(stack stack, void fun(cell)) {
+    stack_traverse_from_bottom_help(stack->pointer, stack, fun);
+  }
+
+  bool stack_empty_p(stack stack) {
+    return
+      stack->pointer == 0 &&
+      stack->link == NULL;
+  }
+  #+end_src
+
+* input_stack & output_stack
+
+*** [note]
+
+    - the use of these two stacks,
+      is to unify interface of read and write.
+
+    - input_stack  push from high address to low address
+      pop  -- read
+      push -- unread
+
+    - output_stack push from low address to high address
+      push -- write
+      pop  -- unwrite
+
+*** stack_type
+
+    #+begin_src c
+    enum stack_type {
+      REGULAR_FILE, // cache
+      STRING,       // no cache needed
+      TERMINAL,     // no cache
+    };
+    #+end_src
+
+*** input_stack
 
     #+begin_src c
     typedef struct {
-      cell size;
       cell pointer;
-      cell* stack;
-    } stk_t;
-    typedef stk_t* stk;
+      byte* stack;
+      int stack_type;
+      union {
+        int   file;
+        char* string;
+        int   terminal;
+      };
+      cell string_pointer;
+    } input_stack__t;
+    typedef input_stack__t* input_stack;
 
-    stk new_stk(cell size) {
-      stk stack = (stk_t*)malloc(sizeof(stk_t));
-      stack->size = size;
-      stack->pointer = 0;
-      stack->stack = (cell*)malloc(sizeof(cell) * size);
-      return stack;
+    #define INPUT_STACK_BLOCK_SIZE (4 * 1024)
+
+    input_stack input_stack_new(int stack_type) {
+      input_stack input_stack = (input_stack__t*)malloc(sizeof(input_stack__t));
+      input_stack->pointer = 0;
+      input_stack->stack = (byte*)malloc(INPUT_STACK_BLOCK_SIZE);
+      input_stack->stack_type = stack_type;
+      return input_stack;
     }
 
-    stk_free(stk stack) {
-      free(stack->stack);
-      free(stack);
+    // readable check before call input_stack_file
+    input_stack input_stack_file(int file) {
+      input_stack input_stack = input_stack_new(REGULAR_FILE);
+      input_stack->file = file;
+      return input_stack;
     }
 
-    cell pop(stk stack) {
-      stack->pointer--;
-      return stack->stack[stack->pointer];
-    };
-
-    cell tos(stk stack) {
-      return stack->stack[stack->pointer - 1];
-    };
-
-    drop(stk stack) {
-      stack->pointer--;
-    };
-
-    push(stk stack, cell data) {
-      stack->stack[stack->pointer] = data;
-      stack->pointer++;
-    };
-
-    cell stk_ref(stk stack, cell index) {
-      return stack->stack[index];
+    input_stack input_stack_string(char* string) {
+      input_stack input_stack = input_stack_new(STRING);
+      input_stack->string = string;
+      input_stack->string_pointer = 0;
+      return input_stack;
     }
 
-    bool stk_empty_p(stk stack) {
-      return stack->pointer == 0;
+    input_stack input_stack_terminal() {
+      input_stack input_stack = input_stack_new(TERMINAL);
+      return input_stack;
+    }
+
+    input_stack_free(input_stack input_stack) {
+    }
+
+    byte input_stack_pop(input_stack input_stack) {
+    }
+
+    byte input_stack_tos(input_stack input_stack) {
+    }
+
+    input_stack_drop(input_stack input_stack) {
+    }
+
+    input_stack_push(input_stack input_stack, byte byte) {
+    }
+
+    bool input_stack_empty_p(input_stack input_stack) {
     }
     #+end_src
 
-*** bstk
+*** >< output_stack
 
     #+begin_src c
-    typedef struct {
-      cell type;
-      cell size;
-      cell pointer;
-      cell* bstack;
-    } bstk_t;
-    typedef bstk_t* bstk;
 
-    // open_bstk
-    // bstk_free
-    // bstk_pop
-    // bstk_tos
-    // bstk_drop
-    // bstk_push
-    // bstk_empty_p
     #+end_src
 
 * compiling_stack & here
@@ -554,7 +734,7 @@
     - to redirect compiling location
 
     #+begin_src c
-    stk compiling_stack; // of jojo
+    stack compiling_stack; // of jojo
 
     p_compiling_stack_inc() {
       jo* jojo = pop(compiling_stack);
@@ -701,7 +881,7 @@
 ***** binding_filter_stack
 
       #+begin_src c
-      stk binding_filter_stack; // of jo
+      stack binding_filter_stack; // of jo
       #+end_src
 
 ***** p_binding_filter_stack_push
@@ -727,11 +907,7 @@
 
       run_binding_filter() {
         // [name] -> [name]
-        cell i = binding_filter_stack->pointer;
-        while (i > 0) {
-          jo_apply_now(stk_ref(binding_filter_stack, i-1));
-          i--;
-        }
+        stack_traverse_from_bottom(binding_filter_stack, jo_apply_now);
       }
       #+end_src
 
@@ -843,7 +1019,7 @@
 
 * *apply* & eval
 
-*** note
+*** [note]
 
     - be careful when calling jo_apply in primitive,
       because after return_stack_push a jojo,
@@ -858,7 +1034,7 @@
 *** keyword_stack
 
     #+begin_src c
-    stk keyword_stack; // of jo
+    stack keyword_stack; // of alias_pointer
     #+end_src
 
 *** alias
@@ -1629,10 +1805,17 @@
 
 * *byte*
 
+*** [note]
+
+    - reading_stack and writing_stack can be :
+      1. file
+      2. buffer
+      3. terminal
+
 *** reading_stack
 
     #+begin_src c
-    stk reading_stack; // of FILE*
+    stack reading_stack; // of FILE*
     #+end_src
 
 *** get_real_reading_path
@@ -1826,6 +2009,9 @@
     #+begin_src c
     p_alias_filter() {
       // nick -> name
+      if (stack_empty_p(keyword_stack)) {
+        return;
+      }
       jo nick = data_stack_pop();
       cell base = tos(keyword_stack);
       cell i = current_alias_pointer;
@@ -1936,7 +2122,7 @@
 ***** jo_filter_stack
 
       #+begin_src c
-      stk jo_filter_stack; // of jo
+      stack jo_filter_stack; // of jo
       #+end_src
 
 ***** p_jo_filter_stack_push
@@ -1957,13 +2143,11 @@
 
 ***** run_jo_filter
 
+      - the order is important
+
       #+begin_src c
       run_jo_filter() {
-        cell i = jo_filter_stack->pointer;
-        while (i > 0) {
-          jo_apply_now(stk_ref(jo_filter_stack, i-1));
-          i--;
-        }
+        stack_traverse_from_bottom(jo_filter_stack, jo_apply_now);
       }
       #+end_src
 
@@ -2839,7 +3023,7 @@
       }
       push(reading_stack, file);
       p_repl();
-      pop(reading_stack);
+      drop(reading_stack);
       fclose(file);
     }
     #+end_src
@@ -3130,7 +3314,7 @@
 
 *** k_declare
 
-***** note
+***** [note]
 
       - no compile before define
         declare helps mutual recursive function
@@ -3407,7 +3591,7 @@
       debug_repl_level--;
       printf("- exit debug-repl [level %ld]\n", debug_repl_level);
 
-      pop(reading_stack);
+      drop(reading_stack);
     }
     #+end_src
 
@@ -3424,7 +3608,7 @@
       stepper_counter = 0;
       pending_steps = 0;
       printf("- exit stepper\n");
-      pop(reading_stack);
+      drop(reading_stack);
     }
 
     stepper() {
@@ -3489,7 +3673,7 @@
 
 *** to handle kernel signal
 
-***** note
+***** [note]
 
       - A function is said to be reentrant
         if it can safely be simultaneously executed
@@ -3785,7 +3969,7 @@
 *** current_compiling_jojo_stack
 
     #+begin_src c
-    stk current_compiling_jojo_stack; // of jo
+    stack current_compiling_jojo_stack; // of jo
     #+end_src
 
 *** p_compile_jojo
@@ -3798,7 +3982,7 @@
       here(JO_END);
       here(0);
       here(0);
-      pop(current_compiling_jojo_stack);
+      drop(current_compiling_jojo_stack);
     }
     #+end_src
 
@@ -4311,34 +4495,15 @@
 
 * *play*
 
-*** p1
-
-    #+begin_src c
-    stk tt_stack;
-
-    p1() {
-      push(tt_stack, 1);
-      push(tt_stack, 2);
-      push(tt_stack, 3);
-      printf("- %ld\n", pop(tt_stack));
-      printf("- %ld\n", pop(tt_stack));
-      printf("- %ld\n", pop(tt_stack));
-      push(tt_stack, "asdf");
-      printf("- %s\n", pop(tt_stack));
-      stk_free(tt_stack);
-    }
-    #+end_src
-
 *** expose_play
 
     #+begin_src c
     expose_play() {
-      tt_stack = new_stk(1024);
-      define_prim("p1", p1);
+
     }
     #+end_src
 
-* main
+* init
 
 *** init_jotable
 
@@ -4408,12 +4573,12 @@
     jo jojo_area[1024 * 1024];
 
     init_stacks() {
-      compiling_stack       = new_stk(1024);
-      reading_stack         = new_stk(1024);
-      binding_filter_stack  = new_stk(1024);
-      keyword_stack         = new_stk(1024);
-      jo_filter_stack       = new_stk(1024);
-      current_compiling_jojo_stack = new_stk(1024);
+      compiling_stack              = new_stack("compiling_stack");
+      reading_stack                = new_stack("reading_stack");
+      binding_filter_stack         = new_stack("binding_filter_stack");
+      keyword_stack                = new_stack("keyword_stack");
+      jo_filter_stack              = new_stack("jo_filter_stack");
+      current_compiling_jojo_stack = new_stack("current_compiling_jojo_stack");
 
       push(compiling_stack, jojo_area);
       push(reading_stack, stdin);
@@ -4466,19 +4631,19 @@
                  "r");
       push(reading_stack, core_file);
       p_repl();
-      pop(reading_stack);
+      drop(reading_stack);
       fclose(core_file);
     }
     #+end_src
 
-*** main
+* main
 
-    #+begin_src c
-    main(int argc, char** argv) {
-      cmd_number = argc;
-      cmd_string_array = argv;
-      init_jojo();
-      init_core();
-      p_repl();
-    }
-    #+end_src
+  #+begin_src c
+  main(int argc, char** argv) {
+    cmd_number = argc;
+    cmd_string_array = argv;
+    init_jojo();
+    init_core();
+    p_repl();
+  }
+  #+end_src

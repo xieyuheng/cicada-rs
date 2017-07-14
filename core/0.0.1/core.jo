@@ -898,7 +898,9 @@
       (run (jo binding-filter-for-module) binding-filter-stack-push)
       (define jo-filter-for-module
         (jojo
-          (note name -> module[version].name or name)
+          (note name -> module[version].name)
+          (note name -> name)
+
           (if defining-stack (~ empty?) then end)
           (if dup defining-stack (~ tos) list/member? then
               prefix-stack (~ tos)
