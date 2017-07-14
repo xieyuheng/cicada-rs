@@ -250,146 +250,157 @@
 
     jo JO_LOCAL_IN;
     jo JO_LOCAL_OUT;
-  typedef struct _stack_link__t {
-    cell* stack;
-    struct _stack_link__t* link;
-  } stack_link__t;
-  typedef stack_link__t* stack_link;
+    typedef struct _stack_link__t {
+      cell* stack;
+      struct _stack_link__t* link;
+    } stack_link__t;
+    typedef stack_link__t* stack_link;
 
-  typedef struct {
-    char* name;
-    cell pointer;
-    cell* stack;
-    stack_link link;
-  } stack__t;
-  typedef stack__t* stack;
+    typedef struct {
+      char* name;
+      cell pointer;
+      cell* stack;
+      stack_link link;
+    } stack__t;
+    typedef stack__t* stack;
 
-  #define STACK_BLOCK_SIZE 1024
-
-  stack new_stack(char* name) {
-    stack stack = (stack__t*)malloc(sizeof(stack__t));
-    stack->name = name;
-    stack->pointer = 0;
-    stack->stack = (cell*)malloc(sizeof(cell) * STACK_BLOCK_SIZE);
-    stack->link = NULL;
-    return stack;
-  }
-
-  stack_free_link(stack_link link) {
-    if (link == NULL) {
-      return;
-    }
-    else {
-      stack_free_link(link->link);
-      free(link->stack);
-      free(link);
-    }
-  }
-
-  // ><><><
-  // stack->name is not freed
-  stack_free(stack stack) {
-    stack_free_link(stack->link);
-    free(stack->stack);
-    free(stack);
-  }
-
-  stack_block_underflow_check(stack stack) {
-    if (stack->pointer > 0) {
-      return;
-    }
-    else if (stack->link != NULL) {
-      stack->stack = stack->link->stack;
-      stack->link = stack->link->link;
-      stack->pointer = STACK_BLOCK_SIZE;
-      return;
-    }
-    else {
-      printf("- %s underflow\n", stack->name);
-      p_debug();
-    }
-  }
-
-  cell pop(stack stack) {
-    stack_block_underflow_check(stack);
-    stack->pointer--;
-    return stack->stack[stack->pointer];
-  }
-
-  cell tos(stack stack) {
-    stack_block_underflow_check(stack);
-    return stack->stack[stack->pointer - 1];
-  }
-
-  drop(stack stack) {
-    stack_block_underflow_check(stack);
-    stack->pointer--;
-  }
-
-  stack_block_overflow_check(stack stack) {
-    if (stack->pointer < STACK_BLOCK_SIZE) {
-      return;
-    }
-    else {
-      stack_link new_link = (stack_link__t*)malloc(sizeof(stack_link__t));
-      new_link->stack = (cell*)malloc(sizeof(cell) * STACK_BLOCK_SIZE);
-      new_link->link = stack->link;
-      stack->link = new_link;
+    #define STACK_BLOCK_SIZE 1024
+    stack new_stack(char* name) {
+      stack stack = (stack__t*)malloc(sizeof(stack__t));
+      stack->name = name;
       stack->pointer = 0;
+      stack->stack = (cell*)malloc(sizeof(cell) * STACK_BLOCK_SIZE);
+      stack->link = NULL;
+      return stack;
     }
-  }
 
-  push(stack stack, cell data) {
-    stack_block_overflow_check(stack);
-    stack->stack[stack->pointer] = data;
-    stack->pointer++;
-  }
-
-
-  stack_traverse_from_top_help(cell cursor,
-                               stack stack,
-                               void fun(cell)) {
-    while (cursor > 0) {
-      fun(stack->stack[cursor - 1]);
-      cursor--;
+    stack_free_link(stack_link link) {
+      if (link == NULL) {
+        return;
+      }
+      else {
+        stack_free_link(link->link);
+        free(link->stack);
+        free(link);
+      }
     }
-    if (stack->link != NULL) {
-      stack_traverse_from_top_help(STACK_BLOCK_SIZE,
-                                   (stack->link)->stack,
-                                   fun);
+
+    // ><><><
+    // stack->name is not freed
+    stack_free(stack stack) {
+      stack_free_link(stack->link);
+      free(stack->stack);
+      free(stack);
     }
-  }
-
-  stack_traverse_from_top(stack stack, void fun(cell)) {
-    stack_traverse_from_top_help(stack->pointer,
-                                 stack,
-                                 fun);
-  }
-
-  stack_traverse_from_bottom_help(cell cursor,
-                                  stack stack,
-                                  void fun(cell)) {
-    if (stack->link != NULL) {
-      stack_traverse_from_bottom_help(STACK_BLOCK_SIZE,
-                                      (stack->link)->stack,
-                                      fun);
+    stack_block_underflow_check(stack stack) {
+      if (stack->pointer > 0) {
+        return;
+      }
+      else if (stack->link != NULL) {
+        free(stack->stack);
+        stack->stack = stack->link->stack;
+        stack_link old_link = stack->link;
+        stack->link = stack->link->link;
+        free(old_link);
+        stack->pointer = STACK_BLOCK_SIZE;
+        return;
+      }
+      else {
+        printf("- %s underflow\n", stack->name);
+        p_debug();
+      }
     }
-    cell i = 0;
-    while (i < cursor) {
-      fun(stack->stack[i]);
-      i++;
+
+    stack_block_overflow_check(stack stack) {
+      if (stack->pointer < STACK_BLOCK_SIZE) {
+        return;
+      }
+      else {
+        stack_link new_link = (stack_link__t*)malloc(sizeof(stack_link__t));
+        new_link->stack = stack->stack;
+        new_link->link = stack->link;
+        stack->link = new_link;
+        stack->stack = (cell*)malloc(sizeof(cell) * STACK_BLOCK_SIZE);
+        stack->pointer = 0;
+      }
     }
-  }
+    cell pop(stack stack) {
+      stack_block_underflow_check(stack);
+      stack->pointer--;
+      return stack->stack[stack->pointer];
+    }
 
-  stack_traverse_from_bottom(stack stack, void fun(cell)) {
-    stack_traverse_from_bottom_help(stack->pointer, stack, fun);
-  }
+    cell tos(stack stack) {
+      stack_block_underflow_check(stack);
+      return stack->stack[stack->pointer - 1];
+    }
 
-  bool stack_empty_p(stack stack) {
-    return
-      stack->pointer == 0 &&
-      stack->link == NULL;
-  }
+    drop(stack stack) {
+      stack_block_underflow_check(stack);
+      stack->pointer--;
+    }
+    push(stack stack, cell data) {
+      stack_block_overflow_check(stack);
+      stack->stack[stack->pointer] = data;
+      stack->pointer++;
+    }
+    stack_traverse_from_top_help
+    (cell cursor,
+     cell* stack,
+     stack_link link,
+     void fun(cell)) {
+      while (cursor > 0) {
+        fun(stack[cursor - 1]);
+        cursor--;
+      }
+      if (link != NULL) {
+        stack_traverse_from_top_help
+          (STACK_BLOCK_SIZE,
+           link->stack,
+           link->link,
+           fun);
+      }
+    }
+
+    stack_traverse_from_top(stack stack, void fun(cell)) {
+      stack_traverse_from_top_help
+        (stack->pointer,
+         stack->stack,
+         stack->link,
+         fun);
+    }
+
+    stack_traverse_from_bottom_help
+    (cell cursor,
+     cell* stack,
+     stack_link link,
+     void fun(cell)) {
+      if (link != NULL) {
+        stack_traverse_from_bottom_help
+          (STACK_BLOCK_SIZE,
+           link->stack,
+           link->link,
+           fun);
+      }
+      cell i = 0;
+      while (i < cursor) {
+        fun(stack[i]);
+        i++;
+      }
+    }
+
+    stack_traverse_from_bottom(stack stack, void fun(cell)) {
+      stack_traverse_from_bottom_help
+        (stack->pointer,
+         stack->stack,
+         stack->link,
+         fun);
+    }
+    bool stack_empty_p(stack stack) {
+      return
+        stack->pointer == 0 &&
+        stack->link == NULL;
+    }
     enum stack_type {
       REGULAR_FILE, // cache
       STRING,       // no cache needed
@@ -2946,7 +2957,6 @@
       define_prim("newline", p_newline);
     }
     expose_play() {
-
     }
     init_jotable() {
       bzero(jotable, jotable_size * sizeof(jotable_entry));
