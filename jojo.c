@@ -255,7 +255,6 @@
       struct _stack_link__t* link;
     } stack_link__t;
     typedef stack_link__t* stack_link;
-
     typedef struct {
       char* name;
       cell pointer;
@@ -324,6 +323,11 @@
         stack->pointer = 0;
       }
     }
+    bool stack_empty_p(stack stack) {
+      return
+        stack->pointer == 0 &&
+        stack->link == NULL;
+    }
     cell pop(stack stack) {
       stack_block_underflow_check(stack);
       stack->pointer--;
@@ -339,6 +343,7 @@
       stack_block_underflow_check(stack);
       stack->pointer--;
     }
+
     push(stack stack, cell data) {
       stack_block_overflow_check(stack);
       stack->stack[stack->pointer] = data;
@@ -396,20 +401,21 @@
          stack->link,
          fun);
     }
-    bool stack_empty_p(stack stack) {
-      return
-        stack->pointer == 0 &&
-        stack->link == NULL;
-    }
-    enum stack_type {
+    typedef enum {
       REGULAR_FILE, // cache
       STRING,       // no cache needed
       TERMINAL,     // no cache
-    };
+    } stack_type;
+    typedef struct _byte_stack_link__t {
+      byte* stack;
+      struct _byte_stack_link__t* link;
+    } byte_stack_link__t;
+    typedef byte_stack_link__t* byte_stack_link;
     typedef struct {
       cell pointer;
       byte* stack;
-      int stack_type;
+      byte_stack_link link;
+      stack_type type;
       union {
         int   file;
         char* string;
@@ -420,12 +426,12 @@
     typedef input_stack__t* input_stack;
 
     #define INPUT_STACK_BLOCK_SIZE (4 * 1024)
-
-    input_stack input_stack_new(int stack_type) {
+    input_stack input_stack_new(stack_type stack_type) {
       input_stack input_stack = (input_stack__t*)malloc(sizeof(input_stack__t));
-      input_stack->pointer = 0;
+      input_stack->pointer = INPUT_STACK_BLOCK_SIZE;
       input_stack->stack = (byte*)malloc(INPUT_STACK_BLOCK_SIZE);
-      input_stack->stack_type = stack_type;
+      input_stack->link = NULL;
+      input_stack->type = stack_type;
       return input_stack;
     }
 
@@ -449,9 +455,36 @@
     }
 
     input_stack_free(input_stack input_stack) {
+      // ><><><
     }
+    bool input_stack_empty_p(input_stack input_stack) {
 
+    }
+    input_stack_block_underflow_check(input_stack input_stack) {
+    }
     byte input_stack_pop(input_stack input_stack) {
+      if (input_stack->pointer < INPUT_STACK_BLOCK_SIZE) {
+        byte byte = input_stack->stack[input_stack->pointer];
+        input_stack->pointer++;
+        return byte;
+      }
+
+      if (input_stack->type == REGULAR_FILE) {
+
+      }
+      else if (input_stack->type == STRING) {
+        byte byte = input_stack->string[input_stack->string_pointer];
+        input_stack->string_pointer++;
+        return byte;
+      }
+      else if (input_stack->type == TERMINAL) {
+
+      }
+      else {
+        printf("- input_stack_pop meet unknow stack type\n");
+        printf("  stack type number : %ld\n", input_stack->type);
+        p_debug();
+      }
     }
 
     byte input_stack_tos(input_stack input_stack) {
@@ -459,11 +492,7 @@
 
     input_stack_drop(input_stack input_stack) {
     }
-
     input_stack_push(input_stack input_stack, byte byte) {
-    }
-
-    bool input_stack_empty_p(input_stack input_stack) {
     }
 
     stack compiling_stack; // of jojo
