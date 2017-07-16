@@ -250,8 +250,8 @@
     } stack__t;
     typedef stack__t* stack;
 
-    #define STACK_BLOCK_SIZE 1024
-    // #define STACK_BLOCK_SIZE 1 // for test
+    // #define STACK_BLOCK_SIZE 1024
+    #define STACK_BLOCK_SIZE 1 // for test
     stack new_stack(char* name) {
       stack stack = (stack__t*)malloc(sizeof(stack__t));
       stack->name = name;
@@ -414,8 +414,8 @@
     } input_stack__t;
     typedef input_stack__t* input_stack;
 
-    #define INPUT_STACK_BLOCK_SIZE (4 * 1024)
-    // #define INPUT_STACK_BLOCK_SIZE 1 // for test
+    // #define INPUT_STACK_BLOCK_SIZE (4 * 1024)
+    #define INPUT_STACK_BLOCK_SIZE 1 // for test
     input_stack input_stack_new(input_stack_type input_stack_type) {
       input_stack input_stack =
         (input_stack__t*)malloc(sizeof(input_stack__t));
@@ -1499,7 +1499,7 @@
       define_prim("set-byte", p_set_byte);
       define_prim("get-byte", p_get_byte);
     }
-    stack reading_stack; // of FILE*
+    stack reading_stack; // of input_stack
     erase_real_path_to_dir(char* path) {
       cell cursor = strlen(path);
       while (path[cursor] != '/') {
@@ -1514,13 +1514,15 @@
       // should free its return value
       char* real_reading_path = malloc(PATH_MAX);
       if (path[0] == '/' ||
-          tos(reading_stack) == stdin) {
+          ((input_stack__t*)tos(reading_stack))->type == INPUT_STACK_TERMINAL) {
         realpath(path, real_reading_path);
         return real_reading_path;
       }
       else {
         char* proc_link_path = malloc(PATH_MAX);
-        sprintf(proc_link_path, "/proc/self/fd/%d", fileno(tos(reading_stack)));
+        sprintf(proc_link_path,
+                "/proc/self/fd/%d",
+                ((input_stack__t*)tos(reading_stack))->file);
         ssize_t real_bytes = readlink(proc_link_path, real_reading_path, PATH_MAX);
         if (real_bytes == -1) {
           reportf("- get_real_reading_path fail to readlink\n");
@@ -1540,26 +1542,20 @@
       }
     }
     bool has_byte_p() {
-      FILE* file = tos(reading_stack);
-      if (feof(file) == 0) {
-        return true;
-      }
-      else {
-        return false;
-      }
+      return !input_stack_empty_p(tos(reading_stack));
     }
     p_has_byte_p() {
       data_stack_push(has_byte_p());
     }
     byte read_byte() {
-      return fgetc(tos(reading_stack));
-    }
-    byte_unread(byte c) {
-      ungetc(c, tos(reading_stack));
+      return input_stack_pop(tos(reading_stack));
     }
     p_read_byte() {
       // -> byte
       data_stack_push(read_byte());
+    }
+    byte_unread(byte b) {
+      input_stack_push(tos(reading_stack), b);
     }
     p_byte_unread() {
       // byte -> {reading_stack}
@@ -1680,7 +1676,7 @@
           }
         }
 
-        c = read_byte();
+        c = read_byte(); // reportf("- read_byte() : %c\n", c);
 
         if (!collecting) {
           if (isspace(c)) {
@@ -2304,16 +2300,18 @@
     p_path_load() {
       // path -> {reading_stack}
       char* path = data_stack_pop();
-      FILE* file = fopen(path, "r");
-      if(file == NULL) {
+      int file = open(path, O_RDONLY);
+      if(file == -1) {
         reportf("- p_path_load fail : %s\n", path);
         perror("file open failed");
         return;
       }
-      push(reading_stack, file);
+      input_stack input_stack = input_stack_file(file);
+      push(reading_stack, input_stack);
       p_repl();
       drop(reading_stack);
-      fclose(file);
+      input_stack_free(input_stack);
+      close(file);
     }
     k_one_include() {
       // "..."
@@ -2721,7 +2719,7 @@
       }
     }
     p_debug() {
-      push(reading_stack, stdin);
+      push(reading_stack, input_stack_terminal());
 
       reportf("- in debug-repl [level %ld] >_<!\n", debug_repl_level);
       p_print_return_stack();
@@ -2748,7 +2746,7 @@
     }
 
     stepper() {
-      push(reading_stack, stdin);
+      push(reading_stack, input_stack_terminal());
       reportf("stepper> ");
       while (true) {
 
@@ -3497,7 +3495,7 @@
       current_compiling_jojo_stack = new_stack("current_compiling_jojo_stack");
 
       push(compiling_stack, jojo_area);
-      push(reading_stack, stdin);
+      push(reading_stack, input_stack_terminal());
       push(jo_filter_stack, str2jo("alias-filter"));
     }
     init_jojo() {
@@ -3531,14 +3529,11 @@
     #include "core/0.0.1/core.h"
 
     init_core() {
-      FILE* core_file =
-        fmemopen(core_0_0_1_core_jo,
-                 core_0_0_1_core_jo_len,
-                 "r");
-      push(reading_stack, core_file);
+      input_stack input_stack = input_stack_string(core_0_0_1_core_jo);
+      push(reading_stack, input_stack);
       p_repl();
       drop(reading_stack);
-      fclose(core_file);
+      input_stack_free(input_stack);
     }
   int main(int argc, char** argv) {
     cmd_number = argc;
