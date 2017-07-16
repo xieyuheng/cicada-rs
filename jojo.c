@@ -458,7 +458,24 @@
       // ><><><
     }
     bool input_stack_empty_p(input_stack input_stack) {
-
+      if (input_stack->pointer != INPUT_STACK_BLOCK_SIZE ||
+          input_stack->link != NULL) {
+        return false;
+      }
+      if (input_stack->type == REGULAR_FILE) {
+        return input_stack->string[input_stack->string_pointer] == '\0';
+      }
+      else if (input_stack->type == STRING) {
+        return input_stack->string[input_stack->string_pointer] == '\0';
+      }
+      else if (input_stack->type == TERMINAL) {
+        return false;
+      }
+      else {
+        printf("- input_stack_empty_p meet unknow stack type\n");
+        printf("  stack type number : %ld\n", input_stack->type);
+        p_debug();
+      }
     }
     input_stack_block_underflow_check(input_stack input_stack) {
     }
@@ -468,7 +485,6 @@
         input_stack->pointer++;
         return byte;
       }
-
       if (input_stack->type == REGULAR_FILE) {
 
       }
@@ -2215,7 +2231,7 @@
     p_repl() {
       while (true) {
         if (!has_jo_p()) {
-          return;
+          return 69;
         }
         jo s = read_jo();
         if (s == ROUND_BAR) {
@@ -3093,10 +3109,10 @@
       drop(reading_stack);
       fclose(core_file);
     }
-  main(int argc, char** argv) {
+  int main(int argc, char** argv) {
     cmd_number = argc;
     cmd_string_array = argv;
     init_jojo();
     init_core();
-    p_repl();
+    return p_repl();
   }
