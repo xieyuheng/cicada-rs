@@ -264,6 +264,7 @@
     typedef stack__t* stack;
 
     #define STACK_BLOCK_SIZE 1024
+    // #define STACK_BLOCK_SIZE 1 // for test
     stack new_stack(char* name) {
       stack stack = (stack__t*)malloc(sizeof(stack__t));
       stack->name = name;
@@ -272,7 +273,6 @@
       stack->link = NULL;
       return stack;
     }
-
     stack_free_link(stack_link link) {
       if (link == NULL) {
         return;
@@ -291,6 +291,8 @@
       free(stack->stack);
       free(stack);
     }
+    // can not pop
+    // for stack->pointer can not decrease under 0
     stack_block_underflow_check(stack stack) {
       if (stack->pointer > 0) {
         return;
@@ -305,11 +307,13 @@
         return;
       }
       else {
-        printf("- %s underflow\n", stack->name);
+        printf("- stack_block_underflow_check fail\n");
+        printf("  %s underflow\n", stack->name);
         p_debug();
       }
     }
-
+    // can not push
+    // for stack->pointer can not increase over STACK_BLOCK_SIZE
     stack_block_overflow_check(stack stack) {
       if (stack->pointer < STACK_BLOCK_SIZE) {
         return;
@@ -333,17 +337,14 @@
       stack->pointer--;
       return stack->stack[stack->pointer];
     }
-
     cell tos(stack stack) {
       stack_block_underflow_check(stack);
       return stack->stack[stack->pointer - 1];
     }
-
     drop(stack stack) {
       stack_block_underflow_check(stack);
       stack->pointer--;
     }
-
     push(stack stack, cell data) {
       stack_block_overflow_check(stack);
       stack->stack[stack->pointer] = data;
@@ -374,7 +375,6 @@
          stack->link,
          fun);
     }
-
     stack_traverse_from_bottom_help
     (cell cursor,
      cell* stack,
@@ -405,17 +405,19 @@
       REGULAR_FILE, // cache
       STRING,       // no cache needed
       TERMINAL,     // no cache
-    } stack_type;
+    } byte_stack_type;
     typedef struct _byte_stack_link__t {
       byte* stack;
+      cell end_pointer;
       struct _byte_stack_link__t* link;
     } byte_stack_link__t;
     typedef byte_stack_link__t* byte_stack_link;
     typedef struct {
       cell pointer;
+      cell end_pointer;
       byte* stack;
       byte_stack_link link;
-      stack_type type;
+      byte_stack_type type;
       union {
         int   file;
         char* string;
@@ -426,50 +428,174 @@
     typedef input_stack__t* input_stack;
 
     #define INPUT_STACK_BLOCK_SIZE (4 * 1024)
-    input_stack input_stack_new(stack_type stack_type) {
+    // #define INPUT_STACK_BLOCK_SIZE 1 // for test
+    input_stack input_stack_new(byte_stack_type byte_stack_type) {
       input_stack input_stack = (input_stack__t*)malloc(sizeof(input_stack__t));
       input_stack->pointer = INPUT_STACK_BLOCK_SIZE;
+      input_stack->end_pointer = INPUT_STACK_BLOCK_SIZE;
       input_stack->stack = (byte*)malloc(INPUT_STACK_BLOCK_SIZE);
       input_stack->link = NULL;
-      input_stack->type = stack_type;
+      input_stack->type = byte_stack_type;
       return input_stack;
     }
-
     // readable check before call input_stack_file
     input_stack input_stack_file(int file) {
       input_stack input_stack = input_stack_new(REGULAR_FILE);
       input_stack->file = file;
       return input_stack;
     }
-
     input_stack input_stack_string(char* string) {
       input_stack input_stack = input_stack_new(STRING);
       input_stack->string = string;
       input_stack->string_pointer = 0;
       return input_stack;
     }
-
     input_stack input_stack_terminal() {
       input_stack input_stack = input_stack_new(TERMINAL);
       return input_stack;
     }
+    input_stack_free_link(byte_stack_link link) {
+      if (link == NULL) {
+        return;
+      }
+      else {
+        input_stack_free_link(link->link);
+        free(link->stack);
+        free(link);
+      }
+    }
 
     input_stack_free(input_stack input_stack) {
-      // ><><><
+      input_stack_free_link(input_stack->link);
+      free(input_stack->stack);
+      free(input_stack);
+    }
+    // can not pop
+    // for input_stack->pointer can not increase over input_stack->end_pointer
+    input_stack_block_underflow_check(input_stack input_stack) {
+      if (input_stack->pointer < input_stack->end_pointer) {
+        return;
+      }
+
+      else if (input_stack->link != NULL) {
+        free(input_stack->stack);
+        input_stack->stack = input_stack->link->stack;
+        input_stack->end_pointer = input_stack->link->end_pointer;
+        byte_stack_link old_link = input_stack->link;
+        input_stack->link = input_stack->link->link;
+        free(old_link);
+        input_stack->pointer = 0;
+        return;
+      }
+
+      else if (input_stack->type == REGULAR_FILE) {
+        ssize_t real_bytes = read(input_stack->file,
+                                  input_stack->stack,
+                                  INPUT_STACK_BLOCK_SIZE);
+        if (real_bytes == 0) {
+          printf("- input_stack_block_underflow_check fail\n");
+          printf("  input_stack underflow\n");
+          printf("  meet end-of-file when reading a regular_file\n");
+          printf("  file descriptor : %ld\n", input_stack->file);
+          p_debug();
+        }
+        else {
+          input_stack->pointer = 0;
+          input_stack->end_pointer = real_bytes;
+          return;
+        }
+      }
+
+      else if (input_stack->type == STRING) {
+        byte byte = input_stack->string[input_stack->string_pointer];
+        if (byte == '\0') {
+          printf("- input_stack_block_underflow_check fail\n");
+          printf("  input_stack underflow\n");
+          printf("  meet end-of-string when reading a string\n");
+          p_debug();
+        }
+        input_stack->string_pointer++;
+        input_stack->end_pointer = INPUT_STACK_BLOCK_SIZE;
+        input_stack->pointer = INPUT_STACK_BLOCK_SIZE - 1;
+        input_stack->stack[input_stack->pointer] = byte;
+        return;
+      }
+
+      else if (input_stack->type == TERMINAL) {
+        ssize_t real_bytes = read(STDIN_FILENO,
+                                  input_stack->stack,
+                                  INPUT_STACK_BLOCK_SIZE);
+        if (real_bytes == 0) {
+          printf("- input_stack_block_underflow_check fail\n");
+          printf("  input_stack underflow\n");
+          printf("  meet end-of-file when reading from terminal\n");
+          p_debug();
+        }
+        else {
+          input_stack->pointer = 0;
+          input_stack->end_pointer = real_bytes;
+          return;
+        }
+      }
+
+      else {
+        printf("- input_stack_block_underflow_check fail\n");
+        printf("  meet unknow stack type\n");
+        printf("  stack type number : %ld\n", input_stack->type);
+        p_debug();
+      }
+    }
+    // can not push
+    // for input_stack->pointer can not decrease under 0
+    input_stack_block_overflow_check(input_stack input_stack) {
+      if (input_stack->pointer > 0) {
+        return;
+      }
+      else {
+        byte_stack_link new_link =
+          (byte_stack_link__t*)malloc(sizeof(byte_stack_link__t));
+        new_link->stack = input_stack->stack;
+        new_link->link = input_stack->link;
+        new_link->end_pointer = input_stack->end_pointer;
+        input_stack->link = new_link;
+        input_stack->stack = (byte*)malloc(INPUT_STACK_BLOCK_SIZE);
+        input_stack->pointer = INPUT_STACK_BLOCK_SIZE;
+        input_stack->end_pointer = INPUT_STACK_BLOCK_SIZE;
+      }
     }
     bool input_stack_empty_p(input_stack input_stack) {
-      if (input_stack->pointer != INPUT_STACK_BLOCK_SIZE ||
+      if (input_stack->pointer != input_stack->end_pointer ||
           input_stack->link != NULL) {
         return false;
       }
       if (input_stack->type == REGULAR_FILE) {
-        return input_stack->string[input_stack->string_pointer] == '\0';
+        ssize_t real_bytes = read(input_stack->file,
+                                  input_stack->stack,
+                                  INPUT_STACK_BLOCK_SIZE);
+        if (real_bytes == 0) {
+          return true;
+        }
+        else {
+          input_stack->pointer = 0;
+          input_stack->end_pointer = real_bytes;
+          return false;
+        }
       }
       else if (input_stack->type == STRING) {
         return input_stack->string[input_stack->string_pointer] == '\0';
       }
       else if (input_stack->type == TERMINAL) {
-        return false;
+        ssize_t real_bytes = read(STDIN_FILENO,
+                                  input_stack->stack,
+                                  INPUT_STACK_BLOCK_SIZE);
+        if (real_bytes == 0) {
+          return true;
+        }
+        else {
+          input_stack->pointer = 0;
+          input_stack->end_pointer = real_bytes;
+          return false;
+        }
       }
       else {
         printf("- input_stack_empty_p meet unknow stack type\n");
@@ -477,38 +603,26 @@
         p_debug();
       }
     }
-    input_stack_block_underflow_check(input_stack input_stack) {
-    }
     byte input_stack_pop(input_stack input_stack) {
-      if (input_stack->pointer < INPUT_STACK_BLOCK_SIZE) {
-        byte byte = input_stack->stack[input_stack->pointer];
-        input_stack->pointer++;
-        return byte;
-      }
-      if (input_stack->type == REGULAR_FILE) {
-
-      }
-      else if (input_stack->type == STRING) {
-        byte byte = input_stack->string[input_stack->string_pointer];
-        input_stack->string_pointer++;
-        return byte;
-      }
-      else if (input_stack->type == TERMINAL) {
-
-      }
-      else {
-        printf("- input_stack_pop meet unknow stack type\n");
-        printf("  stack type number : %ld\n", input_stack->type);
-        p_debug();
-      }
+      input_stack_block_underflow_check(input_stack);
+      byte byte = input_stack->stack[input_stack->pointer];
+      input_stack->pointer++;
+      return byte;
     }
-
     byte input_stack_tos(input_stack input_stack) {
+      input_stack_block_underflow_check(input_stack);
+      byte byte = input_stack->stack[input_stack->pointer];
+      return byte;
     }
-
     input_stack_drop(input_stack input_stack) {
+      input_stack_block_underflow_check(input_stack);
+      input_stack->pointer++;
     }
+    // input_stack_push does not care about byte_stack_type
     input_stack_push(input_stack input_stack, byte byte) {
+      input_stack_block_overflow_check(input_stack);
+      input_stack->pointer--;
+      input_stack->stack[input_stack->pointer] = byte;
     }
 
     stack compiling_stack; // of jojo
@@ -3001,7 +3115,52 @@
 
       define_prim("newline", p_newline);
     }
+    p1() {
+      int file = open("/home/xyh/lang/jojo/README", O_RDWR);
+      input_stack t0_stack = input_stack_file(file);
+      input_stack_push(t0_stack, '\n');
+      input_stack_push(t0_stack, '\n');
+      input_stack_push(t0_stack, '1');
+      input_stack_push(t0_stack, '2');
+      input_stack_push(t0_stack, '3');
+      input_stack_push(t0_stack, '4');
+      input_stack_push(t0_stack, '\n');
+      input_stack_push(t0_stack, '\n');
+      while (!input_stack_empty_p(t0_stack)) {
+        printf("%c", input_stack_pop(t0_stack));
+      }
+      input_stack_free(t0_stack);
+      printf("- input_stack test0 finished\n");
+
+      input_stack t1_stack = input_stack_terminal();
+      while (!input_stack_empty_p(t1_stack)) {
+        byte byte = input_stack_pop(t1_stack);
+        printf("\n> %c", byte);
+      }
+      input_stack_free(t1_stack);
+      printf("- input_stack test1 finished\n");
+
+      input_stack t2_stack = input_stack_string("1234567890");
+      input_stack_push(t2_stack, '\n');
+      input_stack_push(t2_stack, '\n');
+      input_stack_push(t2_stack, '1');
+      input_stack_push(t2_stack, '2');
+      input_stack_push(t2_stack, '3');
+      input_stack_push(t2_stack, '4');
+      input_stack_push(t2_stack, '\n');
+      input_stack_push(t2_stack, '\n');
+      while (!input_stack_empty_p(t2_stack)) {
+        byte byte = input_stack_pop(t2_stack);
+        printf("%c", byte);
+      }
+      input_stack_free(t2_stack);
+      printf("\n");
+      printf("- input_stack test2 finished\n");
+    }
+    init_play() {
+    }
     expose_play() {
+      define_prim("p1", p1);
     }
     init_jotable() {
       bzero(jotable, jotable_size * sizeof(jotable_entry));
@@ -3114,5 +3273,6 @@
     cmd_string_array = argv;
     init_jojo();
     init_core();
+    init_play();
     return p_repl();
   }
