@@ -2024,7 +2024,7 @@
     p_error_number_print() {
       // errno -> {terminal-output}
       int no = data_stack_pop();
-      printf("%s", strerror(no));
+      string_print(strerror(no));
     }
     p_path_open_read() {
       // [path] -> [file true] or [errno false]
@@ -2295,7 +2295,7 @@
       }
       else {
         file_path[real_bytes] = '\0';
-        printf("%s", file_path);
+        string_print(file_path);
       }
     }
     p_repl();

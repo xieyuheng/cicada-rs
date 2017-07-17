@@ -1,7 +1,5 @@
 #+property: tangle libjojo.c
 #+title:  jojo
-- all functions about output should respect writing_stack
-  [to use it as an implicit argument]
 - readable check for input_stack
   writable check for output_stack
 - command in repl
@@ -3247,7 +3245,7 @@
     p_error_number_print() {
       // errno -> {terminal-output}
       int no = data_stack_pop();
-      printf("%s", strerror(no));
+      string_print(strerror(no));
     }
     #+end_src
 
@@ -3618,7 +3616,7 @@
       }
       else {
         file_path[real_bytes] = '\0';
-        printf("%s", file_path);
+        string_print(file_path);
       }
     }
     #+end_src
