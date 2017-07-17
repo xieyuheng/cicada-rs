@@ -115,7 +115,7 @@
       }
 
       cell string_to_int(char* str) { return string_to_based_int(str, 10); }
-    reportf(char* format, ...) {
+    report(char* format, ...) {
       va_list arg_list;
       va_start(arg_list, format);
       vdprintf(STDERR_FILENO, format, arg_list);
@@ -175,8 +175,8 @@
           return jo;
         }
         else if (counter == jotable_size) {
-          reportf("- jotable_insert fail\n");
-          reportf("  the hash_table is filled\n");
+          report("- jotable_insert fail\n");
+          report("  the hash_table is filled\n");
           p_debug();
           return NULL;
         }
@@ -294,8 +294,8 @@
         return;
       }
       else {
-        reportf("- stack_block_underflow_check fail\n");
-        reportf("  %s underflow\n", stack->name);
+        report("- stack_block_underflow_check fail\n");
+        report("  %s underflow\n", stack->name);
         p_debug();
       }
     }
@@ -426,8 +426,14 @@
       input_stack->type = input_stack_type;
       return input_stack;
     }
-    // readable check before call input_stack_file
     input_stack input_stack_file(int file) {
+      int file_flag = fcntl(file, F_GETFL);
+      int access_mode = file_flag & O_ACCMODE;
+      if (file_flag == -1) {
+        report("- input_stack_file fail\n");
+        perror("  fcntl error ");
+        p_debug();
+      }
       input_stack input_stack = input_stack_new(INPUT_STACK_REGULAR_FILE);
       input_stack->file = file;
       return input_stack;
@@ -481,10 +487,10 @@
                                   input_stack->stack,
                                   INPUT_STACK_BLOCK_SIZE);
         if (real_bytes == 0) {
-          reportf("- input_stack_block_underflow_check fail\n");
-          reportf("  input_stack underflow\n");
-          reportf("  meet end-of-file when reading a regular_file\n");
-          reportf("  file descriptor : %ld\n", input_stack->file);
+          report("- input_stack_block_underflow_check fail\n");
+          report("  input_stack underflow\n");
+          report("  meet end-of-file when reading a regular_file\n");
+          report("  file descriptor : %ld\n", input_stack->file);
           p_debug();
         }
         else {
@@ -497,9 +503,9 @@
       else if (input_stack->type == INPUT_STACK_STRING) {
         byte byte = input_stack->string[input_stack->string_pointer];
         if (byte == '\0') {
-          reportf("- input_stack_block_underflow_check fail\n");
-          reportf("  input_stack underflow\n");
-          reportf("  meet end-of-string when reading a string\n");
+          report("- input_stack_block_underflow_check fail\n");
+          report("  input_stack underflow\n");
+          report("  meet end-of-string when reading a string\n");
           p_debug();
         }
         input_stack->string_pointer++;
@@ -514,9 +520,9 @@
                                   input_stack->stack,
                                   INPUT_STACK_BLOCK_SIZE);
         if (real_bytes == 0) {
-          reportf("- input_stack_block_underflow_check fail\n");
-          reportf("  input_stack underflow\n");
-          reportf("  meet end-of-file when reading from terminal\n");
+          report("- input_stack_block_underflow_check fail\n");
+          report("  input_stack underflow\n");
+          report("  meet end-of-file when reading from terminal\n");
           p_debug();
         }
         else {
@@ -527,9 +533,9 @@
       }
 
       else {
-        reportf("- input_stack_block_underflow_check fail\n");
-        reportf("  meet unknow stack type\n");
-        reportf("  stack type number : %ld\n", input_stack->type);
+        report("- input_stack_block_underflow_check fail\n");
+        report("  meet unknow stack type\n");
+        report("  stack type number : %ld\n", input_stack->type);
         p_debug();
       }
     }
@@ -586,8 +592,8 @@
         }
       }
       else {
-        reportf("- input_stack_empty_p meet unknow stack type\n");
-        reportf("  stack type number : %ld\n", input_stack->type);
+        report("- input_stack_empty_p meet unknow stack type\n");
+        report("  stack type number : %ld\n", input_stack->type);
         p_debug();
       }
     }
@@ -648,11 +654,24 @@
       output_stack->type = output_stack_type;
       return output_stack;
     }
-    // writable check before call output_stack_file
     output_stack output_stack_file(int file) {
-      output_stack output_stack = output_stack_new(OUTPUT_STACK_REGULAR_FILE);
-      output_stack->file = file;
-      return output_stack;
+      int file_flag = fcntl(file, F_GETFL);
+      int access_mode = file_flag & O_ACCMODE;
+      if (file_flag == -1) {
+        report("- output_stack_file fail\n");
+        perror("  fcntl error ");
+        p_debug();
+      }
+      else if (access_mode == O_WRONLY || access_mode == O_RDWR) {
+        output_stack output_stack = output_stack_new(OUTPUT_STACK_REGULAR_FILE);
+        output_stack->file = file;
+        return output_stack;
+      }
+      else {
+        report("- output_stack_file fail\n");
+        report("  output_stack_file fail\n");
+        p_debug();
+      }
     }
     output_stack output_stack_string() {
       output_stack output_stack = output_stack_new(OUTPUT_STACK_STRING);
@@ -688,8 +707,8 @@
                                    link->stack,
                                    OUTPUT_STACK_BLOCK_SIZE);
         if (real_bytes != OUTPUT_STACK_BLOCK_SIZE) {
-          reportf("- output_stack_file_flush_link fail\n");
-          reportf("  file descriptor : %ld\n", file);
+          report("- output_stack_file_flush_link fail\n");
+          report("  file descriptor : %ld\n", file);
           perror("  write error : ");
           p_debug();
         }
@@ -703,8 +722,8 @@
                                  output_stack->stack,
                                  output_stack->pointer);
       if (real_bytes != output_stack->pointer) {
-        reportf("- output_stack_file_flush fail\n");
-        reportf("  file descriptor : %ld\n", output_stack->file);
+        report("- output_stack_file_flush fail\n");
+        report("  file descriptor : %ld\n", output_stack->file);
         perror("  write error : ");
         p_debug();
       }
@@ -768,31 +787,31 @@
       }
 
       else if (output_stack->type == OUTPUT_STACK_REGULAR_FILE) {
-        reportf("- output_stack_block_underflow_check fail\n");
-        reportf("  output_stack underflow\n");
-        reportf("  when writing a regular_file\n");
-        reportf("  file descriptor : %ld\n", output_stack->file);
+        report("- output_stack_block_underflow_check fail\n");
+        report("  output_stack underflow\n");
+        report("  when writing a regular_file\n");
+        report("  file descriptor : %ld\n", output_stack->file);
         p_debug();
       }
 
       else if (output_stack->type == OUTPUT_STACK_STRING) {
-        reportf("- output_stack_block_underflow_check fail\n");
-        reportf("  output_stack underflow\n");
-        reportf("  when writing a string\n");
+        report("- output_stack_block_underflow_check fail\n");
+        report("  output_stack underflow\n");
+        report("  when writing a string\n");
         p_debug();
       }
 
       else if (output_stack->type == OUTPUT_STACK_TERMINAL) {
-        reportf("- output_stack_block_underflow_check fail\n");
-        reportf("  output_stack underflow\n");
-        reportf("  when writing to terminal\n");
+        report("- output_stack_block_underflow_check fail\n");
+        report("  output_stack underflow\n");
+        report("  when writing to terminal\n");
         p_debug();
       }
 
       else {
-        reportf("- output_stack_block_underflow_check fail\n");
-        reportf("  meet unknow stack type\n");
-        reportf("  stack type number : %ld\n", output_stack->type);
+        report("- output_stack_block_underflow_check fail\n");
+        report("  meet unknow stack type\n");
+        report("  stack type number : %ld\n", output_stack->type);
         p_debug();
       }
     }
@@ -827,8 +846,8 @@
         return true;
       }
       else {
-        reportf("- output_stack_empty_p meet unknow stack type\n");
-        reportf("  stack type number : %ld\n", output_stack->type);
+        report("- output_stack_empty_p meet unknow stack type\n");
+        report("  stack type number : %ld\n", output_stack->type);
         p_debug();
       }
     }
@@ -851,7 +870,7 @@
         buffer[0] = b;
         ssize_t real_bytes = write(STDOUT_FILENO, buffer, 1);
         if (real_bytes != 1) {
-          reportf("- output_stack_push fail\n");
+          report("- output_stack_push fail\n");
           perror("  write error : ");
           p_debug();
         }
@@ -987,11 +1006,11 @@
       cell data = data_stack_pop();
 
       if (!name_can_bind_p(name)) {
-        reportf("- p_bind_name can not rebind\n");
-        reportf("  name : %s\n", jo2str(name));
-        reportf("  tag : %s\n", jo2str(tag));
-        reportf("  data : %ld\n", data);
-        reportf("  it has been bound as a %s\n", jo2str(name->tag));
+        report("- p_bind_name can not rebind\n");
+        report("  name : %s\n", jo2str(name));
+        report("  tag : %s\n", jo2str(tag));
+        report("  data : %ld\n", data);
+        report("  it has been bound as a %s\n", jo2str(name->tag));
         return;
       }
 
@@ -1055,7 +1074,7 @@
 
     jo_apply(jo jo) {
       if (!used_jo_p(jo)) {
-        reportf("- jo_apply meet undefined jo : %s\n", jo2str(jo));
+        report("- jo_apply meet undefined jo : %s\n", jo2str(jo));
         p_debug();
         return;
       }
@@ -1139,7 +1158,7 @@
         }
       }
       if (step_flag == true) {
-        reportf("- the stepped jojo is finished\n");
+        report("- the stepped jojo is finished\n");
         exit_stepper();
       }
     }
@@ -1252,18 +1271,18 @@
     p_print_data_stack() {
       // {terminal-output}
       if (data_stack_pointer < data_stack_base) {
-        reportf("  * %ld *  ", (data_stack_pointer - data_stack_base));
-        reportf("-- below the stack --\n");
+        report("  * %ld *  ", (data_stack_pointer - data_stack_base));
+        report("-- below the stack --\n");
       }
       else {
-        reportf("  * %ld *  ", (data_stack_pointer - data_stack_base));
-        reportf("-- ");
+        report("  * %ld *  ", (data_stack_pointer - data_stack_base));
+        report("-- ");
         cell i = data_stack_base;
         while (i < data_stack_pointer) {
-          reportf("%ld ", data_stack[i]);
+          report("%ld ", data_stack[i]);
           i++;
         }
-        reportf("--\n");
+        report("--\n");
       }
     }
     p_stack_base() {
@@ -1292,7 +1311,7 @@
       current_local_pointer = rp.local_pointer;
     }
     p_bye() {
-      reportf("bye bye ^-^/\n");
+      report("bye bye ^-^/\n");
       exit(0);
     }
     expose_ending() {
@@ -1326,8 +1345,8 @@
                 ((input_stack__t*)tos(reading_stack))->file);
         ssize_t real_bytes = readlink(proc_link_path, real_reading_path, PATH_MAX);
         if (real_bytes == -1) {
-          reportf("- get_real_reading_path fail to readlink\n");
-          reportf("  proc_link_path : %s\n", proc_link_path);
+          report("- get_real_reading_path fail to readlink\n");
+          report("  proc_link_path : %s\n", proc_link_path);
           perror("  readlink : ");
           free(proc_link_path);
           free(real_reading_path);
@@ -1792,7 +1811,7 @@
 
         if (!has_byte_p()) {
           if (!collecting) {
-            reportf("- p_read_raw_jo meet end-of-file\n");
+            report("- p_read_raw_jo meet end-of-file\n");
             return;
           }
           else {
@@ -1800,7 +1819,7 @@
           }
         }
 
-        c = read_byte(); // reportf("- read_byte() : %c\n", c);
+        c = read_byte(); // report("- read_byte() : %c\n", c);
 
         if (!collecting) {
           if (isspace(c)) {
@@ -2290,7 +2309,7 @@
 
       ssize_t real_bytes = readlink(proc_link_path, file_path, PATH_MAX);
       if (real_bytes == -1) {
-        reportf("- p_file_print_path fail readlink /proc/self/fd/%d\n", fileno(file));
+        report("- p_file_print_path fail readlink /proc/self/fd/%d\n", fileno(file));
         perror("\n");
       }
       else {
@@ -2305,7 +2324,7 @@
       char* path = data_stack_pop();
       int file = open(path, O_RDONLY);
       if(file == -1) {
-        reportf("- p_path_load fail : %s\n", path);
+        report("- p_path_load fail : %s\n", path);
         perror("file open failed");
         return;
       }
@@ -2442,9 +2461,9 @@
     ccall (char* function_name, void* lib) {
       primitive fun = dlsym(lib, function_name);
       if (fun == NULL) {
-        reportf("- ccall fail\n");
-        reportf("  function_name : %s\n", function_name);
-        reportf("  dynamic link error : %s\n", dlerror());
+        report("- ccall fail\n");
+        report("  function_name : %s\n", function_name);
+        report("  dynamic link error : %s\n", dlerror());
       };
       fun();
     }
@@ -2468,9 +2487,9 @@
       free(path);
       void* lib = dlopen(real_read_path, RTLD_LAZY);
       if (lib == NULL) {
-        reportf("- k_clib_one fail to open library\n");
-        reportf("  real_read_path : %s\n", real_read_path);
-        reportf("  dynamic link error : %s\n", dlerror());
+        report("- k_clib_one fail to open library\n");
+        report("  real_read_path : %s\n", real_read_path);
+        report("  dynamic link error : %s\n", dlerror());
         p_debug();
         return;
       };
@@ -2590,84 +2609,84 @@
     p_bare_jojo_print() {
       // jojo -> {terminal-output}
       jo* jojo = data_stack_pop();
-      reportf("[ ");
+      report("[ ");
       while (true) {
         if (jojo[0] == 0 && jojo[1] == 0) {
           break;
         }
         else if (jojo[0] == JO_INS_INT) {
-          reportf("(int %ld) ", jojo[1]);
+          report("(int %ld) ", jojo[1]);
           jojo++;
           jojo++;
         }
         else if (jojo[0] == JO_INS_JO) {
-          reportf("(jo %s) ", jo2str(jojo[1]));
+          report("(jo %s) ", jo2str(jojo[1]));
           jojo++;
           jojo++;
         }
         else if (jojo[0] == JO_INS_STRING) {
-          reportf("(string \"%s\") ", (char*)jojo[1]);
+          report("(string \"%s\") ", (char*)jojo[1]);
           jojo++;
           jojo++;
         }
         else if (jojo[0] == JO_INS_BYTE) {
-          reportf("(btye \"%c\") ", (char)jojo[1]);
+          report("(btye \"%c\") ", (char)jojo[1]);
           jojo++;
           jojo++;
         }
         else if (jojo[0] == JO_INS_BARE_JOJO) {
-          reportf("(bare-jojo ");
+          report("(bare-jojo ");
           data_stack_push(jojo + 2);
           p_bare_jojo_print();
-          reportf(") ");
+          report(") ");
           jojo = jojo + (cell)jojo[1];
           jojo++;
         }
         else if (jojo[0] == JO_INS_ADDRESS) {
-          reportf("(address %ld) ", jojo[1]);
+          report("(address %ld) ", jojo[1]);
           jojo++;
           jojo++;
         }
         else if (jojo[0] == JO_INS_JUMP_IF_FALSE) {
-          reportf("(jump-if-false %ld) ", jojo[1]);
+          report("(jump-if-false %ld) ", jojo[1]);
           jojo++;
           jojo++;
         }
         else if (jojo[0] == JO_INS_JUMP) {
-          reportf("(jump %ld) ", jojo[1]);
+          report("(jump %ld) ", jojo[1]);
           jojo++;
           jojo++;
         }
         else if (jojo[0] == JO_INS_LOOP) {
-          reportf("(loop) ");
+          report("(loop) ");
           jojo++;
           jojo++;
         }
         else if (jojo[0] == JO_INS_RECUR) {
-          reportf("(recur) ");
+          report("(recur) ");
           jojo++;
           jojo++;
         }
         else if (jojo[0] == JO_INS_TAIL_CALL) {
-          reportf("(tail-call %s) ", jo2str(jojo[1]));
+          report("(tail-call %s) ", jo2str(jojo[1]));
           jojo++;
           jojo++;
         }
         else {
-          reportf("%s ", jo2str(jojo[0]));
+          report("%s ", jo2str(jojo[0]));
           jojo++;
         }
       }
-      reportf("] ");
+      report("] ");
     }
     point_return_point(cell i) {
-      reportf("    - ");
+      report("    - ");
       if (i != return_stack_pointer -1) {
-        reportf("{ %s } ", jo2str(*(return_stack[i].jojo - 1)));
+        report("{ %s } ", jo2str(*(return_stack[i].jojo - 1)));
       }
       data_stack_push(return_stack[i].jojo);
       p_bare_jojo_print();
-      reportf("\n");
+      report("\n");
 
     //   cell cursor = return_stack[i].local_pointer;
     //   cell end = return_stack[i+1].local_pointer;
@@ -2676,7 +2695,7 @@
     //   }
 
     //   while (end > cursor) {
-    //     reportf("      %s = %ld %s\n"
+    //     report("      %s = %ld %s\n"
     //            , jo2str(local_record[cursor].name)
     //            , local_record[cursor].local_data
     //            , jo2str(local_record[cursor].local_tag));
@@ -2685,7 +2704,7 @@
     }
     p_print_return_stack() {
       cell i = return_stack_base;
-      reportf("  - return-stack :\n");
+      report("  - return-stack :\n");
       while (i < return_stack_pointer) {
         point_return_point(i);
         i++;
@@ -2700,9 +2719,9 @@
         }
         jo jo = read_raw_jo();
         if (jo == str2jo("help")) {
-          reportf("- debug-repl usage :\n");
-          reportf("  - available commands :\n");
-          reportf("    help exit bye\n");
+          report("- debug-repl usage :\n");
+          report("  - available commands :\n");
+          report("    help exit bye\n");
         }
         else if (jo == str2jo("exit")) {
           return;
@@ -2714,7 +2733,7 @@
         else if (jo == ROUND_BAR) {
           jo_apply(read_jo());
           p_print_data_stack();
-          reportf("debug[%ld]> ", debug_repl_level);
+          report("debug[%ld]> ", debug_repl_level);
         }
         else {
           // loop
@@ -2724,14 +2743,14 @@
     p_debug() {
       push(reading_stack, input_stack_terminal());
 
-      reportf("- in debug-repl [level %ld] >_<!\n", debug_repl_level);
+      report("- in debug-repl [level %ld] >_<!\n", debug_repl_level);
       p_print_return_stack();
       p_print_data_stack();
-      reportf("debug[%ld]> ", debug_repl_level);
+      report("debug[%ld]> ", debug_repl_level);
       debug_repl_level++;
       p_debug_repl();
       debug_repl_level--;
-      reportf("- exit debug-repl [level %ld]\n", debug_repl_level);
+      report("- exit debug-repl [level %ld]\n", debug_repl_level);
 
       drop(reading_stack);
     }
@@ -2744,44 +2763,44 @@
       step_flag = false;
       stepper_counter = 0;
       pending_steps = 0;
-      reportf("- exit stepper\n");
+      report("- exit stepper\n");
       drop(reading_stack);
     }
 
     stepper() {
       push(reading_stack, input_stack_terminal());
-      reportf("stepper> ");
+      report("stepper> ");
       while (true) {
 
         if (pending_steps > 0) {
           p_print_return_stack();
           p_print_data_stack();
           stepper_counter++;
-          reportf("- stepper counting : %ld\n", stepper_counter);
+          report("- stepper counting : %ld\n", stepper_counter);
           pending_steps--;
           return;
         }
 
         jo jo = read_raw_jo();
         if (jo == str2jo("help")) {
-          reportf("- stepper usage :\n");
-          reportf("  type '.' to execute one step\n");
-          reportf("  type a numebr to execute the number of steps\n");
-          reportf("  - available commands :\n");
-          reportf("    help exit bye\n");
+          report("- stepper usage :\n");
+          report("  type '.' to execute one step\n");
+          report("  type a numebr to execute the number of steps\n");
+          report("  - available commands :\n");
+          report("    help exit bye\n");
         }
         else if (jo == str2jo(".")) {
           p_print_return_stack();
           p_print_data_stack();
           stepper_counter++;
-          reportf("- stepper counting : %ld\n", stepper_counter);
+          report("- stepper counting : %ld\n", stepper_counter);
           return;
         }
         else if (nat_string_p(jo2str(jo))) {
           p_print_return_stack();
           p_print_data_stack();
           stepper_counter++;
-          reportf("- stepper counting : %ld\n", stepper_counter);
+          report("- stepper counting : %ld\n", stepper_counter);
           pending_steps = string_to_int(jo2str(jo)) - 1;
           return;
         }
@@ -2806,7 +2825,7 @@
         fflush(stdout);
         fflush(stderr);
 
-        reportf("- kernel_signal_handler\n");
+        report("- kernel_signal_handler\n");
         psiginfo(siginfo, "  signal ");
 
         int errno_backup;
@@ -2886,7 +2905,7 @@
         }
         else {
           // no compile before define
-          reportf("- compile_until_meet_jo undefined : %s\n", jo2str(jo));
+          report("- compile_until_meet_jo undefined : %s\n", jo2str(jo));
           k_ignore();
           p_debug();
           return;
@@ -2910,9 +2929,9 @@
         }
         else {
           // no compile before define
-          reportf("- compile_until_meet_jo_or_jo undefined : %s\n", jo2str(jo));
-          reportf("- ending_jo1 : %s\n", jo2str(ending_jo1));
-          reportf("- ending_jo2 : %s\n", jo2str(ending_jo2));
+          report("- compile_until_meet_jo_or_jo undefined : %s\n", jo2str(jo));
+          report("- ending_jo1 : %s\n", jo2str(ending_jo1));
+          report("- ending_jo2 : %s\n", jo2str(ending_jo2));
           k_ignore();
           p_debug();
           return JO_NULL; // to fool the compiler
@@ -3111,9 +3130,9 @@
         data_stack_push(lp.local_data);
       }
       else {
-        reportf("- p_local_data_out fatal error\n");
-        reportf("  name is not bound\n");
-        reportf("  name : %s\n", jo2str(jo));
+        report("- p_local_data_out fatal error\n");
+        report("  name is not bound\n");
+        report("  name : %s\n", jo2str(jo));
         p_debug();
       }
     }
@@ -3139,9 +3158,9 @@
         data_stack_push(lp.local_tag);
       }
       else {
-        reportf("- p_local_tag_out fatal error\n");
-        reportf("  name is not bound\n");
-        reportf("  name : %s\n", jo2str(jo));
+        report("- p_local_tag_out fatal error\n");
+        report("  name is not bound\n");
+        report("  name : %s\n", jo2str(jo));
         p_debug();
       }
     }
@@ -3171,9 +3190,9 @@
         data_stack_push(lp.local_tag);
       }
       else {
-        reportf("- p_local_out fatal error\n");
-        reportf("  name is not bound\n");
-        reportf("  name : %s\n", jo2str(jo));
+        report("- p_local_out fatal error\n");
+        report("  name is not bound\n");
+        report("  name : %s\n", jo2str(jo));
         p_debug();
       }
     }
@@ -3359,18 +3378,18 @@
       input_stack_push(t0_stack, '\n');
       input_stack_push(t0_stack, '\n');
       while (!input_stack_empty_p(t0_stack)) {
-        reportf("%c", input_stack_pop(t0_stack));
+        report("%c", input_stack_pop(t0_stack));
       }
       input_stack_free(t0_stack);
-      reportf("- input_stack test0 finished\n");
+      report("- input_stack test0 finished\n");
 
       input_stack t1_stack = input_stack_terminal();
       while (!input_stack_empty_p(t1_stack)) {
         byte byte = input_stack_pop(t1_stack);
-        reportf("\n> %c", byte);
+        report("\n> %c", byte);
       }
       input_stack_free(t1_stack);
-      reportf("- input_stack test1 finished\n");
+      report("- input_stack test1 finished\n");
 
       input_stack t2_stack = input_stack_string("1234567890");
       input_stack_push(t2_stack, '\n');
@@ -3383,11 +3402,11 @@
       input_stack_push(t2_stack, '\n');
       while (!input_stack_empty_p(t2_stack)) {
         byte byte = input_stack_pop(t2_stack);
-        reportf("%c", byte);
+        report("%c", byte);
       }
       input_stack_free(t2_stack);
-      reportf("\n");
-      reportf("- input_stack test2 finished\n");
+      report("\n");
+      report("- input_stack test2 finished\n");
     }
     p2() {
       int file = open("k1~", O_RDWR);
@@ -3406,7 +3425,7 @@
       output_stack_file_flush(t0_stack);
       output_stack_free(t0_stack);
       close(file);
-      reportf("- output_stack test0 finished\n");
+      report("- output_stack test0 finished\n");
 
       output_stack t1_stack = output_stack_terminal();
       output_stack_push(t1_stack, '\n');
@@ -3418,20 +3437,20 @@
       output_stack_push(t1_stack, '\n');
       output_stack_push(t1_stack, '\n');
       output_stack_free(t1_stack);
-      reportf("- output_stack test1 finished\n");
+      report("- output_stack test1 finished\n");
 
       output_stack t2_stack = output_stack_string();
       output_stack_push(t2_stack, '1');
       output_stack_push(t2_stack, '2');
-      reportf("- %c\n", output_stack_pop(t2_stack));
+      report("- %c\n", output_stack_pop(t2_stack));
       output_stack_push(t2_stack, '3');
       output_stack_push(t2_stack, '4');
-      reportf("- %c\n", output_stack_pop(t2_stack));
+      report("- %c\n", output_stack_pop(t2_stack));
       output_stack_push(t2_stack, '\n');
       char* collected_string = output_stack_string_collect(t2_stack);
-      reportf("- collected_string : %s\n", collected_string);
+      report("- collected_string : %s\n", collected_string);
       output_stack_free(t2_stack);
-      reportf("- output_stack test2 finished\n");
+      report("- output_stack test2 finished\n");
     }
     init_play() {
     }
