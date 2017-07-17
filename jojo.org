@@ -1,11 +1,7 @@
 #+property: tangle libjojo.c
 #+title:  jojo
-- command in repl
-  to use it as a shell
-- fix point_return_point
-* [todo-stack]
 
-  - jo/unread
+* [todo-stack]
 
   - low-level syntax macro
     [at reader level]
@@ -27,6 +23,11 @@
   - concurrent
     use list to implement return_stack and data_stack in jojo
     thus each group of stacks is a light weight process
+
+  - fix point_return_point
+    - we need to add some overhead to local variable
+      maybe I will add this,
+      when I really need to print local variable with tag.
 
 * [maybe]
 
@@ -2997,6 +2998,33 @@
     }
     #+end_src
 
+*** string_unread
+
+    #+begin_src c
+    string_unread(char* str) {
+      if (str[0] == '\0') {
+        return;
+      }
+      else {
+        string_unread(str+1);
+        byte_unread(str[0]);
+      }
+    }
+    #+end_src
+
+*** p_jo_unread
+
+    #+begin_src c
+    p_jo_unread() {
+      // jo -> {tos of reading_stack}
+      jo jo = data_stack_pop();
+      char* str = jo2str(jo);
+      byte_unread(' ');
+      string_unread(str);
+      byte_unread(' ');
+    }
+    #+end_src
+
 *** cat_2_jo
 
     #+begin_src c
@@ -3233,6 +3261,8 @@
 
       define_prim("read/raw-jo", p_read_raw_jo);
       define_prim("read/jo", p_read_jo);
+
+      define_prim("jo/unread", p_jo_unread);
 
       define_prim("ins/jo", i_int);
       define_primkey("jo", k_jo);
@@ -3750,34 +3780,6 @@
 
 * *system*
 
-*** p_command_run
-
-    #+begin_src c
-    p_command_run() {
-      // string -> {*}
-      system(data_stack_pop());
-    }
-    #+end_src
-
-*** p_n_command_run
-
-    #+begin_src c
-    p_n_command_run() {
-      // ... string n -> *
-      cell n = data_stack_pop();
-      cell i = 0;
-      char* str = malloc(4 * 1024);
-      str[0] = 0;
-      while (i < n) {
-        strcat(str, data_stack[data_stack_pointer - n + i]);
-        i++;
-      }
-      data_stack_pointer = data_stack_pointer - n;
-      system(str);
-      free(str);
-    }
-    #+end_src
-
 *** p_cmd_number
 
     #+begin_src c
@@ -3819,15 +3821,24 @@
     }
     #+end_src
 
+*** p_string_sh_run
+
+    #+begin_src c
+    p_string_sh_run() {
+      // string -> {*}
+      system(data_stack_pop());
+    }
+    #+end_src
+
 *** expose_system
 
     #+begin_src c
     expose_system() {
-      define_prim("command/run", p_command_run);
-      define_prim("n-command/run", p_n_command_run);
       define_prim("cmd-number", p_cmd_number);
       define_prim("index->cmd-string", p_index_to_cmd_string);
       define_prim("find-env-string", p_find_env_string);
+
+      define_prim("string/sh-run", p_string_sh_run);
     }
     #+end_src
 

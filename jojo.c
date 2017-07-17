@@ -1873,6 +1873,23 @@
       p_read_raw_jo();
       return data_stack_pop();
     }
+    string_unread(char* str) {
+      if (str[0] == '\0') {
+        return;
+      }
+      else {
+        string_unread(str+1);
+        byte_unread(str[0]);
+      }
+    }
+    p_jo_unread() {
+      // jo -> {tos of reading_stack}
+      jo jo = data_stack_pop();
+      char* str = jo2str(jo);
+      byte_unread(' ');
+      string_unread(str);
+      byte_unread(' ');
+    }
     jo cat_2_jo(jo x, jo y) {
       char str[2 * 1024];
       str[0] = 0;
@@ -2021,6 +2038,8 @@
 
       define_prim("read/raw-jo", p_read_raw_jo);
       define_prim("read/jo", p_read_jo);
+
+      define_prim("jo/unread", p_jo_unread);
 
       define_prim("ins/jo", i_int);
       define_primkey("jo", k_jo);
@@ -2407,24 +2426,6 @@
       define_prim("path/load", p_path_load);
       define_primkey("include", k_include);
     }
-    p_command_run() {
-      // string -> {*}
-      system(data_stack_pop());
-    }
-    p_n_command_run() {
-      // ... string n -> *
-      cell n = data_stack_pop();
-      cell i = 0;
-      char* str = malloc(4 * 1024);
-      str[0] = 0;
-      while (i < n) {
-        strcat(str, data_stack[data_stack_pointer - n + i]);
-        i++;
-      }
-      data_stack_pointer = data_stack_pointer - n;
-      system(str);
-      free(str);
-    }
     cell cmd_number;
 
     p_cmd_number() {
@@ -2451,12 +2452,16 @@
         data_stack_push(true);
       }
     }
+    p_string_sh_run() {
+      // string -> {*}
+      system(data_stack_pop());
+    }
     expose_system() {
-      define_prim("command/run", p_command_run);
-      define_prim("n-command/run", p_n_command_run);
       define_prim("cmd-number", p_cmd_number);
       define_prim("index->cmd-string", p_index_to_cmd_string);
       define_prim("find-env-string", p_find_env_string);
+
+      define_prim("string/sh-run", p_string_sh_run);
     }
     ccall (char* function_name, void* lib) {
       primitive fun = dlsym(lib, function_name);
