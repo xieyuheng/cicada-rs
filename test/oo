@@ -52,31 +52,33 @@
      <person> (set testing-meta-variable-0)
      <person> (get testing-meta-variable-0) (~ write))
 
+(run newline)
 
 
 (define bare-stack-0 <bare-stack> (~ new))
 
-(test bare-stack-0 (~ empty?) dup dot dot newline
-      bare-stack-0 (~ push: (data (int 1)))
-      bare-stack-0 (~ empty?) dup dot dot newline
-      bare-stack-0 (~ push: (data (int 2)))
-      bare-stack-0 (~ empty?) dup dot dot newline
-      bare-stack-0 (~ push: (data (int 3)))
-      bare-stack-0 (~ empty?) dup dot dot newline
-      bare-stack-0 (~ pop) int/print newline
-      bare-stack-0 (~ empty?) dup dot dot newline
-      bare-stack-0 (~ pop) int/print newline
-      bare-stack-0 (~ empty?) dup dot dot newline
-      bare-stack-0 (~ pop) int/print newline
-      bare-stack-0 (~ empty?) dup dot dot newline)
+(run bare-stack-0 (~ empty?) dup int/print space int/print space newline
+     bare-stack-0 (~ push: (data (int 1)))
+     bare-stack-0 (~ empty?) dup int/print space int/print space newline
+     bare-stack-0 (~ push: (data (int 2)))
+     bare-stack-0 (~ empty?) dup int/print space int/print space newline
+     bare-stack-0 (~ push: (data (int 3)))
+     bare-stack-0 (~ empty?) dup int/print space int/print space newline
+     bare-stack-0 (~ pop) int/print newline
+     bare-stack-0 (~ empty?) dup int/print space int/print space newline
+     bare-stack-0 (~ pop) int/print newline
+     bare-stack-0 (~ empty?) dup int/print space int/print space newline
+     bare-stack-0 (~ pop) int/print newline
+     bare-stack-0 (~ empty?) dup int/print space int/print space newline)
 
 (define stack-0 <stack> (~ new))
 
-(test stack-0 (~ push: (number 1))
-      stack-0 (~ push: (number 2))
-      stack-0 (~ push: (number 3))
-      stack-0 (~ pop) (~ write)
-      stack-0 (~ pop) (~ write)
-      stack-0 (~ pop) (~ write))
+(run stack-0 (~ push: (number 1))
+     stack-0 (~ push: (number 2))
+     stack-0 (~ push: (number 3))
+     stack-0 (~ pop) (~ write)
+     stack-0 (~ pop) (~ write)
+     stack-0 (~ pop) (~ write))
 
-(run bye)
+(run newline
+     bye)

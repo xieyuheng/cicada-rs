@@ -44,13 +44,13 @@
         (note cons -> [io])
         (if dup cons-area-top eq? then drop end)
         (string "#:") string/print
-        dup dot
+        dup int/print space
         (string "mark: ") string/print
-        dup get-cell dot
+        dup get-cell int/print space
         (string "car: ") string/print
-        dup car dot
+        dup car int/print space
         (string "cdr: ") string/print
-        dup cdr dot
+        dup cdr int/print space
         newline
         cons-size add
         (loop)))
@@ -186,7 +186,7 @@
       (jojo
         (note list -> [output])
         (if dup null eq? then drop (jo null) jo/print (string " ") string/print end)
-        (if dup cons? not then dot end)
+        (if dup cons? not then int/print space end)
         dup cdr (recur)
         car (recur) (jo cons) jo/print (string " ") string/print))
     (define list/copy
@@ -770,7 +770,6 @@
         (* (~ lteq?: i) (< self) (< i) lteq?)
 
         (* print (< self) int/print)
-        (* dot (< self) int/dot)
         (* write (string "(int ") string/print
            (<< self) (~ print)
            (string ") ") string/print)))
