@@ -1,6 +1,17 @@
 #+property: tangle core.jo
 #+title: core
 
+- no gc
+  - how should we manage memory
+
+- no oo
+  - we can not simply implement oo by message sending
+    because we can not use (loop) and (recur) in them.
+  - what is the use of tag ?
+
+- more about c like struct
+  and syntax macro
+
 - we must maintain the ability
   to use low level untype code to implement objects.
 
@@ -11,6 +22,10 @@
 
 - message like syntax of function call
   without oo
+  #+begin_src jojo
+  {m1: m2: }
+  {<string> m1: m2:}
+  #+end_src
 
 - use pattern match to make the syntax extension mechanism
   easier to use
@@ -126,6 +141,85 @@
 
       - low-level jojo compiler with 'unread'
       - pattern match as jojo compiler generator
+
+* core keywords
+
+*** (lev)
+
+    #+begin_src jojo
+    (define lev
+      (note lev denotes leave-data-here)
+      (keyword
+        read/jo
+        (if dup round-ket eq? then drop end)
+        (if dup round-bar eq? then drop
+            read/jo
+            (if dup (jo esc) eq? then
+                drop compile-until-round-ket (loop))
+            (el jo/apply (jo here) here (loop)))
+        (el (jo ins/jo) here
+            here
+            (jo here) here (loop))))
+    #+end_src
+
+*** (alias)
+
+    #+begin_src jojo
+    (define alias
+      (keyword
+        read/raw-jo (> nick)
+        (if (< nick) round-ket eq? then end)
+        read/jo (> name)
+        (if (< name) round-ket eq? then
+            (string "- alias meet uneven list") string/print newline
+            (string "  last nick : ") string/print (< nick) jo/print
+            newline
+            end)
+        (el (lev ins/jo (< nick)
+                 ins/jo (< name)
+                 alias-add)
+            (loop))))
+    #+end_src
+
+*** (cat)
+
+    - to concatenate string
+
+    #+begin_src jojo
+    (define cat
+      (keyword
+        read/raw-jo
+        (if dup round-ket eq? then drop end)
+        (if dup double-quote eq? then
+            drop one-string
+            (lev string/print)
+            (loop))
+        (if dup round-bar eq? then drop
+            read/jo jo/apply (loop))
+        (el here (loop))))
+    #+end_src
+
+*** (orz)
+
+    #+begin_src jojo
+    (define orz
+      (keyword
+        cat (lev debug)))
+    #+end_src
+
+*** (assert)
+
+    - (assert) for embedding tests in code.
+      and use (include) to separate tests out.
+
+    #+begin_src jojo
+    (define assert
+      (keyword
+        bare-jojo (> bare-jojo)
+        (< bare-jojo) apply
+        (if then end)
+        (orz "- assert fail on : " (< bare-jojo) bare-jojo/print newline)))
+    #+end_src
 
 * list
 
@@ -371,85 +465,6 @@
         (if dup null eq? then 2drop false end)
         (if 2dup car eq? then 2drop true end)
         (el cdr (loop))))
-    #+end_src
-
-* core keywords
-
-*** (lev)
-
-    #+begin_src jojo
-    (define lev
-      (note lev denotes leave-data-here)
-      (keyword
-        read/jo
-        (if dup round-ket eq? then drop end)
-        (if dup round-bar eq? then drop
-            read/jo
-            (if dup (jo esc) eq? then
-                drop compile-until-round-ket (loop))
-            (el jo/apply (jo here) here (loop)))
-        (el (jo ins/jo) here
-            here
-            (jo here) here (loop))))
-    #+end_src
-
-*** (alias)
-
-    #+begin_src jojo
-    (define alias
-      (keyword
-        read/raw-jo (> nick)
-        (if (< nick) round-ket eq? then end)
-        read/jo (> name)
-        (if (< name) round-ket eq? then
-            (string "- alias meet uneven list") string/print newline
-            (string "  last nick : ") string/print (< nick) jo/print
-            newline
-            end)
-        (el (lev ins/jo (< nick)
-                 ins/jo (< name)
-                 alias-add)
-            (loop))))
-    #+end_src
-
-*** (cat)
-
-    - to concatenate string
-
-    #+begin_src jojo
-    (define cat
-      (keyword
-        read/raw-jo
-        (if dup round-ket eq? then drop end)
-        (if dup double-quote eq? then
-            drop one-string
-            (lev string/print)
-            (loop))
-        (if dup round-bar eq? then drop
-            read/jo jo/apply (loop))
-        (el here (loop))))
-    #+end_src
-
-*** (orz)
-
-    #+begin_src jojo
-    (define orz
-      (keyword
-        cat (lev debug)))
-    #+end_src
-
-*** (assert)
-
-    - (assert) for embedding tests in code.
-      and use (include) to separate tests out.
-
-    #+begin_src jojo
-    (define assert
-      (keyword
-        bare-jojo (> bare-jojo)
-        (< bare-jojo) apply
-        (if then end)
-        (orz "- assert fail on : " (< bare-jojo) bare-jojo/print newline)))
     #+end_src
 
 * jo

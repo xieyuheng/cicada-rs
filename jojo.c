@@ -918,34 +918,31 @@
       cell local_pointer;
     } return_point;
 
-    typedef return_point return_stack_t[1024 * 1024 * 4];
-
-    return_stack_t return_stack;
-    cell return_stack_base = 64;
-    cell return_stack_pointer = 64;
-
-    return_stack_push(return_point value) {
-      return_stack[return_stack_pointer] = value;
-      return_stack_pointer++;
-    }
+    stack return_stack;
 
     return_point return_stack_pop() {
-      return_stack_pointer--;
-      return return_stack[return_stack_pointer];
+      return_point rp;
+      rp.jojo = pop(return_stack);
+      rp.local_pointer = pop(return_stack);
+      return rp;
     }
 
     return_point return_stack_tos() {
-      return return_stack[return_stack_pointer - 1];
+      return_point rp;
+      rp.jojo = pop(return_stack);
+      rp.local_pointer = pop(return_stack);
+      push(return_stack, rp.local_pointer);
+      push(return_stack, rp.jojo);
+      return rp;
     }
 
     bool return_stack_empty_p() {
-      return return_stack_base == return_stack_pointer;
+      return stack_empty_p(return_stack);
     }
 
     return_stack_make_point(jo* jojo, cell local_pointer) {
-      return_point rp = {.jojo = jojo, .local_pointer = local_pointer};
-      return_stack[return_stack_pointer] = rp;
-      return_stack_pointer++;
+      push(return_stack, local_pointer);
+      push(return_stack, jojo);
     }
 
     return_stack_new_point(jo* jojo) {
@@ -953,10 +950,8 @@
     }
 
     return_stack_inc() {
-      return_point rp = return_stack_pop();
-      return_point rp1 = {.jojo = rp.jojo + 1,
-                          .local_pointer = rp.local_pointer};
-      return_stack_push(rp1);
+      jo* jojo = pop(return_stack);
+      push(return_stack, jojo + 1);
     }
     jo name_record[16 * 1024];
     cell name_record_counter = 0;
@@ -1136,8 +1131,8 @@
     exit_stepper();
 
     eval() {
-      cell base = return_stack_pointer;
-      while (return_stack_pointer >= base) {
+      cell base = return_stack->pointer;
+      while (return_stack->pointer >= base) {
         return_point rp = return_stack_tos();
         return_stack_inc();
         jo* jojo = rp.jojo;
@@ -2660,36 +2655,21 @@
       }
       report("] ");
     }
-    point_return_point(cell i) {
-      report("    - ");
-      if (i != return_stack_pointer -1) {
-        report("{ %s } ", jo2str(*(return_stack[i].jojo - 1)));
+    print_return_point(jo* jojo) {
+      if (jojo <= current_local_pointer) {
+        return;
       }
-      push(data_stack, return_stack[i].jojo);
+      report("    - ");
+      if (jojo != tos(return_stack)) {
+        report("{ %s } ", jo2str(*(jojo - 1)));
+      }
+      push(data_stack, jojo);
       p_bare_jojo_print();
       report("\n");
-
-    //   cell cursor = return_stack[i].local_pointer;
-    //   cell end = return_stack[i+1].local_pointer;
-    //   if (i = return_stack_pointer -1) {
-    //     end = current_local_pointer;
-    //   }
-
-    //   while (end > cursor) {
-    //     report("      %s = %ld %s\n"
-    //            , jo2str(local_record[cursor].name)
-    //            , local_record[cursor].local_data
-    //            , jo2str(local_record[cursor].local_tag));
-    //     cursor++;
-    //   }
     }
     p_print_return_stack() {
-      cell i = return_stack_base;
       report("  - return-stack :\n");
-      while (i < return_stack_pointer) {
-        point_return_point(i);
-        i++;
-      }
+      stack_traverse_from_bottom(return_stack, print_return_point);
     }
     cell debug_repl_level = 0;
 
@@ -3043,9 +3023,7 @@
       return_point rp = return_stack_pop();
       jo* jojo = rp.jojo;
       cell offset = jojo[0];
-      return_point rp1 = {.jojo = jojo + offset,
-                          .local_pointer = rp.local_pointer};
-      return_stack_push(rp1);
+      return_stack_make_point(jojo + offset, rp.local_pointer);
       push(data_stack, jojo + 1);
     }
     k_bare_jojo() {
@@ -3499,7 +3477,7 @@
 
     init_stacks() {
       data_stack                   = new_stack("data_stack");
-
+      return_stack                 = new_stack("return_stack");
       compiling_stack              = new_stack("compiling_stack");
       reading_stack                = new_stack("reading_stack");
       writing_stack                = new_stack("writing_stack");

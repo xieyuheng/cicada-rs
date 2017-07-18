@@ -1,3 +1,52 @@
+  {m1: m2: }
+  {<string> m1: m2:}
+    (define lev
+      (note lev denotes leave-data-here)
+      (keyword
+        read/jo
+        (if dup round-ket eq? then drop end)
+        (if dup round-bar eq? then drop
+            read/jo
+            (if dup (jo esc) eq? then
+                drop compile-until-round-ket (loop))
+            (el jo/apply (jo here) here (loop)))
+        (el (jo ins/jo) here
+            here
+            (jo here) here (loop))))
+    (define alias
+      (keyword
+        read/raw-jo (> nick)
+        (if (< nick) round-ket eq? then end)
+        read/jo (> name)
+        (if (< name) round-ket eq? then
+            (string "- alias meet uneven list") string/print newline
+            (string "  last nick : ") string/print (< nick) jo/print
+            newline
+            end)
+        (el (lev ins/jo (< nick)
+                 ins/jo (< name)
+                 alias-add)
+            (loop))))
+    (define cat
+      (keyword
+        read/raw-jo
+        (if dup round-ket eq? then drop end)
+        (if dup double-quote eq? then
+            drop one-string
+            (lev string/print)
+            (loop))
+        (if dup round-bar eq? then drop
+            read/jo jo/apply (loop))
+        (el here (loop))))
+    (define orz
+      (keyword
+        cat (lev debug)))
+    (define assert
+      (keyword
+        bare-jojo (> bare-jojo)
+        (< bare-jojo) apply
+        (if then end)
+        (orz "- assert fail on : " (< bare-jojo) bare-jojo/print newline)))
     (define cons-size      (data (int 3) cell-size mul))
     (define cons-area-size (data (int 1024 1024) mul cons-size mul))
     (define cons-area      (data cons-area-size allocate))
@@ -212,53 +261,6 @@
         (if dup null eq? then 2drop false end)
         (if 2dup car eq? then 2drop true end)
         (el cdr (loop))))
-    (define lev
-      (note lev denotes leave-data-here)
-      (keyword
-        read/jo
-        (if dup round-ket eq? then drop end)
-        (if dup round-bar eq? then drop
-            read/jo
-            (if dup (jo esc) eq? then
-                drop compile-until-round-ket (loop))
-            (el jo/apply (jo here) here (loop)))
-        (el (jo ins/jo) here
-            here
-            (jo here) here (loop))))
-    (define alias
-      (keyword
-        read/raw-jo (> nick)
-        (if (< nick) round-ket eq? then end)
-        read/jo (> name)
-        (if (< name) round-ket eq? then
-            (string "- alias meet uneven list") string/print newline
-            (string "  last nick : ") string/print (< nick) jo/print
-            newline
-            end)
-        (el (lev ins/jo (< nick)
-                 ins/jo (< name)
-                 alias-add)
-            (loop))))
-    (define cat
-      (keyword
-        read/raw-jo
-        (if dup round-ket eq? then drop end)
-        (if dup double-quote eq? then
-            drop one-string
-            (lev string/print)
-            (loop))
-        (if dup round-bar eq? then drop
-            read/jo jo/apply (loop))
-        (el here (loop))))
-    (define orz
-      (keyword
-        cat (lev debug)))
-    (define assert
-      (keyword
-        bare-jojo (> bare-jojo)
-        (< bare-jojo) apply
-        (if then end)
-        (orz "- assert fail on : " (< bare-jojo) bare-jojo/print newline)))
     (define jo/left-part-of-byte
       (jojo
         (note byte jo -> jo)
