@@ -97,13 +97,13 @@
         cell-size add
         (loop)))
 
-    (define mark-cons-area/data-stack
-      (jojo
-        (note stack -> [cons-area])
-        (if dup stack-base eq? then drop end)
-        cell-size sub
-        dup get-cell mark-cons
-        (loop)))
+    (note (define mark-cons-area/data-stack
+         (jojo
+          (note stack -> [cons-area])
+          (if dup stack-base eq? then drop end)
+          cell-size sub
+          dup get-cell mark-cons
+          (loop))))
 
     (define mark-cons-area
       (jojo
@@ -113,8 +113,7 @@
             (int 0) (address current-mark) set-cell)
         current-mark inc (address current-mark) set-cell
         name-record mark-cons-area/name-record
-        stack-pointer
-        mark-cons-area/data-stack))
+        (note stack-pointer mark-cons-area/data-stack)))
 
     (note cons :
           mark
