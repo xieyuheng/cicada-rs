@@ -1,61 +1,32 @@
 #+property: tangle core.jo
 #+title: core
 
-- no gc
-  - how should we manage memory
-
-- no oo
-  - we can not simply implement oo by message sending
-    because we can not use (loop) and (recur) in them.
-  - what is the use of tag ?
-
-- more about c like struct
-  and syntax macro
-
-- we must maintain the ability
-  to use low level untype code to implement objects.
-
-- [docs] start from composition
-
-- <jojo> and combinators
-  - to mock a mocking bird
-
-- message like syntax of function call
-  without oo
-  #+begin_src jojo
-  {m1: m2: }
-  {<string> m1: m2:}
-  #+end_src
-
-- use pattern match to make the syntax extension mechanism
-  easier to use
-  - low-level jojo compiler with 'unread'
-  - pattern match as compiler generator
-
-  - with 'unread'
-    the reading-stack is a stack of byte-stacks
-
-- return stack operations
-  [or return stack surgery]
-  - how to make this easier to write ?
-    to use separated return-stack ?
-    how about nested return stack surgeries ?
-    stack of return-stacks ?
-    yes!
-    when one return-stack is empty,
-    it must point the global return-stack pointer pointer
-    to another return-stack pointer.
-
-- about gc
-  - note about gc
-  - move gc to c code
-  - fix the roots of gc
-  - re-test the gc
-
 * [todo-list]
+
+  - use pattern match to make the syntax extension mechanism
+    easier to use
+    - low-level jojo compiler with 'unread'
+    - pattern match as compiler generator
+
+    - with 'unread'
+      the reading-stack is a stack of byte-stacks
 
   - let message be able to sent to many objects
     by extending (add-method)
+
+  - <jojo> and combinators
+    - to mock a mocking bird
+
+  - return stack operations
+    [or return stack surgery]
+    - how to make this easier to write ?
+      to use separated return-stack ?
+      how about nested return stack surgeries ?
+      stack of return-stacks ?
+      yes!
+      when one return-stack is empty,
+      it must point the global return-stack pointer pointer
+      to another return-stack pointer.
 
   - has-method? has-meta-method?
 
