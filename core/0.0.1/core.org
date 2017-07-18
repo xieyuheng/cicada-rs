@@ -1,6 +1,11 @@
 #+property: tangle core.jo
 #+title: core
 
+- we must maintain the ability
+  to use low level untype code to implement objects.
+
+- [docs] start from composition
+
 - <jojo> and combinators
   - to mock a mocking bird
 
@@ -33,8 +38,6 @@
   - re-test the gc
 
 * [todo-list]
-
-  - [docs] start from composition
 
   - let message be able to sent to many objects
     by extending (add-method)
@@ -1094,11 +1097,6 @@
 
 * <text>
 
-*** [note]
-
-    - <text> is static allocated,
-      no gc for this class.
-
 *** <text>
 
     #+begin_src jojo
@@ -1155,7 +1153,15 @@
     #+begin_src jojo
     (define-class <jojo>
       (method
-        (* apply (< self) apply)))
+        (* apply (< self) apply)
+        (* (~ map: list)
+           (if (< list) null eq? then null end)
+           (el (<< self) (~ map: (data (< list) cdr))
+               (< list) car (<< self) (~ apply) cons))
+        (* (~ repeat: time)
+           (if (< time) (int 0) eq? then end)
+           (el (<< self) (~ apply)
+               (<< self) (~ repeat: (data (< time) dec))))))
     #+end_src
 
 * <stack>

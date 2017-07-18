@@ -800,7 +800,15 @@
            (< self) class/get-tag)))
     (define-class <jojo>
       (method
-        (* apply (< self) apply)))
+        (* apply (< self) apply)
+        (* (~ map: list)
+           (if (< list) null eq? then null end)
+           (el (<< self) (~ map: (data (< list) cdr))
+               (< list) car (<< self) (~ apply) cons))
+        (* (~ repeat: time)
+           (if (< time) (int 0) eq? then end)
+           (el (<< self) (~ apply)
+               (<< self) (~ repeat: (data (< time) dec))))))
     (define-class <bare-stack>
       (inherit <object>)
       (variable
