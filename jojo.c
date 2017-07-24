@@ -133,13 +133,13 @@
     #define S9(x1, x2, x3, x4, x5, x6, x7, x8, x9) (char*[]){x1, x2, x3, x4, x5, x6, x7, x8, x9, NULL}
   p_debug() {
   }
-    typedef struct _jotable_entry {
+    struct jotable_entry {
       char *key;
-      struct _jotable_entry *tag;
+      struct jotable_entry *tag;
       cell data;
-    } jotable_entry;
+    };
 
-    typedef jotable_entry *jo;
+    typedef struct jotable_entry *jo;
 
     // prime table size
     //   1000003   about 976 k
@@ -148,8 +148,8 @@
     //   100003    about 97 k
     //   100333
     //   997
-    #define jotable_size 100003
-    jotable_entry jotable[jotable_size];
+    #define JOTABLE_SIZE 100003
+    struct jotable_entry jotable[JOTABLE_SIZE];
 
     // thus (jotable + index) is jo
     bool used_jo_p(jo jo) {
@@ -167,7 +167,7 @@
     }
     // a hash an index into jotable
     cell jotable_hash(cell sum, cell counter) {
-      return (counter + sum) % jotable_size;
+      return (counter + sum) % JOTABLE_SIZE;
     }
     p_debug();
 
@@ -186,7 +186,7 @@
         else if (string_equal(key, jo->key)) {
           return jo;
         }
-        else if (counter == jotable_size) {
+        else if (counter == JOTABLE_SIZE) {
           report("- jotable_insert fail\n");
           report("  the hash_table is filled\n");
           p_debug();
@@ -249,30 +249,28 @@
 
     jo JO_LOCAL_IN;
     jo JO_LOCAL_OUT;
-    typedef struct _stack_link__t {
+    struct stack_link {
       cell* stack;
-      struct _stack_link__t* link;
-    } stack_link__t;
-    typedef stack_link__t* stack_link;
-    typedef struct {
+      struct stack_link* link;
+    };
+    struct stack {
       char* name;
       cell pointer;
       cell* stack;
-      stack_link link;
-    } stack__t;
-    typedef stack__t* stack;
+      struct stack_link* link;
+    };
 
     #define STACK_BLOCK_SIZE 1024
     // #define STACK_BLOCK_SIZE 1 // for test
-    stack new_stack(char* name) {
-      stack stack = (stack__t*)malloc(sizeof(stack__t));
+    struct stack* new_stack(char* name) {
+      struct stack* stack = (struct stack*)malloc(sizeof(struct stack));
       stack->name = name;
       stack->pointer = 0;
       stack->stack = (cell*)malloc(sizeof(cell) * STACK_BLOCK_SIZE);
       stack->link = NULL;
       return stack;
     }
-    stack_free_link(stack_link link) {
+    stack_free_link(struct stack_link* link) {
       if (link == NULL) {
         return;
       }
@@ -285,21 +283,21 @@
 
     // ><><><
     // stack->name is not freed
-    stack_free(stack stack) {
+    stack_free(struct stack* stack) {
       stack_free_link(stack->link);
       free(stack->stack);
       free(stack);
     }
     // can not pop
     // for stack->pointer can not decrease under 0
-    stack_block_underflow_check(stack stack) {
+    stack_block_underflow_check(struct stack* stack) {
       if (stack->pointer > 0) {
         return;
       }
       else if (stack->link != NULL) {
         free(stack->stack);
         stack->stack = stack->link->stack;
-        stack_link old_link = stack->link;
+        struct stack_link* old_link = stack->link;
         stack->link = stack->link->link;
         free(old_link);
         stack->pointer = STACK_BLOCK_SIZE;
@@ -313,12 +311,12 @@
     }
     // can not push
     // for stack->pointer can not increase over STACK_BLOCK_SIZE
-    stack_block_overflow_check(stack stack) {
+    stack_block_overflow_check(struct stack* stack) {
       if (stack->pointer < STACK_BLOCK_SIZE) {
         return;
       }
       else {
-        stack_link new_link = (stack_link__t*)malloc(sizeof(stack_link__t));
+        struct stack_link* new_link = (struct stack_link*)malloc(sizeof(struct stack_link));
         new_link->stack = stack->stack;
         new_link->link = stack->link;
         stack->link = new_link;
@@ -326,12 +324,12 @@
         stack->pointer = 0;
       }
     }
-    bool stack_empty_p(stack stack) {
+    bool stack_empty_p(struct stack* stack) {
       return
         stack->pointer == 0 &&
         stack->link == NULL;
     }
-    cell stack_length_link(cell sum, stack_link link) {
+    cell stack_length_link(cell sum, struct stack_link* link) {
       if (link == NULL) {
         return sum;
       }
@@ -340,28 +338,28 @@
       }
     }
 
-    cell stack_length(stack stack) {
+    cell stack_length(struct stack* stack) {
       return stack_length_link(stack->pointer, stack->link);
     }
-    cell pop(stack stack) {
+    cell pop(struct stack* stack) {
       stack_block_underflow_check(stack);
       stack->pointer--;
       return stack->stack[stack->pointer];
     }
-    cell tos(stack stack) {
+    cell tos(struct stack* stack) {
       stack_block_underflow_check(stack);
       return stack->stack[stack->pointer - 1];
     }
-    drop(stack stack) {
+    drop(struct stack* stack) {
       stack_block_underflow_check(stack);
       stack->pointer--;
     }
-    push(stack stack, cell data) {
+    push(struct stack* stack, cell data) {
       stack_block_overflow_check(stack);
       stack->stack[stack->pointer] = data;
       stack->pointer++;
     }
-    cell stack_peek_link(stack_link link, cell index) {
+    cell stack_peek_link(struct stack_link* link, cell index) {
       if (index < STACK_BLOCK_SIZE) {
         return link->stack[STACK_BLOCK_SIZE - index];
       }
@@ -370,8 +368,10 @@
       }
     }
 
-    cell stack_peek(stack stack, cell index) {
+    cell stack_peek(struct stack* stack, cell index) {
+       report("<stack_peek> index : %ld\n", index);
       if (index < stack->pointer) {
+
         return stack->stack[stack->pointer - index];
       }
       else {
@@ -381,7 +381,7 @@
     stack_traverse_from_top_help
     (cell cursor,
      cell* stack,
-     stack_link link,
+     struct stack_link* link,
      void fun(cell)) {
       while (cursor > 0) {
         fun(stack[cursor - 1]);
@@ -396,7 +396,7 @@
       }
     }
 
-    stack_traverse_from_top(stack stack, void fun(cell)) {
+    stack_traverse_from_top(struct stack* stack, void fun(cell)) {
       stack_traverse_from_top_help
         (stack->pointer,
          stack->stack,
@@ -406,7 +406,7 @@
     stack_traverse_from_bottom_help
     (cell cursor,
      cell* stack,
-     stack_link link,
+     struct stack_link* link,
      void fun(cell)) {
       if (link != NULL) {
         stack_traverse_from_bottom_help
@@ -422,7 +422,7 @@
       }
     }
 
-    stack_traverse_from_bottom(stack stack, void fun(cell)) {
+    stack_traverse_from_bottom(struct stack* stack, void fun(cell)) {
       stack_traverse_from_bottom_help
         (stack->pointer,
          stack->stack,
@@ -434,17 +434,16 @@
       INPUT_STACK_STRING,
       INPUT_STACK_TERMINAL,
     } input_stack_type;
-    typedef struct _input_stack_link__t {
+    struct input_stack_link {
       byte* stack;
       cell end_pointer;
-      struct _input_stack_link__t* link;
-    } input_stack_link__t;
-    typedef input_stack_link__t* input_stack_link;
-    typedef struct {
+      struct input_stack_link* link;
+    };
+    struct input_stack {
       cell pointer;
       cell end_pointer;
       byte* stack;
-      input_stack_link link;
+      struct input_stack_link* link;
       input_stack_type type;
       union {
         int   file;
@@ -452,14 +451,13 @@
         // int   terminal;
       };
       cell string_pointer;
-    } input_stack__t;
-    typedef input_stack__t* input_stack;
+    };
 
     // #define INPUT_STACK_BLOCK_SIZE (4 * 1024)
     #define INPUT_STACK_BLOCK_SIZE 1 // for test
-    input_stack input_stack_new(input_stack_type input_stack_type) {
-      input_stack input_stack =
-        (input_stack__t*)malloc(sizeof(input_stack__t));
+    struct input_stack* input_stack_new(input_stack_type input_stack_type) {
+      struct input_stack* input_stack =
+        (struct input_stack*)malloc(sizeof(struct input_stack));
       input_stack->pointer = INPUT_STACK_BLOCK_SIZE;
       input_stack->end_pointer = INPUT_STACK_BLOCK_SIZE;
       input_stack->stack = (byte*)malloc(INPUT_STACK_BLOCK_SIZE);
@@ -467,7 +465,7 @@
       input_stack->type = input_stack_type;
       return input_stack;
     }
-    input_stack input_stack_file(int file) {
+    struct input_stack* input_stack_file(int file) {
       int file_flag = fcntl(file, F_GETFL);
       int access_mode = file_flag & O_ACCMODE;
       if (file_flag == -1) {
@@ -475,21 +473,21 @@
         perror("  fcntl error ");
         p_debug();
       }
-      input_stack input_stack = input_stack_new(INPUT_STACK_REGULAR_FILE);
+      struct input_stack* input_stack = input_stack_new(INPUT_STACK_REGULAR_FILE);
       input_stack->file = file;
       return input_stack;
     }
-    input_stack input_stack_string(char* string) {
-      input_stack input_stack = input_stack_new(INPUT_STACK_STRING);
+    struct input_stack* input_stack_string(char* string) {
+      struct input_stack* input_stack = input_stack_new(INPUT_STACK_STRING);
       input_stack->string = string;
       input_stack->string_pointer = 0;
       return input_stack;
     }
-    input_stack input_stack_terminal() {
-      input_stack input_stack = input_stack_new(INPUT_STACK_TERMINAL);
+    struct input_stack* input_stack_terminal() {
+      struct input_stack* input_stack = input_stack_new(INPUT_STACK_TERMINAL);
       return input_stack;
     }
-    input_stack_free_link(input_stack_link link) {
+    input_stack_free_link(struct input_stack_link* link) {
       if (link == NULL) {
         return;
       }
@@ -500,14 +498,14 @@
       }
     }
 
-    input_stack_free(input_stack input_stack) {
+    input_stack_free(struct input_stack* input_stack) {
       input_stack_free_link(input_stack->link);
       free(input_stack->stack);
       free(input_stack);
     }
     // can not pop
     // for input_stack->pointer can not increase over input_stack->end_pointer
-    input_stack_block_underflow_check(input_stack input_stack) {
+    input_stack_block_underflow_check(struct input_stack* input_stack) {
       if (input_stack->pointer < input_stack->end_pointer) {
         return;
       }
@@ -516,7 +514,7 @@
         free(input_stack->stack);
         input_stack->stack = input_stack->link->stack;
         input_stack->end_pointer = input_stack->link->end_pointer;
-        input_stack_link old_link = input_stack->link;
+        struct input_stack_link* old_link = input_stack->link;
         input_stack->link = input_stack->link->link;
         free(old_link);
         input_stack->pointer = 0;
@@ -582,13 +580,13 @@
     }
     // can not push
     // for input_stack->pointer can not decrease under 0
-    input_stack_block_overflow_check(input_stack input_stack) {
+    input_stack_block_overflow_check(struct input_stack* input_stack) {
       if (input_stack->pointer > 0) {
         return;
       }
       else {
-        input_stack_link new_link =
-          (input_stack_link__t*)malloc(sizeof(input_stack_link__t));
+        struct input_stack_link* new_link =
+          (struct input_stack_link*)malloc(sizeof(struct input_stack_link));
         new_link->stack = input_stack->stack;
         new_link->link = input_stack->link;
         new_link->end_pointer = input_stack->end_pointer;
@@ -598,7 +596,7 @@
         input_stack->end_pointer = INPUT_STACK_BLOCK_SIZE;
       }
     }
-    bool input_stack_empty_p(input_stack input_stack) {
+    bool input_stack_empty_p(struct input_stack* input_stack) {
       if (input_stack->pointer != input_stack->end_pointer ||
           input_stack->link != NULL) {
         return false;
@@ -638,22 +636,22 @@
         p_debug();
       }
     }
-    byte input_stack_pop(input_stack input_stack) {
+    byte input_stack_pop(struct input_stack* input_stack) {
       input_stack_block_underflow_check(input_stack);
       byte byte = input_stack->stack[input_stack->pointer];
       input_stack->pointer++;
       return byte;
     }
-    byte input_stack_tos(input_stack input_stack) {
+    byte input_stack_tos(struct input_stack* input_stack) {
       input_stack_block_underflow_check(input_stack);
       byte byte = input_stack->stack[input_stack->pointer];
       return byte;
     }
-    input_stack_drop(input_stack input_stack) {
+    input_stack_drop(struct input_stack* input_stack) {
       input_stack_block_underflow_check(input_stack);
       input_stack->pointer++;
     }
-    input_stack_push(input_stack input_stack, byte byte) {
+    input_stack_push(struct input_stack* input_stack, byte byte) {
       input_stack_block_overflow_check(input_stack);
       input_stack->pointer--;
       input_stack->stack[input_stack->pointer] = byte;
@@ -663,15 +661,14 @@
       OUTPUT_STACK_STRING,
       OUTPUT_STACK_TERMINAL,
     } output_stack_type;
-    typedef struct _output_stack_link__t {
+    struct output_stack_link {
       byte* stack;
-      struct _output_stack_link__t* link;
-    } output_stack_link__t;
-    typedef output_stack_link__t* output_stack_link;
-    typedef struct {
+      struct output_stack_link* link;
+    };
+    struct output_stack {
       cell pointer;
       byte* stack;
-      output_stack_link link;
+      struct output_stack_link* link;
       output_stack_type type;
       union {
         int   file; // with cache
@@ -681,21 +678,20 @@
         // int   terminal; // no cache
       };
       cell string_pointer;
-    } output_stack__t;
-    typedef output_stack__t* output_stack;
+    };
 
     // #define OUTPUT_STACK_BLOCK_SIZE (4 * 1024)
     #define OUTPUT_STACK_BLOCK_SIZE 1 // for test
-    output_stack output_stack_new(output_stack_type output_stack_type) {
-      output_stack output_stack =
-        (output_stack__t*)malloc(sizeof(output_stack__t));
+    struct output_stack* output_stack_new(output_stack_type output_stack_type) {
+      struct output_stack* output_stack =
+        (struct output_stack*)malloc(sizeof(struct output_stack));
       output_stack->pointer = 0;
       output_stack->stack = (byte*)malloc(OUTPUT_STACK_BLOCK_SIZE);
       output_stack->link = NULL;
       output_stack->type = output_stack_type;
       return output_stack;
     }
-    output_stack output_stack_file(int file) {
+    struct output_stack* output_stack_file(int file) {
       int file_flag = fcntl(file, F_GETFL);
       int access_mode = file_flag & O_ACCMODE;
       if (file_flag == -1) {
@@ -704,7 +700,7 @@
         p_debug();
       }
       else if (access_mode == O_WRONLY || access_mode == O_RDWR) {
-        output_stack output_stack = output_stack_new(OUTPUT_STACK_REGULAR_FILE);
+        struct output_stack* output_stack = output_stack_new(OUTPUT_STACK_REGULAR_FILE);
         output_stack->file = file;
         return output_stack;
       }
@@ -714,15 +710,15 @@
         p_debug();
       }
     }
-    output_stack output_stack_string() {
-      output_stack output_stack = output_stack_new(OUTPUT_STACK_STRING);
+    struct output_stack* output_stack_string() {
+      struct output_stack* output_stack = output_stack_new(OUTPUT_STACK_STRING);
       return output_stack;
     }
-    output_stack output_stack_terminal() {
-      output_stack output_stack = output_stack_new(OUTPUT_STACK_TERMINAL);
+    struct output_stack* output_stack_terminal() {
+      struct output_stack* output_stack = output_stack_new(OUTPUT_STACK_TERMINAL);
       return output_stack;
     }
-    output_stack_free_link(output_stack_link link) {
+    output_stack_free_link(struct output_stack_link* link) {
       if (link == NULL) {
         return;
       }
@@ -733,12 +729,12 @@
       }
     }
 
-    output_stack_free(output_stack output_stack) {
+    output_stack_free(struct output_stack* output_stack) {
       output_stack_free_link(output_stack->link);
       free(output_stack->stack);
       free(output_stack);
     }
-    output_stack_file_flush_link(int file, output_stack_link link) {
+    output_stack_file_flush_link(int file, struct output_stack_link* link) {
       if (link == NULL) {
         return;
       }
@@ -756,7 +752,7 @@
       }
     }
 
-    output_stack_file_flush(output_stack output_stack) {
+    output_stack_file_flush(struct output_stack* output_stack) {
       output_stack_file_flush_link(output_stack->file,
                                    output_stack->link);
       ssize_t real_bytes = write(output_stack->file,
@@ -774,7 +770,7 @@
         output_stack->pointer = 0;
       }
     }
-    cell output_stack_string_length_link(cell sum, output_stack_link link) {
+    cell output_stack_string_length_link(cell sum, struct output_stack_link* link) {
       if (link == NULL) {
         return sum;
       }
@@ -785,13 +781,13 @@
       }
     }
 
-    cell output_stack_string_length(output_stack output_stack) {
+    cell output_stack_string_length(struct output_stack* output_stack) {
       cell sum = strlen(output_stack->stack);
       return output_stack_string_length_link(sum, output_stack->link);
     }
 
 
-    byte* output_stack_string_collect_link(byte* buffer, output_stack_link link) {
+    byte* output_stack_string_collect_link(byte* buffer, struct output_stack_link* link) {
       if (link == NULL) {
         return buffer;
       }
@@ -802,7 +798,7 @@
       }
     }
 
-    char* output_stack_string_collect(output_stack output_stack) {
+    char* output_stack_string_collect(struct output_stack* output_stack) {
       byte* string = (byte*)malloc(1 + output_stack_string_length(output_stack));
       byte* buffer = string;
       buffer = output_stack_string_collect_link(buffer, output_stack->link);
@@ -812,7 +808,7 @@
     }
     // can not pop
     // for output_stack->pointer can not decrease under 0
-    output_stack_block_underflow_check(output_stack output_stack) {
+    output_stack_block_underflow_check(struct output_stack* output_stack) {
       if (output_stack->pointer > 0) {
         return;
       }
@@ -820,7 +816,7 @@
       else if (output_stack->link != NULL) {
         free(output_stack->stack);
         output_stack->stack = output_stack->link->stack;
-        output_stack_link old_link = output_stack->link;
+        struct output_stack_link* old_link = output_stack->link;
         output_stack->link = output_stack->link->link;
         free(old_link);
         output_stack->pointer = OUTPUT_STACK_BLOCK_SIZE;
@@ -858,13 +854,13 @@
     }
     // can not push
     // for output_stack->pointer can not increase over OUTPUT_STACK_BLOCK_SIZE
-    output_stack_block_overflow_check(output_stack output_stack) {
+    output_stack_block_overflow_check(struct output_stack* output_stack) {
       if (output_stack->pointer < OUTPUT_STACK_BLOCK_SIZE) {
         return;
       }
       else {
-        output_stack_link new_link =
-          (output_stack_link__t*)malloc(sizeof(output_stack_link__t));
+        struct output_stack_link* new_link =
+          (struct output_stack_link*)malloc(sizeof(struct output_stack_link));
         new_link->stack = output_stack->stack;
         new_link->link = output_stack->link;
         output_stack->link = new_link;
@@ -872,7 +868,7 @@
         output_stack->pointer = 0;
       }
     }
-    bool output_stack_empty_p(output_stack output_stack) {
+    bool output_stack_empty_p(struct output_stack* output_stack) {
       if (output_stack->pointer != 0 ||
           output_stack->link != NULL) {
         return false;
@@ -892,20 +888,20 @@
         p_debug();
       }
     }
-    byte output_stack_pop(output_stack output_stack) {
+    byte output_stack_pop(struct output_stack* output_stack) {
       output_stack_block_underflow_check(output_stack);
       output_stack->pointer--;
       return output_stack->stack[output_stack->pointer];
     }
-    byte output_stack_tos(output_stack output_stack) {
+    byte output_stack_tos(struct output_stack* output_stack) {
       output_stack_block_underflow_check(output_stack);
       return output_stack->stack[output_stack->pointer - 1];
     }
-    output_stack_drop(output_stack output_stack) {
+    output_stack_drop(struct output_stack* output_stack) {
       output_stack_block_underflow_check(output_stack);
       output_stack->pointer--;
     }
-    output_stack_push(output_stack output_stack, byte b) {
+    output_stack_push(struct output_stack* output_stack, byte b) {
       if (output_stack->type == OUTPUT_STACK_TERMINAL) {
         byte buffer[1];
         buffer[0] = b;
@@ -922,22 +918,22 @@
         output_stack->pointer++;
       }
     }
-    typedef struct {
+    struct object {
       jo tag;
       cell data;
-    } object_point;
+    };
 
-    stack object_stack;
+    struct stack* object_stack;
 
-    object_point object_stack_pop() {
-      object_point p;
+    struct object object_stack_pop() {
+      struct object p;
       p.tag = pop(object_stack);
       p.data = pop(object_stack);
       return p;
     }
 
-    object_point object_stack_tos() {
-      object_point p;
+    struct object object_stack_tos() {
+      struct object p;
       p.tag = pop(object_stack);
       p.data = pop(object_stack);
       push(object_stack, p.data);
@@ -961,30 +957,30 @@
     cell object_stack_peek_data(cell index) {
       return stack_peek(object_stack, (index*2));
     }
-    typedef struct {
+    struct local {
       jo name;
       cell local_tag;
       cell local_data;
-    } local_point;
+    };
 
-    local_point local_record[4 * 1024];
+    struct local local_record[4 * 1024];
     cell current_local_pointer = 0;
-    typedef struct {
+    struct ret {
       jo* jojo;
       cell local_pointer;
-    } return_point;
+    };
 
-    stack return_stack;
+    struct stack* return_stack;
 
-    return_point return_stack_pop() {
-      return_point p;
+    struct ret return_stack_pop() {
+      struct ret p;
       p.jojo = pop(return_stack);
       p.local_pointer = pop(return_stack);
       return p;
     }
 
-    return_point return_stack_tos() {
-      return_point p;
+    struct ret return_stack_tos() {
+      struct ret p;
       p.jojo = pop(return_stack);
       p.local_pointer = pop(return_stack);
       push(return_stack, p.local_pointer);
@@ -1009,7 +1005,7 @@
       jo* jojo = pop(return_stack);
       push(return_stack, jojo + 1);
     }
-    stack compiling_stack; // of jojo
+    struct stack* compiling_stack; // of jojo
 
     p_compiling_stack_inc() {
       jo* jojo = pop(compiling_stack);
@@ -1027,17 +1023,16 @@
     } gc_type;
     // typedef void (* cleaner__t)(cell);
 
-    typedef struct class {
+    struct class {
       jo class_name;
       jo super_name;
       gc_type gc_type;
       // cleaner__t cleaner;
       cell object_size;
-    } class__t;
-    typedef class__t* class;
+    };
     define_atom_class(char* class_name,
                       gc_type gc_type) {
-      class class = (class__t*)malloc(sizeof(class__t));
+      struct class* class = (struct class*)malloc(sizeof(struct class));
       class->class_name = str2jo(class_name);
       class->super_name = str2jo("<object>");
       class->gc_type = gc_type;
@@ -1083,7 +1078,7 @@
       name->data = class;
     }
     init_class() {
-      class class = (class__t*)malloc(sizeof(class__t));
+      struct class* class = (struct class*)malloc(sizeof(struct class));
       jo name = str2jo("<object>");
       class->class_name = name;
       class->gc_type = GC_RECUR;
@@ -1091,20 +1086,20 @@
       name->tag = str2jo("<class>");
       name->data = class;
     }
-    typedef struct {
+    struct object_record_entry {
       cell mark;
       jo tag;
       cell pointer;
-    } object_record_entry;
+    };
 
-    object_record_entry object_record[1024 * 1024];
+    struct object_record_entry object_record[1024 * 1024];
     mark_object_record(jo tag, cell pointer) {
 
     }
     sweep_object_record() {
 
     }
-    new(class class) {
+    new(struct class* class) {
       cell* object = (cell*)malloc(class->object_size*2*sizeof(cell));
       object_stack_push(class->class_name, object);
     }
@@ -1132,6 +1127,9 @@
       }
       strcpy(cursor, function_name);
       jo name = str2jo(name_buffer);
+
+      report("<define_prim> name_buffer : %s\n", name_buffer);
+
       cell arity = i;
       if (arity == 0) {
         name->tag = TAG_PRIM;
@@ -1142,23 +1140,26 @@
         name->data = fun;
       }
       else {
-        report("- define_primitive fall\n");
+        report("- define_prim fall\n");
         report("  arity of %s should not be %ld\n", function_name, arity);
       }
     }
-    stack keyword_stack; // of alias_pointer
-    typedef struct {
+    struct stack* keyword_stack; // of alias_pointer
+    struct alias {
       jo nick;
       jo name;
-    } alias_point;
+    };
 
-    alias_point alias_record[1024];
+    struct alias alias_record[1024];
     cell current_alias_pointer = 0;
+    jo object_tag(cell* o, cell index) {
+      return o[index*2];
+    }
+    jo object_data(cell* o, cell index) {
+      return o[index*2+1];
+    }
     jo jo2real_jo(jo j) {
       cell arity = j->data;
-      if (arity == 0) {
-        return j;
-      }
       char name_buffer[1024];
       char* cursor = name_buffer;
       cell i = arity;
@@ -1169,18 +1170,15 @@
         cursor = cursor + strlen(jo2str(tag));
         i--;
       }
+      strcpy(cursor, jo2str(j));
+      report("<jo2real_jo> name_buffer : %s\n", name_buffer);
       return str2jo(name_buffer);
-    }
-    jo object_tag(cell* o, cell index) {
-      return o[index*2];
-    }
-    jo object_data(cell* o, cell index) {
-      return o[index*2+1];
     }
     generic_apply(jo jo) {
       jo = jo2real_jo(jo);
       cell tag = jo->tag;
       if (tag == TAG_PRIM) {
+        report("<generic_apply> primitive\n");
         primitive primitive = jo->data;
         primitive();
       }
@@ -1204,7 +1202,7 @@
       }
       else if (tag == str2jo("<get-object-field>")) {
         cell index = jo->data;
-        object_point p = object_stack_pop();
+        struct object p = object_stack_pop();
         object_stack_push(object_tag(p.data, index),
                           object_data(p.data, index));
       }
@@ -1225,7 +1223,12 @@
         return;
       }
       if (jo->tag == str2jo("<generic-prototype>")) {
+        report("<jo_apply> jo : %s\n", jo2str(jo));
         generic_apply(jo);
+      }
+      else if (jo->tag == TAG_PRIM) {
+        primitive primitive = jo->data;
+        primitive();
       }
       else {
         push(object_stack, jo->data);
@@ -1235,7 +1238,7 @@
     eval() {
       cell base = return_stack->pointer;
       while (return_stack->pointer >= base) {
-        return_point rp = return_stack_tos();
+        struct ret rp = return_stack_tos();
         return_stack_inc();
         jo* jojo = rp.jojo;
         jo jo = jojo[0];
@@ -1243,46 +1246,45 @@
       }
     }
     p_drop() {
-      pop(object_stack);
+      object_stack_pop();
     }
     p_dup() {
-      // a a -> a
-      cell a = pop(object_stack);
-      push(object_stack, a);
-      push(object_stack, a);
+      struct object a = object_stack_pop();
+      object_stack_push(a.tag, a.data);
+      object_stack_push(a.tag, a.data);
     }
     p_over() {
       // b a -> b a b
-      cell a = pop(object_stack);
-      cell b = pop(object_stack);
-      push(object_stack, b);
-      push(object_stack, a);
-      push(object_stack, b);
+      struct object a = object_stack_pop();
+      struct object b = object_stack_pop();
+      object_stack_push(b.tag, b.data);
+      object_stack_push(a.tag, a.data);
+      object_stack_push(b.tag, b.data);
     }
     p_tuck() {
       // b a -> a b a
-      cell a = pop(object_stack);
-      cell b = pop(object_stack);
-      push(object_stack, a);
-      push(object_stack, b);
-      push(object_stack, a);
+      struct object a = object_stack_pop();
+      struct object b = object_stack_pop();
+      object_stack_push(a.tag, a.data);
+      object_stack_push(b.tag, b.data);
+      object_stack_push(a.tag, a.data);
     }
     p_swap() {
       // b a -> a b
-      cell a = pop(object_stack);
-      cell b = pop(object_stack);
-      push(object_stack, a);
-      push(object_stack, b);
+      struct object a = object_stack_pop();
+      struct object b = object_stack_pop();
+      object_stack_push(a.tag, a.data);
+      object_stack_push(b.tag, b.data);
     }
     expose_stack_operation() {
-      define_prim("drop", p_drop);
-      define_prim("dup", p_dup);
-      define_prim("over", p_over);
-      define_prim("tuck", p_tuck);
-      define_prim("swap", p_swap);
+      define_prim("drop", S1("<object>"), p_drop);
+      define_prim("dup", S1("<object>"), p_dup);
+      define_prim("over", S2("<object>", "<object>"), p_over);
+      define_prim("tuck", S2("<object>", "<object>"), p_tuck);
+      define_prim("swap", S2("<object>", "<object>"), p_swap);
     }
     p_end() {
-      return_point rp = return_stack_pop();
+      struct ret rp = return_stack_pop();
       current_local_pointer = rp.local_pointer;
     }
     p_bye() {
@@ -1295,7 +1297,7 @@
     }
     p1() {
       int file = open("README", O_RDWR);
-      input_stack t0_stack = input_stack_file(file);
+      struct input_stack* t0_stack = input_stack_file(file);
       input_stack_push(t0_stack, '\n');
       input_stack_push(t0_stack, '\n');
       input_stack_push(t0_stack, '1');
@@ -1310,7 +1312,7 @@
       input_stack_free(t0_stack);
       report("- input_stack test0 finished\n");
 
-      input_stack t1_stack = input_stack_terminal();
+      struct input_stack* t1_stack = input_stack_terminal();
       while (!input_stack_empty_p(t1_stack)) {
         byte byte = input_stack_pop(t1_stack);
         report("\n> %c", byte);
@@ -1318,7 +1320,7 @@
       input_stack_free(t1_stack);
       report("- input_stack test1 finished\n");
 
-      input_stack t2_stack = input_stack_string("1234567890");
+      struct input_stack* t2_stack = input_stack_string("1234567890");
       input_stack_push(t2_stack, '\n');
       input_stack_push(t2_stack, '\n');
       input_stack_push(t2_stack, '1');
@@ -1336,8 +1338,11 @@
       report("- input_stack test2 finished\n");
     }
     p2() {
-      int file = open("k1~", O_RDWR);
-      output_stack t0_stack = output_stack_file(file);
+      int file = open("k1~",
+                      (O_CREAT | O_RDWR),
+                      (S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP | S_IROTH | S_IWOTH));
+
+      struct output_stack* t0_stack = output_stack_file(file);
       output_stack_push(t0_stack, '1'); output_stack_pop(t0_stack);
       output_stack_push(t0_stack, '2');
       output_stack_push(t0_stack, '3'); output_stack_drop(t0_stack);
@@ -1354,7 +1359,7 @@
       close(file);
       report("- output_stack test0 finished\n");
 
-      output_stack t1_stack = output_stack_terminal();
+      struct output_stack* t1_stack = output_stack_terminal();
       output_stack_push(t1_stack, '\n');
       output_stack_push(t1_stack, '\n');
       output_stack_push(t1_stack, '1');
@@ -1366,7 +1371,7 @@
       output_stack_free(t1_stack);
       report("- output_stack test1 finished\n");
 
-      output_stack t2_stack = output_stack_string();
+      struct output_stack* t2_stack = output_stack_string();
       output_stack_push(t2_stack, '1');
       output_stack_push(t2_stack, '2');
       report("- %c\n", output_stack_pop(t2_stack));
@@ -1382,20 +1387,32 @@
     p3() {
       define_class("<rectangle>", "<object>", S3("height", "width", "k1"));
     }
+    print_object_stack_data(cell data) {
+      report("%ld ", data);
+    }
+
+    p4() {
+      report("<p4>\n");
+      report("  * %ld *  ", stack_length(object_stack));
+      report("-- ");
+      stack_traverse_from_bottom(object_stack, print_object_stack_data);
+      report("--\n");
+    }
     init_play() {
       p3();
     }
     expose_play() {
-      define_prim("p1", p1);
-      define_prim("p2", p2);
-      define_prim("p3", p3);
+      define_prim("p1", S0, p1);
+      define_prim("p2", S0, p2);
+      define_prim("p3", S0, p3);
+      define_prim("p4", S0, p4);
     }
     init_system() {
       setvbuf(stdout, NULL, _IONBF, 0);
       setvbuf(stderr, NULL, _IONBF, 0);
     }
     init_jotable() {
-      bzero(jotable, jotable_size * sizeof(jotable_entry));
+      bzero(jotable, JOTABLE_SIZE * sizeof(struct jotable_entry));
     }
     init_literal_jo() {
       EMPTY_JO = str2jo("");
@@ -1470,8 +1487,6 @@
       init_stacks();
       init_class();
 
-      expose_name();
-      expose_apply();
       expose_stack_operation();
       expose_ending();
 
@@ -1483,5 +1498,18 @@
     init_system();
     init_jojo();
     init_play();
+    {
+      object_stack_push(str2jo("<object>"), 666);
+
+      here(str2jo("dup"));
+      here(str2jo("dup"));
+      here(str2jo("swap"));
+      here(str2jo("p4"));
+      here(str2jo("p1"));
+      here(str2jo("p2"));
+      here(str2jo("end"));
+      return_stack_push_new(jojo_area);
+      eval();
+    }
     return 66;
   }
