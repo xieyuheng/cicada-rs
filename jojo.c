@@ -379,57 +379,6 @@
     cell stack_ref(struct stack* stack, cell index) {
       return stack_peek(stack, stack_length(stack) - index);
     }
-    stack_traverse_from_top_help
-    (cell cursor,
-     cell* stack,
-     struct stack_link* link,
-     void fun(cell)) {
-      while (cursor > 0) {
-        fun(stack[cursor - 1]);
-        cursor--;
-      }
-      if (link != NULL) {
-        stack_traverse_from_top_help
-          (STACK_BLOCK_SIZE,
-           link->stack,
-           link->link,
-           fun);
-      }
-    }
-
-    stack_traverse_from_top(struct stack* stack, void fun(cell)) {
-      stack_traverse_from_top_help
-        (stack->pointer,
-         stack->stack,
-         stack->link,
-         fun);
-    }
-    stack_traverse_from_bottom_help
-    (cell cursor,
-     cell* stack,
-     struct stack_link* link,
-     void fun(cell)) {
-      if (link != NULL) {
-        stack_traverse_from_bottom_help
-          (STACK_BLOCK_SIZE,
-           link->stack,
-           link->link,
-           fun);
-      }
-      cell i = 0;
-      while (i < cursor) {
-        fun(stack[i]);
-        i++;
-      }
-    }
-
-    stack_traverse_from_bottom(struct stack* stack, void fun(cell)) {
-      stack_traverse_from_bottom_help
-        (stack->pointer,
-         stack->stack,
-         stack->link,
-         fun);
-    }
     typedef enum {
       INPUT_STACK_REGULAR_FILE,
       INPUT_STACK_STRING,
@@ -1022,13 +971,13 @@
       GC_CLEANER,
       GC_RECUR,
     } gc_type;
-    // typedef void (* cleaner__t)(cell);
+    // typedef void (* cleaner_t)(cell);
 
     struct class {
       jo_t class_name;
       jo_t super_name;
       gc_type gc_type;
-      // cleaner__t cleaner;
+      // cleaner_t cleaner;
       cell object_size;
     };
     define_atom_class(char* class_name,
@@ -1076,9 +1025,11 @@
     define_struct() {
 
     }
-    define_class(char* class_name,
-                 char* super_name,
-                 char* fields[]) {
+    define_class(class_name, super_name, fields)
+      char* class_name;
+      char* super_name;
+      char* fields[];
+    {
       struct class* class = (struct class*)malloc(sizeof(struct class));
       jo_t name = str2jo(class_name);
       jo_t super = str2jo(super_name);
@@ -1184,24 +1135,103 @@
     set_data_field(cell* feilds, cell index, cell data) {
       feilds[index*2] = data;
     }
-    jo_t jo2real_jo(jo_t jo) {
-      cell arity = jo->data;
-      char name_buffer[1024];
-      char* cursor = name_buffer;
-      cell i = arity;
-      jo_t tag;
-      while (i > 0) {
-        tag = object_stack_peek_tag(i);
-        strcpy(cursor, jo2str(tag));
-        cursor = cursor + strlen(jo2str(tag));
-        i--;
+      struct absolute_t {
+        jo_t root;
+        jo_t current;
+      };
+      bool absolute_end_p(absolute_array, arity)
+        struct absolute_t absolute_array[];
+        cell arity;
+      {
+        cell i = 0;
+        while (i < arity) {
+          if (absolute_array[i].current != str2jo("<object>")) {
+            return false;
+          }
+          i++;
+        }
+        return true;
       }
-      strcpy(cursor, jo2str(jo));
-      report("<jo2real_jo> name_buffer : %s\n", name_buffer);
-      return str2jo(name_buffer);
-    }
+      absolute_next(absolute_array, arity)
+        struct absolute_t absolute_array[];
+        cell arity;
+      {
+        // inc non <object>
+        cell i = arity-1;
+        while (i >= 0) {
+          if (absolute_array[i].current != str2jo("<object>")) {
+            struct class* class = absolute_array[i].current->data;
+            absolute_array[i].current = class->super_name;
+            i++;
+            break;
+          }
+          i--;
+        }
+        // reset the rest to object
+        while (i < arity) {
+          absolute_array[i].current = absolute_array[i].root;
+          i++;
+        }
+      }
+      jo_t absolute_currnet_jo(jo, absolute_array, arity)
+        jo_t jo;
+        struct absolute_t absolute_array[];
+        cell arity;
+      {
+        char buffer[1024];
+        char* cursor = buffer;
+        cell i = 0;
+        while (i < arity) {
+          jo_t class_name = absolute_array[i].current;
+          char* str = jo2str(class_name);
+          strcpy(cursor, str);
+          cursor = cursor + strlen(str);
+          i++;
+        }
+        strcpy(cursor, jo2str(jo));
+        return str2jo(buffer);
+      }
+      jo_t absolute_jo_loop(jo, absolute_array, arity)
+        jo_t jo;
+        struct absolute_t absolute_array[];
+        cell arity;
+      {
+        jo_t new_jo = absolute_currnet_jo(jo, absolute_array, arity);
+        if (used_jo_p(new_jo)) {
+          return new_jo;
+        }
+        else if (absolute_end_p(absolute_array, arity)) {
+          return NULL;
+        }
+        else {
+          absolute_next(absolute_array, arity);
+          return absolute_jo_loop(jo, absolute_array, arity);
+        }
+      }
+      jo_t absolute_jo(jo_t jo) {
+        cell arity = jo->data;
+        struct absolute_t absolute_array[256];
+        cell tag_index = arity;
+        cell i = 0;
+        jo_t tag;
+        while (i < arity) {
+          tag = object_stack_peek_tag(tag_index);
+          absolute_array[i].root = tag;
+          absolute_array[i].current = tag;
+          tag_index--;
+          i++;
+        }
+        jo_t new_jo = absolute_jo_loop(jo, absolute_array, arity);
+        if (new_jo == NULL) {
+          report("- absolute_jo can not find\n");
+          return NULL;
+        }
+        else {
+          return new_jo;
+        }
+      }
     generic_apply(jo_t jo) {
-      jo = jo2real_jo(jo);
+      jo = absolute_jo(jo);
       if (jo->tag == TAG_PRIM) {
         primitive primitive = jo->data;
         primitive();
@@ -1232,8 +1262,6 @@
       }
       else if (jo->tag == str2jo("<set-object-field>")) {
         cell index = jo->data;
-        report("- <set-object-field>\n");
-        report("  index : %ld\n", index);
         struct object a = object_stack_pop();
         struct object b = object_stack_pop();
         set_tag_field(a.data, index, b.tag);
@@ -1532,8 +1560,12 @@
       here(str2jo("swap"));
       here(str2jo("<rectangle>"));
       here(str2jo("new"));
+      here(str2jo("tuck"));
       here(str2jo("!width"));
-      // here(str2jo(".width"));
+      here(str2jo("dup"));
+      here(str2jo(".width"));
+      here(str2jo("swap"));
+      here(str2jo(".width"));
       here(str2jo("print-object-stack"));
       here(str2jo("end"));
       return_stack_push_new(jojo_area);
