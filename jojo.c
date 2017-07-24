@@ -369,12 +369,15 @@
     }
 
     cell stack_peek(struct stack* stack, cell index) {
-      if (index < stack->pointer) {
+      if (index <= stack->pointer) {
         return stack->stack[stack->pointer - index];
       }
       else {
         return stack_peek_link(stack->link, index - stack->pointer);
       }
+    }
+    cell stack_ref(struct stack* stack, cell index) {
+      return stack_peek(stack, stack_length(stack) - index);
     }
     stack_traverse_from_top_help
     (cell cursor,
@@ -1039,20 +1042,35 @@
       name->tag = str2jo("<class>");
       name->data = class;
     }
+    bool check_function_arity(char* function_name, cell arity) {
+      jo_t name = str2jo(function_name);
+      if (used_jo_p(name)) {
+        return name->tag == str2jo("<generic-prototype>") && name->data == arity;
+      }
+      else {
+        name->tag = str2jo("<generic-prototype>");
+        name->data = arity;
+        return true;
+      }
+    }
     define_field(char* class_name, char* field, cell index) {
       char name_buffer[1024];
       jo_t name;
-      strcpy(name_buffer+1, class_name);
-      strcpy(name_buffer+1+strlen(class_name), field);
-
-      name_buffer[0] = '.';
+      strcpy(name_buffer, class_name);
+      name_buffer[strlen(class_name)] = '.';
+      strcpy(name_buffer + 1 + strlen(class_name), field);
+      check_function_arity(name_buffer + strlen(class_name), 1);
       name = str2jo(name_buffer);
-      name->tag = ("<get-object-field>");
+      name->tag = str2jo("<get-object-field>");
       name->data = index;
 
-      name_buffer[0] = '!';
+      strcpy(name_buffer, "<object>");
+      strcpy(name_buffer + strlen("<object>"), class_name);
+      name_buffer[strlen(class_name) + strlen("<object>")] = '!';
+      strcpy(name_buffer + 1 + strlen(class_name) + strlen("<object>"), field);
+      check_function_arity(name_buffer + strlen(class_name) + strlen("<object>"), 2);
       name = str2jo(name_buffer);
-      name->tag = ("<set-object-field>");
+      name->tag = str2jo("<set-object-field>");
       name->data = index;
     }
     define_struct() {
@@ -1089,17 +1107,6 @@
     }
     expose_class() {
       define_the_object_class();
-    }
-    bool check_function_arity(char* function_name, cell arity) {
-      jo_t name = str2jo(function_name);
-      if (used_jo_p(name)) {
-        return name->tag == str2jo("<generic-prototype>") && name->data == arity;
-      }
-      else {
-        name->tag = str2jo("<generic-prototype>");
-        name->data = arity;
-        return true;
-      }
     }
     define_prim(char* function_name,
                 char* tags[],
@@ -1163,16 +1170,19 @@
     struct alias alias_record[1024];
     cell current_alias_pointer = 0;
     jo_t get_tag_field(cell* feilds, cell index) {
-      return feilds[index*2];
-    }
-    cell get_data_field(cell* feilds, cell index) {
       return feilds[index*2+1];
     }
+
     set_tag_field(cell* feilds, cell index, jo_t tag) {
-
+      feilds[index*2+1] = tag;
     }
-    set_data_field(cell* feilds, cell index, cell data) {
 
+    cell get_data_field(cell* feilds, cell index) {
+      return feilds[index*2];
+    }
+
+    set_data_field(cell* feilds, cell index, cell data) {
+      feilds[index*2] = data;
     }
     jo_t jo2real_jo(jo_t jo) {
       cell arity = jo->data;
@@ -1222,6 +1232,8 @@
       }
       else if (jo->tag == str2jo("<set-object-field>")) {
         cell index = jo->data;
+        report("- <set-object-field>\n");
+        report("  index : %ld\n", index);
         struct object a = object_stack_pop();
         struct object b = object_stack_pop();
         set_tag_field(a.data, index, b.tag);
@@ -1401,28 +1413,23 @@
       output_stack_free(t2_stack);
       report("- output_stack test2 finished\n");
     }
-    p3() {
-      define_class("<rectangle>", "<object>", S3("height", "width", "k1"));
-    }
-    print_object_stack_data(cell data) {
-      report("%ld ", data);
-    }
-
-    p4() {
-      report("<p4>\n");
-      report("  * %ld *  ", stack_length(object_stack));
+    p_print_object_stack() {
+      cell length = stack_length(object_stack);
+      report("  * %ld *  ", length/2);
       report("-- ");
-      stack_traverse_from_bottom(object_stack, print_object_stack_data);
+      cell cursor = 0;
+      while (cursor < length) {
+        report("%ld ", stack_ref(object_stack, cursor));
+        report("%s ", jo2str(stack_ref(object_stack, cursor+1)));
+        cursor++;
+        cursor++;
+      }
       report("--\n");
-    }
-    init_play() {
-      p3();
     }
     expose_play() {
       define_prim("p1", S0, p1);
       define_prim("p2", S0, p2);
-      define_prim("p3", S0, p3);
-      define_prim("p4", S0, p4);
+      define_prim("print-object-stack", S0, p_print_object_stack);
     }
     init_system() {
       setvbuf(stdout, NULL, _IONBF, 0);
@@ -1504,6 +1511,7 @@
       init_stacks();
 
       expose_class();
+      expose_object();
       expose_stack_operation();
       expose_ending();
 
@@ -1514,15 +1522,19 @@
     // cmd_string_array = argv;
     init_system();
     init_jojo();
-    init_play();
     {
+      define_class("<rectangle>", "<object>", S2("height", "width"));
+
       object_stack_push(str2jo("<object>"), 666);
       object_stack_push(str2jo("<object>"), 888);
+
       here(str2jo("over"));
       here(str2jo("swap"));
-      here(str2jo("<object>"));
+      here(str2jo("<rectangle>"));
       here(str2jo("new"));
-      here(str2jo("p4"));
+      here(str2jo("!width"));
+      // here(str2jo(".width"));
+      here(str2jo("print-object-stack"));
       here(str2jo("end"));
       return_stack_push_new(jojo_area);
       eval();
