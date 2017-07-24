@@ -361,6 +361,23 @@
       stack->stack[stack->pointer] = data;
       stack->pointer++;
     }
+    cell stack_peek_link(stack_link link, cell index) {
+      if (index < STACK_BLOCK_SIZE) {
+        return link->stack[STACK_BLOCK_SIZE - index];
+      }
+      else {
+        return stack_peek_link(link->link, index - STACK_BLOCK_SIZE);
+      }
+    }
+
+    cell stack_peek(stack stack, cell index) {
+      if (index < stack->pointer) {
+        return stack->stack[stack->pointer - index];
+      }
+      else {
+        return stack_peek_link(stack->link, index - stack->pointer);
+      }
+    }
     stack_traverse_from_top_help
     (cell cursor,
      cell* stack,
@@ -938,11 +955,11 @@
     }
 
     jo object_stack_peek_tag(cell index) {
-      return str2jo("kkk");
+      return stack_peek(object_stack, (index*2) - 1);
     }
 
     cell object_stack_peek_data(cell index) {
-
+      return stack_peek(object_stack, (index*2));
     }
     typedef struct {
       jo name;

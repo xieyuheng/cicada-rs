@@ -1,6 +1,5 @@
 #+property: tangle jojo.c
 #+title:  jojo
-- object_stack_peek_tag
 - field as a new type of apply-able object
 - new (<class>)
 - add current size to size of super class
@@ -157,7 +156,7 @@
     | jotable              | 97 * 1024   | jotable_entry |
     | name_record          | 16 * 1024   | jo            |
     |----------------------+-------------+---------------|
-    | object_stack           |             | cell          |
+    | object_stack         |             | cell          |
     | return_stack         |             | return_point  |
     | local_record         | 4 * 1024    | local_point   |
     | alias_record         | 1024        | alias_point   |
@@ -712,6 +711,28 @@
       stack_block_overflow_check(stack);
       stack->stack[stack->pointer] = data;
       stack->pointer++;
+    }
+    #+end_src
+
+*** stack_peek
+
+    #+begin_src c
+    cell stack_peek_link(stack_link link, cell index) {
+      if (index < STACK_BLOCK_SIZE) {
+        return link->stack[STACK_BLOCK_SIZE - index];
+      }
+      else {
+        return stack_peek_link(link->link, index - STACK_BLOCK_SIZE);
+      }
+    }
+
+    cell stack_peek(stack stack, cell index) {
+      if (index < stack->pointer) {
+        return stack->stack[stack->pointer - index];
+      }
+      else {
+        return stack_peek_link(stack->link, index - stack->pointer);
+      }
     }
     #+end_src
 
@@ -1495,11 +1516,11 @@
     }
 
     jo object_stack_peek_tag(cell index) {
-      return str2jo("kkk");
+      return stack_peek(object_stack, (index*2) - 1);
     }
 
     cell object_stack_peek_data(cell index) {
-
+      return stack_peek(object_stack, (index*2));
     }
     #+end_src
 
