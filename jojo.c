@@ -139,7 +139,7 @@
       cell data;
     };
 
-    typedef struct jotable_entry *jo;
+    typedef struct jotable_entry* jo_t;
 
     // prime table size
     //   1000003   about 976 k
@@ -152,7 +152,7 @@
     struct jotable_entry jotable[JOTABLE_SIZE];
 
     // thus (jotable + index) is jo
-    bool used_jo_p(jo jo) {
+    bool used_jo_p(jo_t jo) {
       return jo->tag != 0;
     }
     cell string_to_sum(char* str) {
@@ -171,13 +171,13 @@
     }
     p_debug();
 
-    jo jotable_insert(char* key) {
+    jo_t jotable_insert(char* key) {
       // in C : [string] -> [jo]
       cell sum = string_to_sum(key);
       cell counter = 0;
       while (true) {
         cell index = jotable_hash(sum, counter);
-        jo jo = (jotable + index);
+        jo_t jo = (jotable + index);
         if (jo->key == 0) {
           key = strdup(key);
           jo->key = key;
@@ -197,58 +197,58 @@
         }
       }
     }
-    jo str2jo(char* str) {
+    jo_t str2jo(char* str) {
       return jotable_insert(str);
     }
-    char* jo2str(jo jo) {
+    char* jo2str(jo_t jo) {
       return jo->key;
     }
-    jo EMPTY_JO;
-    jo TAG_PRIM;
-    jo TAG_JOJO;
-    jo TAG_PRIM_KEYWORD;
-    jo TAG_KEYWORD;
-    jo TAG_DATA;
+    jo_t EMPTY_JO;
+    jo_t TAG_PRIM;
+    jo_t TAG_JOJO;
+    jo_t TAG_PRIM_KEYWORD;
+    jo_t TAG_KEYWORD;
+    jo_t TAG_DATA;
 
-    jo JO_DECLARED;
+    jo_t JO_DECLARED;
 
-    jo ROUND_BAR;
-    jo ROUND_KET;
-    jo SQUARE_BAR;
-    jo SQUARE_KET;
-    jo FLOWER_BAR;
-    jo FLOWER_KET;
-    jo DOUBLE_QUOTE;
+    jo_t ROUND_BAR;
+    jo_t ROUND_KET;
+    jo_t SQUARE_BAR;
+    jo_t SQUARE_KET;
+    jo_t FLOWER_BAR;
+    jo_t FLOWER_KET;
+    jo_t DOUBLE_QUOTE;
 
-    jo JO_INS_INT;
-    jo JO_INS_JO;
-    jo JO_INS_STRING;
-    jo JO_INS_BYTE;
-    jo JO_INS_BARE_JOJO;
-    jo JO_INS_ADDRESS;
+    jo_t JO_INS_INT;
+    jo_t JO_INS_JO;
+    jo_t JO_INS_STRING;
+    jo_t JO_INS_BYTE;
+    jo_t JO_INS_BARE_JOJO;
+    jo_t JO_INS_ADDRESS;
 
-    jo JO_INS_JUMP;
-    jo JO_INS_JUMP_IF_FALSE;
+    jo_t JO_INS_JUMP;
+    jo_t JO_INS_JUMP_IF_FALSE;
 
-    jo JO_INS_TAIL_CALL;
-    jo JO_INS_LOOP;
-    jo JO_INS_RECUR;
+    jo_t JO_INS_TAIL_CALL;
+    jo_t JO_INS_LOOP;
+    jo_t JO_INS_RECUR;
 
-    jo JO_NULL;
-    jo JO_THEN;
-    jo JO_ELSE;
+    jo_t JO_NULL;
+    jo_t JO_THEN;
+    jo_t JO_ELSE;
 
-    jo JO_APPLY;
-    jo JO_END;
+    jo_t JO_APPLY;
+    jo_t JO_END;
 
-    jo JO_LOCAL_DATA_IN;
-    jo JO_LOCAL_DATA_OUT;
+    jo_t JO_LOCAL_DATA_IN;
+    jo_t JO_LOCAL_DATA_OUT;
 
-    jo JO_LOCAL_TAG_IN;
-    jo JO_LOCAL_TAG_OUT;
+    jo_t JO_LOCAL_TAG_IN;
+    jo_t JO_LOCAL_TAG_OUT;
 
-    jo JO_LOCAL_IN;
-    jo JO_LOCAL_OUT;
+    jo_t JO_LOCAL_IN;
+    jo_t JO_LOCAL_OUT;
     struct stack_link {
       cell* stack;
       struct stack_link* link;
@@ -369,9 +369,7 @@
     }
 
     cell stack_peek(struct stack* stack, cell index) {
-       report("<stack_peek> index : %ld\n", index);
       if (index < stack->pointer) {
-
         return stack->stack[stack->pointer - index];
       }
       else {
@@ -919,7 +917,7 @@
       }
     }
     struct object {
-      jo tag;
+      jo_t tag;
       cell data;
     };
 
@@ -945,12 +943,12 @@
       return stack_empty_p(object_stack);
     }
 
-    object_stack_push(jo tag, cell data) {
+    object_stack_push(jo_t tag, cell data) {
       push(object_stack, data);
       push(object_stack, tag);
     }
 
-    jo object_stack_peek_tag(cell index) {
+    jo_t object_stack_peek_tag(cell index) {
       return stack_peek(object_stack, (index*2) - 1);
     }
 
@@ -958,7 +956,7 @@
       return stack_peek(object_stack, (index*2));
     }
     struct local {
-      jo name;
+      jo_t name;
       cell local_tag;
       cell local_data;
     };
@@ -966,7 +964,7 @@
     struct local local_record[4 * 1024];
     cell current_local_pointer = 0;
     struct ret {
-      jo* jojo;
+      jo_t* jojo;
       cell local_pointer;
     };
 
@@ -992,27 +990,27 @@
       return stack_empty_p(return_stack);
     }
 
-    return_stack_push(jo* jojo, cell local_pointer) {
+    return_stack_push(jo_t* jojo, cell local_pointer) {
       push(return_stack, local_pointer);
       push(return_stack, jojo);
     }
 
-    return_stack_push_new(jo* jojo) {
+    return_stack_push_new(jo_t* jojo) {
       return_stack_push(jojo, current_local_pointer);
     }
 
     return_stack_inc() {
-      jo* jojo = pop(return_stack);
+      jo_t* jojo = pop(return_stack);
       push(return_stack, jojo + 1);
     }
     struct stack* compiling_stack; // of jojo
 
     p_compiling_stack_inc() {
-      jo* jojo = pop(compiling_stack);
+      jo_t* jojo = pop(compiling_stack);
       push(compiling_stack, jojo + 1);
     }
     here(cell n) {
-      jo* jojo = pop(compiling_stack);
+      jo_t* jojo = pop(compiling_stack);
       jojo[0] = n;
       push(compiling_stack, jojo + 1);
     }
@@ -1024,8 +1022,8 @@
     // typedef void (* cleaner__t)(cell);
 
     struct class {
-      jo class_name;
-      jo super_name;
+      jo_t class_name;
+      jo_t super_name;
       gc_type gc_type;
       // cleaner__t cleaner;
       cell object_size;
@@ -1037,13 +1035,13 @@
       class->super_name = str2jo("<object>");
       class->gc_type = gc_type;
 
-      jo name = str2jo(class_name);
+      jo_t name = str2jo(class_name);
       name->tag = str2jo("<class>");
       name->data = class;
     }
     define_field(char* class_name, char* field, cell index) {
       char name_buffer[1024];
-      jo name;
+      jo_t name;
       strcpy(name_buffer+1, class_name);
       strcpy(name_buffer+1+strlen(class_name), field);
 
@@ -1057,12 +1055,15 @@
       name->tag = ("<set-object-field>");
       name->data = index;
     }
+    define_struct() {
+
+    }
     define_class(char* class_name,
                  char* super_name,
                  char* fields[]) {
       struct class* class = (struct class*)malloc(sizeof(struct class));
-      jo name = str2jo(class_name);
-      jo super = str2jo(super_name);
+      jo_t name = str2jo(class_name);
+      jo_t super = str2jo(super_name);
       class->class_name = name;
       class->super_name = super;
       class->gc_type = GC_RECUR;
@@ -1077,34 +1078,20 @@
       name->tag = str2jo("<class>");
       name->data = class;
     }
-    init_class() {
+    define_the_object_class() {
       struct class* class = (struct class*)malloc(sizeof(struct class));
-      jo name = str2jo("<object>");
+      jo_t name = str2jo("<object>");
       class->class_name = name;
       class->gc_type = GC_RECUR;
       class->object_size = 0;
       name->tag = str2jo("<class>");
       name->data = class;
     }
-    struct object_record_entry {
-      cell mark;
-      jo tag;
-      cell pointer;
-    };
-
-    struct object_record_entry object_record[1024 * 1024];
-    mark_object_record(jo tag, cell pointer) {
-
-    }
-    sweep_object_record() {
-
-    }
-    new(struct class* class) {
-      cell* object = (cell*)malloc(class->object_size*2*sizeof(cell));
-      object_stack_push(class->class_name, object);
+    expose_class() {
+      define_the_object_class();
     }
     bool check_function_arity(char* function_name, cell arity) {
-      jo name = str2jo(function_name);
+      jo_t name = str2jo(function_name);
       if (used_jo_p(name)) {
         return name->tag == str2jo("<generic-prototype>") && name->data == arity;
       }
@@ -1126,7 +1113,7 @@
         i++;
       }
       strcpy(cursor, function_name);
-      jo name = str2jo(name_buffer);
+      jo_t name = str2jo(name_buffer);
 
       report("<define_prim> name_buffer : %s\n", name_buffer);
 
@@ -1144,55 +1131,82 @@
         report("  arity of %s should not be %ld\n", function_name, arity);
       }
     }
+    struct object_record_entry {
+      cell mark;
+      jo_t tag;
+      cell pointer;
+    };
+
+    struct object_record_entry object_record[1024 * 1024];
+    mark_object_record(jo_t tag, cell pointer) {
+
+    }
+    sweep_object_record() {
+
+    }
+    p_new() {
+      // [<class>] -> [<object> of <class>]
+      struct object a = object_stack_pop();
+      struct class* class = a.data;
+      cell* data = (cell*)malloc(class->object_size*2*sizeof(cell));
+      object_stack_push(class->class_name, data);
+    }
+    expose_object() {
+      define_prim("new", S1("<class>"), p_new);
+    }
     struct stack* keyword_stack; // of alias_pointer
     struct alias {
-      jo nick;
-      jo name;
+      jo_t nick;
+      jo_t name;
     };
 
     struct alias alias_record[1024];
     cell current_alias_pointer = 0;
-    jo object_tag(cell* o, cell index) {
-      return o[index*2];
+    jo_t get_tag_field(cell* feilds, cell index) {
+      return feilds[index*2];
     }
-    jo object_data(cell* o, cell index) {
-      return o[index*2+1];
+    cell get_data_field(cell* feilds, cell index) {
+      return feilds[index*2+1];
     }
-    jo jo2real_jo(jo j) {
-      cell arity = j->data;
+    set_tag_field(cell* feilds, cell index, jo_t tag) {
+
+    }
+    set_data_field(cell* feilds, cell index, cell data) {
+
+    }
+    jo_t jo2real_jo(jo_t jo) {
+      cell arity = jo->data;
       char name_buffer[1024];
       char* cursor = name_buffer;
       cell i = arity;
-      jo tag;
+      jo_t tag;
       while (i > 0) {
         tag = object_stack_peek_tag(i);
         strcpy(cursor, jo2str(tag));
         cursor = cursor + strlen(jo2str(tag));
         i--;
       }
-      strcpy(cursor, jo2str(j));
+      strcpy(cursor, jo2str(jo));
       report("<jo2real_jo> name_buffer : %s\n", name_buffer);
       return str2jo(name_buffer);
     }
-    generic_apply(jo jo) {
+    generic_apply(jo_t jo) {
       jo = jo2real_jo(jo);
-      cell tag = jo->tag;
-      if (tag == TAG_PRIM) {
-        report("<generic_apply> primitive\n");
+      if (jo->tag == TAG_PRIM) {
         primitive primitive = jo->data;
         primitive();
       }
-      else if (tag == TAG_JOJO) {
+      else if (jo->tag == TAG_JOJO) {
         cell jojo = jo->data;
         return_stack_push_new(jojo);
       }
-      else if (tag == TAG_PRIM_KEYWORD) {
+      else if (jo->tag == TAG_PRIM_KEYWORD) {
         push(keyword_stack, current_alias_pointer);
         primitive primitive = jo->data;
         primitive();
         current_alias_pointer = pop(keyword_stack);
       }
-      else if (tag == TAG_KEYWORD) {
+      else if (jo->tag == TAG_KEYWORD) {
         // keywords are always evaled
         push(keyword_stack, current_alias_pointer);
         cell jojo = jo->data;
@@ -1200,23 +1214,26 @@
         eval();
         current_alias_pointer = pop(keyword_stack);
       }
-      else if (tag == str2jo("<get-object-field>")) {
+      else if (jo->tag == str2jo("<get-object-field>")) {
         cell index = jo->data;
-        struct object p = object_stack_pop();
-        object_stack_push(object_tag(p.data, index),
-                          object_data(p.data, index));
+        struct object a = object_stack_pop();
+        object_stack_push(get_tag_field(a.data, index),
+                          get_data_field(a.data, index));
       }
-      else if (tag == str2jo("<set-object-field>")) {
+      else if (jo->tag == str2jo("<set-object-field>")) {
         cell index = jo->data;
-        //
+        struct object a = object_stack_pop();
+        struct object b = object_stack_pop();
+        set_tag_field(a.data, index, b.tag);
+        set_data_field(a.data, index, b.data);
       }
       else {
-        report("- generic_apply meet unknown tag : %s\n", jo2str(tag));
+        report("- generic_apply meet unknown tag : %s\n", jo2str(jo->tag));
       }
     }
     p_debug();
 
-    jo_apply(jo jo) {
+    jo_apply(jo_t jo) {
       if (!used_jo_p(jo)) {
         report("- jo_apply meet undefined jo : %s\n", jo2str(jo));
         p_debug();
@@ -1240,8 +1257,8 @@
       while (return_stack->pointer >= base) {
         struct ret rp = return_stack_tos();
         return_stack_inc();
-        jo* jojo = rp.jojo;
-        jo jo = jojo[0];
+        jo_t* jojo = rp.jojo;
+        jo_t jo = jojo[0];
         jo_apply(jo);
       }
     }
@@ -1278,7 +1295,7 @@
     }
     expose_stack_operation() {
       define_prim("drop", S1("<object>"), p_drop);
-      define_prim("dup", S1("<object>"), p_dup);
+      define_prim("dup",  S1("<object>"), p_dup);
       define_prim("over", S2("<object>", "<object>"), p_over);
       define_prim("tuck", S2("<object>", "<object>"), p_tuck);
       define_prim("swap", S2("<object>", "<object>"), p_swap);
@@ -1463,7 +1480,7 @@
       JO_LOCAL_IN = str2jo("local-in");
       JO_LOCAL_OUT = str2jo("local-out");
     }
-    jo jojo_area[1024 * 1024];
+    jo_t jojo_area[1024 * 1024];
 
     init_stacks() {
       object_stack                 = new_stack("object_stack");
@@ -1485,8 +1502,8 @@
       init_jotable();
       init_literal_jo();
       init_stacks();
-      init_class();
 
+      expose_class();
       expose_stack_operation();
       expose_ending();
 
@@ -1500,13 +1517,12 @@
     init_play();
     {
       object_stack_push(str2jo("<object>"), 666);
-
-      here(str2jo("dup"));
-      here(str2jo("dup"));
+      object_stack_push(str2jo("<object>"), 888);
+      here(str2jo("over"));
       here(str2jo("swap"));
+      here(str2jo("<object>"));
+      here(str2jo("new"));
       here(str2jo("p4"));
-      here(str2jo("p1"));
-      here(str2jo("p2"));
       here(str2jo("end"));
       return_stack_push_new(jojo_area);
       eval();

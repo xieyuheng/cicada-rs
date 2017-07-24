@@ -68,3 +68,39 @@
        stack-0 pop write
        stack-0 pop write)
   #+end_src
+
+* ><
+
+*** c
+
+    #+begin_src c
+    typedef enum {
+      GC_IGNORE,
+      GC_CLEANER,
+      GC_RECUR,
+    } gc_type;
+    // typedef void (* cleaner__t)(cell);
+
+    struct class {
+      jo class_name;
+      jo super_name;
+      gc_type gc_type;
+      // cleaner__t cleaner;
+      cell object_size;
+    };
+    #+end_src
+
+*** jojo
+
+    #+begin_src jojo
+    (define-enum <gc-type>
+      GC-IGNORE
+      GC-CLEANER
+      GC-RECUR)
+
+    (define-struct <class>
+      [<jo> class-name]
+      [<jo> super-name]
+      [<gc-type> gc-type]
+      [<cell> object-size])
+    #+end_src
