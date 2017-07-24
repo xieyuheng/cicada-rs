@@ -1,7 +1,6 @@
 #+property: tangle jojo.c
 #+title:  jojo
 - add current size to size of super class
-- new (<class>)
 - inherit gc_type form super class
 * [todo-stack]
 
@@ -1726,6 +1725,15 @@
     #+begin_src c
     sweep_object_record() {
 
+    }
+    #+end_src
+
+*** new
+
+    #+begin_src c
+    new(class class) {
+      cell* data = (cell*)malloc(class->size*2*sizeof(cell));
+      object_stack_push(class->class_name, data);
     }
     #+end_src
 
