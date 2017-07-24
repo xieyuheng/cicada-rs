@@ -925,19 +925,19 @@
     typedef struct {
       jo tag;
       cell data;
-    } data_point;
+    } object_point;
 
     stack object_stack;
 
-    data_point object_stack_pop() {
-      data_point p;
+    object_point object_stack_pop() {
+      object_point p;
       p.tag = pop(object_stack);
       p.data = pop(object_stack);
       return p;
     }
 
-    data_point object_stack_tos() {
-      data_point p;
+    object_point object_stack_tos() {
+      object_point p;
       p.tag = pop(object_stack);
       p.data = pop(object_stack);
       push(object_stack, p.data);
@@ -1048,7 +1048,20 @@
       name->data = class;
     }
     define_field(char* class_name, char* field, cell index) {
-      report("- %s\n", field);
+      char name_buffer[1024];
+      jo name;
+      strcpy(name_buffer+1, class_name);
+      strcpy(name_buffer+1+strlen(class_name), field);
+
+      name_buffer[0] = '.';
+      name = str2jo(name_buffer);
+      name->tag = ("<get-object-field>");
+      name->data = index;
+
+      name_buffer[0] = '!';
+      name = str2jo(name_buffer);
+      name->tag = ("<set-object-field>");
+      name->data = index;
     }
     define_class(char* class_name,
                  char* super_name,
@@ -1146,6 +1159,12 @@
       }
       return str2jo(name_buffer);
     }
+    jo object_tag(cell* o, cell index) {
+      return o[index*2];
+    }
+    jo object_data(cell* o, cell index) {
+      return o[index*2+1];
+    }
     generic_apply(jo jo) {
       jo = jo2real_jo(jo);
       cell tag = jo->tag;
@@ -1170,6 +1189,16 @@
         return_stack_push_new(jojo);
         eval();
         current_alias_pointer = pop(keyword_stack);
+      }
+      else if (tag == str2jo("<get-object-field>")) {
+        cell index = jo->data;
+        object_point p = object_stack_pop();
+        object_stack_push(object_tag(p.data, index),
+                          object_data(p.data, index));
+      }
+      else if (tag == str2jo("<set-object-field>")) {
+        cell index = jo->data;
+        //
       }
       else {
         report("- generic_apply meet unknown tag : %s\n", jo2str(tag));
