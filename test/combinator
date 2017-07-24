@@ -8,15 +8,3 @@
            (jojo inc) (~ map: (data)) list/print newline)
      (~ repeat: (data (int 100)))
      bye)
-
-(note
-
-  (add-method (<list> :list <jojo> :jojo) map
-    (if :list null eq? then null end)
-    (el :list cdr :jojo (recur)
-        :list car :jojo apply cons))
-
-  (add-method (<int> :time <jojo> :jojo) repeat
-    (if :time (int 0) eq? then end)
-    (el :jojo apply
-        :time dec :jojo (loop))))

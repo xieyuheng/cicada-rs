@@ -121,10 +121,22 @@
       vdprintf(STDERR_FILENO, format, arg_list);
       va_end(arg_list);
     }
+    #define S0 (char*[]){NULL}
+    #define S1(x1) (char*[]){x1, NULL}
+    #define S2(x1, x2) (char*[]){x1, x2, NULL}
+    #define S3(x1, x2, x3) (char*[]){x1, x2, x3, NULL}
+    #define S4(x1, x2, x3, x4) (char*[]){x1, x2, x3, x4, NULL}
+    #define S5(x1, x2, x3, x4, x5) (char*[]){x1, x2, x3, x4, x5, NULL}
+    #define S6(x1, x2, x3, x4, x5, x6) (char*[]){x1, x2, x3, x4, x5, x6, NULL}
+    #define S7(x1, x2, x3, x4, x5, x6, x7) (char*[]){x1, x2, x3, x4, x5, x6, x7, NULL}
+    #define S8(x1, x2, x3, x4, x5, x6, x7, x8) (char*[]){x1, x2, x3, x4, x5, x6, x7, x8, NULL}
+    #define S9(x1, x2, x3, x4, x5, x6, x7, x8, x9) (char*[]){x1, x2, x3, x4, x5, x6, x7, x8, x9, NULL}
+  p_debug() {
+  }
     typedef struct _jotable_entry {
       char *key;
       struct _jotable_entry *tag;
-      cell value;
+      cell data;
     } jotable_entry;
 
     typedef jotable_entry *jo;
@@ -893,18 +905,45 @@
         output_stack->pointer++;
       }
     }
-    stack compiling_stack; // of jojo
+    typedef struct {
+      jo tag;
+      cell data;
+    } data_point;
 
-    p_compiling_stack_inc() {
-      jo* jojo = pop(compiling_stack);
-      push(compiling_stack, jojo + 1);
+    stack object_stack;
+
+    data_point object_stack_pop() {
+      data_point p;
+      p.tag = pop(object_stack);
+      p.data = pop(object_stack);
+      return p;
     }
-    here(cell n) {
-      jo* jojo = pop(compiling_stack);
-      jojo[0] = n;
-      push(compiling_stack, jojo + 1);
+
+    data_point object_stack_tos() {
+      data_point p;
+      p.tag = pop(object_stack);
+      p.data = pop(object_stack);
+      push(object_stack, p.data);
+      push(object_stack, p.tag);
+      return p;
     }
-    stack data_stack; // of cell
+
+    bool object_stack_empty_p() {
+      return stack_empty_p(object_stack);
+    }
+
+    object_stack_push(jo tag, cell data) {
+      push(object_stack, data);
+      push(object_stack, tag);
+    }
+
+    jo object_stack_peek_tag(cell index) {
+      return str2jo("kkk");
+    }
+
+    cell object_stack_peek_data(cell index) {
+
+    }
     typedef struct {
       jo name;
       cell local_tag;
@@ -921,130 +960,149 @@
     stack return_stack;
 
     return_point return_stack_pop() {
-      return_point rp;
-      rp.jojo = pop(return_stack);
-      rp.local_pointer = pop(return_stack);
-      return rp;
+      return_point p;
+      p.jojo = pop(return_stack);
+      p.local_pointer = pop(return_stack);
+      return p;
     }
 
     return_point return_stack_tos() {
-      return_point rp;
-      rp.jojo = pop(return_stack);
-      rp.local_pointer = pop(return_stack);
-      push(return_stack, rp.local_pointer);
-      push(return_stack, rp.jojo);
-      return rp;
+      return_point p;
+      p.jojo = pop(return_stack);
+      p.local_pointer = pop(return_stack);
+      push(return_stack, p.local_pointer);
+      push(return_stack, p.jojo);
+      return p;
     }
 
     bool return_stack_empty_p() {
       return stack_empty_p(return_stack);
     }
 
-    return_stack_make_point(jo* jojo, cell local_pointer) {
+    return_stack_push(jo* jojo, cell local_pointer) {
       push(return_stack, local_pointer);
       push(return_stack, jojo);
     }
 
-    return_stack_new_point(jo* jojo) {
-      return_stack_make_point(jojo, current_local_pointer);
+    return_stack_push_new(jo* jojo) {
+      return_stack_push(jojo, current_local_pointer);
     }
 
     return_stack_inc() {
       jo* jojo = pop(return_stack);
       push(return_stack, jojo + 1);
     }
-    jo name_record[16 * 1024];
-    cell name_record_counter = 0;
-    p_name_record() {
-      push(data_stack, name_record);
-    }
-      stack binding_filter_stack; // of jo
-      p_binding_filter_stack_push() {
-        push(binding_filter_stack, pop(data_stack));
-      }
-      p_binding_filter_stack_pop() {
-        push(data_stack, pop(binding_filter_stack));
-      }
-      jo_apply_now(jo jo);
+    stack compiling_stack; // of jojo
 
-      run_binding_filter() {
-        // [name] -> [name]
-        stack_traverse_from_bottom(binding_filter_stack, jo_apply_now);
+    p_compiling_stack_inc() {
+      jo* jojo = pop(compiling_stack);
+      push(compiling_stack, jojo + 1);
+    }
+    here(cell n) {
+      jo* jojo = pop(compiling_stack);
+      jojo[0] = n;
+      push(compiling_stack, jojo + 1);
+    }
+    typedef enum {
+      GC_IGNORE,
+      GC_CLEANER,
+      GC_RECUR,
+    } gc_type;
+    // typedef void (* cleaner__t)(cell);
+
+    typedef struct {
+      jo class_name;
+      jo super_name;
+      gc_type gc_type;
+      // cleaner__t cleaner;
+      cell object_size;
+    } class__t;
+    typedef class__t* class;
+    define_atom_class(char* class_name,
+                      char* super_name,
+                      gc_type gc_type) {
+      class class = (class__t*)malloc(sizeof(class__t));
+      class->class_name = str2jo(class_name);
+      class->super_name = str2jo(super_name);
+      class->gc_type = gc_type;
+
+      jo name = str2jo(class_name);
+      name->tag = str2jo("<class>");
+      name->data = class;
+    }
+    define_field(char* class_name, char* field, cell index) {
+      report("- %s\n", field);
+    }
+    define_class(char* class_name,
+                 char* super_name,
+                 char* fields[]) {
+      class class = (class__t*)malloc(sizeof(class__t));
+      class->class_name = str2jo(class_name);
+      class->super_name = str2jo(super_name);
+      class->gc_type = GC_RECUR;
+
+      cell i = 0;
+      while (fields[i] != NULL) {
+        define_field(class_name, fields[i], i);
+        i++;
       }
-    bool name_can_bind_p(jo name) {
-      if (name->tag == JO_DECLARED) {
-        return true;
-      }
-      else if (used_jo_p(name)) {
-        return false;
+
+      class->object_size = i;
+
+      jo name = str2jo(class_name);
+      name->tag = str2jo("<class>");
+      name->data = class;
+    }
+    typedef struct {
+      cell mark;
+      jo tag;
+      cell pointer;
+    } object_record_entry;
+
+    object_record_entry object_record[1024 * 1024];
+    mark_object_record(jo tag, cell pointer) {
+
+    }
+    sweep_object_record() {
+
+    }
+    bool check_function_arity(char* function_name, cell arity) {
+      jo name = str2jo(function_name);
+      if (used_jo_p(name)) {
+        return name->tag == str2jo("<generic-prototype>") && name->data == arity;
       }
       else {
+        name->tag = str2jo("<generic-prototype>");
+        name->data = arity;
         return true;
       }
     }
-    p_bind_name() {
-      // [data tag name] -> {set-jotable}
-      run_binding_filter();
-
-      jo name = pop(data_stack);
-      jo tag = pop(data_stack);
-      cell data = pop(data_stack);
-
-      if (!name_can_bind_p(name)) {
-        report("- p_bind_name can not rebind\n");
-        report("  name : %s\n", jo2str(name));
-        report("  tag : %s\n", jo2str(tag));
-        report("  data : %ld\n", data);
-        report("  it has been bound as a %s\n", jo2str(name->tag));
-        return;
+    define_prim(char* function_name,
+                char* tags[],
+                primitive fun) {
+      char name_buffer[1024];
+      char* cursor = name_buffer;
+      cell i = 0;
+      while (tags[i] != NULL) {
+        strcpy(cursor, tags[i]);
+        cursor = cursor + strlen(tags[i]);
+        i++;
       }
-
-      name_record[name_record_counter] = name;
-      name_record_counter++;
-      name_record[name_record_counter] = 0;
-
-      name->tag = tag;
-      name->value = data;
-    }
-    p_rebind_name() {
-      // [data tag name] -> {set-jotable}
-      run_binding_filter();
-
-      jo name = pop(data_stack);
-      jo tag = pop(data_stack);
-      cell data = pop(data_stack);
-
-      if (!used_jo_p(name)) {
-        name_record[name_record_counter] = name;
-        name_record_counter++;
-        name_record[name_record_counter] = 0;
+      strcpy(cursor, function_name);
+      jo name = str2jo(name_buffer);
+      cell arity = i;
+      if (arity == 0) {
+        name->tag = TAG_PRIM;
+        name->data = fun;
       }
-
-      name->tag = tag;
-      name->value = data;
-    }
-    define_prim(char* str, primitive fun) {
-      jo name = str2jo(str);
-      push(data_stack, fun);
-      push(data_stack, TAG_PRIM);
-      push(data_stack, name);
-      p_bind_name();
-    }
-    define_primkey(char* str, primitive fun) {
-      jo name = str2jo(str);
-      push(data_stack, fun);
-      push(data_stack, TAG_PRIM_KEYWORD);
-      push(data_stack, name);
-      p_bind_name();
-    }
-    expose_name() {
-      define_prim("bind-name", p_bind_name);
-      define_prim("rebind-name", p_rebind_name);
-
-      define_prim("name-record", p_name_record);
-
-      define_prim("binding-filter-stack-push", p_binding_filter_stack_push);
-      define_prim("binding-filter-stack-pop", p_binding_filter_stack_pop);
+      else if (check_function_arity(function_name, arity)) {
+        name->tag = TAG_PRIM;
+        name->data = fun;
+      }
+      else {
+        report("- define_primitive fall\n");
+        report("  arity of %s should not be %ld\n", function_name, arity);
+      }
     }
     stack keyword_stack; // of alias_pointer
     typedef struct {
@@ -1054,7 +1112,52 @@
 
     alias_point alias_record[1024];
     cell current_alias_pointer = 0;
-    eval();
+    jo jo2real_jo(jo j) {
+      cell arity = j->data;
+      if (arity == 0) {
+        return j;
+      }
+      char name_buffer[1024];
+      char* cursor = name_buffer;
+      cell i = arity;
+      jo tag;
+      while (i > 0) {
+        tag = object_stack_peek_tag(i);
+        strcpy(cursor, jo2str(tag));
+        cursor = cursor + strlen(jo2str(tag));
+        i--;
+      }
+      return str2jo(name_buffer);
+    }
+    generic_apply(jo jo) {
+      jo = jo2real_jo(jo);
+      cell tag = jo->tag;
+      if (tag == TAG_PRIM) {
+        primitive primitive = jo->data;
+        primitive();
+      }
+      else if (tag == TAG_JOJO) {
+        cell jojo = jo->data;
+        return_stack_push_new(jojo);
+      }
+      else if (tag == TAG_PRIM_KEYWORD) {
+        push(keyword_stack, current_alias_pointer);
+        primitive primitive = jo->data;
+        primitive();
+        current_alias_pointer = pop(keyword_stack);
+      }
+      else if (tag == TAG_KEYWORD) {
+        // keywords are always evaled
+        push(keyword_stack, current_alias_pointer);
+        cell jojo = jo->data;
+        return_stack_push_new(jojo);
+        eval();
+        current_alias_pointer = pop(keyword_stack);
+      }
+      else {
+        report("- generic_apply meet unknown tag : %s\n", jo2str(tag));
+      }
+    }
     p_debug();
 
     jo_apply(jo jo) {
@@ -1063,73 +1166,14 @@
         p_debug();
         return;
       }
-
-      cell tag = jo->tag;
-
-      if (tag == TAG_PRIM) {
-        primitive primitive = jo->value;
-        primitive();
-      }
-      else if (tag == TAG_JOJO) {
-        cell jojo = jo->value;
-        return_stack_new_point(jojo);
-      }
-
-      else if (tag == TAG_PRIM_KEYWORD) {
-        push(keyword_stack, current_alias_pointer);
-        primitive primitive = jo->value;
-        primitive();
-        current_alias_pointer = pop(keyword_stack);
-      }
-      else if (tag == TAG_KEYWORD) {
-        // keywords are always evaled
-        push(keyword_stack, current_alias_pointer);
-        cell jojo = jo->value;
-        return_stack_new_point(jojo);
-        eval();
-        current_alias_pointer = pop(keyword_stack);
-      }
-
-      else if (tag == TAG_DATA) {
-        cell cell = jo->value;
-        push(data_stack, cell);
+      if (jo->tag == str2jo("<generic-prototype>")) {
+        generic_apply(jo);
       }
       else {
-        cell cell = jo->value;
-        push(data_stack, cell);
-        push(data_stack, tag);
+        push(object_stack, jo->data);
+        push(object_stack, jo->tag);
       }
     }
-    jo_apply_now(jo jo) {
-      cell tag = jo->tag;
-      if (tag == TAG_JOJO) {
-        cell jojo = jo->value;
-        return_stack_new_point(jojo);
-        eval();
-        return;
-      }
-      else {
-        jo_apply(jo);
-        return;
-      }
-    }
-    jo_apply_with_local_pointer(jo jo, cell local_pointer) {
-      cell tag = jo->tag;
-      if (tag == TAG_JOJO) {
-        cell jojo = jo->value;
-        return_stack_make_point(jojo, local_pointer);
-        return;
-      }
-      else {
-        jo_apply(jo);
-        return;
-      }
-    }
-    bool step_flag = false;
-
-    stepper();
-    exit_stepper();
-
     eval() {
       cell base = return_stack->pointer;
       while (return_stack->pointer >= base) {
@@ -1138,144 +1182,46 @@
         jo* jojo = rp.jojo;
         jo jo = jojo[0];
         jo_apply(jo);
-        if (step_flag == true) {
-          stepper();
-        }
       }
-      if (step_flag == true) {
-        report("- the stepped jojo is finished\n");
-        exit_stepper();
-      }
-    }
-    p_apply() {
-      return_stack_new_point(pop(data_stack));
-    }
-    p_apply_with_local_pointer() {
-      // [local_pointer jojo] -> [*]
-      jo* jojo = pop(data_stack);
-      cell local_pointer = pop(data_stack);
-      return_stack_make_point(jojo, local_pointer);
-    }
-    p_jo_apply() {
-      jo_apply(pop(data_stack));
-    }
-    p_jo_apply_with_local_pointer() {
-      jo jo = pop(data_stack);
-      cell local_pointer = pop(data_stack);
-      jo_apply_with_local_pointer(jo, local_pointer);
-    }
-    expose_apply() {
-      define_prim("apply", p_apply);
-      define_prim("apply-with-local-pointer", p_apply_with_local_pointer);
-
-      define_prim("jo/apply", p_jo_apply);
-      define_prim("jo/apply-with-local-pointer", p_jo_apply_with_local_pointer);
     }
     p_drop() {
-      pop(data_stack);
-    }
-    p_2drop() {
-      pop(data_stack);
-      pop(data_stack);
+      pop(object_stack);
     }
     p_dup() {
       // a a -> a
-      cell a = pop(data_stack);
-      push(data_stack, a);
-      push(data_stack, a);
-    }
-    p_2dup() {
-      // b a -> b a b a
-      cell a = pop(data_stack);
-      cell b = pop(data_stack);
-      push(data_stack, b);
-      push(data_stack, a);
-      push(data_stack, b);
-      push(data_stack, a);
+      cell a = pop(object_stack);
+      push(object_stack, a);
+      push(object_stack, a);
     }
     p_over() {
       // b a -> b a b
-      cell a = pop(data_stack);
-      cell b = pop(data_stack);
-      push(data_stack, b);
-      push(data_stack, a);
-      push(data_stack, b);
-    }
-    p_2over() {
-      // d c  b a -> d c  b a  d c
-      cell a = pop(data_stack);
-      cell b = pop(data_stack);
-      cell c = pop(data_stack);
-      cell d = pop(data_stack);
-      push(data_stack, d);
-      push(data_stack, c);
-      push(data_stack, b);
-      push(data_stack, a);
-      push(data_stack, d);
-      push(data_stack, c);
+      cell a = pop(object_stack);
+      cell b = pop(object_stack);
+      push(object_stack, b);
+      push(object_stack, a);
+      push(object_stack, b);
     }
     p_tuck() {
       // b a -> a b a
-      cell a = pop(data_stack);
-      cell b = pop(data_stack);
-      push(data_stack, a);
-      push(data_stack, b);
-      push(data_stack, a);
-    }
-    p_2tuck() {
-      // d c  b a -> b a  d c  b a
-      cell a = pop(data_stack);
-      cell b = pop(data_stack);
-      cell c = pop(data_stack);
-      cell d = pop(data_stack);
-      push(data_stack, b);
-      push(data_stack, a);
-      push(data_stack, d);
-      push(data_stack, c);
-      push(data_stack, b);
-      push(data_stack, a);
+      cell a = pop(object_stack);
+      cell b = pop(object_stack);
+      push(object_stack, a);
+      push(object_stack, b);
+      push(object_stack, a);
     }
     p_swap() {
       // b a -> a b
-      cell a = pop(data_stack);
-      cell b = pop(data_stack);
-      push(data_stack, a);
-      push(data_stack, b);
-    }
-    p_2swap() {
-      // d c  b a -> b a  d c
-      cell a = pop(data_stack);
-      cell b = pop(data_stack);
-      cell c = pop(data_stack);
-      cell d = pop(data_stack);
-      push(data_stack, b);
-      push(data_stack, a);
-      push(data_stack, d);
-      push(data_stack, c);
-    }
-    print_data_stack_data(cell data) {
-      report("%ld ", data);
-    }
-
-    p_print_data_stack() {
-      // {terminal-output}
-      report("  * %ld *  ", stack_length(data_stack));
-      report("-- ");
-      stack_traverse_from_bottom(data_stack, print_data_stack_data);
-      report("--\n");
+      cell a = pop(object_stack);
+      cell b = pop(object_stack);
+      push(object_stack, a);
+      push(object_stack, b);
     }
     expose_stack_operation() {
       define_prim("drop", p_drop);
-      define_prim("2drop", p_2drop);
       define_prim("dup", p_dup);
-      define_prim("2dup", p_2dup);
       define_prim("over", p_over);
-      define_prim("2over", p_2over);
       define_prim("tuck", p_tuck);
-      define_prim("2tuck", p_2tuck);
       define_prim("swap", p_swap);
-      define_prim("2swap", p_2swap);
-      define_prim("print-data-stack", p_print_data_stack);
     }
     p_end() {
       return_point rp = return_stack_pop();
@@ -1286,2044 +1232,8 @@
       exit(0);
     }
     expose_ending() {
-      define_prim("end", p_end);
-      define_prim("bye", p_bye);
-    }
-    stack reading_stack; // of input_stack
-    stack writing_stack; // of output_stack
-    erase_real_path_to_dir(char* path) {
-      cell cursor = strlen(path);
-      while (path[cursor] != '/') {
-        path[cursor] = '\0';
-        cursor--;
-      }
-      path[cursor] = '\0';
-    }
-
-    char* get_real_reading_path(char* path) {
-      // caller of this function
-      // should free its return value
-      char* real_reading_path = malloc(PATH_MAX);
-      if (path[0] == '/' ||
-          ((input_stack__t*)tos(reading_stack))->type == INPUT_STACK_TERMINAL) {
-        realpath(path, real_reading_path);
-        return real_reading_path;
-      }
-      else {
-        char* proc_link_path = malloc(PATH_MAX);
-        sprintf(proc_link_path,
-                "/proc/self/fd/%d",
-                ((input_stack__t*)tos(reading_stack))->file);
-        ssize_t real_bytes = readlink(proc_link_path, real_reading_path, PATH_MAX);
-        if (real_bytes == -1) {
-          report("- get_real_reading_path fail to readlink\n");
-          report("  proc_link_path : %s\n", proc_link_path);
-          perror("  readlink : ");
-          free(proc_link_path);
-          free(real_reading_path);
-          p_debug();
-          return NULL; // to fool the compiler
-        }
-        free(proc_link_path);
-        real_reading_path[real_bytes] = '\0';
-        erase_real_path_to_dir(real_reading_path);
-        strcat(real_reading_path, "/");
-        strcat(real_reading_path, path);
-        return real_reading_path;
-      }
-    }
-    bool has_byte_p() {
-      return !input_stack_empty_p(tos(reading_stack));
-    }
-    p_has_byte_p() {
-      push(data_stack, has_byte_p());
-    }
-    byte read_byte() {
-      return input_stack_pop(tos(reading_stack));
-    }
-    p_read_byte() {
-      // -> byte
-      push(data_stack, read_byte());
-    }
-    byte_unread(byte b) {
-      input_stack_push(tos(reading_stack), b);
-    }
-    p_byte_unread() {
-      // byte -> {reading_stack}
-      byte_unread(pop(data_stack));
-    }
-    byte_print(byte b) {
-      output_stack_push(tos(writing_stack), b);
-    }
-    p_byte_print() {
-      // byte ->
-      byte_print(pop(data_stack));
-    }
-    p_ignore_until_double_quote() {
-      while (true) {
-        byte b = read_byte();
-        if (b == '"') {
-          return;
-        }
-        else {
-          // loop
-        }
-      }
-    }
-    k_one_byte() {
-      byte byte = read_byte();
-      p_ignore_until_double_quote();
-      here(JO_INS_BYTE);
-      here(byte);
-    }
-    jo read_raw_jo();
-
-    k_byte() {
-      // (byte ...)
-      while (true) {
-        jo jo = read_raw_jo();
-        if (jo == ROUND_KET) {
-          return;
-        }
-        else if (jo == DOUBLE_QUOTE) {
-          k_one_byte();
-          // loop
-        }
-        else {
-          // loop
-        }
-      }
-    }
-    i_int();
-
-    expose_byte() {
-      define_prim("has-byte?", p_has_byte_p);
-      define_prim("read/byte", p_read_byte);
-      define_prim("byte/unread", p_byte_unread);
-      define_prim("byte/print", p_byte_print);
-      define_prim("ignore-until-double-quote", p_ignore_until_double_quote);
-
-      define_prim("ins/byte", i_int);
-      define_primkey("byte", k_byte);
-    }
-    p_true() {
-      push(data_stack, true);
-    }
-    p_false() {
-      push(data_stack, false);
-    }
-    p_not() {
-      // bool -> bool
-      cell a = pop(data_stack);
-      push(data_stack, !a);
-    }
-    p_and() {
-      // bool bool -> bool
-      cell a = pop(data_stack);
-      cell b = pop(data_stack);
-      push(data_stack, a&&b);
-    }
-    p_or() {
-      // bool bool -> bool
-      cell a = pop(data_stack);
-      cell b = pop(data_stack);
-      push(data_stack, a||b);
-    }
-    expose_bool() {
-      define_prim("true", p_true);
-      define_prim("false", p_false);
-      define_prim("not", p_not);
-      define_prim("and", p_and);
-      define_prim("or", p_or);
-    }
-    k_one_string() {
-      // "..."
-      char buffer[1024 * 1024];
-      cell cursor = 0;
-      while (true) {
-        char c = read_byte();
-        if (c == '"') {
-          buffer[cursor] = 0;
-          cursor++;
-          break;
-        }
-        else {
-          buffer[cursor] = c;
-          cursor++;
-        }
-      }
-      char* str = malloc(cursor);
-      strcpy(str, buffer);
-      here(JO_INS_STRING);
-      here(str);
-    }
-    k_string() {
-      // (string "...")
-      while (true) {
-        jo s = read_raw_jo();
-        if (s == ROUND_KET) {
-          return;
-        }
-        else if (s == DOUBLE_QUOTE) {
-          k_one_string();
-        }
-        else {
-          // do nothing
-        }
-      }
-    }
-    p_string_length() {
-      // string -> length
-      push(data_stack, strlen(pop(data_stack)));
-    }
-    string_print(char* str) {
-      while (str[0] != '\0') {
-        byte_print(str[0]);
-        str++;
-      }
-    }
-    p_string_print() {
-      // string -> {terminal-output}
-      string_print(pop(data_stack));
-    }
-    p_string_append_to_buffer() {
-      // buffer string -> buffer
-      char* str = pop(data_stack);
-      char* buffer = tos(data_stack);
-      strcat(buffer, str);
-    }
-    p_string_first_byte() {
-      char* s = pop(data_stack);
-      push(data_stack, s[0]);
-    }
-    p_string_last_byte() {
-      char* s = pop(data_stack);
-      cell i = 0;
-      while (s[i+1] != 0) {
-        i++;
-      }
-      push(data_stack, s[i]);
-    }
-    p_string_member_p() {
-      // non-zero-byte string -> true or false
-      char* s = pop(data_stack);
-      byte b = pop(data_stack);
-      cell i = 0;
-      while (s[i] != 0) {
-        if (s[i] == b) {
-          push(data_stack, true);
-          return;
-        }
-        else {
-          i++;
-        }
-      }
-      push(data_stack, false);
-    }
-    p_string_find_byte() {
-      // byte string -> [index true] or [false]
-      char* s = pop(data_stack);
-      byte b = pop(data_stack);
-      cell i = 0;
-      while (s[i] != 0) {
-        if (s[i] == b) {
-          push(data_stack, i);
-          push(data_stack, true);
-          return;
-        }
-        else {
-          i++;
-        }
-      }
-      push(data_stack, false);
-    }
-    p_string_equal_p() {
-      push(data_stack, string_equal(pop(data_stack), pop(data_stack)));
-    }
-    expose_string() {
-      define_prim("ins/string", i_int);
-      define_primkey("string", k_string);
-      define_primkey("one-string", k_one_string);
-      define_prim("string/print", p_string_print);
-      define_prim("string/length", p_string_length);
-      define_prim("string/append-to-buffer", p_string_append_to_buffer);
-      define_prim("string/first-byte", p_string_first_byte);
-      define_prim("string/last-byte", p_string_last_byte);
-      define_prim("string/member?", p_string_member_p);
-      define_prim("string/find-byte", p_string_find_byte);
-      define_prim("string/equal?", p_string_equal_p);
-    }
-    p_inc() {
-      cell a = pop(data_stack);
-      push(data_stack, a + 1);
-    }
-    p_dec() {
-      cell a = pop(data_stack);
-      push(data_stack, a - 1);
-    }
-    p_neg() {
-      cell a = pop(data_stack);
-      push(data_stack, - a);
-    }
-    p_add() {
-      cell b = pop(data_stack);
-      cell a = pop(data_stack);
-      push(data_stack, a + b);
-    }
-    p_sub() {
-      cell b = pop(data_stack);
-      cell a = pop(data_stack);
-      push(data_stack, a - b);
-    }
-    p_mul() {
-      cell b = pop(data_stack);
-      cell a = pop(data_stack);
-      push(data_stack, a * b);
-    }
-    p_div() {
-      cell b = pop(data_stack);
-      cell a = pop(data_stack);
-      push(data_stack, a / b);
-    }
-    p_mod() {
-      cell b = pop(data_stack);
-      cell a = pop(data_stack);
-      push(data_stack, a % b);
-    }
-    p_eq_p() {
-      cell b = pop(data_stack);
-      cell a = pop(data_stack);
-      push(data_stack, a == b);
-    }
-    p_gt_p() {
-      cell b = pop(data_stack);
-      cell a = pop(data_stack);
-      push(data_stack, a > b);
-    }
-    p_lt_p() {
-      cell b = pop(data_stack);
-      cell a = pop(data_stack);
-      push(data_stack, a < b);
-    }
-    p_gteq_p() {
-      cell b = pop(data_stack);
-      cell a = pop(data_stack);
-      push(data_stack, a >= b);
-    }
-    p_lteq_p() {
-      cell b = pop(data_stack);
-      cell a = pop(data_stack);
-      push(data_stack, a <= b);
-    }
-    i_int() {
-      // [] -> [cell] {return_stack}
-      return_point rp = return_stack_tos();
-      return_stack_inc();
-      jo* jojo = rp.jojo;
-      jo jo = jojo[0];
-      push(data_stack, jo);
-    }
-    jo read_raw_jo();
-
-    k_int() {
-      // (int ...)
-      while (true) {
-        jo s = read_raw_jo();
-        if (s == ROUND_KET) {
-          break;
-        }
-        else {
-          here(JO_INS_INT);
-          here(string_to_int(jo2str(s)));
-        }
-      }
-    }
-    p_int_print() {
-      char buffer [32];
-      sprintf(buffer, "%ld", pop(data_stack));
-      string_print(buffer);
-    }
-    expose_int() {
-      define_prim("inc", p_inc);
-      define_prim("dec", p_dec);
-      define_prim("neg", p_neg);
-
-      define_prim("add", p_add);
-      define_prim("sub", p_sub);
-
-      define_prim("mul", p_mul);
-      define_prim("div", p_div);
-      define_prim("mod", p_mod);
-
-      define_prim("eq?", p_eq_p);
-      define_prim("gt?", p_gt_p);
-      define_prim("lt?", p_lt_p);
-      define_prim("gteq?", p_gteq_p);
-      define_prim("lteq?", p_lteq_p);
-
-      define_prim("ins/int", i_int);
-      define_primkey("int", k_int);
-
-      define_prim("int/print", p_int_print);
-    }
-    p_allocate () {
-      // size -> addr
-      push(data_stack, calloc(pop(data_stack), 1));
-    }
-    p_free () {
-      // addr ->
-      free(pop(data_stack));
-    }
-    k_ignore();
-
-    k_address() {
-      // (address ...)
-      here(JO_INS_ADDRESS);
-      jo name = read_raw_jo();
-      here(&(name->value));
-      k_ignore();
-    }
-    p_jo_as_var() {
-      jo jo = pop(data_stack);
-      push(data_stack, &(jo->value));
-    }
-    p_set_cell() {
-      // cell address ->
-      cell* address = pop(data_stack);
-      cell value = pop(data_stack);
-      address[0] = value;
-    }
-    p_get_cell() {
-      // address -> cell
-      cell* address = pop(data_stack);
-      push(data_stack, address[0]);
-    }
-    p_set_byte() {
-      // byte address ->
-      char* address = pop(data_stack);
-      cell value = pop(data_stack);
-      address[0] = value;
-    }
-    p_get_byte() {
-      // address -> byte
-      char* address = pop(data_stack);
-      push(data_stack, address[0]);
-    }
-    expose_memory() {
-      define_prim("allocate", p_allocate);
-      define_prim("free", p_free);
-
-      define_prim("ins/address", i_int);
-      define_primkey("address", k_address);
-
-      define_prim("jo-as-var", p_jo_as_var);
-      define_prim("set-cell", p_set_cell);
-      define_prim("get-cell", p_get_cell);
-      define_prim("set-byte", p_set_byte);
-      define_prim("get-byte", p_get_byte);
-    }
-    p_alias_add() {
-      jo name = pop(data_stack);
-      jo nick = pop(data_stack);
-      alias_record[current_alias_pointer].nick = nick;
-      alias_record[current_alias_pointer].name = name;
-      current_alias_pointer++;
-    }
-    p_alias_filter() {
-      // nick -> name
-      if (stack_empty_p(keyword_stack)) {
-        return;
-      }
-      jo nick = pop(data_stack);
-      cell base = tos(keyword_stack);
-      cell i = current_alias_pointer;
-      while (i >= base) {
-        if (alias_record[i].nick == nick) {
-          push(data_stack, alias_record[i].name);
-          return;
-        }
-        else {
-          i--;
-        }
-      }
-      push(data_stack, nick);
-    }
-    bool has_jo_p() {
-      byte c;
-      while (true) {
-
-        if (!has_byte_p()) {
-          return false;
-        }
-
-        c = read_byte();
-
-        if (isspace(c)) {
-          // loop
-        }
-        else {
-          byte_unread(c);
-          return true;
-        }
-      }
-    }
-    p_has_jo_p() {
-      push(data_stack, has_jo_p());
-    }
-    p_read_raw_jo() {
-      // {reading_stack} -> jo
-      byte buf[1024];
-      cell cur = 0;
-      cell collecting = false;
-      byte c;
-      byte go = true;
-
-      while (go) {
-
-        if (!has_byte_p()) {
-          if (!collecting) {
-            report("- p_read_raw_jo meet end-of-file\n");
-            return;
-          }
-          else {
-            break;
-          }
-        }
-
-        c = read_byte(); // report("- read_byte() : %c\n", c);
-
-        if (!collecting) {
-          if (isspace(c)) {
-            // loop
-          }
-          else {
-            collecting = true;
-            buf[cur] = c;
-            cur++;
-            if (isbarcket(c)) {
-              go = false;
-            }
-          }
-        }
-
-        else {
-          if (isbarcket(c) ||
-              isspace(c)) {
-            byte_unread(c);
-            go = false;
-          }
-          else {
-            buf[cur] = c;
-            cur++;
-          }
-        }
-      }
-
-      buf[cur] = 0;
-      push(data_stack, str2jo(buf));
-    }
-      stack jo_filter_stack; // of jo
-      p_jo_filter_stack_push() {
-        push(jo_filter_stack, pop(data_stack));
-      }
-      p_jo_filter_stack_pop() {
-        push(data_stack, pop(jo_filter_stack));
-      }
-      run_jo_filter() {
-        stack_traverse_from_bottom(jo_filter_stack, jo_apply_now);
-      }
-    p_read_jo() {
-      p_read_raw_jo();
-      run_jo_filter();
-    }
-    jo read_jo() {
-      p_read_jo();
-      return pop(data_stack);
-    }
-    jo read_raw_jo() {
-      p_read_raw_jo();
-      return pop(data_stack);
-    }
-    string_unread(char* str) {
-      if (str[0] == '\0') {
-        return;
-      }
-      else {
-        string_unread(str+1);
-        byte_unread(str[0]);
-      }
-    }
-    p_jo_unread() {
-      // jo -> {tos of reading_stack}
-      jo jo = pop(data_stack);
-      char* str = jo2str(jo);
-      byte_unread(' ');
-      string_unread(str);
-      byte_unread(' ');
-    }
-    jo cat_2_jo(jo x, jo y) {
-      char str[2 * 1024];
-      str[0] = 0;
-      strcat(str, jo2str(x));
-      strcat(str, jo2str(y));
-      return str2jo(str);
-    }
-    jo cat_3_jo(jo x, jo y, jo z) {
-      char str[3 * 1024];
-      str[0] = 0;
-      strcat(str, jo2str(x));
-      strcat(str, jo2str(y));
-      strcat(str, jo2str(z));
-      return str2jo(str);
-    }
-    p_jo_append() {
-      jo jo2 = pop(data_stack);
-      jo jo1 = pop(data_stack);
-      push(data_stack, cat_2_jo(jo1, jo2));
-    }
-    p_empty_jo() {
-      push(data_stack, EMPTY_JO);
-    }
-    p_jo_used_p() {
-      // jo -> bool
-      jo jo = pop(data_stack);
-      push(data_stack, used_jo_p(jo));
-    }
-    p_jo_to_string() {
-      // jo -> string
-      jo jo = pop(data_stack);
-      push(data_stack, jo2str(jo));
-    }
-    p_string_length_to_jo() {
-      // string length -> jo
-      cell len = pop(data_stack);
-      cell str = pop(data_stack);
-      char buffer[2 * 1024];
-      strncpy(buffer, str, len);
-      buffer[len] = 0;
-      push(data_stack, str2jo(buffer));
-    }
-    p_string_to_jo() {
-      // string -> jo
-      char* str = pop(data_stack);
-      push(data_stack, str2jo(str));
-    }
-    p_null() {
-      push(data_stack, JO_NULL);
-    }
-    k_raw_jo() {
-      // (raw-jo ...)
-      while (true) {
-        jo s = read_raw_jo();
-        if (s == ROUND_BAR) {
-          jo_apply(read_jo());
-        }
-        else if (s == ROUND_KET) {
-          break;
-        }
-        else {
-          here(JO_INS_JO);
-          here(s);
-        }
-      }
-    }
-    k_jo() {
-      // (jo ...)
-      while (true) {
-        jo s = read_jo();
-        if (s == ROUND_BAR) {
-          jo_apply(read_jo());
-        }
-        else if (s == ROUND_KET) {
-          break;
-        }
-        else {
-          here(JO_INS_JO);
-          here(s);
-        }
-      }
-    }
-    p_jo_print() {
-      // jo -> {terminal-output}
-      string_print(jo2str(pop(data_stack)));
-    }
-    cell p_generate_jo_counter = 0;
-    p_generate_jo() {
-      char* s = pop(data_stack);
-      char buffer [1024];
-      sprintf(buffer, "%s:generated-jo#%ld", jo2str(s), p_generate_jo_counter);
-      p_generate_jo_counter++;
-      push(data_stack, str2jo(buffer));
-    }
-    p_jo_find_byte() {
-      // byte jo -> [index true] or [false]
-      p_jo_to_string();
-      p_string_find_byte();
-    }
-    p_jo_right_part() {
-      // index jo -> jo
-      jo jo = pop(data_stack);
-      cell index = pop(data_stack);
-      char* s = jo2str(jo);
-      push(data_stack, str2jo(s + index));
-    }
-    p_jo_left_part() {
-      // index jo -> jo
-      char target[1024];
-      jo jo = pop(data_stack);
-      cell index = pop(data_stack);
-      char* source = jo2str(jo);
-      cell i = 0;
-      while (i < index) {
-        target[i] = source[i];
-        i++;
-      }
-      target[index] = 0;
-      push(data_stack, str2jo(target));
-    }
-    p_jo_part() {
-      // index-begin index-end jo -> jo
-      char target[1024];
-      jo jo = pop(data_stack);
-      cell index_end = pop(data_stack);
-      cell index_begin = pop(data_stack);
-      char* source = jo2str(jo);
-      cell i = index_begin;
-      while (i < index_end) {
-        target[i] = source[i];
-        i++;
-      }
-      target[index_end] = 0;
-      push(data_stack, str2jo(target + index_begin));
-    }
-    expose_jo() {
-      define_prim("null", p_null);
-
-      define_prim("jo-filter-stack-push", p_jo_filter_stack_push);
-      define_prim("jo-filter-stack-pop", p_jo_filter_stack_pop);
-
-      define_prim("alias-add", p_alias_add);
-      define_prim("alias-filter", p_alias_filter);
-
-      define_prim("has-jo?", p_has_jo_p);
-
-      define_prim("read/raw-jo", p_read_raw_jo);
-      define_prim("read/jo", p_read_jo);
-
-      define_prim("jo/unread", p_jo_unread);
-
-      define_prim("ins/jo", i_int);
-      define_primkey("jo", k_jo);
-      define_primkey("raw-jo", k_raw_jo);
-
-      define_prim("jo/used?", p_jo_used_p);
-      define_prim("jo/append", p_jo_append);
-      define_prim("empty-jo", p_empty_jo);
-      define_prim("jo->string", p_jo_to_string);
-      define_prim("string->jo", p_string_to_jo);
-      define_prim("string/length->jo", p_string_length_to_jo);
-      define_prim("jo/print", p_jo_print);
-      define_prim("generate-jo", p_generate_jo);
-
-      define_prim("jo/find-byte", p_jo_find_byte);
-      define_prim("jo/left-part", p_jo_left_part);
-      define_prim("jo/right-part", p_jo_right_part);
-      define_prim("jo/part", p_jo_part);
-    }
-    p_error_number_print() {
-      // errno -> {terminal-output}
-      int no = pop(data_stack);
-      string_print(strerror(no));
-    }
-    p_path_open_read() {
-      // [path] -> [file true] or [errno false]
-      char* path = pop(data_stack);
-
-      FILE* file = fopen(path, "r");
-      if (file == NULL) {
-        push(data_stack, errno);
-        push(data_stack, false);
-      }
-      else {
-        push(data_stack, file);
-        push(data_stack, true);
-      }
-    }
-    p_path_open_write() {
-      // [path] -> [file true] or [errno false]
-      char* path = pop(data_stack);
-
-      FILE* file = fopen(path, "wx");
-      if (file == NULL) {
-        push(data_stack, errno);
-        push(data_stack, false);
-      }
-      else {
-        push(data_stack, file);
-        push(data_stack, true);
-      }
-    }
-    p_path_open_read_and_write() {
-      // [path] -> [file true] or [errno false]
-      char* path = pop(data_stack);
-
-      FILE* file = fopen(path, "r+");
-      if (file == NULL) {
-        push(data_stack, errno);
-        push(data_stack, false);
-      }
-      else {
-        push(data_stack, file);
-        push(data_stack, true);
-      }
-    }
-    p_path_open_create() {
-      // [path] -> [file true] or [errno false]
-      char* path = pop(data_stack);
-
-      FILE* file = fopen(path, "w+");
-      if (file == NULL) {
-        push(data_stack, errno);
-        push(data_stack, false);
-      }
-      else {
-        push(data_stack, file);
-        push(data_stack, true);
-      }
-    }
-    p_file_close() {
-      // [file] -> [true] or [errno false]
-      // - error reasons
-      // 1. to close an unopened file descriptor
-      // 2. close the same file descriptor twice
-      // 3. error conditions for specific file system
-      //    to diagnose during a close operation
-      //    - for example, NFS (Network File System)
-      FILE* file = pop(data_stack);
-
-      if (fclose(file) == EOF) {
-        push(data_stack, errno);
-        push(data_stack, false);
-      }
-      else {
-        push(data_stack, true);
-      }
-    }
-    p_file_end_p() {
-      // file -> true or false
-      FILE* file = pop(data_stack);
-
-      if (feof(file)) {
-        push(data_stack, true);
-      }
-      else {
-        push(data_stack, false);
-      }
-    }
-    p_file_read() {
-      // [file buffer requested-bytes] ->
-      // [real-bytes true] or [errno false]
-      // - partial read reasons
-      //   1. [regular-file] end-of-file is reached
-      //   2. [terminal] meets '\n'
-      size_t want_bytes = pop(data_stack);
-      void* buffer = pop(data_stack);
-      FILE* file = pop(data_stack);
-
-      size_t real_bytes = fread(buffer, 1, file, want_bytes);
-      if (real_bytes != want_bytes) {
-        if (ferror(file)) {
-          push(data_stack, errno);
-          push(data_stack, false);
-        }
-        else {
-          push(data_stack, real_bytes);
-          push(data_stack, true);
-        }
-      }
-      else {
-        push(data_stack, real_bytes);
-        push(data_stack, true);
-      }
-    }
-    p_file_write() {
-      // [file buffer want-bytes] ->
-      // [true] or [errno false]
-      // - partial write reasons
-      //   1. disk was filled
-      //   2. the process resource limit on file sizes was reached
-      size_t want_bytes = pop(data_stack);
-      void* buffer = pop(data_stack);
-      FILE* file = pop(data_stack);
-
-      ssize_t real_bytes = fwrite(buffer, 1, want_bytes, file);
-      if (real_bytes != want_bytes) {
-        push(data_stack, errno);
-        push(data_stack, false);
-      }
-      else {
-        push(data_stack, true);
-      }
-    }
-    p_file_size() {
-      // file -> int
-      FILE* file = pop(data_stack);
-      struct stat file_state;
-      fstat(fileno(file), &file_state);
-      push(data_stack, file_state.st_size);
-    }
-    p_file_regular_file_p() {
-      // file -> true or false
-      FILE* file = pop(data_stack);
-      struct stat file_state;
-      fstat(fileno(file), &file_state);
-      if ((file_state.st_mode & S_IFMT) == S_IFREG) {
-        push(data_stack, true);
-      }
-      else {
-        push(data_stack, false);
-      }
-    }
-    p_file_directory_p() {
-      // file -> true or false
-      FILE* file = pop(data_stack);
-      struct stat file_state;
-      fstat(fileno(file), &file_state);
-      if ((file_state.st_mode & S_IFMT) == S_IFDIR) {
-        push(data_stack, true);
-      }
-      else {
-        push(data_stack, false);
-      }
-    }
-    p_file_character_device_p() {
-      // file -> true or false
-      FILE* file = pop(data_stack);
-      struct stat file_state;
-      fstat(fileno(file), &file_state);
-      if ((file_state.st_mode & S_IFMT) == S_IFCHR) {
-        push(data_stack, true);
-      }
-      else {
-        push(data_stack, false);
-      }
-    }
-    p_file_block_device_p() {
-      // file -> true or false
-      FILE* file = pop(data_stack);
-      struct stat file_state;
-      fstat(fileno(file), &file_state);
-      if ((file_state.st_mode & S_IFMT) == S_IFBLK) {
-        push(data_stack, true);
-      }
-      else {
-        push(data_stack, false);
-      }
-    }
-    p_file_fifo_p() {
-      // file -> true or false
-      FILE* file = pop(data_stack);
-      struct stat file_state;
-      fstat(fileno(file), &file_state);
-      if ((file_state.st_mode & S_IFMT) == S_IFIFO) {
-        push(data_stack, true);
-      }
-      else {
-        push(data_stack, false);
-      }
-    }
-    p_file_socket_p() {
-      // file -> true or false
-      FILE* file = pop(data_stack);
-      struct stat file_state;
-      fstat(fileno(file), &file_state);
-      if ((file_state.st_mode & S_IFMT) == S_IFSOCK) {
-        push(data_stack, true);
-      }
-      else {
-        push(data_stack, false);
-      }
-    }
-    p_path_exist_p() {
-      // path -> true or false
-      char* path = pop(data_stack);
-
-      if (access(path, F_OK) == -1) {
-        push(data_stack, false);
-      }
-      else {
-        push(data_stack, true);
-      }
-    }
-    p_path_readable_p() {
-      // path -> true or false
-      char* path = pop(data_stack);
-
-      if (access(path, R_OK) == -1) {
-        push(data_stack, false);
-      }
-      else {
-        push(data_stack, true);
-      }
-    }
-    p_path_writable_p() {
-      // path -> true or false
-      char* path = pop(data_stack);
-
-      if (access(path, W_OK) == -1) {
-        push(data_stack, false);
-      }
-      else {
-        push(data_stack, true);
-      }
-    }
-    p_path_executable_p() {
-      // path -> true or false
-      char* path = pop(data_stack);
-
-      if (access(path, X_OK) == -1) {
-        push(data_stack, false);
-      }
-      else {
-        push(data_stack, true);
-      }
-    }
-    p_file_print_path() {
-      // file -> path
-      FILE* file = pop(data_stack);
-
-      char proc_link_path[PATH_MAX];
-      char file_path[PATH_MAX];
-
-      sprintf(proc_link_path, "/proc/self/fd/%d", fileno(file));
-
-      ssize_t real_bytes = readlink(proc_link_path, file_path, PATH_MAX);
-      if (real_bytes == -1) {
-        report("- p_file_print_path fail readlink /proc/self/fd/%d\n", fileno(file));
-        perror("\n");
-      }
-      else {
-        file_path[real_bytes] = '\0';
-        string_print(file_path);
-      }
-    }
-    p_repl();
-
-    p_path_load() {
-      // path -> {reading_stack}
-      char* path = pop(data_stack);
-      int file = open(path, O_RDONLY);
-      if(file == -1) {
-        report("- p_path_load fail : %s\n", path);
-        perror("file open failed");
-        return;
-      }
-      input_stack input_stack = input_stack_file(file);
-      push(reading_stack, input_stack);
-      p_repl();
-      drop(reading_stack);
-      input_stack_free(input_stack);
-      close(file);
-    }
-    k_one_include() {
-      // "..."
-      char* path = malloc(PATH_MAX);
-      cell cursor = 0;
-      while (true) {
-        char c = read_byte();
-        if (c == '"') {
-          path[cursor] = 0;
-          cursor++;
-          break;
-        }
-        else {
-          path[cursor] = c;
-          cursor++;
-        }
-      }
-      char* real_read_path = get_real_reading_path(path);
-      free(path);
-      push(data_stack, real_read_path);
-      p_path_load();
-      free(real_read_path);
-    }
-    k_include() {
-      // (include "..." ...)
-      while (true) {
-        jo s = read_raw_jo();
-        if (s == ROUND_KET) {
-          return;
-        }
-        else if (s == ROUND_BAR) {
-          jo_apply(read_jo());
-        }
-        else if (s == DOUBLE_QUOTE) {
-          k_one_include();
-        }
-        else {
-          // do nothing
-        }
-      }
-    }
-    expose_file() {
-      define_prim("error-number/print", p_error_number_print);
-
-      define_prim("path/open/read", p_path_open_read);
-      define_prim("path/open/write", p_path_open_write);
-      define_prim("path/open/create", p_path_open_create);
-      define_prim("path/open/read-and-write", p_path_open_read_and_write);
-
-      define_prim("file/close", p_file_close);
-
-      define_prim("file/read", p_file_read);
-      define_prim("file/write", p_file_write);
-
-      define_prim("file/size", p_file_size);
-
-      define_prim("file/regular-file?", p_file_regular_file_p);
-      define_prim("file/directory?", p_file_directory_p);
-      define_prim("file/character-device?", p_file_character_device_p);
-      define_prim("file/block-device?", p_file_block_device_p);
-      define_prim("file/fifo?", p_file_fifo_p);
-      define_prim("file/socket?", p_file_socket_p);
-
-      define_prim("path/exist?", p_path_exist_p);
-      define_prim("path/readable?", p_path_readable_p);
-      define_prim("path/writable?", p_path_writable_p);
-      define_prim("path/executable?", p_path_executable_p);
-
-      define_prim("file/print-path", p_file_print_path);
-
-      define_prim("path/load", p_path_load);
-      define_primkey("include", k_include);
-    }
-    cell cmd_number;
-
-    p_cmd_number() {
-      // -> cmd_number
-      push(data_stack, cmd_number);
-    }
-    char** cmd_string_array;
-
-    p_index_to_cmd_string() {
-      // index -> string
-      cell index = pop(data_stack);
-      char* cmd_string = cmd_string_array[index];
-      push(data_stack, cmd_string);
-    }
-    p_find_env_string() {
-      // string -> [env-string true] or [false]
-      char* var_string = pop(data_stack);
-      char* env_string = getenv(var_string);
-      if (env_string == NULL) {
-        push(data_stack, false);
-      }
-      else {
-        push(data_stack, env_string);
-        push(data_stack, true);
-      }
-    }
-    p_string_sh_run() {
-      // string -> {*}
-      system(pop(data_stack));
-    }
-    expose_system() {
-      define_prim("cmd-number", p_cmd_number);
-      define_prim("index->cmd-string", p_index_to_cmd_string);
-      define_prim("find-env-string", p_find_env_string);
-
-      define_prim("string/sh-run", p_string_sh_run);
-    }
-    ccall (char* function_name, void* lib) {
-      primitive fun = dlsym(lib, function_name);
-      if (fun == NULL) {
-        report("- ccall fail\n");
-        report("  function_name : %s\n", function_name);
-        report("  dynamic link error : %s\n", dlerror());
-      };
-      fun();
-    }
-    k_clib_one() {
-      // "..."
-      char* path = malloc(PATH_MAX);
-      cell cursor = 0;
-      while (true) {
-        char c = read_byte();
-        if (c == '"') {
-          path[cursor] = 0;
-          cursor++;
-          break;
-        }
-        else {
-          path[cursor] = c;
-          cursor++;
-        }
-      }
-      char* real_read_path = get_real_reading_path(path);
-      free(path);
-      void* lib = dlopen(real_read_path, RTLD_LAZY);
-      if (lib == NULL) {
-        report("- k_clib_one fail to open library\n");
-        report("  real_read_path : %s\n", real_read_path);
-        report("  dynamic link error : %s\n", dlerror());
-        p_debug();
-        return;
-      };
-      free(real_read_path);
-      ccall("expose", lib);
-    }
-    k_clib() {
-      // (clib "..." ...)
-      while (true) {
-        jo s = read_raw_jo();
-        if (s == ROUND_KET) {
-          return;
-        }
-        else if (s == DOUBLE_QUOTE) {
-          k_clib_one();
-        }
-        else {
-          // do nothing
-        }
-      }
-    }
-    expose_cffi() {
-      define_prim("clib", k_clib);
-    }
-    k_run();
-
-    k_define() {
-      jo name = read_jo();
-      k_run();
-      push(data_stack, name);
-      p_bind_name();
-    }
-    k_redefine() {
-      jo name = read_jo();
-      k_run();
-      push(data_stack, name);
-      p_rebind_name();
-    }
-    p_defined_p() {
-      // [name] -> true or false
-      jo name = pop(data_stack);
-      push(data_stack, used_jo_p(name));
-    }
-      k_declare_one() {
-        jo jo = read_jo();
-        jo->tag = JO_DECLARED;
-        k_ignore();
-      }
-      k_declare() {
-        while (true) {
-          jo s = read_jo();
-          if (s == ROUND_KET) {
-            return;
-          }
-          else if (s == ROUND_BAR) {
-            k_declare_one();
-          }
-          else {
-            // do nothing
-          }
-        }
-      }
-    p_declared_p() {
-      // [name] -> true or false
-      jo name = pop(data_stack);
-      if (name->tag == JO_DECLARED) {
-        push(data_stack, true);
-      }
-      else {
-        push(data_stack, false);
-      }
-    }
-    p_compile_jojo();
-
-    k_run() {
-      // (run ...)
-      jo* jojo = tos(compiling_stack);
-      p_compile_jojo();
-      return_stack_new_point(jojo);
-      eval();
-    }
-    bool test_flag = false;
-    p_test_flag() { push(data_stack, test_flag); }
-    p_test_flag_on() { test_flag = true; }
-    p_test_flag_off() { test_flag = false; }
-
-    k_test() {
-      if (test_flag) {
-        k_run();
-      }
-      else {
-        k_ignore();
-      }
-    }
-    bool repl_flag = false;
-    p_repl_flag() { push(data_stack, repl_flag); }
-    p_repl_flag_on() { repl_flag = true; }
-    p_repl_flag_off() { repl_flag = false; }
-
-    p_repl() {
-      while (true) {
-        if (!has_jo_p()) {
-          return 69;
-        }
-        jo s = read_jo();
-        if (s == ROUND_BAR) {
-          jo_apply(read_jo());
-          if (repl_flag) {
-            p_print_data_stack();
-          }
-        }
-        else {
-          // loop
-        }
-      }
-    }
-    p_bare_jojo_print() {
-      // jojo -> {terminal-output}
-      jo* jojo = pop(data_stack);
-      report("[ ");
-      while (true) {
-        if (jojo[0] == 0 && jojo[1] == 0) {
-          break;
-        }
-        else if (jojo[0] == JO_INS_INT) {
-          report("(int %ld) ", jojo[1]);
-          jojo++;
-          jojo++;
-        }
-        else if (jojo[0] == JO_INS_JO) {
-          report("(jo %s) ", jo2str(jojo[1]));
-          jojo++;
-          jojo++;
-        }
-        else if (jojo[0] == JO_INS_STRING) {
-          report("(string \"%s\") ", (char*)jojo[1]);
-          jojo++;
-          jojo++;
-        }
-        else if (jojo[0] == JO_INS_BYTE) {
-          report("(btye \"%c\") ", (char)jojo[1]);
-          jojo++;
-          jojo++;
-        }
-        else if (jojo[0] == JO_INS_BARE_JOJO) {
-          report("(bare-jojo ");
-          push(data_stack, jojo + 2);
-          p_bare_jojo_print();
-          report(") ");
-          jojo = jojo + (cell)jojo[1];
-          jojo++;
-        }
-        else if (jojo[0] == JO_INS_ADDRESS) {
-          report("(address %ld) ", jojo[1]);
-          jojo++;
-          jojo++;
-        }
-        else if (jojo[0] == JO_INS_JUMP_IF_FALSE) {
-          report("(jump-if-false %ld) ", jojo[1]);
-          jojo++;
-          jojo++;
-        }
-        else if (jojo[0] == JO_INS_JUMP) {
-          report("(jump %ld) ", jojo[1]);
-          jojo++;
-          jojo++;
-        }
-        else if (jojo[0] == JO_INS_LOOP) {
-          report("(loop) ");
-          jojo++;
-          jojo++;
-        }
-        else if (jojo[0] == JO_INS_RECUR) {
-          report("(recur) ");
-          jojo++;
-          jojo++;
-        }
-        else if (jojo[0] == JO_INS_TAIL_CALL) {
-          report("(tail-call %s) ", jo2str(jojo[1]));
-          jojo++;
-          jojo++;
-        }
-        else {
-          report("%s ", jo2str(jojo[0]));
-          jojo++;
-        }
-      }
-      report("] ");
-    }
-    print_return_point(jo* jojo) {
-      if (jojo <= current_local_pointer) {
-        return;
-      }
-      report("    - ");
-      if (jojo != tos(return_stack)) {
-        report("{ %s } ", jo2str(*(jojo - 1)));
-      }
-      push(data_stack, jojo);
-      p_bare_jojo_print();
-      report("\n");
-    }
-    p_print_return_stack() {
-      report("  - return-stack :\n");
-      stack_traverse_from_bottom(return_stack, print_return_point);
-    }
-    cell debug_repl_level = 0;
-
-    p_debug_repl() {
-      while (true) {
-        if (!has_jo_p()) {
-          return;
-        }
-        jo jo = read_raw_jo();
-        if (jo == str2jo("help")) {
-          report("- debug-repl usage :\n");
-          report("  - available commands :\n");
-          report("    help exit bye\n");
-        }
-        else if (jo == str2jo("exit")) {
-          return;
-        }
-        else if (jo == str2jo("bye")) {
-          p_bye();
-          return;
-        }
-        else if (jo == ROUND_BAR) {
-          jo_apply(read_jo());
-          p_print_data_stack();
-          report("debug[%ld]> ", debug_repl_level);
-        }
-        else {
-          // loop
-        }
-      }
-    }
-    p_debug() {
-      push(reading_stack, input_stack_terminal());
-
-      report("- in debug-repl [level %ld] >_<!\n", debug_repl_level);
-      p_print_return_stack();
-      p_print_data_stack();
-      report("debug[%ld]> ", debug_repl_level);
-      debug_repl_level++;
-      p_debug_repl();
-      debug_repl_level--;
-      report("- exit debug-repl [level %ld]\n", debug_repl_level);
-
-      drop(reading_stack);
-    }
-    cell stepper_counter = 0;
-    cell pending_steps = 0;
-
-    // return will not exit stepper
-    // set step_flag to exit stepper
-    exit_stepper() {
-      step_flag = false;
-      stepper_counter = 0;
-      pending_steps = 0;
-      report("- exit stepper\n");
-      drop(reading_stack);
-    }
-
-    stepper() {
-      push(reading_stack, input_stack_terminal());
-      report("stepper> ");
-      while (true) {
-
-        if (pending_steps > 0) {
-          p_print_return_stack();
-          p_print_data_stack();
-          stepper_counter++;
-          report("- stepper counting : %ld\n", stepper_counter);
-          pending_steps--;
-          return;
-        }
-
-        jo jo = read_raw_jo();
-        if (jo == str2jo("help")) {
-          report("- stepper usage :\n");
-          report("  type '.' to execute one step\n");
-          report("  type a numebr to execute the number of steps\n");
-          report("  - available commands :\n");
-          report("    help exit bye\n");
-        }
-        else if (jo == str2jo(".")) {
-          p_print_return_stack();
-          p_print_data_stack();
-          stepper_counter++;
-          report("- stepper counting : %ld\n", stepper_counter);
-          return;
-        }
-        else if (nat_string_p(jo2str(jo))) {
-          p_print_return_stack();
-          p_print_data_stack();
-          stepper_counter++;
-          report("- stepper counting : %ld\n", stepper_counter);
-          pending_steps = string_to_int(jo2str(jo)) - 1;
-          return;
-        }
-        else if (jo == str2jo("exit")) {
-          exit_stepper();
-          return;
-        }
-        else if (jo == str2jo("bye")) {
-          p_bye();
-          return;
-        }
-        else {
-          // loop
-        }
-      }
-    }
-    p_step() {
-      step_flag = true;
-    }
-      kernel_signal_handler(int sig, siginfo_t *siginfo, void *ucontext) {
-        fflush(stdin);
-        fflush(stdout);
-        fflush(stderr);
-
-        report("- kernel_signal_handler\n");
-        psiginfo(siginfo, "  signal ");
-
-        int errno_backup;
-        errno_backup = errno;
-
-        p_debug();
-
-        errno = errno_backup;
-      }
-      init_kernel_signal_handler() {
-        struct sigaction kernel_signal_action;
-
-        sigemptyset(&kernel_signal_action.sa_mask);
-
-        kernel_signal_action.sa_flags = SA_SIGINFO | SA_NODEFER | SA_RESTART;
-        kernel_signal_action.sa_sigaction = kernel_signal_handler;
-
-        int sig_array[] = { SIGSEGV, SIGBUS, SIGFPE, SIGILL,
-                            SIGPIPE, SIGSYS, SIGXCPU, SIGXFSZ};
-        int sig_array_length = sizeof(sig_array)/sizeof(sig_array[0]);
-        cell i = 0;
-        while (i < sig_array_length) {
-          if (sigaction(sig_array[i], &kernel_signal_action, NULL) == -1) {
-            perror("- init_kernel_signal_handler fail");
-          }
-          i++;
-        }
-      }
-    expose_top_level() {
-      define_primkey("define", k_define);
-      define_primkey("redefine", k_redefine);
-      define_prim("defined?", p_defined_p);
-
-      define_primkey("declare", k_declare);
-      define_prim("declared?", p_declared_p);
-
-      define_primkey("run", k_run);
-
-      define_primkey("test", k_test);
-      define_prim("test-flag", p_test_flag);
-      define_prim("test-flag/on", p_test_flag_on);
-      define_prim("test-flag/off", p_test_flag_off);
-
-      define_prim("repl", p_repl);
-      define_prim("repl-flag", p_repl_flag);
-      define_prim("repl-flag/on", p_repl_flag_on);
-      define_prim("repl-flag/off", p_repl_flag_off);
-
-      define_prim("bare-jojo/print", p_bare_jojo_print);
-      define_prim("print-return-stack", p_print_return_stack);
-      define_prim("debug", p_debug);
-
-      define_prim("step", p_step);
-    }
-    k_ignore() {
-      while (true) {
-        jo s = read_raw_jo();
-        if (s == ROUND_BAR) {
-          k_ignore();
-        }
-        if (s == ROUND_KET) {
-          break;
-        }
-      }
-    }
-    compile_until_meet_jo(jo ending_jo) {
-      while (true) {
-        jo jo = read_jo();
-        if (jo == ROUND_BAR) {
-          jo_apply(read_jo());
-        }
-        else if (jo == ending_jo) {
-          break;
-        }
-        else if (used_jo_p(jo)) {
-          here(jo);
-        }
-        else {
-          // no compile before define
-          report("- compile_until_meet_jo undefined : %s\n", jo2str(jo));
-          k_ignore();
-          p_debug();
-          return;
-        }
-      }
-    }
-    p_compile_until_meet_jo() {
-      compile_until_meet_jo(pop(data_stack));
-    }
-    jo compile_until_meet_jo_or_jo(jo ending_jo1, jo ending_jo2) {
-      while (true) {
-        jo jo = read_jo();
-        if (jo == ROUND_BAR) {
-          jo_apply(read_jo());
-        }
-        else if (jo == ending_jo1 || jo == ending_jo2) {
-          return jo;
-        }
-        else if (used_jo_p(jo)) {
-          here(jo);
-        }
-        else {
-          // no compile before define
-          report("- compile_until_meet_jo_or_jo undefined : %s\n", jo2str(jo));
-          report("- ending_jo1 : %s\n", jo2str(ending_jo1));
-          report("- ending_jo2 : %s\n", jo2str(ending_jo2));
-          k_ignore();
-          p_debug();
-          return JO_NULL; // to fool the compiler
-        }
-      }
-    }
-    p_compile_until_round_ket() {
-      compile_until_meet_jo(ROUND_KET);
-    }
-    i_jump() {
-      // {return_stack}
-      return_point rp = return_stack_tos();
-      jo* jojo = rp.jojo;
-      cell offset = jojo[0];
-      return_point rp1 = return_stack_pop();
-      return_stack_make_point(jojo + offset, rp1.local_pointer);
-    }
-    k_jump() {
-      here(JO_INS_JUMP);
-      here(string_to_int(jo2str(read_raw_jo())));
-      k_ignore();
-    }
-    i_jump_if_false() {
-      // [bool] -> {return_stack}
-      return_point rp = return_stack_tos();
-      return_stack_inc();
-      jo* jojo = rp.jojo;
-      cell offset = jojo[0];
-      cell b = pop(data_stack);
-      if (b == false) {
-        return_point rp1 = return_stack_pop();
-        return_stack_make_point(jojo + offset, rp1.local_pointer);
-      }
-    }
-    k_jump_if_false() {
-      here(JO_INS_JUMP_IF_FALSE);
-      here(string_to_int(jo2str(read_raw_jo())));
-      k_ignore();
-    }
-    // - without else
-    //   (if a b p? then c d)
-    //   ==>
-    //     a b p?
-    //     jump_if_false[:end-of-then]
-    //     c d
-    //   :end-of-then
-
-    // - with else
-    //   (if a b p? then c d else e f)
-    //   ==>
-    //     a b p?
-    //     jump_if_false[:end-of-then]
-    //     c d
-    //     jump[:end-of-else]
-    //   :end-of-then
-    //     e f
-    //   :end-of-else
-
-    k_if() {
-      compile_until_meet_jo(JO_THEN);
-      here(JO_INS_JUMP_IF_FALSE);
-      jo* end_of_then = tos(compiling_stack);
-      p_compiling_stack_inc();
-      jo ending_jo = compile_until_meet_jo_or_jo(JO_ELSE, ROUND_KET);
-      if (ending_jo == ROUND_KET) {
-        end_of_then[0] = (jo*)tos(compiling_stack) - end_of_then;
-        return;
-      }
-      else {
-        here(JO_INS_JUMP);
-        jo* end_of_else = tos(compiling_stack);
-        p_compiling_stack_inc();
-        end_of_then[0] = (jo*)tos(compiling_stack) - end_of_then;
-        p_compile_until_round_ket();
-        end_of_else[0] = (jo*)tos(compiling_stack) - end_of_else;
-        return;
-      }
-    }
-    stack current_compiling_jojo_stack; // of jo
-    p_compile_jojo() {
-      jo* jojo = tos(compiling_stack);
-      push(current_compiling_jojo_stack, jojo);
-      compile_until_meet_jo(ROUND_KET);
-      here(JO_END);
-      here(0);
-      here(0);
-      drop(current_compiling_jojo_stack);
-    }
-    i_tail_call() {
-      return_point rp = return_stack_pop();
-      jo* jojo = rp.jojo;
-      jo jo = jojo[0];
-      jo_apply_with_local_pointer(jo, rp.local_pointer);
-    }
-    k_tail_call() {
-      // no check for "no compile before define"
-      here(JO_INS_TAIL_CALL);
-      here(read_jo());
-      k_ignore();
-    }
-    i_loop() {
-      return_point rp = return_stack_pop();
-      jo* jojo = rp.jojo;
-      jo* jojo_self = jojo[0];
-      return_stack_make_point(jojo_self, rp.local_pointer);
-    }
-    k_loop() {
-      here(JO_INS_LOOP);
-      here(tos(current_compiling_jojo_stack));
-      k_ignore();
-    }
-    i_recur() {
-      return_point rp = return_stack_tos();
-      return_stack_inc();
-      jo* jojo = rp.jojo;
-      jo* jojo_self = jojo[0];
-      return_stack_new_point(jojo_self);
-    }
-    k_recur() {
-      here(JO_INS_RECUR);
-      here(tos(current_compiling_jojo_stack));
-      k_ignore();
-    }
-    p_compiling_stack_tos() {
-      push(data_stack, tos(compiling_stack));
-    }
-    i_bare_jojo() {
-      return_point rp = return_stack_pop();
-      jo* jojo = rp.jojo;
-      cell offset = jojo[0];
-      return_stack_make_point(jojo + offset, rp.local_pointer);
-      push(data_stack, jojo + 1);
-    }
-    k_bare_jojo() {
-      // (bare-jojo ...)
-      here(JO_INS_BARE_JOJO);
-      jo* beginning = tos(compiling_stack);
-      p_compiling_stack_inc();
-      p_compile_jojo();
-      beginning[0] = (jo*)tos(compiling_stack) - beginning;
-    }
-    k_jojo() {
-      // (jojo ...)
-      k_bare_jojo();
-      here(JO_INS_JO);
-      here(TAG_JOJO);
-    }
-    k_keyword() {
-      // (keyword ...)
-      k_bare_jojo();
-      here(JO_INS_JO);
-      here(TAG_KEYWORD);
-    }
-    k_data() {
-      // (data ...)
-      p_compile_until_round_ket();
-      here(JO_INS_JO);
-      here(TAG_DATA);
-    }
-    cell local_find(jo name) {
-      // return index of local_record
-      // -1 -- no found
-      return_point rp = return_stack_tos();
-      cell cursor = current_local_pointer - 1;
-      while (cursor >= rp.local_pointer) {
-        if (local_record[cursor].name == name) {
-          return cursor;
-        }
-        else {
-          cursor--;
-        }
-      }
-      return -1;
-    }
-    p_local_data_in() {
-      cell jo = pop(data_stack);
-      cell index = local_find(jo);
-      cell data = pop(data_stack);
-      if (index != -1) {
-        local_record[index].name = jo;
-        local_record[index].local_data = data;
-      }
-      else {
-        local_record[current_local_pointer].name = jo;
-        local_record[current_local_pointer].local_data = data;
-        current_local_pointer = current_local_pointer + 1;
-      }
-    }
-    p_local_data_out() {
-      cell jo = pop(data_stack);
-      cell index = local_find(jo);
-      if (index != -1) {
-        local_point lp = local_record[index];
-        push(data_stack, lp.local_data);
-      }
-      else {
-        report("- p_local_data_out fatal error\n");
-        report("  name is not bound\n");
-        report("  name : %s\n", jo2str(jo));
-        p_debug();
-      }
-    }
-    p_local_tag_in() {
-      cell jo = pop(data_stack);
-      cell index = local_find(jo);
-      cell tag = pop(data_stack);
-      if (index != -1) {
-        local_record[index].name = jo;
-        local_record[index].local_tag = tag;
-      }
-      else {
-        local_record[current_local_pointer].name = jo;
-        local_record[current_local_pointer].local_tag = tag;
-        current_local_pointer = current_local_pointer + 1;
-      }
-    }
-    p_local_tag_out() {
-      cell jo = pop(data_stack);
-      cell index = local_find(jo);
-      if (index != -1) {
-        local_point lp = local_record[index];
-        push(data_stack, lp.local_tag);
-      }
-      else {
-        report("- p_local_tag_out fatal error\n");
-        report("  name is not bound\n");
-        report("  name : %s\n", jo2str(jo));
-        p_debug();
-      }
-    }
-    p_local_in() {
-      cell jo = pop(data_stack);
-      cell index = local_find(jo);
-      cell tag = pop(data_stack);
-      cell data = pop(data_stack);
-      if (index != -1) {
-        local_record[index].name = jo;
-        local_record[index].local_tag = tag;
-        local_record[index].local_data = data;
-      }
-      else {
-        local_record[current_local_pointer].name = jo;
-        local_record[current_local_pointer].local_tag = tag;
-        local_record[current_local_pointer].local_data = data;
-        current_local_pointer = current_local_pointer + 1;
-      }
-    }
-    p_local_out() {
-      cell jo = pop(data_stack);
-      cell index = local_find(jo);
-      if (index != -1) {
-        local_point lp = local_record[index];
-        push(data_stack, lp.local_data);
-        push(data_stack, lp.local_tag);
-      }
-      else {
-        report("- p_local_out fatal error\n");
-        report("  name is not bound\n");
-        report("  name : %s\n", jo2str(jo));
-        p_debug();
-      }
-    }
-    k_local_data_in() {
-      jo s = read_raw_jo();
-      if (s == ROUND_KET) {
-        return;
-      }
-      else {
-        k_local_data_in();
-
-        here(JO_INS_JO);
-        here(s);
-        here(JO_LOCAL_DATA_IN);
-      }
-    }
-    k_local_data_out() {
-      jo s = read_raw_jo();
-      if (s == ROUND_KET) {
-        return;
-      }
-      else {
-        here(JO_INS_JO);
-        here(s);
-        here(JO_LOCAL_DATA_OUT);
-
-        k_local_data_out();
-      }
-    }
-    k_local_tag_in() {
-      jo s = read_raw_jo();
-      if (s == ROUND_KET) {
-        return;
-      }
-      else {
-        k_local_data_in();
-
-        here(JO_INS_JO);
-        here(s);
-        here(JO_LOCAL_TAG_IN);
-      }
-    }
-    k_local_tag_out() {
-      jo s = read_raw_jo();
-      if (s == ROUND_KET) {
-        return;
-      }
-      else {
-        here(JO_INS_JO);
-        here(s);
-        here(JO_LOCAL_TAG_OUT);
-
-        k_local_data_out();
-      }
-    }
-    k_local_in() {
-      jo s = read_raw_jo();
-      if (s == ROUND_KET) {
-        return;
-      }
-      else {
-        k_local_data_in();
-
-        here(JO_INS_JO);
-        here(s);
-        here(JO_LOCAL_IN);
-      }
-    }
-    k_local_out() {
-      jo s = read_raw_jo();
-      if (s == ROUND_KET) {
-        return;
-      }
-      else {
-        here(JO_INS_JO);
-        here(s);
-        here(JO_LOCAL_OUT);
-
-        k_local_data_out();
-      }
-    }
-    p_current_local_pointer() {
-      push(data_stack, current_local_pointer);
-    }
-    expose_keyword() {
-      define_primkey("ignore", k_ignore);
-      define_primkey("note", k_ignore);
-
-      define_prim("compiling-stack/tos", p_compiling_stack_tos);
-      define_prim("compiling-stack/inc", p_compiling_stack_inc);
-
-      define_prim("compile-until-meet-jo", p_compile_until_meet_jo);
-      define_prim("compile-until-round-ket", p_compile_until_round_ket);
-
-
-      define_prim("ins/jump", i_jump);
-      define_primkey("jump", k_jump);
-
-      define_prim("ins/jump-if-false", i_jump_if_false);
-      define_primkey("jump-if-false", k_jump_if_false);
-
-      define_primkey("if", k_if);
-      define_primkey("else", p_compile_until_round_ket);
-      define_primkey("el", p_compile_until_round_ket);
-
-      define_prim("compile-jojo", p_compile_jojo);
-
-      define_prim("ins/tail-call", i_tail_call);
-      define_primkey("tail-call", k_tail_call);
-      define_prim("ins/loop", i_loop);
-      define_primkey("loop", k_loop);
-      define_prim("ins/recur", i_recur);
-      define_primkey("recur", k_recur);
-
-      define_primkey("data", k_data);
-      define_primkey("jojo", k_jojo);
-      define_primkey("keyword", k_keyword);
-
-      define_prim("ins/bare-jojo", i_bare_jojo);
-      define_primkey("bare-jojo", k_bare_jojo);
-
-      define_prim("local-data-in", p_local_data_in);
-      define_prim("local-data-out", p_local_data_out);
-      define_primkey(">", k_local_data_in);
-      define_primkey("<", k_local_data_out);
-
-      define_prim("local-tag-in", p_local_tag_in);
-      define_prim("local-tag-out", p_local_tag_out);
-      define_primkey("%>", k_local_tag_in);
-      define_primkey("<%", k_local_tag_out);
-
-      define_prim("local-in", p_local_in);
-      define_prim("local-out", p_local_out);
-      define_primkey(">>", k_local_in);
-      define_primkey("<<", k_local_out);
-
-      define_prim("current-local-pointer", p_current_local_pointer);
-    }
-    p_here() {
-      here(pop(data_stack));
-    }
-    p_round_bar()    { push(data_stack, ROUND_BAR); }
-    p_round_ket()    { push(data_stack, ROUND_KET); }
-    p_square_bar()   { push(data_stack, SQUARE_BAR); }
-    p_square_ket()   { push(data_stack, SQUARE_KET); }
-    p_flower_bar()   { push(data_stack, FLOWER_BAR); }
-    p_flower_ket()   { push(data_stack, FLOWER_KET); }
-    p_double_quote() { push(data_stack, DOUBLE_QUOTE); }
-    p_cell_size() {
-      push(data_stack, sizeof(cell));
-    }
-    p_space() {
-      output_stack_push(tos(writing_stack), ' ');
-    }
-    p_newline() {
-      output_stack_push(tos(writing_stack), '\n');
-    }
-    expose_mise() {
-      define_prim("here", p_here);
-
-      define_prim("round-bar", p_round_bar);
-      define_prim("round-ket", p_round_ket);
-      define_prim("square-bar", p_square_bar);
-      define_prim("square-ket", p_square_ket);
-      define_prim("flower-bar", p_flower_bar);
-      define_prim("flower-ket", p_flower_ket);
-      define_prim("double-quote", p_double_quote);
-
-      define_prim("cell-size", p_cell_size);
-
-      define_prim("space", p_space);
-      define_prim("newline", p_newline);
+      define_prim("end", S0, p_end);
+      define_prim("bye", S0, p_bye);
     }
     p1() {
       int file = open("README", O_RDWR);
@@ -3411,11 +1321,16 @@
       output_stack_free(t2_stack);
       report("- output_stack test2 finished\n");
     }
+    p3() {
+      define_class("<rectangle>", "<object>", S3("height", "width", "k1"));
+    }
     init_play() {
+      p3();
     }
     expose_play() {
       define_prim("p1", p1);
       define_prim("p2", p2);
+      define_prim("p3", p3);
     }
     init_system() {
       setvbuf(stdout, NULL, _IONBF, 0);
@@ -3476,64 +1391,38 @@
     jo jojo_area[1024 * 1024];
 
     init_stacks() {
-      data_stack                   = new_stack("data_stack");
+      object_stack                 = new_stack("object_stack");
       return_stack                 = new_stack("return_stack");
       compiling_stack              = new_stack("compiling_stack");
-      reading_stack                = new_stack("reading_stack");
-      writing_stack                = new_stack("writing_stack");
-      binding_filter_stack         = new_stack("binding_filter_stack");
+      // reading_stack                = new_stack("reading_stack");
+      // writing_stack                = new_stack("writing_stack");
+      // binding_filter_stack         = new_stack("binding_filter_stack");
       keyword_stack                = new_stack("keyword_stack");
-      jo_filter_stack              = new_stack("jo_filter_stack");
-      current_compiling_jojo_stack = new_stack("current_compiling_jojo_stack");
+      // jo_filter_stack              = new_stack("jo_filter_stack");
+      // current_compiling_jojo_stack = new_stack("current_compiling_jojo_stack");
 
       push(compiling_stack, jojo_area);
-      push(reading_stack, input_stack_terminal());
-      push(writing_stack, output_stack_terminal());
-      push(jo_filter_stack, str2jo("alias-filter"));
+      // push(reading_stack, input_stack_terminal());
+      // push(writing_stack, output_stack_terminal());
+      // push(jo_filter_stack, str2jo("alias-filter"));
     }
     init_jojo() {
       init_jotable();
       init_literal_jo();
       init_stacks();
-      init_kernel_signal_handler();
-
-      p_empty_jo();
-      p_drop();
 
       expose_name();
       expose_apply();
       expose_stack_operation();
       expose_ending();
-      expose_bool();
-      expose_int();
-      expose_memory();
-      expose_byte();
-      expose_jo();
-      expose_string();
-      expose_file();
-      expose_keyword();
-      expose_system();
-      expose_cffi();
-      expose_top_level();
-      expose_mise();
 
       expose_play();
     }
-    #include "core/0.0.1/core.h"
-
-    init_core() {
-      input_stack input_stack = input_stack_string(core_0_0_1_core_jo);
-      push(reading_stack, input_stack);
-      p_repl();
-      drop(reading_stack);
-      input_stack_free(input_stack);
-    }
   int main(int argc, char** argv) {
-    cmd_number = argc;
-    cmd_string_array = argv;
+    // cmd_number = argc;
+    // cmd_string_array = argv;
     init_system();
     init_jojo();
-    init_core();
     init_play();
-    return p_repl();
+    return 66;
   }
