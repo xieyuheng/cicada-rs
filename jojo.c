@@ -1027,7 +1027,7 @@
     } gc_type;
     // typedef void (* cleaner__t)(cell);
 
-    typedef struct {
+    typedef struct class {
       jo class_name;
       jo super_name;
       gc_type gc_type;
@@ -1036,11 +1036,10 @@
     } class__t;
     typedef class__t* class;
     define_atom_class(char* class_name,
-                      char* super_name,
                       gc_type gc_type) {
       class class = (class__t*)malloc(sizeof(class__t));
       class->class_name = str2jo(class_name);
-      class->super_name = str2jo(super_name);
+      class->super_name = str2jo("<object>");
       class->gc_type = gc_type;
 
       jo name = str2jo(class_name);
@@ -1066,20 +1065,29 @@
     define_class(char* class_name,
                  char* super_name,
                  char* fields[]) {
-      class class = (class__t*)malloc(sizeof(class__t));
-      class->class_name = str2jo(class_name);
-      class->super_name = str2jo(super_name);
+      struct class* class = (struct class*)malloc(sizeof(struct class));
+      jo name = str2jo(class_name);
+      jo super = str2jo(super_name);
+      class->class_name = name;
+      class->super_name = super;
       class->gc_type = GC_RECUR;
-
-      cell i = 0;
+      struct class* super_class = super->data;
+      cell i = super_class->object_size;
       while (fields[i] != NULL) {
         define_field(class_name, fields[i], i);
         i++;
       }
-
       class->object_size = i;
 
-      jo name = str2jo(class_name);
+      name->tag = str2jo("<class>");
+      name->data = class;
+    }
+    init_class() {
+      class class = (class__t*)malloc(sizeof(class__t));
+      jo name = str2jo("<object>");
+      class->class_name = name;
+      class->gc_type = GC_RECUR;
+      class->object_size = 0;
       name->tag = str2jo("<class>");
       name->data = class;
     }
@@ -1095,6 +1103,10 @@
     }
     sweep_object_record() {
 
+    }
+    new(class class) {
+      cell* object = (cell*)malloc(class->object_size*2*sizeof(cell));
+      object_stack_push(class->class_name, object);
     }
     bool check_function_arity(char* function_name, cell arity) {
       jo name = str2jo(function_name);
@@ -1456,6 +1468,7 @@
       init_jotable();
       init_literal_jo();
       init_stacks();
+      init_class();
 
       expose_name();
       expose_apply();
