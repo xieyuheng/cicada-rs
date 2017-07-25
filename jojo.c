@@ -208,7 +208,7 @@
     jo_t TAG_JOJO;
     jo_t TAG_PRIM_KEYWORD;
     jo_t TAG_KEYWORD;
-    jo_t TAG_DATA;
+    jo_t TAG_INT;
 
     jo_t JO_DECLARED;
 
@@ -220,11 +220,7 @@
     jo_t FLOWER_KET;
     jo_t DOUBLE_QUOTE;
 
-    jo_t JO_INS_INT;
-    jo_t JO_INS_JO;
-    jo_t JO_INS_STRING;
-    jo_t JO_INS_BYTE;
-    jo_t JO_INS_BARE_JOJO;
+    jo_t JO_INS_LIT;
     jo_t JO_INS_ADDRESS;
 
     jo_t JO_INS_JUMP;
@@ -1194,7 +1190,6 @@
       struct object_record_entry object_record[OBJECT_RECORD_SIZE];
 
       typedef struct object_record_entry* object_pointer_t;
-
       object_pointer_t object_record_pointer = object_record;
       bool object_record_end_p() {
         return object_record_pointer >= (object_record + OBJECT_RECORD_SIZE);
@@ -1748,9 +1743,26 @@
         }
       }
     }
+    ins_lit() {
+      // [] -> [cell] {return_stack}
+      struct ret p = return_stack_tos();
+      return_stack_inc();
+      return_stack_inc();
+      jo_t* jojo = p.jojo;
+      jo_t tag = jojo[0];
+      cell data = jojo[1];
+      object_stack_push(tag, data);
+    }
     compile_jo(jo_t jo) {
       if (jo == ROUND_BAR) {
         jo_apply(read_jo());
+        return;
+      }
+      char* str = jo2str(jo);
+      if (int_string_p(str)) {
+        here(JO_INS_LIT);
+        here(TAG_INT);
+        here(string_to_int(str));
       }
       else if (used_jo_p(jo)) {
         here(jo);
@@ -1813,6 +1825,8 @@
 
     expose_def() {
       define_prim_keyword("def", S0, k_def);
+      define_prim_keyword("run", S0, k_run);
+      define_prim("ins/lit", S0, ins_lit);
     }
     p_print_object_stack() {
       cell length = stack_length(object_stack);
@@ -1960,7 +1974,7 @@
       TAG_JOJO         = str2jo("<jojo>");
       TAG_PRIM_KEYWORD = str2jo("<prim-keyword>");
       TAG_KEYWORD      = str2jo("<keyword>");
-      TAG_DATA         = str2jo("<data>");
+      TAG_INT          = str2jo("<int>");
 
       JO_DECLARED = str2jo("declared");
 
@@ -1972,11 +1986,7 @@
       FLOWER_KET   =   str2jo("}");
       DOUBLE_QUOTE =   str2jo("\"");
 
-      JO_INS_INT  = str2jo("ins/int");
-      JO_INS_JO   = str2jo("ins/jo");
-      JO_INS_STRING = str2jo("ins/string");
-      JO_INS_BYTE = str2jo("ins/byte");
-      JO_INS_BARE_JOJO = str2jo("ins/bare-jojo");
+      JO_INS_LIT  = str2jo("ins/lit");
       JO_INS_ADDRESS = str2jo("ins/address");
 
       JO_INS_JUMP = str2jo("ins/jump");
@@ -2088,6 +2098,5 @@
       eval();
     }
 
-    // p_repl();
-    return 233;
+    return p_repl();
   }
