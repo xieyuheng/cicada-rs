@@ -1153,6 +1153,31 @@
         report("  arity of %s should not be %ld\n", function_name, arity);
       }
     }
+    define_prim_keyword(function_name, tags, fun)
+      char* function_name;
+      char* tags[];
+      primitive_t fun;
+    {
+      char name_buffer[1024];
+      char* cursor = name_buffer;
+      cell i = 0;
+      while (tags[i] != NULL) {
+        strcpy(cursor, tags[i]);
+        cursor = cursor + strlen(tags[i]);
+        i++;
+      }
+      strcpy(cursor, function_name);
+      jo_t name = str2jo(name_buffer);
+      cell arity = i;
+      if (arity == 0 ||
+          check_function_arity(function_name, arity)) {
+        bind_name(name, TAG_PRIM_KEYWORD, fun);
+      }
+      else {
+        report("- define_prim_keyword fall\n");
+        report("  arity of %s should not be %ld\n", function_name, arity);
+      }
+    }
       typedef enum {
         GC_MARK_FREE,
         GC_MARK_USING,
@@ -1167,7 +1192,13 @@
       // #define OBJECT_RECORD_SIZE 64 * 1024
       #define OBJECT_RECORD_SIZE 3
       struct object_record_entry object_record[OBJECT_RECORD_SIZE];
-      object_record_counter = 0;
+
+      typedef struct object_record_entry* object_pointer_t;
+
+      object_pointer_t object_record_pointer = object_record;
+      bool object_record_end_p() {
+        return object_record_pointer >= (object_record + OBJECT_RECORD_SIZE);
+      }
       init_object_record() {
         bzero(object_record,
               OBJECT_RECORD_SIZE *
@@ -1188,45 +1219,59 @@
       set_field_data(cell* fields, cell field_index, cell data) {
         fields[field_index*2] = data;
       }
-      jo_t get_object_field_tag(cell object_index, cell field_index) {
-        cell* fields = object_record[object_index].pointer;
+      jo_t get_object_field_tag(object_pointer, field_index)
+        object_pointer_t object_pointer;
+        cell field_index;
+      {
+        cell* fields = object_pointer->pointer;
         return get_field_tag(fields, field_index);
       }
 
-      set_object_field_tag(cell object_index, cell field_index, jo_t tag) {
-        cell* fields = object_record[object_index].pointer;
+      set_object_field_tag(object_pointer, field_index, tag)
+        object_pointer_t object_pointer;
+        cell field_index;
+        jo_t tag;
+      {
+        cell* fields = object_pointer->pointer;
         set_field_tag(fields, field_index, tag);
       }
 
-      cell get_object_field_data(cell object_index, cell field_index) {
-        cell* fields = object_record[object_index].pointer;
+      cell get_object_field_data(object_pointer, field_index)
+        object_pointer_t object_pointer;
+        cell field_index;
+      {
+        cell* fields = object_pointer->pointer;
         return get_field_data(fields, field_index);
       }
 
-      set_object_field_data(cell object_index, cell field_index, cell data) {
-        cell* fields = object_record[object_index].pointer;
+      set_object_field_data(object_pointer, field_index, data)
+        object_pointer_t object_pointer;
+        cell field_index;
+        cell data;
+      {
+        cell* fields = object_pointer->pointer;
         set_field_data(fields, field_index, data);
       }
       mark_one(jo_t tag, cell data) {
         struct class* class = tag->data;
         if (class->gc_flag == GC_RECUR) {
-          cell object_index = data;
-          if (object_record[object_index].mark == GC_MARK_USING) {
+          object_pointer_t object_pointer = data;
+          if (object_pointer->mark == GC_MARK_USING) {
             return;
           }
-          object_record[object_index].mark = GC_MARK_USING;
+          object_pointer->mark = GC_MARK_USING;
           cell object_size = class->object_size;
-          cell* fields = object_record[object_index].pointer;
+          cell* fields = object_pointer->pointer;
           cell i = 0;
           while (i < object_size) {
-            mark_one(get_object_field_tag(object_index, i),
-                     get_object_field_data(object_index, i));
+            mark_one(get_object_field_tag(object_pointer, i),
+                     get_object_field_data(object_pointer, i));
             i++;
           }
         }
         else if (class->gc_flag == GC_FREE) {
-          cell object_index = data;
-          object_record[object_index].mark = GC_MARK_USING;
+          object_pointer_t object_pointer = data;
+          object_pointer->mark = GC_MARK_USING;
         }
       }
       mark_object_record() {
@@ -1257,60 +1302,63 @@
         if (class->gc_flag == GC_IGNORE) {
           return;
         }
-        cell object_index = data;
-        gc_mark_t mark = object_record[object_index].mark;
+        object_pointer_t object_pointer = data;
+        gc_mark_t mark = object_pointer->mark;
         if (mark == GC_MARK_USING) {
           return;
         }
         // else if (mark == GC_MARK_FREE)
         else {
           if (class->gc_flag == GC_FREE) {
-            free(object_record[object_index].pointer);
+            free(object_pointer->pointer);
           }
           // else if (class->gc_flag == GC_RECUR)
           else {
-            object_record[object_index].mark = GC_MARK_USING;
+            object_pointer->mark = GC_MARK_USING;
             cell object_size = class->object_size;
             cell i = 0;
-            cell* fields = object_record[object_index].pointer;
+            cell* fields = object_pointer->pointer;
             while (i < object_size) {
               sweep_one(get_field_tag(fields, i),
                         get_field_data(fields, i));
               i++;
             }
-            object_record[object_index].mark = GC_MARK_FREE;
-            free(object_record[object_index].pointer);
+            object_pointer->mark = GC_MARK_FREE;
+            free(object_pointer->pointer);
           }
         }
       }
       sweep_object_record() {
         cell i = 0;
         while (i < OBJECT_RECORD_SIZE) {
-          sweep_one(object_record[i].tag, i);
+          sweep_one(object_record[i].tag, object_record + i);
           i++;
         }
       }
       run_gc() {
+        // report("- run_gc()\n");
         mark_object_record();
+        // report("- after mark_object_record()\n");
         sweep_object_record();
+        // report("- after sweep_object_record()\n");
       }
-      cell next_free_object_record_entry() {
-        while (object_record_counter < OBJECT_RECORD_SIZE &&
-               object_record[object_record_counter].mark != GC_MARK_FREE) {
-          object_record_counter++;
+      next_free_object_record_entry() {
+        while (!object_record_end_p() &&
+               object_record_pointer->mark != GC_MARK_FREE) {
+          object_record_pointer++;
         }
-        return object_record_counter;
       }
 
-      cell new_object_record_entry() {
-        if (next_free_object_record_entry() < OBJECT_RECORD_SIZE) {
-          return object_record_counter++;
+      object_pointer_t new_object_record_entry() {
+        next_free_object_record_entry();
+        if (!object_record_end_p()) {
+          return object_record_pointer++;
         }
         else {
           run_gc();
-          object_record_counter = 0;
+          object_record_pointer = object_record;
           if (next_free_object_record_entry() < OBJECT_RECORD_SIZE) {
-            return object_record_counter++;
+            return object_record_pointer++;
           }
           else {
             report("- new_object_record_entry fail\n");
@@ -1333,11 +1381,11 @@
         i++;
       }
 
-      cell index = new_object_record_entry();
-      object_record[index].tag = class->class_name;
-      object_record[index].pointer = fields;
+      object_pointer_t object_pointer = new_object_record_entry();
+      object_pointer->tag = class->class_name;
+      object_pointer->pointer = fields;
 
-      object_stack_push(class->class_name, index);
+      object_stack_push(class->class_name, object_pointer);
     }
     struct stack* keyword_stack; // of alias_pointer
     struct alias {
@@ -1391,7 +1439,7 @@
 
       define_the_object_class();
 
-      define_atom_class("<cell>", GC_IGNORE);
+      define_atom_class("<int>", GC_IGNORE);
       define_atom_class("<jo>", GC_IGNORE);
       define_atom_class("<string>", GC_FREE);
       define_atom_class("<class>", GC_IGNORE);
@@ -1584,6 +1632,224 @@
       define_prim("end", S0, p_end);
       define_prim("bye", S0, p_bye);
     }
+    struct stack* reading_stack; // of input_stack
+    struct stack* writing_stack; // of output_stack
+    bool has_byte_p() {
+      return !input_stack_empty_p(tos(reading_stack));
+    }
+    byte read_byte() {
+      return input_stack_pop(tos(reading_stack));
+    }
+    byte_unread(byte b) {
+      input_stack_push(tos(reading_stack), b);
+    }
+    byte_print(byte b) {
+      output_stack_push(tos(writing_stack), b);
+    }
+    bool has_jo_p() {
+      byte c;
+      while (true) {
+
+        if (!has_byte_p()) {
+          return false;
+        }
+
+        c = read_byte();
+
+        if (isspace(c)) {
+          // loop
+        }
+        else {
+          byte_unread(c);
+          return true;
+        }
+      }
+    }
+    jo_t read_raw_jo() {
+      byte buf[1024];
+      cell cur = 0;
+      cell collecting = false;
+      byte c;
+      byte go = true;
+
+      while (go) {
+
+        if (!has_byte_p()) {
+          if (!collecting) {
+            report("- p_read_raw_jo meet end-of-file\n");
+            return;
+          }
+          else {
+            break;
+          }
+        }
+
+        c = read_byte(); // report("- read_byte() : %c\n", c);
+
+        if (!collecting) {
+          if (isspace(c)) {
+            // loop
+          }
+          else {
+            collecting = true;
+            buf[cur] = c;
+            cur++;
+            if (isbarcket(c)) {
+              go = false;
+            }
+          }
+        }
+
+        else {
+          if (isbarcket(c) ||
+              isspace(c)) {
+            byte_unread(c);
+            go = false;
+          }
+          else {
+            buf[cur] = c;
+            cur++;
+          }
+        }
+      }
+
+      buf[cur] = 0;
+      return str2jo(buf);
+    }
+    jo_t read_jo() {
+      return read_raw_jo();
+    }
+    string_unread(char* str) {
+      if (str[0] == '\0') {
+        return;
+      }
+      else {
+        string_unread(str+1);
+        byte_unread(str[0]);
+      }
+    }
+    jo_unread(jo_t jo) {
+      char* str = jo2str(jo);
+      byte_unread(' ');
+      string_unread(str);
+      byte_unread(' ');
+    }
+    expose_rw() {
+
+    }
+    k_ignore() {
+      while (true) {
+        jo_t s = read_raw_jo();
+        if (s == ROUND_BAR) {
+          k_ignore();
+        }
+        if (s == ROUND_KET) {
+          break;
+        }
+      }
+    }
+    compile_jo(jo_t jo) {
+      if (jo == ROUND_BAR) {
+        jo_apply(read_jo());
+      }
+      else if (used_jo_p(jo)) {
+        here(jo);
+      }
+      else {
+        // no compile before define
+        report("- compile_jo undefined : %s\n", jo2str(jo));
+        k_ignore();
+        p_debug();
+      }
+    }
+    compile_until_meet_jo(jo_t ending_jo) {
+      while (true) {
+        jo_t jo = read_jo();
+        if (jo == ending_jo) {
+          return;
+        }
+        else {
+          compile_jo(jo);
+        }
+      }
+    }
+    jo_t compile_until_meet_jo_or_jo(jo_t ending_jo1, jo_t ending_jo2) {
+      while (true) {
+        jo_t jo = read_jo();
+        if (jo == ending_jo1 || jo == ending_jo2) {
+          return jo;
+        }
+        else {
+          compile_jo(jo);
+        }
+      }
+    }
+    p_compile_until_round_ket() {
+      compile_until_meet_jo(ROUND_KET);
+    }
+    struct stack* current_compiling_jojo_stack; // of jo
+    p_compile_jojo() {
+      jo_t* jojo = tos(compiling_stack);
+      push(current_compiling_jojo_stack, jojo);
+      compile_until_meet_jo(ROUND_KET);
+      here(JO_END);
+      here(0);
+      here(0);
+      drop(current_compiling_jojo_stack);
+    }
+    k_run() {
+      // (run ...)
+      jo_t* jojo = tos(compiling_stack);
+      p_compile_jojo();
+      return_stack_push_new(jojo);
+      eval();
+    }
+    k_def() {
+      jo_t name = read_jo();
+      k_run();
+      struct object a = object_stack_pop();
+      bind_name(name, a.tag, a.data);
+    }
+
+    expose_def() {
+      define_prim_keyword("def", S0, k_def);
+    }
+    p_print_object_stack() {
+      cell length = stack_length(object_stack);
+      report("  * %ld *  ", length/2);
+      report("-- ");
+      cell cursor = 0;
+      while (cursor < length) {
+        report("%ld ", stack_ref(object_stack, cursor));
+        report("%s ", jo2str(stack_ref(object_stack, cursor+1)));
+        cursor++;
+        cursor++;
+      }
+      report("--\n");
+    }
+    bool repl_flag = false;
+    p_repl_flag_on() { repl_flag = true; }
+    p_repl_flag_off() { repl_flag = false; }
+
+    p_repl() {
+      while (true) {
+        if (!has_jo_p()) {
+          return 69;
+        }
+        jo_t s = read_jo();
+        if (s == ROUND_BAR) {
+          jo_apply(read_jo());
+          if (repl_flag) {
+            p_print_object_stack();
+          }
+        }
+        else {
+          // loop
+        }
+      }
+    }
+    expose_repl() {
+    }
     p1() {
       int file = open("README", O_RDWR);
       struct input_stack* t0_stack = input_stack_file(file);
@@ -1673,19 +1939,6 @@
       output_stack_free(t2_stack);
       report("- output_stack test2 finished\n");
     }
-    p_print_object_stack() {
-      cell length = stack_length(object_stack);
-      report("  * %ld *  ", length/2);
-      report("-- ");
-      cell cursor = 0;
-      while (cursor < length) {
-        report("%ld ", stack_ref(object_stack, cursor));
-        report("%s ", jo2str(stack_ref(object_stack, cursor+1)));
-        cursor++;
-        cursor++;
-      }
-      report("--\n");
-    }
     expose_play() {
       define_prim("p1", S0, p1);
       define_prim("p2", S0, p2);
@@ -1752,20 +2005,25 @@
     jo_t jojo_area[1024 * 1024];
 
     init_stacks() {
-      object_stack                 = new_stack("object_stack");
-      return_stack                 = new_stack("return_stack");
-      compiling_stack              = new_stack("compiling_stack");
-      // reading_stack                = new_stack("reading_stack");
-      // writing_stack                = new_stack("writing_stack");
-      // binding_filter_stack         = new_stack("binding_filter_stack");
-      keyword_stack                = new_stack("keyword_stack");
-      // jo_filter_stack              = new_stack("jo_filter_stack");
-      // current_compiling_jojo_stack = new_stack("current_compiling_jojo_stack");
+      object_stack = new_stack("object_stack");
+      return_stack = new_stack("return_stack");
 
+      compiling_stack = new_stack("compiling_stack");
       push(compiling_stack, jojo_area);
-      // push(reading_stack, input_stack_terminal());
-      // push(writing_stack, output_stack_terminal());
+
+      reading_stack = new_stack("reading_stack");
+      push(reading_stack, input_stack_terminal());
+
+      writing_stack = new_stack("writing_stack");
+      push(writing_stack, output_stack_terminal());
+
+      // binding_filter_stack = new_stack("binding_filter_stack");
+      keyword_stack = new_stack("keyword_stack");
+
+      // jo_filter_stack = new_stack("jo_filter_stack");
       // push(jo_filter_stack, str2jo("alias-filter"));
+
+      current_compiling_jojo_stack = new_stack("current_compiling_jojo_stack");
     }
     init_jojo() {
       init_jotable();
@@ -1775,6 +2033,7 @@
       expose_object();
       expose_stack_operation();
       expose_ending();
+      expose_def();
 
       expose_play();
     }
@@ -1783,11 +2042,12 @@
     // cmd_string_array = argv;
     init_system();
     init_jojo();
+    p_repl_flag_on();
     {
       define_class("<rectangle>", "<object>", S2("height", "width"));
 
-      object_stack_push(str2jo("<cell>"), 666);
-      object_stack_push(str2jo("<cell>"), 888);
+      object_stack_push(str2jo("<int>"), 666);
+      object_stack_push(str2jo("<int>"), 888);
 
       here(str2jo("over"));
       here(str2jo("swap"));
@@ -1828,5 +2088,6 @@
       eval();
     }
 
-    return 66;
+    // p_repl();
+    return 233;
   }
