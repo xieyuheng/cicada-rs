@@ -1143,9 +1143,6 @@
       }
       strcpy(cursor, function_name);
       jo_t name = str2jo(name_buffer);
-
-      report("<define_prim> name_buffer : %s\n", name_buffer);
-
       cell arity = i;
       if (arity == 0 ||
           check_function_arity(function_name, arity)) {
@@ -1255,14 +1252,23 @@
           i++;
         }
       }
-      sweep_one(jo_t tag, cell object_index) {
+      sweep_one(jo_t tag, cell data) {
+        struct class* class = tag->data;
+        if (class->gc_flag == GC_IGNORE) {
+          return;
+        }
+        cell object_index = data;
         gc_mark_t mark = object_record[object_index].mark;
-        if (mark == GC_MARK_FREE) {
-          struct class* class = tag->data;
+        if (mark == GC_MARK_USING) {
+          return;
+        }
+        // else if (mark == GC_MARK_FREE)
+        else {
           if (class->gc_flag == GC_FREE) {
             free(object_record[object_index].pointer);
           }
-          else if (class->gc_flag == GC_RECUR) {
+          // else if (class->gc_flag == GC_RECUR)
+          else {
             object_record[object_index].mark = GC_MARK_USING;
             cell object_size = class->object_size;
             cell i = 0;
@@ -1275,10 +1281,6 @@
             object_record[object_index].mark = GC_MARK_FREE;
             free(object_record[object_index].pointer);
           }
-          else { // (class->gc_flag == GC_IGNORE)
-          }
-        }
-        else { // (mark == GC_MARK_USING)
         }
       }
       sweep_object_record() {
@@ -1289,11 +1291,8 @@
         }
       }
       run_gc() {
-        report("- run_gc\n");
         mark_object_record();
-        report("- after mark_object_record()\n");
         sweep_object_record();
-        report("- after sweep_object_record()\n");
       }
       cell next_free_object_record_entry() {
         while (object_record_counter < OBJECT_RECORD_SIZE &&
@@ -1330,7 +1329,7 @@
       cell i = 0;
       while (i < class->object_size) {
         set_field_tag(fields, i, str2jo("<uninitialised-field-place-holder>"));
-        set_field_data(fields, i, 0);
+        // set_field_data(fields, i, 0);
         i++;
       }
 
@@ -1805,7 +1804,6 @@
 
       here(str2jo("<rectangle>"));
       here(str2jo("new"));
-      here(str2jo("drop"));
 
       here(str2jo("<rectangle>"));
       here(str2jo("new"));
@@ -1821,36 +1819,7 @@
 
       here(str2jo("<rectangle>"));
       here(str2jo("new"));
-      here(str2jo("drop"));
-
-      here(str2jo("<rectangle>"));
-      here(str2jo("new"));
-      here(str2jo("drop"));
-
-      here(str2jo("<rectangle>"));
-      here(str2jo("new"));
-      here(str2jo("drop"));
-
-      here(str2jo("<rectangle>"));
-      here(str2jo("new"));
-      here(str2jo("drop"));
-
-      here(str2jo("<rectangle>"));
-      here(str2jo("new"));
-      here(str2jo("drop"));
-
-      here(str2jo("<rectangle>"));
-      here(str2jo("new"));
-      here(str2jo("drop"));
-
-      here(str2jo("<rectangle>"));
-      here(str2jo("new"));
-      here(str2jo("drop"));
-
-      here(str2jo("<rectangle>"));
-      here(str2jo("new"));
-      here(str2jo("drop"));
-
+      here(str2jo(".height"));
 
       here(str2jo("print-object-stack"));
 
