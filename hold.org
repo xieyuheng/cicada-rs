@@ -1,0 +1,66 @@
+* *misc*
+
+*** p_here
+
+    #+begin_src c
+    p_here() {
+      here(pop(data_stack));
+    }
+    #+end_src
+
+*** bar and ket
+
+    #+begin_src c
+    p_round_bar()    { push(data_stack, ROUND_BAR); }
+    p_round_ket()    { push(data_stack, ROUND_KET); }
+    p_square_bar()   { push(data_stack, SQUARE_BAR); }
+    p_square_ket()   { push(data_stack, SQUARE_KET); }
+    p_flower_bar()   { push(data_stack, FLOWER_BAR); }
+    p_flower_ket()   { push(data_stack, FLOWER_KET); }
+    p_double_quote() { push(data_stack, DOUBLE_QUOTE); }
+    #+end_src
+
+*** p_cell_size
+
+    #+begin_src c
+    p_cell_size() {
+      push(data_stack, sizeof(cell));
+    }
+    #+end_src
+
+*** p_space
+
+    #+begin_src c
+    p_space() {
+      output_stack_push(tos(writing_stack), ' ');
+    }
+    #+end_src
+
+*** p_newline
+
+    #+begin_src c
+    p_newline() {
+      output_stack_push(tos(writing_stack), '\n');
+    }
+    #+end_src
+
+*** expose_mise
+
+    #+begin_src c
+    expose_mise() {
+      define_prim("here", p_here);
+
+      define_prim("round-bar",  p_round_bar);
+      define_prim("round-ket",  p_round_ket);
+      define_prim("square-bar", p_square_bar);
+      define_prim("square-ket", p_square_ket);
+      define_prim("flower-bar", p_flower_bar);
+      define_prim("flower-ket", p_flower_ket);
+      define_prim("double-quote", p_double_quote);
+
+      define_prim("cell-size", S0, p_cell_size);
+
+      define_prim("space", S0, p_space);
+      define_prim("newline", S0, p_newline);
+    }
+    #+end_src
