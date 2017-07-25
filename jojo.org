@@ -1,13 +1,17 @@
 #+property: tangle jojo.c
 #+title:  jojo
+- i_lit
+- compile_jo handles int
+- compile_jo handles string
+- compile_jo handles local
+  :name for local var
+  and (> :name) to set them
 - defclass
 - defn
 - <string>
 - <int>
 - runtime error for <uninitialised-field-place-holder>
   in exe_get_object_field
-- :name for local var
-  and (> :name) to set them
 - new module system
 - low-level syntax macro
   [at reader level]
@@ -2696,6 +2700,9 @@
       if (jo == ROUND_BAR) {
         jo_apply(read_jo());
       }
+      // else if () {
+
+      // }
       else if (used_jo_p(jo)) {
         here(jo);
       }
