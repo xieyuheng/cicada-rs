@@ -1220,6 +1220,8 @@
 
     struct alias alias_record[1024];
     cell current_alias_pointer = 0;
+      exe_generic_prototype() {
+      }
       exe_prim(primitive_t primitive) {
         primitive();
       }
@@ -1371,16 +1373,6 @@
           return new_jo;
         }
       }
-    generic_apply(jo_t jo) {
-      jo = absolute_jo(jo);
-      struct class* class = jo->tag->data;
-      if (class->executable) {
-        class->executer(jo->data);
-      }
-      else {
-        report("- generic_apply meet unknown tag : %s\n", jo2str(jo->tag));
-      }
-    }
     p_debug();
 
     jo_apply(jo_t jo) {
@@ -1390,11 +1382,13 @@
         return;
       }
       if (jo->tag == str2jo("<generic-prototype>")) {
-        generic_apply(jo);
+        jo_apply(absolute_jo(jo));
+        return;
       }
-      else if (jo->tag == TAG_PRIM) {
-        primitive_t primitive = jo->data;
-        primitive();
+
+      struct class* class = jo->tag->data;
+      if (class->executable) {
+        class->executer(jo->data);
       }
       else {
         push(object_stack, jo->data);

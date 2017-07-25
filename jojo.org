@@ -1,10 +1,6 @@
 #+property: tangle jojo.c
 #+title:  jojo
 
-- fix jo_apply
-
-- fix "<set-object-field>" in jo_apply
-
 - struct
   - expose 'class' and 'stack' as struct to jojo
   - struct also can be inherited
@@ -94,9 +90,6 @@
     - overhead of eval
       base_pointer test [to be able to return to c function]
       step_flag test
-
-    - overhead of jo_apply
-      dispatching [dynamic threaded code]
 
 *** possible static type system
 
@@ -1930,6 +1923,13 @@
 
 *** executer
 
+***** exe_generic_prototype
+
+      #+begin_src c
+      exe_generic_prototype() {
+      }
+      #+end_src
+
 ***** exe_prim
 
       #+begin_src c
@@ -2167,21 +2167,6 @@
       }
       #+end_src
 
-*** generic_apply
-
-    #+begin_src c
-    generic_apply(jo_t jo) {
-      jo = absolute_jo(jo);
-      struct class* class = jo->tag->data;
-      if (class->executable) {
-        class->executer(jo->data);
-      }
-      else {
-        report("- generic_apply meet unknown tag : %s\n", jo2str(jo->tag));
-      }
-    }
-    #+end_src
-
 *** jo_apply
 
     #+begin_src c
@@ -2194,11 +2179,13 @@
         return;
       }
       if (jo->tag == str2jo("<generic-prototype>")) {
-        generic_apply(jo);
+        jo_apply(absolute_jo(jo));
+        return;
       }
-      else if (jo->tag == TAG_PRIM) {
-        primitive_t primitive = jo->data;
-        primitive();
+
+      struct class* class = jo->tag->data;
+      if (class->executable) {
+        class->executer(jo->data);
       }
       else {
         push(object_stack, jo->data);
