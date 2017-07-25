@@ -1,16 +1,9 @@
 #+property: tangle jojo.c
 #+title:  jojo
-
-- struct
-  - expose 'class' and 'stack' as struct to jojo
-  - struct also can be inherited
-  - struct is handled in c clib
-
-- to optimize jo_apply :
-  - a nametable over jotable
-    rethink the concept of jo
-  - or tricks on hashtable
-
+- runtime error for <uninitialised-field-place-holder>
+- <string>
+- <cell>
+- test gc
 * [todo-stack]
 
   - :name for local var
@@ -21,6 +14,16 @@
 
 * [todo-list]
 
+  - struct
+    - expose 'class' and 'stack' as struct to jojo
+    - struct also can be inherited
+    - struct is handled in c clib
+
+  - to optimize jo_apply :
+    - a nametable over jotable
+      rethink the concept of jo
+    - or tricks on hashtable
+
   - trace and untrace a jo
 
   - delimited continuation
@@ -29,11 +32,6 @@
   - concurrent
     use list to implement return_stack and object_stack in jojo
     thus each group of stacks is a light weight process
-
-  - fix print_return_point
-    - we need to add some overhead to local variable
-      maybe I will add this,
-      when I really need to print local variable with tag.
 
 * [maybe]
 
@@ -1618,8 +1616,8 @@
       GC_FREE,
       GC_RECUR,
     } gc_flag_t;
-    // typedef void (* cleaner_t)(cell);
 
+    // typedef void (* cleaner_t)(cell);
     typedef void (* executer_t)(cell);
     struct class {
       jo_t class_name;
@@ -1628,7 +1626,7 @@
       bool executable;
       executer_t executer;
       // cleaner_t cleaner;
-      cell object_size;
+      cell object_size; // unit cell*2
     };
     #+end_src
 
@@ -1808,83 +1806,222 @@
       - gc uses malloc and free.
         gc frees things during sweep.
 
-      - the roots of gc are :
-        1. name_record
-        2. object_stack
-
 ***** object_record
 
       #+begin_src c
+      typedef enum {
+        GC_MARK_FREE,
+        GC_MARK_USING,
+      } gc_mark_t;
+
       struct object_record_entry {
-        cell mark;
+        gc_mark_t mark;
         jo_t tag;
-        cell data;
+        cell pointer;
       };
 
-      #define OBJECT_RECORD_SIZE 1024 * 1024
+      // #define OBJECT_RECORD_SIZE 64 * 1024
+      #define OBJECT_RECORD_SIZE 3
       struct object_record_entry object_record[OBJECT_RECORD_SIZE];
       object_record_counter = 0;
       #+end_src
 
-***** >< mark_object_record
+***** init_object_record
 
       #+begin_src c
-      mark_object_record(jo_t tag, cell pointer) {
-
+      init_object_record() {
+        bzero(object_record,
+              OBJECT_RECORD_SIZE *
+              sizeof(struct object_record_entry));
       }
       #+end_src
 
-***** >< sweep_object_record
+***** about fields
+
+      - to abstract the order of tag and data in memory.
+
+      #+begin_src c
+      jo_t get_field_tag(cell* fields, cell field_index) {
+        return fields[field_index*2+1];
+      }
+
+      set_field_tag(cell* fields, cell field_index, jo_t tag) {
+        fields[field_index*2+1] = tag;
+      }
+
+      cell get_field_data(cell* fields, cell field_index) {
+        return fields[field_index*2];
+      }
+
+      set_field_data(cell* fields, cell field_index, cell data) {
+        fields[field_index*2] = data;
+      }
+      #+end_src
+
+***** about object_index
+
+      #+begin_src c
+      jo_t get_object_field_tag(cell object_index, cell field_index) {
+        cell* fields = object_record[object_index].pointer;
+        return get_field_tag(fields, field_index);
+      }
+
+      set_object_field_tag(cell object_index, cell field_index, jo_t tag) {
+        cell* fields = object_record[object_index].pointer;
+        set_field_tag(fields, field_index, tag);
+      }
+
+      cell get_object_field_data(cell object_index, cell field_index) {
+        cell* fields = object_record[object_index].pointer;
+        return get_field_data(fields, field_index);
+      }
+
+      set_object_field_data(cell object_index, cell field_index, cell data) {
+        cell* fields = object_record[object_index].pointer;
+        set_field_data(fields, field_index, data);
+      }
+      #+end_src
+
+***** mark_one
+
+      #+begin_src c
+      mark_one(jo_t tag, cell data) {
+        struct class* class = tag->data;
+        if (class->gc_flag == GC_RECUR) {
+          cell object_index = data;
+          if (object_record[object_index].mark == GC_MARK_USING) {
+            return;
+          }
+          object_record[object_index].mark = GC_MARK_USING;
+          cell object_size = class->object_size;
+          cell* fields = object_record[object_index].pointer;
+          cell i = 0;
+          while (i < object_size) {
+            mark_one(get_object_field_tag(object_index, i),
+                     get_object_field_data(object_index, i));
+            i++;
+          }
+        }
+        else if (class->gc_flag == GC_FREE) {
+          cell object_index = data;
+          object_record[object_index].mark = GC_MARK_USING;
+        }
+      }
+      #+end_src
+
+***** mark_object_record
+
+      #+begin_src c
+      mark_object_record() {
+        // prepare
+        cell i = 0;
+        while (i < OBJECT_RECORD_SIZE) {
+          object_record[i].mark = GC_MARK_FREE;
+          i++;
+        }
+        // name_record as root
+        i = 0;
+        while (i < name_record_counter) {
+          jo_t name = name_record[i];
+          mark_one(name->tag, name->data);
+          i++;
+        }
+        // object_stack as root
+        i = 0;
+        while (i < stack_length(object_stack)) {
+          mark_one(stack_ref(object_stack, i+1),
+                   stack_ref(object_stack, i));
+          i++;
+          i++;
+        }
+      }
+      #+end_src
+
+***** sweep_one
+
+      #+begin_src c
+      sweep_one(jo_t tag, cell object_index) {
+        gc_mark_t mark = object_record[object_index].mark;
+        if (mark == GC_MARK_FREE) {
+          struct class* class = tag->data;
+          if (class->gc_flag == GC_FREE) {
+            free(object_record[object_index].pointer);
+          }
+          else if (class->gc_flag == GC_RECUR) {
+            object_record[object_index].mark = GC_MARK_USING;
+            cell object_size = class->object_size;
+            cell i = 0;
+            cell* fields = object_record[object_index].pointer;
+            while (i < object_size) {
+              sweep_one(get_field_tag(fields, i),
+                        get_field_data(fields, i));
+              i++;
+            }
+            object_record[object_index].mark = GC_MARK_FREE;
+            free(object_record[object_index].pointer);
+          }
+          else { // (class->gc_flag == GC_IGNORE)
+          }
+        }
+        else { // (mark == GC_MARK_USING)
+        }
+      }
+      #+end_src
+
+***** sweep_object_record
 
       #+begin_src c
       sweep_object_record() {
-
+        cell i = 0;
+        while (i < OBJECT_RECORD_SIZE) {
+          sweep_one(object_record[i].tag, i);
+          i++;
+        }
       }
       #+end_src
 
-***** >< switch_object_stack
+***** run_gc
 
       #+begin_src c
-
+      run_gc() {
+        report("- run_gc\n");
+        mark_object_record();
+        report("- after mark_object_record()\n");
+        sweep_object_record();
+        report("- after sweep_object_record()\n");
+      }
       #+end_src
 
 ***** new_object_record_entry
 
       #+begin_src c
-      cell new_object_record_entry() {
-        if (object_record_counter < OBJECT_RECORD_SIZE) {
+      cell next_free_object_record_entry() {
+        while (object_record_counter < OBJECT_RECORD_SIZE &&
+               object_record[object_record_counter].mark != GC_MARK_FREE) {
           object_record_counter++;
-          return object_record_counter - 1;
+        }
+        return object_record_counter;
+      }
+
+      cell new_object_record_entry() {
+        if (next_free_object_record_entry() < OBJECT_RECORD_SIZE) {
+          return object_record_counter++;
         }
         else {
-          return NULL;
+          run_gc();
+          object_record_counter = 0;
+          if (next_free_object_record_entry() < OBJECT_RECORD_SIZE) {
+            return object_record_counter++;
+          }
+          else {
+            report("- new_object_record_entry fail\n");
+            report("  after gc, the object_record is still filled\n");
+            report("  OBJECT_RECORD_SIZE : %ld\n", OBJECT_RECORD_SIZE);
+            return NULL;
+          }
         }
       }
       #+end_src
-
-*** about fields
-
-    #+begin_src c
-    jo_t get_tag_field(cell object_index, cell field_index) {
-      cell* fields = object_record[object_index].data;
-      return fields[field_index*2+1];
-    }
-
-    set_tag_field(cell object_index, cell field_index, jo_t tag) {
-      cell* fields = object_record[object_index].data;
-      fields[field_index*2+1] = tag;
-    }
-
-    cell get_data_field(cell object_index, cell field_index) {
-      cell* fields = object_record[object_index].data;
-      return fields[field_index*2];
-    }
-
-    set_data_field(cell object_index, cell field_index, cell data) {
-      cell* fields = object_record[object_index].data;
-      fields[field_index*2] = data;
-    }
-    #+end_src
 
 *** p_new
 
@@ -1893,11 +2030,18 @@
       // [<class>] -> [<object> of <class>]
       struct object a = object_stack_pop();
       struct class* class = a.data;
-      cell* data = (cell*)malloc(class->object_size*2*sizeof(cell));
+      cell* fields = (cell*)malloc(class->object_size*2*sizeof(cell));
+
+      cell i = 0;
+      while (i < class->object_size) {
+        set_field_tag(fields, i, str2jo("<uninitialised-field-place-holder>"));
+        set_field_data(fields, i, 0);
+        i++;
+      }
 
       cell index = new_object_record_entry();
       object_record[index].tag = class->class_name;
-      object_record[index].data = data;
+      object_record[index].pointer = fields;
 
       object_stack_push(class->class_name, index);
     }
@@ -1922,13 +2066,6 @@
     #+end_src
 
 *** executer
-
-***** exe_generic_prototype
-
-      #+begin_src c
-      exe_generic_prototype() {
-      }
-      #+end_src
 
 ***** exe_prim
 
@@ -1974,8 +2111,8 @@
       exe_set_object_field(cell index) {
         struct object a = object_stack_pop();
         struct object b = object_stack_pop();
-        set_tag_field(a.data, index, b.tag);
-        set_data_field(a.data, index, b.data);
+        set_object_field_tag(a.data, index, b.tag);
+        set_object_field_data(a.data, index, b.data);
       }
       #+end_src
 
@@ -1984,8 +2121,8 @@
       #+begin_src c
       exe_get_object_field(cell index) {
         struct object a = object_stack_pop();
-        object_stack_push(get_tag_field(a.data, index),
-                          get_data_field(a.data, index));
+        object_stack_push(get_object_field_tag(a.data, index),
+                          get_object_field_data(a.data, index));
       }
       #+end_src
 
@@ -2008,12 +2145,16 @@
 
     #+begin_src c
     expose_object() {
+      init_object_record();
+
       define_the_object_class();
 
       define_atom_class("<cell>", GC_IGNORE);
       define_atom_class("<jo>", GC_IGNORE);
       define_atom_class("<string>", GC_FREE);
       define_atom_class("<class>", GC_IGNORE);
+      define_atom_class("<generic-prototype>", GC_IGNORE);
+      define_atom_class("<uninitialised-field-place-holder>", GC_IGNORE);
 
       define_executable_atom_class("<prim>", GC_IGNORE, exe_prim);
       define_executable_atom_class("<prim-keyword>", GC_IGNORE, exe_prim_keyword);
@@ -2452,7 +2593,9 @@
 
     #+begin_src c
     init_jotable() {
-      bzero(jotable, JOTABLE_SIZE * sizeof(struct jotable_entry));
+      bzero(jotable,
+            JOTABLE_SIZE *
+            sizeof(struct jotable_entry));
     }
     #+end_src
 
@@ -2575,6 +2718,25 @@
       here(str2jo(".width"));
       here(str2jo("<string>"));
       here(str2jo("print-object-stack"));
+
+      here(str2jo("<rectangle>"));
+      here(str2jo("new"));
+      here(str2jo("drop"));
+
+      here(str2jo("<rectangle>"));
+      here(str2jo("new"));
+      here(str2jo("drop"));
+
+      here(str2jo("<rectangle>"));
+      here(str2jo("new"));
+      here(str2jo("drop"));
+
+      here(str2jo("<rectangle>"));
+      here(str2jo("new"));
+      here(str2jo("drop"));
+
+      here(str2jo("print-object-stack"));
+
       here(str2jo("end"));
       return_stack_push_new(jojo_area);
       eval();
