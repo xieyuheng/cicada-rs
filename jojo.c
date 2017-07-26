@@ -1336,7 +1336,6 @@
         char* field_name;
         cell index;
       {
-        report("- field_name : %s\n", field_name);
         char name_buffer[1024];
 
         name_buffer[0] = '\0';
@@ -1454,7 +1453,9 @@
           i++;
         }
         strcpy(cursor, function_name);
+
         jo_t name = str2jo(name_buffer);
+
         cell arity = i;
         if (arity == 0 ||
             check_function_arity(function_name, arity)) {
@@ -2104,13 +2105,11 @@
         return;
       }
     }
-    k_add_fun() {
-    }
     #define MAX_FIELDS 1024
 
     k_add_class() {
       jo_t name = read_jo();
-      read_jo();
+      read_jo(); // drop '('
       jo_t super = read_jo();
       k_ignore();
       jo_t fields[MAX_FIELDS];
@@ -2132,6 +2131,62 @@
         i++;
       }
       _add_class(name, super, fields);
+    }
+    k_add_fun_args(jo_t* args) {
+      if (args[0] == NULL) { return; }
+      k_add_fun_args(args+1);
+      // ><><>< little syntax check here
+      {
+        here(JO_INS_SET_LOCAL);
+        here(args[0]);
+      }
+    }
+
+    // caller free
+    jo_t* k_add_fun_tags() {
+      read_jo(); // drop '('
+      jo_t* tags = (jo_t*)malloc(64 * sizeof(jo_t));
+      jo_t args[64];
+      cell i = 0;
+      while (true) {
+        jo_t arg = read_jo(); if (arg == ROUND_KET) { break; }
+        args[i] = arg;
+        jo_t tag = read_jo();
+        tags[i] = tag;
+        i++;
+      }
+      args[i] = NULL;
+      k_add_fun_args(args);
+      tags[i] = NULL;
+      return tags;
+    }
+    k_add_fun() {
+      jo_t fun_name = read_jo();
+      jo_t* jojo = tos(compiling_stack);
+      jo_t* tags = k_add_fun_tags();
+      p_compile_jojo();
+
+      char name_buffer[1024];
+      char* cursor = name_buffer;
+      cell i = 0;
+      while (tags[i] != NULL) {
+        strcpy(cursor, jo2str(tags[i]));
+        cursor = cursor + strlen(jo2str(tags[i]));
+        i++;
+      }
+      strcpy(cursor, jo2str(fun_name));
+      free(tags);
+      jo_t name = str2jo(name_buffer);
+
+      cell arity = i;
+      if (arity == 0 ||
+          check_function_arity(jo2str(fun_name), arity)) {
+        bind_name(name, TAG_JOJO, jojo);
+      }
+      else {
+        report("- k_add_fun fall\n");
+        report("  arity of %s should not be %ld\n", jo2str(fun_name), arity);
+      }
     }
     expose_add() {
       add_prim_keyword("+var", S0, k_add_var);

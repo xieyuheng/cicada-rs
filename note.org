@@ -1,39 +1,46 @@
 #+title:  note of jojo
 
-* syntax example
+* <cons>
 
   #+begin_src jojo
-  (+class <t> (<object>) a b c)
+  (+class <cons> (<object>)
+    car cdr)
 
+  (+fun cons (:c <object> :o <object>)
+    <cons> new :c1!
+    :c :c1 .cdr!
+    :o :c1 .car!
+    :c1)
+
+  (+var x
+    0
+    1 cons
+    2 cons)
+
+  (run
+    x .cdr .cdr)
+  #+end_src
+
+* ><
+
+  #+begin_src jojo
   (+class <rectangle> (<object>)
     height width)
 
   (+class <color-rectangle> (<rectangle>)
-    cyan magenta yellow
-    clear?)
+    cyan magenta yellow)
 
-  (run <color-rectangle> new
-       dup 666 swap .clear?!
-       .clear?)
-
-  (+fun map (<list> :list <jojo> :jojo)
+  (+fun map (:list <list> :jojo <jojo>)
     (if :list null eq? then null end)
     (el :list cdr :jojo (recur)
         :list car :jojo apply cons))
 
-  (+fun repeat (<int> :time <jojo> :jojo)
+  (+fun repeat (:time <int> :jojo <jojo>)
     (if :time 0 eq? then end)
     (el :jojo apply
         :time dec :jojo (loop)))
 
-  (+class <cons> (<object>)
-    [car null]
-    [cdr null])
 
-  (+fun cons (<cons> :c <object> :o)
-    <cons> new :c1!
-    :c :c1.cdr!
-    :o :c1.car!)
 
   (+class <person> (<object>)
     [age 13]
@@ -41,11 +48,11 @@
     (:meta-variable
      [testing-meta-variable 666]))
 
-  (+fun grow (<person> :p)
+  (+fun grow (:p <person>)
     :p.age inc
     :p.age!)
 
-  (+fun report (<person> :p)
+  (+fun report (:p <person>)
     "age : " w :p.age w nl
     "languege : " w :p.language w nl
     nl)
