@@ -67,6 +67,12 @@
         return 0;
       }
     }
+    report(char* format, ...) {
+      va_list arg_list;
+      va_start(arg_list, format);
+      vdprintf(STDERR_FILENO, format, arg_list);
+      va_end(arg_list);
+    }
       bool string_equal(char* s1, char* s2) {
         if (strcmp(s1, s2) == 0) {
           return true;
@@ -115,12 +121,60 @@
       }
 
       cell string_to_int(char* str) { return string_to_based_int(str, 10); }
-    report(char* format, ...) {
-      va_list arg_list;
-      va_start(arg_list, format);
-      vdprintf(STDERR_FILENO, format, arg_list);
-      va_end(arg_list);
-    }
+      cell string_count_member(char* s, byte b) {
+        cell sum = 0;
+        cell i = 0;
+        while (s[i] != '\0') {
+          if (s[i] == b) {
+            sum++;
+          }
+          i++;
+        }
+        return sum;
+      }
+      bool string_member_p(char* s, byte b) {
+        cell i = 0;
+        while (s[i] != '\0') {
+          if (s[i] == b) {
+            return true;
+          }
+          i++;
+        }
+        return false;
+      }
+      char string_last_byte(char* s) {
+        cell i = 0;
+        while (s[i+1] != 0) {
+          i++;
+        }
+        return s[i];
+      }
+      // caller free
+      char* substring(char* str, cell begin, cell end) {
+        cell len = strlen(str);
+        if ((end != NULL && end > len) ||
+            (begin < 0)) {
+          report("- substring fail\n");
+          report("  string : %s\n", str);
+          report("  length : %ld\n", len);
+          report("  begin index : %ld\n", begin);
+          report("  end index : %ld\n", end);
+          return;
+        }
+
+        char* buf = strdup(str);
+        if (end != NULL) {
+          buf[end] = '\0';
+        }
+        if (begin == 0) {
+          return buf;
+        }
+        else {
+          char* s = strdup(buf+begin);
+          free(buf);
+          return s;
+        }
+      }
     #define S0 (char*[]){NULL}
     #define S1(x1) (char*[]){x1, NULL}
     #define S2(x1, x2) (char*[]){x1, x2, NULL}
@@ -222,7 +276,8 @@
     jo_t DOUBLE_QUOTE;
 
     jo_t JO_INS_LIT;
-    jo_t JO_INS_ADDRESS;
+    jo_t JO_INS_GET_LOCAL;
+    jo_t JO_INS_SET_LOCAL;
 
     jo_t JO_INS_JUMP;
     jo_t JO_INS_JUMP_IF_FALSE;
@@ -285,6 +340,14 @@
       name_record_counter++;
       name_record[name_record_counter] = 0;
 
+      name->tag = tag;
+      name->data = data;
+    }
+    rebind_name(name, tag, data)
+      jo_t name;
+      jo_t tag;
+      cell data;
+    {
       name->tag = tag;
       name->data = data;
     }
@@ -1270,7 +1333,6 @@
       }
       define_field(char* class_name, char* field, cell index) {
         char name_buffer[1024];
-        jo_t name;
 
         name_buffer[0] = '\0';
         strcat(name_buffer, ".");
@@ -1280,8 +1342,7 @@
           strcat(name_buffer, class_name);
           strcat(name_buffer, ".");
           strcat(name_buffer, field);
-          name = str2jo(name_buffer);
-          bind_name(name, str2jo("<get-object-field>"), index);
+          bind_name(str2jo(name_buffer), str2jo("<get-object-field>"), index);
         }
         else {
           report("- define_field fail\n");
@@ -1299,8 +1360,7 @@
           strcat(name_buffer, ".");
           strcat(name_buffer, field);
           strcat(name_buffer, "!");
-          name = str2jo(name_buffer);
-          bind_name(name, str2jo("<set-object-field>"), index);
+          bind_name(str2jo(name_buffer), str2jo("<set-object-field>"), index);
         }
         else {
           report("- define_field fail\n");
@@ -1429,16 +1489,20 @@
         eval();
         current_alias_pointer = pop(keyword_stack);
       }
+      exe_get_object_field(cell index) {
+        struct object a = object_stack_pop();
+        object_stack_push(get_object_field_tag(a.data, index),
+                          get_object_field_data(a.data, index));
+      }
       exe_set_object_field(cell index) {
         struct object a = object_stack_pop();
         struct object b = object_stack_pop();
         set_object_field_tag(a.data, index, b.tag);
         set_object_field_data(a.data, index, b.data);
       }
-      exe_get_object_field(cell index) {
+      exe_set_global_variable(jo_t name) {
         struct object a = object_stack_pop();
-        object_stack_push(get_object_field_tag(a.data, index),
-                          get_object_field_data(a.data, index));
+        rebind_name(name, a.tag, a.data);
       }
     define_the_object_class() {
       struct class* class = (struct class*)malloc(sizeof(struct class));
@@ -1468,6 +1532,7 @@
       define_executable_atom_class("<keyword>", gc_ignore, exe_keyword);
       define_executable_atom_class("<set-object-field>", gc_ignore, exe_set_object_field);
       define_executable_atom_class("<get-object-field>", gc_ignore, exe_get_object_field);
+      define_executable_atom_class("<set-global-variable>", gc_ignore, exe_set_global_variable);
 
       define_prim("new", S1("<class>"), p_new);
     }
@@ -1766,10 +1831,10 @@
     }
     ins_lit() {
       // [] -> [cell] {return_stack}
-      struct ret p = return_stack_tos();
+      struct ret rp = return_stack_tos();
       return_stack_inc();
       return_stack_inc();
-      jo_t* jojo = p.jojo;
+      jo_t* jojo = rp.jojo;
       jo_t tag = jojo[0];
       cell data = jojo[1];
       object_stack_push(tag, data);
@@ -1800,6 +1865,121 @@
       here(TAG_STRING);
       here(object_entry);
     }
+      // :local
+      bool get_local_string_p(char* str) {
+        if (str[0] != ':') {
+          return false;
+        }
+        else if (string_last_byte(str) == '!') {
+          return false;
+        }
+        else if (string_member_p(str, '.')) {
+          return false;
+        }
+        else {
+          return true;
+        }
+      }
+      // :local!
+      bool set_local_string_p(char* str) {
+        if (str[0] != ':') {
+          return false;
+        }
+        else if (string_last_byte(str) != '!') {
+          return false;
+        }
+        else if (string_member_p(str, '.')) {
+          return false;
+        }
+        else {
+          return true;
+        }
+      }
+      // :local.field
+      bool get_local_field_string_p(char* str) {
+        if (str[0] != ':') {
+          return false;
+        }
+        else if (string_last_byte(str) == '!') {
+          return false;
+        }
+        else if (string_count_member(str, '.') != 1) {
+          return false;
+        }
+        else {
+          return true;
+        }
+      }
+      // :local.field!
+      bool set_local_field_string_p(char* str) {
+        if (str[0] != ':') {
+          return false;
+        }
+        else if (string_last_byte(str) != '!') {
+          return false;
+        }
+        else if (string_count_member(str, '.') != 1) {
+          return false;
+        }
+        else {
+          return true;
+        }
+      }
+      cell local_find(jo_t name) {
+        // return index of local_record
+        // -1 -- no found
+        struct ret rp = return_stack_tos();
+        cell cursor = current_local_pointer - 1;
+        while (cursor >= rp.local_pointer) {
+          if (local_record[cursor].name == name) {
+            return cursor;
+          }
+          else {
+            cursor--;
+          }
+        }
+        return -1;
+      }
+      ins_set_local() {
+        struct ret rp = return_stack_tos();
+        return_stack_inc();
+        jo_t* jojo = rp.jojo;
+        jo_t jo = jojo[0];
+
+        cell index = local_find(jo);
+
+        struct object a = object_stack_pop();
+        if (index != -1) {
+          local_record[index].name = jo;
+          local_record[index].local_tag = a.tag;
+          local_record[index].local_data = a.data;
+        }
+        else {
+          local_record[current_local_pointer].name = jo;
+          local_record[current_local_pointer].local_tag = a.tag;
+          local_record[current_local_pointer].local_data = a.data;
+          current_local_pointer++;
+        }
+      }
+      ins_get_local() {
+        struct ret rp = return_stack_tos();
+        return_stack_inc();
+        jo_t* jojo = rp.jojo;
+        jo_t jo = jojo[0];
+
+        cell index = local_find(jo);
+
+        if (index != -1) {
+          struct local lp = local_record[index];
+          object_stack_push(lp.local_tag, lp.local_data);
+        }
+        else {
+          report("- ins_get_local fatal error\n");
+          report("  name is not bound\n");
+          report("  name : %s\n", jo2str(jo));
+          p_debug();
+        }
+      }
     compile_jo(jo_t jo) {
       if (jo == ROUND_BAR) {
         jo_apply(read_jo());
@@ -1813,6 +1993,16 @@
       }
       else if (jo == DOUBLE_QUOTE) {
         compile_string();
+      }
+      else if (get_local_string_p(str)) {
+        here(JO_INS_GET_LOCAL);
+        here(jo);
+      }
+      else if (set_local_string_p(str)) {
+        here(JO_INS_SET_LOCAL);
+        char* tmp = substring(str, 0, strlen(str) -1);
+        here(str2jo(tmp));
+        free(tmp);
       }
       else if (used_jo_p(jo)) {
         here(jo);
@@ -1871,12 +2061,30 @@
       k_run();
       struct object a = object_stack_pop();
       bind_name(name, a.tag, a.data);
+
+      char name_buffer[1024];
+      name_buffer[0] = '\0';
+      strcat(name_buffer, jo2str(name));
+      strcat(name_buffer, "!");
+      if (check_function_arity(name_buffer, 1)) {
+        name_buffer[0] = '\0';
+        strcat(name_buffer, "<object>");
+        strcat(name_buffer, jo2str(name));
+        strcat(name_buffer, "!");
+        bind_name(str2jo(name_buffer), str2jo("<set-global-variable>"), name);
+      }
+      else {
+        report("- def fail\n");
+        return;
+      }
     }
 
     expose_def() {
       define_prim_keyword("def", S0, k_def);
       define_prim_keyword("run", S0, k_run);
       define_prim("ins/lit", S0, ins_lit);
+      define_prim("ins/get-local", S0, ins_get_local);
+      define_prim("ins/set-local", S0, ins_set_local);
     }
     p_print_object_stack() {
       cell length = stack_length(object_stack);
@@ -2037,8 +2245,9 @@
       FLOWER_KET   =   str2jo("}");
       DOUBLE_QUOTE =   str2jo("\"");
 
-      JO_INS_LIT  = str2jo("ins/lit");
-      JO_INS_ADDRESS = str2jo("ins/address");
+      JO_INS_LIT       = str2jo("ins/lit");
+      JO_INS_GET_LOCAL = str2jo("ins/get-local");
+      JO_INS_SET_LOCAL = str2jo("ins/set-local");
 
       JO_INS_JUMP = str2jo("ins/jump");
       JO_INS_JUMP_IF_FALSE = str2jo("ins/jump-if-false");
