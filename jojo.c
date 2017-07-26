@@ -209,6 +209,7 @@
     jo_t TAG_PRIM_KEYWORD;
     jo_t TAG_KEYWORD;
     jo_t TAG_INT;
+    jo_t TAG_STRING;
 
     jo_t JO_DECLARED;
 
@@ -1005,364 +1006,210 @@
       push(compiling_stack, jojo + 1);
     }
     typedef enum {
-      GC_IGNORE,
-      // GC_CLEANER,
-      GC_FREE,
-      GC_RECUR,
-    } gc_flag_t;
+      GC_STATE_MARKING,
+      GC_STATE_SWEEPING,
+    } gc_state_t;
+    typedef void (* gc_actor_t)(gc_state_t, cell);
+    typedef enum {
+      GC_MARK_FREE,
+      GC_MARK_USING,
+    } gc_mark_t;
 
-    // typedef void (* cleaner_t)(cell);
+    struct object_entry {
+      gc_mark_t mark;
+      gc_actor_t gc_actor;
+      cell object_size;
+      cell pointer;
+    };
+
+    // #define OBJECT_RECORD_SIZE 64 * 1024
+    #define OBJECT_RECORD_SIZE 3
+    struct object_entry object_record[OBJECT_RECORD_SIZE];
+
+    struct object_entry* object_record_pointer = object_record;
+    bool object_record_end_p() {
+      return object_record_pointer >= (object_record + OBJECT_RECORD_SIZE);
+    }
+    init_object_record() {
+      bzero(object_record,
+            OBJECT_RECORD_SIZE *
+            sizeof(struct object_entry));
+    }
     typedef void (* executer_t)(cell);
     struct class {
       jo_t class_name;
       jo_t super_name;
-      gc_flag_t gc_flag;
+      gc_actor_t gc_actor;
       bool executable;
       executer_t executer;
-      // cleaner_t cleaner;
       cell object_size; // unit cell*2
     };
-    define_atom_class(class_name, gc_flag)
-      char* class_name;
-      gc_flag_t gc_flag;
-    {
-      struct class* class = (struct class*)malloc(sizeof(struct class));
-      class->class_name = str2jo(class_name);
-      class->super_name = str2jo("<object>");
-      class->gc_flag = gc_flag;
-      class->executable = false;
+    jo_t get_field_tag(cell* fields, cell field_index) {
+      return fields[field_index*2+1];
+    }
 
-      jo_t name = str2jo(class_name);
-      bind_name(name, str2jo("<class>"), class);
+    set_field_tag(cell* fields, cell field_index, jo_t tag) {
+      fields[field_index*2+1] = tag;
     }
-    define_executable_atom_class(class_name, gc_flag, executer)
-      char* class_name;
-      gc_flag_t gc_flag;
-      executer_t executer;
-    {
-      struct class* class = (struct class*)malloc(sizeof(struct class));
-      class->class_name = str2jo(class_name);
-      class->super_name = str2jo("<object>");
-      class->gc_flag = gc_flag;
-      class->executable = true;
-      class->executer = executer;
 
-      jo_t name = str2jo(class_name);
-      bind_name(name, str2jo("<class>"), class);
+    cell get_field_data(cell* fields, cell field_index) {
+      return fields[field_index*2];
     }
-    bool check_function_arity(char* function_name, cell arity) {
-      jo_t name = str2jo(function_name);
-      if (used_jo_p(name)) {
-        return name->tag == str2jo("<generic-prototype>") && name->data == arity;
-      }
-      else {
-        bind_name(name, str2jo("<generic-prototype>"), arity);
-        return true;
-      }
-    }
-    define_field(char* class_name, char* field, cell index) {
-      char name_buffer[1024];
-      jo_t name;
-      strcpy(name_buffer, class_name);
-      name_buffer[strlen(class_name)] = '.';
-      strcpy(name_buffer + 1 + strlen(class_name), field);
-      check_function_arity(name_buffer + strlen(class_name), 1);
-      name = str2jo(name_buffer);
-      bind_name(name, str2jo("<get-object-field>"), index);
 
-      strcpy(name_buffer, "<object>");
-      strcpy(name_buffer + strlen("<object>"), class_name);
-      name_buffer[strlen(class_name) + strlen("<object>")] = '!';
-      strcpy(name_buffer + 1 + strlen(class_name) + strlen("<object>"), field);
-      check_function_arity(name_buffer + strlen(class_name) + strlen("<object>"), 2);
-      name = str2jo(name_buffer);
-      bind_name(name, str2jo("<set-object-field>"), index);
+    set_field_data(cell* fields, cell field_index, cell data) {
+      fields[field_index*2] = data;
     }
-    define_class(class_name, super_name, fields)
-      char* class_name;
-      char* super_name;
-      char* fields[];
+    jo_t get_object_field_tag(object_entry, field_index)
+      struct object_entry* object_entry;
+      cell field_index;
     {
-      struct class* class = (struct class*)malloc(sizeof(struct class));
-      jo_t name = str2jo(class_name);
-      jo_t super = str2jo(super_name);
-      class->class_name = name;
-      class->super_name = super;
-      class->gc_flag = GC_RECUR;
-      class->executable = false;
-      struct class* super_class = super->data;
-      cell i = super_class->object_size;
-      while (fields[i] != NULL) {
-        define_field(class_name, fields[i], i);
-        i++;
-      }
-      class->object_size = i;
+      cell* fields = object_entry->pointer;
+      return get_field_tag(fields, field_index);
+    }
 
-      bind_name(name, str2jo("<class>"), class);
-    }
-    define_executable_class(class_name, super_name, executer, fields)
-      char* class_name;
-      char* super_name;
-      executer_t executer;
-      char* fields[];
+    set_object_field_tag(object_entry, field_index, tag)
+      struct object_entry* object_entry;
+      cell field_index;
+      jo_t tag;
     {
-      struct class* class = (struct class*)malloc(sizeof(struct class));
-      jo_t name = str2jo(class_name);
-      jo_t super = str2jo(super_name);
-      class->class_name = name;
-      class->super_name = super;
-      class->gc_flag = GC_RECUR;
-      class->executable = true;
-      class->executer = executer;
-      struct class* super_class = super->data;
-      cell i = super_class->object_size;
-      while (fields[i] != NULL) {
-        define_field(class_name, fields[i], i);
-        i++;
-      }
-      class->object_size = i;
+      cell* fields = object_entry->pointer;
+      set_field_tag(fields, field_index, tag);
+    }
 
-      bind_name(name, str2jo("<class>"), class);
-    }
-    define_prim(function_name, tags, fun)
-      char* function_name;
-      char* tags[];
-      primitive_t fun;
+    cell get_object_field_data(object_entry, field_index)
+      struct object_entry* object_entry;
+      cell field_index;
     {
-      char name_buffer[1024];
-      char* cursor = name_buffer;
+      cell* fields = object_entry->pointer;
+      return get_field_data(fields, field_index);
+    }
+
+    set_object_field_data(object_entry, field_index, data)
+      struct object_entry* object_entry;
+      cell field_index;
+      cell data;
+    {
+      cell* fields = object_entry->pointer;
+      set_field_data(fields, field_index, data);
+    }
+    mark_one(jo_t tag, cell data) {
+      struct class* class = tag->data;
+      class->gc_actor(GC_STATE_MARKING, data);
+    }
+    mark_object_record() {
+      // prepare
       cell i = 0;
-      while (tags[i] != NULL) {
-        strcpy(cursor, tags[i]);
-        cursor = cursor + strlen(tags[i]);
+      while (i < OBJECT_RECORD_SIZE) {
+        object_record[i].mark = GC_MARK_FREE;
         i++;
       }
-      strcpy(cursor, function_name);
-      jo_t name = str2jo(name_buffer);
-      cell arity = i;
-      if (arity == 0 ||
-          check_function_arity(function_name, arity)) {
-        bind_name(name, TAG_PRIM, fun);
+      // name_record as root
+      i = 0;
+      while (i < name_record_counter) {
+        jo_t name = name_record[i];
+        mark_one(name->tag, name->data);
+        i++;
       }
-      else {
-        report("- define_prim fall\n");
-        report("  arity of %s should not be %ld\n", function_name, arity);
+      // object_stack as root
+      i = 0;
+      while (i < stack_length(object_stack)) {
+        mark_one(stack_ref(object_stack, i+1),
+                 stack_ref(object_stack, i));
+        i++;
+        i++;
       }
     }
-    define_prim_keyword(function_name, tags, fun)
-      char* function_name;
-      char* tags[];
-      primitive_t fun;
-    {
-      char name_buffer[1024];
-      char* cursor = name_buffer;
+    sweep_one(struct object_entry* object_entry) {
+      if (object_entry->mark == GC_MARK_USING) {
+        return;
+      }
+      else {
+        object_entry->gc_actor(GC_STATE_SWEEPING, object_entry);
+      }
+    }
+    sweep_object_record() {
       cell i = 0;
-      while (tags[i] != NULL) {
-        strcpy(cursor, tags[i]);
-        cursor = cursor + strlen(tags[i]);
+      while (i < OBJECT_RECORD_SIZE) {
+        sweep_one(object_record + i);
         i++;
       }
-      strcpy(cursor, function_name);
-      jo_t name = str2jo(name_buffer);
-      cell arity = i;
-      if (arity == 0 ||
-          check_function_arity(function_name, arity)) {
-        bind_name(name, TAG_PRIM_KEYWORD, fun);
-      }
-      else {
-        report("- define_prim_keyword fall\n");
-        report("  arity of %s should not be %ld\n", function_name, arity);
-      }
     }
-      typedef enum {
-        GC_MARK_FREE,
-        GC_MARK_USING,
-      } gc_mark_t;
-
-      struct object_record_entry {
-        gc_mark_t mark;
-        jo_t tag;
-        cell pointer;
-      };
-
-      // #define OBJECT_RECORD_SIZE 64 * 1024
-      #define OBJECT_RECORD_SIZE 3
-      struct object_record_entry object_record[OBJECT_RECORD_SIZE];
-
-      typedef struct object_record_entry* object_pointer_t;
-      object_pointer_t object_record_pointer = object_record;
-      bool object_record_end_p() {
-        return object_record_pointer >= (object_record + OBJECT_RECORD_SIZE);
+      gc_ignore(gc_state_t gc_state, cell data) {
+        if (gc_state == GC_STATE_MARKING) {
+        }
+        else if (gc_state == GC_STATE_SWEEPING) {
+        }
       }
-      init_object_record() {
-        bzero(object_record,
-              OBJECT_RECORD_SIZE *
-              sizeof(struct object_record_entry));
+      gc_free(gc_state_t gc_state, struct object_entry* object_entry) {
+        if (gc_state == GC_STATE_MARKING) {
+          object_entry->mark = GC_MARK_USING;
+        }
+        else if (gc_state == GC_STATE_SWEEPING) {
+          free(object_entry->pointer);
+        }
       }
-      jo_t get_field_tag(cell* fields, cell field_index) {
-        return fields[field_index*2+1];
-      }
-
-      set_field_tag(cell* fields, cell field_index, jo_t tag) {
-        fields[field_index*2+1] = tag;
-      }
-
-      cell get_field_data(cell* fields, cell field_index) {
-        return fields[field_index*2];
-      }
-
-      set_field_data(cell* fields, cell field_index, cell data) {
-        fields[field_index*2] = data;
-      }
-      jo_t get_object_field_tag(object_pointer, field_index)
-        object_pointer_t object_pointer;
-        cell field_index;
-      {
-        cell* fields = object_pointer->pointer;
-        return get_field_tag(fields, field_index);
-      }
-
-      set_object_field_tag(object_pointer, field_index, tag)
-        object_pointer_t object_pointer;
-        cell field_index;
-        jo_t tag;
-      {
-        cell* fields = object_pointer->pointer;
-        set_field_tag(fields, field_index, tag);
-      }
-
-      cell get_object_field_data(object_pointer, field_index)
-        object_pointer_t object_pointer;
-        cell field_index;
-      {
-        cell* fields = object_pointer->pointer;
-        return get_field_data(fields, field_index);
-      }
-
-      set_object_field_data(object_pointer, field_index, data)
-        object_pointer_t object_pointer;
-        cell field_index;
-        cell data;
-      {
-        cell* fields = object_pointer->pointer;
-        set_field_data(fields, field_index, data);
-      }
-      mark_one(jo_t tag, cell data) {
-        struct class* class = tag->data;
-        if (class->gc_flag == GC_RECUR) {
-          object_pointer_t object_pointer = data;
-          if (object_pointer->mark == GC_MARK_USING) {
+      gc_recur(gc_state_t gc_state, struct object_entry* object_entry) {
+        if (gc_state == GC_STATE_MARKING) {
+          if (object_entry->mark == GC_MARK_USING) {
             return;
           }
-          object_pointer->mark = GC_MARK_USING;
-          cell object_size = class->object_size;
-          cell* fields = object_pointer->pointer;
+          object_entry->mark = GC_MARK_USING;
+          cell object_size = object_entry->object_size;
+          cell* fields = object_entry->pointer;
           cell i = 0;
           while (i < object_size) {
-            mark_one(get_object_field_tag(object_pointer, i),
-                     get_object_field_data(object_pointer, i));
+            mark_one(get_object_field_tag(object_entry, i),
+                     get_object_field_data(object_entry, i));
             i++;
           }
         }
-        else if (class->gc_flag == GC_FREE) {
-          object_pointer_t object_pointer = data;
-          object_pointer->mark = GC_MARK_USING;
+        else if (gc_state == GC_STATE_SWEEPING) {
+          free(object_entry->pointer);
         }
       }
-      mark_object_record() {
-        // prepare
-        cell i = 0;
-        while (i < OBJECT_RECORD_SIZE) {
-          object_record[i].mark = GC_MARK_FREE;
-          i++;
-        }
-        // name_record as root
-        i = 0;
-        while (i < name_record_counter) {
-          jo_t name = name_record[i];
-          mark_one(name->tag, name->data);
-          i++;
-        }
-        // object_stack as root
-        i = 0;
-        while (i < stack_length(object_stack)) {
-          mark_one(stack_ref(object_stack, i+1),
-                   stack_ref(object_stack, i));
-          i++;
-          i++;
-        }
-      }
-      sweep_one(jo_t tag, cell data) {
-        struct class* class = tag->data;
-        if (class->gc_flag == GC_IGNORE) {
-          return;
-        }
-        object_pointer_t object_pointer = data;
-        gc_mark_t mark = object_pointer->mark;
-        if (mark == GC_MARK_USING) {
-          return;
-        }
-        // else if (mark == GC_MARK_FREE)
-        else {
-          if (class->gc_flag == GC_FREE) {
-            free(object_pointer->pointer);
-          }
-          // else if (class->gc_flag == GC_RECUR)
-          else {
-            object_pointer->mark = GC_MARK_USING;
-            cell object_size = class->object_size;
-            cell i = 0;
-            cell* fields = object_pointer->pointer;
-            while (i < object_size) {
-              sweep_one(get_field_tag(fields, i),
-                        get_field_data(fields, i));
-              i++;
-            }
-            object_pointer->mark = GC_MARK_FREE;
-            free(object_pointer->pointer);
-          }
-        }
-      }
-      sweep_object_record() {
-        cell i = 0;
-        while (i < OBJECT_RECORD_SIZE) {
-          sweep_one(object_record[i].tag, object_record + i);
-          i++;
-        }
-      }
-      run_gc() {
-        // report("- run_gc()\n");
-        mark_object_record();
-        // report("- after mark_object_record()\n");
-        sweep_object_record();
-        // report("- after sweep_object_record()\n");
-      }
-      next_free_object_record_entry() {
-        while (!object_record_end_p() &&
-               object_record_pointer->mark != GC_MARK_FREE) {
-          object_record_pointer++;
-        }
-      }
+    run_gc() {
+      mark_object_record();
+      sweep_object_record();
+    }
 
-      object_pointer_t new_object_record_entry() {
-        next_free_object_record_entry();
-        if (!object_record_end_p()) {
+    // run_gc() {
+    //   report("- run_gc()\n");
+    //   mark_object_record();
+    //   report("- after mark_object_record()\n");
+    //   sweep_object_record();
+    //   report("- after sweep_object_record()\n");
+    // }
+    next_free_record_object_entry() {
+      while (!object_record_end_p() &&
+             object_record_pointer->mark != GC_MARK_FREE) {
+        object_record_pointer++;
+      }
+    }
+
+    struct object_entry* new_record_object_entry() {
+      next_free_record_object_entry();
+      if (!object_record_end_p()) {
+        return object_record_pointer++;
+      }
+      else {
+        run_gc();
+        object_record_pointer = object_record;
+        if (next_free_record_object_entry() < OBJECT_RECORD_SIZE) {
           return object_record_pointer++;
         }
         else {
-          run_gc();
-          object_record_pointer = object_record;
-          if (next_free_object_record_entry() < OBJECT_RECORD_SIZE) {
-            return object_record_pointer++;
-          }
-          else {
-            report("- new_object_record_entry fail\n");
-            report("  after gc, the object_record is still filled\n");
-            report("  OBJECT_RECORD_SIZE : %ld\n", OBJECT_RECORD_SIZE);
-            return NULL;
-          }
+          report("- new_record_object_entry fail\n");
+          report("  after gc, the object_record is still filled\n");
+          report("  OBJECT_RECORD_SIZE : %ld\n", OBJECT_RECORD_SIZE);
+          return NULL;
         }
       }
+    }
+    struct object_entry* new_static_object_entry() {
+      struct object_entry* object_entry =
+        (struct object_entry*)malloc(sizeof(struct object_entry));
+      return object_entry;
+    }
     p_new() {
       // [<class>] -> [<object> of <class>]
       struct object a = object_stack_pop();
@@ -1376,12 +1223,186 @@
         i++;
       }
 
-      object_pointer_t object_pointer = new_object_record_entry();
-      object_pointer->tag = class->class_name;
-      object_pointer->pointer = fields;
+      struct object_entry* object_entry = new_record_object_entry();
+      object_entry->gc_actor = gc_recur;
+      object_entry->pointer = fields;
+      object_entry->object_size = class->object_size;
 
-      object_stack_push(class->class_name, object_pointer);
+      object_stack_push(class->class_name, object_entry);
     }
+      define_atom_class(class_name, gc_actor)
+        char* class_name;
+        gc_actor_t gc_actor;
+      {
+        struct class* class = (struct class*)malloc(sizeof(struct class));
+        class->class_name = str2jo(class_name);
+        class->super_name = str2jo("<object>");
+        class->gc_actor = gc_actor;
+        class->executable = false;
+
+        jo_t name = str2jo(class_name);
+        bind_name(name, str2jo("<class>"), class);
+      }
+      define_executable_atom_class(class_name, gc_actor, executer)
+        char* class_name;
+        gc_actor_t gc_actor;
+        executer_t executer;
+      {
+        struct class* class = (struct class*)malloc(sizeof(struct class));
+        class->class_name = str2jo(class_name);
+        class->super_name = str2jo("<object>");
+        class->gc_actor = gc_actor;
+        class->executable = true;
+        class->executer = executer;
+
+        jo_t name = str2jo(class_name);
+        bind_name(name, str2jo("<class>"), class);
+      }
+      bool check_function_arity(char* function_name, cell arity) {
+        jo_t name = str2jo(function_name);
+        if (used_jo_p(name)) {
+          return name->tag == str2jo("<generic-prototype>") && name->data == arity;
+        }
+        else {
+          bind_name(name, str2jo("<generic-prototype>"), arity);
+          return true;
+        }
+      }
+      define_field(char* class_name, char* field, cell index) {
+        char name_buffer[1024];
+        jo_t name;
+
+        name_buffer[0] = '\0';
+        strcat(name_buffer, ".");
+        strcat(name_buffer, field);
+        if (check_function_arity(name_buffer, 1)) {
+          name_buffer[0] = '\0';
+          strcat(name_buffer, class_name);
+          strcat(name_buffer, ".");
+          strcat(name_buffer, field);
+          name = str2jo(name_buffer);
+          bind_name(name, str2jo("<get-object-field>"), index);
+        }
+        else {
+          report("- define_field fail\n");
+          return;
+        }
+
+        name_buffer[0] = '\0';
+        strcat(name_buffer, ".");
+        strcat(name_buffer, field);
+        strcat(name_buffer, "!");
+        if (check_function_arity(name_buffer, 2)) {
+          name_buffer[0] = '\0';
+          strcat(name_buffer, "<object>");
+          strcat(name_buffer, class_name);
+          strcat(name_buffer, ".");
+          strcat(name_buffer, field);
+          strcat(name_buffer, "!");
+          name = str2jo(name_buffer);
+          bind_name(name, str2jo("<set-object-field>"), index);
+        }
+        else {
+          report("- define_field fail\n");
+          return;
+        }
+      }
+      define_class(class_name, super_name, fields)
+        char* class_name;
+        char* super_name;
+        char* fields[];
+      {
+        struct class* class = (struct class*)malloc(sizeof(struct class));
+        jo_t name = str2jo(class_name);
+        jo_t super = str2jo(super_name);
+        class->class_name = name;
+        class->super_name = super;
+        class->gc_actor = gc_recur;
+        class->executable = false;
+        struct class* super_class = super->data;
+        cell i = super_class->object_size;
+        while (fields[i] != NULL) {
+          define_field(class_name, fields[i], i);
+          i++;
+        }
+        class->object_size = i;
+
+        bind_name(name, str2jo("<class>"), class);
+      }
+      define_executable_class(class_name, super_name, executer, fields)
+        char* class_name;
+        char* super_name;
+        executer_t executer;
+        char* fields[];
+      {
+        struct class* class = (struct class*)malloc(sizeof(struct class));
+        jo_t name = str2jo(class_name);
+        jo_t super = str2jo(super_name);
+        class->class_name = name;
+        class->super_name = super;
+        class->gc_actor = gc_recur;
+        class->executable = true;
+        class->executer = executer;
+        struct class* super_class = super->data;
+        cell i = super_class->object_size;
+        while (fields[i] != NULL) {
+          define_field(class_name, fields[i], i);
+          i++;
+        }
+        class->object_size = i;
+
+        bind_name(name, str2jo("<class>"), class);
+      }
+      define_prim(function_name, tags, fun)
+        char* function_name;
+        char* tags[];
+        primitive_t fun;
+      {
+        char name_buffer[1024];
+        char* cursor = name_buffer;
+        cell i = 0;
+        while (tags[i] != NULL) {
+          strcpy(cursor, tags[i]);
+          cursor = cursor + strlen(tags[i]);
+          i++;
+        }
+        strcpy(cursor, function_name);
+        jo_t name = str2jo(name_buffer);
+        cell arity = i;
+        if (arity == 0 ||
+            check_function_arity(function_name, arity)) {
+          bind_name(name, TAG_PRIM, fun);
+        }
+        else {
+          report("- define_prim fall\n");
+          report("  arity of %s should not be %ld\n", function_name, arity);
+        }
+      }
+      define_prim_keyword(function_name, tags, fun)
+        char* function_name;
+        char* tags[];
+        primitive_t fun;
+      {
+        char name_buffer[1024];
+        char* cursor = name_buffer;
+        cell i = 0;
+        while (tags[i] != NULL) {
+          strcpy(cursor, tags[i]);
+          cursor = cursor + strlen(tags[i]);
+          i++;
+        }
+        strcpy(cursor, function_name);
+        jo_t name = str2jo(name_buffer);
+        cell arity = i;
+        if (arity == 0 ||
+            check_function_arity(function_name, arity)) {
+          bind_name(name, TAG_PRIM_KEYWORD, fun);
+        }
+        else {
+          report("- define_prim_keyword fall\n");
+          report("  arity of %s should not be %ld\n", function_name, arity);
+        }
+      }
     struct stack* keyword_stack; // of alias_pointer
     struct alias {
       jo_t nick;
@@ -1423,7 +1444,7 @@
       struct class* class = (struct class*)malloc(sizeof(struct class));
       jo_t name = str2jo("<object>");
       class->class_name = name;
-      class->gc_flag = GC_RECUR;
+      class->gc_actor = gc_recur;
       class->object_size = 0;
       class->executable = false;
 
@@ -1434,19 +1455,19 @@
 
       define_the_object_class();
 
-      define_atom_class("<int>", GC_IGNORE);
-      define_atom_class("<jo>", GC_IGNORE);
-      define_atom_class("<string>", GC_FREE);
-      define_atom_class("<class>", GC_IGNORE);
-      define_atom_class("<generic-prototype>", GC_IGNORE);
-      define_atom_class("<uninitialised-field-place-holder>", GC_IGNORE);
+      define_atom_class("<int>", gc_ignore);
+      define_atom_class("<jo>", gc_ignore);
+      define_atom_class("<string>", gc_free);
+      define_atom_class("<class>", gc_ignore);
+      define_atom_class("<generic-prototype>", gc_ignore);
+      define_atom_class("<uninitialised-field-place-holder>", gc_ignore);
 
-      define_executable_atom_class("<prim>", GC_IGNORE, exe_prim);
-      define_executable_atom_class("<prim-keyword>", GC_IGNORE, exe_prim_keyword);
-      define_executable_atom_class("<jojo>", GC_IGNORE, exe_jojo);
-      define_executable_atom_class("<keyword>", GC_IGNORE, exe_keyword);
-      define_executable_atom_class("<set-object-field>", GC_IGNORE, exe_set_object_field);
-      define_executable_atom_class("<get-object-field>", GC_IGNORE, exe_get_object_field);
+      define_executable_atom_class("<prim>", gc_ignore, exe_prim);
+      define_executable_atom_class("<prim-keyword>", gc_ignore, exe_prim_keyword);
+      define_executable_atom_class("<jojo>", gc_ignore, exe_jojo);
+      define_executable_atom_class("<keyword>", gc_ignore, exe_keyword);
+      define_executable_atom_class("<set-object-field>", gc_ignore, exe_set_object_field);
+      define_executable_atom_class("<get-object-field>", gc_ignore, exe_get_object_field);
 
       define_prim("new", S1("<class>"), p_new);
     }
@@ -1753,6 +1774,32 @@
       cell data = jojo[1];
       object_stack_push(tag, data);
     }
+    compile_string() {
+      // "..."
+      char buffer[1024 * 1024];
+      cell cursor = 0;
+      while (true) {
+        char c = read_byte();
+        if (c == '"') {
+          buffer[cursor] = '\0';
+          cursor++;
+          break;
+        }
+        else {
+          buffer[cursor] = c;
+          cursor++;
+        }
+      }
+      char* str = strdup(buffer);
+      struct object_entry* object_entry = new_static_object_entry();
+      object_entry->mark = GC_MARK_USING;
+      object_entry->gc_actor = gc_ignore;
+      object_entry->pointer = str;
+
+      here(JO_INS_LIT);
+      here(TAG_STRING);
+      here(object_entry);
+    }
     compile_jo(jo_t jo) {
       if (jo == ROUND_BAR) {
         jo_apply(read_jo());
@@ -1763,6 +1810,9 @@
         here(JO_INS_LIT);
         here(TAG_INT);
         here(string_to_int(str));
+      }
+      else if (jo == DOUBLE_QUOTE) {
+        compile_string();
       }
       else if (used_jo_p(jo)) {
         here(jo);
@@ -1975,6 +2025,7 @@
       TAG_PRIM_KEYWORD = str2jo("<prim-keyword>");
       TAG_KEYWORD      = str2jo("<keyword>");
       TAG_INT          = str2jo("<int>");
+      TAG_STRING       = str2jo("<string>");
 
       JO_DECLARED = str2jo("declared");
 
@@ -2064,7 +2115,7 @@
       here(str2jo("<rectangle>"));
       here(str2jo("new"));
       here(str2jo("tuck"));
-      here(str2jo("!width"));
+      here(str2jo(".width!"));
       here(str2jo("dup"));
       here(str2jo(".width"));
       here(str2jo("swap"));
