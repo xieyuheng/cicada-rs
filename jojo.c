@@ -176,15 +176,7 @@
         }
       }
     #define S0 (char*[]){NULL}
-    #define S1(x1) (char*[]){x1, NULL}
-    #define S2(x1, x2) (char*[]){x1, x2, NULL}
-    #define S3(x1, x2, x3) (char*[]){x1, x2, x3, NULL}
-    #define S4(x1, x2, x3, x4) (char*[]){x1, x2, x3, x4, NULL}
-    #define S5(x1, x2, x3, x4, x5) (char*[]){x1, x2, x3, x4, x5, NULL}
-    #define S6(x1, x2, x3, x4, x5, x6) (char*[]){x1, x2, x3, x4, x5, x6, NULL}
-    #define S7(x1, x2, x3, x4, x5, x6, x7) (char*[]){x1, x2, x3, x4, x5, x6, x7, NULL}
-    #define S8(x1, x2, x3, x4, x5, x6, x7, x8) (char*[]){x1, x2, x3, x4, x5, x6, x7, x8, NULL}
-    #define S9(x1, x2, x3, x4, x5, x6, x7, x8, x9) (char*[]){x1, x2, x3, x4, x5, x6, x7, x8, x9, NULL}
+    #define S(...) (char*[]){__VA_ARGS__, NULL}
   p_debug() {
   }
     struct jotable_entry {
@@ -1562,7 +1554,7 @@
       add_executable_atom_class("<get-object-field>", gc_ignore, exe_get_object_field);
       add_executable_atom_class("<set-global-variable>", gc_ignore, exe_set_global_variable);
 
-      add_prim("new", S1("<class>"), p_new);
+      add_prim("new", S("<class>"), p_new);
     }
       struct absolute_t {
         jo_t root;
@@ -1723,11 +1715,11 @@
       object_stack_push(b.tag, b.data);
     }
     expose_stack_operation() {
-      add_prim("drop", S1("<object>"), p_drop);
-      add_prim("dup",  S1("<object>"), p_dup);
-      add_prim("over", S2("<object>", "<object>"), p_over);
-      add_prim("tuck", S2("<object>", "<object>"), p_tuck);
-      add_prim("swap", S2("<object>", "<object>"), p_swap);
+      add_prim("drop", S("<object>"), p_drop);
+      add_prim("dup",  S("<object>"), p_dup);
+      add_prim("over", S("<object>", "<object>"), p_over);
+      add_prim("tuck", S("<object>", "<object>"), p_tuck);
+      add_prim("swap", S("<object>", "<object>"), p_swap);
     }
     p_end() {
       struct ret rp = return_stack_pop();
@@ -2431,7 +2423,7 @@
     init_jojo();
     p_repl_flag_on();
     {
-      add_class("<rectangle>", "<object>", S2("height", "width"));
+      add_class("<rectangle>", "<object>", S("height", "width"));
 
       object_stack_push(str2jo("<int>"), 666);
       object_stack_push(str2jo("<int>"), 888);
