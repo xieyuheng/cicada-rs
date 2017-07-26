@@ -1293,7 +1293,7 @@
 
       object_stack_push(class->class_name, object_entry);
     }
-      define_atom_class(class_name, gc_actor)
+      add_atom_class(class_name, gc_actor)
         char* class_name;
         gc_actor_t gc_actor;
       {
@@ -1306,7 +1306,7 @@
         jo_t name = str2jo(class_name);
         bind_name(name, str2jo("<class>"), class);
       }
-      define_executable_atom_class(class_name, gc_actor, executer)
+      add_executable_atom_class(class_name, gc_actor, executer)
         char* class_name;
         gc_actor_t gc_actor;
         executer_t executer;
@@ -1331,43 +1331,70 @@
           return true;
         }
       }
-      define_field(char* class_name, char* field, cell index) {
+      add_field(class_name, field_name, index)
+        char* class_name;
+        char* field_name;
+        cell index;
+      {
+        report("- field_name : %s\n", field_name);
         char name_buffer[1024];
 
         name_buffer[0] = '\0';
         strcat(name_buffer, ".");
-        strcat(name_buffer, field);
+        strcat(name_buffer, field_name);
         if (check_function_arity(name_buffer, 1)) {
           name_buffer[0] = '\0';
           strcat(name_buffer, class_name);
           strcat(name_buffer, ".");
-          strcat(name_buffer, field);
+          strcat(name_buffer, field_name);
           bind_name(str2jo(name_buffer), str2jo("<get-object-field>"), index);
         }
         else {
-          report("- define_field fail\n");
+          report("- add_field fail\n");
           return;
         }
 
         name_buffer[0] = '\0';
         strcat(name_buffer, ".");
-        strcat(name_buffer, field);
+        strcat(name_buffer, field_name);
         strcat(name_buffer, "!");
         if (check_function_arity(name_buffer, 2)) {
           name_buffer[0] = '\0';
           strcat(name_buffer, "<object>");
           strcat(name_buffer, class_name);
           strcat(name_buffer, ".");
-          strcat(name_buffer, field);
+          strcat(name_buffer, field_name);
           strcat(name_buffer, "!");
           bind_name(str2jo(name_buffer), str2jo("<set-object-field>"), index);
         }
         else {
-          report("- define_field fail\n");
+          report("- add_field fail\n");
           return;
         }
       }
-      define_class(class_name, super_name, fields)
+      _add_class(name, super, fields)
+        jo_t name;
+        jo_t super;
+        jo_t fields[];
+      {
+        struct class* class = (struct class*)malloc(sizeof(struct class));
+        class->class_name = name;
+        class->super_name = super;
+        class->gc_actor = gc_recur;
+        class->executable = false;
+        struct class* super_class = super->data;
+        cell i = 0;
+        while (fields[i] != NULL) {
+          add_field(jo2str(name),
+                    jo2str(fields[i]),
+                    super_class->object_size + i);
+          i++;
+        }
+        class->object_size = super_class->object_size + i;
+
+        bind_name(name, str2jo("<class>"), class);
+      }
+      add_class(class_name, super_name, fields)
         char* class_name;
         char* super_name;
         char* fields[];
@@ -1380,16 +1407,16 @@
         class->gc_actor = gc_recur;
         class->executable = false;
         struct class* super_class = super->data;
-        cell i = super_class->object_size;
+        cell i = 0;
         while (fields[i] != NULL) {
-          define_field(class_name, fields[i], i);
+          add_field(class_name, fields[i], super_class->object_size + i);
           i++;
         }
-        class->object_size = i;
+        class->object_size = super_class->object_size + i;
 
         bind_name(name, str2jo("<class>"), class);
       }
-      define_executable_class(class_name, super_name, executer, fields)
+      add_executable_class(class_name, super_name, executer, fields)
         char* class_name;
         char* super_name;
         executer_t executer;
@@ -1406,14 +1433,14 @@
         struct class* super_class = super->data;
         cell i = super_class->object_size;
         while (fields[i] != NULL) {
-          define_field(class_name, fields[i], i);
+          add_field(class_name, fields[i], i);
           i++;
         }
         class->object_size = i;
 
         bind_name(name, str2jo("<class>"), class);
       }
-      define_prim(function_name, tags, fun)
+      add_prim(function_name, tags, fun)
         char* function_name;
         char* tags[];
         primitive_t fun;
@@ -1434,11 +1461,11 @@
           bind_name(name, TAG_PRIM, fun);
         }
         else {
-          report("- define_prim fall\n");
+          report("- add_prim fall\n");
           report("  arity of %s should not be %ld\n", function_name, arity);
         }
       }
-      define_prim_keyword(function_name, tags, fun)
+      add_prim_keyword(function_name, tags, fun)
         char* function_name;
         char* tags[];
         primitive_t fun;
@@ -1459,7 +1486,7 @@
           bind_name(name, TAG_PRIM_KEYWORD, fun);
         }
         else {
-          report("- define_prim_keyword fall\n");
+          report("- add_prim_keyword fall\n");
           report("  arity of %s should not be %ld\n", function_name, arity);
         }
       }
@@ -1504,7 +1531,7 @@
         struct object a = object_stack_pop();
         rebind_name(name, a.tag, a.data);
       }
-    define_the_object_class() {
+    add_the_object_class() {
       struct class* class = (struct class*)malloc(sizeof(struct class));
       jo_t name = str2jo("<object>");
       class->class_name = name;
@@ -1517,24 +1544,24 @@
     expose_object() {
       init_object_record();
 
-      define_the_object_class();
+      add_the_object_class();
 
-      define_atom_class("<int>", gc_ignore);
-      define_atom_class("<jo>", gc_ignore);
-      define_atom_class("<string>", gc_free);
-      define_atom_class("<class>", gc_ignore);
-      define_atom_class("<generic-prototype>", gc_ignore);
-      define_atom_class("<uninitialised-field-place-holder>", gc_ignore);
+      add_atom_class("<int>", gc_ignore);
+      add_atom_class("<jo>", gc_ignore);
+      add_atom_class("<string>", gc_free);
+      add_atom_class("<class>", gc_ignore);
+      add_atom_class("<generic-prototype>", gc_ignore);
+      add_atom_class("<uninitialised-field-place-holder>", gc_ignore);
 
-      define_executable_atom_class("<prim>", gc_ignore, exe_prim);
-      define_executable_atom_class("<prim-keyword>", gc_ignore, exe_prim_keyword);
-      define_executable_atom_class("<jojo>", gc_ignore, exe_jojo);
-      define_executable_atom_class("<keyword>", gc_ignore, exe_keyword);
-      define_executable_atom_class("<set-object-field>", gc_ignore, exe_set_object_field);
-      define_executable_atom_class("<get-object-field>", gc_ignore, exe_get_object_field);
-      define_executable_atom_class("<set-global-variable>", gc_ignore, exe_set_global_variable);
+      add_executable_atom_class("<prim>", gc_ignore, exe_prim);
+      add_executable_atom_class("<prim-keyword>", gc_ignore, exe_prim_keyword);
+      add_executable_atom_class("<jojo>", gc_ignore, exe_jojo);
+      add_executable_atom_class("<keyword>", gc_ignore, exe_keyword);
+      add_executable_atom_class("<set-object-field>", gc_ignore, exe_set_object_field);
+      add_executable_atom_class("<get-object-field>", gc_ignore, exe_get_object_field);
+      add_executable_atom_class("<set-global-variable>", gc_ignore, exe_set_global_variable);
 
-      define_prim("new", S1("<class>"), p_new);
+      add_prim("new", S1("<class>"), p_new);
     }
       struct absolute_t {
         jo_t root;
@@ -1695,11 +1722,11 @@
       object_stack_push(b.tag, b.data);
     }
     expose_stack_operation() {
-      define_prim("drop", S1("<object>"), p_drop);
-      define_prim("dup",  S1("<object>"), p_dup);
-      define_prim("over", S2("<object>", "<object>"), p_over);
-      define_prim("tuck", S2("<object>", "<object>"), p_tuck);
-      define_prim("swap", S2("<object>", "<object>"), p_swap);
+      add_prim("drop", S1("<object>"), p_drop);
+      add_prim("dup",  S1("<object>"), p_dup);
+      add_prim("over", S2("<object>", "<object>"), p_over);
+      add_prim("tuck", S2("<object>", "<object>"), p_tuck);
+      add_prim("swap", S2("<object>", "<object>"), p_swap);
     }
     p_end() {
       struct ret rp = return_stack_pop();
@@ -1710,8 +1737,8 @@
       exit(0);
     }
     expose_ending() {
-      define_prim("end", S0, p_end);
-      define_prim("bye", S0, p_bye);
+      add_prim("end", S0, p_end);
+      add_prim("bye", S0, p_bye);
     }
     struct stack* reading_stack; // of input_stack
     struct stack* writing_stack; // of output_stack
@@ -2010,7 +2037,6 @@
       else {
         // no compile before define
         report("- compile_jo undefined : %s\n", jo2str(jo));
-        k_ignore();
         p_debug();
       }
     }
@@ -2056,7 +2082,7 @@
       return_stack_push_new(jojo);
       eval();
     }
-    k_def() {
+    k_add_var() {
       jo_t name = read_jo();
       k_run();
       struct object a = object_stack_pop();
@@ -2078,13 +2104,45 @@
         return;
       }
     }
+    k_add_fun() {
+    }
+    #define MAX_FIELDS 1024
 
-    expose_def() {
-      define_prim_keyword("def", S0, k_def);
-      define_prim_keyword("run", S0, k_run);
-      define_prim("ins/lit", S0, ins_lit);
-      define_prim("ins/get-local", S0, ins_get_local);
-      define_prim("ins/set-local", S0, ins_set_local);
+    k_add_class() {
+      jo_t name = read_jo();
+      read_jo();
+      jo_t super = read_jo();
+      k_ignore();
+      jo_t fields[MAX_FIELDS];
+      cell i = 0;
+      while (true) {
+        if (i >= MAX_FIELDS) {
+          k_ignore;
+          report("- k_add_class fail\n");
+          report("  too many fields\n");
+          report("  MAX_FIELDS : %ld\n", MAX_FIELDS);
+          return;
+        }
+        jo_t field = read_jo();
+        if (field == ROUND_KET) {
+          fields[i] = NULL;
+          break;
+        }
+        fields[i] = field;
+        i++;
+      }
+      _add_class(name, super, fields);
+    }
+    expose_add() {
+      add_prim_keyword("+var", S0, k_add_var);
+      add_prim_keyword("+fun", S0, k_add_fun);
+      add_prim_keyword("+class", S0, k_add_class);
+
+      add_prim_keyword("run", S0, k_run);
+
+      add_prim("ins/lit", S0, ins_lit);
+      add_prim("ins/get-local", S0, ins_get_local);
+      add_prim("ins/set-local", S0, ins_set_local);
     }
     p_print_object_stack() {
       cell length = stack_length(object_stack);
@@ -2211,10 +2269,14 @@
       output_stack_free(t2_stack);
       report("- output_stack test2 finished\n");
     }
+    p3() {
+      report("- SIGSEGV : %ld\n", SIGSEGV);
+    }
     expose_play() {
-      define_prim("p1", S0, p1);
-      define_prim("p2", S0, p2);
-      define_prim("print-object-stack", S0, p_print_object_stack);
+      add_prim("p1", S0, p1);
+      add_prim("p2", S0, p2);
+      add_prim("p3", S0, p3);
+      add_prim("print-object-stack", S0, p_print_object_stack);
     }
     init_system() {
       setvbuf(stdout, NULL, _IONBF, 0);
@@ -2303,7 +2365,7 @@
       expose_object();
       expose_stack_operation();
       expose_ending();
-      expose_def();
+      expose_add();
 
       expose_play();
     }
@@ -2314,7 +2376,7 @@
     init_jojo();
     p_repl_flag_on();
     {
-      define_class("<rectangle>", "<object>", S2("height", "width"));
+      add_class("<rectangle>", "<object>", S2("height", "width"));
 
       object_stack_push(str2jo("<int>"), 666);
       object_stack_push(str2jo("<int>"), 888);

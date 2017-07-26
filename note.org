@@ -3,65 +3,73 @@
 * syntax example
 
   #+begin_src jojo
-  (defclass <rectangle> (<object>)
+  (+class <t> (<object>) a b c)
+
+  (+class <rectangle> (<object>)
     height width)
 
-  (defclass <color-rectangle> (<rectangle>)
+  (+class <color-rectangle> (<rectangle>)
     cyan magenta yellow
     clear?)
 
-  (defn map (<list> :list <jojo> :jojo)
+  (run <color-rectangle> new
+       dup 666 swap .clear?!
+       .clear?)
+
+  (+fun map (<list> :list <jojo> :jojo)
     (if :list null eq? then null end)
     (el :list cdr :jojo (recur)
         :list car :jojo apply cons))
 
-  (defn repeat (<int> :time <jojo> :jojo)
+  (+fun repeat (<int> :time <jojo> :jojo)
     (if :time 0 eq? then end)
     (el :jojo apply
         :time dec :jojo (loop)))
 
-  (defclass <cons> (<object>)
+  (+class <cons> (<object>)
     [car null]
     [cdr null])
 
-  (defn cons (<cons> :c <object> :o)
+  (+fun cons (<cons> :c <object> :o)
     <cons> new :c1!
     :c :c1.cdr!
     :o :c1.car!)
 
-  (defclass <person> (<object>)
+  (+class <person> (<object>)
     [age 13]
     [language "chinese"]
     (:meta-variable
      [testing-meta-variable 666]))
 
-  (defn grow (<person> :p)
+  (+fun grow (<person> :p)
     :p.age inc
     :p.age!)
 
-  (defn report (<person> :p)
+  (+fun report (<person> :p)
     "age : " w :p.age w nl
     "languege : " w :p.language w nl
     nl)
 
-  (def xieyuheng <person> new)
+  (+var xieyuheng <person> new)
 
-  (run xieyuheng report
-       xieyuheng grow
-       xieyuheng report
-       xieyuheng 10 grow-by
-       xieyuheng report
-       xieyuheng 10 grow-by
-       xieyuheng report)
+  (run
+    xieyuheng report
+    xieyuheng grow
+    xieyuheng report
+    xieyuheng 10 grow-by
+    xieyuheng report
+    xieyuheng 10 grow-by
+    xieyuheng report)
 
-  (def stack-0 <stack> new)
+  (+var stack-0 <stack> new)
 
-  (run stack-0 1 push
-       stack-0 2 push
-       stack-0 3 push
-       stack-0 pop w
-       stack-0 pop w
-       stack-0 pop w)
+  (run
+    stack-0 1 push
+    stack-0 2 push
+    stack-0 3 push
+    stack-0 pop w
+    stack-0 pop w
+    stack-0 pop w)
   #+end_src
 
 * ><
