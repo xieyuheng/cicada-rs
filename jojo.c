@@ -175,8 +175,6 @@
           return s;
         }
       }
-    #define S0 (char*[]){NULL}
-    #define S(...) (char*[]){__VA_ARGS__, NULL}
   p_debug() {
     exit(233);
   }
@@ -1080,7 +1078,7 @@
     struct object_entry {
       gc_mark_t mark;
       gc_actor_t gc_actor;
-      cell object_size;
+      cell fields_number;
       cell pointer;
     };
 
@@ -1099,14 +1097,27 @@
             sizeof(struct object_entry));
     }
     typedef void (* executer_t)(cell);
+
     struct class {
       jo_t class_name;
       jo_t super_name;
       gc_actor_t gc_actor;
       bool executable;
       executer_t executer;
-      cell object_size; // unit cell*2
+      cell fields_number;
+      cell direct_fields_number;
+      jo_t* direct_fields;
     };
+    // assume class has the indexed field
+    jo_t class_field_name(struct class* class, cell index) {
+      cell direct_index =
+        index - (class->fields_number - class->direct_fields_number);
+      if (direct_index >= 0) {
+        return class->direct_fields[direct_index];
+      }
+      struct class* super = class->super_name->data;
+      return class_field_name(super, index);
+    }
     jo_t get_field_tag(cell* fields, cell field_index) {
       return fields[field_index*2+1];
     }
@@ -1217,10 +1228,10 @@
             return;
           }
           object_entry->mark = GC_MARK_USING;
-          cell object_size = object_entry->object_size;
+          cell fields_number = object_entry->fields_number;
           cell* fields = object_entry->pointer;
           cell i = 0;
-          while (i < object_size) {
+          while (i < fields_number) {
             mark_one(get_object_field_tag(object_entry, i),
                      get_object_field_data(object_entry, i));
             i++;
@@ -1277,10 +1288,10 @@
       // [<class>] -> [<object> of <class>]
       struct object a = object_stack_pop();
       struct class* class = a.data;
-      cell* fields = (cell*)malloc(class->object_size*2*sizeof(cell));
+      cell* fields = (cell*)malloc(class->fields_number*2*sizeof(cell));
 
       cell i = 0;
-      while (i < class->object_size) {
+      while (i < class->fields_number) {
         set_field_tag(fields, i, str2jo("<uninitialised-field-place-holder>"));
         // set_field_data(fields, i, 0);
         i++;
@@ -1289,24 +1300,11 @@
       struct object_entry* object_entry = new_record_object_entry();
       object_entry->gc_actor = gc_recur;
       object_entry->pointer = fields;
-      object_entry->object_size = class->object_size;
+      object_entry->fields_number = class->fields_number;
 
       object_stack_push(class->class_name, object_entry);
     }
-      add_atom_class(class_name, gc_actor)
-        char* class_name;
-        gc_actor_t gc_actor;
-      {
-        struct class* class = (struct class*)malloc(sizeof(struct class));
-        class->class_name = str2jo(class_name);
-        class->super_name = str2jo("<object>");
-        class->gc_actor = gc_actor;
-        class->executable = false;
-
-        jo_t name = str2jo(class_name);
-        bind_name(name, str2jo("<class>"), class);
-      }
-      add_exe_atom_class(class_name, gc_actor, executer)
+      add_atom_class_exe(class_name, gc_actor, executer)
         char* class_name;
         gc_actor_t gc_actor;
         executer_t executer;
@@ -1315,11 +1313,22 @@
         class->class_name = str2jo(class_name);
         class->super_name = str2jo("<object>");
         class->gc_actor = gc_actor;
-        class->executable = true;
-        class->executer = executer;
+        if (executer == NULL) {
+          class->executable = false;
+        }
+        else {
+          class->executable = true;
+          class->executer = executer;
+        }
 
         jo_t name = str2jo(class_name);
         bind_name(name, str2jo("<class>"), class);
+      }
+      add_atom_class(class_name, gc_actor)
+        char* class_name;
+        gc_actor_t gc_actor;
+      {
+        add_atom_class_exe(class_name, gc_actor, NULL);
       }
       bool check_function_arity(char* function_name, cell arity) {
         jo_t name = str2jo(function_name);
@@ -1371,125 +1380,96 @@
           return;
         }
       }
-      _add_class(name, super, fields)
-        jo_t name;
-        jo_t super;
-        jo_t fields[];
+      add_class_exe(class_name, super_name, executer, fields)
+        char* class_name;
+        char* super_name;
+        executer_t executer;
+        jo_t* fields[];
       {
         struct class* class = (struct class*)malloc(sizeof(struct class));
+        jo_t name = str2jo(class_name);
+        jo_t super = str2jo(super_name);
         class->class_name = name;
         class->super_name = super;
         class->gc_actor = gc_recur;
-        class->executable = false;
+        if (executer == NULL) {
+          class->executable = false;
+        }
+        else {
+          class->executable = true;
+          class->executer = executer;
+        }
+
         struct class* super_class = super->data;
         cell i = 0;
         while (fields[i] != NULL) {
-          add_field(jo2str(name),
+          add_field(class_name,
                     jo2str(fields[i]),
-                    super_class->object_size + i);
+                    super_class->fields_number + i);
           i++;
         }
-        class->object_size = super_class->object_size + i;
+
+        class->fields_number = super_class->fields_number + i;
+        class->direct_fields_number = i;
+        class->direct_fields = fields;
 
         bind_name(name, str2jo("<class>"), class);
       }
       add_class(class_name, super_name, fields)
         char* class_name;
         char* super_name;
-        char* fields[];
+        jo_t* fields[];
       {
-        struct class* class = (struct class*)malloc(sizeof(struct class));
-        jo_t name = str2jo(class_name);
-        jo_t super = str2jo(super_name);
-        class->class_name = name;
-        class->super_name = super;
-        class->gc_actor = gc_recur;
-        class->executable = false;
-        struct class* super_class = super->data;
-        cell i = 0;
-        while (fields[i] != NULL) {
-          add_field(class_name, fields[i], super_class->object_size + i);
-          i++;
-        }
-        class->object_size = super_class->object_size + i;
-
-        bind_name(name, str2jo("<class>"), class);
+        add_class_exe(class_name, super_name, NULL, fields);
       }
-      add_exe_class(class_name, super_name, executer, fields)
-        char* class_name;
-        char* super_name;
-        executer_t executer;
-        char* fields[];
+      _add_class(name, super, fields)
+        jo_t name;
+        jo_t super;
+        jo_t fields[];
       {
-        struct class* class = (struct class*)malloc(sizeof(struct class));
-        jo_t name = str2jo(class_name);
-        jo_t super = str2jo(super_name);
-        class->class_name = name;
-        class->super_name = super;
-        class->gc_actor = gc_recur;
-        class->executable = true;
-        class->executer = executer;
-        struct class* super_class = super->data;
-        cell i = super_class->object_size;
-        while (fields[i] != NULL) {
-          add_field(class_name, fields[i], i);
+        add_class(jo2str(name), jo2str(super), fields);
+      }
+      add_prim_general(tag, function_name, tags, fun)
+        jo_t tag;
+        char* function_name;
+        jo_t* tags[];
+        primitive_t fun;
+      {
+        char name_buffer[1024];
+        char* cursor = name_buffer;
+        cell i = 0;
+        while (tags[i] != NULL) {
+          strcpy(cursor, jo2str(tags[i]));
+          cursor = cursor + strlen(jo2str(tags[i]));
           i++;
         }
-        class->object_size = i;
+        strcpy(cursor, function_name);
 
-        bind_name(name, str2jo("<class>"), class);
+        jo_t name = str2jo(name_buffer);
+
+        cell arity = i;
+        if (arity == 0 ||
+            check_function_arity(function_name, arity)) {
+          bind_name(name, tag, fun);
+        }
+        else {
+          report("- add_prim_general fall\n");
+          report("  arity of %s should not be %ld\n", function_name, arity);
+        }
       }
       add_prim(function_name, tags, fun)
         char* function_name;
-        char* tags[];
+        jo_t* tags[];
         primitive_t fun;
       {
-        char name_buffer[1024];
-        char* cursor = name_buffer;
-        cell i = 0;
-        while (tags[i] != NULL) {
-          strcpy(cursor, tags[i]);
-          cursor = cursor + strlen(tags[i]);
-          i++;
-        }
-        strcpy(cursor, function_name);
-
-        jo_t name = str2jo(name_buffer);
-
-        cell arity = i;
-        if (arity == 0 ||
-            check_function_arity(function_name, arity)) {
-          bind_name(name, TAG_PRIM, fun);
-        }
-        else {
-          report("- add_prim fall\n");
-          report("  arity of %s should not be %ld\n", function_name, arity);
-        }
+        add_prim_general(TAG_PRIM, function_name, tags, fun);
       }
       add_prim_keyword(function_name, tags, fun)
         char* function_name;
-        char* tags[];
+        jo_t* tags[];
         primitive_t fun;
       {
-        char name_buffer[1024];
-        char* cursor = name_buffer;
-        cell i = 0;
-        while (tags[i] != NULL) {
-          strcpy(cursor, tags[i]);
-          cursor = cursor + strlen(tags[i]);
-          i++;
-        }
-        strcpy(cursor, function_name);
-        jo_t name = str2jo(name_buffer);
-        cell arity = i;
-        if (arity == 0 ||
-            check_function_arity(function_name, arity)) {
-          bind_name(name, TAG_PRIM_KEYWORD, fun);
-        }
-        else {
-          report("- add_prim_keyword fall\n");
-          report("  arity of %s should not be %ld\n", function_name, arity);
-        }
+        add_prim_general(TAG_PRIM_KEYWORD, function_name, tags, fun);
       }
     struct stack* keyword_stack; // of alias_pointer
     struct alias {
@@ -1520,13 +1500,14 @@
       // runtime error for uninitialised-field
       exe_get_object_field(cell index) {
         struct object a = object_stack_pop();
+        struct class* class = a.tag->data;
         jo_t tag = get_object_field_tag(a.data, index);
         cell data = get_object_field_data(a.data, index);
         if (tag == TAG_UNINITIALISED_FIELD_PLACE_HOLDER) {
           object_stack_push(a.tag, a.data);
           report("- exe_get_object_field fail\n");
           report("  field is uninitialised\n");
-          report("  field index : %ld\n", index);
+          report("  field : %s\n", jo2str(class_field_name(class, index)));
           report("  see top of object_stack for the object\n");
           p_debug();
         }
@@ -1553,11 +1534,28 @@
       jo_t name = str2jo("<object>");
       class->class_name = name;
       class->gc_actor = gc_recur;
-      class->object_size = 0;
+      class->fields_number = 0;
       class->executable = false;
 
       bind_name(name, str2jo("<class>"), class);
     }
+      // caller free
+      jo_t* generate_jo_array(char*ss[]) {
+        cell len = 0;
+        while (ss[len] != NULL) {
+          len++;
+        }
+        jo_t* js = (jo_t*)malloc(len * sizeof(jo_t) + 1);
+        cell i = 0;
+        while (i < len) {
+          js[i] = str2jo(ss[i]);
+          i++;
+        }
+        js[i] = NULL;
+        return js;
+      }
+      #define J0 (char*[]){NULL}
+      #define J(...) generate_jo_array((char*[]){__VA_ARGS__, NULL})
     expose_object() {
       init_object_record();
 
@@ -1571,15 +1569,15 @@
       add_atom_class("<generic-prototype>", gc_ignore);
       add_atom_class("<uninitialised-field-place-holder>", gc_ignore);
 
-      add_exe_atom_class("<prim>", gc_ignore, exe_prim);
-      add_exe_atom_class("<prim-keyword>", gc_ignore, exe_prim_keyword);
-      add_exe_atom_class("<jojo>", gc_ignore, exe_jojo);
-      add_exe_atom_class("<keyword>", gc_ignore, exe_keyword);
-      add_exe_atom_class("<set-object-field>", gc_ignore, exe_set_object_field);
-      add_exe_atom_class("<get-object-field>", gc_ignore, exe_get_object_field);
-      add_exe_atom_class("<set-global-variable>", gc_ignore, exe_set_global_variable);
+      add_atom_class_exe("<prim>", gc_ignore, exe_prim);
+      add_atom_class_exe("<prim-keyword>", gc_ignore, exe_prim_keyword);
+      add_atom_class_exe("<jojo>", gc_ignore, exe_jojo);
+      add_atom_class_exe("<keyword>", gc_ignore, exe_keyword);
+      add_atom_class_exe("<set-object-field>", gc_ignore, exe_set_object_field);
+      add_atom_class_exe("<get-object-field>", gc_ignore, exe_get_object_field);
+      add_atom_class_exe("<set-global-variable>", gc_ignore, exe_set_global_variable);
 
-      add_prim("new", S("<class>"), p_new);
+      add_prim("new", J("<class>"), p_new);
     }
       struct absolute_t {
         jo_t root;
@@ -1753,11 +1751,11 @@
       object_stack_push(b.tag, b.data);
     }
     expose_stack_operation() {
-      add_prim("drop", S("<object>"), p_drop);
-      add_prim("dup",  S("<object>"), p_dup);
-      add_prim("over", S("<object>", "<object>"), p_over);
-      add_prim("tuck", S("<object>", "<object>"), p_tuck);
-      add_prim("swap", S("<object>", "<object>"), p_swap);
+      add_prim("drop", J("<object>"), p_drop);
+      add_prim("dup",  J("<object>"), p_dup);
+      add_prim("over", J("<object>", "<object>"), p_over);
+      add_prim("tuck", J("<object>", "<object>"), p_tuck);
+      add_prim("swap", J("<object>", "<object>"), p_swap);
     }
     p_end() {
       struct ret rp = return_stack_pop();
@@ -1768,8 +1766,8 @@
       exit(0);
     }
     expose_ending() {
-      add_prim("end", S0, p_end);
-      add_prim("bye", S0, p_bye);
+      add_prim("end", J0, p_end);
+      add_prim("bye", J0, p_bye);
     }
     struct stack* reading_stack; // of input_stack
     struct stack* writing_stack; // of output_stack
@@ -1877,7 +1875,7 @@
 
     }
     expose_closure() {
-      add_exe_class("<closure", "<object>", exe_closure, S("env", "jojo"));
+      add_class_exe("<closure", "<object>", exe_closure, J("env", "jojo"));
     }
     k_ignore() {
       while (true) {
@@ -2228,15 +2226,15 @@
       }
     }
     expose_add() {
-      add_prim_keyword("+var", S0, k_add_var);
-      add_prim_keyword("+fun", S0, k_add_fun);
-      add_prim_keyword("+class", S0, k_add_class);
+      add_prim_keyword("+var", J0, k_add_var);
+      add_prim_keyword("+fun", J0, k_add_fun);
+      add_prim_keyword("+class", J0, k_add_class);
 
-      add_prim_keyword("run", S0, k_run);
+      add_prim_keyword("run", J0, k_run);
 
-      add_prim("ins/lit", S0, ins_lit);
-      add_prim("ins/get-local", S0, ins_get_local);
-      add_prim("ins/set-local", S0, ins_set_local);
+      add_prim("ins/lit", J0, ins_lit);
+      add_prim("ins/get-local", J0, ins_get_local);
+      add_prim("ins/set-local", J0, ins_set_local);
     }
     p_print_object_stack() {
       cell length = stack_length(object_stack);
@@ -2258,7 +2256,7 @@
     p_repl() {
       while (true) {
         if (!has_jo_p()) {
-          return 69;
+          return 234;
         }
         jo_t s = read_jo();
         if (s == ROUND_BAR) {
@@ -2297,11 +2295,11 @@
     expose_bool() {
       add_atom_class("<bool>", gc_ignore);
 
-      add_prim("true", S0, p_true);
-      add_prim("false", S0, p_false);
-      add_prim("not", S("<bool>"), p_not);
-      add_prim("and", S("<bool>", "<bool>"), p_and);
-      add_prim("or",  S("<bool>", "<bool>"), p_or);
+      add_prim("true", J0, p_true);
+      add_prim("false", J0, p_false);
+      add_prim("not", J("<bool>"), p_not);
+      add_prim("and", J("<bool>", "<bool>"), p_and);
+      add_prim("or",  J("<bool>", "<bool>"), p_or);
     }
     write_string(char* str) {
       while (str[0] != '\0') {
@@ -2377,13 +2375,13 @@
       object_stack_push(TAG_BOOL, string_equal(ao->pointer, ao->pointer));
     }
     expose_string() {
-      add_prim("w", S("<string>"), p_write_string);
-      add_prim("len", S("<string>"), p_string_len);
-      add_prim("ref", S("<string>", "<int>"), p_string_ref);
-      add_prim("cat", S("<string>", "<string>"), p_string_cat);
-      add_prim("slice", S("<string>", "<int>", "<int>"), p_string_slice);
-      add_prim("empty?", S("<string>"), p_string_empty_p);
-      add_prim("eq?", S("<string>", "<string>"), p_string_eq_p);
+      add_prim("w", J("<string>"), p_write_string);
+      add_prim("len", J("<string>"), p_string_len);
+      add_prim("ref", J("<string>", "<int>"), p_string_ref);
+      add_prim("cat", J("<string>", "<string>"), p_string_cat);
+      add_prim("slice", J("<string>", "<int>", "<int>"), p_string_slice);
+      add_prim("empty?", J("<string>"), p_string_empty_p);
+      add_prim("eq?", J("<string>", "<string>"), p_string_eq_p);
     }
     p_inc() {
       struct object a = object_stack_pop();
@@ -2454,24 +2452,24 @@
       write_string(buffer);
     }
     expose_int() {
-      add_prim("inc", S("<int>"), p_inc);
-      add_prim("dec", S("<int>"), p_dec);
-      add_prim("neg", S("<int>"), p_neg);
+      add_prim("inc", J("<int>"), p_inc);
+      add_prim("dec", J("<int>"), p_dec);
+      add_prim("neg", J("<int>"), p_neg);
 
-      add_prim("add", S("<int>", "<int>"), p_add);
-      add_prim("sub", S("<int>", "<int>"), p_sub);
+      add_prim("add", J("<int>", "<int>"), p_add);
+      add_prim("sub", J("<int>", "<int>"), p_sub);
 
-      add_prim("mul", S("<int>", "<int>"), p_mul);
-      add_prim("div", S("<int>", "<int>"), p_div);
-      add_prim("mod", S("<int>", "<int>"), p_mod);
+      add_prim("mul", J("<int>", "<int>"), p_mul);
+      add_prim("div", J("<int>", "<int>"), p_div);
+      add_prim("mod", J("<int>", "<int>"), p_mod);
 
-      add_prim("eq?", S("<int>", "<int>"), p_eq_p);
-      add_prim("gt?", S("<int>", "<int>"), p_gt_p);
-      add_prim("lt?", S("<int>", "<int>"), p_lt_p);
-      add_prim("gteq?", S("<int>", "<int>"), p_gteq_p);
-      add_prim("lteq?", S("<int>", "<int>"), p_lteq_p);
+      add_prim("eq?", J("<int>", "<int>"), p_eq_p);
+      add_prim("gt?", J("<int>", "<int>"), p_gt_p);
+      add_prim("lt?", J("<int>", "<int>"), p_lt_p);
+      add_prim("gteq?", J("<int>", "<int>"), p_gteq_p);
+      add_prim("lteq?", J("<int>", "<int>"), p_lteq_p);
 
-      add_prim("w", S("<int>"), p_write_int);
+      add_prim("w", J("<int>"), p_write_int);
     }
     p1() {
       int file = open("README", O_RDWR);
@@ -2566,10 +2564,10 @@
       report("- SIGSEGV : %ld\n", SIGSEGV);
     }
     expose_play() {
-      add_prim("p1", S0, p1);
-      add_prim("p2", S0, p2);
-      add_prim("p3", S0, p3);
-      add_prim("print-object-stack", S0, p_print_object_stack);
+      add_prim("p1", J0, p1);
+      add_prim("p2", J0, p2);
+      add_prim("p3", J0, p3);
+      add_prim("print-object-stack", J0, p_print_object_stack);
     }
     init_system() {
       setvbuf(stdout, NULL, _IONBF, 0);
