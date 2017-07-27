@@ -1302,7 +1302,7 @@
         jo_t name = str2jo(class_name);
         bind_name(name, str2jo("<class>"), class);
       }
-      add_executable_atom_class(class_name, gc_actor, executer)
+      add_exe_atom_class(class_name, gc_actor, executer)
         char* class_name;
         gc_actor_t gc_actor;
         executer_t executer;
@@ -1411,7 +1411,7 @@
 
         bind_name(name, str2jo("<class>"), class);
       }
-      add_executable_class(class_name, super_name, executer, fields)
+      add_exe_class(class_name, super_name, executer, fields)
         char* class_name;
         char* super_name;
         executer_t executer;
@@ -1543,7 +1543,6 @@
 
       add_the_object_class();
 
-      add_atom_class("<bool>", gc_ignore);
       add_atom_class("<byte>", gc_ignore);
       add_atom_class("<int>", gc_ignore);
       add_atom_class("<jo>", gc_ignore);
@@ -1552,13 +1551,13 @@
       add_atom_class("<generic-prototype>", gc_ignore);
       add_atom_class("<uninitialised-field-place-holder>", gc_ignore);
 
-      add_executable_atom_class("<prim>", gc_ignore, exe_prim);
-      add_executable_atom_class("<prim-keyword>", gc_ignore, exe_prim_keyword);
-      add_executable_atom_class("<jojo>", gc_ignore, exe_jojo);
-      add_executable_atom_class("<keyword>", gc_ignore, exe_keyword);
-      add_executable_atom_class("<set-object-field>", gc_ignore, exe_set_object_field);
-      add_executable_atom_class("<get-object-field>", gc_ignore, exe_get_object_field);
-      add_executable_atom_class("<set-global-variable>", gc_ignore, exe_set_global_variable);
+      add_exe_atom_class("<prim>", gc_ignore, exe_prim);
+      add_exe_atom_class("<prim-keyword>", gc_ignore, exe_prim_keyword);
+      add_exe_atom_class("<jojo>", gc_ignore, exe_jojo);
+      add_exe_atom_class("<keyword>", gc_ignore, exe_keyword);
+      add_exe_atom_class("<set-object-field>", gc_ignore, exe_set_object_field);
+      add_exe_atom_class("<get-object-field>", gc_ignore, exe_get_object_field);
+      add_exe_atom_class("<set-global-variable>", gc_ignore, exe_set_global_variable);
 
       add_prim("new", S("<class>"), p_new);
     }
@@ -1726,33 +1725,6 @@
       add_prim("over", S("<object>", "<object>"), p_over);
       add_prim("tuck", S("<object>", "<object>"), p_tuck);
       add_prim("swap", S("<object>", "<object>"), p_swap);
-    }
-    p_true() {
-      object_stack_push(TAG_BOOL, true);
-    }
-    p_false() {
-      object_stack_push(TAG_BOOL, false);
-    }
-    p_not() {
-      struct object a = object_stack_pop();
-      object_stack_push(TAG_BOOL, !a.data);
-    }
-    p_and() {
-      struct object a = object_stack_pop();
-      struct object b = object_stack_pop();
-      object_stack_push(TAG_BOOL, a.data && b.data);
-    }
-    p_or() {
-      struct object a = object_stack_pop();
-      struct object b = object_stack_pop();
-      object_stack_push(TAG_BOOL, a.data || b.data);
-    }
-    expose_bool() {
-      add_prim("true", S0, p_true);
-      add_prim("false", S0, p_false);
-      add_prim("not", S("<bool>"), p_not);
-      add_prim("and", S("<bool>", "<bool>"), p_and);
-      add_prim("or",  S("<bool>", "<bool>"), p_or);
     }
     p_end() {
       struct ret rp = return_stack_pop();
@@ -2260,6 +2232,129 @@
     }
     expose_repl() {
     }
+    p_true() {
+      object_stack_push(TAG_BOOL, true);
+    }
+    p_false() {
+      object_stack_push(TAG_BOOL, false);
+    }
+    p_not() {
+      struct object a = object_stack_pop();
+      object_stack_push(TAG_BOOL, !a.data);
+    }
+    p_and() {
+      struct object a = object_stack_pop();
+      struct object b = object_stack_pop();
+      object_stack_push(TAG_BOOL, a.data && b.data);
+    }
+    p_or() {
+      struct object a = object_stack_pop();
+      struct object b = object_stack_pop();
+      object_stack_push(TAG_BOOL, a.data || b.data);
+    }
+    expose_bool() {
+      add_atom_class("<bool>", gc_ignore);
+
+      add_prim("true", S0, p_true);
+      add_prim("false", S0, p_false);
+      add_prim("not", S("<bool>"), p_not);
+      add_prim("and", S("<bool>", "<bool>"), p_and);
+      add_prim("or",  S("<bool>", "<bool>"), p_or);
+    }
+    p_inc() {
+      struct object a = object_stack_pop();
+      object_stack_push(TAG_INT, a.data + 1);
+    }
+    p_dec() {
+      struct object a = object_stack_pop();
+      object_stack_push(TAG_INT, a.data - 1);
+    }
+    p_neg() {
+      struct object a = object_stack_pop();
+      object_stack_push(TAG_INT, - a.data);
+    }
+    p_add() {
+      struct object a = object_stack_pop();
+      struct object b = object_stack_pop();
+      object_stack_push(TAG_INT, a.data + b.data);
+    }
+    p_sub() {
+      struct object a = object_stack_pop();
+      struct object b = object_stack_pop();
+      object_stack_push(TAG_INT, b.data - a.data);
+    }
+    p_mul() {
+      struct object a = object_stack_pop();
+      struct object b = object_stack_pop();
+      object_stack_push(TAG_INT, a.data * b.data);
+    }
+    p_div() {
+      struct object a = object_stack_pop();
+      struct object b = object_stack_pop();
+      object_stack_push(TAG_INT, b.data / a.data);
+    }
+    p_mod() {
+      struct object a = object_stack_pop();
+      struct object b = object_stack_pop();
+      object_stack_push(TAG_INT, b.data % a.data);
+    }
+    p_eq_p() {
+      struct object a = object_stack_pop();
+      struct object b = object_stack_pop();
+      object_stack_push(TAG_BOOL, b.data == a.data);
+    }
+    p_gt_p() {
+      struct object a = object_stack_pop();
+      struct object b = object_stack_pop();
+      object_stack_push(TAG_BOOL, b.data > a.data);
+    }
+    p_lt_p() {
+      struct object a = object_stack_pop();
+      struct object b = object_stack_pop();
+      object_stack_push(TAG_BOOL, b.data < a.data);
+    }
+    p_gteq_p() {
+      struct object a = object_stack_pop();
+      struct object b = object_stack_pop();
+      object_stack_push(TAG_BOOL, b.data >= a.data);
+    }
+    p_lteq_p() {
+      struct object a = object_stack_pop();
+      struct object b = object_stack_pop();
+      object_stack_push(TAG_BOOL, b.data <= a.data);
+    }
+    string_print(char* str) {
+      while (str[0] != '\0') {
+        byte_print(str[0]);
+        str++;
+      }
+    }
+    p_write_int() {
+      char buffer [32];
+      struct object a = object_stack_pop();
+      sprintf(buffer, "%ld", a.data);
+      string_print(buffer);
+    }
+    expose_int() {
+      add_prim("inc", S("<int>"), p_inc);
+      add_prim("dec", S("<int>"), p_dec);
+      add_prim("neg", S("<int>"), p_neg);
+
+      add_prim("add", S("<int>", "<int>"), p_add);
+      add_prim("sub", S("<int>", "<int>"), p_sub);
+
+      add_prim("mul", S("<int>", "<int>"), p_mul);
+      add_prim("div", S("<int>", "<int>"), p_div);
+      add_prim("mod", S("<int>", "<int>"), p_mod);
+
+      add_prim("eq?", S("<int>", "<int>"), p_eq_p);
+      add_prim("gt?", S("<int>", "<int>"), p_gt_p);
+      add_prim("lt?", S("<int>", "<int>"), p_lt_p);
+      add_prim("gteq?", S("<int>", "<int>"), p_gteq_p);
+      add_prim("lteq?", S("<int>", "<int>"), p_lteq_p);
+
+      add_prim("w", S("<int>"), p_write_int);
+    }
     p1() {
       int file = open("README", O_RDWR);
       struct input_stack* t0_stack = input_stack_file(file);
@@ -2447,9 +2542,10 @@
 
       expose_object();
       expose_stack_operation();
-      expose_bool();
       expose_ending();
       expose_add();
+      expose_bool();
+      expose_int();
 
       expose_play();
     }
