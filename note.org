@@ -39,26 +39,23 @@
     (run 0 1 cons))
   #+end_src
 
+* [test] *control*
+
+  #+begin_src jojo
+  (+fun t0 ()
+    (if 1 eq? then 111 end)
+    222)
+
+
+  #+end_src
+  
 * [test] <closure>
 
   #+begin_src jojo
-  (+fun t1 ()
-    123 :x! :x :x :x)
-  (run t1)
-
   (+fun t0 ()
-    1 :a! 2 :b! [:a :b])
+    1 :a! 2 :b! (clo :a :b add))
   (+var x0 t0)
   (run x0)
-
-
-  (+fun t0 ()
-    [1 2])
-  (+var x0 t0)
-  (run x0)
-
-
-  (+var d (run 123 :x! [:x :x :x]))
   #+end_src
 
 * ><
@@ -72,24 +69,16 @@
 
   (+fun map (:list <list> :jojo <jojo>)
     (if :list null eq? then null end)
-    (el :list cdr :jojo (recur)
-        :list car :jojo apply cons))
+    (el :list cdr :jojo (recur) :list car :jojo apply cons))
 
   (+fun repeat (:time <int> :jojo <jojo>)
     (if :time 0 eq? then end)
-    (el :jojo apply
-        :time dec :jojo (loop)))
+    (el :jojo apply :time dec :jojo (loop)))
 
-  (+fun map (:list <list> :jojo <jojo>)
-    (cd [:list null eq? -> null end]
-        [:list cdr :jojo (recur)
-         :list car :jojo apply cons]))
 
   (+class <person> (<object>)
     [age 13]
-    [language "chinese"]
-    (:meta-variable
-     [testing-meta-variable 666]))
+    [language "chinese"])
 
   (+fun grow (:p <person>)
     :p.age inc
