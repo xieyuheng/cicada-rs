@@ -359,7 +359,7 @@
     };
 
     #define STACK_BLOCK_SIZE 1024
-    // #define STACK_BLOCK_SIZE 1 // for test
+    // #define STACK_BLOCK_SIZE 1 // for testing
     struct stack* new_stack(char* name) {
       struct stack* stack = (struct stack*)malloc(sizeof(struct stack));
       stack->name = name;
@@ -502,7 +502,7 @@
     };
 
     // #define INPUT_STACK_BLOCK_SIZE (4 * 1024)
-    #define INPUT_STACK_BLOCK_SIZE 1 // for test
+    #define INPUT_STACK_BLOCK_SIZE 1 // for testing
     struct input_stack* input_stack_new(input_stack_type input_stack_type) {
       struct input_stack* input_stack =
         (struct input_stack*)malloc(sizeof(struct input_stack));
@@ -729,7 +729,7 @@
     };
 
     // #define OUTPUT_STACK_BLOCK_SIZE (4 * 1024)
-    #define OUTPUT_STACK_BLOCK_SIZE 1 // for test
+    #define OUTPUT_STACK_BLOCK_SIZE 1 // for testing
     struct output_stack* output_stack_new(output_stack_type output_stack_type) {
       struct output_stack* output_stack =
         (struct output_stack*)malloc(sizeof(struct output_stack));
@@ -1081,8 +1081,9 @@
       cell pointer;
     };
 
-    // #define OBJECT_RECORD_SIZE 64 * 1024
-    #define OBJECT_RECORD_SIZE 3
+    #define OBJECT_RECORD_SIZE 64 * 1024
+    // #define OBJECT_RECORD_SIZE 3 // for testing
+
     struct object_entry object_record[OBJECT_RECORD_SIZE];
 
     struct object_entry* object_record_pointer = object_record;
@@ -1749,7 +1750,7 @@
     byte_unread(byte b) {
       input_stack_push(tos(reading_stack), b);
     }
-    byte_print(byte b) {
+    write_byte(byte b) {
       output_stack_push(tos(writing_stack), b);
     }
     bool has_jo_p() {
@@ -2261,6 +2262,88 @@
       add_prim("and", S("<bool>", "<bool>"), p_and);
       add_prim("or",  S("<bool>", "<bool>"), p_or);
     }
+    write_string(char* str) {
+      while (str[0] != '\0') {
+        write_byte(str[0]);
+        str++;
+      }
+    }
+    p_write_string() {
+      struct object a = object_stack_pop();
+      struct object_entry* ao = a.data;
+      write_string(ao->pointer);
+    }
+    p_string_len() {
+      struct object a = object_stack_pop();
+      struct object_entry* ao = a.data;
+      object_stack_push(TAG_INT, strlen(ao->pointer));
+    }
+    p_string_ref() {
+      struct object a = object_stack_pop();
+      struct object b = object_stack_pop();
+      struct object_entry* bo = b.data;
+      char* str = bo->pointer;
+      object_stack_push(TAG_BYTE, str[a.data]);
+    }
+    p_string_cat() {
+      struct object a = object_stack_pop();
+      struct object b = object_stack_pop();
+      struct object_entry* ao = a.data;
+      struct object_entry* bo = b.data;
+      char* str0 = bo->pointer;
+      char* str1 = ao->pointer;
+
+      char* str2 = (char*)malloc(strlen(str0) + strlen(str1) + 1);
+      str2[0] = '\0';
+      strcat(str2, str0);
+      strcat(str2, str1);
+
+      struct object_entry* object_entry = new_record_object_entry();
+      object_entry->mark = GC_MARK_USING;
+      object_entry->gc_actor = gc_free;
+      object_entry->pointer = str2;
+
+      object_stack_push(TAG_STRING, object_entry);
+    }
+    p_string_slice() {
+      struct object a = object_stack_pop();
+      struct object b = object_stack_pop();
+      struct object c = object_stack_pop();
+      struct object_entry* co = c.data;
+      char* str0 = co->pointer;
+      cell begin = b.data;
+      cell end = a.data;
+      char* str1 = substring(str0, begin, end);
+
+      struct object_entry* object_entry = new_record_object_entry();
+      object_entry->mark = GC_MARK_USING;
+      object_entry->gc_actor = gc_free;
+      object_entry->pointer = str1;
+
+      object_stack_push(TAG_STRING, object_entry);
+    }
+    p_string_empty_p() {
+      struct object a = object_stack_pop();
+      struct object_entry* ao = a.data;
+      char* str = ao->pointer;
+      object_stack_push(TAG_BOOL, str[0] == '\0');
+    }
+    p_string_eq_p() {
+      struct object a = object_stack_pop();
+      struct object b = object_stack_pop();
+      struct object_entry* ao = a.data;
+      struct object_entry* bo = b.data;
+      object_stack_push(TAG_BOOL, string_equal(ao->pointer, ao->pointer));
+    }
+    expose_string() {
+      add_prim("w", S("<string>"), p_write_string);
+      add_prim("len", S("<string>"), p_string_len);
+      add_prim("ref", S("<string>", "<int>"), p_string_ref);
+      add_prim("cat", S("<string>", "<string>"), p_string_cat);
+      add_prim("slice", S("<string>", "<int>", "<int>"), p_string_slice);
+      add_prim("empty?", S("<string>"), p_string_empty_p);
+      add_prim("eq?", S("<string>", "<string>"), p_string_eq_p);
+    }
     p_inc() {
       struct object a = object_stack_pop();
       object_stack_push(TAG_INT, a.data + 1);
@@ -2323,17 +2406,11 @@
       struct object b = object_stack_pop();
       object_stack_push(TAG_BOOL, b.data <= a.data);
     }
-    string_print(char* str) {
-      while (str[0] != '\0') {
-        byte_print(str[0]);
-        str++;
-      }
-    }
     p_write_int() {
       char buffer [32];
       struct object a = object_stack_pop();
       sprintf(buffer, "%ld", a.data);
-      string_print(buffer);
+      write_string(buffer);
     }
     expose_int() {
       add_prim("inc", S("<int>"), p_inc);
@@ -2545,6 +2622,7 @@
       expose_ending();
       expose_add();
       expose_bool();
+      expose_string();
       expose_int();
 
       expose_play();
