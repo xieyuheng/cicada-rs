@@ -39,6 +39,28 @@
     (run 0 1 cons))
   #+end_src
 
+* [test] <closure>
+
+  #+begin_src jojo
+  (+fun t1 ()
+    123 :x! :x :x :x)
+  (run t1)
+
+  (+fun t0 ()
+    1 :a! 2 :b! [:a :b])
+  (+var x0 t0)
+  (run x0)
+
+
+  (+fun t0 ()
+    [1 2])
+  (+var x0 t0)
+  (run x0)
+
+
+  (+var d (run 123 :x! [:x :x :x]))
+  #+end_src
+
 * ><
 
   #+begin_src jojo

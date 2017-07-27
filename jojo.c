@@ -276,8 +276,8 @@
     jo_t JO_INS_GET_LOCAL;
     jo_t JO_INS_SET_LOCAL;
 
-    jo_t JO_INS_JUMP;
-    jo_t JO_INS_JUMP_IF_FALSE;
+    jo_t JO_INS_JMP;
+    jo_t JO_INS_JMP_IF_FALSE;
 
     jo_t JO_INS_TAIL_CALL;
     jo_t JO_INS_LOOP;
@@ -362,7 +362,8 @@
     #define STACK_BLOCK_SIZE 1024
     // #define STACK_BLOCK_SIZE 1 // for testing
     struct stack* new_stack(char* name) {
-      struct stack* stack = (struct stack*)malloc(sizeof(struct stack));
+      struct stack* stack = (struct stack*)
+        malloc(sizeof(struct stack));
       stack->name = name;
       stack->pointer = 0;
       stack->stack = (cell*)malloc(sizeof(cell) * STACK_BLOCK_SIZE);
@@ -415,7 +416,8 @@
         return;
       }
       else {
-        struct stack_link* new_link = (struct stack_link*)malloc(sizeof(struct stack_link));
+        struct stack_link* new_link = (struct stack_link*)
+          malloc(sizeof(struct stack_link));
         new_link->stack = stack->stack;
         new_link->link = stack->link;
         stack->link = new_link;
@@ -505,8 +507,8 @@
     // #define INPUT_STACK_BLOCK_SIZE (4 * 1024)
     #define INPUT_STACK_BLOCK_SIZE 1 // for testing
     struct input_stack* input_stack_new(input_stack_type input_stack_type) {
-      struct input_stack* input_stack =
-        (struct input_stack*)malloc(sizeof(struct input_stack));
+      struct input_stack* input_stack = (struct input_stack*)
+        malloc(sizeof(struct input_stack));
       input_stack->pointer = INPUT_STACK_BLOCK_SIZE;
       input_stack->end_pointer = INPUT_STACK_BLOCK_SIZE;
       input_stack->stack = (byte*)malloc(INPUT_STACK_BLOCK_SIZE);
@@ -634,8 +636,8 @@
         return;
       }
       else {
-        struct input_stack_link* new_link =
-          (struct input_stack_link*)malloc(sizeof(struct input_stack_link));
+        struct input_stack_link* new_link = (struct input_stack_link*)
+          malloc(sizeof(struct input_stack_link));
         new_link->stack = input_stack->stack;
         new_link->link = input_stack->link;
         new_link->end_pointer = input_stack->end_pointer;
@@ -732,8 +734,8 @@
     // #define OUTPUT_STACK_BLOCK_SIZE (4 * 1024)
     #define OUTPUT_STACK_BLOCK_SIZE 1 // for testing
     struct output_stack* output_stack_new(output_stack_type output_stack_type) {
-      struct output_stack* output_stack =
-        (struct output_stack*)malloc(sizeof(struct output_stack));
+      struct output_stack* output_stack = (struct output_stack*)
+        malloc(sizeof(struct output_stack));
       output_stack->pointer = 0;
       output_stack->stack = (byte*)malloc(OUTPUT_STACK_BLOCK_SIZE);
       output_stack->link = NULL;
@@ -908,8 +910,8 @@
         return;
       }
       else {
-        struct output_stack_link* new_link =
-          (struct output_stack_link*)malloc(sizeof(struct output_stack_link));
+        struct output_stack_link* new_link = (struct output_stack_link*)
+          malloc(sizeof(struct output_stack_link));
         new_link->stack = output_stack->stack;
         new_link->link = output_stack->link;
         output_stack->link = new_link;
@@ -1013,10 +1015,10 @@
     };
 
     struct local local_record[4 * 1024];
-    cell current_local_pointer = 0;
+    cell current_local_counter = 0;
     struct ret {
       jo_t* jojo;
-      cell local_pointer;
+      cell local_counter;
     };
 
     struct stack* return_stack;
@@ -1024,15 +1026,15 @@
     struct ret return_stack_pop() {
       struct ret p;
       p.jojo = pop(return_stack);
-      p.local_pointer = pop(return_stack);
+      p.local_counter = pop(return_stack);
       return p;
     }
 
     struct ret return_stack_tos() {
       struct ret p;
       p.jojo = pop(return_stack);
-      p.local_pointer = pop(return_stack);
-      push(return_stack, p.local_pointer);
+      p.local_counter = pop(return_stack);
+      push(return_stack, p.local_counter);
       push(return_stack, p.jojo);
       return p;
     }
@@ -1041,13 +1043,13 @@
       return stack_empty_p(return_stack);
     }
 
-    return_stack_push(jo_t* jojo, cell local_pointer) {
-      push(return_stack, local_pointer);
+    return_stack_push(jo_t* jojo, cell local_counter) {
+      push(return_stack, local_counter);
       push(return_stack, jojo);
     }
 
     return_stack_push_new(jo_t* jojo) {
-      return_stack_push(jojo, current_local_pointer);
+      return_stack_push(jojo, current_local_counter);
     }
 
     return_stack_inc() {
@@ -1108,64 +1110,76 @@
       cell direct_fields_number;
       jo_t* direct_fields;
     };
-    // assume class has the indexed field
-    jo_t class_field_name(struct class* class, cell index) {
-      cell direct_index =
-        index - (class->fields_number - class->direct_fields_number);
-      if (direct_index >= 0) {
-        return class->direct_fields[direct_index];
+      jo_t get_field_tag(cell* fields, cell field_index) {
+        return fields[field_index*2+1];
       }
-      struct class* super = class->super_name->data;
-      return class_field_name(super, index);
-    }
-    jo_t get_field_tag(cell* fields, cell field_index) {
-      return fields[field_index*2+1];
-    }
 
-    set_field_tag(cell* fields, cell field_index, jo_t tag) {
-      fields[field_index*2+1] = tag;
-    }
+      set_field_tag(cell* fields, cell field_index, jo_t tag) {
+        fields[field_index*2+1] = tag;
+      }
 
-    cell get_field_data(cell* fields, cell field_index) {
-      return fields[field_index*2];
-    }
+      cell get_field_data(cell* fields, cell field_index) {
+        return fields[field_index*2];
+      }
 
-    set_field_data(cell* fields, cell field_index, cell data) {
-      fields[field_index*2] = data;
-    }
-    jo_t get_object_field_tag(object_entry, field_index)
-      struct object_entry* object_entry;
-      cell field_index;
-    {
-      cell* fields = object_entry->pointer;
-      return get_field_tag(fields, field_index);
-    }
+      set_field_data(cell* fields, cell field_index, cell data) {
+        fields[field_index*2] = data;
+      }
+      // assume exist
+      jo_t class_index_to_field_name(struct class* class, cell index) {
+        cell direct_index =
+          index - (class->fields_number - class->direct_fields_number);
+        if (direct_index >= 0) {
+          return class->direct_fields[direct_index];
+        }
+        struct class* super = class->super_name->data;
+        return class_index_to_field_name(super, index);
+      }
+      // assume exist
+      cell class_field_name_to_index(struct class* class, jo_t field_name) {
+        cell direct_index = class->fields_number - class->direct_fields_number;
+        while (direct_index < class->fields_number) {
+          if (class->direct_fields[direct_index] == field_name) {
+            return direct_index;
+          }
+          direct_index++;
+        }
+        struct class* super = class->super_name->data;
+        return class_field_name_to_index(super, field_name);
+      }
+      jo_t get_object_field_tag(object_entry, field_index)
+        struct object_entry* object_entry;
+        cell field_index;
+      {
+        cell* fields = object_entry->pointer;
+        return get_field_tag(fields, field_index);
+      }
 
-    set_object_field_tag(object_entry, field_index, tag)
-      struct object_entry* object_entry;
-      cell field_index;
-      jo_t tag;
-    {
-      cell* fields = object_entry->pointer;
-      set_field_tag(fields, field_index, tag);
-    }
+      set_object_field_tag(object_entry, field_index, tag)
+        struct object_entry* object_entry;
+        cell field_index;
+        jo_t tag;
+      {
+        cell* fields = object_entry->pointer;
+        set_field_tag(fields, field_index, tag);
+      }
 
-    cell get_object_field_data(object_entry, field_index)
-      struct object_entry* object_entry;
-      cell field_index;
-    {
-      cell* fields = object_entry->pointer;
-      return get_field_data(fields, field_index);
-    }
+      cell get_object_field_data(object_entry, field_index)
+        struct object_entry* object_entry;
+        cell field_index;
+      {
+        cell* fields = object_entry->pointer;
+        return get_field_data(fields, field_index);
+      }
 
-    set_object_field_data(object_entry, field_index, data)
-      struct object_entry* object_entry;
-      cell field_index;
-      cell data;
-    {
-      cell* fields = object_entry->pointer;
-      set_field_data(fields, field_index, data);
-    }
+      set_object_field_data(object_entry, field_index, data)
+        struct object_entry* object_entry;
+        cell field_index;
+        cell data;
+      {
+        cell* fields = object_entry->pointer;
+        set_field_data(fields, field_index, data);
+      }
     mark_one(jo_t tag, cell data) {
       struct class* class = tag->data;
       class->gc_actor(GC_STATE_MARKING, data);
@@ -1224,9 +1238,7 @@
       }
       gc_recur(gc_state_t gc_state, struct object_entry* object_entry) {
         if (gc_state == GC_STATE_MARKING) {
-          if (object_entry->mark == GC_MARK_USING) {
-            return;
-          }
+          if (object_entry->mark == GC_MARK_USING) { return; }
           object_entry->mark = GC_MARK_USING;
           cell fields_number = object_entry->fields_number;
           cell* fields = object_entry->pointer;
@@ -1280,8 +1292,8 @@
       }
     }
     struct object_entry* new_static_object_entry() {
-      struct object_entry* object_entry =
-        (struct object_entry*)malloc(sizeof(struct object_entry));
+      struct object_entry* object_entry = (struct object_entry*)
+        malloc(sizeof(struct object_entry));
       return object_entry;
     }
     p_new() {
@@ -1309,7 +1321,8 @@
         gc_actor_t gc_actor;
         executer_t executer;
       {
-        struct class* class = (struct class*)malloc(sizeof(struct class));
+        struct class* class = (struct class*)
+          malloc(sizeof(struct class));
         class->class_name = str2jo(class_name);
         class->super_name = str2jo("<object>");
         class->gc_actor = gc_actor;
@@ -1386,7 +1399,8 @@
         executer_t executer;
         jo_t* fields[];
       {
-        struct class* class = (struct class*)malloc(sizeof(struct class));
+        struct class* class = (struct class*)
+          malloc(sizeof(struct class));
         jo_t name = str2jo(class_name);
         jo_t super = str2jo(super_name);
         class->class_name = name;
@@ -1505,9 +1519,15 @@
         cell data = get_object_field_data(a.data, index);
         if (tag == TAG_UNINITIALISED_FIELD_PLACE_HOLDER) {
           object_stack_push(a.tag, a.data);
+          jo_t field_name = class_index_to_field_name(class, index);
           report("- exe_get_object_field fail\n");
           report("  field is uninitialised\n");
-          report("  field : %s\n", jo2str(class_field_name(class, index)));
+          report("  field : %s\n", jo2str(field_name));
+          // { // testing class_field_name_to_index
+          //   report("  field index 1 : %ld\n", index);
+          //   report("  field index 2 : %ld\n",
+          //          class_field_name_to_index(class, field_name));
+          // }
           report("  see top of object_stack for the object\n");
           p_debug();
         }
@@ -1525,12 +1545,9 @@
         struct object a = object_stack_pop();
         rebind_name(name, a.tag, a.data);
       }
-      exe_closure(struct object_entry* closure) {
-        // closure
-        // return_stack_push(jojo);
-      }
     add_the_object_class() {
-      struct class* class = (struct class*)malloc(sizeof(struct class));
+      struct class* class = (struct class*)
+        malloc(sizeof(struct class));
       jo_t name = str2jo("<object>");
       class->class_name = name;
       class->gc_actor = gc_recur;
@@ -1759,7 +1776,7 @@
     }
     p_end() {
       struct ret rp = return_stack_pop();
-      current_local_pointer = rp.local_pointer;
+      current_local_counter = rp.local_counter;
     }
     p_bye() {
       report("bye bye ^-^/\n");
@@ -1874,8 +1891,195 @@
     expose_rw() {
 
     }
+    // :local
+    bool get_local_string_p(char* str) {
+      if (str[0] != ':') {
+        return false;
+      }
+      else if (string_last_byte(str) == '!') {
+        return false;
+      }
+      else if (string_member_p(str, '.')) {
+        return false;
+      }
+      else {
+        return true;
+      }
+    }
+    // :local!
+    bool set_local_string_p(char* str) {
+      if (str[0] != ':') {
+        return false;
+      }
+      else if (string_last_byte(str) != '!') {
+        return false;
+      }
+      else if (string_member_p(str, '.')) {
+        return false;
+      }
+      else {
+        return true;
+      }
+    }
+    // :local.field
+    bool get_local_field_string_p(char* str) {
+      if (str[0] != ':') {
+        return false;
+      }
+      else if (string_last_byte(str) == '!') {
+        return false;
+      }
+      else if (string_count_member(str, '.') != 1) {
+        return false;
+      }
+      else {
+        return true;
+      }
+    }
+    // :local.field!
+    bool set_local_field_string_p(char* str) {
+      if (str[0] != ':') {
+        return false;
+      }
+      else if (string_last_byte(str) != '!') {
+        return false;
+      }
+      else if (string_count_member(str, '.') != 1) {
+        return false;
+      }
+      else {
+        return true;
+      }
+    }
+    cell local_find(jo_t name) {
+      // return index of local_record
+      // -1 -- no found
+      struct ret rp = return_stack_tos();
+      cell cursor = current_local_counter - 1;
+      while (cursor >= rp.local_counter) {
+        if (local_record[cursor].name == name) {
+          return cursor;
+        }
+        else {
+          cursor--;
+        }
+      }
+      return -1;
+    }
+    set_local(jo_t name, jo_t tag, cell data) {
+      cell index = local_find(name);
+      if (index != -1) {
+        local_record[index].name = name;
+        local_record[index].local_tag = tag;
+        local_record[index].local_data = data;
+      }
+      else {
+        local_record[current_local_counter].name = name;
+        local_record[current_local_counter].local_tag = tag;
+        local_record[current_local_counter].local_data = data;
+        current_local_counter++;
+      }
+    }
+    ins_set_local() {
+      struct ret rp = return_stack_tos();
+      return_stack_inc();
+      jo_t* jojo = rp.jojo;
+      jo_t name = jojo[0];
+      struct object a = object_stack_pop();
+      set_local(name, a.tag, a.data);
+    }
+    ins_get_local() {
+      struct ret rp = return_stack_tos();
+      return_stack_inc();
+      jo_t* jojo = rp.jojo;
+      jo_t name = jojo[0];
+
+      cell index = local_find(name);
+
+      if (index != -1) {
+        struct local lp = local_record[index];
+        object_stack_push(lp.local_tag, lp.local_data);
+      }
+      else {
+        report("- ins_get_local fatal error\n");
+        report("  name is not bound\n");
+        report("  name : %s\n", jo2str(name));
+        p_debug();
+      }
+    }
+    gc_local_env(gc_state_t gc_state, struct object_entry* object_entry) {
+      if (gc_state == GC_STATE_MARKING) {
+        if (object_entry->mark == GC_MARK_USING) { return; }
+        object_entry->mark = GC_MARK_USING;
+        struct local* lr = object_entry->pointer;
+        while (lr->name != NULL) {
+            mark_one(lr->local_tag, lr->local_data);
+          lr++;
+        }
+      }
+      else if (gc_state == GC_STATE_SWEEPING) {
+        free(object_entry->pointer);
+      }
+    }
+    // caller free
+    struct local* current_local_record() {
+      struct ret rp = return_stack_tos();
+      cell length = current_local_counter - rp.local_counter;
+      cell i = 0;
+      struct local* lr = (struct local*)
+        malloc((length + 1) * sizeof(struct local));
+      while (i < length) {
+        lr[i].name       = local_record[rp.local_counter + i].name;
+        lr[i].local_tag  = local_record[rp.local_counter + i].local_tag;
+        lr[i].local_data = local_record[rp.local_counter + i].local_data;
+        i++;
+      }
+      lr[i].name = NULL;
+      return lr;
+    }
+    p_current_local_env() {
+      struct local* lr = current_local_record();
+      struct object_entry* object_entry = new_record_object_entry();
+      object_entry->gc_actor = gc_local_env;
+      object_entry->pointer = lr;
+      object_stack_push(str2jo("<local-env>"), object_entry);
+    }
+    p_jojo_enclose() {
+      jo_apply(str2jo("<closure>"));
+      jo_apply(str2jo("new"));
+      jo_apply(str2jo("tuck"));
+      jo_apply(str2jo(".jojo!"));
+      jo_apply(str2jo("current-local-env"));
+      jo_apply(str2jo("over"));
+      jo_apply(str2jo(".local-env!"));
+    }
+    set_local_record(struct local* lr) {
+      while (lr->name != NULL) {
+        set_local(lr->name, lr->local_tag, lr->local_data);
+        lr++;
+      }
+    }
+    exe_closure(struct object_entry* closure) {
+      object_stack_push(str2jo("<closure>"), closure);
+      jo_apply(str2jo(".local-env"));
+      struct object a = object_stack_pop();
+      struct object_entry* ao = a.data;
+      struct local* lr = ao->pointer;
+
+      object_stack_push(str2jo("<closure>"), closure);
+      jo_apply(str2jo(".jojo"));
+      struct object b = object_stack_pop();
+      jo_t* jojo = b.data;
+
+      cell local_counter = current_local_counter;
+      set_local_record(lr);
+      return_stack_push(jojo, local_counter);
+    }
     expose_closure() {
-      add_class_exe("<closure", "<object>", exe_closure, J("env", "jojo"));
+      add_prim("current-local-env", J0, p_current_local_env);
+      add_prim("enclose", J("<jojo>"), p_jojo_enclose);
+      add_atom_class("<local-env>", gc_local_env);
+      add_class_exe("<closure>", "<object>", exe_closure, J("local-env", "jojo"));
     }
     k_ignore() {
       while (true) {
@@ -1924,121 +2128,37 @@
       here(TAG_STRING);
       here(object_entry);
     }
-      // :local
-      bool get_local_string_p(char* str) {
-        if (str[0] != ':') {
-          return false;
-        }
-        else if (string_last_byte(str) == '!') {
-          return false;
-        }
-        else if (string_member_p(str, '.')) {
-          return false;
-        }
-        else {
-          return true;
-        }
-      }
-      // :local!
-      bool set_local_string_p(char* str) {
-        if (str[0] != ':') {
-          return false;
-        }
-        else if (string_last_byte(str) != '!') {
-          return false;
-        }
-        else if (string_member_p(str, '.')) {
-          return false;
-        }
-        else {
-          return true;
-        }
-      }
-      // :local.field
-      bool get_local_field_string_p(char* str) {
-        if (str[0] != ':') {
-          return false;
-        }
-        else if (string_last_byte(str) == '!') {
-          return false;
-        }
-        else if (string_count_member(str, '.') != 1) {
-          return false;
-        }
-        else {
-          return true;
-        }
-      }
-      // :local.field!
-      bool set_local_field_string_p(char* str) {
-        if (str[0] != ':') {
-          return false;
-        }
-        else if (string_last_byte(str) != '!') {
-          return false;
-        }
-        else if (string_count_member(str, '.') != 1) {
-          return false;
-        }
-        else {
-          return true;
-        }
-      }
-      cell local_find(jo_t name) {
-        // return index of local_record
-        // -1 -- no found
-        struct ret rp = return_stack_tos();
-        cell cursor = current_local_pointer - 1;
-        while (cursor >= rp.local_pointer) {
-          if (local_record[cursor].name == name) {
-            return cursor;
-          }
-          else {
-            cursor--;
-          }
-        }
-        return -1;
-      }
-      ins_set_local() {
-        struct ret rp = return_stack_tos();
-        return_stack_inc();
-        jo_t* jojo = rp.jojo;
-        jo_t jo = jojo[0];
+    ins_jmp() {
+      struct ret rp = return_stack_tos();
+      jo_t* jojo = rp.jojo;
+      cell offset = jojo[0];
+      struct ret rp1 = return_stack_pop();
+      return_stack_push(jojo + offset, rp1.local_counter);
+    }
+    struct stack* current_compiling_jojo_stack; // of jo
+    bool compile_until_meet_jo(jo_t ending_jo);
 
-        cell index = local_find(jo);
-
-        struct object a = object_stack_pop();
-        if (index != -1) {
-          local_record[index].name = jo;
-          local_record[index].local_tag = a.tag;
-          local_record[index].local_data = a.data;
-        }
-        else {
-          local_record[current_local_pointer].name = jo;
-          local_record[current_local_pointer].local_tag = a.tag;
-          local_record[current_local_pointer].local_data = a.data;
-          current_local_pointer++;
-        }
+    bool compile_closure() {
+      here(JO_INS_JMP);
+      jo_t* end_of_closure = tos(compiling_stack);
+      p_compiling_stack_inc();
+      jo_t* jojo = tos(compiling_stack);
+      bool success_p;
+      {
+        push(current_compiling_jojo_stack, jojo);
+        success_p = compile_until_meet_jo(SQUARE_KET);
+        here(JO_END);
+        here(0);
+        here(0);
+        drop(current_compiling_jojo_stack);
       }
-      ins_get_local() {
-        struct ret rp = return_stack_tos();
-        return_stack_inc();
-        jo_t* jojo = rp.jojo;
-        jo_t jo = jojo[0];
-
-        cell index = local_find(jo);
-
-        if (index != -1) {
-          struct local lp = local_record[index];
-          object_stack_push(lp.local_tag, lp.local_data);
-        }
-        else {
-          report("- ins_get_local fatal error\n");
-          report("  name is not bound\n");
-          report("  name : %s\n", jo2str(jo));
-          p_debug();
-        }
-      }
+      end_of_closure[0] = (jo_t*)tos(compiling_stack) - end_of_closure;
+      here(JO_INS_LIT);
+      here(str2jo("<jojo>"));
+      here(jojo);
+      here(str2jo("enclose"));
+      return success_p;
+    }
     bool compile_jo(jo_t jo) {
       if (jo == ROUND_BAR) {
         jo_apply(read_jo());
@@ -2054,6 +2174,9 @@
       else if (jo == DOUBLE_QUOTE) {
         compile_string();
         return true;
+      }
+      else if (jo == SQUARE_BAR) {
+        return compile_closure();
       }
       else if (get_local_string_p(str)) {
         here(JO_INS_GET_LOCAL);
@@ -2077,18 +2200,18 @@
         return false;
       }
     }
-    compile_until_meet_jo(jo_t ending_jo) {
+    bool compile_until_meet_jo(jo_t ending_jo) {
       while (true) {
         jo_t jo = read_jo();
         if (jo == ending_jo) {
-          return;
+          return true;
         }
         if (!compile_jo(jo)) {
           report("- compile_until_meet_jo fail\n");
           // report("  the rest of the ...\n");
           // p_dump();
           p_debug();
-          return;
+          return false;
         }
       }
     }
@@ -2106,15 +2229,16 @@
     p_compile_until_round_ket() {
       compile_until_meet_jo(ROUND_KET);
     }
-    struct stack* current_compiling_jojo_stack; // of jo
     p_compile_jojo() {
       jo_t* jojo = tos(compiling_stack);
-      push(current_compiling_jojo_stack, jojo);
-      compile_until_meet_jo(ROUND_KET);
-      here(JO_END);
-      here(0);
-      here(0);
-      drop(current_compiling_jojo_stack);
+      {
+        push(current_compiling_jojo_stack, jojo);
+        compile_until_meet_jo(ROUND_KET);
+        here(JO_END);
+        here(0);
+        here(0);
+        drop(current_compiling_jojo_stack);
+      }
     }
     k_run() {
       // (run ...)
@@ -2233,6 +2357,8 @@
       add_prim_keyword("run", J0, k_run);
 
       add_prim("ins/lit", J0, ins_lit);
+      add_prim("ins/jmp", J0, ins_jmp);
+
       add_prim("ins/get-local", J0, ins_get_local);
       add_prim("ins/set-local", J0, ins_set_local);
     }
@@ -2608,8 +2734,8 @@
       JO_INS_GET_LOCAL = str2jo("ins/get-local");
       JO_INS_SET_LOCAL = str2jo("ins/set-local");
 
-      JO_INS_JUMP = str2jo("ins/jump");
-      JO_INS_JUMP_IF_FALSE = str2jo("ins/jump-if-false");
+      JO_INS_JMP = str2jo("ins/jmp");
+      JO_INS_JMP_IF_FALSE = str2jo("ins/jmp-if-false");
 
       JO_INS_TAIL_CALL = str2jo("ins/tail-call");
       JO_INS_LOOP = str2jo("ins/loop");
@@ -2662,6 +2788,7 @@
       expose_object();
       expose_stack_operation();
       expose_ending();
+      expose_closure();
       expose_add();
       expose_bool();
       expose_string();
