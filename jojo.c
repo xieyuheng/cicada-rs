@@ -259,6 +259,7 @@
     jo_t TAG_INT;
     jo_t TAG_BYTE;
     jo_t TAG_STRING;
+    jo_t TAG_JO;
 
     jo_t TAG_UNINITIALISED_FIELD_PLACE_HOLDER;
 
@@ -2065,6 +2066,14 @@
         free(tmp);
         return true;
       }
+      else if (str[0] == '\'' && strlen(str) != 1) {
+        here(JO_INS_LIT);
+        here(TAG_JO);
+        char* tmp = substring(str, 1, NULL);
+        here(str2jo(tmp));
+        free(tmp);
+        return true;
+      }
       else if (used_jo_p(jo)) {
         here(jo);
         return true;
@@ -2756,6 +2765,7 @@
       TAG_INT          = str2jo("<int>");
       TAG_BYTE         = str2jo("<byte>");
       TAG_STRING       = str2jo("<string>");
+      TAG_JO           = str2jo("<jo>");
 
       TAG_UNINITIALISED_FIELD_PLACE_HOLDER =
         str2jo("<uninitialised-field-place-holder>");
