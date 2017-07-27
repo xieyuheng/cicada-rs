@@ -3,8 +3,6 @@
 - little syntax check
 - to writing jojo in c code
 - <string>
-- <int>
-- <bool>
 - <byte>
 - <jo>
 - <jojo>
@@ -535,7 +533,11 @@
     jo_t TAG_JOJO;
     jo_t TAG_PRIM_KEYWORD;
     jo_t TAG_KEYWORD;
+
+
+    jo_t TAG_BOOL;
     jo_t TAG_INT;
+    jo_t TAG_BYTE;
     jo_t TAG_STRING;
 
     jo_t JO_DECLARED;
@@ -2349,6 +2351,8 @@
 
       add_the_object_class();
 
+      add_atom_class("<bool>", gc_ignore);
+      add_atom_class("<byte>", gc_ignore);
       add_atom_class("<int>", gc_ignore);
       add_atom_class("<jo>", gc_ignore);
       add_atom_class("<string>", gc_free);
@@ -2620,6 +2624,67 @@
       add_prim("swap", S("<object>", "<object>"), p_swap);
     }
     #+end_src
+
+* <bool>
+
+*** p_true
+
+    #+begin_src c
+    p_true() {
+      object_stack_push(TAG_BOOL, true);
+    }
+    #+end_src
+
+*** p_false
+
+    #+begin_src c
+    p_false() {
+      object_stack_push(TAG_BOOL, false);
+    }
+    #+end_src
+
+*** p_not
+
+    #+begin_src c
+    p_not() {
+      struct object a = object_stack_pop();
+      object_stack_push(TAG_BOOL, !a.data);
+    }
+    #+end_src
+
+*** p_and
+
+    #+begin_src c
+    p_and() {
+      struct object a = object_stack_pop();
+      struct object b = object_stack_pop();
+      object_stack_push(TAG_BOOL, a.data && b.data);
+    }
+    #+end_src
+
+*** p_or
+
+    #+begin_src c
+    p_or() {
+      struct object a = object_stack_pop();
+      struct object b = object_stack_pop();
+      object_stack_push(TAG_BOOL, a.data || b.data);
+    }
+    #+end_src
+
+*** expose_bool
+
+    #+begin_src c
+    expose_bool() {
+      add_prim("true", S0, p_true);
+      add_prim("false", S0, p_false);
+      add_prim("not", S("<bool>"), p_not);
+      add_prim("and", S("<bool>", "<bool>"), p_and);
+      add_prim("or",  S("<bool>", "<bool>"), p_or);
+    }
+    #+end_src
+
+* <int>
 
 * *ending*
 
@@ -3488,7 +3553,10 @@
       TAG_JOJO         = str2jo("<jojo>");
       TAG_PRIM_KEYWORD = str2jo("<prim-keyword>");
       TAG_KEYWORD      = str2jo("<keyword>");
+
+      TAG_BOOL         = str2jo("<bool>");
       TAG_INT          = str2jo("<int>");
+      TAG_BYTE         = str2jo("<byte>");
       TAG_STRING       = str2jo("<string>");
 
       JO_DECLARED = str2jo("declared");
@@ -3568,6 +3636,7 @@
 
       expose_object();
       expose_stack_operation();
+      expose_bool();
       expose_ending();
       expose_add();
 

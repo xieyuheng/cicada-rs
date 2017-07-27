@@ -254,7 +254,11 @@
     jo_t TAG_JOJO;
     jo_t TAG_PRIM_KEYWORD;
     jo_t TAG_KEYWORD;
+
+
+    jo_t TAG_BOOL;
     jo_t TAG_INT;
+    jo_t TAG_BYTE;
     jo_t TAG_STRING;
 
     jo_t JO_DECLARED;
@@ -1539,6 +1543,8 @@
 
       add_the_object_class();
 
+      add_atom_class("<bool>", gc_ignore);
+      add_atom_class("<byte>", gc_ignore);
       add_atom_class("<int>", gc_ignore);
       add_atom_class("<jo>", gc_ignore);
       add_atom_class("<string>", gc_free);
@@ -1720,6 +1726,33 @@
       add_prim("over", S("<object>", "<object>"), p_over);
       add_prim("tuck", S("<object>", "<object>"), p_tuck);
       add_prim("swap", S("<object>", "<object>"), p_swap);
+    }
+    p_true() {
+      object_stack_push(TAG_BOOL, true);
+    }
+    p_false() {
+      object_stack_push(TAG_BOOL, false);
+    }
+    p_not() {
+      struct object a = object_stack_pop();
+      object_stack_push(TAG_BOOL, !a.data);
+    }
+    p_and() {
+      struct object a = object_stack_pop();
+      struct object b = object_stack_pop();
+      object_stack_push(TAG_BOOL, a.data && b.data);
+    }
+    p_or() {
+      struct object a = object_stack_pop();
+      struct object b = object_stack_pop();
+      object_stack_push(TAG_BOOL, a.data || b.data);
+    }
+    expose_bool() {
+      add_prim("true", S0, p_true);
+      add_prim("false", S0, p_false);
+      add_prim("not", S("<bool>"), p_not);
+      add_prim("and", S("<bool>", "<bool>"), p_and);
+      add_prim("or",  S("<bool>", "<bool>"), p_or);
     }
     p_end() {
       struct ret rp = return_stack_pop();
@@ -2341,7 +2374,10 @@
       TAG_JOJO         = str2jo("<jojo>");
       TAG_PRIM_KEYWORD = str2jo("<prim-keyword>");
       TAG_KEYWORD      = str2jo("<keyword>");
+
+      TAG_BOOL         = str2jo("<bool>");
       TAG_INT          = str2jo("<int>");
+      TAG_BYTE         = str2jo("<byte>");
       TAG_STRING       = str2jo("<string>");
 
       JO_DECLARED = str2jo("declared");
@@ -2411,6 +2447,7 @@
 
       expose_object();
       expose_stack_operation();
+      expose_bool();
       expose_ending();
       expose_add();
 
