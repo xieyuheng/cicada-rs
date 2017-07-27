@@ -178,6 +178,7 @@
     #define S0 (char*[]){NULL}
     #define S(...) (char*[]){__VA_ARGS__, NULL}
   p_debug() {
+    exit(233);
   }
     struct jotable_entry {
       char *key;
@@ -1618,7 +1619,7 @@
         strcpy(cursor, jo2str(jo));
         return str2jo(buffer);
       }
-      jo_t absolute_jo_loop(jo, absolute_array, arity)
+      jo_t generic_jo_loop(jo, absolute_array, arity)
         jo_t jo;
         struct absolute_t absolute_array[];
         cell arity;
@@ -1632,10 +1633,10 @@
         }
         else {
           absolute_next(absolute_array, arity);
-          return absolute_jo_loop(jo, absolute_array, arity);
+          return generic_jo_loop(jo, absolute_array, arity);
         }
       }
-      jo_t absolute_jo(jo_t jo) {
+      jo_t generic_jo(jo_t jo) {
         cell arity = jo->data;
         struct absolute_t absolute_array[256];
         cell tag_index = arity;
@@ -1648,9 +1649,22 @@
           tag_index--;
           i++;
         }
-        jo_t new_jo = absolute_jo_loop(jo, absolute_array, arity);
+        jo_t new_jo = generic_jo_loop(jo, absolute_array, arity);
         if (new_jo == NULL) {
-          report("- absolute_jo can not find\n");
+          report("- generic_jo fail\n");
+          report("  generic name : %s\n", jo2str(jo));
+          report("  arity : %ld\n", arity);
+          report("  attempted to apply it to : ");
+          tag_index = arity;
+          i = 0;
+          while (i < arity) {
+            tag = object_stack_peek_tag(tag_index);
+            report("%s ", jo2str(tag));
+            tag_index--;
+            i++;
+          }
+          report("\n");
+          p_debug();
           return NULL;
         }
         else {
@@ -1666,7 +1680,7 @@
         return;
       }
       if (jo->tag == str2jo("<generic-prototype>")) {
-        jo_apply(absolute_jo(jo));
+        jo_apply(generic_jo(jo));
         return;
       }
 
@@ -2035,7 +2049,7 @@
       }
       else {
         // no compile before define
-        report("- compile_jo undefined : %s\n", jo2str(jo));
+        report("- compile_jo meet undefined jo : %s\n", jo2str(jo));
         p_debug();
       }
     }
@@ -2133,11 +2147,8 @@
     k_add_fun_args(jo_t* args) {
       if (args[0] == NULL) { return; }
       k_add_fun_args(args+1);
-      // ><><>< little syntax check here
-      {
-        here(JO_INS_SET_LOCAL);
-        here(args[0]);
-      }
+      here(JO_INS_SET_LOCAL);
+      here(args[0]);
     }
 
     // caller free
@@ -2633,50 +2644,5 @@
     init_system();
     init_jojo();
     p_repl_flag_on();
-    {
-      add_class("<rectangle>", "<object>", S("height", "width"));
-
-      object_stack_push(str2jo("<int>"), 666);
-      object_stack_push(str2jo("<int>"), 888);
-
-      here(str2jo("over"));
-      here(str2jo("swap"));
-      here(str2jo("<rectangle>"));
-      here(str2jo("new"));
-      here(str2jo("tuck"));
-      here(str2jo(".width!"));
-      here(str2jo("dup"));
-      here(str2jo(".width"));
-      here(str2jo("swap"));
-      here(str2jo(".width"));
-      here(str2jo("<string>"));
-      here(str2jo("print-object-stack"));
-
-      here(str2jo("<rectangle>"));
-      here(str2jo("new"));
-
-      here(str2jo("<rectangle>"));
-      here(str2jo("new"));
-      here(str2jo("drop"));
-
-      here(str2jo("<rectangle>"));
-      here(str2jo("new"));
-      here(str2jo("drop"));
-
-      here(str2jo("<rectangle>"));
-      here(str2jo("new"));
-      here(str2jo("drop"));
-
-      here(str2jo("<rectangle>"));
-      here(str2jo("new"));
-      here(str2jo(".height"));
-
-      here(str2jo("print-object-stack"));
-
-      here(str2jo("end"));
-      return_stack_push_new(jojo_area);
-      eval();
-    }
-
     return p_repl();
   }

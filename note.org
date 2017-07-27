@@ -1,24 +1,39 @@
 #+title:  note of jojo
 
-* <cons>
+* <list>
 
   #+begin_src jojo
-  (+class <cons> (<object>)
+  (+class <list> (<object>)
+    empty-p
     car cdr)
 
-  (+fun cons (:c <object> :o <object>)
-    <cons> new :c1!
-    :c :c1 .cdr!
-    :o :c1 .car!
-    :c1)
+  (+fun cons (:cdr <list> :car <object>)
+    <list> new :l!
+    false :l .empty-p!
+    :cdr :l .cdr!
+    :car :l .car!
+    :l)
+
+  (+fun empty-list ()
+    <list> new :l!
+    true :l .empty-p!
+    :l)
+
+  (+fun empty? (:l <list>)
+    :l .empty-p)
 
   (+var x
-    0
+    empty-list
     1 cons
     2 cons)
 
   (run
-    x .cdr .cdr)
+    x .cdr .cdr empty?)
+
+  (+var y
+    0
+    1 cons
+    2 cons)
   #+end_src
 
 * ><
