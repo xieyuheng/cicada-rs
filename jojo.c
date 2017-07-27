@@ -262,6 +262,8 @@
     jo_t TAG_BYTE;
     jo_t TAG_STRING;
 
+    jo_t TAG_UNINITIALISED_FIELD_PLACE_HOLDER;
+
     jo_t JO_DECLARED;
 
     jo_t ROUND_BAR;
@@ -1515,10 +1517,22 @@
         eval();
         current_alias_pointer = pop(keyword_stack);
       }
+      // runtime error for uninitialised-field
       exe_get_object_field(cell index) {
         struct object a = object_stack_pop();
-        object_stack_push(get_object_field_tag(a.data, index),
-                          get_object_field_data(a.data, index));
+        jo_t tag = get_object_field_tag(a.data, index);
+        cell data = get_object_field_data(a.data, index);
+        if (tag == TAG_UNINITIALISED_FIELD_PLACE_HOLDER) {
+          object_stack_push(a.tag, a.data);
+          report("- exe_get_object_field fail\n");
+          report("  field is uninitialised\n");
+          report("  field index : %ld\n", index);
+          report("  see top of object_stack for the object\n");
+          p_debug();
+        }
+        else {
+          object_stack_push(tag, data);
+        }
       }
       exe_set_object_field(cell index) {
         struct object a = object_stack_pop();
@@ -1529,6 +1543,10 @@
       exe_set_global_variable(jo_t name) {
         struct object a = object_stack_pop();
         rebind_name(name, a.tag, a.data);
+      }
+      exe_closure(struct object_entry* closure) {
+        // closure
+        // return_stack_push(jojo);
       }
     add_the_object_class() {
       struct class* class = (struct class*)malloc(sizeof(struct class));
@@ -1858,6 +1876,9 @@
     expose_rw() {
 
     }
+    expose_closure() {
+      add_exe_class("<closure", "<object>", exe_closure, S("env", "jojo"));
+    }
     k_ignore() {
       while (true) {
         jo_t s = read_raw_jo();
@@ -2020,37 +2041,42 @@
           p_debug();
         }
       }
-    compile_jo(jo_t jo) {
+    bool compile_jo(jo_t jo) {
       if (jo == ROUND_BAR) {
         jo_apply(read_jo());
-        return;
+        return true;
       }
       char* str = jo2str(jo);
       if (int_string_p(str)) {
         here(JO_INS_LIT);
         here(TAG_INT);
         here(string_to_int(str));
+        return true;
       }
       else if (jo == DOUBLE_QUOTE) {
         compile_string();
+        return true;
       }
       else if (get_local_string_p(str)) {
         here(JO_INS_GET_LOCAL);
         here(jo);
+        return true;
       }
       else if (set_local_string_p(str)) {
         here(JO_INS_SET_LOCAL);
         char* tmp = substring(str, 0, strlen(str) -1);
         here(str2jo(tmp));
         free(tmp);
+        return true;
       }
       else if (used_jo_p(jo)) {
         here(jo);
+        return true;
       }
       else {
         // no compile before define
         report("- compile_jo meet undefined jo : %s\n", jo2str(jo));
-        p_debug();
+        return false;
       }
     }
     compile_until_meet_jo(jo_t ending_jo) {
@@ -2059,8 +2085,12 @@
         if (jo == ending_jo) {
           return;
         }
-        else {
-          compile_jo(jo);
+        if (!compile_jo(jo)) {
+          report("- compile_until_meet_jo fail\n");
+          // report("  the rest of the ...\n");
+          // p_dump();
+          p_debug();
+          return;
         }
       }
     }
@@ -2563,6 +2593,9 @@
       TAG_BYTE         = str2jo("<byte>");
       TAG_STRING       = str2jo("<string>");
 
+      TAG_UNINITIALISED_FIELD_PLACE_HOLDER =
+        str2jo("<uninitialised-field-place-holder>");
+
       JO_DECLARED = str2jo("declared");
 
       ROUND_BAR    =   str2jo("(");
@@ -2644,5 +2677,8 @@
     init_system();
     init_jojo();
     p_repl_flag_on();
+    {
+      p_print_object_stack();
+    }
     return p_repl();
   }

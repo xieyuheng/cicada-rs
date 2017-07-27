@@ -55,7 +55,10 @@
     (el :jojo apply
         :time dec :jojo (loop)))
 
-
+  (+fun map (:list <list> :jojo <jojo>)
+    (cd [:list null eq? -> null end]
+        [:list cdr :jojo (recur)
+         :list car :jojo apply cons]))
 
   (+class <person> (<object>)
     [age 13]
