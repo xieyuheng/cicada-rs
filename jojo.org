@@ -6,7 +6,6 @@
 - redesign the repl
   - shell mode
 
-- system
 - cffi
 
 - p_debug
@@ -3145,7 +3144,6 @@
       }
       char* str = strdup(buffer);
       struct object_entry* object_entry = new_static_object_entry();
-      object_entry->mark = GC_MARK_USING;
       object_entry->gc_actor = gc_ignore;
       object_entry->pointer = str;
 
@@ -3822,7 +3820,6 @@
       strcat(str2, str1);
 
       struct object_entry* object_entry = new_record_object_entry();
-      object_entry->mark = GC_MARK_USING;
       object_entry->gc_actor = gc_free;
       object_entry->pointer = str2;
 
@@ -3844,7 +3841,6 @@
       char* str1 = substring(str0, begin, end);
 
       struct object_entry* object_entry = new_record_object_entry();
-      object_entry->mark = GC_MARK_USING;
       object_entry->gc_actor = gc_free;
       object_entry->pointer = str1;
 
@@ -4188,6 +4184,70 @@
     }
     #+end_src
 
+* *system*
+
+*** p_cmd_number
+
+    #+begin_src c
+    cell cmd_number;
+
+    p_cmd_number() {
+      object_stack_push(TAG_INT, cmd_number);
+    }
+    #+end_src
+
+*** p_index_to_cmd_string
+
+    #+begin_src c
+    char** cmd_string_array;
+
+    p_index_to_cmd_string() {
+      // index -> string
+      struct obj a = object_stack_pop();
+      cell index = a.data;
+      char* cmd_string = cmd_string_array[index];
+
+      struct object_entry* object_entry = new_record_object_entry();
+      object_entry->gc_actor = gc_free;
+      object_entry->pointer = strdup(cmd_string);
+
+      object_stack_push(TAG_STRING, object_entry);
+    }
+    #+end_src
+
+*** p_find_env_string
+
+    #+begin_src c
+    p_find_env_string() {
+      // string -> [env-string true] or [false]
+      struct obj a = object_stack_pop();
+      struct object_entry* ao = a.data;
+      char* var_string = ao->pointer;
+      char* env_string = getenv(var_string);
+      if (env_string == NULL) {
+        object_stack_push(TAG_BOOL, false);
+      }
+      else {
+        struct object_entry* object_entry = new_record_object_entry();
+        object_entry->gc_actor = gc_free;
+        object_entry->pointer = strdup(env_string);
+
+        object_stack_push(TAG_STRING, object_entry);
+        object_stack_push(TAG_BOOL, true);
+      }
+    }
+    #+end_src
+
+*** expose_system
+
+    #+begin_src c
+    expose_system() {
+      add_prim("cmd-number", J0, p_cmd_number);
+      add_prim("index->cmd-string", J("<int>"), p_index_to_cmd_string);
+      add_prim("find-env-string", J("<string>"), p_find_env_string);
+    }
+    #+end_src
+
 * *play*
 
 *** p1
@@ -4437,6 +4497,7 @@
       expose_string();
       expose_int();
       expose_closure();
+      expose_system();
       expose_play();
     }
     #+end_src
@@ -4445,8 +4506,8 @@
 
     #+begin_src c
     int main(int argc, char** argv) {
-      // cmd_number = argc;
-      // cmd_string_array = argv;
+      cmd_number = argc;
+      cmd_string_array = argv;
       init_system();
       init_jojo();
       p_repl_flag_on();

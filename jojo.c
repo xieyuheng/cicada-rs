@@ -2042,7 +2042,6 @@
       }
       char* str = strdup(buffer);
       struct object_entry* object_entry = new_static_object_entry();
-      object_entry->mark = GC_MARK_USING;
       object_entry->gc_actor = gc_ignore;
       object_entry->pointer = str;
 
@@ -2519,7 +2518,6 @@
       strcat(str2, str1);
 
       struct object_entry* object_entry = new_record_object_entry();
-      object_entry->mark = GC_MARK_USING;
       object_entry->gc_actor = gc_free;
       object_entry->pointer = str2;
 
@@ -2536,7 +2534,6 @@
       char* str1 = substring(str0, begin, end);
 
       struct object_entry* object_entry = new_record_object_entry();
-      object_entry->mark = GC_MARK_USING;
       object_entry->gc_actor = gc_free;
       object_entry->pointer = str1;
 
@@ -2749,6 +2746,48 @@
       add_class_exe("<closure>", "<object>", exe_closure, J("local-env", "jojo"));
       add_prim_keyword("clo", J0, k_closure);
     }
+    cell cmd_number;
+
+    p_cmd_number() {
+      object_stack_push(TAG_INT, cmd_number);
+    }
+    char** cmd_string_array;
+
+    p_index_to_cmd_string() {
+      // index -> string
+      struct obj a = object_stack_pop();
+      cell index = a.data;
+      char* cmd_string = cmd_string_array[index];
+
+      struct object_entry* object_entry = new_record_object_entry();
+      object_entry->gc_actor = gc_free;
+      object_entry->pointer = strdup(cmd_string);
+
+      object_stack_push(TAG_STRING, object_entry);
+    }
+    p_find_env_string() {
+      // string -> [env-string true] or [false]
+      struct obj a = object_stack_pop();
+      struct object_entry* ao = a.data;
+      char* var_string = ao->pointer;
+      char* env_string = getenv(var_string);
+      if (env_string == NULL) {
+        object_stack_push(TAG_BOOL, false);
+      }
+      else {
+        struct object_entry* object_entry = new_record_object_entry();
+        object_entry->gc_actor = gc_free;
+        object_entry->pointer = strdup(env_string);
+
+        object_stack_push(TAG_STRING, object_entry);
+        object_stack_push(TAG_BOOL, true);
+      }
+    }
+    expose_system() {
+      add_prim("cmd-number", J0, p_cmd_number);
+      add_prim("index->cmd-string", J("<int>"), p_index_to_cmd_string);
+      add_prim("find-env-string", J("<string>"), p_find_env_string);
+    }
     p1() {
       int file = open("README", O_RDWR);
       struct input_stack* t0_stack = input_stack_file(file);
@@ -2951,11 +2990,12 @@
       expose_string();
       expose_int();
       expose_closure();
+      expose_system();
       expose_play();
     }
     int main(int argc, char** argv) {
-      // cmd_number = argc;
-      // cmd_string_array = argv;
+      cmd_number = argc;
+      cmd_string_array = argv;
       init_system();
       init_jojo();
       p_repl_flag_on();
