@@ -253,6 +253,7 @@
     jo_t TAG_JOJO;
     jo_t TAG_PRIM_KEYWORD;
     jo_t TAG_KEYWORD;
+    jo_t TAG_CLOSURE;
 
 
     jo_t TAG_BOOL;
@@ -1297,10 +1298,8 @@
         malloc(sizeof(struct object_entry));
       return object_entry;
     }
-    p_new() {
+    struct object_entry* new(struct class* class) {
       // [<class>] -> [<object> of <class>]
-      struct obj a = object_stack_pop();
-      struct class* class = a.data;
       cell* fields = (cell*)malloc(class->fields_number*2*sizeof(cell));
 
       cell i = 0;
@@ -1315,7 +1314,13 @@
       object_entry->pointer = fields;
       object_entry->fields_number = class->fields_number;
 
-      object_stack_push(class->class_name, object_entry);
+      return object_entry;
+    }
+    p_new() {
+      // [<class>] -> [<object> of <class>]
+      struct obj a = object_stack_pop();
+      struct class* class = a.data;
+      object_stack_push(class->class_name, new(class));
     }
       add_atom_class_exe(class_name, gc_actor, executer)
         char* class_name;
@@ -1707,6 +1712,11 @@
       }
     p_debug();
 
+    exe(jo_t tag, cell data) {
+      struct class* class = tag->data;
+      class->executer(data);
+    }
+
     jo_apply(jo_t jo) {
       if (!used_jo_p(jo)) {
         report("- jo_apply meet undefined jo : %s\n", jo2str(jo));
@@ -1720,7 +1730,7 @@
 
       struct class* class = jo->tag->data;
       if (class->executable) {
-        class->executer(jo->data);
+        exe(jo->tag, jo->data);
       }
       else {
         push(object_stack, jo->data);
@@ -2113,15 +2123,20 @@
     p_compile_until_round_ket() {
       compile_until_meet_jo(ROUND_KET);
     }
-    struct stack* current_compiling_jojo_stack; // of jo
+    struct stack* current_compiling_exe_stack;
+    // of data and tag
     p_compile_jojo() {
       jo_t* jojo = tos(compiling_stack);
-      push(current_compiling_jojo_stack, jojo);
-      compile_until_meet_jo(ROUND_KET);
-      here(JO_END);
-      here(0);
-      here(0);
-      drop(current_compiling_jojo_stack);
+      {
+        push(current_compiling_exe_stack, jojo);
+        push(current_compiling_exe_stack, TAG_JOJO);
+        compile_until_meet_jo(ROUND_KET);
+        here(JO_END);
+        here(0);
+        here(0);
+        drop(current_compiling_exe_stack);
+        drop(current_compiling_exe_stack);
+      }
     }
     expose_compiler() {
 
@@ -2223,7 +2238,7 @@
     // }
     // k_loop() {
     //   here(JO_INS_LOOP);
-    //   here(tos(current_compiling_jojo_stack));
+    //   here(tos(current_compiling_exe_stack));
     //   k_ignore();
     // }
     // i_recur() {
@@ -2235,7 +2250,7 @@
     // }
     // k_recur() {
     //   here(JO_INS_RECUR);
-    //   here(tos(current_compiling_jojo_stack));
+    //   here(tos(current_compiling_exe_stack));
     //   k_ignore();
     // }
     expose_control() {
@@ -2639,15 +2654,6 @@
       object_entry->pointer = lr;
       object_stack_push(str2jo("<local-env>"), object_entry);
     }
-    p_jojo_enclose() {
-      jo_apply(str2jo("<closure>"));
-      jo_apply(str2jo("new"));
-      jo_apply(str2jo("tuck"));
-      jo_apply(str2jo(".jojo!"));
-      jo_apply(str2jo("current-local-env"));
-      jo_apply(str2jo("over"));
-      jo_apply(str2jo(".local-env!"));
-    }
     set_local_record(struct local* lr) {
       while (lr->name != NULL) {
         set_local(lr->name, lr->local_tag, lr->local_data);
@@ -2655,13 +2661,13 @@
       }
     }
     exe_closure(struct object_entry* closure) {
-      object_stack_push(str2jo("<closure>"), closure);
+      object_stack_push(TAG_CLOSURE, closure);
       jo_apply(str2jo(".local-env"));
       struct obj a = object_stack_pop();
       struct object_entry* ao = a.data;
       struct local* lr = ao->pointer;
 
-      object_stack_push(str2jo("<closure>"), closure);
+      object_stack_push(TAG_CLOSURE, closure);
       jo_apply(str2jo(".jojo"));
       struct obj b = object_stack_pop();
       jo_t* jojo = b.data;
@@ -2671,20 +2677,37 @@
       return_stack_push(jojo, local_counter);
     }
     k_closure() {
+      struct class* class = TAG_CLOSURE->data;
+      struct object_entry* closure = new(class);
+
       here(JO_INS_JMP);
       jo_t* end_of_closure = tos(compiling_stack);
       p_compiling_stack_inc();
       jo_t* jojo = tos(compiling_stack);
-      p_compile_jojo();
+      {
+        push(current_compiling_exe_stack, closure);
+        push(current_compiling_exe_stack, TAG_CLOSURE);
+        compile_until_meet_jo(ROUND_KET);
+        here(JO_END);
+        here(0);
+        here(0);
+        drop(current_compiling_exe_stack);
+        drop(current_compiling_exe_stack);
+      }
       end_of_closure[0] = (jo_t*)tos(compiling_stack) - end_of_closure;
-      here(JO_INS_LIT);
-      here(str2jo("<jojo>"));
-      here(jojo);
-      here(str2jo("enclose"));
+
+      here(JO_INS_LIT); here(TAG_JOJO); here(jojo);
+      here(JO_INS_LIT); here(TAG_CLOSURE); here(closure);
+      here(str2jo(".jojo!"));
+
+      here(str2jo("current-local-env"));
+      here(JO_INS_LIT); here(TAG_CLOSURE); here(closure);
+      here(str2jo(".local-env!"));
+
+      here(JO_INS_LIT); here(TAG_CLOSURE); here(closure);
     }
     expose_closure() {
       add_prim("current-local-env", J0, p_current_local_env);
-      add_prim("enclose", J("<jojo>"), p_jojo_enclose);
       add_atom_class("<local-env>", gc_local_env);
       add_class_exe("<closure>", "<object>", exe_closure, J("local-env", "jojo"));
       add_prim_keyword("clo", J0, k_closure);
@@ -2803,6 +2826,7 @@
       TAG_JOJO         = str2jo("<jojo>");
       TAG_PRIM_KEYWORD = str2jo("<prim-keyword>");
       TAG_KEYWORD      = str2jo("<keyword>");
+      TAG_CLOSURE      = str2jo("<closure>");
 
       TAG_BOOL         = str2jo("<bool>");
       TAG_INT          = str2jo("<int>");
@@ -2871,7 +2895,7 @@
       // jo_filter_stack = new_stack("jo_filter_stack");
       // push(jo_filter_stack, str2jo("alias-filter"));
 
-      current_compiling_jojo_stack = new_stack("current_compiling_jojo_stack");
+      current_compiling_exe_stack = new_stack("current_compiling_exe_stack");
     }
     init_jojo() {
       init_jotable();
