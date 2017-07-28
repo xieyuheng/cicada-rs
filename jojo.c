@@ -2202,12 +2202,55 @@
         return;
       }
     }
+    ins_tail_call() {
+      struct ret rp = return_stack_pop();
+      jo_t* jojo = rp.jojo;
+      jo_t jo = jojo[0];
+      current_local_counter = rp.local_counter;
+      jo_apply(jo);
+    }
+    k_tail_call() {
+      // no check for "no compile before define"
+      here(JO_INS_TAIL_CALL);
+      here(read_jo());
+      k_ignore();
+    }
+    ins_loop() {
+      struct ret rp = return_stack_pop();
+      jo_t* jojo = rp.jojo;
+      jo_t* jojo_self = jojo[0];
+      return_stack_push(jojo_self, rp.local_pointer);
+    }
+    k_loop() {
+      here(JO_INS_LOOP);
+      here(tos(current_compiling_jojo_stack));
+      k_ignore();
+    }
+    i_recur() {
+      return_point rp = return_stack_tos();
+      return_stack_inc();
+      jo* jojo = rp.jojo;
+      jo* jojo_self = jojo[0];
+      return_stack_new_point(jojo_self);
+    }
+    k_recur() {
+      here(JO_INS_RECUR);
+      here(tos(current_compiling_jojo_stack));
+      k_ignore();
+    }
     expose_control() {
       add_prim_keyword("note", J0, k_ignore);
       add_prim("ins/lit", J0, ins_lit);
+
       add_prim("ins/jmp", J0, ins_jmp);
       add_prim("ins/jz", J0, ins_jz);
+
       add_prim_keyword("if", J0, k_if);
+      add_prim_keyword("el", J0, p_compile_until_round_ket);
+
+      add_prim("ins/tail-call", J0, ins_tail_call);
+      add_prim_keyword("tail-call", J0, k_tail_call);
+
     }
     k_run() {
       // (run ...)
