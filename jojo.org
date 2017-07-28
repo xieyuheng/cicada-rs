@@ -1,11 +1,13 @@
 #+property: tangle jojo.c
 #+title:  jojo
+* [todo-stack]
 - fix current_compiling_jojo_stack, loop, recur
   for (clo) and other executable
 
   current_compiling_jojo_stack stores not only jojo
 
 - jo_apply should call apply
+
 
 - to writing jojo in c code
 
@@ -3369,44 +3371,44 @@
 *** >< ins_loop
 
     #+begin_src c
-    ins_loop() {
-      struct ret rp = return_stack_pop();
-      jo_t* jojo = rp.jojo;
-      jo_t* jojo_self = jojo[0];
-      return_stack_push(jojo_self, rp.local_pointer);
-    }
+    // ins_loop() {
+    //   struct ret rp = return_stack_pop();
+    //   jo_t* jojo = rp.jojo;
+    //   jo_t* jojo_self = jojo[0];
+    //   return_stack_push(jojo_self, rp.local_pointer);
+    // }
     #+end_src
 
 *** >< k_loop
 
     #+begin_src c
-    k_loop() {
-      here(JO_INS_LOOP);
-      here(tos(current_compiling_jojo_stack));
-      k_ignore();
-    }
+    // k_loop() {
+    //   here(JO_INS_LOOP);
+    //   here(tos(current_compiling_jojo_stack));
+    //   k_ignore();
+    // }
     #+end_src
 
 *** >< i_recur
 
     #+begin_src c
-    i_recur() {
-      return_point rp = return_stack_tos();
-      return_stack_inc();
-      jo* jojo = rp.jojo;
-      jo* jojo_self = jojo[0];
-      return_stack_new_point(jojo_self);
-    }
+    // i_recur() {
+    //   return_point rp = return_stack_tos();
+    //   return_stack_inc();
+    //   jo* jojo = rp.jojo;
+    //   jo* jojo_self = jojo[0];
+    //   return_stack_new_point(jojo_self);
+    // }
     #+end_src
 
 *** >< k_recur
 
     #+begin_src c
-    k_recur() {
-      here(JO_INS_RECUR);
-      here(tos(current_compiling_jojo_stack));
-      k_ignore();
-    }
+    // k_recur() {
+    //   here(JO_INS_RECUR);
+    //   here(tos(current_compiling_jojo_stack));
+    //   k_ignore();
+    // }
     #+end_src
 
 *** expose_control
@@ -3428,7 +3430,7 @@
     }
     #+end_src
 
-* *add*
+* *top*
 
 *** k_run
 
@@ -3476,9 +3478,9 @@
 
     k_add_class() {
       jo_t name = read_jo();
-      read_jo(); // drop '('
+      read_jo(); // drop '['
       jo_t super = read_jo();
-      k_ignore();
+      read_jo(); // drop ']'
       jo_t fields[MAX_FIELDS];
       cell i = 0;
       while (true) {
@@ -3513,12 +3515,12 @@
 
     // caller free
     jo_t* k_add_fun_tags() {
-      read_jo(); // drop '('
+      read_jo(); // drop '['
       jo_t* tags = (jo_t*)malloc(64 * sizeof(jo_t));
       jo_t args[64];
       cell i = 0;
       while (true) {
-        jo_t arg = read_jo(); if (arg == ROUND_KET) { break; }
+        jo_t arg = read_jo(); if (arg == SQUARE_KET) { break; }
         args[i] = arg;
         jo_t tag = read_jo();
         tags[i] = tag;
@@ -3564,11 +3566,11 @@
     }
     #+end_src
 
-*** expose_add
+*** expose_top
 
     #+begin_src c
-    expose_add() {
-      add_prim_keyword("run", J0, k_run);
+    expose_top() {
+      add_prim_keyword("+", J0, k_run);
       add_prim_keyword("+var", J0, k_add_var);
       add_prim_keyword("+fun", J0, k_add_fun);
       add_prim_keyword("+class", J0, k_add_class);
@@ -4355,7 +4357,7 @@
       expose_local();
       expose_compiler();
       expose_control();
-      expose_add();
+      expose_top();
       expose_bool();
       expose_string();
       expose_int();

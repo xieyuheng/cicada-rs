@@ -2215,29 +2215,29 @@
       here(read_jo());
       k_ignore();
     }
-    ins_loop() {
-      struct ret rp = return_stack_pop();
-      jo_t* jojo = rp.jojo;
-      jo_t* jojo_self = jojo[0];
-      return_stack_push(jojo_self, rp.local_pointer);
-    }
-    k_loop() {
-      here(JO_INS_LOOP);
-      here(tos(current_compiling_jojo_stack));
-      k_ignore();
-    }
-    i_recur() {
-      return_point rp = return_stack_tos();
-      return_stack_inc();
-      jo* jojo = rp.jojo;
-      jo* jojo_self = jojo[0];
-      return_stack_new_point(jojo_self);
-    }
-    k_recur() {
-      here(JO_INS_RECUR);
-      here(tos(current_compiling_jojo_stack));
-      k_ignore();
-    }
+    // ins_loop() {
+    //   struct ret rp = return_stack_pop();
+    //   jo_t* jojo = rp.jojo;
+    //   jo_t* jojo_self = jojo[0];
+    //   return_stack_push(jojo_self, rp.local_pointer);
+    // }
+    // k_loop() {
+    //   here(JO_INS_LOOP);
+    //   here(tos(current_compiling_jojo_stack));
+    //   k_ignore();
+    // }
+    // i_recur() {
+    //   return_point rp = return_stack_tos();
+    //   return_stack_inc();
+    //   jo* jojo = rp.jojo;
+    //   jo* jojo_self = jojo[0];
+    //   return_stack_new_point(jojo_self);
+    // }
+    // k_recur() {
+    //   here(JO_INS_RECUR);
+    //   here(tos(current_compiling_jojo_stack));
+    //   k_ignore();
+    // }
     expose_control() {
       add_prim_keyword("note", J0, k_ignore);
       add_prim("ins/lit", J0, ins_lit);
@@ -2285,9 +2285,9 @@
 
     k_add_class() {
       jo_t name = read_jo();
-      read_jo(); // drop '('
+      read_jo(); // drop '['
       jo_t super = read_jo();
-      k_ignore();
+      read_jo(); // drop ']'
       jo_t fields[MAX_FIELDS];
       cell i = 0;
       while (true) {
@@ -2317,12 +2317,12 @@
 
     // caller free
     jo_t* k_add_fun_tags() {
-      read_jo(); // drop '('
+      read_jo(); // drop '['
       jo_t* tags = (jo_t*)malloc(64 * sizeof(jo_t));
       jo_t args[64];
       cell i = 0;
       while (true) {
-        jo_t arg = read_jo(); if (arg == ROUND_KET) { break; }
+        jo_t arg = read_jo(); if (arg == SQUARE_KET) { break; }
         args[i] = arg;
         jo_t tag = read_jo();
         tags[i] = tag;
@@ -2361,8 +2361,8 @@
         report("  arity of %s should not be %ld\n", jo2str(fun_name), arity);
       }
     }
-    expose_add() {
-      add_prim_keyword("run", J0, k_run);
+    expose_top() {
+      add_prim_keyword("+", J0, k_run);
       add_prim_keyword("+var", J0, k_add_var);
       add_prim_keyword("+fun", J0, k_add_fun);
       add_prim_keyword("+class", J0, k_add_class);
@@ -2885,7 +2885,7 @@
       expose_local();
       expose_compiler();
       expose_control();
-      expose_add();
+      expose_top();
       expose_bool();
       expose_string();
       expose_int();

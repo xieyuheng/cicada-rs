@@ -1,25 +1,24 @@
 #+title:  note of jojo
-
 * <list>
 
   #+begin_src jojo
-  (+class <list> (<object>)
+  (+class <list> [<object>]
     empty-p
     car cdr)
 
-  (+fun cons (:cdr <list> :car <object>)
+  (+fun cons [:cdr <list> :car <object>]
     <list> new :l!
     false :l .empty-p!
     :cdr :l .cdr!
     :car :l .car!
     :l)
 
-  (+fun empty-list ()
+  (+fun empty-list []
     <list> new :l!
     true :l .empty-p!
     :l)
 
-  (+fun empty? (:l <list>)
+  (+fun empty? [:l <list>]
     :l .empty-p)
 
   (+var x
@@ -27,96 +26,94 @@
     1 cons
     2 cons)
 
-  (run
-    x .cdr .cdr empty?)
+  (+ x .cdr .cdr empty?)
 
   (note
     uninitialised-field
-    (run x .cdr .cdr .car))
+    (+ x .cdr .cdr .car))
 
   (note
     generic_jo fail
-    (run 0 1 cons))
-  #+end_src
-
-* [test] *control*
-
-  #+begin_src jojo
-  (+fun t0 ()
-    (if 1 eq? then 111 end)
-    222)
-
-
+    (+ 0 1 cons))
   #+end_src
 
 * [test] <closure>
 
   #+begin_src jojo
-  (+fun t0 ()
+  (+fun t0 []
     1 :a! 2 :b! (clo :a :b add))
   (+var x0 t0)
-  (run x0)
+  (+ x0)
 
 
-  (+fun t1 ()
+  (+fun t1 []
     1 :a! 2 :b! (clo :a (clo :b)))
   (+var x1 t1)
-  (run x1)
+  (+ x1)
   (+var x2 1)
-  (run x2! x2)
+  (+ x2! x2)
+  #+end_src
+
+* [test] *control*
+
+  #+begin_src jojo
+  (+fun t2 []
+    (if 1 eq? then 111 end)
+    222)
+
+  (+ 1 t2 w)
+  (+ 2 t2 w)
   #+end_src
 
 * ><
 
   #+begin_src jojo
-  (+class <rectangle> (<object>)
+  (+class <rectangle> [<object>]
     height width)
 
-  (+class <color-rectangle> (<rectangle>)
+  (+class <color-rectangle> [<rectangle>]
     cyan magenta yellow)
 
-  (+fun map (:list <list> :jojo <jojo>)
+  (+fun map [:list <list> :jojo <jojo>]
     (if :list null eq? then null end)
     (el :list cdr :jojo (recur) :list car :jojo apply cons))
 
-  (+fun repeat (:time <int> :jojo <jojo>)
+  (+fun repeat [:time <int> :jojo <jojo>]
     (if :time 0 eq? then end)
     (el :jojo apply :time dec :jojo (loop)))
 
 
-  (+class <person> (<object>)
+  (+class <person> [<object>]
     [age 13]
     [language "chinese"])
 
-  (+fun grow (:p <person>)
+  (+fun grow [:p <person>]
     :p.age inc
     :p.age!)
 
-  (+fun report (:p <person>)
+  (+fun report [:p <person>]
     "age : " w :p.age w nl
     "languege : " w :p.language w nl
     nl)
 
   (+var xieyuheng <person> new)
 
-  (run
-    xieyuheng report
-    xieyuheng grow
-    xieyuheng report
-    xieyuheng 10 grow-by
-    xieyuheng report
-    xieyuheng 10 grow-by
-    xieyuheng report)
+  (+ xieyuheng report
+     xieyuheng grow
+     xieyuheng report
+     xieyuheng 10 grow-by
+     xieyuheng report
+     xieyuheng 10 grow-by
+     xieyuheng report)
 
   (+var stack-0 <stack> new)
 
-  (run
-    stack-0 1 push
-    stack-0 2 push
-    stack-0 3 push
-    stack-0 pop w
-    stack-0 pop w
-    stack-0 pop w)
+  (+ stack-0 1 push
+     stack-0 2 push
+     stack-0 3 push
+     stack-0 pop w
+     stack-0 pop w
+     stack-0 pop w)
   #+end_src
 
 * ><
