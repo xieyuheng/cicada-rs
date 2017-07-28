@@ -1710,12 +1710,11 @@
           return new_jo;
         }
       }
-    p_debug();
-
     exe(jo_t tag, cell data) {
       struct class* class = tag->data;
       class->executer(data);
     }
+    p_debug();
 
     jo_apply(jo_t jo) {
       if (!used_jo_p(jo)) {
@@ -1899,8 +1898,11 @@
       string_unread(str);
       byte_unread(' ');
     }
+    p_nl() {
+      output_stack_push(tos(writing_stack), '\n');
+    }
     expose_rw() {
-
+      add_prim("nl", J0, p_nl);
     }
     // :local
     bool get_local_string_p(char* str) {
@@ -2281,16 +2283,18 @@
     k_run() {
       // (run ...)
       jo_t* jojo = tos(compiling_stack);
+
+      push(current_compiling_exe_stack, jojo);
+      push(current_compiling_exe_stack, TAG_JOJO);
       {
-        push(current_compiling_exe_stack, jojo);
-        push(current_compiling_exe_stack, TAG_JOJO);
         compile_until_meet_jo(ROUND_KET);
         here(JO_END);
         here(0);
         here(0);
-        drop(current_compiling_exe_stack);
-        drop(current_compiling_exe_stack);
       }
+      drop(current_compiling_exe_stack);
+      drop(current_compiling_exe_stack);
+
       return_stack_push_new(jojo);
       eval();
     }
@@ -2371,20 +2375,19 @@
     k_add_fun() {
       jo_t fun_name = read_jo();
       jo_t* jojo = tos(compiling_stack);
-
+      jo_t* tags;
 
       push(current_compiling_exe_stack, jojo);
       push(current_compiling_exe_stack, TAG_JOJO);
-
-      jo_t* tags = k_add_fun_tags();
-
-      compile_until_meet_jo(ROUND_KET);
-      here(JO_END);
-      here(0);
-      here(0);
+      {
+        tags = k_add_fun_tags();
+        compile_until_meet_jo(ROUND_KET);
+        here(JO_END);
+        here(0);
+        here(0);
+      }
       drop(current_compiling_exe_stack);
       drop(current_compiling_exe_stack);
-
 
       char name_buffer[1024];
       char* cursor = name_buffer;
@@ -2716,16 +2719,18 @@
       jo_t* end_of_closure = tos(compiling_stack);
       p_compiling_stack_inc();
       jo_t* jojo = tos(compiling_stack);
+
+      push(current_compiling_exe_stack, closure);
+      push(current_compiling_exe_stack, TAG_CLOSURE);
       {
-        push(current_compiling_exe_stack, closure);
-        push(current_compiling_exe_stack, TAG_CLOSURE);
         compile_until_meet_jo(ROUND_KET);
         here(JO_END);
         here(0);
         here(0);
-        drop(current_compiling_exe_stack);
-        drop(current_compiling_exe_stack);
       }
+      drop(current_compiling_exe_stack);
+      drop(current_compiling_exe_stack);
+
       end_of_closure[0] = (jo_t*)tos(compiling_stack) - end_of_closure;
 
       here(JO_INS_LIT); here(TAG_JOJO); here(jojo);
