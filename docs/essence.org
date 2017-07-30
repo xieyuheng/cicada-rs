@@ -1,0 +1,82 @@
+* 1 inductive sets of data
+
+*** 1.1 recursively specified data
+
+***** >< subsets of natural number
+
+      - ><
+
+***** <list-of-int>
+
+      - <List-of-Int> := () | (<int> . <list-of-int>)
+
+***** <sexp> // symbol expression
+
+      - <list> := <null> | (<sexp> . <list>)
+        <sexp> := <symbol> | <list>
+
+      - kleene star -- {...}*
+        kleene plus -- {...}+
+        kleene star with separater ',' -- {...}*(,)
+
+      - <list> := ({<sexp>}*)
+        <sexp> := <symbol> | <list>
+
+      - note that,
+        if list is to be written as (...),
+        we can not write :
+        <list> := <null> | (cons <sexp> <list>)
+        <sexp> := <symbol> | <list>
+
+***** <binary-tree>
+
+      - <binary-tree> := () | (<int> <binary-tree> <binary-tree>)
+
+***** <lexp> // lambda expression
+
+      - <lexp> := <identifier> | (lambda (<identifier>) <lexp>) | (<lexp> <lexp>)
+
+***** <binary-search-tree>
+
+      - <binary-search-tree> := () | (<int> <binary-search-tree> <binary-search-tree>)
+
+      - not all semantic are expressed in the above grammar.
+        1. key in the left subtree <= key in the current node
+        2. keys in the right subtree > key in the current node
+
+***** grammar as type
+
+      - grammar generate syntax
+        syntax record how grammars are used
+
+      - type generate data
+
+***** recursive proof // structural induction proof
+
+      - how the semantic of structural induction is hiden in type system ?
+
+***** recursive program
+
+*** 1.2 deriving recursive programs
+
+    - ><
+
+*** 1.3 auxiliary procedures and context arguments
+
+*** 1.4 exercises
+
+* 2 data abstraction
+
+* 3 expressions
+
+* 4 state
+
+* 5 continuation-passing interpreters
+
+* 6 continuation-passing style
+
+* 7 types
+
+* 8 modules
+
+* 9 objects and classes

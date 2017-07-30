@@ -1,0 +1,267 @@
+#+title: recall sequent0
+
+- new syntax
+- EOPL in jojo
+* [todo-stack]
+* [note]
+
+*** unification need uni-id
+
+    - 解法 :
+      1. uni-copy
+      2. compile to peek and put [of stack]
+
+*** 原則
+
+    - 注意如下原則 :
+      1. 信息不減
+      2. 證明語義優先
+
+* <nat>
+
+  #+begin_src jojo
+  ;; (.field-name type) and (:local-name type) as assertion
+  ;; which leave type on the stack
+
+  (+type <nat> (-> [] [<type>])
+    zero (-> [] [<nat>])
+    succ (-> [(.pre <nat>)] [<nat>]))
+  (note
+    (+ <nat>
+       (type (-> [] [<type>])
+         zero (-> [] [<nat>])
+         succ (-> [(.pre <nat>)] [<nat>]))))
+
+  (+jojo add (-> [(:n <nat>) (:m <nat>)] [<nat>])
+    (case :m
+      zero [:n]
+      succ [:n :m.pre (recur) succ]))
+
+  (+jojo mul (-> [(:n <nat>) (:m <nat>)] [<nat>])
+    (case :m
+      zero [zero]
+      succ [:n :m.pre (recur) :m add]))
+
+  (+jojo factorial (-> [(:m <nat>)] [<nat>])
+    (case :m
+      zero [zero succ]
+      succ [:m.pre (recur) :m mul]))
+  (note
+    (+ factorial
+       (jojo (-> [(:m <nat>)] [<nat>])
+         (case :m
+           zero [zero succ]
+           succ [:m.pre (recur) :m mul]))))
+
+  (+jojo nat-induction
+      (-> [(:p (-> [nat] [type]))
+           (:pz zero @:p)
+           (:ps (-> [(:k nat) :k @:p] [:k succ @:p]))
+           (:x nat)]
+          [:x @:p])
+    (case :x
+      zero [:pz]
+      succ [:x.pre :p :pz :ps :x.pre (recur) @:ps]))
+  #+end_src
+
+* stack
+
+  - ':name' as local-variable for data
+    also as local-variable for type
+
+  #+begin_src jojo
+  (+jojo drop (-> [(:d :t)] [])
+    (case :d
+      ,* []))
+
+  (+jojo dup (-> [(:d :t)] [:t :t])
+    (case :d
+      ,* [:d :d]))
+
+  (+jojo over (-> [(:d1 :t1) (:d2 :t2)] [:t1 :t2 :t1])
+    (case [:d1 :d2]
+      ,* * [:d1 :d2 :d1]))
+
+  (+jojo tuck (-> [(:d1 :t1) (:d2 :t2)] [:t2 :t1 :t2])
+    (case [:d1 :d2]
+      ,* * [:d2 :d1 :d2]))
+
+  (+jojo swap (-> [(:d1 :t1) (:d2 :t2)] [:t2 :t1])
+    (case [:d1 :d2]
+      ,* * [:d2 :d1]))
+  #+end_src
+
+* test
+
+  #+begin_src jojo
+  (+ zero succ
+     zero succ succ
+     add)
+
+  (+ drop)
+
+  (+ zero succ succ succ
+     zero succ succ succ
+     mul)
+
+  (+ drop)
+
+  (+ zero succ succ succ
+     factorial)
+
+  (+ drop)
+  #+end_src
+
+* >< list
+
+  #+begin_src jojo
+  (def list
+    (type (-> [type] [type])
+      null (-> [] [:t list])
+      cons (-> [:t list :t] [:t list])))
+
+  (def append
+    (lambda (-> [:t list :t list] [:t list])
+      (-> [:l null] [:l])
+      (-> [:l :r :e cons] [:l :r append :e cons])))
+
+  (def length
+    (lambda (-> [:t list] [nat])
+      (-> [null] [zero])
+      (-> [:l :e cons] [:l length succ])))
+
+  (def map
+    (lambda (-> [:t1 list (-> [:t1] [:t2])]
+                [:t2 list])
+      (-> [null :f] [null])
+      (-> [:l :e cons :f] [:l :f map :e :f @ cons])))
+  #+end_src
+
+* [test]
+
+  #+begin_src jojo
+  (+ null zero cons)
+
+  (+ drop)
+
+  (+ null
+     zero cons
+     null
+     zero cons
+     append)
+
+  (+ drop)
+
+  (+ null
+     zero cons
+     zero cons
+     null
+     zero cons
+     zero cons
+     append
+     length)
+
+  (+ drop)
+
+  (+ null
+     zero cons
+     zero cons
+     (lambda (-> [nat] [nat])
+       (-> [zero] [zero succ]))
+     map)
+
+  (+ drop)
+
+  (+ null
+     zero cons
+     zero cons
+     zero cons
+     null
+     zero cons
+     zero cons
+     zero cons
+     append
+     (lambda (-> [nat] [nat])
+       (-> [zero] [zero succ]))
+     map)
+
+  (+ drop)
+  #+end_src
+
+* >< has-length
+
+  #+begin_src jojo
+  (def has-length
+    (type (-> [:t list nat] [type])
+      null/has-length (-> [] [null zero has-length])
+      cons/has-length (-> [:l :n has-length]
+                          [:l :a cons :n succ has-length])))
+
+  (def map/has-length
+    (lambda (-> [:l :n has-length]
+                [:l :f map :n has-length])
+      (-> [null/has-length] [null/has-length])
+      (-> [:h cons/has-length] [:h map/has-length cons/has-length])))
+  #+end_src
+
+* >< vector
+
+  #+begin_src jojo
+  (def vector
+    (type (-> [nat type] [type])
+      null (-> [] [zero :t vector])
+      cons (-> [:n :t vector :t]
+               [:n succ :t vector])))
+
+  (def append
+    (lambda (-> [:m :t vector :n :t vector]
+                [:m :n add :t vector])
+      (-> [:l null] [:l])
+      (-> [:l :r :e cons]
+          [:l :r append :e cons])))
+
+  (def map
+    (lambda (-> [:n :t1 vector (-> [:t1] [:t2])]
+                [:n :t2 vector])
+      (-> [null :f] [null])
+      (-> [:l :e cons :f] [:l :f map :e :f @ cons])))
+  #+end_src
+
+* test
+
+  #+begin_src jojo
+  (+ null
+     zero cons
+     zero cons
+     zero cons
+     null
+     zero cons
+     zero cons
+     zero cons
+     append)
+
+  (+ drop)
+
+  (+ null
+     zero cons
+     zero cons
+     zero cons
+     null
+     zero cons
+     zero cons
+     zero cons
+     append
+     (lambda (-> [nat] [nat])
+       (-> [zero] [zero succ]))
+     map)
+
+  (+ drop)
+  #+end_src
+
+* ><>< fraction
+
+  #+begin_src jojo
+  (def fraction
+    (type (-> [type %:t] [type])
+      fline (-> [:t dup] [:t fraction])))
+  #+end_src
