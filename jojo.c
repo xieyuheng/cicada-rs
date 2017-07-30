@@ -2782,6 +2782,103 @@
       add_prim("index->cmd-string", J("<int>"), p_index_to_cmd_string);
       add_prim("find-env-string", J("<string>"), p_find_env_string);
     }
+    void ccall (char* function_name, void* lib) {
+      primitive_t fun = dlsym(lib, function_name);
+      if (fun == NULL) {
+        report("- ccall fail\n");
+        report("  function_name : %s\n", function_name);
+        report("  dynamic link error : %s\n", dlerror());
+      };
+      fun();
+    }
+    void erase_real_path_to_dir(char* path) {
+      cell cursor = strlen(path);
+      while (path[cursor] != '/') {
+        path[cursor] = '\0';
+        cursor--;
+      }
+      path[cursor] = '\0';
+    }
+
+    char* get_real_reading_path(char* path) {
+      // caller of this function
+      // should free its return value
+      char* real_reading_path = malloc(PATH_MAX);
+      if (path[0] == '/' ||
+          ((struct input_stack*)tos(reading_stack))->type == INPUT_STACK_TERMINAL) {
+        realpath(path, real_reading_path);
+        return real_reading_path;
+      }
+      else {
+        char* proc_link_path = malloc(PATH_MAX);
+        sprintf(proc_link_path,
+                "/proc/self/fd/%d",
+                ((struct input_stack*)tos(reading_stack))->file);
+        ssize_t real_bytes = readlink(proc_link_path, real_reading_path, PATH_MAX);
+        if (real_bytes == -1) {
+          report("- get_real_reading_path fail to readlink\n");
+          report("  proc_link_path : %s\n", proc_link_path);
+          perror("  readlink : ");
+          free(proc_link_path);
+          free(real_reading_path);
+          p_debug();
+          return NULL; // to fool the compiler
+        }
+        free(proc_link_path);
+        real_reading_path[real_bytes] = '\0';
+        erase_real_path_to_dir(real_reading_path);
+        strcat(real_reading_path, "/");
+        strcat(real_reading_path, path);
+        return real_reading_path;
+      }
+    }
+    void k_clib_one() {
+      // "..."
+      char* path = malloc(PATH_MAX);
+      cell cursor = 0;
+      while (true) {
+        char c = read_byte();
+        if (c == '"') {
+          path[cursor] = 0;
+          cursor++;
+          break;
+        }
+        else {
+          path[cursor] = c;
+          cursor++;
+        }
+      }
+      char* real_read_path = get_real_reading_path(path);
+      free(path);
+      void* lib = dlopen(real_read_path, RTLD_LAZY);
+      if (lib == NULL) {
+        report("- k_clib_one fail to open library\n");
+        report("  real_read_path : %s\n", real_read_path);
+        report("  dynamic link error : %s\n", dlerror());
+        p_debug();
+        return;
+      };
+      free(real_read_path);
+      ccall("expose", lib);
+    }
+    void k_clib() {
+      // (clib "..." ...)
+      while (true) {
+        jo_t s = read_raw_jo();
+        if (s == ROUND_KET) {
+          return;
+        }
+        else if (s == DOUBLE_QUOTE) {
+          k_clib_one();
+        }
+        else {
+          // do nothing
+        }
+      }
+    }
+    void expose_cffi() {
+      add_prim_keyword("+clib", J0, k_clib);
+    }
     void p1() {
       int file = open("README", O_RDWR);
       struct input_stack* t0_stack = input_stack_file(file);
@@ -2877,47 +2974,6 @@
     void p4() {
       void* p = NULL;
       printf("- in c stack : %p\n", (void*)&p);
-    }
-    void erase_real_path_to_dir(char* path) {
-      cell cursor = strlen(path);
-      while (path[cursor] != '/') {
-        path[cursor] = '\0';
-        cursor--;
-      }
-      path[cursor] = '\0';
-    }
-
-    char* get_real_reading_path(char* path) {
-      // caller of this function
-      // should free its return value
-      char* real_reading_path = malloc(PATH_MAX);
-      if (path[0] == '/' ||
-          ((struct input_stack*)tos(reading_stack))->type == INPUT_STACK_TERMINAL) {
-        realpath(path, real_reading_path);
-        return real_reading_path;
-      }
-      else {
-        char* proc_link_path = malloc(PATH_MAX);
-        sprintf(proc_link_path,
-                "/proc/self/fd/%d",
-                ((struct input_stack*)tos(reading_stack))->file);
-        ssize_t real_bytes = readlink(proc_link_path, real_reading_path, PATH_MAX);
-        if (real_bytes == -1) {
-          report("- get_real_reading_path fail to readlink\n");
-          report("  proc_link_path : %s\n", proc_link_path);
-          perror("  readlink : ");
-          free(proc_link_path);
-          free(real_reading_path);
-          p_debug();
-          return NULL; // to fool the compiler
-        }
-        free(proc_link_path);
-        real_reading_path[real_bytes] = '\0';
-        erase_real_path_to_dir(real_reading_path);
-        strcat(real_reading_path, "/");
-        strcat(real_reading_path, path);
-        return real_reading_path;
-      }
     }
     void path_load(char* path) {
       int file = open(path, O_RDONLY);
