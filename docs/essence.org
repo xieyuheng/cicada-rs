@@ -1,40 +1,469 @@
-* 1 inductive sets of data
+#+title: essence
+- namespace for data-constructor
+  - interface function which take class as argument
+    can dispatch on the class
+  - but data-constructor which return a type
+    can not dispatch on the type
+    - at compile time we always know what the return type is ?
+* [todo-stack]
+* [note]
+
+*** local-name in (jojo)
+
+    - in jojo :
+      - named // [(: :local-name type)]
+        as assertion, during type-check leave the type in stack
+      - unname // [type]
+        during computation leave object in stack
+
+    - a jojo always has type with it.
+      there is no other simple way to get a trunk of function.
+
+*** (type)
+
+    - every field of product must be named
+    - product occurs in data-constructor and type-constructor
+
+*** unification need uni-id
+
+    - solutions :
+      1. uni-copy
+      2. compile to peek and put [of stack]
+
+*** laws
+
+    1. information non-decreasing
+
+    2. proof semantic precedes functional semantic
+       for example, type is not predicate
+
+    3. generic dispatch
+
+* <class>
+
+  - a class is a function of type (-> [] [<class>])
+
+  - to create a class
+    we call the class
+
+  - a class does not have variants
+
+  - to create a object of a class
+    we call 'new' on the class
+    and set the fields of the newly created object
+
+  #+begin_src jojo
+  (+class <rectangle> [<object>]
+    (: .height <nat>)
+    (: .width <nat>))
+
+  (+class <color-rectangle> [<rectangle>]
+    (: .cyan <nat>)
+    (: .magenta <nat>)
+    (: .yellow <nat>))
+
+  (+ <rectangle> new :rectangle dup
+     3 :rectangle.height!
+     4 :rectangle.width!)
+  #+end_src
+
+* <type>
+
+  - a type is a function of type (-> [...] [<type>])
+
+  - to create a type
+    we call the type
+
+  - a type always has variants
+
+  - a variants of a type is a function of type
+    (-> [...] [... the-type])
+
+  - to create a object of a type
+    we call its variant
+
+  - a variant of a type can be viewed as
+    a named distinct subtype of the type
+
+    each variant has zero or more fields
+    each with its own field-name.
+
+  - x -
+    although there are no pattern-matching for data-constructors,
+    but there are still pattern-matching for type-constructors.
+
+    how to understand this ?
+
+  - k -
+    we siad we can let type inherit type,
+    when that happens,
+    how should argument of type should be handled ?
+
+* <nat>
+
+  #+begin_src jojo
+  (+type <nat> (-> [] <type>)
+    zero (-> [] <nat>)
+    succ (-> (: .pre <nat>) <nat>))
+  (note
+    (+ <nat>
+       (type (-> [] <type>)
+         zero (-> [] <nat>)
+         succ (-> (: .pre <nat>) <nat>))))
+
+  (+jojo add (-> [(: :m <nat>) (: :n <nat>)] <nat>)
+    (case :n
+      zero [:m]
+      succ [:m :n.pre (recur) succ]))
+
+  (+jojo mul (-> [(: :m <nat>) (: :n <nat>)] <nat>)
+    (case :n
+      zero [zero]
+      succ [:m :n.pre (recur) :n add]))
+
+  (+jojo factorial (-> (: :n <nat>) <nat>)
+    (case :n
+      zero [zero succ]
+      succ [:n.pre (recur) :n mul]))
+  (note
+    (+ factorial
+       (jojo (-> (: :n <nat>) <nat>)
+         (case :n
+           zero [zero succ]
+           succ [:n.pre (recur) :n mul]))))
+
+  (+jojo nat-induction
+      (-> [(: :p (-> <nat> <type>))
+           (: :pz zero @:p)
+           (: :ps (-> [(:k <nat>) :k @:p] [:k succ @:p]))
+           (: :x <nat>)]
+          [:x @:p])
+    (case :x
+      zero :pz
+      succ [:x.pre :p :pz :ps :x.pre (recur) @:ps]))
+  #+end_src
+
+* stack
+
+  - ':name' as local-variable for data
+    also as local-variable for type
+
+  #+begin_src jojo
+  (+jojo drop (-> [(: :d :t)] [])
+    (case :d
+      * []))
+
+  (+jojo dup (-> [(: :d :t)] [:t :t])
+    (case :d
+      * [:d :d]))
+
+  (+jojo over (-> [(: :d0 :t0) (: :d1 :t1)] [:t0 :t1 :t0])
+    (case [:d0 :d1]
+      * * [:d0 :d1 :d0]))
+
+  (+jojo tuck (-> [(: :d0 :t0) (: :d1 :t1)] [:t1 :t0 :t1])
+    (case [:d0 :d1]
+      * * [:d1 :d0 :d1]))
+
+  (+jojo swap (-> [(: :d0 :t0) (: :d1 :t1)] [:t1 :t0])
+    (case [:d0 :d1]
+      * * [:d1 :d0]))
+
+  (+ zero succ
+     zero succ succ
+     add)
+
+  (+ drop)
+
+  (+ zero succ succ succ
+     zero succ succ succ
+     mul)
+
+  (+ drop)
+
+  (+ zero succ succ succ
+     factorial)
+
+  (+ drop)
+  #+end_src
+
+* <vector>
+
+  #+begin_src jojo
+  (+type <vector> (-> [<nat> <type>] <type>)
+    null (-> [] [zero :t <vector>])
+    cons (-> [(: .cdr [:n :t <vector>])
+              (: .car :t)]
+             [:n succ :t <vector>]))
+
+  ;; we want to say <vector> inherit <list>
+  ;; thus not need to repeat the function body
+
+  ;; or should we say <list> forget the length information in <vector>
+
+  (+jojo append (-> [(: :l0 [:m :t <vector>])
+                     (: :l1 [:n :t <vector>])]
+                    [:m :n add :t <vector>])
+    (case :l1
+      null :l0
+      cons [:l0 :l1.cdr (recur) :l1.car cons]))
+
+  (+jojo map (-> [(: :l [:n :t1 <vector>])
+                  (: :f (-> :t1 :t2))]
+                 [:n :t2 <vector>])
+    (case :l
+      null null
+      cons [:l.cdr :f (recur) :l.car @:f cons]))
+
+
+  (+ null zero cons)
+
+  (+ drop)
+
+  (+ null
+     zero cons
+     null
+     zero cons
+     append)
+
+  (+ drop)
+
+  (+ null
+     zero cons
+     zero cons
+     null
+     zero cons
+     zero cons
+     append
+     length)
+
+  (+ drop)
+
+  (+ null
+     zero cons
+     zero cons
+     (jojo (-> <nat> <nat>) succ)
+     map)
+
+  (+ drop)
+
+  (+ null
+     zero cons
+     zero cons
+     zero cons
+     null
+     zero cons
+     zero cons
+     zero cons
+     append
+     (jojo (-> <nat> <nat>) succ)
+     map)
+
+  (+ drop)
+  #+end_src
+
+* <list>
+
+  #+begin_src jojo
+  ;; use forgetful functor to reuse function body defined for <vector>
+  (+type <list> (forgetful <vector> (-> [(forget <nat>) <type>] <type>)))
+  #+end_src
+
+* <has-length>
+
+  #+begin_src jojo
+  (+type <has-length> (-> [:t <list> <nat>] <type>)
+    null (-> [] [null zero <has-length>])
+    cons (-> (: .cdr [:l :n <has-length>])
+             [:l :a cons :n succ <has-length>]))
+
+  (+jojo map/has-length (-> [(: :proof [:l :n <has-length>])]
+                            [:l :f map :n <has-length>])
+    (case :proof
+      null null
+      cons [:proof.cdr (recur) cons]))
+  #+end_src
+
+* >< <int>
+
+  - how to implement <int> by <nat>
+
+* >< <fraction>
+
+  - how to implement <fraction> by <int>
+
+  #+begin_src jojo
+  (+class <fraction> [<object>]
+    (: .above <int>)
+    (: .under <int>))
+  #+end_src
+
+* EOPL
+
+*** kleene star
+
+    - kleene star -- {...}*
+      kleene plus -- {...}+
+      kleene star with separater ',' -- {...}*(,)
+
+    - <list> := ({<sexp>}*)
+      <sexp> := <symbol> | <list>
 
 *** 1.1 recursively specified data
 
-***** >< subsets of natural number
+***** <even>
 
-      - ><
+      #+begin_src jojo
+      (+type <even> (-> <nat> <type>)
+        zero (-> [] [zero <even>])
+        plus-two (-> [(: :lemma [:n <even>])]
+                     [:n succ succ <even>]))
+
+      (jojo (-> [] [zero succ succ <even>])
+        zero
+        plus-two)
+      #+end_src
 
 ***** <list-of-int>
 
-      - <List-of-Int> := () | (<int> . <list-of-int>)
+      - <list-of-int> := () | (<int> . <list-of-int>)
 
-***** <sexp> // symbol expression
+      #+begin_src jojo
+      (+type <list-of-int> (-> [] <type>)
+        null (-> [] <list-of-int>)
+        cons (-> [(: .cdr <int>)
+                  (: .car <list-of-int>)]
+                 <list-of-int>))
+      #+end_src
+
+***** <list>
+
+      #+begin_src jojo
+      (+type <list> (-> <type> <type>)
+        null (-> [] [:t <list>])
+        cons (-> [(: .cdr :t)
+                  (: .car [:t <list>])]
+                 [:t <list>]))
+
+      (+def <list-of-int> <int> <list>)
+      #+end_src
+
+***** <sexp>
 
       - <list> := <null> | (<sexp> . <list>)
         <sexp> := <symbol> | <list>
 
-      - kleene star -- {...}*
-        kleene plus -- {...}+
-        kleene star with separater ',' -- {...}*(,)
+      #+begin_src jojo
+      (+type <list> (-> <type> <type>)
+        null (-> [] [:t <list>])
+        cons (-> [(: .cdr :t)
+                  (: .car [:t <list>])]
+                 [:t <list>]))
 
-      - <list> := ({<sexp>}*)
-        <sexp> := <symbol> | <list>
-
-      - note that,
-        if list is to be written as (...),
-        we can not write :
-        <list> := <null> | (cons <sexp> <list>)
-        <sexp> := <symbol> | <list>
+      (+type <sexp> (-> [] <type>)
+        symbol (-> [(: .symbol <symbol>)] <sexp>)
+        list (-> [(: .list [<sexp> <list>])] <sexp>))
+      #+end_src
 
 ***** <binary-tree>
 
       - <binary-tree> := () | (<int> <binary-tree> <binary-tree>)
 
-***** <lexp> // lambda expression
+      #+begin_src jojo
+      (+type <binary-tree> (-> [] <type>)
+        null (-> [] <binary-tree>)
+        node (-> [(: .value <int>)
+                  (: .left <binary-tree>)
+                  (: .right <binary-tree>)]
+                 <binary-tree>))
+      #+end_src
+
+***** <lexp>
+
+      - Designing an interface for a recursive data type
+        1. Include one constructor for each kind of data in the data type.
+        2. Include one predicate for each kind of data in the data type.
+        3. Include one extractor for each piece of data
+           passed to a constructor of the data type.
+
+      - <lexp> denotes "lambda expression"
 
       - <lexp> := <identifier> | (lambda (<identifier>) <lexp>) | (<lexp> <lexp>)
+
+      #+begin_src jojo
+      ;; The constructors are:
+      ;; var-exp    : Var → Lc-exp
+      ;; lambda-exp : Var × Lc-exp → Lc-exp
+      ;; app-exp    : Lc-exp × Lc-exp → Lc-exp
+
+      ;; The predicates are:
+      ;; var-exp?    : Lc-exp → Bool
+      ;; lambda-exp? : Lc-exp → Bool
+      ;; app-exp?    : Lc-exp → Bool
+
+      ;; Finally, the extractors are
+      ;; var-exp->var           : Lc-exp → Var
+      ;; lambda-exp->bound-var  : Lc-exp → Var
+      ;; lambda-exp->body       : Lc-exp → Lc-exp
+      ;; app-exp->rator         : Lc-exp → Lc-exp
+      ;; app-exp->rand          : Lc-exp → Lc-exp
+
+      ;; occurs-free? : Sym × LcExp → Bool
+      (define occurs-free?
+        (lambda (search-var exp)
+          (cond
+           ((var-exp? exp) (eqv? search-var (var-exp->var exp)))
+           ((lambda-exp? exp)
+            (and
+             (not (eqv? search-var (lambda-exp->bound-var exp)))
+             (occurs-free? search-var (lambda-exp->body exp))))
+           (else
+             (or
+              (occurs-free? search-var (app-exp->rator exp))
+              (occurs-free? search-var (app-exp->rand exp)))))))
+
+
+      (+type <lexp> (-> [] <type>)
+        var (-> (: .var <identifier>) <lexp>)
+        lambda (-> [(: .var <identifier>)
+                    (: .body <lexp>)]
+                   <lexp>)
+        app (-> [(: .rator <lexp>)
+                 (: .rand <lexp>)]
+                <lexp>))
+
+      (+jojo occurs-free? (-> [(: :search-var <symbol>) (: :exp <lexp>)] <bool>)
+        (case :exp
+          var [:search-var :exp.var eq?]
+          lambda [:search-var :exp.var eq? not
+                  :search-var :exp.body (recur) and]
+          app [:search-var :exp.rator (recur)
+               :search-var :exp.rand (recur) or]))
+
+
+      (define-datatype lc-exp lc-exp?
+        (var-exp
+         (var identifier?))
+        (lambda-exp
+         (bound-var identifier?)
+         (body lc-exp?))
+        (app-exp
+         (rator lc-exp?)
+         (rand lc-exp?)))
+
+      (define occurs-free?
+        (lambda (search-var exp)
+          (cases lc-exp exp
+             (var-exp (var) (eqv? var search-var))
+             (lambda-exp (bound-var body)
+               (and
+                (not (eqv? search-var bound-var))
+                (occurs-free? search-var body)))
+             (app-exp (rator rand)
+                (or
+                 (occurs-free? search-var rator)
+                 (occurs-free? search-var rand))))))
+      #+end_src
 
 ***** <binary-search-tree>
 
@@ -57,26 +486,97 @@
 
 ***** recursive program
 
-*** 1.2 deriving recursive programs
+***** 1.2 deriving recursive programs
 
-    - ><
+***** 1.3 auxiliary procedures and context arguments
 
-*** 1.3 auxiliary procedures and context arguments
+***** 1.4 exercises
 
-*** 1.4 exercises
+*** 2 data abstraction
 
-* 2 data abstraction
+***** interface and implementation
 
-* 3 expressions
+      - to specifying data via interfaces
+        instead of specifying data via representation
 
-* 4 state
+        - thus named-fields againist pattern-matching
 
-* 5 continuation-passing interpreters
+      - interface is not only named fields
+        interface functions might be related to each other
+        - axioms
 
-* 6 continuation-passing style
+      - interface do not know about data representation
 
-* 7 types
+      - implement know about data representation
+        the most important part of an implementation
+        is the specification of how the data is represented.
+        [v] denotes "the representation of data v"
 
-* 8 modules
+      - ><><><
+        but when applying a data-constructor
+        the order and numbers of arguments still matter
 
-* 9 objects and classes
+      - I use named-fields for data-constructor
+        and pattern-matching for type-constructor
+
+        ><><><
+        maybe because
+        there are subtype relation between type-constructors
+        but there are not such relation between data-constructors
+
+***** constructor and observer
+
+      - constructor
+        return that type of data
+        thus including processing functions of type (-> [... t] [t])
+
+      - observer
+        no return that type of data
+        predicate and extractor
+
+        - but extractor might return that type of data
+          how to define constructor and observer then ?
+
+***** abstract syntax and its representation
+
+      - one abstract syntax
+        may have many concrete syntaxes
+        [or external representation]
+
+        In order to process such data,
+        we need to convert it to an internal representation.
+
+        recursive data type defined by (+type)
+        provides a convenient way
+        to define such an internal representation
+        [or abstract syntax]
+
+        in an abstract syntax tree
+        node labeled with variant-name [sum-type]
+        edge labeled with field-name [product-type]
+        leaf stores data in the field
+
+      - concrete syntax
+        -(parser)->
+        abstract syntax
+        -(interpreter)
+
+      - concrete syntax
+        -(parser)->
+        abstract syntax
+        -(compiler)->
+        native code
+
+*** 3 expressions
+
+*** 4 state
+
+*** 5 continuation-passing interpreters
+
+*** 6 continuation-passing style
+
+*** 7 types
+
+*** 8 modules
+
+*** 9 objects and classes
