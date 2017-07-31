@@ -263,36 +263,11 @@
   (+ drop)
   #+end_src
 
-* >< <list>
-
-  - use forgetful functor
-    to reuse function body defined for <vector>
+* <list>
 
   #+begin_src jojo
-  (+type <list> (-> <type> <type>)
-    null (-> [] [:t <list>])
-    cons (-> [(: .cdr [:t <list>])
-              (: .car :t)]
-             [:t <list>]))
-
-  (+jojo append (-> [(: :l0 [:t <list>])
-                     (: :l1 [:t <list>])]
-                    [:t <list>])
-    (case :l1
-      null :l0
-      cons [:l0 :l1.cdr (recur) :l1.car cons]))
-
-  (+jojo length (-> [:t <list>] <nat>)
-    (case dup
-      null [drop zero]
-      cons [.cdr (recur) succ]))
-
-  (+jojo map (-> [(: :l [:t1 <list>])
-                  (: :f (-> :t1 :t2))]
-                 [:t2 <list>])
-    (case :l
-      null null
-      cons [:l.cdr :f (recur) :l.car @:f cons]))
+  ;; use forgetful functor to reuse function body defined for <vector>
+  (+type <list> (forgetful <vector> (-> [(forget <nat>) <type>] <type>)))
   #+end_src
 
 * <has-length>
