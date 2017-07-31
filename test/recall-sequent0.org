@@ -1,9 +1,38 @@
 #+title: recall sequent0
-
-- new syntax
 - EOPL in jojo
 * [todo-stack]
 * [note]
+
+*** local-name in (jojo)
+
+    - in jojo :
+      - named // [(: :local-name type)]
+        as assertion, during type-check leave the type in stack
+      - unname // [type]
+        during computation leave object in stack
+
+    - a jojo always has type with it.
+      there is no other simple way to get a trunk of function.
+
+*** (type)
+
+    - every field of product must be named
+    - product occurs in data-constructor and type-constructor
+
+*** function application [and constructor application]
+
+    - currently
+      during application arguments are not named
+      and the order of argument is important
+
+      this is not generic
+
+    - to be generic
+      we need to mimic object creation of object system
+      and avoid pattern-matching
+
+    - when a type has branches
+      name of branches can be used as data-constructor
 
 *** unification need uni-id
 
@@ -17,50 +46,101 @@
       1. 信息不減
       2. 證明語義優先
 
+* <class>
+
+  - a class is a function of type (-> [] [<class>])
+
+  - to create a class
+    we call the class
+
+  - a class does not have branches
+
+  - to create a object of a class
+    we call 'new' on the class
+    and set the fields of the newly created object
+
+  #+begin_src jojo
+  (+class <rectangle> [<object>]
+    (: .height <nat>)
+    (: .width <nat>))
+
+  (+class <color-rectangle> [<rectangle>]
+    (: .cyan <nat>)
+    (: .magenta <nat>)
+    (: .yellow <nat>))
+
+  (+ <rectangle> new :rectangle dup
+     3 :rectangle.height!
+     4 :rectangle.width!)
+  #+end_src
+
+* <type>
+
+  - a type is a function of type (-> [...] [<type>])
+
+  - to create a type
+    we call the type
+
+  - a type always has branches
+
+  - a branches of a type is a function of type
+    (-> [...] [... the-type])
+
+  - to create a object of a type
+    we call its branch
+
+  - x -
+    although there are no pattern-matching for data-constructors,
+    but there are still pattern-matching for type-constructors.
+
+    how to understand this ?
+
+  - k -
+    we siad we can let type inherit type,
+    when that happens,
+    how should argument of type should be handled ?
+
 * <nat>
 
   #+begin_src jojo
-  ;; (.field-name type) and (:local-name type) as assertion
-  ;; which leave type on the stack
-
-  (+type <nat> (-> [] [<type>])
-    zero (-> [] [<nat>])
-    succ (-> [(.pre <nat>)] [<nat>]))
+  (+type <nat> (-> [] <type>)
+    zero (-> [] <nat>)
+    succ (-> (: .pre <nat>) <nat>))
   (note
     (+ <nat>
-       (type (-> [] [<type>])
-         zero (-> [] [<nat>])
-         succ (-> [(.pre <nat>)] [<nat>]))))
+       (type (-> [] <type>)
+         zero (-> [] <nat>)
+         succ (-> (: .pre <nat>) <nat>))))
 
-  (+jojo add (-> [(:n <nat>) (:m <nat>)] [<nat>])
-    (case :m
-      zero [:n]
-      succ [:n :m.pre (recur) succ]))
+  (+jojo add (-> [(: :m <nat>) (: :n <nat>)] <nat>)
+    (case :n
+      zero [:m]
+      succ [:m :n.pre (recur) succ]))
 
-  (+jojo mul (-> [(:n <nat>) (:m <nat>)] [<nat>])
-    (case :m
+  (+jojo mul (-> [(: :m <nat>) (: :n <nat>)] <nat>)
+    (case :n
       zero [zero]
-      succ [:n :m.pre (recur) :m add]))
+      succ [:m :n.pre (recur) :n add]))
 
-  (+jojo factorial (-> [(:m <nat>)] [<nat>])
-    (case :m
+  (+jojo factorial (-> (: :n <nat>) <nat>)
+    (case :n
       zero [zero succ]
-      succ [:m.pre (recur) :m mul]))
+      succ [:n.pre (recur) :n mul]))
   (note
     (+ factorial
-       (jojo (-> [(:m <nat>)] [<nat>])
-         (case :m
+       (jojo (-> (: :n <nat>) <nat>)
+         (case :n
            zero [zero succ]
-           succ [:m.pre (recur) :m mul]))))
+           succ [:n.pre (recur) :n mul]))))
 
   (+jojo nat-induction
-      (-> [(:p (-> [nat] [type]))
-           (:pz zero @:p)
-           (:ps (-> [(:k nat) :k @:p] [:k succ @:p]))
-           (:x nat)]
+      (-> [(: :p (-> <nat> <type>))
+           (: :pz zero @:p)
+           (: :ps (-> [(:k <nat>) :k @:p] [:k succ @:p]))
+           (: :x <nat>)]
           [:x @:p])
     (case :x
-      zero [:pz]
+      zero :pz
       succ [:x.pre :p :pz :ps :x.pre (recur) @:ps]))
   #+end_src
 
@@ -70,30 +150,26 @@
     also as local-variable for type
 
   #+begin_src jojo
-  (+jojo drop (-> [(:d :t)] [])
+  (+jojo drop (-> [(: :d :t)] [])
     (case :d
-      ,* []))
+      * []))
 
-  (+jojo dup (-> [(:d :t)] [:t :t])
+  (+jojo dup (-> [(: :d :t)] [:t :t])
     (case :d
-      ,* [:d :d]))
+      * [:d :d]))
 
-  (+jojo over (-> [(:d1 :t1) (:d2 :t2)] [:t1 :t2 :t1])
-    (case [:d1 :d2]
-      ,* * [:d1 :d2 :d1]))
+  (+jojo over (-> [(: :d0 :t0) (: :d1 :t1)] [:t0 :t1 :t0])
+    (case [:d0 :d1]
+      * * [:d0 :d1 :d0]))
 
-  (+jojo tuck (-> [(:d1 :t1) (:d2 :t2)] [:t2 :t1 :t2])
-    (case [:d1 :d2]
-      ,* * [:d2 :d1 :d2]))
+  (+jojo tuck (-> [(: :d0 :t0) (: :d1 :t1)] [:t1 :t0 :t1])
+    (case [:d0 :d1]
+      * * [:d1 :d0 :d1]))
 
-  (+jojo swap (-> [(:d1 :t1) (:d2 :t2)] [:t2 :t1])
-    (case [:d1 :d2]
-      ,* * [:d2 :d1]))
-  #+end_src
+  (+jojo swap (-> [(: :d0 :t0) (: :d1 :t1)] [:t1 :t0])
+    (case [:d0 :d1]
+      * * [:d1 :d0]))
 
-* test
-
-  #+begin_src jojo
   (+ zero succ
      zero succ succ
      add)
@@ -112,34 +188,35 @@
   (+ drop)
   #+end_src
 
-* >< list
+* <vector>
 
   #+begin_src jojo
-  (def list
-    (type (-> [type] [type])
-      null (-> [] [:t list])
-      cons (-> [:t list :t] [:t list])))
+  (+type <vector> (-> [<nat> <type>] <type>)
+    null (-> [] [zero :t <vector>])
+    cons (-> [(: .cdr [:n :t <vector>])
+              (: .car :t)]
+             [:n succ :t <vector>]))
 
-  (def append
-    (lambda (-> [:t list :t list] [:t list])
-      (-> [:l null] [:l])
-      (-> [:l :r :e cons] [:l :r append :e cons])))
+  ;; we want to say <vector> inherit <list>
+  ;; thus not need to repeat the function body
 
-  (def length
-    (lambda (-> [:t list] [nat])
-      (-> [null] [zero])
-      (-> [:l :e cons] [:l length succ])))
+  ;; or should we say <list> forget the length information in <vector>
 
-  (def map
-    (lambda (-> [:t1 list (-> [:t1] [:t2])]
-                [:t2 list])
-      (-> [null :f] [null])
-      (-> [:l :e cons :f] [:l :f map :e :f @ cons])))
-  #+end_src
+  (+jojo append (-> [(: :l0 [:m :t <vector>])
+                     (: :l1 [:n :t <vector>])]
+                    [:m :n add :t <vector>])
+    (case :l1
+      null :l0
+      cons [:l0 :l1.cdr (recur) :l1.car cons]))
 
-* [test]
+  (+jojo map (-> [(: :l [:n :t1 <vector>])
+                  (: :f (-> :t1 :t2))]
+                 [:n :t2 <vector>])
+    (case :l
+      null null
+      cons [:l.cdr :f (recur) :l.car @:f cons]))
 
-  #+begin_src jojo
+
   (+ null zero cons)
 
   (+ drop)
@@ -166,8 +243,7 @@
   (+ null
      zero cons
      zero cons
-     (lambda (-> [nat] [nat])
-       (-> [zero] [zero succ]))
+     (jojo (-> <nat> <nat>) succ)
      map)
 
   (+ drop)
@@ -181,87 +257,69 @@
      zero cons
      zero cons
      append
-     (lambda (-> [nat] [nat])
-       (-> [zero] [zero succ]))
+     (jojo (-> <nat> <nat>) succ)
      map)
 
   (+ drop)
   #+end_src
 
-* >< has-length
+* >< <list>
+
+  - use forgetful functor
+    to reuse function body defined for <vector>
 
   #+begin_src jojo
-  (def has-length
-    (type (-> [:t list nat] [type])
-      null/has-length (-> [] [null zero has-length])
-      cons/has-length (-> [:l :n has-length]
-                          [:l :a cons :n succ has-length])))
+  (+type <list> (-> <type> <type>)
+    null (-> [] [:t <list>])
+    cons (-> [(: .cdr [:t <list>])
+              (: .car :t)]
+             [:t <list>]))
 
-  (def map/has-length
-    (lambda (-> [:l :n has-length]
-                [:l :f map :n has-length])
-      (-> [null/has-length] [null/has-length])
-      (-> [:h cons/has-length] [:h map/has-length cons/has-length])))
+  (+jojo append (-> [(: :l0 [:t <list>])
+                     (: :l1 [:t <list>])]
+                    [:t <list>])
+    (case :l1
+      null :l0
+      cons [:l0 :l1.cdr (recur) :l1.car cons]))
+
+  (+jojo length (-> [:t <list>] <nat>)
+    (case dup
+      null [drop zero]
+      cons [.cdr (recur) succ]))
+
+  (+jojo map (-> [(: :l [:t1 <list>])
+                  (: :f (-> :t1 :t2))]
+                 [:t2 <list>])
+    (case :l
+      null null
+      cons [:l.cdr :f (recur) :l.car @:f cons]))
   #+end_src
 
-* >< vector
+* <has-length>
 
   #+begin_src jojo
-  (def vector
-    (type (-> [nat type] [type])
-      null (-> [] [zero :t vector])
-      cons (-> [:n :t vector :t]
-               [:n succ :t vector])))
+  (+type <has-length> (-> [:t <list> <nat>] <type>)
+    null (-> [] [null zero <has-length>])
+    cons (-> (: .cdr [:l :n <has-length>])
+             [:l :a cons :n succ <has-length>]))
 
-  (def append
-    (lambda (-> [:m :t vector :n :t vector]
-                [:m :n add :t vector])
-      (-> [:l null] [:l])
-      (-> [:l :r :e cons]
-          [:l :r append :e cons])))
-
-  (def map
-    (lambda (-> [:n :t1 vector (-> [:t1] [:t2])]
-                [:n :t2 vector])
-      (-> [null :f] [null])
-      (-> [:l :e cons :f] [:l :f map :e :f @ cons])))
+  (+jojo map/has-length (-> [(: :proof [:l :n <has-length>])]
+                            [:l :f map :n <has-length>])
+    (case :proof
+      null null
+      cons [:proof.cdr map/has-length cons]))
   #+end_src
 
-* test
+* >< <int>
+
+  - how to implement <int> by <nat>
+
+* >< <fraction>
+
+  - how to implement <fraction> by <int>
 
   #+begin_src jojo
-  (+ null
-     zero cons
-     zero cons
-     zero cons
-     null
-     zero cons
-     zero cons
-     zero cons
-     append)
-
-  (+ drop)
-
-  (+ null
-     zero cons
-     zero cons
-     zero cons
-     null
-     zero cons
-     zero cons
-     zero cons
-     append
-     (lambda (-> [nat] [nat])
-       (-> [zero] [zero succ]))
-     map)
-
-  (+ drop)
-  #+end_src
-
-* ><>< fraction
-
-  #+begin_src jojo
-  (def fraction
-    (type (-> [type %:t] [type])
-      fline (-> [:t dup] [:t fraction])))
+  (+class <fraction> [<object>]
+    (: .above <int>)
+    (: .under <int>))
   #+end_src
