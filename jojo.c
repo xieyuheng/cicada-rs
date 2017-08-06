@@ -1085,7 +1085,6 @@
 
     struct class {
       jo_t class_name;
-      jo_t super_name;
       gc_actor_t gc_actor;
       bool executable;
       executer_t executer;
@@ -1115,8 +1114,6 @@
         if (direct_index >= 0) {
           return class->direct_fields[direct_index];
         }
-        struct class* super = class->super_name->data;
-        return class_index_to_field_name(super, index);
       }
       // assume exist
       cell class_field_name_to_index(struct class* class, jo_t field_name) {
@@ -1127,8 +1124,6 @@
           }
           direct_index++;
         }
-        struct class* super = class->super_name->data;
-        return class_field_name_to_index(super, field_name);
       }
       jo_t get_object_field_tag(object_entry, field_index)
         struct object_entry* object_entry;
@@ -1311,7 +1306,6 @@
         struct class* class = (struct class*)
           malloc(sizeof(struct class));
         class->class_name = str2jo(class_name);
-        class->super_name = str2jo("<object>");
         class->gc_actor = gc_actor;
         if (executer == NULL) {
           class->executable = false;
@@ -1330,16 +1324,6 @@
       {
         add_atom_class_exe(class_name, gc_actor, NULL);
       }
-      bool check_function_arity(char* function_name, cell arity) {
-        jo_t name = str2jo(function_name);
-        if (used_jo_p(name)) {
-          return name->tag == str2jo("<generic-prototype>") && name->data == arity;
-        }
-        else {
-          bind_name(name, str2jo("<generic-prototype>"), arity);
-          return true;
-        }
-      }
       void add_field(class_name, field_name, index)
         char* class_name;
         char* field_name;
@@ -1347,26 +1331,12 @@
       {
         char name_buffer[1024];
 
-        name_buffer[0] = '\0';
-        strcat(name_buffer, ".");
-        strcat(name_buffer, field_name);
-        if (check_function_arity(name_buffer, 1)) {
           name_buffer[0] = '\0';
           strcat(name_buffer, class_name);
           strcat(name_buffer, ".");
           strcat(name_buffer, field_name);
           bind_name(str2jo(name_buffer), str2jo("<get-object-field>"), index);
-        }
-        else {
-          report("- add_field fail\n");
-          return;
-        }
 
-        name_buffer[0] = '\0';
-        strcat(name_buffer, ".");
-        strcat(name_buffer, field_name);
-        strcat(name_buffer, "!");
-        if (check_function_arity(name_buffer, 2)) {
           name_buffer[0] = '\0';
           strcat(name_buffer, "<object>");
           strcat(name_buffer, class_name);
@@ -1374,24 +1344,16 @@
           strcat(name_buffer, field_name);
           strcat(name_buffer, "!");
           bind_name(str2jo(name_buffer), str2jo("<set-object-field>"), index);
-        }
-        else {
-          report("- add_field fail\n");
-          return;
-        }
       }
-      void add_class_exe(class_name, super_name, executer, fields)
+      void add_class_exe(class_name, executer, fields)
         char* class_name;
-        char* super_name;
         executer_t executer;
         jo_t* fields[];
       {
         struct class* class = (struct class*)
           malloc(sizeof(struct class));
         jo_t name = str2jo(class_name);
-        jo_t super = str2jo(super_name);
         class->class_name = name;
-        class->super_name = super;
         class->gc_actor = gc_recur;
         if (executer == NULL) {
           class->executable = false;
@@ -1401,76 +1363,51 @@
           class->executer = executer;
         }
 
-        struct class* super_class = super->data;
         cell i = 0;
         while (fields[i] != NULL) {
           add_field(class_name,
                     jo2str(fields[i]),
-                    super_class->fields_number + i);
+                    i);
           i++;
         }
 
-        class->fields_number = super_class->fields_number + i;
+        class->fields_number = i;
         class->direct_fields_number = i;
         class->direct_fields = fields;
 
         bind_name(name, str2jo("<class>"), class);
       }
-      void add_class(class_name, super_name, fields)
+      void add_class(class_name, fields)
         char* class_name;
-        char* super_name;
         jo_t* fields[];
       {
-        add_class_exe(class_name, super_name, NULL, fields);
+        add_class_exe(class_name, NULL, fields);
       }
-      void _add_class(name, super, fields)
+      void _add_class(name, fields)
         jo_t name;
-        jo_t super;
         jo_t fields[];
       {
-        add_class(jo2str(name), jo2str(super), fields);
+        add_class(jo2str(name), fields);
       }
-      void add_prim_general(tag, function_name, tags, fun)
+      void add_prim_general(tag, function_name, fun)
         jo_t tag;
         char* function_name;
-        jo_t* tags[];
         primitive_t fun;
       {
-        char name_buffer[1024];
-        char* cursor = name_buffer;
-        cell i = 0;
-        while (tags[i] != NULL) {
-          strcpy(cursor, jo2str(tags[i]));
-          cursor = cursor + strlen(jo2str(tags[i]));
-          i++;
-        }
-        strcpy(cursor, function_name);
-
-        jo_t name = str2jo(name_buffer);
-
-        cell arity = i;
-        if (arity == 0 ||
-            check_function_arity(function_name, arity)) {
-          bind_name(name, tag, fun);
-        }
-        else {
-          report("- add_prim_general fall\n");
-          report("  arity of %s should not be %ld\n", function_name, arity);
-        }
+        jo_t name = str2jo(function_name);
+        bind_name(name, tag, fun);
       }
-      void add_prim(function_name, tags, fun)
+      void add_prim(function_name, fun)
         char* function_name;
-        jo_t* tags[];
         primitive_t fun;
       {
-        add_prim_general(TAG_PRIM, function_name, tags, fun);
+        add_prim_general(TAG_PRIM, function_name, fun);
       }
-      void add_prim_keyword(function_name, tags, fun)
+      void add_prim_keyword(function_name, fun)
         char* function_name;
-        jo_t* tags[];
         primitive_t fun;
       {
-        add_prim_general(TAG_PRIM_KEYWORD, function_name, tags, fun);
+        add_prim_general(TAG_PRIM_KEYWORD, function_name, fun);
       }
     struct stack* keyword_stack; // of alias_pointer
     struct alias {
@@ -1534,17 +1471,6 @@
         struct obj a = object_stack_pop();
         rebind_name(name, a.tag, a.data);
       }
-    void add_the_object_class() {
-      struct class* class = (struct class*)
-        malloc(sizeof(struct class));
-      jo_t name = str2jo("<object>");
-      class->class_name = name;
-      class->gc_actor = gc_recur;
-      class->fields_number = 0;
-      class->executable = false;
-
-      bind_name(name, str2jo("<class>"), class);
-    }
       // caller free
       jo_t* generate_jo_array(char*ss[]) {
         cell len = 0;
@@ -1565,14 +1491,11 @@
     void expose_object() {
       init_object_record();
 
-      add_the_object_class();
-
       add_atom_class("<byte>", gc_ignore);
       add_atom_class("<int>", gc_ignore);
       add_atom_class("<jo>", gc_ignore);
       add_atom_class("<string>", gc_free);
       add_atom_class("<class>", gc_ignore);
-      add_atom_class("<generic-prototype>", gc_ignore);
       add_atom_class("<uninitialised-field-place-holder>", gc_ignore);
 
       add_atom_class_exe("<prim>", gc_ignore, exe_prim);
@@ -1583,116 +1506,8 @@
       add_atom_class_exe("<get-object-field>", gc_ignore, exe_get_object_field);
       add_atom_class_exe("<set-global-variable>", gc_ignore, exe_set_global_variable);
 
-      add_prim("new", J("<class>"), p_new);
+      add_prim("new", p_new);
     }
-      struct absolute_t {
-        jo_t root;
-        jo_t current;
-      };
-      bool absolute_end_p(absolute_array, arity)
-        struct absolute_t absolute_array[];
-        cell arity;
-      {
-        cell i = 0;
-        while (i < arity) {
-          if (absolute_array[i].current != str2jo("<object>")) {
-            return false;
-          }
-          i++;
-        }
-        return true;
-      }
-      void absolute_next(absolute_array, arity)
-        struct absolute_t absolute_array[];
-        cell arity;
-      {
-        // inc non <object>
-        cell i = arity-1;
-        while (i >= 0) {
-          if (absolute_array[i].current != str2jo("<object>")) {
-            struct class* class = absolute_array[i].current->data;
-            absolute_array[i].current = class->super_name;
-            i++;
-            break;
-          }
-          i--;
-        }
-        // reset the rest to object
-        while (i < arity) {
-          absolute_array[i].current = absolute_array[i].root;
-          i++;
-        }
-      }
-      jo_t absolute_currnet_jo(jo, absolute_array, arity)
-        jo_t jo;
-        struct absolute_t absolute_array[];
-        cell arity;
-      {
-        char buffer[1024];
-        char* cursor = buffer;
-        cell i = 0;
-        while (i < arity) {
-          jo_t class_name = absolute_array[i].current;
-          char* str = jo2str(class_name);
-          strcpy(cursor, str);
-          cursor = cursor + strlen(str);
-          i++;
-        }
-        strcpy(cursor, jo2str(jo));
-        return str2jo(buffer);
-      }
-      jo_t generic_jo_loop(jo, absolute_array, arity)
-        jo_t jo;
-        struct absolute_t absolute_array[];
-        cell arity;
-      {
-        jo_t new_jo = absolute_currnet_jo(jo, absolute_array, arity);
-        if (used_jo_p(new_jo)) {
-          return new_jo;
-        }
-        else if (absolute_end_p(absolute_array, arity)) {
-          return NULL;
-        }
-        else {
-          absolute_next(absolute_array, arity);
-          return generic_jo_loop(jo, absolute_array, arity);
-        }
-      }
-      jo_t generic_jo(jo_t jo) {
-        cell arity = jo->data;
-        struct absolute_t absolute_array[256];
-        cell tag_index = arity;
-        cell i = 0;
-        jo_t tag;
-        while (i < arity) {
-          tag = object_stack_peek_tag(tag_index);
-          absolute_array[i].root = tag;
-          absolute_array[i].current = tag;
-          tag_index--;
-          i++;
-        }
-        jo_t new_jo = generic_jo_loop(jo, absolute_array, arity);
-        if (new_jo == NULL) {
-          report("- generic_jo fail\n");
-          report("  generic name : %s\n", jo2str(jo));
-          report("  arity : %ld\n", arity);
-          report("  attempted to apply it to : ");
-          tag_index = arity;
-          i = 0;
-          while (i < arity) {
-            tag = object_stack_peek_tag(tag_index);
-            report("%s ", jo2str(tag));
-            tag_index--;
-            i++;
-          }
-          report("\n");
-          p_debug();
-          return NULL;
-        }
-        else {
-          return new_jo;
-        }
-      }
     void exe(jo_t tag, cell data) {
       struct class* class = tag->data;
       class->executer(data);
@@ -1703,10 +1518,6 @@
       if (!used_jo_p(jo)) {
         report("- jo_apply meet undefined jo : %s\n", jo2str(jo));
         p_debug();
-        return;
-      }
-      if (jo->tag == str2jo("<generic-prototype>")) {
-        jo_apply(generic_jo(jo));
         return;
       }
       struct class* class = jo->tag->data;
@@ -1760,11 +1571,11 @@
       object_stack_push(b.tag, b.data);
     }
     void expose_stack() {
-      add_prim("drop", J("<object>"), p_drop);
-      add_prim("dup",  J("<object>"), p_dup);
-      add_prim("over", J("<object>", "<object>"), p_over);
-      add_prim("tuck", J("<object>", "<object>"), p_tuck);
-      add_prim("swap", J("<object>", "<object>"), p_swap);
+      add_prim("drop", p_drop);
+      add_prim("dup",  p_dup);
+      add_prim("over", p_over);
+      add_prim("tuck", p_tuck);
+      add_prim("swap", p_swap);
     }
     void p_end() {
       struct ret rp = return_stack_pop();
@@ -1775,8 +1586,8 @@
       exit(0);
     }
     void expose_ending() {
-      add_prim("end", J0, p_end);
-      add_prim("bye", J0, p_bye);
+      add_prim("end", p_end);
+      add_prim("bye", p_bye);
     }
     struct stack* reading_stack; // of input_stack
     struct stack* writing_stack; // of output_stack
@@ -1885,7 +1696,7 @@
       output_stack_push(tos(writing_stack), '\n');
     }
     void expose_rw() {
-      add_prim("nl", J0, p_nl);
+      add_prim("nl", p_nl);
     }
     // :local
     bool get_local_string_p(char* str) {
@@ -2013,8 +1824,8 @@
       }
     }
     void expose_local() {
-      add_prim("ins/get-local", J0, ins_get_local);
-      add_prim("ins/set-local", J0, ins_set_local);
+      add_prim("ins/get-local", ins_get_local);
+      add_prim("ins/set-local", ins_set_local);
     }
     void compile_string() {
       // "..."
@@ -2254,23 +2065,23 @@
       k_ignore();
     }
     void expose_control() {
-      add_prim_keyword("note", J0, k_ignore);
-      add_prim("ins/lit", J0, ins_lit);
+      add_prim_keyword("note", k_ignore);
+      add_prim("ins/lit", ins_lit);
 
-      add_prim("ins/jmp", J0, ins_jmp);
-      add_prim("ins/jz", J0, ins_jz);
+      add_prim("ins/jmp", ins_jmp);
+      add_prim("ins/jz", ins_jz);
 
-      add_prim_keyword("if", J0, k_if);
-      add_prim_keyword("el", J0, p_compile_until_round_ket);
+      add_prim_keyword("if", k_if);
+      add_prim_keyword("el", p_compile_until_round_ket);
 
-      add_prim("ins/tail-call", J0, ins_tail_call);
-      add_prim_keyword("tail-call", J0, k_tail_call);
+      add_prim("ins/tail-call", ins_tail_call);
+      add_prim_keyword("tail-call", k_tail_call);
 
-      add_prim("ins/loop", J0, ins_loop);
-      add_prim_keyword("loop", J0, k_loop);
+      add_prim("ins/loop", ins_loop);
+      add_prim_keyword("loop", k_loop);
 
-      add_prim("ins/recur", J0, ins_recur);
-      add_prim_keyword("recur", J0, k_recur);
+      add_prim("ins/recur", ins_recur);
+      add_prim_keyword("recur", k_recur);
     }
     void k_run() {
       // (run ...)
@@ -2300,25 +2111,12 @@
       name_buffer[0] = '\0';
       strcat(name_buffer, jo2str(name));
       strcat(name_buffer, "!");
-      if (check_function_arity(name_buffer, 1)) {
-        name_buffer[0] = '\0';
-        strcat(name_buffer, "<object>");
-        strcat(name_buffer, jo2str(name));
-        strcat(name_buffer, "!");
-        bind_name(str2jo(name_buffer), str2jo("<set-global-variable>"), name);
-      }
-      else {
-        report("- def fail\n");
-        return;
-      }
+      bind_name(str2jo(name_buffer), str2jo("<set-global-variable>"), name);
     }
     #define MAX_FIELDS 1024
 
     void k_add_class() {
       jo_t name = read_jo();
-      read_jo(); // drop '['
-      jo_t super = read_jo();
-      read_jo(); // drop ']'
       jo_t fields[MAX_FIELDS];
       cell i = 0;
       while (true) {
@@ -2337,42 +2135,15 @@
         fields[i] = field;
         i++;
       }
-      _add_class(name, super, fields);
-    }
-    void k_add_fun_args(jo_t* args) {
-      if (args[0] == NULL) { return; }
-      k_add_fun_args(args+1);
-      here(JO_INS_SET_LOCAL);
-      here(args[0]);
-    }
-
-    // caller free
-    jo_t* k_add_fun_tags() {
-      read_jo(); // drop '['
-      jo_t* tags = (jo_t*)malloc(64 * sizeof(jo_t));
-      jo_t args[64];
-      cell i = 0;
-      while (true) {
-        jo_t arg = read_jo(); if (arg == SQUARE_KET) { break; }
-        args[i] = arg;
-        jo_t tag = read_jo();
-        tags[i] = tag;
-        i++;
-      }
-      args[i] = NULL;
-      k_add_fun_args(args);
-      tags[i] = NULL;
-      return tags;
+      _add_class(name, fields);
     }
     void k_add_fun() {
       jo_t fun_name = read_jo();
       jo_t* jojo = tos(compiling_stack);
-      jo_t* tags;
 
       push(current_compiling_exe_stack, jojo);
       push(current_compiling_exe_stack, TAG_JOJO);
       {
-        tags = k_add_fun_tags();
         compile_until_meet_jo(ROUND_KET);
         here(JO_END);
         here(0);
@@ -2381,33 +2152,13 @@
       drop(current_compiling_exe_stack);
       drop(current_compiling_exe_stack);
 
-      char name_buffer[1024];
-      char* cursor = name_buffer;
-      cell i = 0;
-      while (tags[i] != NULL) {
-        strcpy(cursor, jo2str(tags[i]));
-        cursor = cursor + strlen(jo2str(tags[i]));
-        i++;
-      }
-      strcpy(cursor, jo2str(fun_name));
-      free(tags);
-      jo_t name = str2jo(name_buffer);
-
-      cell arity = i;
-      if (arity == 0 ||
-          check_function_arity(jo2str(fun_name), arity)) {
-        bind_name(name, TAG_JOJO, jojo);
-      }
-      else {
-        report("- k_add_fun fall\n");
-        report("  arity of %s should not be %ld\n", jo2str(fun_name), arity);
-      }
+      bind_name(fun_name, TAG_JOJO, jojo);
     }
     void expose_top() {
-      add_prim_keyword("+", J0, k_run);
-      add_prim_keyword("+var", J0, k_add_var);
-      add_prim_keyword("+fun", J0, k_add_fun);
-      add_prim_keyword("+class", J0, k_add_class);
+      add_prim_keyword("+", k_run);
+      add_prim_keyword("+var", k_add_var);
+      add_prim_keyword("+fun", k_add_fun);
+      add_prim_keyword("+class", k_add_class);
     }
     void p_print_object_stack() {
       cell length = stack_length(object_stack);
@@ -2469,11 +2220,11 @@
     void expose_bool() {
       add_atom_class("<bool>", gc_ignore);
 
-      add_prim("true", J0, p_true);
-      add_prim("false", J0, p_false);
-      add_prim("not", J("<bool>"), p_not);
-      add_prim("and", J("<bool>", "<bool>"), p_and);
-      add_prim("or",  J("<bool>", "<bool>"), p_or);
+      add_prim("true", p_true);
+      add_prim("false", p_false);
+      add_prim("not", p_not);
+      add_prim("and", p_and);
+      add_prim("or", p_or);
     }
     void write_string(char* str) {
       while (str[0] != '\0') {
@@ -2547,13 +2298,13 @@
       object_stack_push(TAG_BOOL, string_equal(ao->pointer, ao->pointer));
     }
     void expose_string() {
-      add_prim("w", J("<string>"), p_write_string);
-      add_prim("len", J("<string>"), p_string_len);
-      add_prim("ref", J("<string>", "<int>"), p_string_ref);
-      add_prim("cat", J("<string>", "<string>"), p_string_cat);
-      add_prim("slice", J("<string>", "<int>", "<int>"), p_string_slice);
-      add_prim("empty?", J("<string>"), p_string_empty_p);
-      add_prim("eq?", J("<string>", "<string>"), p_string_eq_p);
+      add_prim("write-stringw", p_write_string);
+      add_prim("string-len", p_string_len);
+      add_prim("string-ref", p_string_ref);
+      add_prim("string-cat", p_string_cat);
+      add_prim("string-slice", p_string_slice);
+      add_prim("string-empty?", p_string_empty_p);
+      add_prim("string-eq?", p_string_eq_p);
     }
     void p_inc() {
       struct obj a = object_stack_pop();
@@ -2624,24 +2375,24 @@
       write_string(buffer);
     }
     void expose_int() {
-      add_prim("inc", J("<int>"), p_inc);
-      add_prim("dec", J("<int>"), p_dec);
-      add_prim("neg", J("<int>"), p_neg);
+      add_prim("inc", p_inc);
+      add_prim("dec", p_dec);
+      add_prim("neg", p_neg);
 
-      add_prim("add", J("<int>", "<int>"), p_add);
-      add_prim("sub", J("<int>", "<int>"), p_sub);
+      add_prim("add", p_add);
+      add_prim("sub", p_sub);
 
-      add_prim("mul", J("<int>", "<int>"), p_mul);
-      add_prim("div", J("<int>", "<int>"), p_div);
-      add_prim("mod", J("<int>", "<int>"), p_mod);
+      add_prim("mul", p_mul);
+      add_prim("div", p_div);
+      add_prim("mod", p_mod);
 
-      add_prim("eq?", J("<int>", "<int>"), p_eq_p);
-      add_prim("gt?", J("<int>", "<int>"), p_gt_p);
-      add_prim("lt?", J("<int>", "<int>"), p_lt_p);
-      add_prim("gteq?", J("<int>", "<int>"), p_gteq_p);
-      add_prim("lteq?", J("<int>", "<int>"), p_lteq_p);
+      add_prim("eq?", p_eq_p);
+      add_prim("gt?", p_gt_p);
+      add_prim("lt?", p_lt_p);
+      add_prim("gteq?", p_gteq_p);
+      add_prim("lteq?", p_lteq_p);
 
-      add_prim("w", J("<int>"), p_write_int);
+      add_prim("write-int", p_write_int);
     }
     void gc_local_env(gc_state_t gc_state, struct object_entry* object_entry) {
       if (gc_state == GC_STATE_MARKING) {
@@ -2735,10 +2486,10 @@
       here(JO_INS_LIT); here(TAG_CLOSURE); here(closure);
     }
     void expose_closure() {
-      add_prim("current-local-env", J0, p_current_local_env);
+      add_prim("current-local-env", p_current_local_env);
       add_atom_class("<local-env>", gc_local_env);
-      add_class_exe("<closure>", "<object>", exe_closure, J("local-env", "jojo"));
-      add_prim_keyword("clo", J0, k_closure);
+      add_class_exe("<closure>", exe_closure, J("local-env", "jojo"));
+      add_prim_keyword("clo", k_closure);
     }
     cell cmd_number;
 
@@ -2778,9 +2529,9 @@
       }
     }
     void expose_system() {
-      add_prim("cmd-number", J0, p_cmd_number);
-      add_prim("index->cmd-string", J("<int>"), p_index_to_cmd_string);
-      add_prim("find-env-string", J("<string>"), p_find_env_string);
+      add_prim("cmd-number", p_cmd_number);
+      add_prim("index->cmd-string", p_index_to_cmd_string);
+      add_prim("find-env-string", p_find_env_string);
     }
     void ccall (char* function_name, void* lib) {
       primitive_t fun = dlsym(lib, function_name);
@@ -2877,7 +2628,7 @@
       }
     }
     void expose_cffi() {
-      add_prim_keyword("+clib", J0, k_clib);
+      add_prim_keyword("+clib", k_clib);
     }
     void p1() {
       int file = open("README", O_RDWR);
@@ -2990,11 +2741,11 @@
       close(file);
     }
     void expose_play() {
-      add_prim("p1", J0, p1);
-      add_prim("p2", J0, p2);
-      add_prim("p3", J0, p3);
-      add_prim("p4", J0, p4);
-      add_prim("print-object-stack", J0, p_print_object_stack);
+      add_prim("p1", p1);
+      add_prim("p2", p2);
+      add_prim("p3", p3);
+      add_prim("p4", p4);
+      add_prim("print-object-stack", p_print_object_stack);
     }
     void init_system() {
       setvbuf(stdout, NULL, _IONBF, 0);
@@ -3083,11 +2834,7 @@
 
       current_compiling_exe_stack = new_stack("current_compiling_exe_stack");
     }
-    void init_jojo() {
-      init_jotable();
-      init_literal_jo();
-      init_stacks();
-
+    void init_expose() {
       expose_object();
       expose_stack();
       expose_ending();
@@ -3107,10 +2854,14 @@
       cmd_number = argc;
       cmd_string_array = argv;
       init_system();
-      init_jojo();
+      init_jotable();
+      init_literal_jo();
+      init_stacks();
+      init_expose();
       p_repl_flag_on();
       {
         p_print_object_stack();
       }
+      path_load("test/loop.jo");
       p_repl();
     }
