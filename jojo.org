@@ -1,25 +1,22 @@
 #+property: tangle jojo.c
 #+title:  jojo
 
-
-- fix object-field
+- fix object_field
 
 - syntax for unnamed object
-  but a class need to know its name ?
-  does it ?
-  if it does, why function does not ?
+
+  - both class and function can be unnamed
 
   - class needs a class_name field
     because we need to print it.
     function also need such name
 
-  - both class and function can be unnamed
-
-  - no <closure>
-    <jojo> as <closure> with name field
+- no <closure>
+  <jojo> as <closure> with name field
 
 - specify cffi
   - by specifing the way to write jojo code in c
+
 * [todo-stack]
 
 - function to print object
@@ -27,8 +24,6 @@
 - p_debug
 - stepper
 - signal handler
-
-- to writing jojo in c code in a better way
 
 - print the rest of the jojo when compilation fail
 
@@ -40,7 +35,7 @@
     how about '( [ ] )
 - use 'the little schemer' to test list processing
 
-- new module system
+- old module system
 
 - <byte>
 - <jojo>
@@ -737,6 +732,7 @@
     #+begin_src c
     // can not pop
     // for stack->pointer can not decrease under 0
+
     void stack_block_underflow_check(struct stack* stack) {
       if (stack->pointer > 0) {
         return;
@@ -919,8 +915,8 @@
       cell string_pointer;
     };
 
-    // #define INPUT_STACK_BLOCK_SIZE (4 * 1024)
-    #define INPUT_STACK_BLOCK_SIZE 1 // for testing
+    #define INPUT_STACK_BLOCK_SIZE (4 * 1024)
+    // #define INPUT_STACK_BLOCK_SIZE 1 // for testing
     #+end_src
 
 *** input_stack_new
@@ -1240,8 +1236,8 @@
       cell string_pointer;
     };
 
-    // #define OUTPUT_STACK_BLOCK_SIZE (4 * 1024)
-    #define OUTPUT_STACK_BLOCK_SIZE 1 // for testing
+    #define OUTPUT_STACK_BLOCK_SIZE (4 * 1024)
+    // #define OUTPUT_STACK_BLOCK_SIZE 1 // for testing
     #+end_src
 
 *** output_stack_new
@@ -2100,19 +2096,19 @@
       {
         char name_buffer[1024];
 
-          name_buffer[0] = '\0';
-          strcat(name_buffer, class_name);
-          strcat(name_buffer, ".");
-          strcat(name_buffer, field_name);
-          bind_name(str2jo(name_buffer), str2jo("<get-object-field>"), index);
+        name_buffer[0] = '\0';
+        strcat(name_buffer, class_name);
+        strcat(name_buffer, ".");
+        strcat(name_buffer, field_name);
+        bind_name(str2jo(name_buffer), str2jo("<get-object-field>"), index);
 
-          name_buffer[0] = '\0';
-          strcat(name_buffer, "<object>");
-          strcat(name_buffer, class_name);
-          strcat(name_buffer, ".");
-          strcat(name_buffer, field_name);
-          strcat(name_buffer, "!");
-          bind_name(str2jo(name_buffer), str2jo("<set-object-field>"), index);
+        name_buffer[0] = '\0';
+        strcat(name_buffer, "<object>");
+        strcat(name_buffer, class_name);
+        strcat(name_buffer, ".");
+        strcat(name_buffer, field_name);
+        strcat(name_buffer, "!");
+        bind_name(str2jo(name_buffer), str2jo("<set-object-field>"), index);
       }
       #+end_src
 

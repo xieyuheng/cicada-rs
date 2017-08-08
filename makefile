@@ -3,7 +3,7 @@ cc = gcc
 #cc = clang
 copy = rsync --recursive --links --perms --times --group --owner --devices --specials --verbose --human-readable
 w = -Wno-int-conversion -Wno-incompatible-pointer-types -Wunused-value
-o = -Ofast
+o = -O2
 f = -rdynamic
 l = -ldl
 

@@ -377,6 +377,7 @@
     }
     // can not pop
     // for stack->pointer can not decrease under 0
+
     void stack_block_underflow_check(struct stack* stack) {
       if (stack->pointer > 0) {
         return;
@@ -491,8 +492,8 @@
       cell string_pointer;
     };
 
-    // #define INPUT_STACK_BLOCK_SIZE (4 * 1024)
-    #define INPUT_STACK_BLOCK_SIZE 1 // for testing
+    #define INPUT_STACK_BLOCK_SIZE (4 * 1024)
+    // #define INPUT_STACK_BLOCK_SIZE 1 // for testing
     struct input_stack* input_stack_new(input_stack_type input_stack_type) {
       struct input_stack* input_stack = (struct input_stack*)
         malloc(sizeof(struct input_stack));
@@ -715,8 +716,8 @@
       cell string_pointer;
     };
 
-    // #define OUTPUT_STACK_BLOCK_SIZE (4 * 1024)
-    #define OUTPUT_STACK_BLOCK_SIZE 1 // for testing
+    #define OUTPUT_STACK_BLOCK_SIZE (4 * 1024)
+    // #define OUTPUT_STACK_BLOCK_SIZE 1 // for testing
     struct output_stack* output_stack_new(output_stack_type output_stack_type) {
       struct output_stack* output_stack = (struct output_stack*)
         malloc(sizeof(struct output_stack));
@@ -1331,19 +1332,19 @@
       {
         char name_buffer[1024];
 
-          name_buffer[0] = '\0';
-          strcat(name_buffer, class_name);
-          strcat(name_buffer, ".");
-          strcat(name_buffer, field_name);
-          bind_name(str2jo(name_buffer), str2jo("<get-object-field>"), index);
+        name_buffer[0] = '\0';
+        strcat(name_buffer, class_name);
+        strcat(name_buffer, ".");
+        strcat(name_buffer, field_name);
+        bind_name(str2jo(name_buffer), str2jo("<get-object-field>"), index);
 
-          name_buffer[0] = '\0';
-          strcat(name_buffer, "<object>");
-          strcat(name_buffer, class_name);
-          strcat(name_buffer, ".");
-          strcat(name_buffer, field_name);
-          strcat(name_buffer, "!");
-          bind_name(str2jo(name_buffer), str2jo("<set-object-field>"), index);
+        name_buffer[0] = '\0';
+        strcat(name_buffer, "<object>");
+        strcat(name_buffer, class_name);
+        strcat(name_buffer, ".");
+        strcat(name_buffer, field_name);
+        strcat(name_buffer, "!");
+        bind_name(str2jo(name_buffer), str2jo("<set-object-field>"), index);
       }
       void add_class_exe(class_name, executer, fields)
         char* class_name;
@@ -2862,6 +2863,5 @@
       {
         p_print_object_stack();
       }
-      path_load("test/loop.jo");
       p_repl();
     }

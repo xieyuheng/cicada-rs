@@ -3,38 +3,15 @@
 * <list>
 
   #+begin_src esse
-  (+class <null>)
-  (+class <cons> .car .cdr)
+  (+clas <null>)
+  (+clas <cons> .cdr .car)
 
-  (+fun cons [:cdr <list> :car <object>]
-    <list> new :l!
-    false :l .empty-p!
-    :cdr :l .cdr!
-    :car :l .car!
-    :l)
-
-  (+fun empty-list []
-    <list> new :l!
-    true :l .empty-p!
-    :l)
-
-  (+fun empty? [:l <list>]
-    :l .empty-p)
-
-  (+var x
-    empty-list
+  (+vari x
+    null
     1 cons
     2 cons)
 
-  (+ x .cdr .cdr empty?)
-
-  (note
-    uninitialised-field
-    (+ x .cdr .cdr .car))
-
-  (note
-    generic_jo fail
-    (+ 0 1 cons))
+  (run x .cdr .cdr null?)
   #+end_src
 
 * [test] <closure>
@@ -63,7 +40,6 @@
 
   (+ 1 t2 w)
   (+ 2 t2 w)
-
 
   (+fun l0 [:x <int>]
     (if :x 0 eq? then end)
