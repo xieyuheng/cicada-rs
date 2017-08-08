@@ -1,53 +1,50 @@
 #+title: basic
 
-* <list>
+* <cons>
 
   #+begin_src esse
-  (+clas <null>)
-  (+clas <cons> .cdr .car)
+  (+data <null>)
+  (+data <cons> .cdr .car)
 
-  (+vari x
+  (+var x
     null
     1 cons
     2 cons)
 
-  (run x .cdr .cdr null?)
+  (run x .cdr .cdr tag '<null> eq?)
   #+end_src
 
 * [test] <closure>
 
   #+begin_src jojo
-  (+fun t0 []
-    1 :a! 2 :b! (clo :a :b add))
+  (+jojo t0 1 :a! 2 :b! (clo :a :b add))
   (+var x0 t0)
-  (+ x0)
+  (run x0)
 
-
-  (+fun t1 []
-    1 :a! 2 :b! (clo :a (clo :b)))
+  (+jojo t1 1 :a! 2 :b! (clo :a (clo :b)))
   (+var x1 t1)
-  (+ x1)
+  (run x1)
   (+var x2 1)
-  (+ x2! x2)
+  (run x2! x2)
   #+end_src
 
 * [test] *control*
 
   #+begin_src jojo
-  (+fun t2 []
+  (+jojo t2 []
     (if 1 eq? then 111 end)
     222)
 
   (+ 1 t2 w)
   (+ 2 t2 w)
 
-  (+fun l0 [:x <int>]
+  (+jojo l0 [:x <int>]
     (if :x 0 eq? then end)
     (el :x w " " w :x dec (loop)))
 
   (+ 1000 l0)
 
-  (+fun l1 [:x <int>]
+  (+jojo l1 [:x <int>]
     (if :x 0 eq? then end)
     (el :x w " " w :x dec (recur)))
 
@@ -63,11 +60,11 @@
   (+class <color-rectangle> [<rectangle>]
     cyan magenta yellow)
 
-  (+fun map [:list <list> :jojo <jojo>]
+  (+jojo map [:list <list> :jojo <jojo>]
     (if :list null eq? then null end)
     (el :list cdr :jojo (recur) :list car :jojo apply cons))
 
-  (+fun repeat [:time <int> :jojo <jojo>]
+  (+jojo repeat [:time <int> :jojo <jojo>]
     (if :time 0 eq? then end)
     (el :jojo apply :time dec :jojo (loop)))
 
@@ -76,11 +73,11 @@
     [age 13]
     [language "chinese"])
 
-  (+fun grow [:p <person>]
+  (+jojo grow [:p <person>]
     :p.age inc
     :p.age!)
 
-  (+fun report [:p <person>]
+  (+jojo report [:p <person>]
     "age : " w :p.age w nl
     "languege : " w :p.language w nl
     nl)

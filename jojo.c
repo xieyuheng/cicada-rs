@@ -240,8 +240,8 @@
     jo_t TAG_JOJO;
     jo_t TAG_PRIM_KEYWORD;
     jo_t TAG_KEYWORD;
+    jo_t TAG_CLASS;
     jo_t TAG_CLOSURE;
-
 
     jo_t TAG_BOOL;
     jo_t TAG_INT;
@@ -264,6 +264,8 @@
     jo_t JO_INS_LIT;
     jo_t JO_INS_GET_LOCAL;
     jo_t JO_INS_SET_LOCAL;
+    jo_t JO_INS_GET_FIELD;
+    jo_t JO_INS_SET_FIELD;
 
     jo_t JO_INS_JMP;
     jo_t JO_INS_JZ;
@@ -1090,8 +1092,7 @@
       bool executable;
       executer_t executer;
       cell fields_number;
-      cell direct_fields_number;
-      jo_t* direct_fields;
+      jo_t* fields;
     };
       jo_t get_field_tag(cell* fields, cell field_index) {
         return fields[field_index*2+1];
@@ -1110,21 +1111,19 @@
       }
       // assume exist
       jo_t class_index_to_field_name(struct class* class, cell index) {
-        cell direct_index =
-          index - (class->fields_number - class->direct_fields_number);
-        if (direct_index >= 0) {
-          return class->direct_fields[direct_index];
-        }
+        return class->fields[index];
       }
       // assume exist
       cell class_field_name_to_index(struct class* class, jo_t field_name) {
-        cell direct_index = class->fields_number - class->direct_fields_number;
-        while (direct_index < class->fields_number) {
-          if (class->direct_fields[direct_index] == field_name) {
-            return direct_index;
-          }
-          direct_index++;
+        cell i = 0;
+        while (i < class->fields_number) {
+          if (class->fields[i] == field_name) { return i; }
+          i++;
         }
+        report("- class_field_name_to_index fail\n");
+        report("  field_name : %s\n", jo2str(field_name));
+        report("  class_name : %s\n", jo2str(class->class_name));
+        p_debug();
       }
       jo_t get_object_field_tag(object_entry, field_index)
         struct object_entry* object_entry;
@@ -1159,6 +1158,47 @@
         cell* fields = object_entry->pointer;
         set_field_data(fields, field_index, data);
       }
+    void ins_get_field() {
+      struct ret rp = return_stack_tos();
+      return_stack_inc();
+      jo_t* jojo = rp.jojo;
+      jo_t name = jojo[0];
+
+      struct obj a = object_stack_pop();
+      struct class* class = a.tag->data;
+
+      cell index = class_field_name_to_index(class, name);
+
+      jo_t tag = get_object_field_tag(a.data, index);
+      cell data = get_object_field_data(a.data, index);
+      if (tag == TAG_UNINITIALISED_FIELD_PLACE_HOLDER) {
+        object_stack_push(a.tag, a.data);
+        report("- ins_get_field fail\n");
+        report("  field is uninitialised\n");
+        report("  field_name : %s\n", jo2str(name));
+        report("  class_name : %s\n", jo2str(class->class_name));
+        report("  see top of object_stack for the object\n");
+        p_debug();
+      }
+      else {
+        object_stack_push(tag, data);
+      }
+    }
+    void ins_set_field() {
+      struct ret rp = return_stack_tos();
+      return_stack_inc();
+      jo_t* jojo = rp.jojo;
+      jo_t name = jojo[0];
+
+      struct obj a = object_stack_pop();
+      struct class* class = a.tag->data;
+
+      cell index = class_field_name_to_index(class, name);
+
+      struct obj b = object_stack_pop();
+      set_object_field_tag(a.data, index, b.tag);
+      set_object_field_data(a.data, index, b.data);
+    }
     void mark_one(jo_t tag, cell data) {
       struct class* class = tag->data;
       class->gc_actor(GC_STATE_MARKING, data);
@@ -1276,13 +1316,11 @@
       return object_entry;
     }
     struct object_entry* new(struct class* class) {
-      // [<class>] -> [<object> of <class>]
       cell* fields = (cell*)malloc(class->fields_number*2*sizeof(cell));
 
       cell i = 0;
       while (i < class->fields_number) {
         set_field_tag(fields, i, str2jo("<uninitialised-field-place-holder>"));
-        // set_field_data(fields, i, 0);
         i++;
       }
 
@@ -1292,12 +1330,6 @@
       object_entry->fields_number = class->fields_number;
 
       return object_entry;
-    }
-    void p_new() {
-      // [<class>] -> [<object> of <class>]
-      struct obj a = object_stack_pop();
-      struct class* class = a.data;
-      object_stack_push(class->class_name, new(class));
     }
       void add_atom_class_exe(class_name, gc_actor, executer)
         char* class_name;
@@ -1325,27 +1357,6 @@
       {
         add_atom_class_exe(class_name, gc_actor, NULL);
       }
-      void add_field(class_name, field_name, index)
-        char* class_name;
-        char* field_name;
-        cell index;
-      {
-        char name_buffer[1024];
-
-        name_buffer[0] = '\0';
-        strcat(name_buffer, class_name);
-        strcat(name_buffer, ".");
-        strcat(name_buffer, field_name);
-        bind_name(str2jo(name_buffer), str2jo("<get-object-field>"), index);
-
-        name_buffer[0] = '\0';
-        strcat(name_buffer, "<object>");
-        strcat(name_buffer, class_name);
-        strcat(name_buffer, ".");
-        strcat(name_buffer, field_name);
-        strcat(name_buffer, "!");
-        bind_name(str2jo(name_buffer), str2jo("<set-object-field>"), index);
-      }
       void add_class_exe(class_name, executer, fields)
         char* class_name;
         executer_t executer;
@@ -1366,17 +1377,18 @@
 
         cell i = 0;
         while (fields[i] != NULL) {
-          add_field(class_name,
-                    jo2str(fields[i]),
-                    i);
           i++;
         }
 
         class->fields_number = i;
-        class->direct_fields_number = i;
-        class->direct_fields = fields;
+        class->fields = fields;
 
         bind_name(name, str2jo("<class>"), class);
+
+        char* tmp = substring(class_name, 1, strlen(class_name) -1);
+        jo_t data_constructor_name = str2jo(tmp);
+        free(tmp);
+        bind_name(data_constructor_name, str2jo("<data-constructor>"), class);
       }
       void add_class(class_name, fields)
         char* class_name;
@@ -1438,39 +1450,27 @@
         eval();
         current_alias_pointer = pop(keyword_stack);
       }
-      // runtime error for uninitialised-field
-      void exe_get_object_field(cell index) {
-        struct obj a = object_stack_pop();
-        struct class* class = a.tag->data;
-        jo_t tag = get_object_field_tag(a.data, index);
-        cell data = get_object_field_data(a.data, index);
-        if (tag == TAG_UNINITIALISED_FIELD_PLACE_HOLDER) {
-          object_stack_push(a.tag, a.data);
-          jo_t field_name = class_index_to_field_name(class, index);
-          report("- exe_get_object_field fail\n");
-          report("  field is uninitialised\n");
-          report("  field : %s\n", jo2str(field_name));
-          // { // testing class_field_name_to_index
-          //   report("  field index 1 : %ld\n", index);
-          //   report("  field index 2 : %ld\n",
-          //          class_field_name_to_index(class, field_name));
-          // }
-          report("  see top of object_stack for the object\n");
-          p_debug();
-        }
-        else {
-          object_stack_push(tag, data);
-        }
-      }
-      void exe_set_object_field(cell index) {
-        struct obj a = object_stack_pop();
-        struct obj b = object_stack_pop();
-        set_object_field_tag(a.data, index, b.tag);
-        set_object_field_data(a.data, index, b.data);
-      }
       void exe_set_global_variable(jo_t name) {
         struct obj a = object_stack_pop();
         rebind_name(name, a.tag, a.data);
+      }
+      void exe_data_constructor(struct class* class) {
+        cell* fields = (cell*)malloc(class->fields_number*2*sizeof(cell));
+
+        cell i = 0;
+        while (i < class->fields_number) {
+          struct obj a = object_stack_pop();
+          set_field_tag(fields, (class->fields_number - (i+1)), a.tag);
+          set_field_data(fields, (class->fields_number - (i+1)), a.data);
+          i++;
+        }
+
+        struct object_entry* object_entry = new_record_object_entry();
+        object_entry->gc_actor = gc_recur;
+        object_entry->pointer = fields;
+        object_entry->fields_number = class->fields_number;
+
+        object_stack_push(class->class_name, object_entry);
       }
       // caller free
       jo_t* generate_jo_array(char*ss[]) {
@@ -1489,8 +1489,15 @@
       }
       #define J0 (char*[]){NULL}
       #define J(...) generate_jo_array((char*[]){__VA_ARGS__, NULL})
+    void p_tag() {
+      struct obj a = object_stack_pop();
+      object_stack_push(TAG_JO, a.tag);
+    }
     void expose_object() {
       init_object_record();
+
+      add_prim("ins/get-field", ins_get_field);
+      add_prim("ins/set-field", ins_set_field);
 
       add_atom_class("<byte>", gc_ignore);
       add_atom_class("<int>", gc_ignore);
@@ -1503,11 +1510,10 @@
       add_atom_class_exe("<prim-keyword>", gc_ignore, exe_prim_keyword);
       add_atom_class_exe("<jojo>", gc_ignore, exe_jojo);
       add_atom_class_exe("<keyword>", gc_ignore, exe_keyword);
-      add_atom_class_exe("<set-object-field>", gc_ignore, exe_set_object_field);
-      add_atom_class_exe("<get-object-field>", gc_ignore, exe_get_object_field);
       add_atom_class_exe("<set-global-variable>", gc_ignore, exe_set_global_variable);
+      add_atom_class_exe("<data-constructor>", gc_ignore, exe_data_constructor);
 
-      add_prim("new", p_new);
+      add_prim("tag", p_tag);
     }
     void exe(jo_t tag, cell data) {
       struct class* class = tag->data;
@@ -1699,66 +1705,6 @@
     void expose_rw() {
       add_prim("nl", p_nl);
     }
-    // :local
-    bool get_local_string_p(char* str) {
-      if (str[0] != ':') {
-        return false;
-      }
-      else if (string_last_byte(str) == '!') {
-        return false;
-      }
-      else if (string_member_p(str, '.')) {
-        return false;
-      }
-      else {
-        return true;
-      }
-    }
-    // :local!
-    bool set_local_string_p(char* str) {
-      if (str[0] != ':') {
-        return false;
-      }
-      else if (string_last_byte(str) != '!') {
-        return false;
-      }
-      else if (string_member_p(str, '.')) {
-        return false;
-      }
-      else {
-        return true;
-      }
-    }
-    // :local.field
-    bool get_local_field_string_p(char* str) {
-      if (str[0] != ':') {
-        return false;
-      }
-      else if (string_last_byte(str) == '!') {
-        return false;
-      }
-      else if (string_count_member(str, '.') != 1) {
-        return false;
-      }
-      else {
-        return true;
-      }
-    }
-    // :local.field!
-    bool set_local_field_string_p(char* str) {
-      if (str[0] != ':') {
-        return false;
-      }
-      else if (string_last_byte(str) != '!') {
-        return false;
-      }
-      else if (string_count_member(str, '.') != 1) {
-        return false;
-      }
-      else {
-        return true;
-      }
-    }
     cell local_find(jo_t name) {
       // return index of local_record
       // -1 -- no found
@@ -1802,6 +1748,7 @@
       return_stack_inc();
       jo_t* jojo = rp.jojo;
       jo_t name = jojo[0];
+
       struct obj a = object_stack_pop();
       set_local(name, a.tag, a.data);
     }
@@ -1828,6 +1775,96 @@
       add_prim("ins/get-local", ins_get_local);
       add_prim("ins/set-local", ins_set_local);
     }
+      // :local
+      bool get_local_string_p(char* str) {
+        if (str[0] != ':') {
+          return false;
+        }
+        else if (string_last_byte(str) == '!') {
+          return false;
+        }
+        else if (string_member_p(str, '.')) {
+          return false;
+        }
+        else {
+          return true;
+        }
+      }
+      // :local!
+      bool set_local_string_p(char* str) {
+        if (str[0] != ':') {
+          return false;
+        }
+        else if (string_last_byte(str) != '!') {
+          return false;
+        }
+        else if (string_member_p(str, '.')) {
+          return false;
+        }
+        else {
+          return true;
+        }
+      }
+      // :local.field
+      bool get_local_field_string_p(char* str) {
+        if (str[0] != ':') {
+          return false;
+        }
+        else if (string_last_byte(str) == '!') {
+          return false;
+        }
+        else if (string_count_member(str, '.') != 1) {
+          return false;
+        }
+        else {
+          return true;
+        }
+      }
+      // :local.field!
+      bool set_local_field_string_p(char* str) {
+        if (str[0] != ':') {
+          return false;
+        }
+        else if (string_last_byte(str) != '!') {
+          return false;
+        }
+        else if (string_count_member(str, '.') != 1) {
+          return false;
+        }
+        else {
+          return true;
+        }
+      }
+      // .field
+      bool get_field_string_p(char* str) {
+        if (str[0] != '.') {
+          return false;
+        }
+        else if (string_last_byte(str) == '!') {
+          return false;
+        }
+        else if (string_count_member(str, '.') != 1) {
+          return false;
+        }
+        else {
+          return true;
+        }
+      }
+      // .field!
+      bool set_field_string_p(char* str) {
+        if (str[0] != '.') {
+          return false;
+        }
+        else if (string_last_byte(str) != '!') {
+          return false;
+        }
+        else if (string_count_member(str, '.') != 1) {
+          return false;
+        }
+        else {
+          return true;
+        }
+      }
     void compile_string() {
       // "..."
       char buffer[1024 * 1024];
@@ -1858,22 +1895,27 @@
         jo_apply(read_jo());
         return true;
       }
+
       char* str = jo2str(jo);
+      // number
       if (int_string_p(str)) {
         here(JO_INS_LIT);
         here(TAG_INT);
         here(string_to_int(str));
         return true;
       }
+      // "string"
       else if (jo == DOUBLE_QUOTE) {
         compile_string();
         return true;
       }
+      // :local
       else if (get_local_string_p(str)) {
         here(JO_INS_GET_LOCAL);
         here(jo);
         return true;
       }
+      // :local!
       else if (set_local_string_p(str)) {
         here(JO_INS_SET_LOCAL);
         char* tmp = substring(str, 0, strlen(str) -1);
@@ -1881,6 +1923,21 @@
         free(tmp);
         return true;
       }
+      // .field
+      else if (get_field_string_p(str)) {
+        here(JO_INS_GET_FIELD);
+        here(jo);
+        return true;
+      }
+      // .field!
+      else if (set_field_string_p(str)) {
+        here(JO_INS_SET_FIELD);
+        char* tmp = substring(str, 0, strlen(str) -1);
+        here(str2jo(tmp));
+        free(tmp);
+        return true;
+      }
+      // 'jo
       else if (str[0] == '\'' && strlen(str) != 1) {
         here(JO_INS_LIT);
         here(TAG_JO);
@@ -2156,10 +2213,10 @@
       bind_name(fun_name, TAG_JOJO, jojo);
     }
     void expose_top() {
-      add_prim_keyword("+", k_run);
+      add_prim_keyword("run", k_run);
       add_prim_keyword("+var", k_add_var);
-      add_prim_keyword("+fun", k_add_fun);
-      add_prim_keyword("+class", k_add_class);
+      add_prim_keyword("+jojo", k_add_fun);
+      add_prim_keyword("+data", k_add_class);
     }
     void p_print_object_stack() {
       cell length = stack_length(object_stack);
@@ -2765,6 +2822,7 @@
       TAG_PRIM_KEYWORD = str2jo("<prim-keyword>");
       TAG_KEYWORD      = str2jo("<keyword>");
       TAG_CLOSURE      = str2jo("<closure>");
+      TAG_CLASS        = str2jo("<class>");
 
       TAG_BOOL         = str2jo("<bool>");
       TAG_INT          = str2jo("<int>");
@@ -2788,6 +2846,8 @@
       JO_INS_LIT       = str2jo("ins/lit");
       JO_INS_GET_LOCAL = str2jo("ins/get-local");
       JO_INS_SET_LOCAL = str2jo("ins/set-local");
+      JO_INS_GET_FIELD = str2jo("ins/get-field");
+      JO_INS_SET_FIELD = str2jo("ins/set-field");
 
       JO_INS_JMP = str2jo("ins/jmp");
       JO_INS_JZ  = str2jo("ins/jz");
