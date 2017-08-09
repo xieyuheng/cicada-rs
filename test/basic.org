@@ -13,6 +13,8 @@
 
   (run x .cdr .cdr tag '<null> eq?)
 
+  (run x .cdr .cdr null?)
+
   (+jojo test1 (note)
     :x!
     (case :x
@@ -20,8 +22,6 @@
       cons [2]))
 
   (run x test1)
-
-
 
   (+jojo test2 (note)
     :x!
@@ -68,90 +68,3 @@
 
   (+ 1000 l1)
   #+end_src
-
-* ><
-
-  #+begin_src jojo
-  (+class <rectangle> [<object>]
-    height width)
-
-  (+class <color-rectangle> [<rectangle>]
-    cyan magenta yellow)
-
-  (+jojo map [:list <list> :jojo <jojo>]
-    (if :list null eq? then null end)
-    (el :list cdr :jojo (recur) :list car :jojo apply cons))
-
-  (+jojo repeat [:time <int> :jojo <jojo>]
-    (if :time 0 eq? then end)
-    (el :jojo apply :time dec :jojo (loop)))
-
-
-  (+class <person> [<object>]
-    [age 13]
-    [language "chinese"])
-
-  (+jojo grow [:p <person>]
-    :p.age inc
-    :p.age!)
-
-  (+jojo report [:p <person>]
-    "age : " w :p.age w nl
-    "languege : " w :p.language w nl
-    nl)
-
-  (+var xieyuheng <person> new)
-
-  (+ xieyuheng report
-     xieyuheng grow
-     xieyuheng report
-     xieyuheng 10 grow-by
-     xieyuheng report
-     xieyuheng 10 grow-by
-     xieyuheng report)
-
-  (+var stack-0 <stack> new)
-
-  (+ stack-0 1 push
-     stack-0 2 push
-     stack-0 3 push
-     stack-0 pop w
-     stack-0 pop w
-     stack-0 pop w)
-  #+end_src
-
-* ><
-
-*** c
-
-    #+begin_src c
-    typedef enum {
-      GC_IGNORE,
-      GC_CLEANER,
-      GC_RECUR,
-    } gc_type;
-    // typedef void (* cleaner__t)(cell);
-
-    struct class {
-      jo class_name;
-      jo super_name;
-      gc_type gc_type;
-      // cleaner__t cleaner;
-      cell object_size;
-    };
-    #+end_src
-
-*** jojo
-
-    #+begin_src jojo
-    (defenum <gc-type>
-      GC-IGNORE
-      GC-CLEANER
-      GC-RECUR)
-
-    (defstruct <class>
-      [<jo> class-name]
-      [<jo> super-name]
-      [<gc-type> gc-type]
-      [<cell> object-size])
-    #+end_src

@@ -1,38 +1,37 @@
 #+property: tangle jojo.c
 #+title:  jojo
 
-- no <closure>
-  <jojo> as <closure> with name field
-
-- (+jojo) named
-  (jojo) unnamed
-
-- specify cffi
-  - by specifing the way to write jojo code in c
-
 * [todo-stack]
 
-- function to print object
 
-- p_debug
-- stepper
-- signal handler
 
-- print the rest of the jojo when compilation fail
+  - no <closure>
+    <jojo> as <closure> with name field
 
-- <jo>
+  - (+jojo) named
+    (jojo) unnamed
 
-- '(...) as <list> of jo
-  - '( ( ) ) as nested list
-  - ><><><
-    how about '( [ ] )
-- use 'the little schemer' to test list processing
+  - generic w to write object
+  - p_debug
+  - stepper
 
-- old module system
+  - signal handler
 
-- <byte>
-- <jojo>
-- reader level syntax macro
+  - specify cffi
+    - by specifing the way to write jojo code in c
+
+  - old module system
+
+  - print the rest of the jojo when compilation fail
+
+  - '(...) as <list> of jo
+    - '( ( ) ) as nested list
+    - ><><><
+      how about '( [ ] )
+
+  - use 'the little schemer' to test list processing
+
+  - reader level syntax macro
 
 * [todo-list]
 
@@ -2151,6 +2150,14 @@
         jo_t data_constructor_name = str2jo(tmp);
         free(tmp);
         bind_name(data_constructor_name, str2jo("<data-constructor>"), class);
+
+        char* tmp2 = malloc(strlen(jo2str(data_constructor_name) + 1 + 1));
+        tmp2[0] = '\0';
+        strcat(tmp2, jo2str(data_constructor_name));
+        strcat(tmp2, "?");
+        jo_t data_predicate_name = str2jo(tmp2);
+        free(tmp2);
+        bind_name(data_predicate_name, str2jo("<data-predicate>"), class);
       }
       #+end_src
 
@@ -2305,6 +2312,15 @@
       }
       #+end_src
 
+***** exe_data_predicate
+
+      #+begin_src c
+      void exe_data_predicate(struct class* class) {
+        struct obj a = object_stack_pop();
+        object_stack_push(TAG_BOOL, (class->class_name == a.tag));
+      }
+      #+end_src
+
 *** literal jo_array
 
 ***** generate_jo_array
@@ -2365,6 +2381,8 @@
       add_atom_class_exe("<keyword>", gc_ignore, exe_keyword);
       add_atom_class_exe("<set-global-variable>", gc_ignore, exe_set_global_variable);
       add_atom_class_exe("<data-constructor>", gc_ignore, exe_data_constructor);
+      add_atom_class_exe("<data-predicate>", gc_ignore, exe_data_predicate);
+
 
       add_prim("tag", p_tag);
     }
@@ -3189,6 +3207,16 @@
     }
     #+end_src
 
+*** compile_maybe_square
+
+    #+begin_src c
+    void compile_maybe_square() {
+      jo_t first_jo = read_jo();
+      if (first_jo == SQUARE_BAR) { compile_until_meet_jo(SQUARE_KET); }
+      else { compile_jo(first_jo); }
+    }
+    #+end_src
+
 *** k_case
 
     #+begin_src c
@@ -3210,14 +3238,8 @@
     //   :end-of-case
     //     drop
 
-    void try_compile_square() {
-      jo_t first_jo = read_jo();
-      if (first_jo == SQUARE_BAR) { compile_until_meet_jo(SQUARE_KET); }
-      else { compile_jo(first_jo); }
-    }
-
     void k_case() {
-      try_compile_square();
+      compile_maybe_square();
       cell counter = 0;
       cell case_ends[256];
 
@@ -3242,7 +3264,7 @@
           jo_t* end_of_this_case = tos(compiling_stack);
           p_compiling_stack_inc();
           here(str2jo("drop"));
-          try_compile_square();
+          compile_maybe_square();
 
           here(JO_INS_JMP);
           case_ends[counter] = tos(compiling_stack);

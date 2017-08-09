@@ -1389,6 +1389,14 @@
         jo_t data_constructor_name = str2jo(tmp);
         free(tmp);
         bind_name(data_constructor_name, str2jo("<data-constructor>"), class);
+
+        char* tmp2 = malloc(strlen(jo2str(data_constructor_name) + 1 + 1));
+        tmp2[0] = '\0';
+        strcat(tmp2, jo2str(data_constructor_name));
+        strcat(tmp2, "?");
+        jo_t data_predicate_name = str2jo(tmp2);
+        free(tmp2);
+        bind_name(data_predicate_name, str2jo("<data-predicate>"), class);
       }
       void add_class(class_name, fields)
         char* class_name;
@@ -1472,6 +1480,10 @@
 
         object_stack_push(class->class_name, object_entry);
       }
+      void exe_data_predicate(struct class* class) {
+        struct obj a = object_stack_pop();
+        object_stack_push(TAG_BOOL, (class->class_name == a.tag));
+      }
       // caller free
       jo_t* generate_jo_array(char*ss[]) {
         cell len = 0;
@@ -1512,6 +1524,8 @@
       add_atom_class_exe("<keyword>", gc_ignore, exe_keyword);
       add_atom_class_exe("<set-global-variable>", gc_ignore, exe_set_global_variable);
       add_atom_class_exe("<data-constructor>", gc_ignore, exe_data_constructor);
+      add_atom_class_exe("<data-predicate>", gc_ignore, exe_data_predicate);
+
 
       add_prim("tag", p_tag);
     }
@@ -2066,6 +2080,11 @@
         return;
       }
     }
+    void compile_maybe_square() {
+      jo_t first_jo = read_jo();
+      if (first_jo == SQUARE_BAR) { compile_until_meet_jo(SQUARE_KET); }
+      else { compile_jo(first_jo); }
+    }
     //   (case [...]
     //     data-constructor-name [...]
     //     ...)
@@ -2084,14 +2103,8 @@
     //   :end-of-case
     //     drop
 
-    void try_compile_square() {
-      jo_t first_jo = read_jo();
-      if (first_jo == SQUARE_BAR) { compile_until_meet_jo(SQUARE_KET); }
-      else { compile_jo(first_jo); }
-    }
-
     void k_case() {
-      try_compile_square();
+      compile_maybe_square();
       cell counter = 0;
       cell case_ends[256];
 
@@ -2116,7 +2129,7 @@
           jo_t* end_of_this_case = tos(compiling_stack);
           p_compiling_stack_inc();
           here(str2jo("drop"));
-          try_compile_square();
+          compile_maybe_square();
 
           here(JO_INS_JMP);
           case_ends[counter] = tos(compiling_stack);
