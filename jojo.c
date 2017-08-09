@@ -13,6 +13,9 @@
   #include <signal.h>
   #include <limits.h>
   #include <stdarg.h>
+  #include <sys/socket.h>
+  #include <netdb.h>
+  #include <arpa/inet.h>
   typedef enum { false, true } bool;
   // typedef intptr_t cell;
   typedef intmax_t cell;
@@ -1042,17 +1045,6 @@
       jo_t* jojo = pop(return_stack);
       push(return_stack, jojo + 1);
     }
-    struct stack* compiling_stack; // of jojo
-
-    void p_compiling_stack_inc() {
-      jo_t* jojo = pop(compiling_stack);
-      push(compiling_stack, jojo + 1);
-    }
-    void here(cell n) {
-      jo_t* jojo = pop(compiling_stack);
-      jojo[0] = n;
-      push(compiling_stack, jojo + 1);
-    }
     typedef enum {
       GC_STATE_MARKING,
       GC_STATE_SWEEPING,
@@ -1820,6 +1812,17 @@
     void expose_local() {
       add_prim("ins/get-local", ins_get_local);
       add_prim("ins/set-local", ins_set_local);
+    }
+    struct stack* compiling_stack; // of jojo
+
+    void p_compiling_stack_inc() {
+      jo_t* jojo = pop(compiling_stack);
+      push(compiling_stack, jojo + 1);
+    }
+    void here(cell n) {
+      jo_t* jojo = pop(compiling_stack);
+      jojo[0] = n;
+      push(compiling_stack, jojo + 1);
     }
       // :local
       bool get_local_string_p(char* str) {
@@ -2661,6 +2664,213 @@
       add_data_exe("<closure>", exe_closure, J(".local-env", ".jojo"));
       add_prim_keyword("jojo", k_closure);
     }
+    void p_tcp_socket_listen() {
+      // [:service <string> :backlog <int>] -> [<socket>]
+
+      struct addrinfo hints, *servinfo, *p;
+      int yes = 1;
+
+      struct obj a = object_stack_pop();
+      int backlog = a.data;
+
+      struct obj b = object_stack_pop();
+      struct object_entry* bo = b.data;
+      char* service = bo->pointer;
+
+      memset(&hints, 0, sizeof hints);
+      hints.ai_family = AF_UNSPEC;
+      hints.ai_socktype = SOCK_STREAM;
+      hints.ai_flags = AI_PASSIVE;
+
+      int rv = getaddrinfo(NULL, service, &hints, &servinfo);
+      if (rv != 0) {
+        report("- p_tcp_socket_listen fail to getaddrinfo\n");
+        report("  service : %s\n", service);
+        report("getaddrinfo: %s\n", gai_strerror(rv));
+        p_debug();
+        return;
+      }
+
+      int sockfd;
+      for(p = servinfo; p != NULL; p = p->ai_next) {
+        sockfd = socket(p->ai_family,
+                        p->ai_socktype,
+                        p->ai_protocol);
+        if (sockfd == -1) { continue; }
+        // ><><>< why setsockopt ?
+        if (setsockopt(sockfd,
+                       SOL_SOCKET,
+                       SO_REUSEADDR, &yes, sizeof(int)) == -1) {
+          report("- p_tcp_socket_listen fail to listen\n");
+          report("  service : %s\n", service);
+          perror("  setsockopt error : ");
+          p_debug();
+        }
+        if (bind(sockfd, p->ai_addr, p->ai_addrlen) == -1) {
+          close(sockfd);
+          continue;
+        }
+        break;
+      }
+      freeaddrinfo(servinfo);
+
+      if (p == NULL)  {
+        report("- p_tcp_socket_listen fail to bind\n");
+        report("  service : %s\n", service);
+        p_debug();
+      }
+
+      if (listen(sockfd, backlog) == -1) {
+        report("- p_tcp_socket_listen fail to listen\n");
+        report("  service : %s\n", service);
+        perror("  listen error : ");
+        p_debug();
+      }
+
+      object_stack_push(str2jo("<socket>"), sockfd);
+    }
+    // get sockaddr, ipv4 or ipv6:
+    void *get_in_addr(struct sockaddr *sa) {
+      if (sa->sa_family == AF_INET) {
+        return &(((struct sockaddr_in*)sa)->sin_addr);
+      }
+      return &(((struct sockaddr_in6*)sa)->sin6_addr);
+    }
+
+    void p_socket_accept() {
+      // [:sockfd <socket>] ->
+      // [:newfd <socket> :connector-address <string>]
+
+      struct obj a = object_stack_pop();
+      int sockfd = a.data;
+
+      struct sockaddr_storage their_addr; // connector's address information
+      socklen_t sin_size;
+      char str[INET6_ADDRSTRLEN];
+
+      sin_size = sizeof their_addr;
+      int newfd = accept(sockfd, (struct sockaddr *)&their_addr, &sin_size);
+      if (newfd == -1) {
+        report("- p_socket_accept fail\n");
+        perror("  accept error : ");
+        return;
+      }
+
+      inet_ntop(their_addr.ss_family,
+                get_in_addr((struct sockaddr *)&their_addr),
+                str,
+                sizeof(str));
+
+      object_stack_push(str2jo("<socket>"), newfd);
+
+      struct object_entry* object_entry = new_record_object_entry();
+      object_entry->gc_actor = gc_free;
+      object_entry->pointer = strdup(str);
+
+      object_stack_push(TAG_STRING, object_entry);
+    }
+    void p_tcp_socket_connect() {
+      // [:host <string> :service <string>] -> [<socket>]
+
+      struct obj a = object_stack_pop();
+      struct object_entry* ao = a.data;
+      char* service = ao->pointer;
+
+      struct obj b = object_stack_pop();
+      struct object_entry* bo = b.data;
+      char* host = bo->pointer;
+
+      struct addrinfo hints, *servinfo, *p;
+
+      memset(&hints, 0, sizeof hints);
+      hints.ai_family = AF_UNSPEC;
+      hints.ai_socktype = SOCK_STREAM;
+
+      int rv = getaddrinfo(host, service, &hints, &servinfo);
+      if (rv != 0) {
+        report("- p_tcp_socket_connect fail to getaddrinfo\n");
+        report("  host : %s\n", host);
+        report("  service : %s\n", service);
+        report("  getaddrinfo error : %s\n", gai_strerror(rv));
+        p_debug();
+        return;
+      }
+
+      int sockfd;
+      for(p = servinfo; p != NULL; p = p->ai_next) {
+        sockfd = socket(p->ai_family,
+                        p->ai_socktype,
+                        p->ai_protocol);
+        if (sockfd == -1) { continue; }
+        if (connect(sockfd, p->ai_addr, p->ai_addrlen) == -1) {
+          close(sockfd);
+          continue;
+        }
+        break;
+      }
+      freeaddrinfo(servinfo);
+
+      if (p == NULL)  {
+        report("- p_tcp_socket_connect fail to connect\n");
+        report("  host : %s\n", host);
+        report("  service : %s\n", service);
+        p_debug();
+      }
+
+      object_stack_push(str2jo("<socket>"), sockfd);
+    }
+    void p_socket_send() {
+      // [<socket> <string>] -> []
+
+      struct obj a = object_stack_pop();
+      struct object_entry* ao = a.data;
+      char* str = ao->pointer;
+
+      struct obj b = object_stack_pop();
+      int sockfd = b.data;
+
+      if (send(sockfd, str, strlen(str), 0) == -1) {
+        report("- p_socket_send fail\n");
+        perror("  send error : ");
+      }
+    }
+    void p_socket_recv() {
+      // [<socket>] -> [<string>]
+      struct obj a = object_stack_pop();
+      int sockfd = a.data;
+
+      char* buf[1024];
+
+      ssize_t real_bytes = recv(sockfd, buf, 1024-1, 0);
+      if (real_bytes == -1) {
+        report("- p_socket_recv fail\n");
+        perror("  recv error : ");
+      }
+
+      struct object_entry* object_entry = new_record_object_entry();
+      object_entry->gc_actor = gc_free;
+      object_entry->pointer = strdup(buf);
+
+      object_stack_push(TAG_STRING, object_entry);
+    }
+    void p_close() {
+      // [:sockfd <socket>] -> []
+      struct obj a = object_stack_pop();
+      int sockfd = a.data;
+      if (close(sockfd) == -1) {
+        report("- p_close fail\n");
+        perror("  close error : ");
+      };
+    }
+    void expose_socket() {
+      add_atom_data("<socket>", gc_ignore);
+      add_prim("tcp-socket-listen", p_tcp_socket_listen);
+      add_prim("socket-accept", p_socket_accept);
+      add_prim("tcp-socket-connect", p_tcp_socket_connect);
+      add_prim("socket-send", p_socket_send);
+      add_prim("socket-recv", p_socket_recv);
+      add_prim("close", p_close);
+    }
     cell cmd_number;
 
     void p_cmd_number() {
@@ -3020,6 +3230,7 @@
       expose_string();
       expose_int();
       expose_closure();
+      expose_socket();
       expose_system();
       expose_play();
     }
