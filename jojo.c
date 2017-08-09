@@ -1527,6 +1527,11 @@
       struct obj a = object_stack_pop();
       object_stack_push(TAG_JO, a.tag);
     }
+    void p_eq_p() {
+      struct obj a = object_stack_pop();
+      struct obj b = object_stack_pop();
+      object_stack_push(TAG_BOOL, (b.tag == a.tag) && (b.data == a.data));
+    }
     void expose_object() {
       init_object_record();
 
@@ -1550,6 +1555,7 @@
 
 
       add_prim("tag", p_tag);
+      add_prim("eq?", p_eq_p);
     }
     void exe(jo_t tag, cell data) {
       struct class* class = tag->data;
@@ -2029,31 +2035,6 @@
     // of data and tag
     void expose_compiler() {
 
-    }
-    void k_jojo() {
-      here(JO_INS_JMP);
-      jo_t* end_of_jojo = tos(compiling_stack);
-      p_compiling_stack_inc();
-
-      jo_t* jojo = tos(compiling_stack);
-
-      push(current_compiling_exe_stack, jojo);
-      push(current_compiling_exe_stack, TAG_JOJO);
-      {
-        compile_until_meet_jo(ROUND_KET);
-        here(JO_END);
-        here(0);
-        here(0);
-      }
-      drop(current_compiling_exe_stack);
-      drop(current_compiling_exe_stack);
-
-      end_of_jojo[0] = (jo_t*)tos(compiling_stack) - end_of_jojo;
-
-      here(JO_INS_LIT); here(TAG_JOJO); here(jojo);
-    }
-    void expose_jojo() {
-      add_prim_keyword("jojo", k_jojo);
     }
     void k_ignore() {
       while (true) {
@@ -2535,11 +2516,6 @@
       struct obj b = object_stack_pop();
       object_stack_push(TAG_INT, b.data % a.data);
     }
-    void p_eq_p() {
-      struct obj a = object_stack_pop();
-      struct obj b = object_stack_pop();
-      object_stack_push(TAG_BOOL, b.data == a.data);
-    }
     void p_gt_p() {
       struct obj a = object_stack_pop();
       struct obj b = object_stack_pop();
@@ -2578,7 +2554,6 @@
       add_prim("div", p_div);
       add_prim("mod", p_mod);
 
-      add_prim("eq?", p_eq_p);
       add_prim("gt?", p_gt_p);
       add_prim("lt?", p_lt_p);
       add_prim("gteq?", p_gteq_p);
@@ -2684,7 +2659,7 @@
       add_prim("current-local-env", p_current_local_env);
       add_atom_data("<local-env>", gc_local_env);
       add_data_exe("<closure>", exe_closure, J(".local-env", ".jojo"));
-      add_prim_keyword("clo", k_closure);
+      add_prim_keyword("jojo", k_closure);
     }
     cell cmd_number;
 
@@ -3044,7 +3019,6 @@
       expose_bool();
       expose_string();
       expose_int();
-      expose_jojo();
       expose_closure();
       expose_system();
       expose_play();
