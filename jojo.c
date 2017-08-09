@@ -1158,6 +1158,28 @@
         cell* fields = object_entry->pointer;
         set_field_data(fields, field_index, data);
       }
+    struct obj get_field(jo_t class_tag, struct object_entry* object_entry, jo_t name) {
+      struct class* class = class_tag->data;
+      cell index = class_field_name_to_index(class, name);
+      jo_t tag = get_object_field_tag(object_entry, index);
+      cell data = get_object_field_data(object_entry, index);
+
+      if (tag == TAG_UNINITIALISED_FIELD_PLACE_HOLDER) {
+        object_stack_push(class_tag, object_entry);
+        report("- get_field fail\n");
+        report("  field is uninitialised\n");
+        report("  field_name : %s\n", jo2str(name));
+        report("  class_name : %s\n", jo2str(class->class_name));
+        report("  see top of object_stack for the object\n");
+        p_debug();
+      }
+      else {
+        struct obj a;
+        a.tag = tag;
+        a.data = data;
+        return a;
+      }
+    }
     void ins_get_field() {
       struct ret rp = return_stack_tos();
       return_stack_inc();
@@ -1331,7 +1353,7 @@
 
       return object_entry;
     }
-      void add_atom_class_exe(class_name, gc_actor, executer)
+      void add_atom_data_exe(class_name, gc_actor, executer)
         char* class_name;
         gc_actor_t gc_actor;
         executer_t executer;
@@ -1351,13 +1373,13 @@
         jo_t name = str2jo(class_name);
         bind_name(name, str2jo("<class>"), class);
       }
-      void add_atom_class(class_name, gc_actor)
+      void add_atom_data(class_name, gc_actor)
         char* class_name;
         gc_actor_t gc_actor;
       {
-        add_atom_class_exe(class_name, gc_actor, NULL);
+        add_atom_data_exe(class_name, gc_actor, NULL);
       }
-      void add_class_exe(class_name, executer, fields)
+      void add_data_exe(class_name, executer, fields)
         char* class_name;
         executer_t executer;
         jo_t* fields[];
@@ -1398,17 +1420,17 @@
         free(tmp2);
         bind_name(data_predicate_name, str2jo("<data-predicate>"), class);
       }
-      void add_class(class_name, fields)
+      void add_data(class_name, fields)
         char* class_name;
         jo_t* fields[];
       {
-        add_class_exe(class_name, NULL, fields);
+        add_data_exe(class_name, NULL, fields);
       }
-      void _add_class(name, fields)
+      void _add_data(name, fields)
         jo_t name;
         jo_t fields[];
       {
-        add_class(jo2str(name), fields);
+        add_data(jo2str(name), fields);
       }
       void add_prim_general(tag, function_name, fun)
         jo_t tag;
@@ -1511,20 +1533,20 @@
       add_prim("ins/get-field", ins_get_field);
       add_prim("ins/set-field", ins_set_field);
 
-      add_atom_class("<byte>", gc_ignore);
-      add_atom_class("<int>", gc_ignore);
-      add_atom_class("<jo>", gc_ignore);
-      add_atom_class("<string>", gc_free);
-      add_atom_class("<class>", gc_ignore);
-      add_atom_class("<uninitialised-field-place-holder>", gc_ignore);
+      add_atom_data("<byte>", gc_ignore);
+      add_atom_data("<int>", gc_ignore);
+      add_atom_data("<jo>", gc_ignore);
+      add_atom_data("<string>", gc_free);
+      add_atom_data("<class>", gc_ignore);
+      add_atom_data("<uninitialised-field-place-holder>", gc_ignore);
 
-      add_atom_class_exe("<prim>", gc_ignore, exe_prim);
-      add_atom_class_exe("<prim-keyword>", gc_ignore, exe_prim_keyword);
-      add_atom_class_exe("<jojo>", gc_ignore, exe_jojo);
-      add_atom_class_exe("<keyword>", gc_ignore, exe_keyword);
-      add_atom_class_exe("<set-global-variable>", gc_ignore, exe_set_global_variable);
-      add_atom_class_exe("<data-constructor>", gc_ignore, exe_data_constructor);
-      add_atom_class_exe("<data-predicate>", gc_ignore, exe_data_predicate);
+      add_atom_data_exe("<prim>", gc_ignore, exe_prim);
+      add_atom_data_exe("<prim-keyword>", gc_ignore, exe_prim_keyword);
+      add_atom_data_exe("<jojo>", gc_ignore, exe_jojo);
+      add_atom_data_exe("<keyword>", gc_ignore, exe_keyword);
+      add_atom_data_exe("<set-global-variable>", gc_ignore, exe_set_global_variable);
+      add_atom_data_exe("<data-constructor>", gc_ignore, exe_data_constructor);
+      add_atom_data_exe("<data-predicate>", gc_ignore, exe_data_predicate);
 
 
       add_prim("tag", p_tag);
@@ -1713,11 +1735,15 @@
       string_unread(str);
       byte_unread(' ');
     }
-    void p_nl() {
+    void p_newline() {
       output_stack_push(tos(writing_stack), '\n');
     }
+    void p_space() {
+      output_stack_push(tos(writing_stack), ' ');
+    }
     void expose_rw() {
-      add_prim("nl", p_nl);
+      add_prim("newline", p_newline);
+      add_prim("space", p_space);
     }
     cell local_find(jo_t name) {
       // return index of local_record
@@ -2004,6 +2030,31 @@
     void expose_compiler() {
 
     }
+    void k_jojo() {
+      here(JO_INS_JMP);
+      jo_t* end_of_jojo = tos(compiling_stack);
+      p_compiling_stack_inc();
+
+      jo_t* jojo = tos(compiling_stack);
+
+      push(current_compiling_exe_stack, jojo);
+      push(current_compiling_exe_stack, TAG_JOJO);
+      {
+        compile_until_meet_jo(ROUND_KET);
+        here(JO_END);
+        here(0);
+        here(0);
+      }
+      drop(current_compiling_exe_stack);
+      drop(current_compiling_exe_stack);
+
+      end_of_jojo[0] = (jo_t*)tos(compiling_stack) - end_of_jojo;
+
+      here(JO_INS_LIT); here(TAG_JOJO); here(jojo);
+    }
+    void expose_jojo() {
+      add_prim_keyword("jojo", k_jojo);
+    }
     void k_ignore() {
       while (true) {
         jo_t s = read_raw_jo();
@@ -2256,14 +2307,14 @@
     }
     #define MAX_FIELDS 1024
 
-    void k_add_class() {
+    void k_add_data() {
       jo_t name = read_jo();
       jo_t fields[MAX_FIELDS];
       cell i = 0;
       while (true) {
         if (i >= MAX_FIELDS) {
           k_ignore();
-          report("- k_add_class fail\n");
+          report("- k_add_data fail\n");
           report("  too many fields\n");
           report("  MAX_FIELDS : %ld\n", MAX_FIELDS);
           return;
@@ -2276,9 +2327,9 @@
         fields[i] = field;
         i++;
       }
-      _add_class(name, fields);
+      _add_data(name, fields);
     }
-    void k_add_fun() {
+    void k_add_jojo() {
       jo_t fun_name = read_jo();
       jo_t* jojo = tos(compiling_stack);
 
@@ -2298,8 +2349,8 @@
     void expose_top() {
       add_prim_keyword("run", k_run);
       add_prim_keyword("+var", k_add_var);
-      add_prim_keyword("+jojo", k_add_fun);
-      add_prim_keyword("+data", k_add_class);
+      add_prim_keyword("+jojo", k_add_jojo);
+      add_prim_keyword("+data", k_add_data);
     }
     void p_print_object_stack() {
       cell length = stack_length(object_stack);
@@ -2359,7 +2410,7 @@
       object_stack_push(TAG_BOOL, a.data || b.data);
     }
     void expose_bool() {
-      add_atom_class("<bool>", gc_ignore);
+      add_atom_data("<bool>", gc_ignore);
 
       add_prim("true", p_true);
       add_prim("false", p_false);
@@ -2367,16 +2418,16 @@
       add_prim("and", p_and);
       add_prim("or", p_or);
     }
-    void write_string(char* str) {
+    void string_write(char* str) {
       while (str[0] != '\0') {
         write_byte(str[0]);
         str++;
       }
     }
-    void p_write_string() {
+    void p_string_write() {
       struct obj a = object_stack_pop();
       struct object_entry* ao = a.data;
-      write_string(ao->pointer);
+      string_write(ao->pointer);
     }
     void p_string_len() {
       struct obj a = object_stack_pop();
@@ -2439,7 +2490,7 @@
       object_stack_push(TAG_BOOL, string_equal(ao->pointer, ao->pointer));
     }
     void expose_string() {
-      add_prim("write-stringw", p_write_string);
+      add_prim("string-write", p_string_write);
       add_prim("string-len", p_string_len);
       add_prim("string-ref", p_string_ref);
       add_prim("string-cat", p_string_cat);
@@ -2509,11 +2560,11 @@
       struct obj b = object_stack_pop();
       object_stack_push(TAG_BOOL, b.data <= a.data);
     }
-    void p_write_int() {
+    void p_int_write() {
       char buffer [32];
       struct obj a = object_stack_pop();
       sprintf(buffer, "%ld", a.data);
-      write_string(buffer);
+      string_write(buffer);
     }
     void expose_int() {
       add_prim("inc", p_inc);
@@ -2533,7 +2584,7 @@
       add_prim("gteq?", p_gteq_p);
       add_prim("lteq?", p_lteq_p);
 
-      add_prim("write-int", p_write_int);
+      add_prim("int-write", p_int_write);
     }
     void gc_local_env(gc_state_t gc_state, struct object_entry* object_entry) {
       if (gc_state == GC_STATE_MARKING) {
@@ -2579,15 +2630,12 @@
       }
     }
     void exe_closure(struct object_entry* closure) {
-      object_stack_push(TAG_CLOSURE, closure);
-      jo_apply(str2jo(".local-env"));
-      struct obj a = object_stack_pop();
+
+      struct obj a = get_field(TAG_CLOSURE, closure, str2jo(".local-env"));
       struct object_entry* ao = a.data;
       struct local* lr = ao->pointer;
 
-      object_stack_push(TAG_CLOSURE, closure);
-      jo_apply(str2jo(".jojo"));
-      struct obj b = object_stack_pop();
+      struct obj b = get_field(TAG_CLOSURE, closure, str2jo(".jojo"));
       jo_t* jojo = b.data;
 
       cell local_counter = current_local_counter;
@@ -2618,18 +2666,24 @@
 
       here(JO_INS_LIT); here(TAG_JOJO); here(jojo);
       here(JO_INS_LIT); here(TAG_CLOSURE); here(closure);
-      here(str2jo(".jojo!"));
+      {
+        here(JO_INS_SET_FIELD);
+        here(str2jo(".jojo"));
+      }
 
       here(str2jo("current-local-env"));
       here(JO_INS_LIT); here(TAG_CLOSURE); here(closure);
-      here(str2jo(".local-env!"));
+      {
+        here(JO_INS_SET_FIELD);
+        here(str2jo(".local-env"));
+      }
 
       here(JO_INS_LIT); here(TAG_CLOSURE); here(closure);
     }
     void expose_closure() {
       add_prim("current-local-env", p_current_local_env);
-      add_atom_class("<local-env>", gc_local_env);
-      add_class_exe("<closure>", exe_closure, J("local-env", "jojo"));
+      add_atom_data("<local-env>", gc_local_env);
+      add_data_exe("<closure>", exe_closure, J(".local-env", ".jojo"));
       add_prim_keyword("clo", k_closure);
     }
     cell cmd_number;
@@ -2990,6 +3044,7 @@
       expose_bool();
       expose_string();
       expose_int();
+      expose_jojo();
       expose_closure();
       expose_system();
       expose_play();

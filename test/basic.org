@@ -2,7 +2,7 @@
 
 * <cons>
 
-  #+begin_src esse
+  #+begin_src jojo
   (+data <null>)
   (+data <cons> .cdr .car)
 
@@ -15,7 +15,7 @@
 
   (run x .cdr .cdr null?)
 
-  (+jojo test1 (note)
+  (+jojo test1
     :x!
     (case :x
       null [1]
@@ -23,7 +23,7 @@
 
   (run x test1)
 
-  (+jojo test2 (note)
+  (+jojo test2
     :x!
     (case :x
       null 1
@@ -49,22 +49,24 @@
 * [test] *control*
 
   #+begin_src jojo
-  (+jojo t2 []
+  (+jojo t2
     (if 1 eq? then 111 end)
     222)
 
-  (+ 1 t2 w)
-  (+ 2 t2 w)
+  (run 1 t2 int-write)
+  (run 2 t2 int-write)
 
-  (+jojo l0 [:x <int>]
+  (+jojo l0
+    :x!
     (if :x 0 eq? then end)
-    (el :x w " " w :x dec (loop)))
+    (el :x int-write " " string-write :x dec (loop)))
 
-  (+ 1000 l0)
+  (run 1000 l0)
 
-  (+jojo l1 [:x <int>]
+  (+jojo l1
+    :x!
     (if :x 0 eq? then end)
-    (el :x w " " w :x dec (recur)))
+    (el :x int-write " " string-write :x dec (recur)))
 
-  (+ 1000 l1)
+  (run 1000 l1)
   #+end_src
