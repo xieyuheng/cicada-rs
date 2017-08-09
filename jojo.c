@@ -2066,6 +2066,74 @@
         return;
       }
     }
+    //   (case [...]
+    //     data-constructor-name [...]
+    //     ...)
+    //   ==>
+
+    //     [...]
+
+    //     dup tag 'tag eq?
+    //     jump_if_false[:end-of-this-case]
+    //     drop [...]
+    //     jump[:end-of-case]
+    //   :end-of-this-case
+
+    //     ...
+
+    //   :end-of-case
+    //     drop
+
+    void try_compile_square() {
+      jo_t first_jo = read_jo();
+      if (first_jo == SQUARE_BAR) { compile_until_meet_jo(SQUARE_KET); }
+      else { compile_jo(first_jo); }
+    }
+
+    void k_case() {
+      try_compile_square();
+      cell counter = 0;
+      cell case_ends[256];
+
+      jo_t dc;
+      while (true) {
+        dc = read_jo();
+        if (dc == ROUND_KET) { break; }
+        {
+          here(str2jo("dup"));
+          here(str2jo("tag"));
+          {
+            char* tmp = malloc(strlen(jo2str(dc) + 2 + 1));
+            tmp[0] = '\0';
+            strcat(tmp, "<");
+            strcat(tmp, jo2str(dc));
+            strcat(tmp, ">");
+            here(JO_INS_LIT); here(TAG_JO); here(str2jo(tmp));
+            free(tmp);
+          }
+          here(str2jo("eq?"));
+          here(JO_INS_JZ);
+          jo_t* end_of_this_case = tos(compiling_stack);
+          p_compiling_stack_inc();
+          here(str2jo("drop"));
+          try_compile_square();
+
+          here(JO_INS_JMP);
+          case_ends[counter] = tos(compiling_stack);
+          counter++;
+          p_compiling_stack_inc();
+
+          end_of_this_case[0] = (jo_t*)tos(compiling_stack) - end_of_this_case;
+        }
+      }
+
+      jo_t* end_of_case;
+      while (counter > 0) {
+        counter--;
+        end_of_case = case_ends[counter];
+        end_of_case[0] = (jo_t*)tos(compiling_stack) - end_of_case;
+      }
+    }
     void ins_tail_call() {
       struct ret rp = return_stack_pop();
       current_local_counter = rp.local_counter;
@@ -2131,6 +2199,8 @@
 
       add_prim_keyword("if", k_if);
       add_prim_keyword("el", p_compile_until_round_ket);
+
+      add_prim_keyword("case", k_case);
 
       add_prim("ins/tail-call", ins_tail_call);
       add_prim_keyword("tail-call", k_tail_call);
