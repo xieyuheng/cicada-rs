@@ -1,17 +1,18 @@
 #+property: tangle jojo.c
 #+title:  jojo
-
+- fix k_add_data
+  fields should be malloc-ed
 * [todo-stack]
-
-  - improve socket API
-
-  - module system
-
-  - a way to load core.jo
 
   - p_debug
   - stepper
   - signal handler
+
+  - module system
+
+  - move socket to module
+
+  - improve socket API
 
   - use EOPL to test the language
 
@@ -3453,7 +3454,12 @@
         fields[i] = field;
         i++;
       }
-      _add_data(name, fields);
+      jo_t* fresh_fields = (jo_t*)malloc(i*sizeof(jo_t));
+      while (i > 0) {
+        i--;
+        fresh_fields[i] = fields[i];
+      }
+      _add_data(name, fresh_fields);
     }
     #+end_src
 

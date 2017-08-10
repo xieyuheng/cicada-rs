@@ -2311,7 +2311,12 @@
         fields[i] = field;
         i++;
       }
-      _add_data(name, fields);
+      jo_t* fresh_fields = (jo_t*)malloc(i*sizeof(jo_t));
+      while (i > 0) {
+        i--;
+        fresh_fields[i] = fields[i];
+      }
+      _add_data(name, fresh_fields);
     }
     void k_add_jojo() {
       jo_t fun_name = read_jo();
@@ -2736,7 +2741,6 @@
       }
       return &(((struct sockaddr_in6*)sa)->sin6_addr);
     }
-
     void p_socket_accept() {
       // [:sockfd <socket>] ->
       // [:newfd <socket> :connector-address <string>]

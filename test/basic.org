@@ -6,31 +6,22 @@
   (+data <null>)
   (+data <cons> .cdr .car)
 
-  (+var x
+  (+var a-list
     null
     1 cons
     2 cons)
 
-  (run x .cdr .cdr tag '<null> eq?)
+  (+jojo list-print :l!
+    (case :l
+      null ["null " string-write]
+      cons [:l .cdr (recur)
+            :l .car int-write " " string-write
+            "cons " string-write]))
 
-  (run x .cdr .cdr null?)
-
-  (+jojo test1 :x!
-    (case :x
-      null [1]
-      cons [2]))
-
-  (run x test1)
-
-  (+jojo test2 :x!
-    (case :x
-      null 1
-      cons 2))
-
-  (run null test2)
+  (run a-list list-print)
   #+end_src
 
-* [test] <closure>
+* <closure>
 
   #+begin_src jojo
   (+jojo t0 1 :a! 2 :b! (jojo :a :b add))
@@ -44,7 +35,7 @@
   (run x2! x2)
   #+end_src
 
-* [test] *control*
+* *control*
 
   #+begin_src jojo
   (+jojo t2
@@ -67,7 +58,7 @@
   (run 1000 l1)
   #+end_src
 
-* [test] socket
+* <socket>
 
 *** server
 
@@ -77,8 +68,7 @@
       server socket-accept :addr! :client!
       "got a connection from " string-write :addr string-write newline
       :client "thank you for connecting" socket-send
-      :client close
-      (loop))
+      :client close (loop))
     (run run-server)
     #+end_src
 
@@ -86,5 +76,41 @@
 
     #+begin_src jojo
     (+var clinet "cicada" "8888" tcp-socket-connect)
-    (run clinet socket-recv string-write newline)
+    (+jojo run-clinet
+      clinet socket-recv string-write newline)
+    (run run-clinet)
+    #+end_src
+
+* <monad>
+
+*** maybe
+
+    #+begin_src jojo
+    (note maybe)
+    (+data <nothing>)
+    (+data <just> .it)
+
+    (note tree)
+    (+data <leaf> .value)
+    (+data <node> .left .right)
+
+    (+var a-tree
+      1 leaf 2 leaf node
+      3 leaf 4 leaf node
+      5 leaf node
+      node)
+
+    (+jojo tree-write :t!
+      (case :t
+        leaf [:t .value int-write " leaf " string-write]
+        node [:t .left (recur)
+              :t .right (recur) "node " string-write]))
+
+    (note
+      (+jojo tree-map :t!
+        (case :t
+          leaf []
+          node [])))
+
+    (run a-tree tree-write)
     #+end_src
