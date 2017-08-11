@@ -2076,21 +2076,18 @@
         return_stack_push(jojo + offset, rp1.local_counter);
       }
     }
-    // - without else
+    //// without else
     //   (if a b p? then c d)
-    //   ==>
-    //     a b p?
-    //     jump_if_false[:end-of-then]
+    //// ==>
+    //     a b p? jz[:end-of-then]
     //     c d
     //   :end-of-then
 
-    // - with else
+    //// with else
     //   (if a b p? then c d else e f)
-    //   ==>
-    //     a b p?
-    //     jump_if_false[:end-of-then]
-    //     c d
-    //     jump[:end-of-else]
+    //// ==>
+    //     a b p? jz[:end-of-then]
+    //     c d jmp[:end-of-else]
     //   :end-of-then
     //     e f
     //   :end-of-else
@@ -2123,18 +2120,12 @@
     //   (case [...]
     //     data-constructor-name [...]
     //     ...)
-    //   ==>
-
+    //// ==>
     //     [...]
-
-    //     dup tag 'tag eq?
-    //     jump_if_false[:end-of-this-case]
-    //     drop [...]
-    //     jump[:end-of-case]
+    //     dup tag 'tag eq? jz[:end-of-this-case]
+    //     drop [...] jmp[:end-of-case]
     //   :end-of-this-case
-
-    //     ...
-
+    //     ... ...
     //   :end-of-case
     //     drop
 
@@ -2143,43 +2134,86 @@
       cell counter = 0;
       cell case_ends[256];
 
-      jo_t dc;
       while (true) {
-        dc = read_jo();
+        jo_t dc = read_jo();
         if (dc == ROUND_KET) { break; }
+
+        here(str2jo("dup"));
+        here(str2jo("tag"));
         {
-          here(str2jo("dup"));
-          here(str2jo("tag"));
-          {
-            char* tmp = malloc(strlen(jo2str(dc) + 2 + 1));
-            tmp[0] = '\0';
-            strcat(tmp, "<");
-            strcat(tmp, jo2str(dc));
-            strcat(tmp, ">");
-            here(JO_INS_LIT); here(TAG_JO); here(str2jo(tmp));
-            free(tmp);
-          }
-          here(str2jo("eq?"));
-          here(JO_INS_JZ);
-          jo_t* end_of_this_case = tos(compiling_stack);
-          p_compiling_stack_inc();
-          here(str2jo("drop"));
-          compile_maybe_square();
-
-          here(JO_INS_JMP);
-          case_ends[counter] = tos(compiling_stack);
-          counter++;
-          p_compiling_stack_inc();
-
-          end_of_this_case[0] = (jo_t*)tos(compiling_stack) - end_of_this_case;
+          char* tmp = malloc(strlen(jo2str(dc) + 2 + 1));
+          tmp[0] = '\0';
+          strcat(tmp, "<");
+          strcat(tmp, jo2str(dc));
+          strcat(tmp, ">");
+          here(JO_INS_LIT); here(TAG_JO); here(str2jo(tmp));
+          free(tmp);
         }
+        here(str2jo("eq?"));
+
+        here(JO_INS_JZ);
+        jo_t* end_of_this_case = tos(compiling_stack);
+        p_compiling_stack_inc();
+        here(str2jo("drop"));
+        compile_maybe_square();
+
+        here(JO_INS_JMP);
+        case_ends[counter] = tos(compiling_stack);
+        counter++;
+        p_compiling_stack_inc();
+
+        end_of_this_case[0] = (jo_t*)tos(compiling_stack) - end_of_this_case;
       }
 
-      jo_t* end_of_case;
       while (counter > 0) {
         counter--;
-        end_of_case = case_ends[counter];
+        jo_t* end_of_case = case_ends[counter];
         end_of_case[0] = (jo_t*)tos(compiling_stack) - end_of_case;
+      }
+    }
+    //   (cond
+    //     [:t1 leaf? :t2 leaf? and] [...]
+    //     [:t1 node? :t2 node? and] [...]
+    //     else [else-body])
+    //// ==>
+    //     [:t1 leaf? :t2 leaf? and] jz[:end-of-this-cond]
+    //     [...] jmp[:end-of-cond]
+    //   :end-of-this-cond
+    //     [:t1 node? :t2 node? and] jz[:end-of-this-cond]
+    //     [...] jmp[:end-of-cond]
+    //   :end-of-this-cond
+    //     [else-body]
+    //   :end-of-cond
+
+    void k_cond() {
+      cell counter = 0;
+      cell cond_ends[256];
+      while (true) {
+        jo_t s = read_jo();
+        if (s == ROUND_KET) { break; }
+        else if (s == JO_ELSE) {
+          compile_maybe_square();
+          k_ignore();
+          break;
+        }
+        jo_unread(s);
+        compile_maybe_square();
+        here(JO_INS_JZ);
+        jo_t* end_of_this_cond = tos(compiling_stack);
+        p_compiling_stack_inc();
+
+        compile_maybe_square();
+        here(JO_INS_JMP);
+        cond_ends[counter] = tos(compiling_stack);
+        counter++;
+        p_compiling_stack_inc();
+
+        end_of_this_cond[0] = (jo_t*)tos(compiling_stack) - end_of_this_cond;
+      }
+      while (counter > 0) {
+        counter--;
+        jo_t* end_of_cond = cond_ends[counter];
+        end_of_cond[0] = (jo_t*)tos(compiling_stack) - end_of_cond;
       }
     }
     void ins_tail_call() {
@@ -2249,6 +2283,7 @@
       add_prim_keyword("el", p_compile_until_round_ket);
 
       add_prim_keyword("case", k_case);
+      add_prim_keyword("cond", k_cond);
 
       add_prim("ins/tail-call", ins_tail_call);
       add_prim_keyword("tail-call", k_tail_call);
@@ -2663,11 +2698,16 @@
 
       here(JO_INS_LIT); here(TAG_CLOSURE); here(closure);
     }
+    void p_closure_apply() {
+      struct obj a = object_stack_pop();
+      exe_closure(a.data);
+    }
     void expose_closure() {
       add_prim("current-local-env", p_current_local_env);
       add_atom_data("<local-env>", gc_local_env);
       add_data_exe("<closure>", exe_closure, J(".local-env", ".jojo"));
-      add_prim_keyword("jojo", k_closure);
+      add_prim_keyword("#", k_closure);
+      add_prim("apply", p_closure_apply);
     }
     void p_tcp_socket_listen() {
       // [:service <string> :backlog <int>] -> [<socket>]
