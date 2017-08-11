@@ -1759,13 +1759,7 @@
       return -1;
     }
     void set_local(jo_t name, jo_t tag, cell data) {
-      cell index = local_find(name);
-      if (index != -1) {
-        local_record[index].name = name;
-        local_record[index].local_tag = tag;
-        local_record[index].local_data = data;
-      }
-      else if (current_local_counter < LOCAL_RECORD_SIZE) {
+      if (current_local_counter < LOCAL_RECORD_SIZE) {
         local_record[current_local_counter].name = name;
         local_record[current_local_counter].local_tag = tag;
         local_record[current_local_counter].local_data = data;
@@ -2143,9 +2137,7 @@
         {
           char* tmp = malloc(strlen(jo2str(dc) + 2 + 1));
           tmp[0] = '\0';
-          strcat(tmp, "<");
           strcat(tmp, jo2str(dc));
-          strcat(tmp, ">");
           here(JO_INS_LIT); here(TAG_JO); here(str2jo(tmp));
           free(tmp);
         }
@@ -2341,6 +2333,7 @@
         jo_t field = read_jo();
         if (field == ROUND_KET) {
           fields[i] = NULL;
+          i++;
           break;
         }
         fields[i] = field;
