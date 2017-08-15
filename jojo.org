@@ -1,6 +1,9 @@
 #+property: tangle jojo.c
 #+title:  jojo
-
+- is closure implemented right ?
+- (let)
+- (let-bind)
+- [] as stack -- reversed list
 - run time error for (case) (cond) miss-matching
 - use tag name instead of data constructor name in (case)
 - add else to (case)
@@ -24,11 +27,6 @@
     - by specifing the way to write jojo code in c
 
   - print the rest of the jojo when compilation fail
-
-  - '(...) as <list> of jo
-    - '( ( ) ) as nested list
-    - ><><><
-      how about '( [ ] )
 
   - reader level syntax macro
 
@@ -2645,6 +2643,14 @@
     }
     #+end_src
 
+*** p_read_jo
+
+    #+begin_src c
+    void p_read_jo() {
+      object_stack_push(TAG_JO, read_jo());
+    }
+    #+end_src
+
 *** string_unread
 
     #+begin_src c
@@ -2690,6 +2696,7 @@
 
     #+begin_src c
     void expose_rw() {
+      add_prim("read-jo", p_read_jo);
       add_prim("newline", p_newline);
       add_prim("space", p_space);
     }
@@ -3022,14 +3029,9 @@
         free(tmp);
         return true;
       }
-      else if (used_jo_p(jo)) {
+      else {
         here(jo);
         return true;
-      }
-      else {
-        // no compile before define
-        report("- compile_jo meet undefined jo : %s\n", jo2str(jo));
-        return false;
       }
     }
     #+end_src
@@ -4803,15 +4805,15 @@
     int main(int argc, char** argv) {
       cmd_number = argc;
       cmd_string_array = argv;
+
       init_system();
       init_jotable();
       init_literal_jo();
       init_stacks();
       init_expose();
+
       p_repl_flag_on();
-      {
-        p_print_object_stack();
-      }
+      p_print_object_stack();
       p_repl();
     }
     #+end_src

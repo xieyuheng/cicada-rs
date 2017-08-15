@@ -1718,6 +1718,9 @@
     jo_t read_jo() {
       return read_raw_jo();
     }
+    void p_read_jo() {
+      object_stack_push(TAG_JO, read_jo());
+    }
     void string_unread(char* str) {
       if (str[0] == '\0') {
         return;
@@ -1740,6 +1743,7 @@
       output_stack_push(tos(writing_stack), ' ');
     }
     void expose_rw() {
+      add_prim("read-jo", p_read_jo);
       add_prim("newline", p_newline);
       add_prim("space", p_space);
     }
@@ -1989,14 +1993,9 @@
         free(tmp);
         return true;
       }
-      else if (used_jo_p(jo)) {
+      else {
         here(jo);
         return true;
-      }
-      else {
-        // no compile before define
-        report("- compile_jo meet undefined jo : %s\n", jo2str(jo));
-        return false;
       }
     }
     bool compile_until_meet_jo(jo_t ending_jo) {
@@ -3274,14 +3273,14 @@
     int main(int argc, char** argv) {
       cmd_number = argc;
       cmd_string_array = argv;
+
       init_system();
       init_jotable();
       init_literal_jo();
       init_stacks();
       init_expose();
+
       p_repl_flag_on();
-      {
-        p_print_object_stack();
-      }
+      p_print_object_stack();
       p_repl();
     }

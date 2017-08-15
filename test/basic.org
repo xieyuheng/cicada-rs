@@ -1,61 +1,84 @@
+#+property: tangle basic.jo
 #+title: basic
+- note about concatenative language and state monad !!!
+* [todo-stack]
 
-* <cons>
+  - [] in macro as square-cons
+  - syntax macro
+    - the interface of monad needs nested closure
+      this can not be abstracted by combinator
+      this can only be abstracted by syntax macro
+  - syntax for curry
+    - prefix or postfix ?
+    - from which side of the arguments ?
+    - prefix from left side of the arguments
+      will bring prefix notation back
+    - prefix from right side of the arguments
+      will mimic infix notation
+  - (let-bind) as interface to monad
+  - (case) as macro and to handle multi-value
 
-  #+begin_src jojo
-  (+data <null>)
-  (+data <cons> .cdr .car)
-  (+data <pair> .cdr .car)
+* list
 
-  (run
-    null
-    1 pair
-    2 pair drop)
+*** <null> & <cons>
 
-  (+var a-list
-    null
-    1 cons
-    2 cons)
+    #+begin_src jojo
+    (+data <null>)
+    (+data <cons> .cdr .car)
 
-  (+jojo list-print :f! :l!
-    (case :l
-      <null> ["null" string-write space]
-      <cons> [:l .cdr :f (recur)
-              :l .car :f apply space
-              "cons" string-write space]))
+    (+jojo list-print :f! :l!
+      (case :l
+        <null> ["null" string-write space]
+        <cons> [:l .cdr :f (recur)
+                :l .car :f apply space
+                "cons" string-write space]))
+    #+end_src
 
-  (run a-list (# int-write) list-print)
-  #+end_src
+*** [test]
+
+    #+begin_src jojo
+    (note
+
+      (+var a-list
+        null
+        1 cons
+        2 cons)
+
+      (run a-list (# int-write) list-print))
+    #+end_src
 
 * <closure>
 
-  #+begin_src jojo
-  (+jojo t0 1 :a0! 2 :b0! (# :a0 :b0 add))
-  (run t0 dup
-    apply int-write space
-    apply int-write space
-    newline)
+*** [test]
 
-  (+jojo t1 1 :a! 2 :b! (# :a (# :b t0 apply add)))
-  (run t1 apply apply add)
+    #+begin_src jojo
+    (note
+      (+jojo t0 1 :a0! 2 :b0! (# :a0 :b0 add))
+      (run t0 dup
+        apply int-write space
+        apply int-write space
+        newline)
 
-
-  (+jojo t0 1 :a! (# :a))
-  (+jojo t1 2 :a! (# (# t0 apply)))
-  (run t1 apply apply)
+      (+jojo t1 1 :a! 2 :b! (# :a (# :b t0 apply add)))
+      (run t1 apply apply add)
 
 
-  (+jojo t0 1 :a! (# :a))
-  (+jojo t1 2 :a! (# (# t0)))
-  (run t1 apply apply apply)
+      (+jojo t0 1 :a! (# :a))
+      (+jojo t1 2 :a! (# (# t0 apply)))
+      (run t1 apply apply)
 
 
-  (+jojo t0 1 :a! (# :a))
-  (+jojo t1 (# (# t0 apply)))
-  (run t1 apply apply)
+      (+jojo t0 1 :a! (# :a))
+      (+jojo t1 2 :a! (# (# t0)))
+      (run t1 apply apply apply)
 
-  (run t1 apply)
-  #+end_src
+
+      (+jojo t0 1 :a! (# :a))
+      (+jojo t1 (# (# t0 apply)))
+      (run t1 apply apply)
+
+      (run t1 apply))
+    #+end_src
 
 * <socket>
 
@@ -68,7 +91,7 @@
       "got a connection from " string-write :addr string-write newline
       :client "thank you for connecting" socket-send
       :client close (loop))
-    (run run-server)
+    (note (run run-server))
     #+end_src
 
 *** client
@@ -77,66 +100,125 @@
     (+var clinet "cicada" "8888" tcp-socket-connect)
     (+jojo run-clinet
       clinet socket-recv string-write newline)
-    (run run-clinet)
+    (note (run run-clinet))
     #+end_src
 
 * <monad>
 
-  #+begin_src jojo
-  (+data <nothing>)
-  (+data <just> .v)
+*** maybe
 
-  (+data <leaf> .v)
-  (+data <node> .l .r)
+    #+begin_src jojo
+    (+data <nothing>)
+    (+data <just> .v)
+    #+end_src
 
-  (+var a-tree
-    1 leaf 2 leaf node
-    3 leaf 4 leaf node
-    5 leaf node
-    node)
+*** tree
 
-  (+jojo tree-write :f! :t!
-    (note [tree fun] -> [])
-    (case :t
-      <leaf> [:t .v :f apply "leaf" string-write space]
-      <node> [:t .l :f (recur)
-              :t .r :f (recur) "node" string-write space]))
+    #+begin_src jojo
+    (+data <leaf> .v)
+    (+data <node> .l .r)
 
-  (+jojo tree-map :f! :t!
-    (note [tree fun] -> [tree])
-    (case :t
-      <leaf> [:t .v :f apply leaf]
-      <node> [:t .l :f (recur)
-              :t .r :f (recur) node]))
+    (+jojo tree-write :f! :t!
+      (note [tree fun] -> [])
+      (case :t
+        <leaf> [:t .v :f apply "leaf" string-write space]
+        <node> [:t .l :f (recur)
+                :t .r :f (recur) "node" string-write space]))
 
-  (run a-tree
-    (# 100 add) tree-map
-    (# int-write space) tree-write)
+    (+jojo tree-map :f! :t!
+      (note [tree fun] -> [tree])
+      (case :t
+        <leaf> [:t .v :f apply leaf]
+        <node> [:t .l :f (recur)
+                :t .r :f (recur) node]))
+    #+end_src
 
-  (note
-    (+jojo zip-tree :t1! :t2!
-      (note [tree tree] -> [tree])
-      (cond [:t1 leaf? :t2 leaf? and] [:t1 .v :t2 .v cons leaf]
-            [:t1 node? :t2 node? and] [:t1 .l :t2 .l (recur)
-                                       :t1 .r :t2 .r (recur) node]))
-    (run a-tree dup (# 100 add) tree-map zip-tree
-      (# dup .cdr int-write space
+*** [test] tree
+
+    #+begin_src jojo
+    (+var a-tree
+      1 leaf 2 leaf node
+      3 leaf 4 leaf node
+      5 leaf node
+      node)
+
+    (run a-tree
+      (# 100 add) tree-map
+      (# int-write space) tree-write)
+    #+end_src
+
+*** [note] zip-tree -- do not handle error
+
+    #+begin_src jojo
+    (note
+      (+jojo zip-tree :t1! :t2!
+        (note [tree tree] -> [tree])
+        (cond [:t1 leaf? :t2 leaf? and] [:t1 .v :t2 .v cons leaf]
+              [:t1 node? :t2 node? and] [:t1 .l :t2 .l (recur)
+                                         :t1 .r :t2 .r (recur) node]))
+      (run a-tree dup (# 100 add) tree-map zip-tree
+        (# dup .cdr int-write space
+               .car int-write space
+               "cons" string-write space)
+        tree-write))
+    #+end_src
+
+*** [note] zip-tree -- maybe
+
+    #+begin_src jojo
+    (note
+      (+jojo zip-tree :t1! :t2!
+        (note [tree tree] -> [maybe-tree])
+        (cond [:t1 leaf? :t2 leaf? and]
+              [:t1 .v :t2 .v cons leaf just]
+              [:t1 node? :t2 node? and]
+              (case [:t1 .l :t2 .l (recur) dup :lm!]
+                <nothing> nothing
+                <just> (case [:t1 .r :t2 .r (recur) dup :rm!]
+                         <nothing> nothing
+                         <just> [:lm .v :rm .v node just]))
+              else nothing))
+
+      (+jojo maybe-write :f! :m!
+        (case :m
+          <nothing> ["nothing" string-write space]
+          <just> [:m .v :f apply "just" string-write space]))
+
+      (run a-tree 1 leaf zip-tree
+        (# (# dup .cdr int-write space
              .car int-write space
              "cons" string-write space)
-      tree-write))
+          tree-write)
+        maybe-write)
 
+      (run a-tree dup zip-tree
+        (# (# dup .cdr int-write space
+             .car int-write space
+             "cons" string-write space)
+          tree-write)
+        maybe-write))
+    #+end_src
 
-  (note
+*** zip-tree -- maybe monad
+
+    #+begin_src jojo
+    (+jojo return-maybe just)
+
+    (+jojo bind-maybe :f! :m!
+      (case :m
+        <nothing> nothing
+        <just> [:m .v :f apply]))
+
     (+jojo zip-tree :t1! :t2!
       (note [tree tree] -> [maybe-tree])
       (cond [:t1 leaf? :t2 leaf? and]
-            [:t1 .v :t2 .v cons leaf just]
+            [:t1 .v :t2 .v cons leaf return-maybe]
             [:t1 node? :t2 node? and]
-            (case [:t1 .l :t2 .l (recur) dup :l!]
-              <nothing> nothing
-              <just> (case [:t1 .r :t2 .r (recur) dup :r!]
-                       <nothing> nothing
-                       <just> [:l .v :r .v node just]))
+            [:t1 .l :t2 .l zip-tree
+             (# :l! :t1 .r :t2 .r zip-tree
+               (# :r! :l :r node return-maybe)
+               bind-maybe)
+             bind-maybe]
             else nothing))
 
     (+jojo maybe-write :f! :m!
@@ -156,47 +238,153 @@
                 .car int-write space
                 "cons" string-write space)
          tree-write)
-      maybe-write))
+      maybe-write)
+    #+end_src
+
+*** >< zip-tree -- with macro
+
+    #+begin_src jojo
+    (note
+      (+jojo zip-tree :t1! :t2!
+        (note [tree tree] -> [maybe-tree])
+        (cond [:t1 leaf? :t2 leaf? and]
+              [:t1 .v :t2 .v cons leaf return-maybe]
+              [:t1 node? :t2 node? and]
+              (let-bind bind-maybe
+                :l [:t1 .l :t2 .l zip-tree]
+                :r [:t1 .r :t2 .r zip-tree]
+                [:l :r node return-maybe])
+              else nothing))
+
+      (+keyword let-bind
+        (let-bind bind-maybe
+          :l [:t1 .l :t2 .l zip-tree]
+          :r [:t1 .r :t2 .r zip-tree]
+          [:l :r node return-maybe])
+        [:t1 .l :t2 .l zip-tree
+         (# :l!
+           :t1 .r :t2 .r zip-tree
+           (# :r!
+             :l :r node return-maybe)
+           bind-maybe)
+         bind-maybe]))
 
 
+    (note
+      (let-bind bind-maybe
+        :l [:t1 .l :t2 .l zip-tree]
+        :r [:t1 .r :t2 .r zip-tree]
+        [:l :r node return-maybe])
+      =>
+      [:t1 .l :t2 .l zip-tree
+       (# :l!
+         :t1 .r :t2 .r zip-tree
+         (# :r!
+           :l :r node return-maybe)
+         bind-maybe)
+       bind-maybe])
 
-  (+jojo return-maybe just)
 
-  (+jojo bind-maybe :f! :m!
-    (case :m
-      <nothing> nothing
-      <just> [:m .v :f apply]))
+    (note
 
-  (+jojo zip-tree :t1! :t2!
-    (note [tree tree] -> [maybe-tree])
-    (cond [:t1 leaf? :t2 leaf? and]
-          [:t1 .v :t2 .v cons leaf return-maybe]
-          [:t1 node? :t2 node? and]
-          [:t1 .l :t2 .l (recur)
-           (# :l!
-             :t1 .r :t2 .r (recur)
-             (# :r!
-               :l .v :r .v node return-maybe)
-             bind-maybe)
-           bind-maybe]
-          else nothing))
+      (: bind (-> (M a)
+                  (-> a -- (M b))
+               -- (M b)))
 
-  (+jojo maybe-write :f! :m!
-    (case :m
-      <nothing> ["nothing" string-write space]
-      <just> [:m .v :f apply "just" string-write space]))
+      [(# :t1 .l :t2 .l zip-tree) :l!
+       (# :t1 .r :t2 .r zip-tree) :r!
+       (# @:l @:r node return-maybe)
+       bind-maybe
+       bind-maybe])
+    #+end_src
 
-  (run a-tree 1 leaf zip-tree
-    (# (# dup .cdr int-write space
-              .car int-write space
-              "cons" string-write space)
-       tree-write)
-    maybe-write)
+*** number-tree -- state
 
-  (run a-tree dup zip-tree
-    (# (# dup .cdr int-write space
-              .car int-write space
-              "cons" string-write space)
-       tree-write)
-    maybe-write)
-  #+end_src
+    #+begin_src jojo
+    (+jojo tick
+      (note (-> <int> -- <int> <int>))
+      :x! :x inc :x)
+
+    (+jojo number-tree
+      (note (-> :<t> <tree> -- (-> <int> -- <int> <tree>)))
+      :t!
+      (case :t
+        <leaf> (# :x! :x inc :x leaf)
+        <node> (# :t .l number-tree apply :l!
+                  :t .r number-tree apply :r!
+                  :l :r node)))
+
+    (+var tree-2
+      "1" leaf "2" leaf node
+      "3" leaf "4" leaf node
+      "5" leaf node
+      node)
+
+    (run
+      tree-2 number-tree
+      0 swap apply
+      swap drop
+      (# int-write space) tree-write newline)
+    #+end_src
+
+*** >< number-tree -- state monad
+
+    #+begin_src jojo
+    (note
+      (+jojo return-state
+       (note (-- <v> -> (-- <s> -> <s> <v>)))
+       :v!
+        (# :v))
+
+      (+jojo bind-state
+        (note (-> (-> <s> -- <s> <v1>)
+                  (-> <v1> -- (-> <s> -- <s> <v2>))
+                  -- (-> <s> -- <s> <v2>)))
+        :f! :m!
+        (# :m apply :f apply apply))
+
+      (+jojo tick
+        (note (-> <int> -- <int> <int>))
+        dup inc swap)
+
+      (+jojo number-tree
+        (note (-> :<t> <tree>
+                  -- (-> <int> -- <int> <tree>)))
+        :t!
+        (case :t
+          <leaf> [(# tick)
+                  (# :s! :s leaf return-state)
+                  bind-state]
+          <node> [:t .l number-tree
+                  (# :l! :t .r number-tree
+                         (# :r! :l :r node return-state)
+                         bind-state)
+                  bind-state]))
+
+      (+var tree-0
+        "1" leaf)
+
+      (run
+        tree-0 (# string-write space) tree-write newline)
+
+      (run
+        tree-0 number-tree
+        0 swap apply
+        swap drop
+        (# int-write space) tree-write newline)
+
+      (+var tree-1
+        "1" leaf "2" leaf node)
+
+      (run (note ><><>< error here)
+        tree-1 number-tree
+        0 swap apply
+        swap drop
+        (# int-write space) tree-write newline)
+
+      (+var tree-2
+        "1" leaf "2" leaf node
+        "3" leaf "4" leaf node
+        "5" leaf node
+        node))
+    #+end_src
