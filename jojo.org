@@ -1,6 +1,9 @@
 #+property: tangle jojo.c
 #+title:  jojo
-- is closure implemented right ?
+- p_debug
+- stepper
+- signal handler
+- fix closure
 - (let)
 - (let-bind)
 - [] as stack -- reversed list
@@ -10,10 +13,6 @@
 - syntax for ':local.field' and '@:fun'
 - ',' as 句讀
 * [todo-stack]
-
-  - p_debug
-  - stepper
-  - signal handler
 
   - module system
 
@@ -4075,7 +4074,7 @@
       add_prim("current-local-env", p_current_local_env);
       add_atom_data("<local-env>", gc_local_env);
       add_data_exe("<closure>", exe_closure, J(".local-env", ".jojo"));
-      add_prim_keyword("#", k_closure);
+      add_prim_keyword("%", k_closure);
       add_prim("apply", p_closure_apply);
     }
     #+end_src

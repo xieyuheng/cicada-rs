@@ -2698,7 +2698,7 @@
       add_prim("current-local-env", p_current_local_env);
       add_atom_data("<local-env>", gc_local_env);
       add_data_exe("<closure>", exe_closure, J(".local-env", ".jojo"));
-      add_prim_keyword("#", k_closure);
+      add_prim_keyword("%", k_closure);
       add_prim("apply", p_closure_apply);
     }
     void p_tcp_socket_listen() {

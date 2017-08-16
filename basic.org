@@ -1,9 +1,9 @@
 #+property: tangle basic.jo
 #+title: basic
-- note about concatenative language and state monad !!!
+
 * [todo-stack]
 
-  - [] in macro as square-cons
+  - let unnamed data be able to return by closure (%)
   - syntax macro
     - the interface of monad needs nested closure
       this can not be abstracted by combinator
@@ -44,7 +44,7 @@
         1 cons
         2 cons)
 
-      (run a-list (# int-write) list-print))
+      (run a-list (% int-write) list-print))
     #+end_src
 
 * <closure>
@@ -53,31 +53,39 @@
 
     #+begin_src jojo
     (note
-      (+jojo t0 1 :a0! 2 :b0! (# :a0 :b0 add))
+      (+jojo t0 1 :a0! 2 :b0! (% :a0 :b0 add))
       (run t0 dup
         apply int-write space
         apply int-write space
         newline)
 
-      (+jojo t1 1 :a! 2 :b! (# :a (# :b t0 apply add)))
+      (+jojo t1 1 :a! 2 :b! (% :a (% :b t0 apply add)))
       (run t1 apply apply add)
 
 
-      (+jojo t0 1 :a! (# :a))
-      (+jojo t1 2 :a! (# (# t0 apply)))
+      (+jojo t0 1 :a! (% :a))
+      (+jojo t1 2 :a! (% (% t0 apply)))
       (run t1 apply apply)
 
 
-      (+jojo t0 1 :a! (# :a))
-      (+jojo t1 2 :a! (# (# t0)))
+      (+jojo t0 1 :a! (% :a))
+      (+jojo t1 2 :a! (% (% t0)))
       (run t1 apply apply apply)
 
-
-      (+jojo t0 1 :a! (# :a))
-      (+jojo t1 (# (# t0 apply)))
+      (+jojo t0 1 :a! (% :a))
+      (+jojo t1 (% (% t0 apply)))
       (run t1 apply apply)
 
       (run t1 apply))
+
+    (note
+      (+jojo compose :m1! :m2!
+       (% :m2 apply
+          :m1 apply))
+
+      (run (% 1) (% 2) compose (% 3) compose apply)
+
+      (run (% 1) (% 2) (% 3) compose compose apply))
     #+end_src
 
 * <socket>
@@ -143,8 +151,8 @@
       node)
 
     (run a-tree
-      (# 100 add) tree-map
-      (# int-write space) tree-write)
+      (% 100 add) tree-map
+      (% int-write space) tree-write)
     #+end_src
 
 *** [note] zip-tree -- do not handle error
@@ -156,10 +164,10 @@
         (cond [:t1 leaf? :t2 leaf? and] [:t1 .v :t2 .v cons leaf]
               [:t1 node? :t2 node? and] [:t1 .l :t2 .l (recur)
                                          :t1 .r :t2 .r (recur) node]))
-      (run a-tree dup (# 100 add) tree-map zip-tree
-        (# dup .cdr int-write space
-               .car int-write space
-               "cons" string-write space)
+      (run a-tree dup (% 100 add) tree-map zip-tree
+        (% dup .cdr int-write space
+           .car int-write space
+           "cons" string-write space)
         tree-write))
     #+end_src
 
@@ -185,23 +193,23 @@
           <just> [:m .v :f apply "just" string-write space]))
 
       (run a-tree 1 leaf zip-tree
-        (# (# dup .cdr int-write space
-             .car int-write space
-             "cons" string-write space)
-          tree-write)
+        (% (% dup .cdr int-write space
+              .car int-write space
+              "cons" string-write space)
+           tree-write)
         maybe-write)
 
       (run a-tree dup zip-tree
-        (# (# dup .cdr int-write space
-             .car int-write space
-             "cons" string-write space)
-          tree-write)
+        (% (% dup .cdr int-write space
+              .car int-write space
+              "cons" string-write space)
+           tree-write)
         maybe-write))
     #+end_src
 
 *** zip-tree -- maybe monad
 
-    #+begin_src jojo
+    #+begin_src jojo :tangle no
     (+jojo return-maybe just)
 
     (+jojo bind-maybe :f! :m!
@@ -215,9 +223,9 @@
             [:t1 .v :t2 .v cons leaf return-maybe]
             [:t1 node? :t2 node? and]
             [:t1 .l :t2 .l zip-tree
-             (# :l! :t1 .r :t2 .r zip-tree
-               (# :r! :l :r node return-maybe)
-               bind-maybe)
+             (% :l! :t1 .r :t2 .r zip-tree
+                (% :r! :l :r node return-maybe)
+                bind-maybe)
              bind-maybe]
             else nothing))
 
@@ -227,104 +235,105 @@
         <just> [:m .v :f apply "just" string-write space]))
 
     (run a-tree 1 leaf zip-tree
-      (# (# dup .cdr int-write space
-                .car int-write space
-                "cons" string-write space)
+      (% (% dup .cdr int-write space
+            .car int-write space
+            "cons" string-write space)
          tree-write)
       maybe-write)
 
     (run a-tree dup zip-tree
-      (# (# dup .cdr int-write space
-                .car int-write space
-                "cons" string-write space)
+      (% (% dup .cdr int-write space
+            .car int-write space
+            "cons" string-write space)
          tree-write)
       maybe-write)
     #+end_src
 
-*** >< zip-tree -- with macro
+*** >< zip-tree -- composition
 
     #+begin_src jojo
-    (note
+    (+jojo maybe-nothing :m1! :m2!
+      (% :m2 apply
+         (if dup nothing? then end)
+         :m1 apply))
+
+    (note not ok
+      can not call maybe-nothing twice ?
       (+jojo zip-tree :t1! :t2!
-        (note [tree tree] -> [maybe-tree])
+        (note [tree tree] -> [tree | nothing])
         (cond [:t1 leaf? :t2 leaf? and]
-              [:t1 .v :t2 .v cons leaf return-maybe]
+              [:t1 .v :t2 .v cons leaf]
               [:t1 node? :t2 node? and]
-              (let-bind bind-maybe
-                :l [:t1 .l :t2 .l zip-tree]
-                :r [:t1 .r :t2 .r zip-tree]
-                [:l :r node return-maybe])
-              else nothing))
+              [(% :t1 .l :t2 .l zip-tree)
+               (% :t1 .r :t2 .r zip-tree)
+               (% node)
+               maybe-nothing
+               maybe-nothing
+               apply]
+              else nothing)))
 
-      (+keyword let-bind
-        (let-bind bind-maybe
-          :l [:t1 .l :t2 .l zip-tree]
-          :r [:t1 .r :t2 .r zip-tree]
-          [:l :r node return-maybe])
-        [:t1 .l :t2 .l zip-tree
-         (# :l!
-           :t1 .r :t2 .r zip-tree
-           (# :r!
-             :l :r node return-maybe)
-           bind-maybe)
-         bind-maybe]))
+    (+jojo zip-tree :t1! :t2!
+      (note [tree tree] -> [tree | nothing])
+      (cond [:t1 leaf? :t2 leaf? and]
+            [:t1 .v :t2 .v cons leaf]
+            [:t1 node? :t2 node? and]
+            [(% :t1 .l :t2 .l zip-tree)
+             (% :t1 .r :t2 .r zip-tree
+                (if dup nothing? then end)
+                node)
+             maybe-nothing apply]
+            else nothing))
 
+    (note ok
+      (+jojo zip-tree :t1! :t2!
+        (note [tree tree] -> [tree | nothing])
+        (cond [:t1 leaf? :t2 leaf? and]
+              [:t1 .v :t2 .v cons leaf]
+              [:t1 node? :t2 node? and]
+              [(% :t1 .l :t2 .l zip-tree)
+               (% :t1 .r :t2 .r zip-tree
+                  (if dup nothing? then end)
+                  node)
+               maybe-nothing apply]
+              else nothing)))
 
-    (note
-      (let-bind bind-maybe
-        :l [:t1 .l :t2 .l zip-tree]
-        :r [:t1 .r :t2 .r zip-tree]
-        [:l :r node return-maybe])
-      =>
-      [:t1 .l :t2 .l zip-tree
-       (# :l!
-         :t1 .r :t2 .r zip-tree
-         (# :r!
-           :l :r node return-maybe)
-         bind-maybe)
-       bind-maybe])
+    (note ok
+      (+jojo zip-tree :t1! :t2!
+        (note [tree tree] -> [tree | nothing])
+        (cond [:t1 leaf? :t2 leaf? and]
+              [:t1 .v :t2 .v cons leaf]
+              [:t1 node? :t2 node? and]
+              [:t1 .l :t2 .l zip-tree (if dup nothing? then end)
+               :t1 .r :t2 .r zip-tree (if dup nothing? then end)
+               node]
+              else nothing)))
 
-
-    (note
-
-      (: bind (-> (M a)
-                  (-> a -- (M b))
-               -- (M b)))
-
-      [(# :t1 .l :t2 .l zip-tree) :l!
-       (# :t1 .r :t2 .r zip-tree) :r!
-       (# @:l @:r node return-maybe)
-       bind-maybe
-       bind-maybe])
-    #+end_src
-
-*** number-tree -- state
-
-    #+begin_src jojo
-    (+jojo tick
-      (note (-> <int> -- <int> <int>))
-      :x! :x inc :x)
-
-    (+jojo number-tree
-      (note (-> :<t> <tree> -- (-> <int> -- <int> <tree>)))
-      :t!
-      (case :t
-        <leaf> (# :x! :x inc :x leaf)
-        <node> (# :t .l number-tree apply :l!
-                  :t .r number-tree apply :r!
-                  :l :r node)))
-
-    (+var tree-2
-      "1" leaf "2" leaf node
-      "3" leaf "4" leaf node
-      "5" leaf node
-      node)
+    (+jojo write-tree-or-nothing
+      (if dup nothing? then drop "nothing" string-write end)
+      (el (% dup .cdr int-write space
+             .car int-write space
+             "cons" string-write space)
+          tree-write))
 
     (run
-      tree-2 number-tree
-      0 swap apply
-      swap drop
-      (# int-write space) tree-write newline)
+      a-tree 1 leaf zip-tree
+      write-tree-or-nothing)
+
+    (run
+      1 leaf a-tree zip-tree
+      write-tree-or-nothing)
+
+    (run
+      a-tree 1 leaf 1 leaf node zip-tree
+      write-tree-or-nothing)
+
+    (run
+      1 leaf 1 leaf node a-tree zip-tree
+      write-tree-or-nothing)
+
+    (run
+      a-tree dup zip-tree
+      write-tree-or-nothing)
     #+end_src
 
 *** >< number-tree -- state monad
@@ -334,14 +343,14 @@
       (+jojo return-state
        (note (-- <v> -> (-- <s> -> <s> <v>)))
        :v!
-        (# :v))
+        (% :v))
 
       (+jojo bind-state
         (note (-> (-> <s> -- <s> <v1>)
                   (-> <v1> -- (-> <s> -- <s> <v2>))
                   -- (-> <s> -- <s> <v2>)))
         :f! :m!
-        (# :m apply :f apply apply))
+        (% :m apply :f apply apply))
 
       (+jojo tick
         (note (-> <int> -- <int> <int>))
@@ -352,12 +361,12 @@
                   -- (-> <int> -- <int> <tree>)))
         :t!
         (case :t
-          <leaf> [(# tick)
-                  (# :s! :s leaf return-state)
+          <leaf> [(% tick)
+                  (% :s! :s leaf return-state)
                   bind-state]
           <node> [:t .l number-tree
-                  (# :l! :t .r number-tree
-                         (# :r! :l :r node return-state)
+                  (% :l! :t .r number-tree
+                         (% :r! :l :r node return-state)
                          bind-state)
                   bind-state]))
 
@@ -365,13 +374,13 @@
         "1" leaf)
 
       (run
-        tree-0 (# string-write space) tree-write newline)
+        tree-0 (% string-write space) tree-write newline)
 
       (run
         tree-0 number-tree
         0 swap apply
         swap drop
-        (# int-write space) tree-write newline)
+        (% int-write space) tree-write newline)
 
       (+var tree-1
         "1" leaf "2" leaf node)
@@ -380,11 +389,66 @@
         tree-1 number-tree
         0 swap apply
         swap drop
-        (# int-write space) tree-write newline)
+        (% int-write space) tree-write newline)
 
       (+var tree-2
         "1" leaf "2" leaf node
         "3" leaf "4" leaf node
         "5" leaf node
         node))
+    #+end_src
+
+*** number-tree -- state
+
+    #+begin_src jojo
+    (note
+      (+jojo tick
+       (note (-> <int> -- <int> <int>))
+        :x! :x inc :x)
+
+      (+jojo number-tree
+        (note (-> :<t> <tree> -- (-> <int> -- <int> <tree>)))
+        :t!
+        (case :t
+          <leaf> (% :x! :x inc :x leaf)
+          <node> (% :t .l number-tree apply :l!
+                    :t .r number-tree apply :r!
+                    :l :r node)))
+
+      (+var tree-2
+        "1" leaf "2" leaf node
+        "3" leaf "4" leaf node
+        "5" leaf node
+        node)
+
+      (run
+        tree-2 number-tree
+        0 swap apply
+        swap drop
+        (% int-write space) tree-write newline))
+    #+end_src
+
+*** number-tree -- simple
+
+    #+begin_src jojo
+    (+jojo number-tree
+      (note (-> <int>, :<t> <tree> -- <int>, <int> <tree>))
+      :t!
+      (case :t
+        <leaf> [dup inc swap leaf]
+        <node> [:t .l (recur) :l!
+                :t .r (recur) :r!
+                :l :r node]))
+
+    (+var tree-2
+      "1" leaf "2" leaf node
+      "3" leaf "4" leaf node
+      "5" leaf node
+      node)
+
+    (run
+      tree-2
+      0 swap number-tree
+      swap drop
+      (% int-write space) tree-write newline)
     #+end_src
