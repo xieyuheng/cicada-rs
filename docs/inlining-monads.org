@@ -1,0 +1,259 @@
+#+html_head: <link rel="stylesheet" href="https://xieyuheng.github.io/asset/css/page.css" type="text/css" media="screen" />
+#+title: inlining monads
+
+* intro
+
+  - state monad is exactly what I need when writing interpreters.
+    I need to pass environment as extra argument through an interpreter,
+    this extra argument can be capture by state monad.
+
+  - I implemented 'bind' and 'return',
+    and tried to inline them to understand how the state moand works.
+
+  - by doing so,
+    I found that, in a concatenative languages,
+    I do not need to use state moand by its traditional interface.
+
+* number-tree
+
+*** tree
+
+    #+begin_src jojo
+    (+data <leaf> .v)
+    (+data <node> .l .r)
+
+    (+jojo tree-write :f! :t!
+      (note [tree fun] -> [])
+      (case :t
+        <leaf> [:t .v :f apply "leaf" string-write space]
+        <node> [:t .l :f (recur)
+                :t .r :f (recur) "node" string-write space]))
+
+    (+jojo tree-map :f! :t!
+      (note [tree fun] -> [tree])
+      (case :t
+        <leaf> [:t .v :f apply leaf]
+        <node> [:t .l :f (recur)
+                :t .r :f (recur) node]))
+    #+end_src
+
+*** number-tree -- state monad
+
+    #+begin_src jojo
+    (+jojo return-state
+      (note (-- <v> -> (-- <s> -> <s> <v>)))
+      :v!
+      (% :v))
+
+    (+jojo bind-state
+      (note (-> (-> <s> -- <s> <v1>)
+                (-> <v1> -- (-> <s> -- <s> <v2>))
+             -- (-> <s> -- <s> <v2>)))
+      :f! :m!
+      (% :m apply :f apply apply))
+
+    (+jojo tick
+      (note (-> <int> -- <int> <int>))
+      dup inc swap)
+
+    (+jojo number-tree
+      (note (-> :<t> <tree>
+             -- (-> <int> -- <int> <tree>)))
+      :t!
+      (case :t
+        <leaf> [(% tick)
+                (% :s! :s leaf return-state)
+                bind-state]
+        <node> [:t .l number-tree
+                (% :l! :t .r number-tree
+                   (% :r! :l :r node return-state)
+                   bind-state)
+                bind-state]))
+    #+end_src
+
+*** number-tree -- inline
+
+    #+begin_src jojo
+    (+jojo tick
+      (note (-> <int> -- <int> <int>))
+      :x! :x inc :x)
+
+    (+jojo number-tree
+      (note (-> :<t> <tree> -- (-> <int> -- <int> <tree>)))
+      :t!
+      (case :t
+        <leaf> (% :x! :x inc :x leaf)
+        <node> (% :t .l number-tree apply :l!
+                  :t .r number-tree apply :r!
+                  :l :r node)))
+    #+end_src
+
+*** number-tree -- inline and uncurry
+
+    #+begin_src jojo
+    (+jojo number-tree
+      (note (-> <int>, :<t> <tree> -- <int>, <int> <tree>))
+      :t!
+      (case :t
+        <leaf> [dup inc swap leaf]
+        <node> [:t .l (recur) :l!
+                :t .r (recur) :r!
+                :l :r node]))
+    #+end_src
+
+*** [test] number-tree
+
+    #+begin_src jojo
+    (+jojo test-number-tree
+      0 swap number-tree
+      swap drop
+      (% int-write space) tree-write newline)
+
+    (+var tree-1
+      "1" leaf "2" leaf node
+      "3" leaf "4" leaf node
+      "5" leaf node
+      node)
+
+    (run tree-1 test-number-tree)
+    #+end_src
+
+* zip-tree
+
+*** [note]
+
+    - the experiment gose in three steps
+      1. implement the moand
+      2. inline and simplify
+      3. uncurry and simplify
+
+    - here is the experiment applies to maybe monad
+
+*** zip-tree -- do not handle error
+
+    #+begin_src jojo
+    (+jojo zip-tree :t1! :t2!
+      (note [tree tree] -> [tree])
+      (cond [:t1 leaf? :t2 leaf? and] [:t1 .v :t2 .v cons leaf]
+            [:t1 node? :t2 node? and] [:t1 .l :t2 .l (recur)
+                                       :t1 .r :t2 .r (recur) node]))
+    #+end_src
+
+*** zip-tree -- maybe
+
+    #+begin_src jojo
+    (+jojo zip-tree :t1! :t2!
+      (note [tree tree] -> [maybe-tree])
+      (cond [:t1 leaf? :t2 leaf? and]
+            [:t1 .v :t2 .v cons leaf just]
+            [:t1 node? :t2 node? and]
+            (case [:t1 .l :t2 .l (recur) dup :lm!]
+              <nothing> nothing
+              <just> (case [:t1 .r :t2 .r (recur) dup :rm!]
+                       <nothing> nothing
+                       <just> [:lm .v :rm .v node just]))
+            else nothing))
+    #+end_src
+
+*** zip-tree -- maybe monad
+
+    #+begin_src jojo :tangle no
+    (+jojo return-maybe just)
+
+    (+jojo bind-maybe :f! :m!
+      (case :m
+        <nothing> nothing
+        <just> [:m .v :f apply]))
+
+    (+jojo zip-tree :t1! :t2!
+      (note [tree tree] -> [maybe-tree])
+      (cond [:t1 leaf? :t2 leaf? and]
+            [:t1 .v :t2 .v cons leaf return-maybe]
+            [:t1 node? :t2 node? and]
+            [:t1 .l :t2 .l zip-tree
+             (% :l! :t1 .r :t2 .r zip-tree
+                (% :r! :l :r node return-maybe)
+                bind-maybe)
+             bind-maybe]
+            else nothing))
+    #+end_src
+
+*** [test] zip-tree -- maybe
+
+    #+begin_src jojo
+    (+jojo maybe-write :f! :m!
+      (case :m
+        <nothing> ["nothing" string-write space]
+        <just> [:m .v :f apply "just" string-write space]))
+
+    (+jojo test-zip-tree
+      zip-tree
+      (% (% dup .cdr int-write space
+            .car int-write space
+            "cons" string-write space)
+         tree-write)
+      maybe-write)
+
+    (+var tree-2
+      1 leaf 2 leaf node
+      3 leaf 4 leaf node
+      5 leaf node
+      node)
+
+    (run tree-2 dup zip-tree
+      test-zip-tree)
+
+    (run tree-2 1 leaf
+      test-zip-tree)
+    #+end_src
+
+*** zip-tree -- inline and uncurry
+
+    #+begin_src jojo
+    (+jojo zip-tree :t1! :t2!
+      (note [tree tree] -> [tree | nothing])
+      (cond [:t1 leaf? :t2 leaf? and]
+            [:t1 .v :t2 .v cons leaf]
+            [:t1 node? :t2 node? and]
+            [:t1 .l :t2 .l zip-tree (if dup nothing? then end)
+             :t1 .r :t2 .r zip-tree (if dup nothing? then end)
+             node]
+            else nothing))
+    #+end_src
+
+*** [test] zip-tree
+
+    #+begin_src jojo
+    (+var tree-2
+      1 leaf 2 leaf node
+      3 leaf 4 leaf node
+      5 leaf node
+      node)
+
+    (+jojo write-tree-or-nothing
+      (if dup nothing? then drop "nothing" string-write end)
+      (el (% dup .cdr int-write space
+             .car int-write space
+             "cons" string-write space)
+          tree-write))
+
+    (run
+      tree-2 1 leaf zip-tree
+      write-tree-or-nothing)
+
+    (run
+      1 leaf tree-2 zip-tree
+      write-tree-or-nothing)
+
+    (run
+      tree-2 1 leaf 1 leaf node zip-tree
+      write-tree-or-nothing)
+
+    (run
+      1 leaf 1 leaf node tree-2 zip-tree
+      write-tree-or-nothing)
+
+    (run
+      tree-2 dup zip-tree
+      write-tree-or-nothing)
+    #+end_src

@@ -1641,7 +1641,7 @@
     void byte_unread(char b) {
       input_stack_push(tos(reading_stack), b);
     }
-    void write_byte(char b) {
+    void byte_write(char b) {
       output_stack_push(tos(writing_stack), b);
     }
     bool has_jo_p() {
@@ -2436,7 +2436,7 @@
     }
     void string_write(char* str) {
       while (str[0] != '\0') {
-        write_byte(str[0]);
+        byte_write(str[0]);
         str++;
       }
     }

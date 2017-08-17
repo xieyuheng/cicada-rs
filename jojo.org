@@ -1,9 +1,12 @@
 #+property: tangle jojo.c
 #+title:  jojo
 - p_debug
+  - print (if) and (case)
 - stepper
 - signal handler
+
 - fix closure
+
 - (let)
 - (let-bind)
 - [] as stack -- reversed list
@@ -2545,10 +2548,10 @@
     }
     #+end_src
 
-*** write_byte
+*** byte_write
 
     #+begin_src c
-    void write_byte(char b) {
+    void byte_write(char b) {
       output_stack_push(tos(writing_stack), b);
     }
     #+end_src
@@ -3658,7 +3661,7 @@
     #+begin_src c
     void string_write(char* str) {
       while (str[0] != '\0') {
-        write_byte(str[0]);
+        byte_write(str[0]);
         str++;
       }
     }
