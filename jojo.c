@@ -165,9 +165,7 @@
           return s;
         }
       }
-  void p_debug() {
-    exit(233);
-  }
+  void p_debug();
     struct jotable_entry {
       char *key;
       struct jotable_entry *tag;
@@ -2402,8 +2400,255 @@
         }
       }
     }
-    void expose_repl() {
+    cell debug_repl_level = 0;
 
+    void p_debug_repl() {
+      while (true) {
+        if (!has_jo_p()) {
+          return;
+        }
+        jo_t jo = read_raw_jo();
+        if (jo == str2jo("help")) {
+          report("- debug-repl usage :\n");
+          report("  - available commands :\n");
+          report("    help exit bye\n");
+        }
+        else if (jo == str2jo("exit")) {
+          return;
+        }
+        else if (jo == str2jo("bye")) {
+          p_bye();
+          return;
+        }
+        else if (jo == ROUND_BAR) {
+          jo_apply(read_jo());
+          p_print_object_stack();
+          report("debug[%ld]> ", debug_repl_level);
+        }
+        else {
+          // loop
+        }
+      }
+    }
+    void jojo_print_lit(jo_t* jojo) {
+      jo_t tag = jojo[1];
+      if (tag == TAG_INT) {
+        report("%ld ", jojo[2]);
+      }
+      else if (tag == TAG_STRING) {
+        struct object_entry* object_entry = jojo[2];
+        char* str = object_entry->pointer;
+        report("\"%s\" ", str);
+      }
+      else {
+        report("<unknow-data> ");
+      }
+    }
+    void jojo_print(jo_t* jojo) {
+      report("[ ");
+      while (true) {
+        if (jojo[0] == 0 && jojo[1] == 0) {
+          break;
+        }
+        else if (jojo[0] == JO_INS_LIT) {
+          jojo_print_lit(jojo);
+          jojo++;
+          jojo++;
+        }
+        else if (jojo[0] == JO_INS_JZ) {
+          report("(jz %ld) ", jojo[1]);
+          jojo++;
+          jojo++;
+        }
+        else if (jojo[0] == JO_INS_JMP) {
+          report("(jmp %ld) ", jojo[1]);
+          jojo++;
+          jojo++;
+        }
+        else if (jojo[0] == JO_INS_LOOP) {
+          report("(loop) ");
+          jojo++;
+          jojo++;
+        }
+        else if (jojo[0] == JO_INS_RECUR) {
+          report("(recur) ");
+          jojo++;
+          jojo++;
+        }
+        else if (jojo[0] == JO_INS_TAIL_CALL) {
+          report("(tail-call %s) ", jo2str(jojo[1]));
+          jojo++;
+          jojo++;
+        }
+        else {
+          report("%s ", jo2str(jojo[0]));
+          jojo++;
+        }
+      }
+      report("] ");
+    }
+    void print_return_point(struct ret p) {
+      jo_t* jojo = p.jojo;
+      report("    - { %s } ", jo2str(*(jojo - 1)));
+      jojo_print(jojo);
+      report("\n");
+    }
+    void p_print_return_stack() {
+      cell length = stack_length(return_stack);
+      report("  - return-stack * %ld * :\n", length/2);
+      if (length == 0) { return; };
+      cell cursor = 0;
+      while (cursor < length - 2) {
+        struct ret p;
+        p.local_counter = stack_ref(return_stack, cursor);
+        p.jojo = stack_ref(return_stack, cursor+1);
+        print_return_point(p);
+        cursor++;
+        cursor++;
+      }
+      {
+        struct ret p;
+        p.local_counter = stack_ref(return_stack, cursor);
+        p.jojo = stack_ref(return_stack, cursor+1);
+        jo_t* jojo = p.jojo;
+        report("    - ");
+        jojo_print(jojo);
+        report("\n");
+        cursor++;
+        cursor++;
+      }
+    }
+    void p_debug() {
+      push(reading_stack, input_stack_terminal());
+
+      report("- in debug-repl [level %ld] >_<!\n", debug_repl_level);
+      p_print_return_stack();
+      p_print_object_stack();
+      report("debug[%ld]> ", debug_repl_level);
+      debug_repl_level++;
+      p_debug_repl();
+      debug_repl_level--;
+      report("- exit debug-repl [level %ld]\n", debug_repl_level);
+
+      drop(reading_stack);
+    }
+      void kernel_signal_handler(int sig, siginfo_t *siginfo, void *ucontext) {
+        fflush(stdin);
+        fflush(stdout);
+        fflush(stderr);
+
+        report("- kernel_signal_handler\n");
+        psiginfo(siginfo, "  signal ");
+
+        int errno_backup;
+        errno_backup = errno;
+
+        p_debug();
+
+        errno = errno_backup;
+      }
+      void init_kernel_signal_handler() {
+        struct sigaction kernel_signal_action;
+
+        sigemptyset(&kernel_signal_action.sa_mask);
+
+        kernel_signal_action.sa_flags = SA_SIGINFO | SA_NODEFER | SA_RESTART;
+        kernel_signal_action.sa_sigaction = kernel_signal_handler;
+
+        int sig_array[] = { SIGSEGV, SIGBUS, SIGFPE, SIGILL,
+                            SIGPIPE, SIGSYS, SIGXCPU, SIGXFSZ};
+        int sig_array_length = sizeof(sig_array)/sizeof(sig_array[0]);
+        cell i = 0;
+        while (i < sig_array_length) {
+          if (sigaction(sig_array[i], &kernel_signal_action, NULL) == -1) {
+            perror("- init_kernel_signal_handler fail");
+          }
+          i++;
+        }
+      }
+    void expose_repl() {
+      add_prim("debug", p_debug);
+    }
+    bool step_flag = false;
+    cell stepper_counter = 0;
+    cell pending_steps = 0;
+    void report_one_step() {
+      while (true) {
+        if (pending_steps > 0) {
+          p_print_return_stack();
+          p_print_object_stack();
+          stepper_counter++;
+          report("- stepper counting : %ld\n", stepper_counter);
+          pending_steps--;
+          return;
+        }
+
+        jo_t jo = read_jo();
+        if (jo == str2jo("help")) {
+          report("- stepper usage :\n");
+          report("  type '.' to execute one step\n");
+          report("  type a numebr to execute the number of steps\n");
+          report("  - available commands :\n");
+          report("    help exit bye\n");
+        }
+        else if (jo == str2jo(".")) {
+          p_print_return_stack();
+          p_print_object_stack();
+          stepper_counter++;
+          report("- stepper counting : %ld\n", stepper_counter);
+          return;
+        }
+        else if (nat_string_p(jo2str(jo))) {
+          p_print_return_stack();
+          p_print_object_stack();
+          stepper_counter++;
+          report("- stepper counting : %ld\n", stepper_counter);
+          pending_steps = string_to_int(jo2str(jo)) - 1;
+          return;
+        }
+        else if (jo == str2jo("exit")) {
+          step_flag = false;
+          return;
+        }
+        else if (jo == str2jo("bye")) {
+          p_bye();
+          return;
+        }
+        else {
+          // loop
+        }
+      }
+    }
+    void p_step() {
+      step_flag = true;
+      stepper_counter = 0;
+      pending_steps = 0;
+      push(reading_stack, input_stack_terminal());
+      report("stepper> ");
+
+      cell base = return_stack->pointer;
+      while (return_stack->pointer >= base) {
+        if (step_flag == false) { break; };
+        struct ret rp = return_stack_tos();
+        return_stack_inc();
+        jo_t* jojo = rp.jojo;
+        jo_t jo = jojo[0];
+        jo_apply(jo);
+        {
+          report_one_step();
+        }
+      }
+      if (return_stack->pointer >= base) {
+        report("- exit stepper\n");
+      }
+      if (return_stack->pointer < base) {
+        report("- the stepped jojo is finished\n");
+        report("- automatically exit stepper\n");
+      }
+      drop(reading_stack);
+    }
+    void expose_step() {
+      add_prim("step", p_step);
     }
     void p_true() {
       object_stack_push(TAG_BOOL, true);
@@ -3262,6 +3507,8 @@
       expose_compiler();
       expose_control();
       expose_top();
+      expose_repl();
+      expose_step();
       expose_bool();
       expose_string();
       expose_int();
@@ -3279,6 +3526,7 @@
       init_literal_jo();
       init_stacks();
       init_expose();
+      init_kernel_signal_handler();
 
       p_repl_flag_on();
       p_print_object_stack();
