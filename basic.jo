@@ -44,13 +44,13 @@
   (run t1 apply))
 
 (note
-  (+jojo compose :m1! :m2!
+  (+jojo com :m1! :m2!
    (% :m2 apply
       :m1 apply))
 
-  (run (% 1) (% 2) compose (% 3) compose apply)
+  (run (% 1) (% 2) com (% 3) com apply)
 
-  (run (% 1) (% 2) (% 3) compose compose apply))
+  (run (% 1) (% 2) (% 3) com com apply))
 
 (+var server "8888" 5 tcp-socket-listen)
 (+jojo run-server
@@ -94,50 +94,6 @@
 (run a-tree
   (% 100 add) tree-map
   (% int-write space) tree-write)
-
-(note
-  (+jojo zip-tree :t1! :t2!
-    (note [tree tree] -> [tree])
-    (cond [:t1 leaf? :t2 leaf? and] [:t1 .v :t2 .v cons leaf]
-          [:t1 node? :t2 node? and] [:t1 .l :t2 .l (recur)
-                                     :t1 .r :t2 .r (recur) node]))
-  (run a-tree dup (% 100 add) tree-map zip-tree
-    (% dup .cdr int-write space
-       .car int-write space
-       "cons" string-write space)
-    tree-write))
-
-(note
-  (+jojo zip-tree :t1! :t2!
-    (note [tree tree] -> [maybe-tree])
-    (cond [:t1 leaf? :t2 leaf? and]
-          [:t1 .v :t2 .v cons leaf just]
-          [:t1 node? :t2 node? and]
-          (case [:t1 .l :t2 .l (recur) dup :lm!]
-            <nothing> nothing
-            <just> (case [:t1 .r :t2 .r (recur) dup :rm!]
-                     <nothing> nothing
-                     <just> [:lm .v :rm .v node just]))
-          else nothing))
-
-  (+jojo maybe-write :f! :m!
-    (case :m
-      <nothing> ["nothing" string-write space]
-      <just> [:m .v :f apply "just" string-write space]))
-
-  (run a-tree 1 leaf zip-tree
-    (% (% dup .cdr int-write space
-          .car int-write space
-          "cons" string-write space)
-       tree-write)
-    maybe-write)
-
-  (run a-tree dup zip-tree
-    (% (% dup .cdr int-write space
-          .car int-write space
-          "cons" string-write space)
-       tree-write)
-    maybe-write))
 
 (+jojo maybe-nothing :m1! :m2!
   (% :m2 apply
@@ -221,90 +177,6 @@
 (run
   a-tree dup zip-tree
   write-tree-or-nothing)
-
-(note
-  (+jojo return-state
-   (note (-- <v> -> (-- <s> -> <s> <v>)))
-   :v!
-    (% :v))
-
-  (+jojo bind-state
-    (note (-> (-> <s> -- <s> <v1>)
-              (-> <v1> -- (-> <s> -- <s> <v2>))
-              -- (-> <s> -- <s> <v2>)))
-    :f! :m!
-    (% :m apply :f apply apply))
-
-  (+jojo tick
-    (note (-> <int> -- <int> <int>))
-    dup inc swap)
-
-  (+jojo number-tree
-    (note (-> :<t> <tree>
-              -- (-> <int> -- <int> <tree>)))
-    :t!
-    (case :t
-      <leaf> [(% tick)
-              (% :s! :s leaf return-state)
-              bind-state]
-      <node> [:t .l number-tree
-              (% :l! :t .r number-tree
-                     (% :r! :l :r node return-state)
-                     bind-state)
-              bind-state]))
-
-  (+var tree-0
-    "1" leaf)
-
-  (run
-    tree-0 (% string-write space) tree-write newline)
-
-  (run
-    tree-0 number-tree
-    0 swap apply
-    swap drop
-    (% int-write space) tree-write newline)
-
-  (+var tree-1
-    "1" leaf "2" leaf node)
-
-  (run (note ><><>< error here)
-    tree-1 number-tree
-    0 swap apply
-    swap drop
-    (% int-write space) tree-write newline)
-
-  (+var tree-2
-    "1" leaf "2" leaf node
-    "3" leaf "4" leaf node
-    "5" leaf node
-    node))
-
-(note
-  (+jojo tick
-   (note (-> <int> -- <int> <int>))
-    :x! :x inc :x)
-
-  (+jojo number-tree
-    (note (-> :<t> <tree> -- (-> <int> -- <int> <tree>)))
-    :t!
-    (case :t
-      <leaf> (% :x! :x inc :x leaf)
-      <node> (% :t .l number-tree apply :l!
-                :t .r number-tree apply :r!
-                :l :r node)))
-
-  (+var tree-2
-    "1" leaf "2" leaf node
-    "3" leaf "4" leaf node
-    "5" leaf node
-    node)
-
-  (run
-    tree-2 number-tree
-    0 swap apply
-    swap drop
-    (% int-write space) tree-write newline))
 
 (+jojo number-tree
   (note (-> <int>, :<t> <tree> -- <int>, <int> <tree>))

@@ -2454,6 +2454,7 @@
           jojo_print_lit(jojo);
           jojo++;
           jojo++;
+          jojo++;
         }
         else if (jojo[0] == JO_INS_JZ) {
           report("(jz %ld) ", jojo[1]);
@@ -2572,6 +2573,7 @@
     bool step_flag = false;
     cell stepper_counter = 0;
     cell pending_steps = 0;
+
     void report_one_step() {
       while (true) {
         if (pending_steps > 0) {
