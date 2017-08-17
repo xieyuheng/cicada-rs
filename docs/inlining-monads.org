@@ -24,14 +24,12 @@
     (+data <node> .l .r)
 
     (+jojo tree-write :f! :t!
-      (note [tree fun] -> [])
       (case :t
         <leaf> [:t .v :f apply "leaf" string-write space]
         <node> [:t .l :f (recur)
                 :t .r :f (recur) "node" string-write space]))
 
     (+jojo tree-map :f! :t!
-      (note [tree fun] -> [tree])
       (case :t
         <leaf> [:t .v :f apply leaf]
         <node> [:t .l :f (recur)
@@ -47,19 +45,19 @@
       (% :v))
 
     (+jojo bind-state
-      (note (-> (-> <s> -- <s> <v1>)
-                (-> <v1> -- (-> <s> -- <s> <v2>))
-             -- (-> <s> -- <s> <v2>)))
+      (note (-- (-- <s> -> <s> <v1>)
+                (-- <v1> -> (-- <s> -> <s> <v2>))
+             -> (-- <s> -> <s> <v2>)))
       :f! :m!
       (% :m apply :f apply apply))
 
     (+jojo tick
-      (note (-> <int> -- <int> <int>))
+      (note (-- <int> -> <int> <int>))
       dup inc swap)
 
     (+jojo number-tree
-      (note (-> :<t> <tree>
-             -- (-> <int> -- <int> <tree>)))
+      (note (-- :<t> <tree>
+             -> (-- <int> -> <int> <tree>)))
       :t!
       (case :t
         <leaf> [(% tick)
@@ -76,11 +74,11 @@
 
     #+begin_src jojo
     (+jojo tick
-      (note (-> <int> -- <int> <int>))
+      (note (-- <int> -> <int> <int>))
       :x! :x inc :x)
 
     (+jojo number-tree
-      (note (-> :<t> <tree> -- (-> <int> -- <int> <tree>)))
+      (note (-- :<t> <tree> -> (-- <int> -> <int> <tree>)))
       :t!
       (case :t
         <leaf> (% :x! :x inc :x leaf)
@@ -93,7 +91,7 @@
 
     #+begin_src jojo
     (+jojo number-tree
-      (note (-> <int>, :<t> <tree> -- <int>, <int> <tree>))
+      (note (-- <int>, :<t> <tree> -> <int>, <int> <tree>))
       :t!
       (case :t
         <leaf> [dup inc swap leaf]
@@ -144,7 +142,7 @@
 
     #+begin_src jojo
     (+jojo zip-tree :t1! :t2!
-      (note [tree tree] -> [maybe-tree])
+      (note (-- :<t> <tree> :<t> <tree> -> [:<t> <tree> <maybe>]))
       (cond [:t1 leaf? :t2 leaf? and]
             [:t1 .v :t2 .v cons leaf just]
             [:t1 node? :t2 node? and]
@@ -167,7 +165,7 @@
         <just> [:m .v :f apply]))
 
     (+jojo zip-tree :t1! :t2!
-      (note [tree tree] -> [maybe-tree])
+      (note (-- :<t> <tree> :<t> <tree> -> [:<t> <tree> <maybe>]))
       (cond [:t1 leaf? :t2 leaf? and]
             [:t1 .v :t2 .v cons leaf return-maybe]
             [:t1 node? :t2 node? and]
@@ -212,7 +210,7 @@
 
     #+begin_src jojo
     (+jojo zip-tree :t1! :t2!
-      (note [tree tree] -> [tree | nothing])
+      (note (-- :<t> <tree> :<t> <tree> -> [:<t> <tree> | <nothing>]))
       (cond [:t1 leaf? :t2 leaf? and]
             [:t1 .v :t2 .v cons leaf]
             [:t1 node? :t2 node? and]
