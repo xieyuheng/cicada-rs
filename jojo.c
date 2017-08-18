@@ -165,6 +165,12 @@
           return s;
         }
       }
+      // caller free
+      cell* arraydup(cell* src, cell len) {
+        cell* p = malloc(len * sizeof(cell));
+        memcpy(p, src, len * sizeof(cell));
+        return p;
+      }
   void p_debug();
     struct jotable_entry {
       char *key;
@@ -2903,9 +2909,6 @@
       struct class* class = TAG_CLOSURE->data;
       struct object_entry* closure = new(class);
 
-      here(JO_INS_JMP);
-      jo_t* end_of_closure = tos(compiling_stack);
-      p_compiling_stack_inc();
       jo_t* jojo = tos(compiling_stack);
 
       push(current_compiling_exe_stack, closure);
@@ -2919,23 +2922,32 @@
       drop(current_compiling_exe_stack);
       drop(current_compiling_exe_stack);
 
-      end_of_closure[0] = (jo_t*)tos(compiling_stack) - end_of_closure;
+      jo_t* new_jojo =
+        arraydup(jojo, (cell*)tos(compiling_stack) - (cell*)jojo);
+      drop(compiling_stack);
+      push(compiling_stack, jojo);
 
-      here(JO_INS_LIT); here(TAG_JOJO); here(jojo);
-      here(JO_INS_LIT); here(TAG_CLOSURE); here(closure);
-      {
-        here(JO_INS_SET_FIELD);
-        here(str2jo(".jojo"));
-      }
+      here(JO_INS_LIT);
+      here(TAG_JOJO);
+      here(new_jojo);
+
+      here(JO_INS_LIT);
+      here(TAG_CLOSURE);
+      here(closure);
+      here(JO_INS_SET_FIELD);
+      here(str2jo(".jojo"));
 
       here(str2jo("current-local-env"));
-      here(JO_INS_LIT); here(TAG_CLOSURE); here(closure);
-      {
-        here(JO_INS_SET_FIELD);
-        here(str2jo(".local-env"));
-      }
 
-      here(JO_INS_LIT); here(TAG_CLOSURE); here(closure);
+      here(JO_INS_LIT);
+      here(TAG_CLOSURE);
+      here(closure);
+      here(JO_INS_SET_FIELD);
+      here(str2jo(".local-env"));
+
+      here(JO_INS_LIT);
+      here(TAG_CLOSURE);
+      here(closure);
     }
     void p_closure_apply() {
       struct obj a = object_stack_pop();

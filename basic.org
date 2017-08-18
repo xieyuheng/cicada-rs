@@ -17,9 +17,11 @@
                (% :l :r node return-maybe)]
               else nothing))
 
-      [(% :t1 .l :t2 .l zip-tree) (% :l!)
-       (% :t1 .r :t2 .r zip-tree) (% :r!)
-       (% (dynamic :l) (dynamic :r) node return-maybe)]
+      (% (% :t1 .l :t2 .l zip-tree) (% :l!)
+         (% :t1 .r :t2 .r zip-tree) (% :r!)
+         (% (dynamic :l) (dynamic :r) node return-maybe))
+      apply-into-stack
+
 
       (+jojo bind-trivial :rest! :binder! :m!
         (% :m apply
