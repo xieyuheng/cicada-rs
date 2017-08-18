@@ -1,0 +1,77 @@
+* [note]
+
+  - how to implement call-by-need ?
+
+* optimization
+
+  - (+type) defines abstract datatype
+
+    abstract-syntax is a special representation of data
+
+    once defined, we have constructors and extractors
+    we must be able to replace them with more efficient functions.
+    [to optimize representation independent functions]
+
+    - take <nat> as an example
+      when representing number as list of numbers with a large base
+      we must optimize 'add'
+      to make use of the the representation of the data.
+
+    - <env> is another example
+
+    we must design a API for this feature
+
+* encoding of subtype relation
+
+  - function which can apply to supertype can also apply to subtype
+
+  - subtype
+    1. (subtype disjoint-subtype ...)
+    2. forgetful functor
+    3. inheritance
+
+  - constructor and observer
+
+    - constructor
+      return that type of data
+      thus including processing functions of type (-> [... t] [t])
+
+    - observer
+      no return that type of data
+      predicate and extractor
+
+      - but extractor might return that type of data
+        how to define constructor and observer then ?
+
+* implementation
+
+*** unification
+
+    - equivalence between functions
+      or partially applied functions [trunks]
+      or functions applied to non-determinate arguments
+      例如 
+      1. [:m :n add :n :m add <eq>]
+      2. [[add] [swap add] <eq>]
+      對 2 的證明應該劃歸爲對 1 的證明
+      因爲前者有更多的細節
+
+    - 之所以覺得處理不好 unification
+      是因爲我的編程能力還太弱了
+      在不明白 type-class 與 monad 的情況下
+      我對函數式編程的理解也不夠
+
+*** unification need uni-id
+
+    - solutions :
+      1. uni-copy
+      2. compile to peek and put [of stack]
+
+*** laws
+
+    1. information non-decreasing
+
+    2. proof semantic precedes functional semantic
+       for example, type is not predicate
+
+    3. generic dispatch
