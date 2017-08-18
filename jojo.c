@@ -2372,18 +2372,158 @@
       add_prim_keyword("+jojo", k_add_jojo);
       add_prim_keyword("+data", k_add_data);
     }
+    void object_print(jo_t tag, cell data);
+
+    void local_env_print(struct local* lr) {
+      report("{ ");
+      while (lr->name != NULL) {
+        object_print(lr->local_tag, lr->local_data);
+        report("%s! ", jo2str(lr->name));
+        lr++;
+      }
+      report("}");
+    }
+    void jojo_print(jo_t* jojo);
+
+    void object_print(jo_t tag, cell data) {
+      if (tag == TAG_INT) {
+        report("%ld ", data);
+      }
+      else if (tag == TAG_STRING) {
+        struct object_entry* str_obj = data;
+        char* str = str_obj->pointer;
+        report("\"%s\" ", str);
+      }
+      else if (tag == TAG_JO) {
+        jo_t jo = data;
+        report("'%s ", jo2str(jo));
+      }
+      else if (tag == TAG_JOJO) {
+        jo_t* jojo = data;
+        jojo_print(jojo);
+      }
+      else if (tag == str2jo("<local-env>")) {
+        struct local* lr = data;
+        local_env_print(lr);
+        report("<local-env> ");
+      }
+      else if (tag == TAG_CLOSURE) {
+        struct object_entry* closure = data;
+
+        struct obj a = get_field(TAG_CLOSURE, closure, str2jo(".local-env"));
+        struct object_entry* ao = a.data;
+        struct local* lr = ao->pointer;
+
+        struct obj b = get_field(TAG_CLOSURE, closure, str2jo(".jojo"));
+        jo_t* jojo = b.data;
+
+        local_env_print(lr);
+        report("+");
+        jojo_print(jojo);
+      }
+      else {
+        report("%s ", jo2str(tag));
+      }
+    }
+    void jojo_print(jo_t* jojo) {
+      report("[ ");
+      while (true) {
+        if (jojo[0] == 0 && jojo[1] == 0) {
+          break;
+        }
+        else if (jojo[0] == JO_INS_LIT) {
+          object_print(jojo[1], jojo[2]);
+          jojo++;
+          jojo++;
+          jojo++;
+        }
+        else if (jojo[0] == JO_INS_JZ) {
+          report("(jz %ld) ", jojo[1]);
+          jojo++;
+          jojo++;
+        }
+        else if (jojo[0] == JO_INS_JMP) {
+          report("(jmp %ld) ", jojo[1]);
+          jojo++;
+          jojo++;
+        }
+        else if (jojo[0] == JO_INS_LOOP) {
+          report("(loop) ");
+          jojo++;
+          jojo++;
+        }
+        else if (jojo[0] == JO_INS_RECUR) {
+          report("(recur) ");
+          jojo++;
+          jojo++;
+        }
+        else if (jojo[0] == JO_INS_GET_LOCAL ||
+                 jojo[0] == JO_INS_GET_FIELD) {
+          report("%s ", jo2str(jojo[1]));
+          jojo++;
+          jojo++;
+        }
+        else if (jojo[0] == JO_INS_SET_LOCAL ||
+                 jojo[0] == JO_INS_SET_FIELD) {
+          report("%s! ", jo2str(jojo[1]));
+          jojo++;
+          jojo++;
+        }
+        else if (jojo[0] == JO_INS_TAIL_CALL) {
+          report("(tail-call %s) ", jo2str(jojo[1]));
+          jojo++;
+          jojo++;
+        }
+        else {
+          report("%s ", jo2str(jojo[0]));
+          jojo++;
+        }
+      }
+      report("] ");
+    }
     void p_print_object_stack() {
       cell length = stack_length(object_stack);
       report("  * %ld *  ", length/2);
       report("-- ");
       cell cursor = 0;
       while (cursor < length) {
-        report("%ld ", stack_ref(object_stack, cursor));
-        report("%s ", jo2str(stack_ref(object_stack, cursor+1)));
+        object_print(stack_ref(object_stack, cursor+1),
+                     stack_ref(object_stack, cursor));
         cursor++;
         cursor++;
       }
       report("--\n");
+    }
+    void print_return_point(struct ret p) {
+      jo_t* jojo = p.jojo;
+      report("    - { %s } ", jo2str(*(jojo - 1)));
+      jojo_print(jojo);
+      report("\n");
+    }
+    void p_print_return_stack() {
+      cell length = stack_length(return_stack);
+      report("  - return-stack * %ld * :\n", length/2);
+      if (length == 0) { return; };
+      cell cursor = 0;
+      while (cursor < length - 2) {
+        struct ret p;
+        p.local_counter = stack_ref(return_stack, cursor);
+        p.jojo = stack_ref(return_stack, cursor+1);
+        print_return_point(p);
+        cursor++;
+        cursor++;
+      }
+      {
+        struct ret p;
+        p.local_counter = stack_ref(return_stack, cursor);
+        p.jojo = stack_ref(return_stack, cursor+1);
+        jo_t* jojo = p.jojo;
+        report("    - ");
+        jojo_print(jojo);
+        report("\n");
+        cursor++;
+        cursor++;
+      }
     }
     bool repl_flag = false;
     void p_repl_flag_on() { repl_flag = true; }
@@ -2434,95 +2574,6 @@
         else {
           // loop
         }
-      }
-    }
-    void jojo_print_lit(jo_t* jojo) {
-      jo_t tag = jojo[1];
-      if (tag == TAG_INT) {
-        report("%ld ", jojo[2]);
-      }
-      else if (tag == TAG_STRING) {
-        struct object_entry* object_entry = jojo[2];
-        char* str = object_entry->pointer;
-        report("\"%s\" ", str);
-      }
-      else {
-        report("<unknow-data> ");
-      }
-    }
-    void jojo_print(jo_t* jojo) {
-      report("[ ");
-      while (true) {
-        if (jojo[0] == 0 && jojo[1] == 0) {
-          break;
-        }
-        else if (jojo[0] == JO_INS_LIT) {
-          jojo_print_lit(jojo);
-          jojo++;
-          jojo++;
-          jojo++;
-        }
-        else if (jojo[0] == JO_INS_JZ) {
-          report("(jz %ld) ", jojo[1]);
-          jojo++;
-          jojo++;
-        }
-        else if (jojo[0] == JO_INS_JMP) {
-          report("(jmp %ld) ", jojo[1]);
-          jojo++;
-          jojo++;
-        }
-        else if (jojo[0] == JO_INS_LOOP) {
-          report("(loop) ");
-          jojo++;
-          jojo++;
-        }
-        else if (jojo[0] == JO_INS_RECUR) {
-          report("(recur) ");
-          jojo++;
-          jojo++;
-        }
-        else if (jojo[0] == JO_INS_TAIL_CALL) {
-          report("(tail-call %s) ", jo2str(jojo[1]));
-          jojo++;
-          jojo++;
-        }
-        else {
-          report("%s ", jo2str(jojo[0]));
-          jojo++;
-        }
-      }
-      report("] ");
-    }
-    void print_return_point(struct ret p) {
-      jo_t* jojo = p.jojo;
-      report("    - { %s } ", jo2str(*(jojo - 1)));
-      jojo_print(jojo);
-      report("\n");
-    }
-    void p_print_return_stack() {
-      cell length = stack_length(return_stack);
-      report("  - return-stack * %ld * :\n", length/2);
-      if (length == 0) { return; };
-      cell cursor = 0;
-      while (cursor < length - 2) {
-        struct ret p;
-        p.local_counter = stack_ref(return_stack, cursor);
-        p.jojo = stack_ref(return_stack, cursor+1);
-        print_return_point(p);
-        cursor++;
-        cursor++;
-      }
-      {
-        struct ret p;
-        p.local_counter = stack_ref(return_stack, cursor);
-        p.jojo = stack_ref(return_stack, cursor+1);
-        jo_t* jojo = p.jojo;
-        report("    - ");
-        jojo_print(jojo);
-        report("\n");
-        cursor++;
-        cursor++;
       }
     }
     void p_debug() {
@@ -2893,7 +2944,6 @@
       }
     }
     void exe_closure(struct object_entry* closure) {
-
       struct obj a = get_field(TAG_CLOSURE, closure, str2jo(".local-env"));
       struct object_entry* ao = a.data;
       struct local* lr = ao->pointer;
@@ -2906,13 +2956,9 @@
       return_stack_push(jojo, local_counter);
     }
     void k_closure() {
-      struct class* class = TAG_CLOSURE->data;
-      struct object_entry* closure = new(class);
-
       jo_t* jojo = tos(compiling_stack);
-
-      push(current_compiling_exe_stack, closure);
-      push(current_compiling_exe_stack, TAG_CLOSURE);
+      push(current_compiling_exe_stack, jojo);
+      push(current_compiling_exe_stack, TAG_JOJO);
       {
         compile_until_meet_jo(ROUND_KET);
         here(JO_END);
@@ -2931,23 +2977,8 @@
       here(TAG_JOJO);
       here(new_jojo);
 
-      here(JO_INS_LIT);
-      here(TAG_CLOSURE);
-      here(closure);
-      here(JO_INS_SET_FIELD);
-      here(str2jo(".jojo"));
-
       here(str2jo("current-local-env"));
-
-      here(JO_INS_LIT);
-      here(TAG_CLOSURE);
-      here(closure);
-      here(JO_INS_SET_FIELD);
-      here(str2jo(".local-env"));
-
-      here(JO_INS_LIT);
-      here(TAG_CLOSURE);
-      here(closure);
+      here(str2jo("closure"));
     }
     void p_closure_apply() {
       struct obj a = object_stack_pop();
@@ -2956,7 +2987,7 @@
     void expose_closure() {
       add_prim("current-local-env", p_current_local_env);
       add_atom_data("<local-env>", gc_local_env);
-      add_data_exe("<closure>", exe_closure, J(".local-env", ".jojo"));
+      add_data_exe("<closure>", exe_closure, J(".jojo", ".local-env"));
       add_prim_keyword("%", k_closure);
       add_prim("apply", p_closure_apply);
     }

@@ -164,10 +164,10 @@
       (+jojo com :m1! :m2!
        (% :m2 apply
           :m1 apply))
-
-      (run (% 1) (% 2) com (% 3) com apply)
-
-      (run (% 1) (% 2) (% 3) com com apply))
+      (run (% 1) (% 2) com apply add int-write)
+      (run (% 1) (% 2) com (% 3) com apply add add int-write)
+      (run (% 1) (% 2) (% 3) com com apply add add int-write)
+      (run step (% 1) (% 2) (% 3) com com apply add add int-write))
     #+end_src
 
 * <socket>
