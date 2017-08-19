@@ -6,10 +6,9 @@ w = -Wno-int-conversion -Wno-incompatible-pointer-types -Wunused-value
 o = -O2
 f = -rdynamic
 l = -ldl
-
+	# xxd -i core/0.0.1/core.jo > core/0.0.1/core.h &&
 build:
 	./tool/tangle.js &&\
-	xxd -i core/0.0.1/core.jo > core/0.0.1/core.h &&\
 	$(cc) $(w) $(o) $(f) $(l) jojo.c -o jojo
 
 user-install:
