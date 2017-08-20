@@ -166,10 +166,38 @@
         }
       }
       // caller free
-      cell* arraydup(cell* src, cell len) {
+      cell* array_len_dup(cell* src, cell len) {
         cell* p = malloc(len * sizeof(cell));
         memcpy(p, src, len * sizeof(cell));
         return p;
+      }
+      cell array_len(cell* src) {
+        cell i = 0;
+        while (src[i] != 0) {
+          i++;
+        }
+        return i;
+      }
+      // caller free
+      cell* array_dup(cell* src) {
+        return array_len_dup(src, array_len(src) + 1);
+      }
+      bool array_equal_p(cell* a1, cell* a2) {
+        cell i = 0;
+        while (true) {
+          if (a1[i] == a2[i]) {
+            if (a1[i] == 0) {
+              return true;
+            }
+            else {
+              // loop
+            }
+          }
+          else {
+            return false;
+          }
+          i++;
+        }
       }
   void p_debug();
     struct jotable_entry {
@@ -1049,101 +1077,213 @@
       jo_t* jojo = pop(return_stack);
       push(return_stack, jojo + 1);
     }
-    struct hashtable_entry {
+    struct dispatch_entry {
       jo_t key;
       cell data;
-      struct hashtable_entry* rest;
+      struct dispatch_entry* rest;
     };
 
-    struct hashtable {
-      struct hashtable_entry* table;
+    struct dispatch {
+      struct dispatch_entry* table;
       cell size;
     };
-    struct hashtable* new_hashtable(cell size) {
-      struct hashtable* hashtable = (struct hashtable*)
-        malloc(sizeof(struct hashtable));
-      hashtable->size = size;
-      hashtable->table = (struct hashtable_entry*)
-        malloc(size * sizeof(struct hashtable_entry));
-      bzero(hashtable->table, size * sizeof(struct hashtable_entry));
-      return hashtable;
+    struct dispatch* new_dispatch(cell size) {
+      struct dispatch* dispatch = (struct dispatch*)
+        malloc(sizeof(struct dispatch));
+      dispatch->size = size;
+      dispatch->table = (struct dispatch_entry*)
+        malloc(size * sizeof(struct dispatch_entry));
+      bzero(dispatch->table, size * sizeof(struct dispatch_entry));
+      return dispatch;
     }
-    cell hashtable_hash(struct hashtable* hashtable, jo_t key) {
+    cell dispatch_hash(struct dispatch* dispatch, jo_t key) {
       // return (((key - jotable) >> 1)
-      //         % (hashtable->size - 1)) + 1;
+      //         % (dispatch->size - 1)) + 1;
       return ((key - jotable)
-              % (hashtable->size - 1)) + 1;
+              % (dispatch->size - 1)) + 1;
     }
-    void hashtable_insert_entry(hashtable_entry, key, data)
-         struct hashtable_entry* hashtable_entry;
+    void dispatch_insert_entry(dispatch_entry, key, data)
+         struct dispatch_entry* dispatch_entry;
          jo_t key;
          cell data;
     {
-      if (key == hashtable_entry->key) {
-        hashtable_entry->data = data;
+      if (0 == dispatch_entry->key) {
+        dispatch_entry->key = key;
+        dispatch_entry->data = data;
       }
-      else if (0 == hashtable_entry->key) {
-        hashtable_entry->key = key;
-        hashtable_entry->data = data;
+      else if (key == dispatch_entry->key) {
+        dispatch_entry->data = data;
       }
-      else if (hashtable_entry->rest == 0) {
-        struct hashtable_entry* hashtable_entry_new = (struct hashtable_entry*)
-          malloc(sizeof(struct hashtable_entry));
-        bzero(hashtable_entry_new, sizeof(struct hashtable_entry));
-        hashtable_entry->rest = hashtable_entry_new;
-        hashtable_insert_entry(hashtable_entry_new, key, data);
+      else if (dispatch_entry->rest == 0) {
+        struct dispatch_entry* dispatch_entry_new = (struct dispatch_entry*)
+          malloc(sizeof(struct dispatch_entry));
+        bzero(dispatch_entry_new, sizeof(struct dispatch_entry));
+        dispatch_entry->rest = dispatch_entry_new;
+        dispatch_insert_entry(dispatch_entry_new, key, data);
       }
       else {
-        hashtable_insert_entry(hashtable_entry->rest, key, data);
+        dispatch_insert_entry(dispatch_entry->rest, key, data);
       }
     }
-    void hashtable_insert(struct hashtable* hashtable, jo_t key, cell data) {
-      cell index = hashtable_hash(hashtable, key);
-      struct hashtable_entry* hashtable_entry = hashtable->table + index;
-      hashtable_insert_entry(hashtable_entry, key, data);
+    void dispatch_insert(struct dispatch* dispatch, jo_t key, cell data) {
+      cell index = dispatch_hash(dispatch, key);
+      struct dispatch_entry* dispatch_entry = dispatch->table + index;
+      dispatch_insert_entry(dispatch_entry, key, data);
     }
-    struct hashtable_entry*
-    hashtable_find_entry(hashtable_entry, key)
-         struct hashtable_entry* hashtable_entry;
+    struct dispatch_entry*
+    dispatch_find_entry(dispatch_entry, key)
+         struct dispatch_entry* dispatch_entry;
          jo_t key;
     {
-      if (key == hashtable_entry->key) {
-        return hashtable_entry;
+      if (key == dispatch_entry->key) {
+        return dispatch_entry;
       }
-      else if (hashtable_entry->rest != 0) {
-        return hashtable_find_entry(hashtable_entry->rest, key);
+      else if (dispatch_entry->rest != 0) {
+        return dispatch_find_entry(dispatch_entry->rest, key);
       }
       else {
         return NULL;
       }
     }
-    struct hashtable_entry*
-    hashtable_find(hashtable, key)
-         struct hashtable* hashtable;
+    struct dispatch_entry*
+    dispatch_find(dispatch, key)
+         struct dispatch* dispatch;
          jo_t key;
     {
-      cell index = hashtable_hash(hashtable, key);
-      struct hashtable_entry* hashtable_entry = hashtable->table + index;
-      return hashtable_find_entry(hashtable_entry, key);
+      cell index = dispatch_hash(dispatch, key);
+      struct dispatch_entry* dispatch_entry = dispatch->table + index;
+      return dispatch_find_entry(dispatch_entry, key);
     }
-    void hashtable_print_entry(struct hashtable_entry* hashtable_entry) {
-      if (hashtable_entry->key != 0) {
+    void dispatch_print_entry(struct dispatch_entry* dispatch_entry) {
+      if (dispatch_entry->key != 0) {
         report("{%s => %ld} ",
-               jo2str(hashtable_entry->key),
-               hashtable_entry->data);
+               jo2str(dispatch_entry->key),
+               dispatch_entry->data);
       }
-      if (hashtable_entry->rest != 0) {
-        hashtable_print_entry(hashtable_entry->rest);
+      if (dispatch_entry->rest != 0) {
+        dispatch_print_entry(dispatch_entry->rest);
       }
     }
-    void hashtable_print(struct hashtable* hashtable) {
-      report("- hashtable_print\n");
+    void dispatch_print(struct dispatch* dispatch) {
+      report("- dispatch_print\n");
       cell i = 0;
-      while (i < hashtable->size) {
-        struct hashtable_entry* hashtable_entry = hashtable->table + i;
-        if (hashtable_entry->key != 0) {
+      while (i < dispatch->size) {
+        struct dispatch_entry* dispatch_entry = dispatch->table + i;
+        if (dispatch_entry->key != 0) {
           report("  ");
-          hashtable_print_entry(hashtable_entry);
+          dispatch_print_entry(dispatch_entry);
+          report("\n");
+        }
+        i++;
+      }
+    }
+    struct multi_dispatch_entry {
+      jo_t* key;
+      cell data;
+      struct multi_dispatch_entry* rest;
+    };
+
+    struct multi_dispatch {
+      struct multi_dispatch_entry* table;
+      cell size;
+    };
+    struct multi_dispatch* new_multi_dispatch(cell size) {
+      struct multi_dispatch* multi_dispatch = (struct multi_dispatch*)
+        malloc(sizeof(struct multi_dispatch));
+      multi_dispatch->size = size;
+      multi_dispatch->table = (struct multi_dispatch_entry*)
+        malloc(size * sizeof(struct multi_dispatch_entry));
+      bzero(multi_dispatch->table, size * sizeof(struct multi_dispatch_entry));
+      return multi_dispatch;
+    }
+    cell multi_dispatch_hash(struct multi_dispatch* multi_dispatch, jo_t* key) {
+      cell sum = 0;
+      cell i = 0;
+      while (key[i] != 0) {
+        sum = sum + (key[i] - jotable);
+        i++;
+      }
+      return (sum
+              % (multi_dispatch->size - 1)) + 1;
+    }
+    void multi_dispatch_insert_entry(multi_dispatch_entry, key, data)
+         struct multi_dispatch_entry* multi_dispatch_entry;
+         jo_t* key;
+         cell data;
+    {
+      if (0 == multi_dispatch_entry->key) {
+        multi_dispatch_entry->key = array_dup(key);
+        multi_dispatch_entry->data = data;
+      }
+      else if (array_equal_p(key, multi_dispatch_entry->key)) {
+        multi_dispatch_entry->data = data;
+      }
+      else if (multi_dispatch_entry->rest == 0) {
+        struct multi_dispatch_entry* multi_dispatch_entry_new = (struct multi_dispatch_entry*)
+          malloc(sizeof(struct multi_dispatch_entry));
+        bzero(multi_dispatch_entry_new, sizeof(struct multi_dispatch_entry));
+        multi_dispatch_entry->rest = multi_dispatch_entry_new;
+        multi_dispatch_insert_entry(multi_dispatch_entry_new, key, data);
+      }
+      else {
+        multi_dispatch_insert_entry(multi_dispatch_entry->rest, key, data);
+      }
+    }
+    void multi_dispatch_insert(struct multi_dispatch* multi_dispatch, jo_t* key, cell data) {
+      cell index = multi_dispatch_hash(multi_dispatch, key);
+      struct multi_dispatch_entry* multi_dispatch_entry = multi_dispatch->table + index;
+      multi_dispatch_insert_entry(multi_dispatch_entry, key, data);
+    }
+    struct multi_dispatch_entry*
+    multi_dispatch_find_entry(multi_dispatch_entry, key)
+         struct multi_dispatch_entry* multi_dispatch_entry;
+         jo_t* key;
+    {
+      if (multi_dispatch_entry->key == 0) {
+        return NULL;
+      }
+      else if (array_equal_p(key, multi_dispatch_entry->key)) {
+        return multi_dispatch_entry;
+      }
+      else if (multi_dispatch_entry->rest != 0) {
+        return multi_dispatch_find_entry(multi_dispatch_entry->rest, key);
+      }
+      else {
+        return NULL;
+      }
+    }
+    struct multi_dispatch_entry*
+    multi_dispatch_find(multi_dispatch, key)
+         struct multi_dispatch* multi_dispatch;
+         jo_t* key;
+    {
+      cell index = multi_dispatch_hash(multi_dispatch, key);
+      struct multi_dispatch_entry* multi_dispatch_entry = multi_dispatch->table + index;
+      return multi_dispatch_find_entry(multi_dispatch_entry, key);
+    }
+    void multi_dispatch_print_entry(struct multi_dispatch_entry* multi_dispatch_entry) {
+      if (multi_dispatch_entry->key != 0) {
+        report("{");
+        cell i = 0;
+        while (multi_dispatch_entry->key[i] != 0) {
+          report("%s ", jo2str(multi_dispatch_entry->key[i]));
+          i++;
+        }
+        report("=> %ld} ",
+               multi_dispatch_entry->data);
+      }
+      if (multi_dispatch_entry->rest != 0) {
+        multi_dispatch_print_entry(multi_dispatch_entry->rest);
+      }
+    }
+    void multi_dispatch_print(struct multi_dispatch* multi_dispatch) {
+      report("- multi_dispatch_print\n");
+      cell i = 0;
+      while (i < multi_dispatch->size) {
+        struct multi_dispatch_entry* multi_dispatch_entry = multi_dispatch->table + i;
+        if (multi_dispatch_entry->key != 0) {
+          report("  ");
+          multi_dispatch_print_entry(multi_dispatch_entry);
           report("\n");
         }
         i++;
@@ -3069,7 +3209,7 @@
       drop(current_compiling_exe_stack);
 
       jo_t* new_jojo =
-        arraydup(jojo, (cell*)tos(compiling_stack) - (cell*)jojo);
+        array_len_dup(jojo, (cell*)tos(compiling_stack) - (cell*)jojo);
       drop(compiling_stack);
       push(compiling_stack, jojo);
 
@@ -3526,45 +3666,91 @@
       report("- output_stack test2 finished\n");
     }
     void p3() {
-      struct hashtable* hashtable_1 = new_hashtable(16);
-      hashtable_insert(hashtable_1, str2jo("k1"), 100);
-      hashtable_insert(hashtable_1, str2jo("k1"), 1);
-      hashtable_insert(hashtable_1, str2jo("k2"), 2);
-      hashtable_insert(hashtable_1, str2jo("k3"), 3);
-      hashtable_insert(hashtable_1, str2jo("k4"), 4);
-      hashtable_insert(hashtable_1, str2jo("k5"), 5);
-      hashtable_insert(hashtable_1, str2jo("k6"), 6);
+      struct dispatch* dispatch_1 = new_dispatch(16);
+      dispatch_insert(dispatch_1, str2jo("k1"), 100);
+      dispatch_insert(dispatch_1, str2jo("k1"), 1);
+      dispatch_insert(dispatch_1, str2jo("k2"), 2);
+      dispatch_insert(dispatch_1, str2jo("k3"), 3);
+      dispatch_insert(dispatch_1, str2jo("k4"), 4);
+      dispatch_insert(dispatch_1, str2jo("k5"), 5);
+      dispatch_insert(dispatch_1, str2jo("k6"), 6);
 
-      hashtable_insert(hashtable_1, str2jo("kkkk1"), 1);
-      hashtable_insert(hashtable_1, str2jo("kkkk2"), 2);
-      hashtable_insert(hashtable_1, str2jo("kkkk3"), 3);
-      hashtable_insert(hashtable_1, str2jo("kkkk4"), 4);
-      hashtable_insert(hashtable_1, str2jo("kkkk5"), 5);
-      hashtable_insert(hashtable_1, str2jo("kkkk6"), 6);
+      dispatch_insert(dispatch_1, str2jo("kkkk1"), 1);
+      dispatch_insert(dispatch_1, str2jo("kkkk2"), 2);
+      dispatch_insert(dispatch_1, str2jo("kkkk3"), 3);
+      dispatch_insert(dispatch_1, str2jo("kkkk4"), 4);
+      dispatch_insert(dispatch_1, str2jo("kkkk5"), 5);
+      dispatch_insert(dispatch_1, str2jo("kkkk6"), 6);
 
-      hashtable_insert(hashtable_1, str2jo("1"), 666);
-      hashtable_insert(hashtable_1, str2jo("2"), 2);
-      hashtable_insert(hashtable_1, str2jo("3"), 3);
-      hashtable_insert(hashtable_1, str2jo("4"), 4);
-      hashtable_insert(hashtable_1, str2jo("5"), 5);
-      hashtable_insert(hashtable_1, str2jo("6"), 6);
+      dispatch_insert(dispatch_1, str2jo("1"), 666);
+      dispatch_insert(dispatch_1, str2jo("2"), 2);
+      dispatch_insert(dispatch_1, str2jo("3"), 3);
+      dispatch_insert(dispatch_1, str2jo("4"), 4);
+      dispatch_insert(dispatch_1, str2jo("5"), 5);
+      dispatch_insert(dispatch_1, str2jo("6"), 6);
 
-      hashtable_print(hashtable_1);
+      dispatch_print(dispatch_1);
 
-      struct hashtable_entry* hashtable_entry_1 =
-        hashtable_find(hashtable_1, str2jo("1"));
-      if (hashtable_entry_1 == NULL) {
-        report("hashtable_entry_1 == NULL\n");
+      struct dispatch_entry* dispatch_entry_1 =
+        dispatch_find(dispatch_1, str2jo("1"));
+      if (dispatch_entry_1 == NULL) {
+        report("dispatch_entry_1 == NULL\n");
       }
       else {
-        report("hashtable_entry_1->data : %ld\n", hashtable_entry_1->data);
+        report("dispatch_entry_1->data : %ld\n", dispatch_entry_1->data);
       }
-    }
-    void p4() {
+
       // void* p = NULL;
       // printf("- in c stack : %p\n", (void*)&p);
       report("NULL: %ld\n", NULL);
       report("sizeof(struct jotable_entry): %ld\n", sizeof(struct jotable_entry));
+    }
+    void p4() {
+      struct multi_dispatch* multi_dispatch_1 = new_multi_dispatch(16);
+      multi_dispatch_insert(multi_dispatch_1, J("k1", "k1"), 100);
+      multi_dispatch_insert(multi_dispatch_1, J("k1", "k1"), 1);
+      multi_dispatch_insert(multi_dispatch_1, J("k21", "k22"), 2);
+      multi_dispatch_insert(multi_dispatch_1, J("k31", "k32", "k33"), 3);
+      multi_dispatch_insert(multi_dispatch_1, J("k4"), 4);
+      multi_dispatch_insert(multi_dispatch_1, J("k5"), 5);
+      multi_dispatch_insert(multi_dispatch_1, J("k6"), 6);
+
+      multi_dispatch_insert(multi_dispatch_1, J("kkkk1"), 1);
+      multi_dispatch_insert(multi_dispatch_1, J("kkkk2"), 2);
+      multi_dispatch_insert(multi_dispatch_1, J("kkkk3"), 3);
+      multi_dispatch_insert(multi_dispatch_1, J("kkkk4"), 4);
+      multi_dispatch_insert(multi_dispatch_1, J("kkkk5"), 5);
+      multi_dispatch_insert(multi_dispatch_1, J("kkkk6"), 6);
+
+      multi_dispatch_insert(multi_dispatch_1, J("1", "2", "3"), 666);
+      multi_dispatch_insert(multi_dispatch_1, J("2"), 2);
+      multi_dispatch_insert(multi_dispatch_1, J("3"), 3);
+      multi_dispatch_insert(multi_dispatch_1, J("4"), 4);
+      multi_dispatch_insert(multi_dispatch_1, J("5"), 5);
+      multi_dispatch_insert(multi_dispatch_1, J("6"), 6);
+
+      multi_dispatch_print(multi_dispatch_1);
+
+      struct multi_dispatch_entry* multi_dispatch_entry_1 =
+        multi_dispatch_find(multi_dispatch_1, J("1", "2", "3"));
+      if (multi_dispatch_entry_1 == NULL) {
+        report("multi_dispatch_entry_1 == NULL\n");
+      }
+      else {
+        report("multi_dispatch_entry_1->data : %ld\n",
+               multi_dispatch_entry_1->data);
+      }
+
+      struct multi_dispatch_entry* multi_dispatch_entry_2 =
+        multi_dispatch_find(multi_dispatch_1, J("1", "2", "3123"));
+      if (multi_dispatch_entry_2 == NULL) {
+        report("multi_dispatch_entry_2 == NULL\n");
+      }
+      else {
+        report("multi_dispatch_entry_2->data : %ld\n",
+               multi_dispatch_entry_2->data);
+      }
+
     }
     void path_load(char* path) {
       int file = open(path, O_RDONLY);
