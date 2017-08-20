@@ -3,17 +3,7 @@
 
 * [todo-stack]
 
-*** re-design printing format
-
-    - give up indentation
-      but not print in one line
-      to make it easier to read
-
-*** term
-
-    - apply -> exe
-
-*** [note] about dispatching
+*** [note] about dynamic dispatching
 
     - currently at least the following functions need dispatching
       - exe -- over obj
@@ -21,10 +11,17 @@
       - object_print -- over obj
 
     - how about support generic function
-      - no inheritance
-      - some function are generic
-      - some function are not generic, for example :
-        drop dup over tuck swap
+      note that,
+      the generic-ness of exe is implemented
+      by registering the function into a record
+
+    - for a generic function
+      fixed number of specified arguments
+      are used to find the absolute function
+
+*** term
+
+    - apply -> exe
 
 *** re-design the struct of jojo
 
@@ -35,9 +32,25 @@
     - even with (recur) and (loop)
       because the use of higher order functions
 
-*** richer return_point for 'apply-binder'
-
 *** re-implement (recur) (loop) by richer return_point
+
+    - (recur) and (loop) -> 'recur' and 'loop'
+
+    - they work at least both for <jojo> and <closure>
+
+    - they only work in the scope of <jojo> and <closure>
+
+*** richer return_point for 'binder-apply'
+
+*** interface for dynamic scoped var in c code
+
+*** re-design printing format
+
+    - give up indentation
+      but not print in one line
+      to make it easier to read
+
+    - dynamic scoped var for current indentation
 
 *** (case) and (cond)
 
@@ -495,7 +508,7 @@
         }
         else if (counter == JOTABLE_SIZE) {
           report("- jotable_insert fail\n");
-          report("  the hash_table is filled\n");
+          report("  the jotable is filled\n");
           p_debug();
           return NULL;
         }
@@ -1637,6 +1650,153 @@
     void return_stack_inc() {
       jo_t* jojo = pop(return_stack);
       push(return_stack, jojo + 1);
+    }
+    #+end_src
+
+* hashtable
+
+*** struct hashtable
+
+    #+begin_src c
+    struct hashtable_entry {
+      jo_t key;
+      cell data;
+      struct hashtable_entry* rest;
+    };
+
+    struct hashtable {
+      struct hashtable_entry* table;
+      cell size;
+    };
+    #+end_src
+
+*** new_hashtable
+
+    #+begin_src c
+    struct hashtable* new_hashtable(cell size) {
+      struct hashtable* hashtable = (struct hashtable*)
+        malloc(sizeof(struct hashtable));
+      hashtable->size = size;
+      hashtable->table = (struct hashtable_entry*)
+        malloc(size * sizeof(struct hashtable_entry));
+      bzero(hashtable->table, size * sizeof(struct hashtable_entry));
+      return hashtable;
+    }
+    #+end_src
+
+*** hashtable_hash
+
+    #+begin_src c
+    cell hashtable_hash(struct hashtable* hashtable, jo_t key) {
+      // return (((key - jotable) >> 1)
+      //         % (hashtable->size - 1)) + 1;
+      return ((key - jotable)
+              % (hashtable->size - 1)) + 1;
+    }
+    #+end_src
+
+*** hashtable_insert_entry
+
+    #+begin_src c
+    void hashtable_insert_entry(hashtable_entry, key, data)
+         struct hashtable_entry* hashtable_entry;
+         jo_t key;
+         cell data;
+    {
+      if (key == hashtable_entry->key) {
+        hashtable_entry->data = data;
+      }
+      else if (0 == hashtable_entry->key) {
+        hashtable_entry->key = key;
+        hashtable_entry->data = data;
+      }
+      else if (hashtable_entry->rest == 0) {
+        struct hashtable_entry* hashtable_entry_new = (struct hashtable_entry*)
+          malloc(sizeof(struct hashtable_entry));
+        bzero(hashtable_entry_new, sizeof(struct hashtable_entry));
+        hashtable_entry->rest = hashtable_entry_new;
+        hashtable_insert_entry(hashtable_entry_new, key, data);
+      }
+      else {
+        hashtable_insert_entry(hashtable_entry->rest, key, data);
+      }
+    }
+    #+end_src
+
+*** hashtable_insert
+
+    #+begin_src c
+    void hashtable_insert(struct hashtable* hashtable, jo_t key, cell data) {
+      cell index = hashtable_hash(hashtable, key);
+      struct hashtable_entry* hashtable_entry = hashtable->table + index;
+      hashtable_insert_entry(hashtable_entry, key, data);
+    }
+    #+end_src
+
+*** hashtable_find_entry
+
+    #+begin_src c
+    struct hashtable_entry*
+    hashtable_find_entry(hashtable_entry, key)
+         struct hashtable_entry* hashtable_entry;
+         jo_t key;
+    {
+      if (key == hashtable_entry->key) {
+        return hashtable_entry;
+      }
+      else if (hashtable_entry->rest != 0) {
+        return hashtable_find_entry(hashtable_entry->rest, key);
+      }
+      else {
+        return NULL;
+      }
+    }
+    #+end_src
+
+*** hashtable_find
+
+    #+begin_src c
+    struct hashtable_entry*
+    hashtable_find(hashtable, key)
+         struct hashtable* hashtable;
+         jo_t key;
+    {
+      cell index = hashtable_hash(hashtable, key);
+      struct hashtable_entry* hashtable_entry = hashtable->table + index;
+      return hashtable_find_entry(hashtable_entry, key);
+    }
+    #+end_src
+
+*** hashtable_print_entry
+
+    #+begin_src c
+    void hashtable_print_entry(struct hashtable_entry* hashtable_entry) {
+      if (hashtable_entry->key != 0) {
+        report("{%s => %ld} ",
+               jo2str(hashtable_entry->key),
+               hashtable_entry->data);
+      }
+      if (hashtable_entry->rest != 0) {
+        hashtable_print_entry(hashtable_entry->rest);
+      }
+    }
+    #+end_src
+
+*** hashtable_print
+
+    #+begin_src c
+    void hashtable_print(struct hashtable* hashtable) {
+      report("- hashtable_print\n");
+      cell i = 0;
+      while (i < hashtable->size) {
+        struct hashtable_entry* hashtable_entry = hashtable->table + i;
+        if (hashtable_entry->key != 0) {
+          report("  ");
+          hashtable_print_entry(hashtable_entry);
+          report("\n");
+        }
+        i++;
+      }
     }
     #+end_src
 
@@ -5054,7 +5214,39 @@
 
     #+begin_src c
     void p3() {
-      report("- SIGSEGV : %ld\n", SIGSEGV);
+      struct hashtable* hashtable_1 = new_hashtable(16);
+      hashtable_insert(hashtable_1, str2jo("k1"), 100);
+      hashtable_insert(hashtable_1, str2jo("k1"), 1);
+      hashtable_insert(hashtable_1, str2jo("k2"), 2);
+      hashtable_insert(hashtable_1, str2jo("k3"), 3);
+      hashtable_insert(hashtable_1, str2jo("k4"), 4);
+      hashtable_insert(hashtable_1, str2jo("k5"), 5);
+      hashtable_insert(hashtable_1, str2jo("k6"), 6);
+
+      hashtable_insert(hashtable_1, str2jo("kkkk1"), 1);
+      hashtable_insert(hashtable_1, str2jo("kkkk2"), 2);
+      hashtable_insert(hashtable_1, str2jo("kkkk3"), 3);
+      hashtable_insert(hashtable_1, str2jo("kkkk4"), 4);
+      hashtable_insert(hashtable_1, str2jo("kkkk5"), 5);
+      hashtable_insert(hashtable_1, str2jo("kkkk6"), 6);
+
+      hashtable_insert(hashtable_1, str2jo("1"), 666);
+      hashtable_insert(hashtable_1, str2jo("2"), 2);
+      hashtable_insert(hashtable_1, str2jo("3"), 3);
+      hashtable_insert(hashtable_1, str2jo("4"), 4);
+      hashtable_insert(hashtable_1, str2jo("5"), 5);
+      hashtable_insert(hashtable_1, str2jo("6"), 6);
+
+      hashtable_print(hashtable_1);
+
+      struct hashtable_entry* hashtable_entry_1 =
+        hashtable_find(hashtable_1, str2jo("1"));
+      if (hashtable_entry_1 == NULL) {
+        report("hashtable_entry_1 == NULL\n");
+      }
+      else {
+        report("hashtable_entry_1->data : %ld\n", hashtable_entry_1->data);
+      }
     }
     #+end_src
 
@@ -5062,8 +5254,10 @@
 
     #+begin_src c
     void p4() {
-      void* p = NULL;
-      printf("- in c stack : %p\n", (void*)&p);
+      // void* p = NULL;
+      // printf("- in c stack : %p\n", (void*)&p);
+      report("NULL: %ld\n", NULL);
+      report("sizeof(struct jotable_entry): %ld\n", sizeof(struct jotable_entry));
     }
     #+end_src
 
@@ -5113,9 +5307,7 @@
 
     #+begin_src c
     void init_jotable() {
-      bzero(jotable,
-            JOTABLE_SIZE *
-            sizeof(struct jotable_entry));
+      bzero(jotable, JOTABLE_SIZE * sizeof(struct jotable_entry));
     }
     #+end_src
 

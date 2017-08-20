@@ -227,7 +227,7 @@
         }
         else if (counter == JOTABLE_SIZE) {
           report("- jotable_insert fail\n");
-          report("  the hash_table is filled\n");
+          report("  the jotable is filled\n");
           p_debug();
           return NULL;
         }
@@ -1048,6 +1048,106 @@
     void return_stack_inc() {
       jo_t* jojo = pop(return_stack);
       push(return_stack, jojo + 1);
+    }
+    struct hashtable_entry {
+      jo_t key;
+      cell data;
+      struct hashtable_entry* rest;
+    };
+
+    struct hashtable {
+      struct hashtable_entry* table;
+      cell size;
+    };
+    struct hashtable* new_hashtable(cell size) {
+      struct hashtable* hashtable = (struct hashtable*)
+        malloc(sizeof(struct hashtable));
+      hashtable->size = size;
+      hashtable->table = (struct hashtable_entry*)
+        malloc(size * sizeof(struct hashtable_entry));
+      bzero(hashtable->table, size * sizeof(struct hashtable_entry));
+      return hashtable;
+    }
+    cell hashtable_hash(struct hashtable* hashtable, jo_t key) {
+      // return (((key - jotable) >> 1)
+      //         % (hashtable->size - 1)) + 1;
+      return ((key - jotable)
+              % (hashtable->size - 1)) + 1;
+    }
+    void hashtable_insert_entry(hashtable_entry, key, data)
+         struct hashtable_entry* hashtable_entry;
+         jo_t key;
+         cell data;
+    {
+      if (key == hashtable_entry->key) {
+        hashtable_entry->data = data;
+      }
+      else if (0 == hashtable_entry->key) {
+        hashtable_entry->key = key;
+        hashtable_entry->data = data;
+      }
+      else if (hashtable_entry->rest == 0) {
+        struct hashtable_entry* hashtable_entry_new = (struct hashtable_entry*)
+          malloc(sizeof(struct hashtable_entry));
+        bzero(hashtable_entry_new, sizeof(struct hashtable_entry));
+        hashtable_entry->rest = hashtable_entry_new;
+        hashtable_insert_entry(hashtable_entry_new, key, data);
+      }
+      else {
+        hashtable_insert_entry(hashtable_entry->rest, key, data);
+      }
+    }
+    void hashtable_insert(struct hashtable* hashtable, jo_t key, cell data) {
+      cell index = hashtable_hash(hashtable, key);
+      struct hashtable_entry* hashtable_entry = hashtable->table + index;
+      hashtable_insert_entry(hashtable_entry, key, data);
+    }
+    struct hashtable_entry*
+    hashtable_find_entry(hashtable_entry, key)
+         struct hashtable_entry* hashtable_entry;
+         jo_t key;
+    {
+      if (key == hashtable_entry->key) {
+        return hashtable_entry;
+      }
+      else if (hashtable_entry->rest != 0) {
+        return hashtable_find_entry(hashtable_entry->rest, key);
+      }
+      else {
+        return NULL;
+      }
+    }
+    struct hashtable_entry*
+    hashtable_find(hashtable, key)
+         struct hashtable* hashtable;
+         jo_t key;
+    {
+      cell index = hashtable_hash(hashtable, key);
+      struct hashtable_entry* hashtable_entry = hashtable->table + index;
+      return hashtable_find_entry(hashtable_entry, key);
+    }
+    void hashtable_print_entry(struct hashtable_entry* hashtable_entry) {
+      if (hashtable_entry->key != 0) {
+        report("{%s => %ld} ",
+               jo2str(hashtable_entry->key),
+               hashtable_entry->data);
+      }
+      if (hashtable_entry->rest != 0) {
+        hashtable_print_entry(hashtable_entry->rest);
+      }
+    }
+    void hashtable_print(struct hashtable* hashtable) {
+      report("- hashtable_print\n");
+      cell i = 0;
+      while (i < hashtable->size) {
+        struct hashtable_entry* hashtable_entry = hashtable->table + i;
+        if (hashtable_entry->key != 0) {
+          report("  ");
+          hashtable_print_entry(hashtable_entry);
+          report("\n");
+        }
+        i++;
+      }
     }
     typedef enum {
       GC_STATE_MARKING,
@@ -3426,11 +3526,45 @@
       report("- output_stack test2 finished\n");
     }
     void p3() {
-      report("- SIGSEGV : %ld\n", SIGSEGV);
+      struct hashtable* hashtable_1 = new_hashtable(16);
+      hashtable_insert(hashtable_1, str2jo("k1"), 100);
+      hashtable_insert(hashtable_1, str2jo("k1"), 1);
+      hashtable_insert(hashtable_1, str2jo("k2"), 2);
+      hashtable_insert(hashtable_1, str2jo("k3"), 3);
+      hashtable_insert(hashtable_1, str2jo("k4"), 4);
+      hashtable_insert(hashtable_1, str2jo("k5"), 5);
+      hashtable_insert(hashtable_1, str2jo("k6"), 6);
+
+      hashtable_insert(hashtable_1, str2jo("kkkk1"), 1);
+      hashtable_insert(hashtable_1, str2jo("kkkk2"), 2);
+      hashtable_insert(hashtable_1, str2jo("kkkk3"), 3);
+      hashtable_insert(hashtable_1, str2jo("kkkk4"), 4);
+      hashtable_insert(hashtable_1, str2jo("kkkk5"), 5);
+      hashtable_insert(hashtable_1, str2jo("kkkk6"), 6);
+
+      hashtable_insert(hashtable_1, str2jo("1"), 666);
+      hashtable_insert(hashtable_1, str2jo("2"), 2);
+      hashtable_insert(hashtable_1, str2jo("3"), 3);
+      hashtable_insert(hashtable_1, str2jo("4"), 4);
+      hashtable_insert(hashtable_1, str2jo("5"), 5);
+      hashtable_insert(hashtable_1, str2jo("6"), 6);
+
+      hashtable_print(hashtable_1);
+
+      struct hashtable_entry* hashtable_entry_1 =
+        hashtable_find(hashtable_1, str2jo("1"));
+      if (hashtable_entry_1 == NULL) {
+        report("hashtable_entry_1 == NULL\n");
+      }
+      else {
+        report("hashtable_entry_1->data : %ld\n", hashtable_entry_1->data);
+      }
     }
     void p4() {
-      void* p = NULL;
-      printf("- in c stack : %p\n", (void*)&p);
+      // void* p = NULL;
+      // printf("- in c stack : %p\n", (void*)&p);
+      report("NULL: %ld\n", NULL);
+      report("sizeof(struct jotable_entry): %ld\n", sizeof(struct jotable_entry));
     }
     void path_load(char* path) {
       int file = open(path, O_RDONLY);
@@ -3458,9 +3592,7 @@
       setvbuf(stderr, NULL, _IONBF, 0);
     }
     void init_jotable() {
-      bzero(jotable,
-            JOTABLE_SIZE *
-            sizeof(struct jotable_entry));
+      bzero(jotable, JOTABLE_SIZE * sizeof(struct jotable_entry));
     }
     void init_literal_jo() {
       EMPTY_JO = str2jo("");
