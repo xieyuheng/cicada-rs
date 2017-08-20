@@ -257,7 +257,7 @@
           report("- jotable_insert fail\n");
           report("  the jotable is filled\n");
           p_debug();
-          return NULL;
+          return 0;
         }
         else {
           counter++;
@@ -391,11 +391,11 @@
       stack->name = name;
       stack->pointer = 0;
       stack->stack = (cell*)malloc(sizeof(cell) * STACK_BLOCK_SIZE);
-      stack->link = NULL;
+      stack->link = 0;
       return stack;
     }
     void stack_free_link(struct stack_link* link) {
-      if (link == NULL) {
+      if (link == 0) {
         return;
       }
       else {
@@ -419,7 +419,7 @@
       if (stack->pointer > 0) {
         return;
       }
-      else if (stack->link != NULL) {
+      else if (stack->link != 0) {
         free(stack->stack);
         stack->stack = stack->link->stack;
         struct stack_link* old_link = stack->link;
@@ -453,10 +453,10 @@
     bool stack_empty_p(struct stack* stack) {
       return
         stack->pointer == 0 &&
-        stack->link == NULL;
+        stack->link == 0;
     }
     cell stack_length_link(cell sum, struct stack_link* link) {
-      if (link == NULL) {
+      if (link == 0) {
         return sum;
       }
       else {
@@ -537,7 +537,7 @@
       input_stack->pointer = INPUT_STACK_BLOCK_SIZE;
       input_stack->end_pointer = INPUT_STACK_BLOCK_SIZE;
       input_stack->stack = (char*)malloc(INPUT_STACK_BLOCK_SIZE);
-      input_stack->link = NULL;
+      input_stack->link = 0;
       input_stack->type = input_stack_type;
       return input_stack;
     }
@@ -548,7 +548,7 @@
         report("- input_stack_file fail\n");
         perror("  fcntl error ");
         p_debug();
-        return NULL;
+        return 0;
       }
       struct input_stack* input_stack = input_stack_new(INPUT_STACK_REGULAR_FILE);
       input_stack->file = file;
@@ -565,7 +565,7 @@
       return input_stack;
     }
     void input_stack_free_link(struct input_stack_link* link) {
-      if (link == NULL) {
+      if (link == 0) {
         return;
       }
       else {
@@ -587,7 +587,7 @@
         return;
       }
 
-      else if (input_stack->link != NULL) {
+      else if (input_stack->link != 0) {
         free(input_stack->stack);
         input_stack->stack = input_stack->link->stack;
         input_stack->end_pointer = input_stack->link->end_pointer;
@@ -675,7 +675,7 @@
     }
     bool input_stack_empty_p(struct input_stack* input_stack) {
       if (input_stack->pointer != input_stack->end_pointer ||
-          input_stack->link != NULL) {
+          input_stack->link != 0) {
         return false;
       }
       if (input_stack->type == INPUT_STACK_REGULAR_FILE) {
@@ -760,7 +760,7 @@
         malloc(sizeof(struct output_stack));
       output_stack->pointer = 0;
       output_stack->stack = (char*)malloc(OUTPUT_STACK_BLOCK_SIZE);
-      output_stack->link = NULL;
+      output_stack->link = 0;
       output_stack->type = output_stack_type;
       return output_stack;
     }
@@ -771,7 +771,7 @@
         report("- output_stack_file fail\n");
         perror("  fcntl error ");
         p_debug();
-        return NULL;
+        return 0;
       }
       else if (access_mode == O_WRONLY || access_mode == O_RDWR) {
         struct output_stack* output_stack = output_stack_new(OUTPUT_STACK_REGULAR_FILE);
@@ -782,7 +782,7 @@
         report("- output_stack_file fail\n");
         report("  output_stack_file fail\n");
         p_debug();
-        return NULL;
+        return 0;
       }
     }
     struct output_stack* output_stack_string() {
@@ -794,7 +794,7 @@
       return output_stack;
     }
     void output_stack_free_link(struct output_stack_link* link) {
-      if (link == NULL) {
+      if (link == 0) {
         return;
       }
       else {
@@ -810,7 +810,7 @@
       free(output_stack);
     }
     void output_stack_file_flush_link(int file, struct output_stack_link* link) {
-      if (link == NULL) {
+      if (link == 0) {
         return;
       }
       else {
@@ -841,12 +841,12 @@
       }
       else {
         output_stack_free_link(output_stack->link);
-        output_stack->link = NULL;
+        output_stack->link = 0;
         output_stack->pointer = 0;
       }
     }
     cell output_stack_string_length_link(cell sum, struct output_stack_link* link) {
-      if (link == NULL) {
+      if (link == 0) {
         return sum;
       }
       else {
@@ -863,7 +863,7 @@
 
 
     char* output_stack_string_collect_link(char* buffer, struct output_stack_link* link) {
-      if (link == NULL) {
+      if (link == 0) {
         return buffer;
       }
       else {
@@ -888,7 +888,7 @@
         return;
       }
 
-      else if (output_stack->link != NULL) {
+      else if (output_stack->link != 0) {
         free(output_stack->stack);
         output_stack->stack = output_stack->link->stack;
         struct output_stack_link* old_link = output_stack->link;
@@ -945,7 +945,7 @@
     }
     bool output_stack_empty_p(struct output_stack* output_stack) {
       if (output_stack->pointer != 0 ||
-          output_stack->link != NULL) {
+          output_stack->link != 0) {
         return false;
       }
       if (output_stack->type == OUTPUT_STACK_REGULAR_FILE) {
@@ -1142,7 +1142,7 @@
         return dispatch_find_entry(dispatch_entry->rest, key);
       }
       else {
-        return NULL;
+        return 0;
       }
     }
     struct dispatch_entry*
@@ -1240,7 +1240,7 @@
          jo_t* key;
     {
       if (multi_dispatch_entry->key == 0) {
-        return NULL;
+        return 0;
       }
       else if (array_equal_p(key, multi_dispatch_entry->key)) {
         return multi_dispatch_entry;
@@ -1249,7 +1249,7 @@
         return multi_dispatch_find_entry(multi_dispatch_entry->rest, key);
       }
       else {
-        return NULL;
+        return 0;
       }
     }
     struct multi_dispatch_entry*
@@ -1564,7 +1564,7 @@
           report("- new_record_object_entry fail\n");
           report("  after gc, the object_record is still filled\n");
           report("  OBJECT_RECORD_SIZE : %ld\n", OBJECT_RECORD_SIZE);
-          return NULL;
+          return 0;
         }
       }
     }
@@ -1598,7 +1598,7 @@
           malloc(sizeof(struct class));
         class->class_name = str2jo(class_name);
         class->gc_actor = gc_actor;
-        if (executer == NULL) {
+        if (executer == 0) {
           class->executable = false;
         }
         else {
@@ -1613,7 +1613,7 @@
         char* class_name;
         gc_actor_t gc_actor;
       {
-        add_atom_data_exe(class_name, gc_actor, NULL);
+        add_atom_data_exe(class_name, gc_actor, 0);
       }
       void add_data_exe(class_name, executer, fields)
         char* class_name;
@@ -1625,7 +1625,7 @@
         jo_t name = str2jo(class_name);
         class->class_name = name;
         class->gc_actor = gc_recur;
-        if (executer == NULL) {
+        if (executer == 0) {
           class->executable = false;
         }
         else {
@@ -1634,7 +1634,7 @@
         }
 
         cell i = 0;
-        while (fields[i] != NULL) {
+        while (fields[i] != 0) {
           i++;
         }
 
@@ -1660,7 +1660,7 @@
         char* class_name;
         jo_t* fields[];
       {
-        add_data_exe(class_name, NULL, fields);
+        add_data_exe(class_name, 0, fields);
       }
       void _add_data(name, fields)
         jo_t name;
@@ -1745,7 +1745,7 @@
       // caller free
       jo_t* generate_jo_array(char*ss[]) {
         cell len = 0;
-        while (ss[len] != NULL) {
+        while (ss[len] != 0) {
           len++;
         }
         jo_t* js = (jo_t*)malloc(len * sizeof(jo_t) + 1);
@@ -1754,11 +1754,11 @@
           js[i] = str2jo(ss[i]);
           i++;
         }
-        js[i] = NULL;
+        js[i] = 0;
         return js;
       }
-      #define J0 (char*[]){NULL}
-      #define J(...) generate_jo_array((char*[]){__VA_ARGS__, NULL})
+      #define J0 (char*[]){0}
+      #define J(...) generate_jo_array((char*[]){__VA_ARGS__, 0})
     void p_tag() {
       struct obj a = object_stack_pop();
       object_stack_push(TAG_JO, a.tag);
@@ -1920,7 +1920,7 @@
           if (!collecting) {
             report("- p_read_raw_jo meet end-of-file\n");
             p_debug();
-            return NULL;
+            return 0;
           }
           else {
             break;
@@ -2575,7 +2575,7 @@
         }
         jo_t field = read_jo();
         if (field == ROUND_KET) {
-          fields[i] = NULL;
+          fields[i] = 0;
           i++;
           break;
         }
@@ -2616,7 +2616,7 @@
 
     void local_env_print(struct local* lr) {
       report("{ ");
-      while (lr->name != NULL) {
+      while (lr->name != 0) {
         object_print(lr->local_tag, lr->local_data);
         report("%s! ", jo2str(lr->name));
         lr++;
@@ -2858,7 +2858,7 @@
         int sig_array_length = sizeof(sig_array)/sizeof(sig_array[0]);
         cell i = 0;
         while (i < sig_array_length) {
-          if (sigaction(sig_array[i], &kernel_signal_action, NULL) == -1) {
+          if (sigaction(sig_array[i], &kernel_signal_action, 0) == -1) {
             perror("- init_kernel_signal_handler fail");
           }
           i++;
@@ -3145,7 +3145,7 @@
         if (object_entry->mark == GC_MARK_USING) { return; }
         object_entry->mark = GC_MARK_USING;
         struct local* lr = object_entry->pointer;
-        while (lr->name != NULL) {
+        while (lr->name != 0) {
             mark_one(lr->local_tag, lr->local_data);
           lr++;
         }
@@ -3167,7 +3167,7 @@
         lr[i].local_data = local_record[rp.local_counter + i].local_data;
         i++;
       }
-      lr[i].name = NULL;
+      lr[i].name = 0;
       return lr;
     }
     void p_current_local_env() {
@@ -3178,7 +3178,7 @@
       object_stack_push(str2jo("<local-env>"), object_entry);
     }
     void set_local_record(struct local* lr) {
-      while (lr->name != NULL) {
+      while (lr->name != 0) {
         set_local(lr->name, lr->local_tag, lr->local_data);
         lr++;
       }
@@ -3249,7 +3249,7 @@
       hints.ai_socktype = SOCK_STREAM;
       hints.ai_flags = AI_PASSIVE;
 
-      int rv = getaddrinfo(NULL, service, &hints, &servinfo);
+      int rv = getaddrinfo(0, service, &hints, &servinfo);
       if (rv != 0) {
         report("- p_tcp_socket_listen fail to getaddrinfo\n");
         report("  service : %s\n", service);
@@ -3259,7 +3259,7 @@
       }
 
       int sockfd;
-      for(p = servinfo; p != NULL; p = p->ai_next) {
+      for(p = servinfo; p != 0; p = p->ai_next) {
         sockfd = socket(p->ai_family,
                         p->ai_socktype,
                         p->ai_protocol);
@@ -3281,7 +3281,7 @@
       }
       freeaddrinfo(servinfo);
 
-      if (p == NULL)  {
+      if (p == 0)  {
         report("- p_tcp_socket_listen fail to bind\n");
         report("  service : %s\n", service);
         p_debug();
@@ -3363,7 +3363,7 @@
       }
 
       int sockfd;
-      for(p = servinfo; p != NULL; p = p->ai_next) {
+      for(p = servinfo; p != 0; p = p->ai_next) {
         sockfd = socket(p->ai_family,
                         p->ai_socktype,
                         p->ai_protocol);
@@ -3376,7 +3376,7 @@
       }
       freeaddrinfo(servinfo);
 
-      if (p == NULL)  {
+      if (p == 0)  {
         report("- p_tcp_socket_connect fail to connect\n");
         report("  host : %s\n", host);
         report("  service : %s\n", service);
@@ -3462,7 +3462,7 @@
       struct object_entry* ao = a.data;
       char* var_string = ao->pointer;
       char* env_string = getenv(var_string);
-      if (env_string == NULL) {
+      if (env_string == 0) {
         object_stack_push(TAG_BOOL, false);
       }
       else {
@@ -3481,7 +3481,7 @@
     }
     void ccall (char* function_name, void* lib) {
       primitive_t fun = dlsym(lib, function_name);
-      if (fun == NULL) {
+      if (fun == 0) {
         report("- ccall fail\n");
         report("  function_name : %s\n", function_name);
         report("  dynamic link error : %s\n", dlerror());
@@ -3519,7 +3519,7 @@
           free(proc_link_path);
           free(real_reading_path);
           p_debug();
-          return NULL; // to fool the compiler
+          return 0; // to fool the compiler
         }
         free(proc_link_path);
         real_reading_path[real_bytes] = '\0';
@@ -3548,7 +3548,7 @@
       char* real_read_path = get_real_reading_path(path);
       free(path);
       void* lib = dlopen(real_read_path, RTLD_LAZY);
-      if (lib == NULL) {
+      if (lib == 0) {
         report("- k_clib_one fail to open library\n");
         report("  real_read_path : %s\n", real_read_path);
         report("  dynamic link error : %s\n", dlerror());
@@ -3693,16 +3693,16 @@
 
       struct dispatch_entry* dispatch_entry_1 =
         dispatch_find(dispatch_1, str2jo("1"));
-      if (dispatch_entry_1 == NULL) {
-        report("dispatch_entry_1 == NULL\n");
+      if (dispatch_entry_1 == 0) {
+        report("dispatch_entry_1 == 0\n");
       }
       else {
         report("dispatch_entry_1->data : %ld\n", dispatch_entry_1->data);
       }
 
-      // void* p = NULL;
+      // void* p = 0;
       // printf("- in c stack : %p\n", (void*)&p);
-      report("NULL: %ld\n", NULL);
+      report("0: %ld\n", 0);
       report("sizeof(struct jotable_entry): %ld\n", sizeof(struct jotable_entry));
     }
     void p4() {
@@ -3733,8 +3733,8 @@
 
       struct multi_dispatch_entry* multi_dispatch_entry_1 =
         multi_dispatch_find(multi_dispatch_1, J("1", "2", "3"));
-      if (multi_dispatch_entry_1 == NULL) {
-        report("multi_dispatch_entry_1 == NULL\n");
+      if (multi_dispatch_entry_1 == 0) {
+        report("multi_dispatch_entry_1 == 0\n");
       }
       else {
         report("multi_dispatch_entry_1->data : %ld\n",
@@ -3743,14 +3743,13 @@
 
       struct multi_dispatch_entry* multi_dispatch_entry_2 =
         multi_dispatch_find(multi_dispatch_1, J("1", "2", "3123"));
-      if (multi_dispatch_entry_2 == NULL) {
-        report("multi_dispatch_entry_2 == NULL\n");
+      if (multi_dispatch_entry_2 == 0) {
+        report("multi_dispatch_entry_2 == 0\n");
       }
       else {
         report("multi_dispatch_entry_2->data : %ld\n",
                multi_dispatch_entry_2->data);
       }
-
     }
     void path_load(char* path) {
       int file = open(path, O_RDONLY);
@@ -3774,8 +3773,8 @@
       add_prim("print-object-stack", p_print_object_stack);
     }
     void init_system() {
-      setvbuf(stdout, NULL, _IONBF, 0);
-      setvbuf(stderr, NULL, _IONBF, 0);
+      setvbuf(stdout, 0, _IONBF, 0);
+      setvbuf(stderr, 0, _IONBF, 0);
     }
     void init_jotable() {
       bzero(jotable, JOTABLE_SIZE * sizeof(struct jotable_entry));
