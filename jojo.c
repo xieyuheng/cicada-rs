@@ -1332,13 +1332,9 @@
             OBJECT_RECORD_SIZE *
             sizeof(struct object_entry));
     }
-    typedef void (* executer_t)(cell);
-
     struct class {
       jo_t class_name;
       gc_actor_t gc_actor;
-      bool executable;
-      executer_t executer;
       cell fields_number;
       jo_t* fields;
     };
@@ -1601,35 +1597,20 @@
 
       return object_entry;
     }
-      void add_atom_data_exe(class_name, gc_actor, executer)
+      void add_atom(class_name, gc_actor)
         char* class_name;
         gc_actor_t gc_actor;
-        executer_t executer;
       {
         struct class* class = (struct class*)
           malloc(sizeof(struct class));
         class->class_name = str2jo(class_name);
         class->gc_actor = gc_actor;
-        if (executer == 0) {
-          class->executable = false;
-        }
-        else {
-          class->executable = true;
-          class->executer = executer;
-        }
 
         jo_t name = str2jo(class_name);
         bind_name(name, str2jo("<class>"), class);
       }
-      void add_atom_data(class_name, gc_actor)
+      void add_data(class_name, fields)
         char* class_name;
-        gc_actor_t gc_actor;
-      {
-        add_atom_data_exe(class_name, gc_actor, 0);
-      }
-      void add_data_exe(class_name, executer, fields)
-        char* class_name;
-        executer_t executer;
         jo_t* fields[];
       {
         struct class* class = (struct class*)
@@ -1637,13 +1618,6 @@
         jo_t name = str2jo(class_name);
         class->class_name = name;
         class->gc_actor = gc_recur;
-        if (executer == 0) {
-          class->executable = false;
-        }
-        else {
-          class->executable = true;
-          class->executer = executer;
-        }
 
         cell i = 0;
         while (fields[i] != 0) {
@@ -1667,12 +1641,6 @@
         jo_t data_predicate_name = str2jo(tmp2);
         free(tmp2);
         bind_name(data_predicate_name, str2jo("<data-predicate>"), class);
-      }
-      void add_data(class_name, fields)
-        char* class_name;
-        jo_t* fields[];
-      {
-        add_data_exe(class_name, 0, fields);
       }
       void _add_data(name, fields)
         jo_t name;
@@ -1710,19 +1678,19 @@
       add_prim("ins/get-field", ins_get_field);
       add_prim("ins/set-field", ins_set_field);
 
-      add_atom_data("<byte>", gc_ignore);
-      add_atom_data("<int>", gc_ignore);
-      add_atom_data("<jo>", gc_ignore);
-      add_atom_data("<string>", gc_free);
-      add_atom_data("<gene>", gc_ignore);
-      add_atom_data("<uninitialised-field-place-holder>", gc_ignore);
+      add_atom("<byte>", gc_ignore);
+      add_atom("<int>", gc_ignore);
+      add_atom("<jo>", gc_ignore);
+      add_atom("<string>", gc_free);
+      add_atom("<gene>", gc_ignore);
+      add_atom("<uninitialised-field-place-holder>", gc_ignore);
 
-      add_atom_data("<prim>", gc_ignore);
-      add_atom_data("<jojo>", gc_ignore);
-      add_atom_data("<keyword>", gc_ignore);
-      add_atom_data("<set-global-variable>", gc_ignore);
-      add_atom_data("<data-constructor>", gc_ignore);
-      add_atom_data("<data-predicate>", gc_ignore);
+      add_atom("<prim>", gc_ignore);
+      add_atom("<jojo>", gc_ignore);
+      add_atom("<keyword>", gc_ignore);
+      add_atom("<set-global-variable>", gc_ignore);
+      add_atom("<data-constructor>", gc_ignore);
+      add_atom("<data-predicate>", gc_ignore);
 
       add_prim("tag", p_tag);
       add_prim("eq?", p_eq_p);
@@ -1935,11 +1903,13 @@
       jo_t jo = read_jo();
       k_ignore();
       _add_disp(gene_name, tags, jo);
-      report("- k_add_disp\n");
-      report("  gene_name : %s\n", jo2str(gene_name));
-      report("  tags[0] : %s\n", jo2str(tags[0]));
-      report("  tags[1] : %ld\n", tags[1]);
-      report("  jo : %s\n", jo2str(jo));
+      // {
+      //   report("- k_add_disp\n");
+      //   report("  gene_name : %s\n", jo2str(gene_name));
+      //   report("  tags[0] : %s\n", jo2str(tags[0]));
+      //   report("  tags[1] : %ld\n", tags[1]);
+      //   report("  jo : %s\n", jo2str(jo));
+      // }
     }
     void expose_gene() {
       add_gene("exe", 1);
@@ -3132,7 +3102,7 @@
       object_stack_push(TAG_BOOL, a.data || b.data);
     }
     void expose_bool() {
-      add_atom_data("<bool>", gc_ignore);
+      add_atom("<bool>", gc_ignore);
 
       add_prim("true", p_true);
       add_prim("false", p_false);
@@ -3387,7 +3357,7 @@
     }
     void expose_closure() {
       add_prim("current-local-env", p_current_local_env);
-      add_atom_data("<local-env>", gc_local_env);
+      add_atom("<local-env>", gc_local_env);
 
       add_data("<closure>", J(".jojo", ".local-env"));
       add_prim("closure-exe", p_closure_exe);
@@ -3594,7 +3564,7 @@
       };
     }
     void expose_socket() {
-      add_atom_data("<socket>", gc_ignore);
+      add_atom("<socket>", gc_ignore);
       add_prim("tcp-socket-listen", p_tcp_socket_listen);
       add_prim("socket-accept", p_socket_accept);
       add_prim("tcp-socket-connect", p_tcp_socket_connect);
