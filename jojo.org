@@ -3,25 +3,16 @@
 
 * [todo-stack]
 
-*** [note] about dynamic dispatching
+*** fix p_gene_exe
 
-    - currently at least the following functions need dispatching
-      - exe          -- over obj
-      - jojo_print   -- over ins
-      - object_print -- over obj
+*** 'apply' as gene
 
-    - how about support generic function
-      note that,
-      the generic-ness of exe is implemented
-      by registering the function into a record
+    - currently only jojo and closure
+      - maybe with gene
+        we can mark a closure as binder
+        and use 'apply'
 
-    - for a generic function
-      fixed number of specified arguments
-      are used to find the absolute function
-
-*** term
-
-    - apply -> exe
+*** 'write' as gene
 
 *** re-design the struct of jojo
 
@@ -41,6 +32,10 @@
     - they only work in the scope of <jojo> and <closure>
 
 *** richer return_point for 'binder-apply'
+
+*** p_debug
+
+    - some call to p_debug can not return
 
 *** interface for dynamic scoped var in c code
 
@@ -553,7 +548,6 @@
           report("- jotable_insert fail\n");
           report("  the jotable is filled\n");
           p_debug();
-          return 0;
         }
         else {
           counter++;
@@ -584,7 +578,6 @@
     jo_t EMPTY_JO;
     jo_t TAG_PRIM;
     jo_t TAG_JOJO;
-    jo_t TAG_PRIM_KEYWORD;
     jo_t TAG_KEYWORD;
     jo_t TAG_CLASS;
     jo_t TAG_CLOSURE;
@@ -625,6 +618,7 @@
     jo_t JO_ELSE;
 
     jo_t JO_APPLY;
+    jo_t JO_EXE;
     jo_t JO_END;
 
     jo_t JO_LOCAL_DATA_IN;
@@ -710,6 +704,35 @@
     }
     #+end_src
 
+*** literal jo_array
+
+***** generate_jo_array
+
+      #+begin_src c
+      // caller free
+      jo_t* generate_jo_array(char*ss[]) {
+        cell len = 0;
+        while (ss[len] != 0) {
+          len++;
+        }
+        jo_t* js = (jo_t*)malloc(len * sizeof(jo_t) + 1);
+        cell i = 0;
+        while (i < len) {
+          js[i] = str2jo(ss[i]);
+          i++;
+        }
+        js[i] = 0;
+        return js;
+      }
+      #+end_src
+
+***** macro
+
+      #+begin_src c
+      #define J0 (char*[]){0}
+      #define J(...) generate_jo_array((char*[]){__VA_ARGS__, 0})
+      #+end_src
+
 * stack
 
 *** stack_link
@@ -777,7 +800,6 @@
     #+begin_src c
     // can not pop
     // for stack->pointer can not decrease under 0
-
     void stack_block_underflow_check(struct stack* stack) {
       if (stack->pointer > 0) {
         return;
@@ -989,7 +1011,6 @@
         report("- input_stack_file fail\n");
         perror("  fcntl error ");
         p_debug();
-        return 0;
       }
       struct input_stack* input_stack = input_stack_new(INPUT_STACK_REGULAR_FILE);
       input_stack->file = file;
@@ -1309,7 +1330,6 @@
         report("- output_stack_file fail\n");
         perror("  fcntl error ");
         p_debug();
-        return 0;
       }
       else if (access_mode == O_WRONLY || access_mode == O_RDWR) {
         struct output_stack* output_stack = output_stack_new(OUTPUT_STACK_REGULAR_FILE);
@@ -1320,7 +1340,6 @@
         report("- output_stack_file fail\n");
         report("  output_stack_file fail\n");
         p_debug();
-        return 0;
       }
     }
     #+end_src
@@ -1696,99 +1715,99 @@
     }
     #+end_src
 
-* dispatch
+* disp
 
-*** struct dispatch
+*** struct disp
 
     #+begin_src c
-    struct dispatch_entry {
+    struct disp_entry {
       jo_t key;
       cell data;
-      struct dispatch_entry* rest;
+      struct disp_entry* rest;
     };
 
-    struct dispatch {
-      struct dispatch_entry* table;
+    struct disp {
+      struct disp_entry* table;
       cell size;
     };
     #+end_src
 
-*** new_dispatch
+*** new_disp
 
     #+begin_src c
-    struct dispatch* new_dispatch(cell size) {
-      struct dispatch* dispatch = (struct dispatch*)
-        malloc(sizeof(struct dispatch));
-      dispatch->size = size;
-      dispatch->table = (struct dispatch_entry*)
-        malloc(size * sizeof(struct dispatch_entry));
-      bzero(dispatch->table, size * sizeof(struct dispatch_entry));
-      return dispatch;
+    struct disp* new_disp(cell size) {
+      struct disp* disp = (struct disp*)
+        malloc(sizeof(struct disp));
+      disp->size = size;
+      disp->table = (struct disp_entry*)
+        malloc(size * sizeof(struct disp_entry));
+      bzero(disp->table, size * sizeof(struct disp_entry));
+      return disp;
     }
     #+end_src
 
-*** dispatch_hash
+*** disp_hash
 
     #+begin_src c
-    cell dispatch_hash(struct dispatch* dispatch, jo_t key) {
+    cell disp_hash(struct disp* disp, jo_t key) {
       // return (((key - jotable) >> 1)
-      //         % (dispatch->size - 1)) + 1;
+      //         % (disp->size - 1)) + 1;
       return ((key - jotable)
-              % (dispatch->size - 1)) + 1;
+              % (disp->size - 1)) + 1;
     }
     #+end_src
 
-*** dispatch_insert_entry
+*** disp_insert_entry
 
     #+begin_src c
-    void dispatch_insert_entry(dispatch_entry, key, data)
-         struct dispatch_entry* dispatch_entry;
+    void disp_insert_entry(disp_entry, key, data)
+         struct disp_entry* disp_entry;
          jo_t key;
          cell data;
     {
-      if (0 == dispatch_entry->key) {
-        dispatch_entry->key = key;
-        dispatch_entry->data = data;
+      if (0 == disp_entry->key) {
+        disp_entry->key = key;
+        disp_entry->data = data;
       }
-      else if (key == dispatch_entry->key) {
-        dispatch_entry->data = data;
+      else if (key == disp_entry->key) {
+        disp_entry->data = data;
       }
-      else if (dispatch_entry->rest == 0) {
-        struct dispatch_entry* dispatch_entry_new = (struct dispatch_entry*)
-          malloc(sizeof(struct dispatch_entry));
-        bzero(dispatch_entry_new, sizeof(struct dispatch_entry));
-        dispatch_entry->rest = dispatch_entry_new;
-        dispatch_insert_entry(dispatch_entry_new, key, data);
+      else if (disp_entry->rest == 0) {
+        struct disp_entry* disp_entry_new = (struct disp_entry*)
+          malloc(sizeof(struct disp_entry));
+        bzero(disp_entry_new, sizeof(struct disp_entry));
+        disp_entry->rest = disp_entry_new;
+        disp_insert_entry(disp_entry_new, key, data);
       }
       else {
-        dispatch_insert_entry(dispatch_entry->rest, key, data);
+        disp_insert_entry(disp_entry->rest, key, data);
       }
     }
     #+end_src
 
-*** dispatch_insert
+*** disp_insert
 
     #+begin_src c
-    void dispatch_insert(struct dispatch* dispatch, jo_t key, cell data) {
-      cell index = dispatch_hash(dispatch, key);
-      struct dispatch_entry* dispatch_entry = dispatch->table + index;
-      dispatch_insert_entry(dispatch_entry, key, data);
+    void disp_insert(struct disp* disp, jo_t key, cell data) {
+      cell index = disp_hash(disp, key);
+      struct disp_entry* disp_entry = disp->table + index;
+      disp_insert_entry(disp_entry, key, data);
     }
     #+end_src
 
-*** dispatch_find_entry
+*** disp_find_entry
 
     #+begin_src c
-    struct dispatch_entry*
-    dispatch_find_entry(dispatch_entry, key)
-         struct dispatch_entry* dispatch_entry;
+    struct disp_entry*
+    disp_find_entry(disp_entry, key)
+         struct disp_entry* disp_entry;
          jo_t key;
     {
-      if (key == dispatch_entry->key) {
-        return dispatch_entry;
+      if (key == disp_entry->key) {
+        return disp_entry;
       }
-      else if (dispatch_entry->rest != 0) {
-        return dispatch_find_entry(dispatch_entry->rest, key);
+      else if (disp_entry->rest != 0) {
+        return disp_find_entry(disp_entry->rest, key);
       }
       else {
         return 0;
@@ -1796,46 +1815,46 @@
     }
     #+end_src
 
-*** dispatch_find
+*** disp_find
 
     #+begin_src c
-    struct dispatch_entry*
-    dispatch_find(dispatch, key)
-         struct dispatch* dispatch;
+    struct disp_entry*
+    disp_find(disp, key)
+         struct disp* disp;
          jo_t key;
     {
-      cell index = dispatch_hash(dispatch, key);
-      struct dispatch_entry* dispatch_entry = dispatch->table + index;
-      return dispatch_find_entry(dispatch_entry, key);
+      cell index = disp_hash(disp, key);
+      struct disp_entry* disp_entry = disp->table + index;
+      return disp_find_entry(disp_entry, key);
     }
     #+end_src
 
-*** dispatch_print_entry
+*** disp_print_entry
 
     #+begin_src c
-    void dispatch_print_entry(struct dispatch_entry* dispatch_entry) {
-      if (dispatch_entry->key != 0) {
+    void disp_print_entry(struct disp_entry* disp_entry) {
+      if (disp_entry->key != 0) {
         report("{%s => %ld} ",
-               jo2str(dispatch_entry->key),
-               dispatch_entry->data);
+               jo2str(disp_entry->key),
+               disp_entry->data);
       }
-      if (dispatch_entry->rest != 0) {
-        dispatch_print_entry(dispatch_entry->rest);
+      if (disp_entry->rest != 0) {
+        disp_print_entry(disp_entry->rest);
       }
     }
     #+end_src
 
-*** dispatch_print
+*** disp_print
 
     #+begin_src c
-    void dispatch_print(struct dispatch* dispatch) {
-      report("- dispatch_print\n");
+    void disp_print(struct disp* disp) {
+      report("- disp_print\n");
       cell i = 0;
-      while (i < dispatch->size) {
-        struct dispatch_entry* dispatch_entry = dispatch->table + i;
-        if (dispatch_entry->key != 0) {
+      while (i < disp->size) {
+        struct disp_entry* disp_entry = disp->table + i;
+        if (disp_entry->key != 0) {
           report("  ");
-          dispatch_print_entry(dispatch_entry);
+          disp_print_entry(disp_entry);
           report("\n");
         }
         i++;
@@ -1843,41 +1862,41 @@
     }
     #+end_src
 
-* multi_dispatch
+* multi_disp
 
-*** struct multi_dispatch
+*** struct multi_disp
 
     #+begin_src c
-    struct multi_dispatch_entry {
+    struct multi_disp_entry {
       jo_t* key;
       cell data;
-      struct multi_dispatch_entry* rest;
+      struct multi_disp_entry* rest;
     };
 
-    struct multi_dispatch {
-      struct multi_dispatch_entry* table;
+    struct multi_disp {
+      struct multi_disp_entry* table;
       cell size;
     };
     #+end_src
 
-*** new_multi_dispatch
+*** new_multi_disp
 
     #+begin_src c
-    struct multi_dispatch* new_multi_dispatch(cell size) {
-      struct multi_dispatch* multi_dispatch = (struct multi_dispatch*)
-        malloc(sizeof(struct multi_dispatch));
-      multi_dispatch->size = size;
-      multi_dispatch->table = (struct multi_dispatch_entry*)
-        malloc(size * sizeof(struct multi_dispatch_entry));
-      bzero(multi_dispatch->table, size * sizeof(struct multi_dispatch_entry));
-      return multi_dispatch;
+    struct multi_disp* new_multi_disp(cell size) {
+      struct multi_disp* multi_disp = (struct multi_disp*)
+        malloc(sizeof(struct multi_disp));
+      multi_disp->size = size;
+      multi_disp->table = (struct multi_disp_entry*)
+        malloc(size * sizeof(struct multi_disp_entry));
+      bzero(multi_disp->table, size * sizeof(struct multi_disp_entry));
+      return multi_disp;
     }
     #+end_src
 
-*** multi_dispatch_hash
+*** multi_disp_hash
 
     #+begin_src c
-    cell multi_dispatch_hash(struct multi_dispatch* multi_dispatch, jo_t* key) {
+    cell multi_disp_hash(struct multi_disp* multi_disp, jo_t* key) {
       cell sum = 0;
       cell i = 0;
       while (key[i] != 0) {
@@ -1885,116 +1904,116 @@
         i++;
       }
       return (sum
-              % (multi_dispatch->size - 1)) + 1;
+              % (multi_disp->size - 1)) + 1;
     }
     #+end_src
 
-*** multi_dispatch_insert_entry
+*** multi_disp_insert_entry
 
     #+begin_src c
-    void multi_dispatch_insert_entry(multi_dispatch_entry, key, data)
-         struct multi_dispatch_entry* multi_dispatch_entry;
+    void multi_disp_insert_entry(multi_disp_entry, key, data)
+         struct multi_disp_entry* multi_disp_entry;
          jo_t* key;
          cell data;
     {
-      if (0 == multi_dispatch_entry->key) {
-        multi_dispatch_entry->key = array_dup(key);
-        multi_dispatch_entry->data = data;
+      if (0 == multi_disp_entry->key) {
+        multi_disp_entry->key = array_dup(key);
+        multi_disp_entry->data = data;
       }
-      else if (array_equal_p(key, multi_dispatch_entry->key)) {
-        multi_dispatch_entry->data = data;
+      else if (array_equal_p(key, multi_disp_entry->key)) {
+        multi_disp_entry->data = data;
       }
-      else if (multi_dispatch_entry->rest == 0) {
-        struct multi_dispatch_entry* multi_dispatch_entry_new = (struct multi_dispatch_entry*)
-          malloc(sizeof(struct multi_dispatch_entry));
-        bzero(multi_dispatch_entry_new, sizeof(struct multi_dispatch_entry));
-        multi_dispatch_entry->rest = multi_dispatch_entry_new;
-        multi_dispatch_insert_entry(multi_dispatch_entry_new, key, data);
-      }
-      else {
-        multi_dispatch_insert_entry(multi_dispatch_entry->rest, key, data);
-      }
-    }
-    #+end_src
-
-*** multi_dispatch_insert
-
-    #+begin_src c
-    void multi_dispatch_insert(struct multi_dispatch* multi_dispatch, jo_t* key, cell data) {
-      cell index = multi_dispatch_hash(multi_dispatch, key);
-      struct multi_dispatch_entry* multi_dispatch_entry = multi_dispatch->table + index;
-      multi_dispatch_insert_entry(multi_dispatch_entry, key, data);
-    }
-    #+end_src
-
-*** multi_dispatch_find_entry
-
-    #+begin_src c
-    struct multi_dispatch_entry*
-    multi_dispatch_find_entry(multi_dispatch_entry, key)
-         struct multi_dispatch_entry* multi_dispatch_entry;
-         jo_t* key;
-    {
-      if (multi_dispatch_entry->key == 0) {
-        return 0;
-      }
-      else if (array_equal_p(key, multi_dispatch_entry->key)) {
-        return multi_dispatch_entry;
-      }
-      else if (multi_dispatch_entry->rest != 0) {
-        return multi_dispatch_find_entry(multi_dispatch_entry->rest, key);
+      else if (multi_disp_entry->rest == 0) {
+        struct multi_disp_entry* multi_disp_entry_new = (struct multi_disp_entry*)
+          malloc(sizeof(struct multi_disp_entry));
+        bzero(multi_disp_entry_new, sizeof(struct multi_disp_entry));
+        multi_disp_entry->rest = multi_disp_entry_new;
+        multi_disp_insert_entry(multi_disp_entry_new, key, data);
       }
       else {
+        multi_disp_insert_entry(multi_disp_entry->rest, key, data);
+      }
+    }
+    #+end_src
+
+*** multi_disp_insert
+
+    #+begin_src c
+    void multi_disp_insert(struct multi_disp* multi_disp, jo_t* key, cell data) {
+      cell index = multi_disp_hash(multi_disp, key);
+      struct multi_disp_entry* multi_disp_entry = multi_disp->table + index;
+      multi_disp_insert_entry(multi_disp_entry, key, data);
+    }
+    #+end_src
+
+*** multi_disp_find_entry
+
+    #+begin_src c
+    struct multi_disp_entry*
+    multi_disp_find_entry(multi_disp_entry, key)
+         struct multi_disp_entry* multi_disp_entry;
+         jo_t* key;
+    {
+      if (multi_disp_entry->key == 0) {
+        return 0;
+      }
+      else if (array_equal_p(key, multi_disp_entry->key)) {
+        return multi_disp_entry;
+      }
+      else if (multi_disp_entry->rest != 0) {
+        return multi_disp_find_entry(multi_disp_entry->rest, key);
+      }
+      else {
         return 0;
       }
     }
     #+end_src
 
-*** multi_dispatch_find
+*** multi_disp_find
 
     #+begin_src c
-    struct multi_dispatch_entry*
-    multi_dispatch_find(multi_dispatch, key)
-         struct multi_dispatch* multi_dispatch;
+    struct multi_disp_entry*
+    multi_disp_find(multi_disp, key)
+         struct multi_disp* multi_disp;
          jo_t* key;
     {
-      cell index = multi_dispatch_hash(multi_dispatch, key);
-      struct multi_dispatch_entry* multi_dispatch_entry = multi_dispatch->table + index;
-      return multi_dispatch_find_entry(multi_dispatch_entry, key);
+      cell index = multi_disp_hash(multi_disp, key);
+      struct multi_disp_entry* multi_disp_entry = multi_disp->table + index;
+      return multi_disp_find_entry(multi_disp_entry, key);
     }
     #+end_src
 
-*** multi_dispatch_print_entry
+*** multi_disp_print_entry
 
     #+begin_src c
-    void multi_dispatch_print_entry(struct multi_dispatch_entry* multi_dispatch_entry) {
-      if (multi_dispatch_entry->key != 0) {
+    void multi_disp_print_entry(struct multi_disp_entry* multi_disp_entry) {
+      if (multi_disp_entry->key != 0) {
         report("{");
         cell i = 0;
-        while (multi_dispatch_entry->key[i] != 0) {
-          report("%s ", jo2str(multi_dispatch_entry->key[i]));
+        while (multi_disp_entry->key[i] != 0) {
+          report("%s ", jo2str(multi_disp_entry->key[i]));
           i++;
         }
         report("=> %ld} ",
-               multi_dispatch_entry->data);
+               multi_disp_entry->data);
       }
-      if (multi_dispatch_entry->rest != 0) {
-        multi_dispatch_print_entry(multi_dispatch_entry->rest);
+      if (multi_disp_entry->rest != 0) {
+        multi_disp_print_entry(multi_disp_entry->rest);
       }
     }
     #+end_src
 
-*** multi_dispatch_print
+*** multi_disp_print
 
     #+begin_src c
-    void multi_dispatch_print(struct multi_dispatch* multi_dispatch) {
-      report("- multi_dispatch_print\n");
+    void multi_disp_print(struct multi_disp* multi_disp) {
+      report("- multi_disp_print\n");
       cell i = 0;
-      while (i < multi_dispatch->size) {
-        struct multi_dispatch_entry* multi_dispatch_entry = multi_dispatch->table + i;
-        if (multi_dispatch_entry->key != 0) {
+      while (i < multi_disp->size) {
+        struct multi_disp_entry* multi_disp_entry = multi_disp->table + i;
+        if (multi_disp_entry->key != 0) {
           report("  ");
-          multi_dispatch_print_entry(multi_dispatch_entry);
+          multi_disp_print_entry(multi_disp_entry);
           report("\n");
         }
         i++;
@@ -2544,40 +2563,15 @@
 
 *** add_prim
 
-***** add_prim_general
-
-      #+begin_src c
-      void add_prim_general(tag, function_name, fun)
-        jo_t tag;
-        char* function_name;
-        primitive_t fun;
-      {
-        jo_t name = str2jo(function_name);
-        bind_name(name, tag, fun);
-      }
-      #+end_src
-
-***** add_prim
-
-      #+begin_src c
-      void add_prim(function_name, fun)
-        char* function_name;
-        primitive_t fun;
-      {
-        add_prim_general(TAG_PRIM, function_name, fun);
-      }
-      #+end_src
-
-***** add_prim_keyword
-
-      #+begin_src c
-      void add_prim_keyword(function_name, fun)
-        char* function_name;
-        primitive_t fun;
-      {
-        add_prim_general(TAG_PRIM_KEYWORD, function_name, fun);
-      }
-      #+end_src
+    #+begin_src c
+    void add_prim(function_name, fun)
+         char* function_name;
+         primitive_t fun;
+    {
+      jo_t name = str2jo(function_name);
+      bind_name(name, TAG_PRIM, fun);
+    }
+    #+end_src
 
 *** keyword_stack
 
@@ -2597,41 +2591,173 @@
     cell current_alias_pointer = 0;
     #+end_src
 
-*** executers
+*** add_gene
 
-***** exe_prim
+***** [note] dynamic dispatching
+
+      - for a gene function
+        fixed number of tags of specified arguments
+        are used to find the absolute function
+
+***** struct gene
 
       #+begin_src c
-      void exe_prim(primitive_t primitive) {
-        primitive();
+      struct gene {
+        union {
+          jo_t disp;
+          jo_t* multi_disp;
+        };
+        cell arity;
+      };
+      #+end_src
+
+***** add_gene
+
+      #+begin_src c
+      void add_gene(function_name, arity)
+           char* function_name;
+           cell arity;
+      {
+        jo_t name = str2jo(function_name);
+        struct gene* gene = (struct gene*)
+          malloc(sizeof(struct gene));
+        gene->arity = arity;
+
+        if (arity == 1) {
+          struct disp* disp = new_disp(128);
+          gene->disp = disp;
+        }
+        else {
+          struct multi_disp* multi_disp = new_multi_disp(128);
+          gene->multi_disp = multi_disp;
+        }
+
+        bind_name(name, str2jo("<gene>"), gene);
       }
       #+end_src
 
-***** exe_prim_keyword
+***** _add_disp
 
       #+begin_src c
-      void exe_prim_keyword(primitive_t primitive) {
-        push(keyword_stack, current_alias_pointer);
-        primitive();
-        current_alias_pointer = pop(keyword_stack);
+      void _add_disp(gene_name, tags, jo)
+        jo_t gene_name;
+        jo_t* tags;
+        jo_t jo;
+      {
+        struct gene* gene = gene_name->data;
+        if (gene->arity == 1) {
+          disp_insert(gene->disp, tags[0], jo);
+        }
+        else {
+          disp_insert(gene->multi_disp, tags, jo);
+        }
       }
       #+end_src
 
-***** exe_jojo
+***** add_disp
 
       #+begin_src c
-      void exe_jojo(jo_t* jojo) {
+      void add_disp(gene_name, tags, jo)
+        char* gene_name;
+        jo_t* tags;
+        char* jo;
+      {
+        _add_disp(str2jo(gene_name), tags, str2jo(jo));
+      }
+      #+end_src
+
+***** disp_exe
+
+      #+begin_src c
+      void disp_exe(struct gene* gene, jo_t tag) {
+        struct disp* disp = gene->disp;
+        struct disp_entry* disp_entry =
+          disp_find(disp, tag);
+        if (disp_entry == 0) {
+          return;
+        }
+        else {
+          jo_t jo = disp_entry->data;
+          if (jo->tag == TAG_PRIM) {
+            primitive_t f = (primitive_t)jo->data;
+            f();
+          }
+          else {
+            object_stack_push(jo->tag, jo->data);
+            disp_exe(JO_EXE->data, jo->tag);
+          }
+        }
+      }
+      #+end_src
+
+***** multi_disp_exe
+
+      #+begin_src c
+      void multi_disp_exe(struct gene* gene, jo_t* tags) {
+        struct multi_disp* multi_disp = gene->multi_disp;
+        struct disp_entry* disp_entry =
+          multi_disp_find(multi_disp, tags);
+        if (disp_entry == 0) {
+          return;
+        }
+        else {
+          jo_t jo = disp_entry->data;
+          if (jo->tag == TAG_PRIM) {
+            primitive_t f = (primitive_t)jo->data;
+            f();
+          }
+          else {
+            object_stack_push(jo->tag, jo->data);
+            disp_exe(JO_EXE->data, jo->tag);
+          }
+        }
+      }
+      #+end_src
+
+***** >< p_gene_exe
+
+      #+begin_src c
+      void p_gene_exe() {
+        struct obj a = object_stack_pop();
+        struct gene* gene = a.data;
+        if (gene->arity == 1) {
+          struct obj t = object_stack_tos();
+          disp_exe(gene, t.tag);
+        }
+        else {
+          // ><><><
+          // multi_disp_exe(gene, tags);
+        }
+      }
+      #+end_src
+
+***** p_prim_exe
+
+      #+begin_src c
+      void p_prim_exe() {
+        struct obj a = object_stack_pop();
+        primitive_t f = (primitive_t)a.data;
+        f();
+      }
+      #+end_src
+
+***** p_jojo_exe
+
+      #+begin_src c
+      void p_jojo_exe() {
+        struct obj a = object_stack_pop();
+        jo_t* jojo = a.data;
         return_stack_push_new(jojo);
       }
       #+end_src
 
-***** exe_keyword
+***** p_keyword_exe
 
       #+begin_src c
       void eval();
-
-      void exe_keyword(jo_t* jojo) {
-        // keywords are always evaled
+      void p_keyword_exe() {
+        struct obj a = object_stack_pop();
+        jo_t* jojo = a.data;
         push(keyword_stack, current_alias_pointer);
         return_stack_push_new(jojo);
         eval();
@@ -2639,19 +2765,24 @@
       }
       #+end_src
 
-***** exe_set_global_variable
+***** p_set_global_variable_exe
 
       #+begin_src c
-      void exe_set_global_variable(jo_t name) {
+      void p_set_global_variable_exe() {
+        struct obj b = object_stack_pop();
+        jo_t name = b.data;
         struct obj a = object_stack_pop();
         rebind_name(name, a.tag, a.data);
       }
       #+end_src
 
-***** exe_data_constructor
+***** p_data_constructor_exe
 
       #+begin_src c
-      void exe_data_constructor(struct class* class) {
+      void p_data_constructor_exe() {
+        struct obj b = object_stack_pop();
+        struct class* class = b.data;
+
         cell* fields = (cell*)malloc(class->fields_number*2*sizeof(cell));
 
         cell i = 0;
@@ -2671,42 +2802,40 @@
       }
       #+end_src
 
-***** exe_data_predicate
+***** p_data_predicate_exe
 
       #+begin_src c
-      void exe_data_predicate(struct class* class) {
+      void p_data_predicate_exe() {
+        struct obj b = object_stack_pop();
+        struct class* class = b.data;
+
         struct obj a = object_stack_pop();
         object_stack_push(TAG_BOOL, (class->class_name == a.tag));
       }
       #+end_src
 
-*** literal jo_array
-
-***** generate_jo_array
+***** expose_gene
 
       #+begin_src c
-      // caller free
-      jo_t* generate_jo_array(char*ss[]) {
-        cell len = 0;
-        while (ss[len] != 0) {
-          len++;
-        }
-        jo_t* js = (jo_t*)malloc(len * sizeof(jo_t) + 1);
-        cell i = 0;
-        while (i < len) {
-          js[i] = str2jo(ss[i]);
-          i++;
-        }
-        js[i] = 0;
-        return js;
+      void expose_gene() {
+        add_gene("exe", 1);
+
+        add_prim("prim-exe", p_prim_exe);
+        add_prim("jojo-exe", p_jojo_exe);
+        add_prim("gene-exe", p_gene_exe);
+        add_prim("keyword-exe", p_keyword_exe);
+        add_prim("set-global-variable-exe", p_set_global_variable_exe);
+        add_prim("data-constructor-exe", p_data_constructor_exe);
+        add_prim("data-predicate-exe", p_data_predicate_exe);
+
+        add_disp("exe", J("<prim>"), "prim-exe");
+        add_disp("exe", J("<jojo>"), "jojo-exe");
+        add_disp("exe", J("<gene>"), "gene-exe");
+        add_disp("exe", J("<keyword>"), "keyword-exe");
+        add_disp("exe", J("<set-global-variable>"), "set-global-variable-exe");
+        add_disp("exe", J("<data-constructor>"), "data-constructor-exe");
+        add_disp("exe", J("<data-predicate>"), "data-predicate-exe");
       }
-      #+end_src
-
-***** macro
-
-      #+begin_src c
-      #define J0 (char*[]){0}
-      #define J(...) generate_jo_array((char*[]){__VA_ARGS__, 0})
       #+end_src
 
 *** p_tag
@@ -2732,6 +2861,9 @@
 
     #+begin_src c
     void expose_object() {
+
+      expose_gene();
+
       init_object_record();
 
       add_prim("ins/get-field", ins_get_field);
@@ -2741,16 +2873,15 @@
       add_atom_data("<int>", gc_ignore);
       add_atom_data("<jo>", gc_ignore);
       add_atom_data("<string>", gc_free);
-      add_atom_data("<class>", gc_ignore);
+      add_atom_data("<gene>", gc_ignore);
       add_atom_data("<uninitialised-field-place-holder>", gc_ignore);
 
-      add_atom_data_exe("<prim>", gc_ignore, exe_prim);
-      add_atom_data_exe("<prim-keyword>", gc_ignore, exe_prim_keyword);
-      add_atom_data_exe("<jojo>", gc_ignore, exe_jojo);
-      add_atom_data_exe("<keyword>", gc_ignore, exe_keyword);
-      add_atom_data_exe("<set-global-variable>", gc_ignore, exe_set_global_variable);
-      add_atom_data_exe("<data-constructor>", gc_ignore, exe_data_constructor);
-      add_atom_data_exe("<data-predicate>", gc_ignore, exe_data_predicate);
+      add_atom_data("<prim>", gc_ignore);
+      add_atom_data("<jojo>", gc_ignore);
+      add_atom_data("<keyword>", gc_ignore);
+      add_atom_data("<set-global-variable>", gc_ignore);
+      add_atom_data("<data-constructor>", gc_ignore);
+      add_atom_data("<data-predicate>", gc_ignore);
 
 
       add_prim("tag", p_tag);
@@ -2772,15 +2903,6 @@
     - keyword_stack and alias_record
       form a hook for read_jo.
 
-*** exe
-
-    #+begin_src c
-    void exe(jo_t tag, cell data) {
-      struct class* class = tag->data;
-      class->executer(data);
-    }
-    #+end_src
-
 *** jo_apply
 
     #+begin_src c
@@ -2792,14 +2914,8 @@
         p_debug();
         return;
       }
-      struct class* class = jo->tag->data;
-      if (class->executable) {
-        exe(jo->tag, jo->data);
-      }
-      else {
-        push(object_stack, jo->data);
-        push(object_stack, jo->tag);
-      }
+      object_stack_push(jo->tag, jo->data);
+      disp_exe(JO_EXE->data, jo->tag);
     }
     #+end_src
 
@@ -3003,7 +3119,6 @@
           if (!collecting) {
             report("- p_read_raw_jo meet end-of-file\n");
             p_debug();
-            return 0;
           }
           else {
             break;
@@ -3755,7 +3870,8 @@
       jo_t* jojo = rp.jojo;
       jo_t tag = jojo[0];
       cell data = jojo[1];
-      exe(tag, data);
+      object_stack_push(tag, data);
+      disp_exe(JO_EXE->data, tag);
     }
     #+end_src
 
@@ -3787,7 +3903,8 @@
       jo_t* jojo = rp.jojo;
       jo_t tag = jojo[0];
       cell data = jojo[1];
-      exe(tag, data);
+      object_stack_push(tag, data);
+      disp_exe(JO_EXE->data, tag);
     }
     #+end_src
 
@@ -3813,26 +3930,26 @@
 
     #+begin_src c
     void expose_control() {
-      add_prim_keyword("note", k_ignore);
+      add_prim("note", k_ignore);
       add_prim("ins/lit", ins_lit);
 
       add_prim("ins/jmp", ins_jmp);
       add_prim("ins/jz", ins_jz);
 
-      add_prim_keyword("if", k_if);
-      add_prim_keyword("el", p_compile_until_round_ket);
+      add_prim("if", k_if);
+      add_prim("el", p_compile_until_round_ket);
 
-      add_prim_keyword("case", k_case);
-      add_prim_keyword("cond", k_cond);
+      add_prim("case", k_case);
+      add_prim("cond", k_cond);
 
       add_prim("ins/tail-call", ins_tail_call);
-      add_prim_keyword("tail-call", k_tail_call);
+      add_prim("tail-call", k_tail_call);
 
       add_prim("ins/loop", ins_loop);
-      add_prim_keyword("loop", k_loop);
+      add_prim("loop", k_loop);
 
       add_prim("ins/recur", ins_recur);
-      add_prim_keyword("recur", k_recur);
+      add_prim("recur", k_recur);
     }
     #+end_src
 
@@ -3939,10 +4056,10 @@
 
     #+begin_src c
     void expose_top() {
-      add_prim_keyword("run", k_run);
-      add_prim_keyword("+var", k_add_var);
-      add_prim_keyword("+jojo", k_add_jojo);
-      add_prim_keyword("+data", k_add_data);
+      add_prim("run", k_run);
+      add_prim("+var", k_add_var);
+      add_prim("+jojo", k_add_jojo);
+      add_prim("+data", k_add_data);
     }
     #+end_src
 
@@ -4807,10 +4924,13 @@
     }
     #+end_src
 
-*** exe_closure
+*** p_closure_exe
 
     #+begin_src c
-    void exe_closure(struct object_entry* closure) {
+    void p_closure_exe() {
+      struct obj c = object_stack_pop();
+      struct object_entry* closure = c.data;
+
       struct obj a = get_field(TAG_CLOSURE, closure, str2jo(".local-env"));
       struct object_entry* ao = a.data;
       struct local* lr = ao->pointer;
@@ -4854,24 +4974,19 @@
     }
     #+end_src
 
-*** p_closure_apply
-
-    #+begin_src c
-    void p_closure_apply() {
-      struct obj a = object_stack_pop();
-      exe_closure(a.data);
-    }
-    #+end_src
-
 *** expose_closure
 
     #+begin_src c
     void expose_closure() {
       add_prim("current-local-env", p_current_local_env);
       add_atom_data("<local-env>", gc_local_env);
-      add_data_exe("<closure>", exe_closure, J(".jojo", ".local-env"));
-      add_prim_keyword("%", k_closure);
-      add_prim("apply", p_closure_apply);
+
+      add_data("<closure>", J(".jojo", ".local-env"));
+      add_prim("closure-exe", p_closure_exe);
+      add_disp("exe", "<closure>", "closure-exe");
+
+      add_prim("%", k_closure);
+      add_prim("apply", p_closure_exe);
     }
     #+end_src
 
@@ -5237,7 +5352,6 @@
           free(proc_link_path);
           free(real_reading_path);
           p_debug();
-          return 0; // to fool the compiler
         }
         free(proc_link_path);
         real_reading_path[real_bytes] = '\0';
@@ -5307,7 +5421,7 @@
 
     #+begin_src c
     void expose_cffi() {
-      add_prim_keyword("+clib", k_clib);
+      add_prim("+clib", k_clib);
     }
     #+end_src
 
@@ -5416,38 +5530,38 @@
 
     #+begin_src c
     void p3() {
-      struct dispatch* dispatch_1 = new_dispatch(16);
-      dispatch_insert(dispatch_1, str2jo("k1"), 100);
-      dispatch_insert(dispatch_1, str2jo("k1"), 1);
-      dispatch_insert(dispatch_1, str2jo("k2"), 2);
-      dispatch_insert(dispatch_1, str2jo("k3"), 3);
-      dispatch_insert(dispatch_1, str2jo("k4"), 4);
-      dispatch_insert(dispatch_1, str2jo("k5"), 5);
-      dispatch_insert(dispatch_1, str2jo("k6"), 6);
+      struct disp* disp_1 = new_disp(16);
+      disp_insert(disp_1, str2jo("k1"), 100);
+      disp_insert(disp_1, str2jo("k1"), 1);
+      disp_insert(disp_1, str2jo("k2"), 2);
+      disp_insert(disp_1, str2jo("k3"), 3);
+      disp_insert(disp_1, str2jo("k4"), 4);
+      disp_insert(disp_1, str2jo("k5"), 5);
+      disp_insert(disp_1, str2jo("k6"), 6);
 
-      dispatch_insert(dispatch_1, str2jo("kkkk1"), 1);
-      dispatch_insert(dispatch_1, str2jo("kkkk2"), 2);
-      dispatch_insert(dispatch_1, str2jo("kkkk3"), 3);
-      dispatch_insert(dispatch_1, str2jo("kkkk4"), 4);
-      dispatch_insert(dispatch_1, str2jo("kkkk5"), 5);
-      dispatch_insert(dispatch_1, str2jo("kkkk6"), 6);
+      disp_insert(disp_1, str2jo("kkkk1"), 1);
+      disp_insert(disp_1, str2jo("kkkk2"), 2);
+      disp_insert(disp_1, str2jo("kkkk3"), 3);
+      disp_insert(disp_1, str2jo("kkkk4"), 4);
+      disp_insert(disp_1, str2jo("kkkk5"), 5);
+      disp_insert(disp_1, str2jo("kkkk6"), 6);
 
-      dispatch_insert(dispatch_1, str2jo("1"), 666);
-      dispatch_insert(dispatch_1, str2jo("2"), 2);
-      dispatch_insert(dispatch_1, str2jo("3"), 3);
-      dispatch_insert(dispatch_1, str2jo("4"), 4);
-      dispatch_insert(dispatch_1, str2jo("5"), 5);
-      dispatch_insert(dispatch_1, str2jo("6"), 6);
+      disp_insert(disp_1, str2jo("1"), 666);
+      disp_insert(disp_1, str2jo("2"), 2);
+      disp_insert(disp_1, str2jo("3"), 3);
+      disp_insert(disp_1, str2jo("4"), 4);
+      disp_insert(disp_1, str2jo("5"), 5);
+      disp_insert(disp_1, str2jo("6"), 6);
 
-      dispatch_print(dispatch_1);
+      disp_print(disp_1);
 
-      struct dispatch_entry* dispatch_entry_1 =
-        dispatch_find(dispatch_1, str2jo("1"));
-      if (dispatch_entry_1 == 0) {
-        report("dispatch_entry_1 == 0\n");
+      struct disp_entry* disp_entry_1 =
+        disp_find(disp_1, str2jo("1"));
+      if (disp_entry_1 == 0) {
+        report("disp_entry_1 == 0\n");
       }
       else {
-        report("dispatch_entry_1->data : %ld\n", dispatch_entry_1->data);
+        report("disp_entry_1->data : %ld\n", disp_entry_1->data);
       }
 
       // void* p = 0;
@@ -5461,49 +5575,49 @@
 
     #+begin_src c
     void p4() {
-      struct multi_dispatch* multi_dispatch_1 = new_multi_dispatch(16);
-      multi_dispatch_insert(multi_dispatch_1, J("k1", "k1"), 100);
-      multi_dispatch_insert(multi_dispatch_1, J("k1", "k1"), 1);
-      multi_dispatch_insert(multi_dispatch_1, J("k21", "k22"), 2);
-      multi_dispatch_insert(multi_dispatch_1, J("k31", "k32", "k33"), 3);
-      multi_dispatch_insert(multi_dispatch_1, J("k4"), 4);
-      multi_dispatch_insert(multi_dispatch_1, J("k5"), 5);
-      multi_dispatch_insert(multi_dispatch_1, J("k6"), 6);
+      struct multi_disp* multi_disp_1 = new_multi_disp(16);
+      multi_disp_insert(multi_disp_1, J("k1", "k1"), 100);
+      multi_disp_insert(multi_disp_1, J("k1", "k1"), 1);
+      multi_disp_insert(multi_disp_1, J("k21", "k22"), 2);
+      multi_disp_insert(multi_disp_1, J("k31", "k32", "k33"), 3);
+      multi_disp_insert(multi_disp_1, J("k4"), 4);
+      multi_disp_insert(multi_disp_1, J("k5"), 5);
+      multi_disp_insert(multi_disp_1, J("k6"), 6);
 
-      multi_dispatch_insert(multi_dispatch_1, J("kkkk1"), 1);
-      multi_dispatch_insert(multi_dispatch_1, J("kkkk2"), 2);
-      multi_dispatch_insert(multi_dispatch_1, J("kkkk3"), 3);
-      multi_dispatch_insert(multi_dispatch_1, J("kkkk4"), 4);
-      multi_dispatch_insert(multi_dispatch_1, J("kkkk5"), 5);
-      multi_dispatch_insert(multi_dispatch_1, J("kkkk6"), 6);
+      multi_disp_insert(multi_disp_1, J("kkkk1"), 1);
+      multi_disp_insert(multi_disp_1, J("kkkk2"), 2);
+      multi_disp_insert(multi_disp_1, J("kkkk3"), 3);
+      multi_disp_insert(multi_disp_1, J("kkkk4"), 4);
+      multi_disp_insert(multi_disp_1, J("kkkk5"), 5);
+      multi_disp_insert(multi_disp_1, J("kkkk6"), 6);
 
-      multi_dispatch_insert(multi_dispatch_1, J("1", "2", "3"), 666);
-      multi_dispatch_insert(multi_dispatch_1, J("2"), 2);
-      multi_dispatch_insert(multi_dispatch_1, J("3"), 3);
-      multi_dispatch_insert(multi_dispatch_1, J("4"), 4);
-      multi_dispatch_insert(multi_dispatch_1, J("5"), 5);
-      multi_dispatch_insert(multi_dispatch_1, J("6"), 6);
+      multi_disp_insert(multi_disp_1, J("1", "2", "3"), 666);
+      multi_disp_insert(multi_disp_1, J("2"), 2);
+      multi_disp_insert(multi_disp_1, J("3"), 3);
+      multi_disp_insert(multi_disp_1, J("4"), 4);
+      multi_disp_insert(multi_disp_1, J("5"), 5);
+      multi_disp_insert(multi_disp_1, J("6"), 6);
 
-      multi_dispatch_print(multi_dispatch_1);
+      multi_disp_print(multi_disp_1);
 
-      struct multi_dispatch_entry* multi_dispatch_entry_1 =
-        multi_dispatch_find(multi_dispatch_1, J("1", "2", "3"));
-      if (multi_dispatch_entry_1 == 0) {
-        report("multi_dispatch_entry_1 == 0\n");
+      struct multi_disp_entry* multi_disp_entry_1 =
+        multi_disp_find(multi_disp_1, J("1", "2", "3"));
+      if (multi_disp_entry_1 == 0) {
+        report("multi_disp_entry_1 == 0\n");
       }
       else {
-        report("multi_dispatch_entry_1->data : %ld\n",
-               multi_dispatch_entry_1->data);
+        report("multi_disp_entry_1->data : %ld\n",
+               multi_disp_entry_1->data);
       }
 
-      struct multi_dispatch_entry* multi_dispatch_entry_2 =
-        multi_dispatch_find(multi_dispatch_1, J("1", "2", "3123"));
-      if (multi_dispatch_entry_2 == 0) {
-        report("multi_dispatch_entry_2 == 0\n");
+      struct multi_disp_entry* multi_disp_entry_2 =
+        multi_disp_find(multi_disp_1, J("1", "2", "3123"));
+      if (multi_disp_entry_2 == 0) {
+        report("multi_disp_entry_2 == 0\n");
       }
       else {
-        report("multi_dispatch_entry_2->data : %ld\n",
-               multi_dispatch_entry_2->data);
+        report("multi_disp_entry_2->data : %ld\n",
+               multi_disp_entry_2->data);
       }
     }
     #+end_src
@@ -5566,7 +5680,6 @@
 
       TAG_PRIM         = str2jo("<prim>");
       TAG_JOJO         = str2jo("<jojo>");
-      TAG_PRIM_KEYWORD = str2jo("<prim-keyword>");
       TAG_KEYWORD      = str2jo("<keyword>");
       TAG_CLOSURE      = str2jo("<closure>");
       TAG_CLASS        = str2jo("<class>");
@@ -5608,6 +5721,7 @@
       JO_ELSE     = str2jo("else");
 
       JO_APPLY     = str2jo("apply");
+      JO_EXE       = str2jo("exe");
       JO_END       = str2jo("end");
 
       JO_LOCAL_DATA_IN = str2jo("local-data-in");
@@ -5689,6 +5803,7 @@
 
       p_repl_flag_on();
       p_print_object_stack();
+      // path_load("test/loop.jo");
       p_repl();
     }
     #+end_src
