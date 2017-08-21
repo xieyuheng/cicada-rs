@@ -10,12 +10,12 @@
 
 (note
 
-  (+var a-list
+  (+var list-0
     null
     1 cons
     2 cons)
 
-  (run a-list (% int-write) list-print))
+  (run list-0 (% int-write) list-print))
 
 (note
   (+jojo t0 1 :a0! 2 :b0! (% :a0 :b0 add))
@@ -47,10 +47,10 @@
   (+jojo com :m1! :m2!
    (% :m2 apply
       :m1 apply))
-
-  (run (% 1) (% 2) com (% 3) com apply)
-
-  (run (% 1) (% 2) (% 3) com com apply))
+  (run (% 1) (% 2) com apply add int-write)
+  (run (% 1) (% 2) com (% 3) com apply add add int-write)
+  (run (% 1) (% 2) (% 3) com com apply add add int-write)
+  (run step (% 1) (% 2) (% 3) com com apply add add int-write))
 
 (+var server "8888" 5 tcp-socket-listen)
 (+jojo run-server

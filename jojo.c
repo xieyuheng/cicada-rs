@@ -1695,175 +1695,6 @@
 
     struct alias alias_record[1024];
     cell current_alias_pointer = 0;
-      struct gene {
-        union {
-          jo_t disp;
-          jo_t* multi_disp;
-        };
-        cell arity;
-      };
-      void add_gene(function_name, arity)
-           char* function_name;
-           cell arity;
-      {
-        jo_t name = str2jo(function_name);
-        struct gene* gene = (struct gene*)
-          malloc(sizeof(struct gene));
-        gene->arity = arity;
-
-        if (arity == 1) {
-          struct disp* disp = new_disp(128);
-          gene->disp = disp;
-        }
-        else {
-          struct multi_disp* multi_disp = new_multi_disp(128);
-          gene->multi_disp = multi_disp;
-        }
-
-        bind_name(name, str2jo("<gene>"), gene);
-      }
-      void _add_disp(gene_name, tags, jo)
-        jo_t gene_name;
-        jo_t* tags;
-        jo_t jo;
-      {
-        struct gene* gene = gene_name->data;
-        if (gene->arity == 1) {
-          disp_insert(gene->disp, tags[0], jo);
-        }
-        else {
-          disp_insert(gene->multi_disp, tags, jo);
-        }
-      }
-      void add_disp(gene_name, tags, jo)
-        char* gene_name;
-        jo_t* tags;
-        char* jo;
-      {
-        _add_disp(str2jo(gene_name), tags, str2jo(jo));
-      }
-      void disp_exe(struct gene* gene, jo_t tag) {
-        struct disp* disp = gene->disp;
-        struct disp_entry* disp_entry =
-          disp_find(disp, tag);
-        if (disp_entry == 0) {
-          return;
-        }
-        else {
-          jo_t jo = disp_entry->data;
-          if (jo->tag == TAG_PRIM) {
-            primitive_t f = (primitive_t)jo->data;
-            f();
-          }
-          else {
-            object_stack_push(jo->tag, jo->data);
-            disp_exe(JO_EXE->data, jo->tag);
-          }
-        }
-      }
-      void multi_disp_exe(struct gene* gene, jo_t* tags) {
-        struct multi_disp* multi_disp = gene->multi_disp;
-        struct disp_entry* disp_entry =
-          multi_disp_find(multi_disp, tags);
-        if (disp_entry == 0) {
-          return;
-        }
-        else {
-          jo_t jo = disp_entry->data;
-          if (jo->tag == TAG_PRIM) {
-            primitive_t f = (primitive_t)jo->data;
-            f();
-          }
-          else {
-            object_stack_push(jo->tag, jo->data);
-            disp_exe(JO_EXE->data, jo->tag);
-          }
-        }
-      }
-      void p_gene_exe() {
-        struct obj a = object_stack_pop();
-        struct gene* gene = a.data;
-        if (gene->arity == 1) {
-          struct obj t = object_stack_tos();
-          disp_exe(gene, t.tag);
-        }
-        else {
-          // ><><><
-          // multi_disp_exe(gene, tags);
-        }
-      }
-      void p_prim_exe() {
-        struct obj a = object_stack_pop();
-        primitive_t f = (primitive_t)a.data;
-        f();
-      }
-      void p_jojo_exe() {
-        struct obj a = object_stack_pop();
-        jo_t* jojo = a.data;
-        return_stack_push_new(jojo);
-      }
-      void eval();
-      void p_keyword_exe() {
-        struct obj a = object_stack_pop();
-        jo_t* jojo = a.data;
-        push(keyword_stack, current_alias_pointer);
-        return_stack_push_new(jojo);
-        eval();
-        current_alias_pointer = pop(keyword_stack);
-      }
-      void p_set_global_variable_exe() {
-        struct obj b = object_stack_pop();
-        jo_t name = b.data;
-        struct obj a = object_stack_pop();
-        rebind_name(name, a.tag, a.data);
-      }
-      void p_data_constructor_exe() {
-        struct obj b = object_stack_pop();
-        struct class* class = b.data;
-
-        cell* fields = (cell*)malloc(class->fields_number*2*sizeof(cell));
-
-        cell i = 0;
-        while (i < class->fields_number) {
-          struct obj a = object_stack_pop();
-          set_field_tag(fields, (class->fields_number - (i+1)), a.tag);
-          set_field_data(fields, (class->fields_number - (i+1)), a.data);
-          i++;
-        }
-
-        struct object_entry* object_entry = new_record_object_entry();
-        object_entry->gc_actor = gc_recur;
-        object_entry->pointer = fields;
-        object_entry->fields_number = class->fields_number;
-
-        object_stack_push(class->class_name, object_entry);
-      }
-      void p_data_predicate_exe() {
-        struct obj b = object_stack_pop();
-        struct class* class = b.data;
-
-        struct obj a = object_stack_pop();
-        object_stack_push(TAG_BOOL, (class->class_name == a.tag));
-      }
-      void expose_gene() {
-        add_gene("exe", 1);
-
-        add_prim("prim-exe", p_prim_exe);
-        add_prim("jojo-exe", p_jojo_exe);
-        add_prim("gene-exe", p_gene_exe);
-        add_prim("keyword-exe", p_keyword_exe);
-        add_prim("set-global-variable-exe", p_set_global_variable_exe);
-        add_prim("data-constructor-exe", p_data_constructor_exe);
-        add_prim("data-predicate-exe", p_data_predicate_exe);
-
-        add_disp("exe", J("<prim>"), "prim-exe");
-        add_disp("exe", J("<jojo>"), "jojo-exe");
-        add_disp("exe", J("<gene>"), "gene-exe");
-        add_disp("exe", J("<keyword>"), "keyword-exe");
-        add_disp("exe", J("<set-global-variable>"), "set-global-variable-exe");
-        add_disp("exe", J("<data-constructor>"), "data-constructor-exe");
-        add_disp("exe", J("<data-predicate>"), "data-predicate-exe");
-      }
     void p_tag() {
       struct obj a = object_stack_pop();
       object_stack_push(TAG_JO, a.tag);
@@ -1874,9 +1705,6 @@
       object_stack_push(TAG_BOOL, (b.tag == a.tag) && (b.data == a.data));
     }
     void expose_object() {
-
-      expose_gene();
-
       init_object_record();
 
       add_prim("ins/get-field", ins_get_field);
@@ -1896,9 +1724,244 @@
       add_atom_data("<data-constructor>", gc_ignore);
       add_atom_data("<data-predicate>", gc_ignore);
 
-
       add_prim("tag", p_tag);
       add_prim("eq?", p_eq_p);
+    }
+    struct gene {
+      union {
+        jo_t disp;
+        jo_t* multi_disp;
+      };
+      cell arity;
+    };
+    void add_gene(function_name, arity)
+         char* function_name;
+         cell arity;
+    {
+      jo_t name = str2jo(function_name);
+      struct gene* gene = (struct gene*)
+        malloc(sizeof(struct gene));
+      gene->arity = arity;
+
+      if (arity == 1) {
+        struct disp* disp = new_disp(128);
+        gene->disp = disp;
+      }
+      else {
+        struct multi_disp* multi_disp = new_multi_disp(128);
+        gene->multi_disp = multi_disp;
+      }
+
+      bind_name(name, str2jo("<gene>"), gene);
+    }
+    void _add_disp(gene_name, tags, jo)
+      jo_t gene_name;
+      jo_t* tags;
+      jo_t jo;
+    {
+      struct gene* gene = gene_name->data;
+      if (gene->arity == 1) {
+        disp_insert(gene->disp, tags[0], jo);
+      }
+      else {
+        multi_disp_insert(gene->multi_disp, tags, jo);
+      }
+    }
+    void add_disp(gene_name, tags, jo)
+      char* gene_name;
+      jo_t* tags;
+      char* jo;
+    {
+      _add_disp(str2jo(gene_name), tags, str2jo(jo));
+    }
+    void disp_exe(struct gene* gene, jo_t tag) {
+      struct disp* disp = gene->disp;
+      struct disp_entry* disp_entry =
+        disp_find(disp, tag);
+      if (disp_entry == 0) {
+        return;
+      }
+      else {
+        jo_t jo = disp_entry->data;
+        if (jo->tag == TAG_PRIM) {
+          primitive_t f = (primitive_t)jo->data;
+          f();
+        }
+        else {
+          object_stack_push(jo->tag, jo->data);
+          disp_exe(JO_EXE->data, jo->tag);
+        }
+      }
+    }
+    void multi_disp_exe(struct gene* gene, jo_t* tags) {
+      struct multi_disp* multi_disp = gene->multi_disp;
+      struct disp_entry* disp_entry =
+        multi_disp_find(multi_disp, tags);
+      if (disp_entry == 0) {
+        return;
+      }
+      else {
+        jo_t jo = disp_entry->data;
+        if (jo->tag == TAG_PRIM) {
+          primitive_t f = (primitive_t)jo->data;
+          f();
+        }
+        else {
+          object_stack_push(jo->tag, jo->data);
+          disp_exe(JO_EXE->data, jo->tag);
+        }
+      }
+    }
+    void p_gene_exe() {
+      struct obj a = object_stack_pop();
+      struct gene* gene = a.data;
+      if (gene->arity == 1) {
+        struct obj t = object_stack_tos();
+        disp_exe(gene, t.tag);
+      }
+      else {
+        jo_t tags[16];
+        cell i = 0;
+        while (i < gene->arity) {
+          tags[i] = object_stack_peek_tag(i);
+          report("- p_gene_exe : %s\n", jo2str(tags[i]));
+          i++;
+        }
+        tags[i] = 0;
+        multi_disp_exe(gene, tags);
+      }
+    }
+    void p_prim_exe() {
+      struct obj a = object_stack_pop();
+      primitive_t f = (primitive_t)a.data;
+      f();
+    }
+    void p_jojo_exe() {
+      struct obj a = object_stack_pop();
+      jo_t* jojo = a.data;
+      return_stack_push_new(jojo);
+    }
+    void eval();
+    void p_keyword_exe() {
+      struct obj a = object_stack_pop();
+      jo_t* jojo = a.data;
+      push(keyword_stack, current_alias_pointer);
+      return_stack_push_new(jojo);
+      eval();
+      current_alias_pointer = pop(keyword_stack);
+    }
+    void p_set_global_variable_exe() {
+      struct obj b = object_stack_pop();
+      jo_t name = b.data;
+      struct obj a = object_stack_pop();
+      rebind_name(name, a.tag, a.data);
+    }
+    void p_data_constructor_exe() {
+      struct obj b = object_stack_pop();
+      struct class* class = b.data;
+
+      cell* fields = (cell*)malloc(class->fields_number*2*sizeof(cell));
+
+      cell i = 0;
+      while (i < class->fields_number) {
+        struct obj a = object_stack_pop();
+        set_field_tag(fields, (class->fields_number - (i+1)), a.tag);
+        set_field_data(fields, (class->fields_number - (i+1)), a.data);
+        i++;
+      }
+
+      struct object_entry* object_entry = new_record_object_entry();
+      object_entry->gc_actor = gc_recur;
+      object_entry->pointer = fields;
+      object_entry->fields_number = class->fields_number;
+
+      object_stack_push(class->class_name, object_entry);
+    }
+    void p_data_predicate_exe() {
+      struct obj b = object_stack_pop();
+      struct class* class = b.data;
+
+      struct obj a = object_stack_pop();
+      object_stack_push(TAG_BOOL, (class->class_name == a.tag));
+    }
+    jo_t read_jo();
+    void k_ignore();
+
+    cell k_add_gene_count_arity_from_type() {
+      read_jo(); // drop '('
+      read_jo(); // drop '->'
+      cell arity = 0;
+      while (true) {
+        jo_t jo = read_jo();
+        if (jo == str2jo("--")) {
+          k_ignore();
+          break;
+        }
+        if (jo == ROUND_KET) {
+          break;
+        }
+        arity++;
+      }
+      return arity;
+    }
+    void k_add_gene() {
+      jo_t gene_name = read_jo();
+      cell arity = k_add_gene_count_arity_from_type();
+      k_ignore();
+      add_gene(jo2str(gene_name), arity);
+    }
+    void k_add_disp_collect_tags_from_type(jo_t* tags) {
+      read_jo(); // drop '('
+      read_jo(); // drop '->'
+      cell i = 0;
+      while (true) {
+        jo_t jo = read_jo();
+        if (jo == str2jo("--")) {
+          k_ignore();
+          break;
+        }
+        if (jo == ROUND_KET) {
+          break;
+        }
+        tags[i] = jo;
+        i++;
+      }
+      tags[i] = 0;
+    }
+    void k_add_disp() {
+      jo_t gene_name = read_jo();
+      jo_t tags[16];
+      k_add_disp_collect_tags_from_type(tags);
+      jo_t jo = read_jo();
+      k_ignore();
+      _add_disp(gene_name, tags, jo);
+      report("- k_add_disp\n");
+      report("  gene_name : %s\n", jo2str(gene_name));
+      report("  tags[0] : %s\n", jo2str(tags[0]));
+      report("  tags[1] : %ld\n", tags[1]);
+      report("  jo : %s\n", jo2str(jo));
+    }
+    void expose_gene() {
+      add_gene("exe", 1);
+
+      add_prim("prim-exe", p_prim_exe);
+      add_prim("jojo-exe", p_jojo_exe);
+      add_prim("gene-exe", p_gene_exe);
+      add_prim("keyword-exe", p_keyword_exe);
+      add_prim("set-global-variable-exe", p_set_global_variable_exe);
+      add_prim("data-constructor-exe", p_data_constructor_exe);
+      add_prim("data-predicate-exe", p_data_predicate_exe);
+
+      add_disp("exe", J("<prim>"), "prim-exe");
+      add_disp("exe", J("<jojo>"), "jojo-exe");
+      add_disp("exe", J("<gene>"), "gene-exe");
+      add_disp("exe", J("<keyword>"), "keyword-exe");
+      add_disp("exe", J("<set-global-variable>"), "set-global-variable-exe");
+      add_disp("exe", J("<data-constructor>"), "data-constructor-exe");
+      add_disp("exe", J("<data-predicate>"), "data-predicate-exe");
+
+      add_prim("+gene", k_add_gene);
+      add_prim("+disp", k_add_disp);
     }
     void p_debug();
 
@@ -2607,6 +2670,7 @@
     }
     void expose_control() {
       add_prim("note", k_ignore);
+      add_prim("->", k_ignore);
       add_prim("ins/lit", ins_lit);
 
       add_prim("ins/jmp", ins_jmp);
@@ -3962,6 +4026,7 @@
     }
     void init_expose() {
       expose_object();
+      expose_gene();
       expose_stack();
       expose_ending();
       expose_rw();
