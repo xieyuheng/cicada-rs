@@ -99,7 +99,7 @@
     (+jojo list-print (-> :l :f --)
       (case :l
         <null> ["null" string-write space]
-        <cons> [:l .cdr :f (recur)
+        <cons> [:l .cdr :f recur
                 :l .car :f apply space
                 "cons" string-write space]))
     #+end_src
@@ -184,7 +184,7 @@
       server socket-accept :addr! :client!
       "got a connection from " string-write :addr string-write newline
       :client "thank you for connecting" socket-send
-      :client close (loop))
+      :client close recur)
     (note (run run-server))
     #+end_src
 
@@ -216,15 +216,15 @@
       (note [tree fun] -> [])
       (case :t
         <leaf> [:t .v :f apply "leaf" string-write space]
-        <node> [:t .l :f (recur)
-                :t .r :f (recur) "node" string-write space]))
+        <node> [:t .l :f recur
+                :t .r :f recur "node" string-write space]))
 
     (+jojo tree-map :f! :t!
       (note [tree fun] -> [tree])
       (case :t
         <leaf> [:t .v :f apply leaf]
-        <node> [:t .l :f (recur)
-                :t .r :f (recur) node]))
+        <node> [:t .l :f recur
+                :t .r :f recur node]))
     #+end_src
 
 *** [test] tree
@@ -336,8 +336,8 @@
       :t!
       (case :t
         <leaf> [dup inc swap leaf]
-        <node> [:t .l (recur) :l!
-                :t .r (recur) :r!
+        <node> [:t .l recur :l!
+                :t .r recur :r!
                 :l :r node]))
 
     (+var tree-2

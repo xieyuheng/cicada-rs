@@ -314,6 +314,7 @@
     jo_t JO_APPLY;
     jo_t JO_EXE;
     jo_t JO_END;
+    jo_t JO_RECUR;
 
     jo_t JO_LOCAL_DATA_IN;
     jo_t JO_LOCAL_DATA_OUT;
@@ -1971,11 +1972,18 @@
           // tail call is handled here
           return_stack_drop();
           current_local_counter = rp.local_counter;
+          if (jo == JO_RECUR) {
+            object_stack_push(rp.tag, rp.data);
+            disp_exe(JO_EXE->data, rp.tag);
+          }
+          else {
+            jo_apply(jo);
+          }
         }
         else {
           return_stack_inc();
+          jo_apply(jo);
         }
-        jo_apply(jo);
       }
     }
     void p_drop() {
@@ -2437,8 +2445,6 @@
     void p_compile_until_round_ket() {
       compile_until_meet_jo(ROUND_KET);
     }
-    struct stack* current_compiling_exe_stack;
-    // of data and tag
     void expose_compiler() {
 
     }
@@ -2617,63 +2623,10 @@
         end_of_cond[0] = (jo_t*)tos(compiling_stack) - end_of_cond;
       }
     }
-    void ins_tail_call() {
-      struct ret rp = return_stack_pop();
-      current_local_counter = rp.local_counter;
-      jo_t* jojo = rp.jojo;
-      jo_t jo = jojo[0];
-      jo_apply(jo);
-    }
-    void k_tail_call() {
-      // no check for "no compile before define"
-      here(JO_INS_TAIL_CALL);
-      here(read_jo());
-      k_ignore();
-    }
-    void ins_loop() {
-      struct ret rp = return_stack_pop();
-      current_local_counter = rp.local_counter;
-      jo_t* jojo = rp.jojo;
-      jo_t tag = jojo[0];
-      cell data = jojo[1];
-      object_stack_push(tag, data);
-      disp_exe(JO_EXE->data, tag);
-    }
-    void k_loop() {
-      here(JO_INS_LOOP);
-
-      jo_t tag = pop(current_compiling_exe_stack);
-      cell data = pop(current_compiling_exe_stack);
-      push(current_compiling_exe_stack, data);
-      push(current_compiling_exe_stack, tag);
-
-      here(tag);
-      here(data);
-
-      k_ignore();
-    }
-    void ins_recur() {
+    void p_recur() {
       struct ret rp = return_stack_tos();
-      return_stack_inc();
-      return_stack_inc();
-      jo_t* jojo = rp.jojo;
-      jo_t tag = jojo[0];
-      cell data = jojo[1];
-      object_stack_push(tag, data);
-      disp_exe(JO_EXE->data, tag);
-    }
-    void k_recur() {
-      here(JO_INS_RECUR);
-
-      jo_t tag = pop(current_compiling_exe_stack);
-      cell data = pop(current_compiling_exe_stack);
-      push(current_compiling_exe_stack, data);
-      push(current_compiling_exe_stack, tag);
-
-      here(tag);
-      here(data);
-
-      k_ignore();
+      object_stack_push(rp.tag, rp.data);
+      disp_exe(JO_EXE->data, rp.tag);
     }
     void expose_control() {
       add_prim("note", k_ignore);
@@ -2689,29 +2642,18 @@
       add_prim("case", k_case);
       add_prim("cond", k_cond);
 
-      add_prim("ins/tail-call", ins_tail_call);
-      add_prim("tail-call", k_tail_call);
-
-      add_prim("ins/loop", ins_loop);
-      add_prim("loop", k_loop);
-
-      add_prim("ins/recur", ins_recur);
-      add_prim("recur", k_recur);
+      add_prim("recur", p_recur);
     }
     void k_run() {
       // (run ...)
       jo_t* jojo = tos(compiling_stack);
 
-      push(current_compiling_exe_stack, jojo);
-      push(current_compiling_exe_stack, TAG_JOJO);
       {
         compile_until_meet_jo(ROUND_KET);
         here(JO_END);
         here(0);
         here(0);
       }
-      drop(current_compiling_exe_stack);
-      drop(current_compiling_exe_stack);
 
       return_stack_push(jojo, TAG_JOJO, jojo, current_local_counter);
       eval();
@@ -2780,8 +2722,6 @@
       jo_t fun_name = read_jo();
       jo_t* jojo = tos(compiling_stack);
 
-      push(current_compiling_exe_stack, jojo);
-      push(current_compiling_exe_stack, TAG_JOJO);
       {
         jo_t jo1 = read_jo(); // maybe '('
         jo_t jo2 = read_jo(); // maybe '->'
@@ -2798,8 +2738,6 @@
         here(0);
         here(0);
       }
-      drop(current_compiling_exe_stack);
-      drop(current_compiling_exe_stack);
 
       bind_name(fun_name, TAG_JOJO, jojo);
     }
@@ -3460,16 +3398,13 @@
     }
     void k_closure() {
       jo_t* jojo = tos(compiling_stack);
-      push(current_compiling_exe_stack, jojo);
-      push(current_compiling_exe_stack, TAG_JOJO);
+
       {
         compile_until_meet_jo(ROUND_KET);
         here(JO_END);
         here(0);
         here(0);
       }
-      drop(current_compiling_exe_stack);
-      drop(current_compiling_exe_stack);
 
       jo_t* new_jojo =
         array_len_dup(jojo, (cell*)tos(compiling_stack) - (cell*)jojo);
@@ -4090,6 +4025,7 @@
       JO_APPLY     = str2jo("apply");
       JO_EXE       = str2jo("exe");
       JO_END       = str2jo("end");
+      JO_RECUR     = str2jo("recur");
 
       JO_LOCAL_DATA_IN = str2jo("local-data-in");
       JO_LOCAL_DATA_OUT = str2jo("local-data-out");
@@ -4120,8 +4056,6 @@
 
       // jo_filter_stack = new_stack("jo_filter_stack");
       // push(jo_filter_stack, str2jo("alias-filter"));
-
-      current_compiling_exe_stack = new_stack("current_compiling_exe_stack");
     }
     void init_expose() {
       expose_object();
@@ -4156,6 +4090,5 @@
 
       p_repl_flag_on();
       p_print_object_stack();
-      // path_load("test/loop.jo");
       p_repl();
     }
