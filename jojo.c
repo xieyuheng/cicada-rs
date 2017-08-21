@@ -1051,6 +1051,8 @@
     cell current_local_counter = 0;
     struct ret {
       jo_t* jojo;
+      jo_t tag;
+      cell data;
       cell local_counter;
     };
 
@@ -1058,7 +1060,9 @@
 
     struct ret return_stack_pop() {
       struct ret p;
-      p.jojo = pop(return_stack);
+      p.jojo          = pop(return_stack);
+      p.tag           = pop(return_stack);
+      p.data          = pop(return_stack);
       p.local_counter = pop(return_stack);
       return p;
     }
@@ -1066,14 +1070,16 @@
     void return_stack_drop() {
       drop(return_stack);
       drop(return_stack);
+      drop(return_stack);
+      drop(return_stack);
     }
 
     struct ret return_stack_tos() {
       struct ret p;
-      p.jojo = pop(return_stack);
-      p.local_counter = pop(return_stack);
-      push(return_stack, p.local_counter);
-      push(return_stack, p.jojo);
+      p.jojo          = stack_peek(return_stack, 1);
+      p.tag           = stack_peek(return_stack, 2);
+      p.data          = stack_peek(return_stack, 3);
+      p.local_counter = stack_peek(return_stack, 4);
       return p;
     }
 
@@ -1081,13 +1087,24 @@
       return stack_empty_p(return_stack);
     }
 
-    void return_stack_push(jo_t* jojo, cell local_counter) {
+    void return_stack_push(jo_t* jojo, jo_t tag, cell data, cell local_counter) {
       push(return_stack, local_counter);
+      push(return_stack, data);
+      push(return_stack, tag);
       push(return_stack, jojo);
     }
 
-    void return_stack_push_new(jo_t* jojo) {
-      return_stack_push(jojo, current_local_counter);
+    cell return_stack_length() {
+      return stack_length(return_stack) / 4;
+    }
+
+    struct ret return_stack_ref(cell index) {
+      struct ret p;
+      p.jojo          = stack_ref(return_stack, index*4 + 3);
+      p.tag           = stack_ref(return_stack, index*4 + 2);
+      p.data          = stack_ref(return_stack, index*4 + 1);
+      p.local_counter = stack_ref(return_stack, index*4 + 0);
+      return p;
     }
 
     void return_stack_inc() {
@@ -1868,14 +1885,14 @@
     void p_jojo_exe() {
       struct obj a = object_stack_pop();
       jo_t* jojo = a.data;
-      return_stack_push_new(jojo);
+      return_stack_push(jojo, TAG_JOJO, jojo, current_local_counter);
     }
     void eval();
     void p_keyword_exe() {
       struct obj a = object_stack_pop();
       jo_t* jojo = a.data;
       push(keyword_stack, current_alias_pointer);
-      return_stack_push_new(jojo);
+      return_stack_push(jojo, TAG_JOJO, jojo, current_local_counter);
       eval();
       current_alias_pointer = pop(keyword_stack);
     }
@@ -2000,6 +2017,7 @@
       add_prim("swap", p_swap);
     }
     void p_end() {
+      // for 'p_step' which do not handle tail call
       struct ret rp = return_stack_pop();
       current_local_counter = rp.local_counter;
     }
@@ -2448,7 +2466,7 @@
       struct ret rp = return_stack_pop();
       jo_t* jojo = rp.jojo;
       cell offset = jojo[0];
-      return_stack_push(jojo + offset, rp.local_counter);
+      return_stack_push(jojo + offset, rp.tag, rp.data, rp.local_counter);
     }
     void ins_jz() {
       struct ret rp = return_stack_tos();
@@ -2458,7 +2476,7 @@
       struct obj a = object_stack_pop();
       if (a.tag == TAG_BOOL && a.data == false) {
         struct ret rp1 = return_stack_pop();
-        return_stack_push(jojo + offset, rp1.local_counter);
+        return_stack_push(jojo + offset, rp.tag, rp.data, rp1.local_counter);
       }
     }
     //// without else
@@ -2695,7 +2713,7 @@
       drop(current_compiling_exe_stack);
       drop(current_compiling_exe_stack);
 
-      return_stack_push_new(jojo);
+      return_stack_push(jojo, TAG_JOJO, jojo, current_local_counter);
       eval();
     }
     void k_add_var() {
@@ -2987,28 +3005,23 @@
       report("\n");
     }
     void p_print_return_stack() {
-      cell length = stack_length(return_stack);
-      report("  - return-stack * %ld * :\n", length/2);
+      cell length = return_stack_length();
+      report("  - return-stack * %ld * :\n", length);
       if (length == 0) { return; };
-      cell cursor = 0;
-      while (cursor < length - 2) {
-        struct ret p;
-        p.local_counter = stack_ref(return_stack, cursor);
-        p.jojo = stack_ref(return_stack, cursor+1);
+      cell index = 0;
+      while (index < length - 1) {
+        struct ret p = return_stack_ref(index);
         print_return_point(p);
-        cursor++;
-        cursor++;
+        index++;
       }
-      {
-        struct ret p;
-        p.local_counter = stack_ref(return_stack, cursor);
-        p.jojo = stack_ref(return_stack, cursor+1);
+      { // tos of return_stack is special
+        struct ret p = return_stack_ref(index);
         jo_t* jojo = p.jojo;
         report("    - ");
         jojo_print(jojo);
         report("\n");
-        cursor++;
-        cursor++;
+        index++;
+        index++;
       }
     }
     bool repl_flag = false;
@@ -3164,6 +3177,7 @@
         }
       }
     }
+    // do not handle tail call
     void p_step() {
       step_flag = true;
       stepper_counter = 0;
@@ -3442,7 +3456,7 @@
 
       cell local_counter = current_local_counter;
       set_local_record(lr);
-      return_stack_push(jojo, local_counter);
+      return_stack_push(jojo, TAG_CLOSURE, closure, local_counter);
     }
     void k_closure() {
       jo_t* jojo = tos(compiling_stack);
