@@ -1089,218 +1089,6 @@
       jo_t* jojo = pop(return_stack);
       push(return_stack, jojo + 1);
     }
-    struct disp_entry {
-      jo_t key;
-      cell data;
-      struct disp_entry* rest;
-    };
-
-    struct disp {
-      struct disp_entry* table;
-      cell size;
-    };
-    struct disp* new_disp(cell size) {
-      struct disp* disp = (struct disp*)
-        malloc(sizeof(struct disp));
-      disp->size = size;
-      disp->table = (struct disp_entry*)
-        malloc(size * sizeof(struct disp_entry));
-      bzero(disp->table, size * sizeof(struct disp_entry));
-      return disp;
-    }
-    cell disp_hash(struct disp* disp, jo_t key) {
-      // return (((key - jotable) >> 1)
-      //         % (disp->size - 1)) + 1;
-      return ((key - jotable)
-              % (disp->size - 1)) + 1;
-    }
-    void disp_insert_entry(disp_entry, key, data)
-         struct disp_entry* disp_entry;
-         jo_t key;
-         cell data;
-    {
-      if (0 == disp_entry->key) {
-        disp_entry->key = key;
-        disp_entry->data = data;
-      }
-      else if (key == disp_entry->key) {
-        disp_entry->data = data;
-      }
-      else if (disp_entry->rest == 0) {
-        struct disp_entry* disp_entry_new = (struct disp_entry*)
-          malloc(sizeof(struct disp_entry));
-        bzero(disp_entry_new, sizeof(struct disp_entry));
-        disp_entry->rest = disp_entry_new;
-        disp_insert_entry(disp_entry_new, key, data);
-      }
-      else {
-        disp_insert_entry(disp_entry->rest, key, data);
-      }
-    }
-    void disp_insert(struct disp* disp, jo_t key, cell data) {
-      cell index = disp_hash(disp, key);
-      struct disp_entry* disp_entry = disp->table + index;
-      disp_insert_entry(disp_entry, key, data);
-    }
-    struct disp_entry*
-    disp_find_entry(disp_entry, key)
-         struct disp_entry* disp_entry;
-         jo_t key;
-    {
-      if (key == disp_entry->key) {
-        return disp_entry;
-      }
-      else if (disp_entry->rest != 0) {
-        return disp_find_entry(disp_entry->rest, key);
-      }
-      else {
-        return 0;
-      }
-    }
-    struct disp_entry*
-    disp_find(disp, key)
-         struct disp* disp;
-         jo_t key;
-    {
-      cell index = disp_hash(disp, key);
-      struct disp_entry* disp_entry = disp->table + index;
-      return disp_find_entry(disp_entry, key);
-    }
-    void disp_print_entry(struct disp_entry* disp_entry) {
-      if (disp_entry->key != 0) {
-        report("{%s => %ld} ",
-               jo2str(disp_entry->key),
-               disp_entry->data);
-      }
-      if (disp_entry->rest != 0) {
-        disp_print_entry(disp_entry->rest);
-      }
-    }
-    void disp_print(struct disp* disp) {
-      report("- disp_print\n");
-      cell i = 0;
-      while (i < disp->size) {
-        struct disp_entry* disp_entry = disp->table + i;
-        if (disp_entry->key != 0) {
-          report("  ");
-          disp_print_entry(disp_entry);
-          report("\n");
-        }
-        i++;
-      }
-    }
-    struct multi_disp_entry {
-      jo_t* key;
-      cell data;
-      struct multi_disp_entry* rest;
-    };
-
-    struct multi_disp {
-      struct multi_disp_entry* table;
-      cell size;
-    };
-    struct multi_disp* new_multi_disp(cell size) {
-      struct multi_disp* multi_disp = (struct multi_disp*)
-        malloc(sizeof(struct multi_disp));
-      multi_disp->size = size;
-      multi_disp->table = (struct multi_disp_entry*)
-        malloc(size * sizeof(struct multi_disp_entry));
-      bzero(multi_disp->table, size * sizeof(struct multi_disp_entry));
-      return multi_disp;
-    }
-    cell multi_disp_hash(struct multi_disp* multi_disp, jo_t* key) {
-      cell sum = 0;
-      cell i = 0;
-      while (key[i] != 0) {
-        sum = sum + (key[i] - jotable);
-        i++;
-      }
-      return (sum
-              % (multi_disp->size - 1)) + 1;
-    }
-    void multi_disp_insert_entry(multi_disp_entry, key, data)
-         struct multi_disp_entry* multi_disp_entry;
-         jo_t* key;
-         cell data;
-    {
-      if (0 == multi_disp_entry->key) {
-        multi_disp_entry->key = array_dup(key);
-        multi_disp_entry->data = data;
-      }
-      else if (array_equal_p(key, multi_disp_entry->key)) {
-        multi_disp_entry->data = data;
-      }
-      else if (multi_disp_entry->rest == 0) {
-        struct multi_disp_entry* multi_disp_entry_new = (struct multi_disp_entry*)
-          malloc(sizeof(struct multi_disp_entry));
-        bzero(multi_disp_entry_new, sizeof(struct multi_disp_entry));
-        multi_disp_entry->rest = multi_disp_entry_new;
-        multi_disp_insert_entry(multi_disp_entry_new, key, data);
-      }
-      else {
-        multi_disp_insert_entry(multi_disp_entry->rest, key, data);
-      }
-    }
-    void multi_disp_insert(struct multi_disp* multi_disp, jo_t* key, cell data) {
-      cell index = multi_disp_hash(multi_disp, key);
-      struct multi_disp_entry* multi_disp_entry = multi_disp->table + index;
-      multi_disp_insert_entry(multi_disp_entry, key, data);
-    }
-    struct multi_disp_entry*
-    multi_disp_find_entry(multi_disp_entry, key)
-         struct multi_disp_entry* multi_disp_entry;
-         jo_t* key;
-    {
-      if (multi_disp_entry->key == 0) {
-        return 0;
-      }
-      else if (array_equal_p(key, multi_disp_entry->key)) {
-        return multi_disp_entry;
-      }
-      else if (multi_disp_entry->rest != 0) {
-        return multi_disp_find_entry(multi_disp_entry->rest, key);
-      }
-      else {
-        return 0;
-      }
-    }
-    struct multi_disp_entry*
-    multi_disp_find(multi_disp, key)
-         struct multi_disp* multi_disp;
-         jo_t* key;
-    {
-      cell index = multi_disp_hash(multi_disp, key);
-      struct multi_disp_entry* multi_disp_entry = multi_disp->table + index;
-      return multi_disp_find_entry(multi_disp_entry, key);
-    }
-    void multi_disp_print_entry(struct multi_disp_entry* multi_disp_entry) {
-      if (multi_disp_entry->key != 0) {
-        report("{");
-        cell i = 0;
-        while (multi_disp_entry->key[i] != 0) {
-          report("%s ", jo2str(multi_disp_entry->key[i]));
-          i++;
-        }
-        report("=> %ld} ",
-               multi_disp_entry->data);
-      }
-      if (multi_disp_entry->rest != 0) {
-        multi_disp_print_entry(multi_disp_entry->rest);
-      }
-    }
-    void multi_disp_print(struct multi_disp* multi_disp) {
-      report("- multi_disp_print\n");
-      cell i = 0;
-      while (i < multi_disp->size) {
-        struct multi_disp_entry* multi_disp_entry = multi_disp->table + i;
-        if (multi_disp_entry->key != 0) {
-          report("  ");
-          multi_disp_print_entry(multi_disp_entry);
-          report("\n");
-        }
-        i++;
-      }
-    }
     typedef enum {
       GC_STATE_MARKING,
       GC_STATE_SWEEPING,
@@ -1695,6 +1483,233 @@
       add_prim("tag", p_tag);
       add_prim("eq?", p_eq_p);
     }
+      struct disp_entry {
+        jo_t key;
+        jo_t tag;
+        cell data;
+        struct disp_entry* rest;
+      };
+
+      struct disp {
+        struct disp_entry* table;
+        cell size;
+      };
+      struct disp* new_disp(cell size) {
+        struct disp* disp = (struct disp*)
+          malloc(sizeof(struct disp));
+        disp->size = size;
+        disp->table = (struct disp_entry*)
+          malloc(size * sizeof(struct disp_entry));
+        bzero(disp->table, size * sizeof(struct disp_entry));
+        return disp;
+      }
+      cell disp_hash(struct disp* disp, jo_t key) {
+        // return (((key - jotable) >> 1)
+        //         % (disp->size - 1)) + 1;
+        return ((key - jotable)
+                % (disp->size - 1)) + 1;
+      }
+      void disp_insert_entry(disp_entry, key, tag, data)
+           struct disp_entry* disp_entry;
+           jo_t key;
+           jo_t tag;
+           cell data;
+      {
+        if (0 == disp_entry->key) {
+          disp_entry->key = key;
+          disp_entry->tag = tag;
+          disp_entry->data = data;
+        }
+        else if (key == disp_entry->key) {
+          disp_entry->tag = tag;
+          disp_entry->data = data;
+        }
+        else if (disp_entry->rest == 0) {
+          struct disp_entry* disp_entry_new = (struct disp_entry*)
+            malloc(sizeof(struct disp_entry));
+          bzero(disp_entry_new, sizeof(struct disp_entry));
+          disp_entry->rest = disp_entry_new;
+          disp_insert_entry(disp_entry_new, key, tag, data);
+        }
+        else {
+          disp_insert_entry(disp_entry->rest, key, tag, data);
+        }
+      }
+      void disp_insert(struct disp* disp, jo_t key, jo_t tag, cell data) {
+        cell index = disp_hash(disp, key);
+        struct disp_entry* disp_entry = disp->table + index;
+        disp_insert_entry(disp_entry, key, tag, data);
+      }
+      struct disp_entry*
+      disp_find_entry(disp_entry, key)
+           struct disp_entry* disp_entry;
+           jo_t key;
+      {
+        if (key == disp_entry->key) {
+          return disp_entry;
+        }
+        else if (disp_entry->rest != 0) {
+          return disp_find_entry(disp_entry->rest, key);
+        }
+        else {
+          return 0;
+        }
+      }
+      struct disp_entry*
+      disp_find(disp, key)
+           struct disp* disp;
+           jo_t key;
+      {
+        cell index = disp_hash(disp, key);
+        struct disp_entry* disp_entry = disp->table + index;
+        return disp_find_entry(disp_entry, key);
+      }
+      void disp_print_entry(struct disp_entry* disp_entry) {
+        if (disp_entry->key != 0) {
+          report("{%s = %s %ld} ",
+                 jo2str(disp_entry->key),
+                 jo2str(disp_entry->tag),
+                 disp_entry->data);
+        }
+        if (disp_entry->rest != 0) {
+          disp_print_entry(disp_entry->rest);
+        }
+      }
+      void disp_print(struct disp* disp) {
+        report("- disp_print\n");
+        cell i = 0;
+        while (i < disp->size) {
+          struct disp_entry* disp_entry = disp->table + i;
+          if (disp_entry->key != 0) {
+            report("  ");
+            disp_print_entry(disp_entry);
+            report("\n");
+          }
+          i++;
+        }
+      }
+      struct multi_disp_entry {
+        jo_t* key;
+        jo_t tag;
+        cell data;
+        struct multi_disp_entry* rest;
+      };
+
+      struct multi_disp {
+        struct multi_disp_entry* table;
+        cell size;
+      };
+      struct multi_disp* new_multi_disp(cell size) {
+        struct multi_disp* multi_disp = (struct multi_disp*)
+          malloc(sizeof(struct multi_disp));
+        multi_disp->size = size;
+        multi_disp->table = (struct multi_disp_entry*)
+          malloc(size * sizeof(struct multi_disp_entry));
+        bzero(multi_disp->table, size * sizeof(struct multi_disp_entry));
+        return multi_disp;
+      }
+      cell multi_disp_hash(struct multi_disp* multi_disp, jo_t* key) {
+        cell sum = 0;
+        cell i = 0;
+        while (key[i] != 0) {
+          sum = sum + (key[i] - jotable);
+          i++;
+        }
+        return (sum
+                % (multi_disp->size - 1)) + 1;
+      }
+      void multi_disp_insert_entry(multi_disp_entry, key, tag, data)
+           struct multi_disp_entry* multi_disp_entry;
+           jo_t* key;
+           jo_t tag;
+           cell data;
+      {
+        if (0 == multi_disp_entry->key) {
+          multi_disp_entry->key = array_dup(key);
+          multi_disp_entry->tag = tag;
+          multi_disp_entry->data = data;
+        }
+        else if (array_equal_p(key, multi_disp_entry->key)) {
+          multi_disp_entry->tag = tag;
+          multi_disp_entry->data = data;
+        }
+        else if (multi_disp_entry->rest == 0) {
+          struct multi_disp_entry* multi_disp_entry_new = (struct multi_disp_entry*)
+            malloc(sizeof(struct multi_disp_entry));
+          bzero(multi_disp_entry_new, sizeof(struct multi_disp_entry));
+          multi_disp_entry->rest = multi_disp_entry_new;
+          multi_disp_insert_entry(multi_disp_entry_new, key, tag, data);
+        }
+        else {
+          multi_disp_insert_entry(multi_disp_entry->rest, key, tag, data);
+        }
+      }
+      void multi_disp_insert(multi_disp, key, tag, data)
+           struct multi_disp* multi_disp;
+           jo_t* key;
+           jo_t tag;
+           cell data;
+      {
+        cell index = multi_disp_hash(multi_disp, key);
+        struct multi_disp_entry* multi_disp_entry = multi_disp->table + index;
+        multi_disp_insert_entry(multi_disp_entry, key, tag, data);
+      }
+      struct multi_disp_entry*
+      multi_disp_find_entry(multi_disp_entry, key)
+           struct multi_disp_entry* multi_disp_entry;
+           jo_t* key;
+      {
+        if (multi_disp_entry->key == 0) {
+          return 0;
+        }
+        else if (array_equal_p(key, multi_disp_entry->key)) {
+          return multi_disp_entry;
+        }
+        else if (multi_disp_entry->rest != 0) {
+          return multi_disp_find_entry(multi_disp_entry->rest, key);
+        }
+        else {
+          return 0;
+        }
+      }
+      struct multi_disp_entry*
+      multi_disp_find(multi_disp, key)
+           struct multi_disp* multi_disp;
+           jo_t* key;
+      {
+        cell index = multi_disp_hash(multi_disp, key);
+        struct multi_disp_entry* multi_disp_entry = multi_disp->table + index;
+        return multi_disp_find_entry(multi_disp_entry, key);
+      }
+      void multi_disp_print_entry(struct multi_disp_entry* multi_disp_entry) {
+        if (multi_disp_entry->key != 0) {
+          report("{");
+          cell i = 0;
+          while (multi_disp_entry->key[i] != 0) {
+            report("%s ", jo2str(multi_disp_entry->key[i]));
+            i++;
+          }
+          report("= %s %ld} ",
+                 jo2str(multi_disp_entry->tag),
+                 multi_disp_entry->data);
+        }
+        if (multi_disp_entry->rest != 0) {
+          multi_disp_print_entry(multi_disp_entry->rest);
+        }
+      }
+      void multi_disp_print(struct multi_disp* multi_disp) {
+        report("- multi_disp_print\n");
+        cell i = 0;
+        while (i < multi_disp->size) {
+          struct multi_disp_entry* multi_disp_entry = multi_disp->table + i;
+          if (multi_disp_entry->key != 0) {
+            report("  ");
+            multi_disp_print_entry(multi_disp_entry);
+            report("\n");
+          }
+          i++;
+        }
+      }
     struct gene {
       union {
         jo_t disp;
@@ -1722,25 +1737,29 @@
 
       bind_name(name, str2jo("<gene>"), gene);
     }
-    void _add_disp(gene_name, tags, jo)
-      jo_t gene_name;
-      jo_t* tags;
-      jo_t jo;
-    {
-      struct gene* gene = gene_name->data;
-      if (gene->arity == 1) {
-        disp_insert(gene->disp, tags[0], jo);
-      }
-      else {
-        multi_disp_insert(gene->multi_disp, tags, jo);
-      }
-    }
-    void add_disp(gene_name, tags, jo)
+    void add_disp(gene_name, tags, tag_name, data)
       char* gene_name;
       jo_t* tags;
-      char* jo;
+      char* tag_name;
+      cell data;
     {
-      _add_disp(str2jo(gene_name), tags, str2jo(jo));
+      jo_t name = str2jo(gene_name);
+      jo_t tag = str2jo(tag_name);
+      struct gene* gene = name->data;
+      if (gene->arity == 1) {
+        disp_insert(gene->disp, tags[0], tag, data);
+      }
+      else {
+        multi_disp_insert(gene->multi_disp, tags, tag, data);
+      }
+    }
+    void _add_disp(gene_name, tags, tag_name, data)
+      jo_t gene_name;
+      jo_t* tags;
+      jo_t tag_name;
+      cell data;
+    {
+      add_disp(jo2str(gene_name), tags, jo2str(tag_name), data);
     }
     void disp_exe(struct gene* gene, jo_t tag) {
       struct disp* disp = gene->disp;
@@ -1750,33 +1769,31 @@
         return;
       }
       else {
-        jo_t jo = disp_entry->data;
-        if (jo->tag == TAG_PRIM) {
-          primitive_t f = (primitive_t)jo->data;
+        if (disp_entry->tag == TAG_PRIM) {
+          primitive_t f = (primitive_t)disp_entry->data;
           f();
         }
         else {
-          object_stack_push(jo->tag, jo->data);
-          disp_exe(JO_EXE->data, jo->tag);
+          object_stack_push(disp_entry->tag, disp_entry->data);
+          disp_exe(JO_EXE->data, disp_entry->tag);
         }
       }
     }
     void multi_disp_exe(struct gene* gene, jo_t* tags) {
       struct multi_disp* multi_disp = gene->multi_disp;
-      struct disp_entry* disp_entry =
+      struct multi_disp_entry* multi_disp_entry =
         multi_disp_find(multi_disp, tags);
-      if (disp_entry == 0) {
+      if (multi_disp_entry == 0) {
         return;
       }
       else {
-        jo_t jo = disp_entry->data;
-        if (jo->tag == TAG_PRIM) {
-          primitive_t f = (primitive_t)jo->data;
+        if (multi_disp_entry->tag == TAG_PRIM) {
+          primitive_t f = (primitive_t)multi_disp_entry->data;
           f();
         }
         else {
-          object_stack_push(jo->tag, jo->data);
-          disp_exe(JO_EXE->data, jo->tag);
+          object_stack_push(multi_disp_entry->tag, multi_disp_entry->data);
+          disp_exe(JO_EXE->data, multi_disp_entry->tag);
         }
       }
     }
@@ -1852,65 +1869,11 @@
       struct obj a = object_stack_pop();
       object_stack_push(TAG_BOOL, (class->class_name == a.tag));
     }
-    jo_t read_jo();
-    void k_ignore();
+    jo_t* jojo_of(char* function_name) {
+      jo_t name = str2jo(function_name);
+      return name->data;
+    }
 
-    cell k_add_gene_count_arity_from_type() {
-      read_jo(); // drop '('
-      read_jo(); // drop '->'
-      cell arity = 0;
-      while (true) {
-        jo_t jo = read_jo();
-        if (jo == str2jo("--")) {
-          k_ignore();
-          break;
-        }
-        if (jo == ROUND_KET) {
-          break;
-        }
-        arity++;
-      }
-      return arity;
-    }
-    void k_add_gene() {
-      jo_t gene_name = read_jo();
-      cell arity = k_add_gene_count_arity_from_type();
-      k_ignore();
-      add_gene(jo2str(gene_name), arity);
-    }
-    void k_add_disp_collect_tags_from_type(jo_t* tags) {
-      read_jo(); // drop '('
-      read_jo(); // drop '->'
-      cell i = 0;
-      while (true) {
-        jo_t jo = read_jo();
-        if (jo == str2jo("--")) {
-          k_ignore();
-          break;
-        }
-        if (jo == ROUND_KET) {
-          break;
-        }
-        tags[i] = jo;
-        i++;
-      }
-      tags[i] = 0;
-    }
-    void k_add_disp() {
-      jo_t gene_name = read_jo();
-      jo_t tags[16];
-      k_add_disp_collect_tags_from_type(tags);
-      jo_t jo = read_jo();
-      k_ignore();
-      _add_disp(gene_name, tags, jo);
-      // {
-      //   report("- k_add_disp\n");
-      //   report("  gene_name : %s\n", jo2str(gene_name));
-      //   report("  tags[0] : %s\n", jo2str(tags[0]));
-      //   report("  tags[1] : %ld\n", tags[1]);
-      //   report("  jo : %s\n", jo2str(jo));
-      // }
-    }
     void expose_gene() {
       add_gene("exe", 1);
 
@@ -1922,16 +1885,16 @@
       add_prim("data-constructor-exe", p_data_constructor_exe);
       add_prim("data-predicate-exe", p_data_predicate_exe);
 
-      add_disp("exe", J("<prim>"), "prim-exe");
-      add_disp("exe", J("<jojo>"), "jojo-exe");
-      add_disp("exe", J("<gene>"), "gene-exe");
-      add_disp("exe", J("<keyword>"), "keyword-exe");
-      add_disp("exe", J("<set-global-variable>"), "set-global-variable-exe");
-      add_disp("exe", J("<data-constructor>"), "data-constructor-exe");
-      add_disp("exe", J("<data-predicate>"), "data-predicate-exe");
-
-      add_prim("+gene", k_add_gene);
-      add_prim("+disp", k_add_disp);
+      add_disp("exe", J("<prim>"), "<prim>", p_prim_exe);
+      add_disp("exe", J("<jojo>"), "<prim>", p_jojo_exe);
+      add_disp("exe", J("<gene>"), "<prim>", p_gene_exe);
+      add_disp("exe", J("<keyword>"), "<prim>", p_keyword_exe);
+      add_disp("exe", J("<set-global-variable>"),
+               "<prim>", p_set_global_variable_exe);
+      add_disp("exe", J("<data-constructor>"),
+               "<prim>", p_data_constructor_exe);
+      add_disp("exe", J("<data-predicate>"),
+               "<prim>", p_data_predicate_exe);
     }
     void p_debug();
 
@@ -2738,11 +2701,69 @@
 
       bind_name(fun_name, TAG_JOJO, jojo);
     }
+    cell k_add_gene_count_arity_from_type() {
+      read_jo(); // drop '('
+      read_jo(); // drop '->'
+      cell arity = 0;
+      while (true) {
+        jo_t jo = read_jo();
+        if (jo == str2jo("--")) {
+          k_ignore();
+          break;
+        }
+        if (jo == ROUND_KET) {
+          break;
+        }
+        arity++;
+      }
+      return arity;
+    }
+    void k_add_gene() {
+      jo_t gene_name = read_jo();
+      cell arity = k_add_gene_count_arity_from_type();
+      k_ignore();
+      add_gene(jo2str(gene_name), arity);
+    }
+    void k_add_disp_collect_tags_from_type(jo_t* tags) {
+      read_jo(); // drop '('
+      read_jo(); // drop '->'
+      cell i = 0;
+      while (true) {
+        jo_t jo = read_jo();
+        if (jo == str2jo("--")) {
+          k_ignore();
+          break;
+        }
+        if (jo == ROUND_KET) {
+          break;
+        }
+        tags[i] = jo;
+        i++;
+      }
+      tags[i] = 0;
+    }
+    void k_add_disp() {
+      jo_t gene_name = read_jo();
+      jo_t tags[16];
+      k_add_disp_collect_tags_from_type(tags);
+
+      jo_t* jojo = tos(compiling_stack);
+      {
+        compile_until_meet_jo(ROUND_KET);
+        here(JO_END);
+        here(0);
+        here(0);
+      }
+
+      _add_disp(gene_name, tags, TAG_JOJO, jojo);
+    }
     void expose_top() {
       add_prim("run", k_run);
       add_prim("+var", k_add_var);
       add_prim("+jojo", k_add_jojo);
       add_prim("+data", k_add_data);
+      add_prim("+gene", k_add_gene);
+      add_prim("+disp", k_add_disp);
     }
     void object_print(jo_t tag, cell data);
 
@@ -3361,7 +3382,7 @@
 
       add_data("<closure>", J(".jojo", ".local-env"));
       add_prim("closure-exe", p_closure_exe);
-      add_disp("exe", "<closure>", "closure-exe");
+      add_disp("exe", J("<closure>"), "<prim>", p_closure_exe);
 
       add_prim("%", k_closure);
       add_prim("apply", p_closure_exe);
@@ -3801,36 +3822,37 @@
     }
     void p3() {
       struct disp* disp_1 = new_disp(16);
-      disp_insert(disp_1, str2jo("k1"), 100);
-      disp_insert(disp_1, str2jo("k1"), 1);
-      disp_insert(disp_1, str2jo("k2"), 2);
-      disp_insert(disp_1, str2jo("k3"), 3);
-      disp_insert(disp_1, str2jo("k4"), 4);
-      disp_insert(disp_1, str2jo("k5"), 5);
-      disp_insert(disp_1, str2jo("k6"), 6);
+      disp_insert(disp_1, str2jo("k1"), TAG_INT, 100);
+      disp_insert(disp_1, str2jo("k1"), TAG_INT, 1);
+      disp_insert(disp_1, str2jo("k2"), TAG_INT, 2);
+      disp_insert(disp_1, str2jo("k3"), TAG_INT, 3);
+      disp_insert(disp_1, str2jo("k4"), TAG_INT, 4);
+      disp_insert(disp_1, str2jo("k5"), TAG_INT, 5);
+      disp_insert(disp_1, str2jo("k6"), TAG_INT, 6);
 
-      disp_insert(disp_1, str2jo("kkkk1"), 1);
-      disp_insert(disp_1, str2jo("kkkk2"), 2);
-      disp_insert(disp_1, str2jo("kkkk3"), 3);
-      disp_insert(disp_1, str2jo("kkkk4"), 4);
-      disp_insert(disp_1, str2jo("kkkk5"), 5);
-      disp_insert(disp_1, str2jo("kkkk6"), 6);
+      disp_insert(disp_1, str2jo("kkkk1"), TAG_INT, 1);
+      disp_insert(disp_1, str2jo("kkkk2"), TAG_INT, 2);
+      disp_insert(disp_1, str2jo("kkkk3"), TAG_INT, 3);
+      disp_insert(disp_1, str2jo("kkkk4"), TAG_INT, 4);
+      disp_insert(disp_1, str2jo("kkkk5"), TAG_INT, 5);
+      disp_insert(disp_1, str2jo("kkkk6"), TAG_INT, 6);
 
-      disp_insert(disp_1, str2jo("1"), 666);
-      disp_insert(disp_1, str2jo("2"), 2);
-      disp_insert(disp_1, str2jo("3"), 3);
-      disp_insert(disp_1, str2jo("4"), 4);
-      disp_insert(disp_1, str2jo("5"), 5);
-      disp_insert(disp_1, str2jo("6"), 6);
+      disp_insert(disp_1, str2jo("1"), TAG_INT, 666);
+      disp_insert(disp_1, str2jo("2"), TAG_INT, 2);
+      disp_insert(disp_1, str2jo("3"), TAG_INT, 3);
+      disp_insert(disp_1, str2jo("4"), TAG_INT, 4);
+      disp_insert(disp_1, str2jo("5"), TAG_INT, 5);
+      disp_insert(disp_1, str2jo("6"), TAG_INT, 6);
 
       disp_print(disp_1);
 
       struct disp_entry* disp_entry_1 =
         disp_find(disp_1, str2jo("1"));
       if (disp_entry_1 == 0) {
-        report("disp_entry_1 == 0\n");
+        report("disp_entry_1 is empty\n");
       }
       else {
+        report("disp_entry_1->tag : %s\n", jo2str(disp_entry_1->tag));
         report("disp_entry_1->data : %ld\n", disp_entry_1->data);
       }
 
@@ -3841,48 +3863,48 @@
     }
     void p4() {
       struct multi_disp* multi_disp_1 = new_multi_disp(16);
-      multi_disp_insert(multi_disp_1, J("k1", "k1"), 100);
-      multi_disp_insert(multi_disp_1, J("k1", "k1"), 1);
-      multi_disp_insert(multi_disp_1, J("k21", "k22"), 2);
-      multi_disp_insert(multi_disp_1, J("k31", "k32", "k33"), 3);
-      multi_disp_insert(multi_disp_1, J("k4"), 4);
-      multi_disp_insert(multi_disp_1, J("k5"), 5);
-      multi_disp_insert(multi_disp_1, J("k6"), 6);
+      multi_disp_insert(multi_disp_1, J("k1", "k1"), TAG_INT, 100);
+      multi_disp_insert(multi_disp_1, J("k1", "k1"), TAG_INT, 1);
+      multi_disp_insert(multi_disp_1, J("k21", "k22"), TAG_INT, 2);
+      multi_disp_insert(multi_disp_1, J("k31", "k32", "k33"), TAG_INT, 3);
+      multi_disp_insert(multi_disp_1, J("k4"), TAG_INT, 4);
+      multi_disp_insert(multi_disp_1, J("k5"), TAG_INT, 5);
+      multi_disp_insert(multi_disp_1, J("k6"), TAG_INT, 6);
 
-      multi_disp_insert(multi_disp_1, J("kkkk1"), 1);
-      multi_disp_insert(multi_disp_1, J("kkkk2"), 2);
-      multi_disp_insert(multi_disp_1, J("kkkk3"), 3);
-      multi_disp_insert(multi_disp_1, J("kkkk4"), 4);
-      multi_disp_insert(multi_disp_1, J("kkkk5"), 5);
-      multi_disp_insert(multi_disp_1, J("kkkk6"), 6);
+      multi_disp_insert(multi_disp_1, J("kkkk1"), TAG_INT, 1);
+      multi_disp_insert(multi_disp_1, J("kkkk2"), TAG_INT, 2);
+      multi_disp_insert(multi_disp_1, J("kkkk3"), TAG_INT, 3);
+      multi_disp_insert(multi_disp_1, J("kkkk4"), TAG_INT, 4);
+      multi_disp_insert(multi_disp_1, J("kkkk5"), TAG_INT, 5);
+      multi_disp_insert(multi_disp_1, J("kkkk6"), TAG_INT, 6);
 
-      multi_disp_insert(multi_disp_1, J("1", "2", "3"), 666);
-      multi_disp_insert(multi_disp_1, J("2"), 2);
-      multi_disp_insert(multi_disp_1, J("3"), 3);
-      multi_disp_insert(multi_disp_1, J("4"), 4);
-      multi_disp_insert(multi_disp_1, J("5"), 5);
-      multi_disp_insert(multi_disp_1, J("6"), 6);
+      multi_disp_insert(multi_disp_1, J("1", "2", "3"), TAG_INT, 666);
+      multi_disp_insert(multi_disp_1, J("2"), TAG_INT, 2);
+      multi_disp_insert(multi_disp_1, J("3"), TAG_INT, 3);
+      multi_disp_insert(multi_disp_1, J("4"), TAG_INT, 4);
+      multi_disp_insert(multi_disp_1, J("5"), TAG_INT, 5);
+      multi_disp_insert(multi_disp_1, J("6"), TAG_INT, 6);
 
       multi_disp_print(multi_disp_1);
 
       struct multi_disp_entry* multi_disp_entry_1 =
         multi_disp_find(multi_disp_1, J("1", "2", "3"));
       if (multi_disp_entry_1 == 0) {
-        report("multi_disp_entry_1 == 0\n");
+        report("multi_disp_entry_1 is empty\n");
       }
       else {
-        report("multi_disp_entry_1->data : %ld\n",
-               multi_disp_entry_1->data);
+        report("multi_disp_entry_1->tag : %s\n", jo2str(multi_disp_entry_1->tag));
+        report("multi_disp_entry_1->data : %ld\n", multi_disp_entry_1->data);
       }
 
       struct multi_disp_entry* multi_disp_entry_2 =
         multi_disp_find(multi_disp_1, J("1", "2", "3123"));
       if (multi_disp_entry_2 == 0) {
-        report("multi_disp_entry_2 == 0\n");
+        report("multi_disp_entry_2 is empty\n");
       }
       else {
-        report("multi_disp_entry_2->data : %ld\n",
-               multi_disp_entry_2->data);
+        report("multi_disp_entry_2->tag : %s\n", jo2str(multi_disp_entry_2->tag));
+        report("multi_disp_entry_2->data : %ld\n", multi_disp_entry_2->data);
       }
     }
     void path_load(char* path) {
