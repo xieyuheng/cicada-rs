@@ -103,13 +103,6 @@
     (+data <null>)
     (+data <cons> .cdr .car)
 
-    (note (+jojo list-print :f! :l!
-            (case :l
-              <null> ["null" string-write space]
-              <cons> [:l .cdr :f (recur)
-                      :l .car :f apply space
-                      "cons" string-write space])))
-
     (+jojo list-print (-> :l :f --)
       (case :l
         <null> ["null" string-write space]

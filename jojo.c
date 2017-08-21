@@ -1063,6 +1063,11 @@
       return p;
     }
 
+    void return_stack_drop() {
+      drop(return_stack);
+      drop(return_stack);
+    }
+
     struct ret return_stack_tos() {
       struct ret p;
       p.jojo = pop(return_stack);
@@ -1678,11 +1683,13 @@
            jo_t* key;
       {
         cell i = 0;
-        report("- multi_disp_find\n");
-        while (key[i] != 0) {
-          report("  \"%s\"\n", jo2str(key[i]));
-          i++;
-        }
+        // {
+        //   report("- multi_disp_find\n");
+        //   while (key[i] != 0) {
+        //     report("  \"%s\"\n", jo2str(key[i]));
+        //     i++;
+        //   }
+        // }
         cell index = multi_disp_hash(multi_disp, key);
         struct multi_disp_entry* multi_disp_entry = multi_disp->table + index;
         return multi_disp_find_entry(multi_disp_entry, key);
@@ -1940,9 +1947,16 @@
       cell base = return_stack->pointer;
       while (return_stack->pointer >= base) {
         struct ret rp = return_stack_tos();
-        return_stack_inc();
         jo_t* jojo = rp.jojo;
         jo_t jo = jojo[0];
+        jo_t next_jo = jojo[1];
+        if (next_jo == JO_END) {
+          // tail call is handled here
+          return_stack_drop();
+        }
+        else {
+          return_stack_inc();
+        }
         jo_apply(jo);
       }
     }
