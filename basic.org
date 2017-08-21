@@ -103,7 +103,14 @@
     (+data <null>)
     (+data <cons> .cdr .car)
 
-    (+jojo list-print :f! :l!
+    (note (+jojo list-print :f! :l!
+            (case :l
+              <null> ["null" string-write space]
+              <cons> [:l .cdr :f (recur)
+                      :l .car :f apply space
+                      "cons" string-write space])))
+
+    (+jojo list-print (-> :l :f --)
       (case :l
         <null> ["null" string-write space]
         <cons> [:l .cdr :f (recur)
@@ -133,8 +140,11 @@
   (run 1 w newline "one" w newline)
 
   (+gene ww (-> :a :b --))
-  (+disp ww (-> <int> <int> --) int-write space int-write space)
-  (+disp ww (-> <int> <string> --) int-write space int-write space)
+  (+disp ww (-> <int> <int> --) swap int-write space int-write space)
+  (+disp ww (-> <int> <string> --) swap int-write space string-write space)
+  (run 1 2 ww)
+  (run 1 "two" ww)
+  (note (run "two" 1 ww))
   #+end_src
 
 * <closure>

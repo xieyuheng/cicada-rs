@@ -1677,6 +1677,12 @@
            struct multi_disp* multi_disp;
            jo_t* key;
       {
+        cell i = 0;
+        report("- multi_disp_find\n");
+        while (key[i] != 0) {
+          report("  \"%s\"\n", jo2str(key[i]));
+          i++;
+        }
         cell index = multi_disp_hash(multi_disp, key);
         struct multi_disp_entry* multi_disp_entry = multi_disp->table + index;
         return multi_disp_find_entry(multi_disp_entry, key);
@@ -1766,6 +1772,28 @@
       struct disp_entry* disp_entry =
         disp_find(disp, tag);
       if (disp_entry == 0) {
+        report("- disp_exe meet unknow tag\n");
+        report("  tag : %s\n", jo2str(tag));
+        disp_print(disp);
+        p_debug();
+        return;
+      }
+      else {
+        if (disp_entry->tag == TAG_PRIM) {
+          primitive_t f = (primitive_t)disp_entry->data;
+          f();
+        }
+        else {
+          object_stack_push(disp_entry->tag, disp_entry->data);
+          disp_exe(JO_EXE->data, disp_entry->tag);
+        }
+      }
+    }
+    void disp_exe_for_jo_apply(struct gene* gene, jo_t tag) {
+      struct disp* disp = gene->disp;
+      struct disp_entry* disp_entry =
+        disp_find(disp, tag);
+      if (disp_entry == 0) {
         return;
       }
       else {
@@ -1784,6 +1812,16 @@
       struct multi_disp_entry* multi_disp_entry =
         multi_disp_find(multi_disp, tags);
       if (multi_disp_entry == 0) {
+        report("- multi_disp_exe meet unknow tags\n");
+        report("  tags : ");
+        cell i = 0;
+        while (tags[i] != 0) {
+          report("%s ", jo2str(tags[i]));
+          i++;
+        }
+        report("  \n");
+        multi_disp_print(multi_disp);
+        p_debug();
         return;
       }
       else {
@@ -1808,8 +1846,7 @@
         jo_t tags[16];
         cell i = 0;
         while (i < gene->arity) {
-          tags[i] = object_stack_peek_tag(i);
-          report("- p_gene_exe : %s\n", jo2str(tags[i]));
+          tags[i] = object_stack_peek_tag(gene->arity - i);
           i++;
         }
         tags[i] = 0;
@@ -1877,14 +1914,6 @@
     void expose_gene() {
       add_gene("exe", 1);
 
-      add_prim("prim-exe", p_prim_exe);
-      add_prim("jojo-exe", p_jojo_exe);
-      add_prim("gene-exe", p_gene_exe);
-      add_prim("keyword-exe", p_keyword_exe);
-      add_prim("set-global-variable-exe", p_set_global_variable_exe);
-      add_prim("data-constructor-exe", p_data_constructor_exe);
-      add_prim("data-predicate-exe", p_data_predicate_exe);
-
       add_disp("exe", J("<prim>"), "<prim>", p_prim_exe);
       add_disp("exe", J("<jojo>"), "<prim>", p_jojo_exe);
       add_disp("exe", J("<gene>"), "<prim>", p_gene_exe);
@@ -1905,7 +1934,7 @@
         return;
       }
       object_stack_push(jo->tag, jo->data);
-      disp_exe(JO_EXE->data, jo->tag);
+      disp_exe_for_jo_apply(JO_EXE->data, jo->tag);
     }
     void eval() {
       cell base = return_stack->pointer;
@@ -2242,6 +2271,18 @@
           return false;
         }
         else if (string_count_member(str, '.') != 1) {
+          return false;
+        }
+        else {
+          return true;
+        }
+      }
+      // <tag>
+      bool tag_string_p(char* str) {
+        if (str[0] != '<') {
+          return false;
+        }
+        else if (string_last_byte(str) != '>') {
           return false;
         }
         else {
@@ -2684,6 +2725,24 @@
       }
       _add_data(name, fresh_fields);
     }
+    void k_add_jojo_compile_binder_from_type() {
+      jo_t jo = read_jo();
+      if (jo == str2jo("--")) {
+        k_ignore();
+        return;
+      }
+      else if (jo == ROUND_KET) {
+        return;
+      }
+      else if (get_local_string_p(jo2str(jo))) {
+        k_add_jojo_compile_binder_from_type();
+        here(JO_INS_SET_LOCAL);
+        here(jo);
+      }
+      else {
+        k_add_jojo_compile_binder_from_type();
+      }
+    }
     void k_add_jojo() {
       jo_t fun_name = read_jo();
       jo_t* jojo = tos(compiling_stack);
@@ -2691,6 +2750,9 @@
       push(current_compiling_exe_stack, jojo);
       push(current_compiling_exe_stack, TAG_JOJO);
       {
+        read_jo(); // drop '('
+        read_jo(); // drop '->'
+        k_add_jojo_compile_binder_from_type();
         compile_until_meet_jo(ROUND_KET);
         here(JO_END);
         here(0);
@@ -2702,8 +2764,6 @@
       bind_name(fun_name, TAG_JOJO, jojo);
     }
     cell k_add_gene_count_arity_from_type() {
-      read_jo(); // drop '('
-      read_jo(); // drop '->'
       cell arity = 0;
       while (true) {
         jo_t jo = read_jo();
@@ -2711,7 +2771,7 @@
           k_ignore();
           break;
         }
-        if (jo == ROUND_KET) {
+        else if (jo == ROUND_KET) {
           break;
         }
         arity++;
@@ -2720,31 +2780,42 @@
     }
     void k_add_gene() {
       jo_t gene_name = read_jo();
+      read_jo(); // drop '('
+      read_jo(); // drop '->'
       cell arity = k_add_gene_count_arity_from_type();
       k_ignore();
       add_gene(jo2str(gene_name), arity);
     }
     void k_add_disp_collect_tags_from_type(jo_t* tags) {
-      read_jo(); // drop '('
-      read_jo(); // drop '->'
-      cell i = 0;
-      while (true) {
-        jo_t jo = read_jo();
-        if (jo == str2jo("--")) {
-          k_ignore();
-          break;
-        }
-        if (jo == ROUND_KET) {
-          break;
-        }
-        tags[i] = jo;
-        i++;
+      jo_t jo = read_jo();
+      if (jo == str2jo("--")) {
+        k_ignore();
+        tags[0] = 0;
+        return;
       }
-      tags[i] = 0;
+      else if (jo == ROUND_KET) {
+        tags[0] = 0;
+        return;
+      }
+      else if (get_local_string_p(jo2str(jo))) {
+        k_add_disp_collect_tags_from_type(tags);
+        here(JO_INS_SET_LOCAL);
+        here(jo);
+      }
+      else if (tag_string_p(jo2str(jo))) {
+        tags[0] = jo;
+        k_add_disp_collect_tags_from_type(tags+1);
+      }
+      else {
+        k_add_disp_collect_tags_from_type(tags);
+      }
     }
     void k_add_disp() {
       jo_t gene_name = read_jo();
       jo_t tags[16];
+      read_jo(); // drop '('
+      read_jo(); // drop '->'
+
       k_add_disp_collect_tags_from_type(tags);
 
       jo_t* jojo = tos(compiling_stack);
