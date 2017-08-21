@@ -1953,6 +1953,7 @@
         if (next_jo == JO_END) {
           // tail call is handled here
           return_stack_drop();
+          current_local_counter = rp.local_counter;
         }
         else {
           return_stack_inc();
@@ -2764,9 +2765,16 @@
       push(current_compiling_exe_stack, jojo);
       push(current_compiling_exe_stack, TAG_JOJO);
       {
-        read_jo(); // drop '('
-        read_jo(); // drop '->'
-        k_add_jojo_compile_binder_from_type();
+        jo_t jo1 = read_jo(); // maybe '('
+        jo_t jo2 = read_jo(); // maybe '->'
+        if (jo1 == ROUND_BAR &&
+            jo2 == str2jo("->")) {
+          k_add_jojo_compile_binder_from_type();
+        }
+        else {
+          jo_unread(jo2);
+          jo_unread(jo1);
+        }
         compile_until_meet_jo(ROUND_KET);
         here(JO_END);
         here(0);
