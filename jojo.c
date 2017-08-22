@@ -1290,6 +1290,13 @@
         i++;
         i++;
       }
+      // local_record as root
+      i = 0;
+      while (i < current_local_counter) {
+        mark_one(local_record[i].local_tag,
+                 local_record[i].local_data);
+        i++;
+      }
     }
     void sweep_one(struct object_entry* object_entry) {
       if (object_entry->mark == GC_MARK_USING) {
@@ -1454,14 +1461,6 @@
       jo_t name = str2jo(function_name);
       bind_name(name, TAG_PRIM, fun);
     }
-    struct stack* keyword_stack; // of alias_pointer
-    struct alias {
-      jo_t nick;
-      jo_t name;
-    };
-
-    struct alias alias_record[1024];
-    cell current_alias_pointer = 0;
     void p_tag() {
       struct obj a = object_stack_pop();
       object_stack_push(TAG_JO, a.tag);
@@ -1486,7 +1485,6 @@
 
       add_atom("<prim>", gc_ignore);
       add_atom("<jojo>", gc_ignore);
-      add_atom("<keyword>", gc_ignore);
       add_atom("<set-global-variable>", gc_ignore);
       add_atom("<data-constructor>", gc_ignore);
       add_atom("<data-predicate>", gc_ignore);
@@ -1876,15 +1874,6 @@
       jo_t* jojo = a.data;
       return_stack_push(jojo, TAG_JOJO, jojo, current_local_counter);
     }
-    void eval();
-    void p_keyword_exe() {
-      struct obj a = object_stack_pop();
-      jo_t* jojo = a.data;
-      push(keyword_stack, current_alias_pointer);
-      return_stack_push(jojo, TAG_JOJO, jojo, current_local_counter);
-      eval();
-      current_alias_pointer = pop(keyword_stack);
-    }
     void p_set_global_variable_exe() {
       struct obj b = object_stack_pop();
       jo_t name = b.data;
@@ -1930,7 +1919,6 @@
       add_disp("exe", J("<prim>"), "<prim>", p_prim_exe);
       add_disp("exe", J("<jojo>"), "<prim>", p_jojo_exe);
       add_disp("exe", J("<gene>"), "<prim>", p_gene_exe);
-      add_disp("exe", J("<keyword>"), "<prim>", p_keyword_exe);
       add_disp("exe", J("<set-global-variable>"),
                "<prim>", p_set_global_variable_exe);
       add_disp("exe", J("<data-constructor>"),
@@ -4006,7 +3994,6 @@
 
       TAG_PRIM         = str2jo("<prim>");
       TAG_JOJO         = str2jo("<jojo>");
-      TAG_KEYWORD      = str2jo("<keyword>");
       TAG_CLOSURE      = str2jo("<closure>");
       TAG_CLASS        = str2jo("<class>");
 
@@ -4072,12 +4059,6 @@
 
       writing_stack = new_stack("writing_stack");
       push(writing_stack, output_stack_terminal());
-
-      // binding_filter_stack = new_stack("binding_filter_stack");
-      keyword_stack = new_stack("keyword_stack");
-
-      // jo_filter_stack = new_stack("jo_filter_stack");
-      // push(jo_filter_stack, str2jo("alias-filter"));
     }
     void init_expose() {
       expose_object();

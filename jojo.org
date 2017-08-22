@@ -3,13 +3,13 @@
 
 * [todo-stack]
 
-*** a proper reader and macro system
-
-    - re-define keywords
-
 *** fix mark_object_record
 
     - local_record as root
+
+*** a proper reader and macro system
+
+    - re-define keywords
 
 *** 'apply' as gene
 
@@ -134,12 +134,8 @@
     | object_stack         |             | cell          |
     | return_stack         |             | return_point  |
     | local_record         | 4 * 1024    | local_point   |
-    | alias_record         | 1024        | alias_point   |
     |----------------------+-------------+---------------|
     | compiling_stack      |             | jo_t*         |
-    | binding_filter_stack |             | jo_t          |
-    | jo_filter_stack      |             | jo_t          |
-    | keyword_stack        |             | alias_pointer |
     | reading_stack        |             | input_stack   |
     | writing_stack        |             | output_stack  |
 
@@ -1986,6 +1982,13 @@
         i++;
         i++;
       }
+      // local_record as root
+      i = 0;
+      while (i < current_local_counter) {
+        mark_one(local_record[i].local_tag,
+                 local_record[i].local_data);
+        i++;
+      }
     }
     #+end_src
 
@@ -2221,24 +2224,6 @@
     }
     #+end_src
 
-*** keyword_stack
-
-    #+begin_src c
-    struct stack* keyword_stack; // of alias_pointer
-    #+end_src
-
-*** alias
-
-    #+begin_src c
-    struct alias {
-      jo_t nick;
-      jo_t name;
-    };
-
-    struct alias alias_record[1024];
-    cell current_alias_pointer = 0;
-    #+end_src
-
 *** p_tag
 
     #+begin_src c
@@ -2276,7 +2261,6 @@
 
       add_atom("<prim>", gc_ignore);
       add_atom("<jojo>", gc_ignore);
-      add_atom("<keyword>", gc_ignore);
       add_atom("<set-global-variable>", gc_ignore);
       add_atom("<data-constructor>", gc_ignore);
       add_atom("<data-predicate>", gc_ignore);
@@ -2820,20 +2804,6 @@
     }
     #+end_src
 
-*** p_keyword_exe
-
-    #+begin_src c
-    void eval();
-    void p_keyword_exe() {
-      struct obj a = object_stack_pop();
-      jo_t* jojo = a.data;
-      push(keyword_stack, current_alias_pointer);
-      return_stack_push(jojo, TAG_JOJO, jojo, current_local_counter);
-      eval();
-      current_alias_pointer = pop(keyword_stack);
-    }
-    #+end_src
-
 *** p_set_global_variable_exe
 
     #+begin_src c
@@ -2897,7 +2867,6 @@
       add_disp("exe", J("<prim>"), "<prim>", p_prim_exe);
       add_disp("exe", J("<jojo>"), "<prim>", p_jojo_exe);
       add_disp("exe", J("<gene>"), "<prim>", p_gene_exe);
-      add_disp("exe", J("<keyword>"), "<prim>", p_keyword_exe);
       add_disp("exe", J("<set-global-variable>"),
                "<prim>", p_set_global_variable_exe);
       add_disp("exe", J("<data-constructor>"),
@@ -2917,9 +2886,6 @@
 
       if wished follow a 'eval();' after jo_apply
       to return to the primitive function.
-
-    - keyword_stack and alias_record
-      form a hook for read_jo.
 
 *** jo_apply
 
@@ -5804,7 +5770,6 @@
 
       TAG_PRIM         = str2jo("<prim>");
       TAG_JOJO         = str2jo("<jojo>");
-      TAG_KEYWORD      = str2jo("<keyword>");
       TAG_CLOSURE      = str2jo("<closure>");
       TAG_CLASS        = str2jo("<class>");
 
@@ -5875,12 +5840,6 @@
 
       writing_stack = new_stack("writing_stack");
       push(writing_stack, output_stack_terminal());
-
-      // binding_filter_stack = new_stack("binding_filter_stack");
-      keyword_stack = new_stack("keyword_stack");
-
-      // jo_filter_stack = new_stack("jo_filter_stack");
-      // push(jo_filter_stack, str2jo("alias-filter"));
     }
     #+end_src
 
