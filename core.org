@@ -1,32 +1,34 @@
-#+property: tangle basic.jo
-#+title: basic
+#+property: tangle core.jo
+#+title: core
 
 * [todo-stack]
 
 *** dynamic scope and moand interface
 
     - example
-      #+begin_src jojo :tangle no
-      (+jojo zip-tree :t1! :t2!
-        (note [tree tree] -> [maybe-tree])
-        (cond [:t1 leaf? :t2 leaf? and]
-              [:t1 .v :t2 .v cons leaf return-maybe]
-              [:t1 node? :t2 node? and]
-              [(% :t1 .l :t2 .l zip-tree) :l!
-               (% :t1 .r :t2 .r zip-tree) :r!
-               (% :l :r node return-maybe)]
-              else nothing))
+      #+begin_src jojo
+      (note
 
-      (% (% :t1 .l :t2 .l zip-tree) (% :l!)
-         (% :t1 .r :t2 .r zip-tree) (% :r!)
-         (% (dynamic :l) (dynamic :r) node return-maybe))
-      apply-into-stack
+        (+jojo zip-tree :t1! :t2!
+         (note [tree tree] -> [maybe-tree])
+         (cond [:t1 leaf? :t2 leaf? and]
+               [:t1 .v :t2 .v cons leaf return-maybe]
+               [:t1 node? :t2 node? and]
+               [(% :t1 .l :t2 .l zip-tree) :l!
+                (% :t1 .r :t2 .r zip-tree) :r!
+                (% :l :r node return-maybe)]
+               else nothing))
+
+        (% (% :t1 .l :t2 .l zip-tree) (% :l!)
+           (% :t1 .r :t2 .r zip-tree) (% :r!)
+           (% (dynamic :l) (dynamic :r) node return-maybe))
+        apply-into-stack
 
 
-      (+jojo bind-trivial :rest! :binder! :m!
-        (% :m apply
-           :binder binder-apply
-           :rest apply))
+        (+jojo bind-trivial :rest! :binder! :m!
+          (% :m apply
+             :binder binder-apply
+             :rest apply)))
       #+end_src
 
     - 爲甚用 compose 來複合 closure 不能達到所需要的效果 ?
@@ -355,7 +357,32 @@
 
 *** >< list -- monad
 
-    #+begin_src jojo :tangle no
-    (+jojo return-list)
-    (+jojo bind-list)
+    #+begin_src jojo
+    (note
+      (+jojo return-list)
+      (+jojo bind-list))
     #+end_src
+
+*** bind & compose
+
+    #+begin_src jojo
+    (note
+
+      (+jojo bind
+        (-> (: :1m [:<1> <monad>])
+            (: :1-2m (-> :<1> -- :<2> <monad>))
+         -- (: :2m [:<2> <monad>]))
+        dummy (# drop :1m) :1-2m compose apply)
+
+      (+jojo compose
+        (-> (: :0-1m (-> :<0> -- :<1> <monad>))
+            (: :1-2m (-> :<1> -- :<2> <monad>))
+         -- (: :0-2m (-> :<0> -- :<2> <monad>)))
+        (% :0-1m apply :1-2m bind)))
+    #+end_src
+
+* ><
+
+  #+begin_src jojo
+
+  #+end_src

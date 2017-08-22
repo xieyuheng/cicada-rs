@@ -46,5 +46,5 @@ function line_array_to_string (line_array) {
   return result_string;
 }
 
-// tangle("core/0.0.1/core.org", "core/0.0.1/core.jo");
+tangle("core.org", "core.jo");
 tangle("jojo.org", "jojo.c");

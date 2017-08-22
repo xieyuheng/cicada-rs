@@ -284,8 +284,6 @@
 
     jo_t TAG_UNINITIALISED_FIELD_PLACE_HOLDER;
 
-    jo_t JO_DECLARED;
-
     jo_t ROUND_BAR;
     jo_t ROUND_KET;
     jo_t SQUARE_BAR;
@@ -334,21 +332,11 @@
         i++;
       }
     }
-    bool name_can_bind_p(jo_t name) {
-      if (name->tag == JO_DECLARED) {
-        return true;
-      }
-      else if (used_jo_p(name)) {
-        return false;
-      }
-      else {
-        return true;
-      }
-    }
+    bool core_flag = false;
     void bind_name(jo_t name,
                    jo_t tag,
                    cell data) {
-      if (!name_can_bind_p(name)) {
+      if (used_jo_p(name) && !core_flag) {
         report("- bind_name can not rebind\n");
         report("  name : %s\n", jo2str(name));
         report("  tag : %s\n", jo2str(tag));
@@ -2645,7 +2633,6 @@
       add_prim("recur", p_recur);
     }
     void k_run() {
-      // (run ...)
       jo_t* jojo = tos(compiling_stack);
 
       {
@@ -2657,6 +2644,16 @@
 
       return_stack_push(jojo, TAG_JOJO, jojo, current_local_counter);
       eval();
+    }
+    bool test_flag = false;
+    void p_test_flag() { object_stack_push(TAG_BOOL, test_flag); }
+    void p_test_flag_on() { test_flag = true; }
+    void p_test_flag_off() { test_flag = false; }
+
+    void k_test() {
+      if (test_flag) {
+        k_run();
+      }
     }
     void k_add_var() {
       jo_t name = read_jo();
@@ -2808,6 +2805,12 @@
     }
     void expose_top() {
       add_prim("run", k_run);
+
+      add_prim("test", k_test);
+      add_prim("test-flag", p_test_flag);
+      add_prim("test-flag-on", p_test_flag_on);
+      add_prim("test-flag-off", p_test_flag_off);
+
       add_prim("+var", k_add_var);
       add_prim("+jojo", k_add_jojo);
       add_prim("+data", k_add_data);
@@ -2963,6 +2966,7 @@
       }
     }
     bool repl_flag = false;
+    void p_repl_flag() { object_stack_push(TAG_BOOL, repl_flag); }
     void p_repl_flag_on() { repl_flag = true; }
     void p_repl_flag_off() { repl_flag = false; }
 
@@ -3062,6 +3066,10 @@
         }
       }
     void expose_repl() {
+      add_prim("repl-flag", p_repl_flag);
+      add_prim("repl-flag-on", p_repl_flag_on);
+      add_prim("repl-flag-off", p_repl_flag_off);
+
       add_prim("debug", p_debug);
     }
     bool step_flag = false;
@@ -3756,7 +3764,6 @@
       ccall("expose", lib);
     }
     void k_clib() {
-      // (clib "..." ...)
       while (true) {
         jo_t s = read_raw_jo();
         if (s == ROUND_KET) {
@@ -3772,6 +3779,23 @@
     }
     void expose_cffi() {
       add_prim("+clib", k_clib);
+    }
+    void p_core_flag() { object_stack_push(TAG_BOOL, core_flag); }
+    void p_core_flag_on() { core_flag = true; }
+    void p_core_flag_off() { core_flag = false; }
+    void load_core() {
+      #include "core.h"
+      core_jo[core_jo_len - 1] = '\0';
+      struct input_stack* input_stack = input_stack_string(core_jo);
+      push(reading_stack, input_stack);
+      p_repl();
+      drop(reading_stack);
+      input_stack_free(input_stack);
+    }
+    void expose_core() {
+      add_prim("core-flag", p_core_flag);
+      add_prim("core-flag-on", p_core_flag_on);
+      add_prim("core-flag-off", p_core_flag_off);
     }
     void p1() {
       int file = open("README", O_RDWR);
@@ -3995,8 +4019,6 @@
       TAG_UNINITIALISED_FIELD_PLACE_HOLDER =
         str2jo("<uninitialised-field-place-holder>");
 
-      JO_DECLARED = str2jo("declared");
-
       ROUND_BAR    =   str2jo("(");
       ROUND_KET    =   str2jo(")");
       SQUARE_BAR   =   str2jo("[");
@@ -4075,6 +4097,7 @@
       expose_closure();
       expose_socket();
       expose_system();
+      expose_core();
       expose_play();
     }
     int main(int argc, char** argv) {
@@ -4088,7 +4111,8 @@
       init_expose();
       init_kernel_signal_handler();
 
+      load_core();
+
       p_repl_flag_on();
-      p_print_object_stack();
       p_repl();
     }
