@@ -222,15 +222,59 @@
       recur)
     #+end_src
 
-*** +jojo
+*** compile-jojo
 
     #+begin_src jojo
-    (+jojo echo-jexp (-> :jexp --)
-      :jexp jexp-write)
+    (note (+jojo emit-call )
+      (+jojo emit-raw-int )
+      (+jojo emit-lit ))
+
+    (+jojo compile-jojo (-> :l jexp <cons> -- <jojo>)
+      new-jojo-from-compiling-stack-tos
+      swap compile-jojo/help)
+
+    (+jojo compile-jojo/jo)
+
+    (+jojo compile-jojo/help (-> :l jexp <cons> --)
+      (if :l null? then
+          'end emit-call
+          0 emit-raw-int
+          0 emit-raw-int
+          end)
+      :l .car :jexp!
+      (cond [:jexp cons?] []
+            [:jexp vons?] []
+            [:jexp fons?] []
+            [:jexp string?] [:jexp emit-lit]
+            [:jexp jo?] [:jexp compile-jojo/jo])
+      :l .cdr recur)
+    #+end_src
+
+*** (+jojo)
+
+    #+begin_src jojo
+    (+jojo +jojo (-> :l --)
+      :l .car
+      :l .cdr compile-jojo
+      bind-name)
+    #+end_src
+
+*** (run repl)
+
+    #+begin_src jojo
+    (run repl)
+    #+end_src
+
+*** (run)
+
+    #+begin_src jojo
+    (+jojo run
+      )
     #+end_src
 
 *** the-story-begin
 
     #+begin_src jojo
-    (run repl)
+    (+jojo square dup mul)
+    (run )
     #+end_src

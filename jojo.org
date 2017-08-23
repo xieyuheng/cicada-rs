@@ -43,11 +43,6 @@
 
     - dynamic scoped var for current indentation
 
-*** (case) and (cond)
-
-    - run time error for (case) (cond) miss-matching
-    - add else to (case)
-
 *** more syntax
 
     - syntax for ':local.field'
@@ -3623,11 +3618,21 @@
     }
     #+end_src
 
+*** p_bind_name
+
+    #+begin_src c
+    void p_bind_name() {
+      struct obj a = object_stack_pop();
+      struct obj b = object_stack_pop();
+      bind_name(b.data, a.tag, a.data);
+    }
+    #+end_src
+
 *** expose_compiler
 
     #+begin_src c
     void expose_compiler() {
-
+      add_prim("bind-name", p_bind_name);
     }
     #+end_src
 
@@ -5004,6 +5009,25 @@
     }
     #+end_src
 
+* <jojo>
+
+*** p_new_jojo_from_compiling_stack_tos
+
+    #+begin_src c
+    void p_new_jojo_from_compiling_stack_tos() {
+      object_stack_push(TAG_JOJO, tos(compiling_stack));
+    }
+    #+end_src
+
+*** expose_jojo
+
+    #+begin_src c
+    void expose_jojo() {
+      add_prim("new-jojo-from-compiling-stack-tos",
+               p_new_jojo_from_compiling_stack_tos);
+    }
+    #+end_src
+
 * <closure>
 
 *** gc_local_env
@@ -5957,6 +5981,7 @@
       expose_string();
       expose_int();
       expose_jo();
+      expose_jojo();
       expose_closure();
       expose_socket();
       expose_system();

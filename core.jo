@@ -10,31 +10,16 @@
                   {:l :r node return-maybe})
                 else nothing)))
   (run core-flag-on)
-    (note jexp
-      = jexp <cons>
-      | jexp <vons>
-      | jexp <fons>
-      | <string>
-      | <jo>)
-
+      (note jexp
+        = jexp <cons>
+        | jexp <vons>
+        | jexp <fons>
+        | <string>
+        | <jo>)
     (+data <null>)
     (+data <cons> .car .cdr)
     (+data <vons> .var .vdr)
     (+data <fons> .far .fdr)
-    (+jojo list-print (-> :l :f --)
-      (case :l
-        <null> ["null" string-write space]
-        <cons> [:l .cdr :f recur
-                :l .car :f apply space
-                "swap cons" string-write space]))
-    (note
-
-      (+var list-0
-        null
-        1 swap cons
-        2 swap cons)
-
-      (run list-0 {int-write} list-print))
     (+jojo read-jexp (-> -- jexp)
       read-jo :jo!
       (cond [:jo round-bar eq?]  [read-jexp/cons]
@@ -97,6 +82,35 @@
           round-bar jo-unread read-jexp
           swap jo-apply)
       recur)
-    (+jojo echo-jexp (-> :jexp --)
-      :jexp jexp-write)
-  (run repl)
+    (note (+jojo emit-call )
+      (+jojo emit-raw-int )
+      (+jojo emit-lit ))
+
+    (+jojo compile-jojo (-> :l jexp <cons> -- <jojo>)
+      new-jojo-from-compiling-stack-tos
+      swap compile-jojo/help)
+
+    (+jojo compile-jojo/jo)
+
+    (+jojo compile-jojo/help (-> :l jexp <cons> --)
+      (if :l null? then
+          'end emit-call
+          0 emit-raw-int
+          0 emit-raw-int
+          end)
+      :l .car :jexp!
+      (cond [:jexp cons?] []
+            [:jexp vons?] []
+            [:jexp fons?] []
+            [:jexp string?] [:jexp emit-lit]
+            [:jexp jo?] [:jexp compile-jojo/jo])
+      :l .cdr recur)
+    (+jojo +jojo (-> :l --)
+      :l .car
+      :l .cdr compile-jojo
+      bind-name)
+    (run repl)
+    (+jojo run
+      )
+    (+jojo square dup mul)
+    (run )

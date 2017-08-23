@@ -2429,8 +2429,13 @@
     void p_compile_until_round_ket() {
       compile_until_meet_jo(ROUND_KET);
     }
+    void p_bind_name() {
+      struct obj a = object_stack_pop();
+      struct obj b = object_stack_pop();
+      bind_name(b.data, a.tag, a.data);
+    }
     void expose_compiler() {
-
+      add_prim("bind-name", p_bind_name);
     }
     void k_ignore() {
       while (true) {
@@ -3394,6 +3399,13 @@
 
       add_prim("jo-apply", p_jo_apply);
     }
+    void p_new_jojo_from_compiling_stack_tos() {
+      object_stack_push(TAG_JOJO, tos(compiling_stack));
+    }
+    void expose_jojo() {
+      add_prim("new-jojo-from-compiling-stack-tos",
+               p_new_jojo_from_compiling_stack_tos);
+    }
     void gc_local_env(gc_state_t gc_state, struct object_entry* object_entry) {
       if (gc_state == GC_STATE_MARKING) {
         if (object_entry->mark == GC_MARK_USING) { return; }
@@ -4135,6 +4147,7 @@
       expose_string();
       expose_int();
       expose_jo();
+      expose_jojo();
       expose_closure();
       expose_socket();
       expose_system();
