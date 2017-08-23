@@ -2331,6 +2331,8 @@
       here(TAG_STRING);
       here(object_entry);
     }
+    void k_closure();
+
     bool compile_jo(jo_t jo) {
       if (jo == ROUND_BAR) {
         jo_apply(read_jo());
@@ -2385,6 +2387,11 @@
         char* tmp = substring(str, 1, strlen(str));
         here(str2jo(tmp));
         free(tmp);
+        return true;
+      }
+      // {...}
+      else if (jo == FLOWER_BAR) {
+        k_closure();
         return true;
       }
       else {
@@ -2685,7 +2692,7 @@
       }
       _add_data(name, fresh_fields);
     }
-    void k_add_jojo_compile_binder_from_type() {
+    void k_arrow() {
       jo_t jo = read_jo();
       if (jo == str2jo("--")) {
         k_ignore();
@@ -2695,12 +2702,12 @@
         return;
       }
       else if (get_local_string_p(jo2str(jo))) {
-        k_add_jojo_compile_binder_from_type();
+        k_arrow();
         here(JO_INS_SET_LOCAL);
         here(jo);
       }
       else {
-        k_add_jojo_compile_binder_from_type();
+        k_arrow();
       }
     }
     void k_add_jojo() {
@@ -2708,16 +2715,6 @@
       jo_t* jojo = tos(compiling_stack);
 
       {
-        jo_t jo1 = read_jo(); // maybe '('
-        jo_t jo2 = read_jo(); // maybe '->'
-        if (jo1 == ROUND_BAR &&
-            jo2 == str2jo("->")) {
-          k_add_jojo_compile_binder_from_type();
-        }
-        else {
-          jo_unread(jo2);
-          jo_unread(jo1);
-        }
         compile_until_meet_jo(ROUND_KET);
         here(JO_END);
         here(0);
@@ -2800,6 +2797,7 @@
       add_prim("test-flag-off", p_test_flag_off);
 
       add_prim("+var", k_add_var);
+      add_prim("->", k_arrow);
       add_prim("+jojo", k_add_jojo);
       add_prim("+data", k_add_data);
       add_prim("+gene", k_add_gene);
@@ -3396,7 +3394,7 @@
       jo_t* jojo = tos(compiling_stack);
 
       {
-        compile_until_meet_jo(ROUND_KET);
+        compile_until_meet_jo(FLOWER_KET);
         here(JO_END);
         here(0);
         here(0);
@@ -3422,7 +3420,6 @@
       add_prim("closure-exe", p_closure_exe);
       add_disp("exe", J("<closure>"), "<prim>", p_closure_exe);
 
-      add_prim("%", k_closure);
       add_prim("apply", p_closure_exe);
     }
     void p_tcp_socket_listen() {
@@ -4092,7 +4089,8 @@
       init_expose();
       init_kernel_signal_handler();
 
-      load_core();
+      // load_core();
+      path_load("core.jo");
 
       p_repl_flag_on();
       p_repl();
