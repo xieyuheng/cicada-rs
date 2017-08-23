@@ -8,9 +8,12 @@ f = -rdynamic
 l = -ldl
 
 build:
-	./tool/tangle.js
+	make tangle
 	xxd -i core.jo > core.h 
 	$(cc) $(w) $(o) $(f) $(l) jojo.c -o jojo
+
+tangle:
+	./tool/tangle.js
 
 user-install:
 	$(copy) core ~/.jojo/

@@ -2046,7 +2046,10 @@
         }
       }
     }
-    jo_t read_raw_jo() {
+    void p_has_jo_p() {
+      object_stack_push(TAG_BOOL, has_jo_p());
+    }
+    jo_t read_jo() {
       char buf[1024];
       cell cur = 0;
       cell collecting = false;
@@ -2057,7 +2060,7 @@
 
         if (!has_byte_p()) {
           if (!collecting) {
-            report("- p_read_raw_jo meet end-of-file\n");
+            report("- p_read_jo meet end-of-file\n");
             p_debug();
           }
           else {
@@ -2097,9 +2100,6 @@
       buf[cur] = 0;
       return str2jo(buf);
     }
-    jo_t read_jo() {
-      return read_raw_jo();
-    }
     void p_read_jo() {
       object_stack_push(TAG_JO, read_jo());
     }
@@ -2114,7 +2114,7 @@
     }
     void jo_unread(jo_t jo) {
       char* str = jo2str(jo);
-      byte_unread(' ');
+      // byte_unread(' ');
       string_unread(str);
       byte_unread(' ');
     }
@@ -2125,6 +2125,7 @@
       output_stack_push(tos(writing_stack), ' ');
     }
     void expose_rw() {
+      add_prim("has-jo?", p_has_jo_p);
       add_prim("read-jo", p_read_jo);
       add_prim("newline", p_newline);
       add_prim("space", p_space);
@@ -2433,7 +2434,7 @@
     }
     void k_ignore() {
       while (true) {
-        jo_t s = read_raw_jo();
+        jo_t s = read_jo();
         if (s == ROUND_BAR) {
           k_ignore();
         }
@@ -2613,7 +2614,6 @@
     }
     void expose_control() {
       add_prim("note", k_ignore);
-      add_prim("->", k_ignore);
       add_prim("ins/lit", ins_lit);
 
       add_prim("ins/jmp", ins_jmp);
@@ -2956,7 +2956,8 @@
     void p_repl_flag_on() { repl_flag = true; }
     void p_repl_flag_off() { repl_flag = false; }
 
-    void p_repl() {
+    void repl(struct input_stack* input_stack) {
+      push(reading_stack, input_stack);
       while (true) {
         if (!has_jo_p()) {
           return;
@@ -2972,15 +2973,18 @@
           // loop
         }
       }
+      drop(reading_stack);
+      input_stack_free(input_stack);
     }
     cell debug_repl_level = 0;
 
-    void p_debug_repl() {
+    void debug_repl(struct input_stack* input_stack) {
+      push(reading_stack, input_stack);
       while (true) {
         if (!has_jo_p()) {
           return;
         }
-        jo_t jo = read_raw_jo();
+        jo_t jo = read_jo();
         if (jo == str2jo("help")) {
           report("- debug-repl usage :\n");
           report("  - available commands :\n");
@@ -3002,20 +3006,18 @@
           // loop
         }
       }
+      drop(reading_stack);
+      input_stack_free(input_stack);
     }
     void p_debug() {
-      push(reading_stack, input_stack_terminal());
-
       report("- in debug-repl [level %ld] >_<!\n", debug_repl_level);
       p_print_return_stack();
       p_print_object_stack();
       report("debug[%ld]> ", debug_repl_level);
       debug_repl_level++;
-      p_debug_repl();
+      debug_repl(input_stack_terminal());
       debug_repl_level--;
       report("- exit debug-repl [level %ld]\n", debug_repl_level);
-
-      drop(reading_stack);
     }
       void kernel_signal_handler(int sig, siginfo_t *siginfo, void *ucontext) {
         fflush(stdin);
@@ -3072,7 +3074,10 @@
           pending_steps--;
           return;
         }
-
+        if (!has_jo_p()) {
+          step_flag = false;
+          return;
+        }
         jo_t jo = read_jo();
         if (jo == str2jo("help")) {
           report("- stepper usage :\n");
@@ -3111,12 +3116,12 @@
     }
     // do not handle tail call
     void p_step() {
+      struct input_stack* input_stack = input_stack_terminal();
+      push(reading_stack, input_stack);
       step_flag = true;
       stepper_counter = 0;
       pending_steps = 0;
-      push(reading_stack, input_stack_terminal());
       report("stepper> ");
-
       cell base = return_stack->pointer;
       while (return_stack->pointer >= base) {
         if (step_flag == false) { break; };
@@ -3137,6 +3142,7 @@
         report("- automatically exit stepper\n");
       }
       drop(reading_stack);
+      input_stack_free(input_stack);
     }
     void expose_step() {
       add_prim("step", p_step);
@@ -3241,6 +3247,28 @@
       struct object_entry* bo = b.data;
       object_stack_push(TAG_BOOL, string_equal(ao->pointer, ao->pointer));
     }
+    void p_read_string() {
+      char buffer[1024 * 1024];
+      cell cursor = 0;
+      while (true) {
+        char c = read_byte();
+        if (c == '"') {
+          buffer[cursor] = '\0';
+          cursor++;
+          break;
+        }
+        else {
+          buffer[cursor] = c;
+          cursor++;
+        }
+      }
+      char* str = strdup(buffer);
+      struct object_entry* object_entry = new_record_object_entry();
+      object_entry->gc_actor = gc_ignore;
+      object_entry->pointer = str;
+
+      object_stack_push(TAG_STRING, object_entry);
+    }
     void expose_string() {
       add_prim("string-write", p_string_write);
       add_prim("string-len", p_string_len);
@@ -3249,6 +3277,7 @@
       add_prim("string-slice", p_string_slice);
       add_prim("string-empty?", p_string_empty_p);
       add_prim("string-eq?", p_string_eq_p);
+      add_prim("read-string", p_read_string);
     }
     void p_inc() {
       struct obj a = object_stack_pop();
@@ -3331,6 +3360,39 @@
       add_prim("lteq?", p_lteq_p);
 
       add_prim("int-write", p_int_write);
+    }
+    void p_round_bar()    { object_stack_push(TAG_JO, ROUND_BAR); }
+    void p_round_ket()    { object_stack_push(TAG_JO, ROUND_KET); }
+    void p_square_bar()   { object_stack_push(TAG_JO, SQUARE_BAR); }
+    void p_square_ket()   { object_stack_push(TAG_JO, SQUARE_KET); }
+    void p_flower_bar()   { object_stack_push(TAG_JO, FLOWER_BAR); }
+    void p_flower_ket()   { object_stack_push(TAG_JO, FLOWER_KET); }
+    void p_double_quote() { object_stack_push(TAG_JO, DOUBLE_QUOTE); }
+    void p_jo_write() {
+      struct obj a = object_stack_pop();
+      string_write(jo2str(a.data));
+    }
+    void p_jo_unread() {
+      struct obj a = object_stack_pop();
+      jo_unread(a.data);
+    }
+    void p_jo_apply() {
+      struct obj a = object_stack_pop();
+      jo_apply(a.data);
+    }
+    void expose_jo() {
+      add_prim("round-bar", p_round_bar);
+      add_prim("round-ket", p_round_ket);
+      add_prim("square-bar", p_square_bar);
+      add_prim("square-ket", p_square_ket);
+      add_prim("flower-bar", p_flower_bar);
+      add_prim("flower-ket", p_flower_ket);
+      add_prim("double-quote", p_double_quote);
+
+      add_prim("jo-write", p_jo_write);
+      add_prim("jo-unread", p_jo_unread);
+
+      add_prim("jo-apply", p_jo_apply);
     }
     void gc_local_env(gc_state_t gc_state, struct object_entry* object_entry) {
       if (gc_state == GC_STATE_MARKING) {
@@ -3750,7 +3812,7 @@
     }
     void k_clib() {
       while (true) {
-        jo_t s = read_raw_jo();
+        jo_t s = read_jo();
         if (s == ROUND_KET) {
           return;
         }
@@ -3771,16 +3833,21 @@
     void load_core() {
       #include "core.h"
       core_jo[core_jo_len - 1] = '\0';
-      struct input_stack* input_stack = input_stack_string(core_jo);
-      push(reading_stack, input_stack);
-      p_repl();
+      repl(input_stack_string(core_jo));
+    }
+    void p_push_terminal_to_reading_stack() {
+      push(reading_stack, input_stack_terminal());
+    }
+    void p_drop_reading_stack() {
       drop(reading_stack);
-      input_stack_free(input_stack);
     }
     void expose_core() {
       add_prim("core-flag", p_core_flag);
       add_prim("core-flag-on", p_core_flag_on);
       add_prim("core-flag-off", p_core_flag_off);
+
+      add_prim("push-terminal-to-reading-stack", p_push_terminal_to_reading_stack);
+      add_prim("drop-reading-stack", p_drop_reading_stack);
     }
     void p1() {
       int file = open("README", O_RDWR);
@@ -3965,11 +4032,7 @@
         perror("file open failed");
         return;
       }
-      struct input_stack* input_stack = input_stack_file(file);
-      push(reading_stack, input_stack);
-      p_repl();
-      drop(reading_stack);
-      input_stack_free(input_stack);
+      repl(input_stack_file(file));
       close(file);
     }
     void expose_play() {
@@ -4052,7 +4115,6 @@
       push(compiling_stack, jojo_area);
 
       reading_stack = new_stack("reading_stack");
-      push(reading_stack, input_stack_terminal());
 
       writing_stack = new_stack("writing_stack");
       push(writing_stack, output_stack_terminal());
@@ -4072,6 +4134,7 @@
       expose_bool();
       expose_string();
       expose_int();
+      expose_jo();
       expose_closure();
       expose_socket();
       expose_system();
@@ -4093,5 +4156,5 @@
       path_load("core.jo");
 
       p_repl_flag_on();
-      p_repl();
+      repl(input_stack_terminal());
     }

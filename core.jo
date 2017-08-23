@@ -5,226 +5,98 @@
                 [:t1 .v :t2 .v cons leaf return-maybe]
                 [:t1 node? :t2 node? and]
                 (let-bind bind-maybe
-                  :l [:t1 .l :t2 .l zip-tree]
-                  :r [:t1 .r :t2 .r zip-tree]
-                  [:l :r node] return-maybe)
+                  :l {:t1 .l :t2 .l zip-tree}
+                  :r {:t1 .r :t2 .r zip-tree}
+                  {:l :r node return-maybe})
                 else nothing)))
-    (+data <null>)
-    (+data <cons> .cdr .car)
+  (run core-flag-on)
+    (note jexp
+      = jexp <cons>
+      | jexp <vons>
+      | jexp <fons>
+      | <string>
+      | <jo>)
 
+    (+data <null>)
+    (+data <cons> .car .cdr)
+    (+data <vons> .var .vdr)
+    (+data <fons> .far .fdr)
     (+jojo list-print (-> :l :f --)
       (case :l
         <null> ["null" string-write space]
         <cons> [:l .cdr :f recur
                 :l .car :f apply space
-                "cons" string-write space]))
+                "swap cons" string-write space]))
     (note
 
       (+var list-0
         null
-        1 cons
-        2 cons)
+        1 swap cons
+        2 swap cons)
 
       (run list-0 {int-write} list-print))
-  (+gene w (-> :x --))
-  (+disp w (-> <int> --) int-write)
-  (+disp w (-> <string> --) string-write)
-  (run 1 w newline "one" w newline)
+    (+jojo read-jexp (-> -- jexp)
+      read-jo :jo!
+      (cond [:jo round-bar eq?]  [read-jexp/cons]
+            [:jo square-bar eq?] [read-jexp/vons]
+            [:jo flower-bar eq?] [read-jexp/fons]
+            [:jo double-quote eq?] [read-string]
+            else [:jo]))
 
-  (+gene ww (-> :a :b --))
-  (+disp ww (-> <int> <int> --) swap int-write space int-write space)
-  (+disp ww (-> <int> <string> --) swap int-write space string-write space)
-  (run 1 2 ww)
-  (run 1 "two" ww)
-  (note (run "two" 1 ww))
-    (note
-      (+jojo t0 1 :a0! 2 :b0! {:a0 :b0 add})
-      (run t0 dup
-        apply int-write space
-        apply int-write space
-        newline)
+    (+jojo read-jexp/cons
+      read-jo :jo!
+      (if :jo round-ket eq?
+          then null
+          else :jo jo-unread read-jexp recur cons))
 
-      (+jojo t1 1 :a! 2 :b! {:a {:b t0 apply add}})
-      (run t1 apply apply add)
+    (+jojo read-jexp/vons
+      read-jo :jo!
+      (if :jo round-ket eq?
+          then null
+          else :jo jo-unread read-jexp recur vons))
 
+    (+jojo read-jexp/fons
+      read-jo :jo!
+      (if :jo round-ket eq?
+          then null
+          else :jo jo-unread read-jexp recur fons))
+    (+jojo jexp-write (-> :jexp --)
+      (case :jexp
+        <cons> [round-bar  jo-write space :jexp jexp-write/cons]
+        <vons> [square-bar jo-write space :jexp jexp-write/vons]
+        <fons> [flower-bar jo-write space :jexp jexp-write/fons]
+        <string> [double-quote jo-write
+                  :jexp string-write
+                  double-quote jo-write
+                  space]
+        <jo> [:jexp jo-write space]))
 
-      (+jojo t0 1 :a! {:a})
-      (+jojo t1 2 :a! {{t0 apply}})
-      (run t1 apply apply)
+    (+jojo jexp-write/cons (-> :l --)
+      (case :l
+        <null> [round-ket jo-write space]
+        <cons> [:l .car jexp-write
+                :l .cdr recur]))
 
+    (+jojo jexp-write/vons (-> :l --)
+      (case :l
+        <null> [square-bar jo-write space]
+        <cons> [:l .car jexp-write
+                :l .cdr recur]))
 
-      (+jojo t0 1 :a! {:a})
-      (+jojo t1 2 :a! {{t0}})
-      (run t1 apply apply apply)
-
-      (+jojo t0 1 :a! {:a})
-      (+jojo t1 {{t0 apply}})
-      (run t1 apply apply)
-
-      (run t1 apply))
-
-    (note
-      (+jojo com :m1! :m2!
-        {:m2 apply
-         :m1 apply})
-      (run {1} {2} com apply add int-write)
-      (run {1} {2} com {3} com apply add add int-write)
-      (run {1} {2} {3} com com apply add add int-write)
-      (run step {1} {2} {3} com com apply add add int-write))
-    (+var server "8888" 5 tcp-socket-listen)
-    (+jojo run-server
-      server socket-accept :addr! :client!
-      "got a connection from " string-write :addr string-write newline
-      :client "thank you for connecting" socket-send
-      :client close recur)
-    (note (run run-server))
-    (+var clinet "cicada" "8888" tcp-socket-connect)
-    (+jojo run-clinet
-      clinet socket-recv string-write newline)
-    (note (run run-clinet))
-    (+data <nothing>)
-    (+data <just> .v)
-    (+data <leaf> .v)
-    (+data <node> .l .r)
-
-    (+jojo tree-write :f! :t!
-      (note [tree fun] -> [])
-      (case :t
-        <leaf> [:t .v :f apply "leaf" string-write space]
-        <node> [:t .l :f recur
-                :t .r :f recur "node" string-write space]))
-
-    (+jojo tree-map :f! :t!
-      (note [tree fun] -> [tree])
-      (case :t
-        <leaf> [:t .v :f apply leaf]
-        <node> [:t .l :f recur
-                :t .r :f recur node]))
-    (+var a-tree
-      1 leaf 2 leaf node
-      3 leaf 4 leaf node
-      5 leaf node
-      node)
-
-    (run a-tree
-      {100 add} tree-map
-      {int-write space} tree-write)
-    (+jojo maybe-nothing :m1! :m2!
-      {:m2 apply
-       (if dup nothing? then end)
-       :m1 apply})
-
-    (note not ok
-      can not call maybe-nothing twice ?
-      (+jojo zip-tree :t1! :t2!
-        (note [tree tree] -> [tree | nothing])
-        (cond [:t1 leaf? :t2 leaf? and]
-              [:t1 .v :t2 .v cons leaf]
-              [:t1 node? :t2 node? and]
-              [{:t1 .l :t2 .l zip-tree}
-               {:t1 .r :t2 .r zip-tree}
-               {node}
-               maybe-nothing
-               maybe-nothing
-               apply]
-              else nothing)))
-
-    (+jojo zip-tree :t1! :t2!
-      (note [tree tree] -> [tree | nothing])
-      (cond [:t1 leaf? :t2 leaf? and]
-            [:t1 .v :t2 .v cons leaf]
-            [:t1 node? :t2 node? and]
-            [{:t1 .l :t2 .l zip-tree}
-             {:t1 .r :t2 .r zip-tree
-              (if dup nothing? then end)
-              node}
-             maybe-nothing apply]
-            else nothing))
-
-    (note ok
-      (+jojo zip-tree :t1! :t2!
-        (note [tree tree] -> [tree | nothing])
-        (cond [:t1 leaf? :t2 leaf? and]
-              [:t1 .v :t2 .v cons leaf]
-              [:t1 node? :t2 node? and]
-              [{:t1 .l :t2 .l zip-tree}
-               {:t1 .r :t2 .r zip-tree
-                (if dup nothing? then end)
-                node}
-               maybe-nothing apply]
-              else nothing)))
-
-    (note ok
-      (+jojo zip-tree :t1! :t2!
-        (note [tree tree] -> [tree | nothing])
-        (cond [:t1 leaf? :t2 leaf? and]
-              [:t1 .v :t2 .v cons leaf]
-              [:t1 node? :t2 node? and]
-              [:t1 .l :t2 .l zip-tree (if dup nothing? then end)
-               :t1 .r :t2 .r zip-tree (if dup nothing? then end)
-               node]
-              else nothing)))
-
-    (+jojo write-tree-or-nothing
-      (if dup nothing? then drop "nothing" string-write end)
-      (el {dup .cdr int-write space
-           .car int-write space
-           "cons" string-write space}
-          tree-write))
-
-    (run
-      a-tree 1 leaf zip-tree
-      write-tree-or-nothing)
-
-    (run
-      1 leaf a-tree zip-tree
-      write-tree-or-nothing)
-
-    (run
-      a-tree 1 leaf 1 leaf node zip-tree
-      write-tree-or-nothing)
-
-    (run
-      1 leaf 1 leaf node a-tree zip-tree
-      write-tree-or-nothing)
-
-    (run
-      a-tree dup zip-tree
-      write-tree-or-nothing)
-    (+jojo number-tree
-      (note (-> <int>, :<t> <tree> -- <int>, <int> <tree>))
-      :t!
-      (case :t
-        <leaf> [dup inc swap leaf]
-        <node> [:t .l recur :l!
-                :t .r recur :r!
-                :l :r node]))
-
-    (+var tree-2
-      "1" leaf "2" leaf node
-      "3" leaf "4" leaf node
-      "5" leaf node
-      node)
-
-    (run
-      tree-2
-      0 swap number-tree
-      swap drop
-      {int-write space} tree-write newline)
-    (note
-      (+jojo return-list)
-      (+jojo bind-list))
-    (note
-
-      (+jojo bind
-        (-> (: :1m [:<1> <monad>])
-            (: :1-2m (-> :<1> -- :<2> <monad>))
-         -- (: :2m [:<2> <monad>]))
-        dummy {drop :1m} :1-2m compose apply)
-
-      (+jojo compose
-        (-> (: :0-1m (-> :<0> -- :<1> <monad>))
-            (: :1-2m (-> :<1> -- :<2> <monad>))
-         -- (: :0-2m (-> :<0> -- :<2> <monad>)))
-        {:0-1m apply :1-2m bind}))
-
+    (+jojo jexp-write/fons (-> :l --)
+      (case :l
+        <null> [flower-bar jo-write space]
+        <cons> [:l .car jexp-write
+                :l .cdr recur]))
+    (+jojo repl
+      push-terminal-to-reading-stack
+      (if has-jo? not then drop-reading-stack end)
+      read-jo :jo!
+      (if :jo round-bar eq? then
+          read-jo
+          round-bar jo-unread read-jexp
+          swap jo-apply)
+      recur)
+    (+jojo echo-jexp (-> :jexp --)
+      :jexp jexp-write)
+  (run repl)
