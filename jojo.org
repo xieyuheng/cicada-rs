@@ -1,12 +1,10 @@
 #+property: tangle jojo.c
 #+title: jojo
 
+* plus_atom define predicate -- just like plus_data
+* quote and backquote and comma as separator
+* comma ',' as 句讀
 * [todo-stack]
-
-*** plus_atom define predicate -- just like plus_data
-*** jo->int
-
-*** quote and backquote and comma as separator
 
 *** fix repl in core
 
@@ -48,16 +46,9 @@
 
     - dynamic scoped var for current indentation
 
-*** more syntax
-
-    - syntax for ':local.field'
-    - ',' as 句讀
-
 *** specify cffi
 
     - by specifing the way to write jojo code in c
-
-*** print the rest of the jojo when compilation fail
 
 * [todo-list]
 
@@ -4133,6 +4124,14 @@
         jo_t jo = data;
         report("'%s ", jo2str(jo));
       }
+      else if (tag == TAG_BOOL) {
+        if (data) {
+          report("true ");
+        }
+        else {
+          report("flase ");
+        }
+      }
       else if (tag == TAG_JOJO) {
         jo_t* jojo = data;
         jojo_print(jojo);
@@ -4969,6 +4968,15 @@
     }
     #+end_src
 
+*** p_jo_to_int
+
+    #+begin_src c
+    void p_jo_to_int() {
+      struct obj a = object_stack_pop();
+      object_stack_push(TAG_INT, string_to_int(jo2str(a.data)));
+    }
+    #+end_src
+
 *** expose_jo
 
     #+begin_src c
@@ -4985,6 +4993,8 @@
       plus_prim("jo-unread", p_jo_unread);
 
       plus_prim("jo-apply", p_jo_apply);
+
+      plus_prim("jo->int", p_jo_to_int);
     }
     #+end_src
 

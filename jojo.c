@@ -2812,6 +2812,14 @@
         jo_t jo = data;
         report("'%s ", jo2str(jo));
       }
+      else if (tag == TAG_BOOL) {
+        if (data) {
+          report("true ");
+        }
+        else {
+          report("flase ");
+        }
+      }
       else if (tag == TAG_JOJO) {
         jo_t* jojo = data;
         jojo_print(jojo);
@@ -3363,6 +3371,10 @@
       struct obj a = object_stack_pop();
       jo_apply(a.data);
     }
+    void p_jo_to_int() {
+      struct obj a = object_stack_pop();
+      object_stack_push(TAG_INT, string_to_int(jo2str(a.data)));
+    }
     void expose_jo() {
       plus_prim("round-bar", p_round_bar);
       plus_prim("round-ket", p_round_ket);
@@ -3376,6 +3388,8 @@
       plus_prim("jo-unread", p_jo_unread);
 
       plus_prim("jo-apply", p_jo_apply);
+
+      plus_prim("jo->int", p_jo_to_int);
     }
     void p_new_jojo_from_compiling_stack_tos() {
       object_stack_push(TAG_JOJO, tos(compiling_stack));
