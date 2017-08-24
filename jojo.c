@@ -1414,6 +1414,19 @@
 
         jo_t name = str2jo(class_name);
         bind_name(name, str2jo("<class>"), class);
+
+        char* tmp = substring(class_name, 1, strlen(class_name) -1);
+        jo_t data_constructor_name = str2jo(tmp);
+        free(tmp);
+
+        char* tmp2 = malloc(strlen(jo2str(data_constructor_name) + 1 + 1));
+        tmp2[0] = '\0';
+        strcat(tmp2, jo2str(data_constructor_name));
+        strcat(tmp2, "?");
+        jo_t data_predicate_name = str2jo(tmp2);
+        free(tmp2);
+
+        bind_name(data_predicate_name, str2jo("<data-predicate>"), class);
       }
       void plus_data(class_name, fields)
         char* class_name;
@@ -1438,6 +1451,7 @@
         char* tmp = substring(class_name, 1, strlen(class_name) -1);
         jo_t data_constructor_name = str2jo(tmp);
         free(tmp);
+
         bind_name(data_constructor_name, str2jo("<data-constructor>"), class);
 
         char* tmp2 = malloc(strlen(jo2str(data_constructor_name) + 1 + 1));
@@ -1446,6 +1460,7 @@
         strcat(tmp2, "?");
         jo_t data_predicate_name = str2jo(tmp2);
         free(tmp2);
+
         bind_name(data_predicate_name, str2jo("<data-predicate>"), class);
       }
       void _plus_data(name, fields)
