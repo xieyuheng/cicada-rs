@@ -1403,7 +1403,7 @@
 
       return object_entry;
     }
-      void add_atom(class_name, gc_actor)
+      void plus_atom(class_name, gc_actor)
         char* class_name;
         gc_actor_t gc_actor;
       {
@@ -1415,7 +1415,7 @@
         jo_t name = str2jo(class_name);
         bind_name(name, str2jo("<class>"), class);
       }
-      void add_data(class_name, fields)
+      void plus_data(class_name, fields)
         char* class_name;
         jo_t* fields[];
       {
@@ -1448,13 +1448,13 @@
         free(tmp2);
         bind_name(data_predicate_name, str2jo("<data-predicate>"), class);
       }
-      void _add_data(name, fields)
+      void _plus_data(name, fields)
         jo_t name;
         jo_t fields[];
       {
-        add_data(jo2str(name), fields);
+        plus_data(jo2str(name), fields);
       }
-    void add_prim(function_name, fun)
+    void plus_prim(function_name, fun)
          char* function_name;
          primitive_t fun;
     {
@@ -1473,24 +1473,24 @@
     void expose_object() {
       init_object_record();
 
-      add_prim("ins/get-field", ins_get_field);
-      add_prim("ins/set-field", ins_set_field);
+      plus_prim("ins/get-field", ins_get_field);
+      plus_prim("ins/set-field", ins_set_field);
 
-      add_atom("<byte>", gc_ignore);
-      add_atom("<int>", gc_ignore);
-      add_atom("<jo>", gc_ignore);
-      add_atom("<string>", gc_free);
-      add_atom("<gene>", gc_ignore);
-      add_atom("<uninitialised-field-place-holder>", gc_ignore);
+      plus_atom("<byte>", gc_ignore);
+      plus_atom("<int>", gc_ignore);
+      plus_atom("<jo>", gc_ignore);
+      plus_atom("<string>", gc_free);
+      plus_atom("<gene>", gc_ignore);
+      plus_atom("<uninitialised-field-place-holder>", gc_ignore);
 
-      add_atom("<prim>", gc_ignore);
-      add_atom("<jojo>", gc_ignore);
-      add_atom("<set-global-variable>", gc_ignore);
-      add_atom("<data-constructor>", gc_ignore);
-      add_atom("<data-predicate>", gc_ignore);
+      plus_atom("<prim>", gc_ignore);
+      plus_atom("<jojo>", gc_ignore);
+      plus_atom("<set-global-variable>", gc_ignore);
+      plus_atom("<data-constructor>", gc_ignore);
+      plus_atom("<data-predicate>", gc_ignore);
 
-      add_prim("tag", p_tag);
-      add_prim("eq?", p_eq_p);
+      plus_prim("tag", p_tag);
+      plus_prim("eq?", p_eq_p);
     }
       struct disp_entry {
         jo_t key;
@@ -1734,7 +1734,7 @@
       };
       cell arity;
     };
-    void add_gene(function_name, arity)
+    void plus_gene(function_name, arity)
          char* function_name;
          cell arity;
     {
@@ -1754,7 +1754,7 @@
 
       bind_name(name, str2jo("<gene>"), gene);
     }
-    void add_disp(gene_name, tags, tag_name, data)
+    void plus_disp(gene_name, tags, tag_name, data)
       char* gene_name;
       jo_t* tags;
       char* tag_name;
@@ -1770,13 +1770,13 @@
         multi_disp_insert(gene->multi_disp, tags, tag, data);
       }
     }
-    void _add_disp(gene_name, tags, tag_name, data)
+    void _plus_disp(gene_name, tags, tag_name, data)
       jo_t gene_name;
       jo_t* tags;
       jo_t tag_name;
       cell data;
     {
-      add_disp(jo2str(gene_name), tags, jo2str(tag_name), data);
+      plus_disp(jo2str(gene_name), tags, jo2str(tag_name), data);
     }
     void disp_exe(struct gene* gene, jo_t tag) {
       struct disp* disp = gene->disp;
@@ -1914,16 +1914,16 @@
     }
 
     void expose_gene() {
-      add_gene("exe", 1);
+      plus_gene("exe", 1);
 
-      add_disp("exe", J("<prim>"), "<prim>", p_prim_exe);
-      add_disp("exe", J("<jojo>"), "<prim>", p_jojo_exe);
-      add_disp("exe", J("<gene>"), "<prim>", p_gene_exe);
-      add_disp("exe", J("<set-global-variable>"),
+      plus_disp("exe", J("<prim>"), "<prim>", p_prim_exe);
+      plus_disp("exe", J("<jojo>"), "<prim>", p_jojo_exe);
+      plus_disp("exe", J("<gene>"), "<prim>", p_gene_exe);
+      plus_disp("exe", J("<set-global-variable>"),
                "<prim>", p_set_global_variable_exe);
-      add_disp("exe", J("<data-constructor>"),
+      plus_disp("exe", J("<data-constructor>"),
                "<prim>", p_data_constructor_exe);
-      add_disp("exe", J("<data-predicate>"),
+      plus_disp("exe", J("<data-predicate>"),
                "<prim>", p_data_predicate_exe);
     }
     void p_debug();
@@ -1994,11 +1994,11 @@
       object_stack_push(b.tag, b.data);
     }
     void expose_stack() {
-      add_prim("drop", p_drop);
-      add_prim("dup",  p_dup);
-      add_prim("over", p_over);
-      add_prim("tuck", p_tuck);
-      add_prim("swap", p_swap);
+      plus_prim("drop", p_drop);
+      plus_prim("dup",  p_dup);
+      plus_prim("over", p_over);
+      plus_prim("tuck", p_tuck);
+      plus_prim("swap", p_swap);
     }
     void p_end() {
       // for 'p_step' which do not handle tail call
@@ -2010,8 +2010,8 @@
       exit(0);
     }
     void expose_ending() {
-      add_prim("end", p_end);
-      add_prim("bye", p_bye);
+      plus_prim("end", p_end);
+      plus_prim("bye", p_bye);
     }
     struct stack* reading_stack; // of input_stack
     struct stack* writing_stack; // of output_stack
@@ -2125,10 +2125,10 @@
       output_stack_push(tos(writing_stack), ' ');
     }
     void expose_rw() {
-      add_prim("has-jo?", p_has_jo_p);
-      add_prim("read-jo", p_read_jo);
-      add_prim("newline", p_newline);
-      add_prim("space", p_space);
+      plus_prim("has-jo?", p_has_jo_p);
+      plus_prim("read-jo", p_read_jo);
+      plus_prim("newline", p_newline);
+      plus_prim("space", p_space);
     }
     cell local_find(jo_t name) {
       // return index of local_record
@@ -2191,8 +2191,8 @@
       }
     }
     void expose_local() {
-      add_prim("ins/get-local", ins_get_local);
-      add_prim("ins/set-local", ins_set_local);
+      plus_prim("ins/get-local", ins_get_local);
+      plus_prim("ins/set-local", ins_set_local);
     }
     struct stack* compiling_stack; // of jojo
 
@@ -2613,19 +2613,19 @@
       disp_exe(JO_EXE->data, rp.tag);
     }
     void expose_control() {
-      add_prim("note", k_ignore);
-      add_prim("ins/lit", ins_lit);
+      plus_prim("note", k_ignore);
+      plus_prim("ins/lit", ins_lit);
 
-      add_prim("ins/jmp", ins_jmp);
-      add_prim("ins/jz", ins_jz);
+      plus_prim("ins/jmp", ins_jmp);
+      plus_prim("ins/jz", ins_jz);
 
-      add_prim("if", k_if);
-      add_prim("el", p_compile_until_round_ket);
+      plus_prim("if", k_if);
+      plus_prim("el", p_compile_until_round_ket);
 
-      add_prim("case", k_case);
-      add_prim("cond", k_cond);
+      plus_prim("case", k_case);
+      plus_prim("cond", k_cond);
 
-      add_prim("recur", p_recur);
+      plus_prim("recur", p_recur);
     }
     void k_run() {
       jo_t* jojo = tos(compiling_stack);
@@ -2650,7 +2650,7 @@
         k_run();
       }
     }
-    void k_add_var() {
+    void k_plus_var() {
       jo_t name = read_jo();
       k_run();
       struct obj a = object_stack_pop();
@@ -2664,14 +2664,14 @@
     }
     #define MAX_FIELDS 1024
 
-    void k_add_data() {
+    void k_plus_data() {
       jo_t name = read_jo();
       jo_t fields[MAX_FIELDS];
       cell i = 0;
       while (true) {
         if (i >= MAX_FIELDS) {
           k_ignore();
-          report("- k_add_data fail\n");
+          report("- k_plus_data fail\n");
           report("  too many fields\n");
           report("  MAX_FIELDS : %ld\n", MAX_FIELDS);
           return;
@@ -2690,7 +2690,7 @@
         i--;
         fresh_fields[i] = fields[i];
       }
-      _add_data(name, fresh_fields);
+      _plus_data(name, fresh_fields);
     }
     void k_arrow() {
       jo_t jo = read_jo();
@@ -2710,7 +2710,7 @@
         k_arrow();
       }
     }
-    void k_add_jojo() {
+    void k_plus_jojo() {
       jo_t fun_name = read_jo();
       jo_t* jojo = tos(compiling_stack);
 
@@ -2723,7 +2723,7 @@
 
       bind_name(fun_name, TAG_JOJO, jojo);
     }
-    cell k_add_gene_count_arity_from_type() {
+    cell k_plus_gene_count_arity_from_type() {
       cell arity = 0;
       while (true) {
         jo_t jo = read_jo();
@@ -2738,15 +2738,15 @@
       }
       return arity;
     }
-    void k_add_gene() {
+    void k_plus_gene() {
       jo_t gene_name = read_jo();
       read_jo(); // drop '('
       read_jo(); // drop '->'
-      cell arity = k_add_gene_count_arity_from_type();
+      cell arity = k_plus_gene_count_arity_from_type();
       k_ignore();
-      add_gene(jo2str(gene_name), arity);
+      plus_gene(jo2str(gene_name), arity);
     }
-    void k_add_disp_collect_tags_from_type(jo_t* tags) {
+    void k_plus_disp_collect_tags_from_type(jo_t* tags) {
       jo_t jo = read_jo();
       if (jo == str2jo("--")) {
         k_ignore();
@@ -2758,25 +2758,25 @@
         return;
       }
       else if (get_local_string_p(jo2str(jo))) {
-        k_add_disp_collect_tags_from_type(tags);
+        k_plus_disp_collect_tags_from_type(tags);
         emit(JO_INS_SET_LOCAL);
         emit(jo);
       }
       else if (tag_string_p(jo2str(jo))) {
         tags[0] = jo;
-        k_add_disp_collect_tags_from_type(tags+1);
+        k_plus_disp_collect_tags_from_type(tags+1);
       }
       else {
-        k_add_disp_collect_tags_from_type(tags);
+        k_plus_disp_collect_tags_from_type(tags);
       }
     }
-    void k_add_disp() {
+    void k_plus_disp() {
       jo_t gene_name = read_jo();
       jo_t tags[16];
       read_jo(); // drop '('
       read_jo(); // drop '->'
 
-      k_add_disp_collect_tags_from_type(tags);
+      k_plus_disp_collect_tags_from_type(tags);
 
       jo_t* jojo = tos(compiling_stack);
       {
@@ -2786,22 +2786,22 @@
         emit(0);
       }
 
-      _add_disp(gene_name, tags, TAG_JOJO, jojo);
+      _plus_disp(gene_name, tags, TAG_JOJO, jojo);
     }
     void expose_top() {
-      add_prim("run", k_run);
+      plus_prim("run", k_run);
 
-      add_prim("test", k_test);
-      add_prim("test-flag", p_test_flag);
-      add_prim("test-flag-on", p_test_flag_on);
-      add_prim("test-flag-off", p_test_flag_off);
+      plus_prim("test", k_test);
+      plus_prim("test-flag", p_test_flag);
+      plus_prim("test-flag-on", p_test_flag_on);
+      plus_prim("test-flag-off", p_test_flag_off);
 
-      add_prim("+var", k_add_var);
-      add_prim("->", k_arrow);
-      add_prim("+jojo", k_add_jojo);
-      add_prim("+data", k_add_data);
-      add_prim("+gene", k_add_gene);
-      add_prim("+disp", k_add_disp);
+      plus_prim("+var", k_plus_var);
+      plus_prim("->", k_arrow);
+      plus_prim("+jojo", k_plus_jojo);
+      plus_prim("+data", k_plus_data);
+      plus_prim("+gene", k_plus_gene);
+      plus_prim("+disp", k_plus_disp);
     }
     void object_print(jo_t tag, cell data);
 
@@ -3054,11 +3054,11 @@
         }
       }
     void expose_repl() {
-      add_prim("repl-flag", p_repl_flag);
-      add_prim("repl-flag-on", p_repl_flag_on);
-      add_prim("repl-flag-off", p_repl_flag_off);
+      plus_prim("repl-flag", p_repl_flag);
+      plus_prim("repl-flag-on", p_repl_flag_on);
+      plus_prim("repl-flag-off", p_repl_flag_off);
 
-      add_prim("debug", p_debug);
+      plus_prim("debug", p_debug);
     }
     bool step_flag = false;
     cell stepper_counter = 0;
@@ -3145,7 +3145,7 @@
       input_stack_free(input_stack);
     }
     void expose_step() {
-      add_prim("step", p_step);
+      plus_prim("step", p_step);
     }
     void p_true() {
       object_stack_push(TAG_BOOL, true);
@@ -3168,13 +3168,13 @@
       object_stack_push(TAG_BOOL, a.data || b.data);
     }
     void expose_bool() {
-      add_atom("<bool>", gc_ignore);
+      plus_atom("<bool>", gc_ignore);
 
-      add_prim("true", p_true);
-      add_prim("false", p_false);
-      add_prim("not", p_not);
-      add_prim("and", p_and);
-      add_prim("or", p_or);
+      plus_prim("true", p_true);
+      plus_prim("false", p_false);
+      plus_prim("not", p_not);
+      plus_prim("and", p_and);
+      plus_prim("or", p_or);
     }
     void string_write(char* str) {
       while (str[0] != '\0') {
@@ -3270,14 +3270,14 @@
       object_stack_push(TAG_STRING, object_entry);
     }
     void expose_string() {
-      add_prim("string-write", p_string_write);
-      add_prim("string-len", p_string_len);
-      add_prim("string-ref", p_string_ref);
-      add_prim("string-cat", p_string_cat);
-      add_prim("string-slice", p_string_slice);
-      add_prim("string-empty?", p_string_empty_p);
-      add_prim("string-eq?", p_string_eq_p);
-      add_prim("read-string", p_read_string);
+      plus_prim("string-write", p_string_write);
+      plus_prim("string-len", p_string_len);
+      plus_prim("string-ref", p_string_ref);
+      plus_prim("string-cat", p_string_cat);
+      plus_prim("string-slice", p_string_slice);
+      plus_prim("string-empty?", p_string_empty_p);
+      plus_prim("string-eq?", p_string_eq_p);
+      plus_prim("read-string", p_read_string);
     }
     void p_inc() {
       struct obj a = object_stack_pop();
@@ -3343,23 +3343,23 @@
       string_write(buffer);
     }
     void expose_int() {
-      add_prim("inc", p_inc);
-      add_prim("dec", p_dec);
-      add_prim("neg", p_neg);
+      plus_prim("inc", p_inc);
+      plus_prim("dec", p_dec);
+      plus_prim("neg", p_neg);
 
-      add_prim("add", p_add);
-      add_prim("sub", p_sub);
+      plus_prim("add", p_add);
+      plus_prim("sub", p_sub);
 
-      add_prim("mul", p_mul);
-      add_prim("div", p_div);
-      add_prim("mod", p_mod);
+      plus_prim("mul", p_mul);
+      plus_prim("div", p_div);
+      plus_prim("mod", p_mod);
 
-      add_prim("gt?", p_gt_p);
-      add_prim("lt?", p_lt_p);
-      add_prim("gteq?", p_gteq_p);
-      add_prim("lteq?", p_lteq_p);
+      plus_prim("gt?", p_gt_p);
+      plus_prim("lt?", p_lt_p);
+      plus_prim("gteq?", p_gteq_p);
+      plus_prim("lteq?", p_lteq_p);
 
-      add_prim("int-write", p_int_write);
+      plus_prim("int-write", p_int_write);
     }
     void p_round_bar()    { object_stack_push(TAG_JO, ROUND_BAR); }
     void p_round_ket()    { object_stack_push(TAG_JO, ROUND_KET); }
@@ -3381,24 +3381,24 @@
       jo_apply(a.data);
     }
     void expose_jo() {
-      add_prim("round-bar", p_round_bar);
-      add_prim("round-ket", p_round_ket);
-      add_prim("square-bar", p_square_bar);
-      add_prim("square-ket", p_square_ket);
-      add_prim("flower-bar", p_flower_bar);
-      add_prim("flower-ket", p_flower_ket);
-      add_prim("double-quote", p_double_quote);
+      plus_prim("round-bar", p_round_bar);
+      plus_prim("round-ket", p_round_ket);
+      plus_prim("square-bar", p_square_bar);
+      plus_prim("square-ket", p_square_ket);
+      plus_prim("flower-bar", p_flower_bar);
+      plus_prim("flower-ket", p_flower_ket);
+      plus_prim("double-quote", p_double_quote);
 
-      add_prim("jo-write", p_jo_write);
-      add_prim("jo-unread", p_jo_unread);
+      plus_prim("jo-write", p_jo_write);
+      plus_prim("jo-unread", p_jo_unread);
 
-      add_prim("jo-apply", p_jo_apply);
+      plus_prim("jo-apply", p_jo_apply);
     }
     void p_new_jojo_from_compiling_stack_tos() {
       object_stack_push(TAG_JOJO, tos(compiling_stack));
     }
     void expose_jojo() {
-      add_prim("new-jojo-from-compiling-stack-tos",
+      plus_prim("new-jojo-from-compiling-stack-tos",
                p_new_jojo_from_compiling_stack_tos);
     }
     void gc_local_env(gc_state_t gc_state, struct object_entry* object_entry) {
@@ -3482,14 +3482,14 @@
       emit(str2jo("closure"));
     }
     void expose_closure() {
-      add_prim("current-local-env", p_current_local_env);
-      add_atom("<local-env>", gc_local_env);
+      plus_prim("current-local-env", p_current_local_env);
+      plus_atom("<local-env>", gc_local_env);
 
-      add_data("<closure>", J(".jojo", ".local-env"));
-      add_prim("closure-exe", p_closure_exe);
-      add_disp("exe", J("<closure>"), "<prim>", p_closure_exe);
+      plus_data("<closure>", J(".jojo", ".local-env"));
+      plus_prim("closure-exe", p_closure_exe);
+      plus_disp("exe", J("<closure>"), "<prim>", p_closure_exe);
 
-      add_prim("apply", p_closure_exe);
+      plus_prim("apply", p_closure_exe);
     }
     void p_tcp_socket_listen() {
       // [:service <string> :backlog <int>] -> [<socket>]
@@ -3689,13 +3689,13 @@
       };
     }
     void expose_socket() {
-      add_atom("<socket>", gc_ignore);
-      add_prim("tcp-socket-listen", p_tcp_socket_listen);
-      add_prim("socket-accept", p_socket_accept);
-      add_prim("tcp-socket-connect", p_tcp_socket_connect);
-      add_prim("socket-send", p_socket_send);
-      add_prim("socket-recv", p_socket_recv);
-      add_prim("close", p_close);
+      plus_atom("<socket>", gc_ignore);
+      plus_prim("tcp-socket-listen", p_tcp_socket_listen);
+      plus_prim("socket-accept", p_socket_accept);
+      plus_prim("tcp-socket-connect", p_tcp_socket_connect);
+      plus_prim("socket-send", p_socket_send);
+      plus_prim("socket-recv", p_socket_recv);
+      plus_prim("close", p_close);
     }
     cell cmd_number;
 
@@ -3735,9 +3735,9 @@
       }
     }
     void expose_system() {
-      add_prim("cmd-number", p_cmd_number);
-      add_prim("index->cmd-string", p_index_to_cmd_string);
-      add_prim("find-env-string", p_find_env_string);
+      plus_prim("cmd-number", p_cmd_number);
+      plus_prim("index->cmd-string", p_index_to_cmd_string);
+      plus_prim("find-env-string", p_find_env_string);
     }
     void ccall (char* function_name, void* lib) {
       primitive_t fun = dlsym(lib, function_name);
@@ -3832,7 +3832,7 @@
       }
     }
     void expose_cffi() {
-      add_prim("+clib", k_clib);
+      plus_prim("+clib", k_clib);
     }
     void p_core_flag() { object_stack_push(TAG_BOOL, core_flag); }
     void p_core_flag_on() { core_flag = true; }
@@ -3894,24 +3894,24 @@
       free(tmp);
     }
     void expose_core() {
-      add_prim("core-flag", p_core_flag);
-      add_prim("core-flag-on", p_core_flag_on);
-      add_prim("core-flag-off", p_core_flag_off);
+      plus_prim("core-flag", p_core_flag);
+      plus_prim("core-flag-on", p_core_flag_on);
+      plus_prim("core-flag-off", p_core_flag_off);
 
-      add_prim("push-terminal-to-reading-stack", p_push_terminal_to_reading_stack);
-      add_prim("drop-reading-stack", p_drop_reading_stack);
+      plus_prim("push-terminal-to-reading-stack", p_push_terminal_to_reading_stack);
+      plus_prim("drop-reading-stack", p_drop_reading_stack);
 
-      add_prim("bind-name", p_bind_name);
+      plus_prim("bind-name", p_bind_name);
 
       // note that, the notation of instruction is not exposed to jojo
-      add_prim("jo-emit-call", p_jo_emit_call);
-      add_prim("int-emit-data", p_int_emit_data);
-      add_prim("emit-lit", p_emit_lit);
+      plus_prim("jo-emit-call", p_jo_emit_call);
+      plus_prim("int-emit-data", p_int_emit_data);
+      plus_prim("emit-lit", p_emit_lit);
 
-      add_prim("jo-emit-get-local", p_jo_emit_get_local);
-      add_prim("jo-emit-set-local", p_jo_emit_set_local);
-      add_prim("jo-emit-get-field", p_jo_emit_get_field);
-      add_prim("jo-emit-set-field", p_jo_emit_set_field);
+      plus_prim("jo-emit-get-local", p_jo_emit_get_local);
+      plus_prim("jo-emit-set-local", p_jo_emit_set_local);
+      plus_prim("jo-emit-get-field", p_jo_emit_get_field);
+      plus_prim("jo-emit-set-field", p_jo_emit_set_field);
     }
     void p1() {
       int file = open("README", O_RDWR);
@@ -4100,11 +4100,11 @@
       close(file);
     }
     void expose_play() {
-      add_prim("p1", p1);
-      add_prim("p2", p2);
-      add_prim("p3", p3);
-      add_prim("p4", p4);
-      add_prim("print-object-stack", p_print_object_stack);
+      plus_prim("p1", p1);
+      plus_prim("p2", p2);
+      plus_prim("p3", p3);
+      plus_prim("p4", p4);
+      plus_prim("print-object-stack", p_print_object_stack);
     }
     void init_system() {
       setvbuf(stdout, 0, _IONBF, 0);
