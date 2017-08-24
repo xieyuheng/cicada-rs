@@ -2200,7 +2200,7 @@
       jo_t* jojo = pop(compiling_stack);
       push(compiling_stack, jojo + 1);
     }
-    void here(cell n) {
+    void emit(cell n) {
       jo_t* jojo = pop(compiling_stack);
       jojo[0] = n;
       push(compiling_stack, jojo + 1);
@@ -2328,9 +2328,9 @@
       object_entry->gc_actor = gc_ignore;
       object_entry->pointer = str;
 
-      here(JO_INS_LIT);
-      here(TAG_STRING);
-      here(object_entry);
+      emit(JO_INS_LIT);
+      emit(TAG_STRING);
+      emit(object_entry);
     }
     void k_closure();
 
@@ -2343,9 +2343,9 @@
       char* str = jo2str(jo);
       // number
       if (int_string_p(str)) {
-        here(JO_INS_LIT);
-        here(TAG_INT);
-        here(string_to_int(str));
+        emit(JO_INS_LIT);
+        emit(TAG_INT);
+        emit(string_to_int(str));
         return true;
       }
       // "string"
@@ -2355,38 +2355,38 @@
       }
       // :local
       else if (get_local_string_p(str)) {
-        here(JO_INS_GET_LOCAL);
-        here(jo);
+        emit(JO_INS_GET_LOCAL);
+        emit(jo);
         return true;
       }
       // :local!
       else if (set_local_string_p(str)) {
-        here(JO_INS_SET_LOCAL);
+        emit(JO_INS_SET_LOCAL);
         char* tmp = substring(str, 0, strlen(str) -1);
-        here(str2jo(tmp));
+        emit(str2jo(tmp));
         free(tmp);
         return true;
       }
       // .field
       else if (get_field_string_p(str)) {
-        here(JO_INS_GET_FIELD);
-        here(jo);
+        emit(JO_INS_GET_FIELD);
+        emit(jo);
         return true;
       }
       // .field!
       else if (set_field_string_p(str)) {
-        here(JO_INS_SET_FIELD);
+        emit(JO_INS_SET_FIELD);
         char* tmp = substring(str, 0, strlen(str) -1);
-        here(str2jo(tmp));
+        emit(str2jo(tmp));
         free(tmp);
         return true;
       }
       // 'jo
       else if (str[0] == '\'' && strlen(str) != 1) {
-        here(JO_INS_LIT);
-        here(TAG_JO);
+        emit(JO_INS_LIT);
+        emit(TAG_JO);
         char* tmp = substring(str, 1, strlen(str));
-        here(str2jo(tmp));
+        emit(str2jo(tmp));
         free(tmp);
         return true;
       }
@@ -2396,7 +2396,7 @@
         return true;
       }
       else {
-        here(jo);
+        emit(jo);
         return true;
       }
     }
@@ -2487,7 +2487,7 @@
 
     void k_if() {
       compile_until_meet_jo(JO_THEN);
-      here(JO_INS_JZ);
+      emit(JO_INS_JZ);
       jo_t* end_of_then = tos(compiling_stack);
       p_compiling_stack_inc();
       jo_t ending_jo = compile_until_meet_jo_or_jo(JO_ELSE, ROUND_KET);
@@ -2496,7 +2496,7 @@
         return;
       }
       else {
-        here(JO_INS_JMP);
+        emit(JO_INS_JMP);
         jo_t* end_of_else = tos(compiling_stack);
         p_compiling_stack_inc();
         end_of_then[0] = (jo_t*)tos(compiling_stack) - end_of_then;
@@ -2531,24 +2531,24 @@
         jo_t dc = read_jo();
         if (dc == ROUND_KET) { break; }
 
-        here(str2jo("dup"));
-        here(str2jo("tag"));
+        emit(str2jo("dup"));
+        emit(str2jo("tag"));
         {
           char* tmp = malloc(strlen(jo2str(dc) + 2 + 1));
           tmp[0] = '\0';
           strcat(tmp, jo2str(dc));
-          here(JO_INS_LIT); here(TAG_JO); here(str2jo(tmp));
+          emit(JO_INS_LIT); emit(TAG_JO); emit(str2jo(tmp));
           free(tmp);
         }
-        here(str2jo("eq?"));
+        emit(str2jo("eq?"));
 
-        here(JO_INS_JZ);
+        emit(JO_INS_JZ);
         jo_t* end_of_this_case = tos(compiling_stack);
         p_compiling_stack_inc();
-        here(str2jo("drop"));
+        emit(str2jo("drop"));
         compile_maybe_square();
 
-        here(JO_INS_JMP);
+        emit(JO_INS_JMP);
         case_ends[counter] = tos(compiling_stack);
         counter++;
         p_compiling_stack_inc();
@@ -2589,12 +2589,12 @@
         }
         jo_unread(s);
         compile_maybe_square();
-        here(JO_INS_JZ);
+        emit(JO_INS_JZ);
         jo_t* end_of_this_cond = tos(compiling_stack);
         p_compiling_stack_inc();
 
         compile_maybe_square();
-        here(JO_INS_JMP);
+        emit(JO_INS_JMP);
         cond_ends[counter] = tos(compiling_stack);
         counter++;
         p_compiling_stack_inc();
@@ -2632,9 +2632,9 @@
 
       {
         compile_until_meet_jo(ROUND_KET);
-        here(JO_END);
-        here(0);
-        here(0);
+        emit(JO_END);
+        emit(0);
+        emit(0);
       }
 
       return_stack_push(jojo, TAG_JOJO, jojo, current_local_counter);
@@ -2703,8 +2703,8 @@
       }
       else if (get_local_string_p(jo2str(jo))) {
         k_arrow();
-        here(JO_INS_SET_LOCAL);
-        here(jo);
+        emit(JO_INS_SET_LOCAL);
+        emit(jo);
       }
       else {
         k_arrow();
@@ -2716,9 +2716,9 @@
 
       {
         compile_until_meet_jo(ROUND_KET);
-        here(JO_END);
-        here(0);
-        here(0);
+        emit(JO_END);
+        emit(0);
+        emit(0);
       }
 
       bind_name(fun_name, TAG_JOJO, jojo);
@@ -2759,8 +2759,8 @@
       }
       else if (get_local_string_p(jo2str(jo))) {
         k_add_disp_collect_tags_from_type(tags);
-        here(JO_INS_SET_LOCAL);
-        here(jo);
+        emit(JO_INS_SET_LOCAL);
+        emit(jo);
       }
       else if (tag_string_p(jo2str(jo))) {
         tags[0] = jo;
@@ -2781,9 +2781,9 @@
       jo_t* jojo = tos(compiling_stack);
       {
         compile_until_meet_jo(ROUND_KET);
-        here(JO_END);
-        here(0);
-        here(0);
+        emit(JO_END);
+        emit(0);
+        emit(0);
       }
 
       _add_disp(gene_name, tags, TAG_JOJO, jojo);
@@ -3464,9 +3464,9 @@
 
       {
         compile_until_meet_jo(FLOWER_KET);
-        here(JO_END);
-        here(0);
-        here(0);
+        emit(JO_END);
+        emit(0);
+        emit(0);
       }
 
       jo_t* new_jojo =
@@ -3474,12 +3474,12 @@
       drop(compiling_stack);
       push(compiling_stack, jojo);
 
-      here(JO_INS_LIT);
-      here(TAG_JOJO);
-      here(new_jojo);
+      emit(JO_INS_LIT);
+      emit(TAG_JOJO);
+      emit(new_jojo);
 
-      here(str2jo("current-local-env"));
-      here(str2jo("closure"));
+      emit(str2jo("current-local-env"));
+      emit(str2jo("closure"));
     }
     void expose_closure() {
       add_prim("current-local-env", p_current_local_env);
@@ -3855,42 +3855,42 @@
     }
     void p_jo_emit_call() {
       struct obj a = object_stack_pop();
-      here(a.data);
+      emit(a.data);
     }
     void p_int_emit_data() {
       struct obj a = object_stack_pop();
-      here(a.data);
+      emit(a.data);
     }
     void p_emit_lit() {
       struct obj a = object_stack_pop();
-      here(JO_INS_LIT);
-      here(a.tag);
-      here(a.data);
+      emit(JO_INS_LIT);
+      emit(a.tag);
+      emit(a.data);
     }
     void p_jo_emit_get_local() {
       struct obj a = object_stack_pop();
-      here(JO_INS_GET_LOCAL);
-      here(a.data);
+      emit(JO_INS_GET_LOCAL);
+      emit(a.data);
     }
     void p_jo_emit_set_local() {
       struct obj a = object_stack_pop();
       char* str = jo2str(a.data);
-      here(JO_INS_SET_LOCAL);
+      emit(JO_INS_SET_LOCAL);
       char* tmp = substring(str, 0, strlen(str) -1);
-      here(str2jo(tmp));
+      emit(str2jo(tmp));
       free(tmp);
     }
     void p_jo_emit_get_field() {
       struct obj a = object_stack_pop();
-      here(JO_INS_GET_FIELD);
-      here(a.data);
+      emit(JO_INS_GET_FIELD);
+      emit(a.data);
     }
     void p_jo_emit_set_field() {
       struct obj a = object_stack_pop();
       char* str = jo2str(a.data);
-      here(JO_INS_SET_FIELD);
+      emit(JO_INS_SET_FIELD);
       char* tmp = substring(str, 0, strlen(str) -1);
-      here(str2jo(tmp));
+      emit(str2jo(tmp));
       free(tmp);
     }
     void expose_core() {
