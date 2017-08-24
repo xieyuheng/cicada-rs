@@ -2334,10 +2334,10 @@
     }
     void k_closure();
 
-    bool compile_jo(jo_t jo) {
+    void compile_jo(jo_t jo) {
       if (jo == ROUND_BAR) {
         jo_apply(read_jo());
-        return true;
+        return;
       }
 
       char* str = jo2str(jo);
@@ -2346,18 +2346,15 @@
         emit(JO_INS_LIT);
         emit(TAG_INT);
         emit(string_to_int(str));
-        return true;
       }
       // "string"
       else if (jo == DOUBLE_QUOTE) {
         compile_string();
-        return true;
       }
       // :local
       else if (get_local_string_p(str)) {
         emit(JO_INS_GET_LOCAL);
         emit(jo);
-        return true;
       }
       // :local!
       else if (set_local_string_p(str)) {
@@ -2365,13 +2362,11 @@
         char* tmp = substring(str, 0, strlen(str) -1);
         emit(str2jo(tmp));
         free(tmp);
-        return true;
       }
       // .field
       else if (get_field_string_p(str)) {
         emit(JO_INS_GET_FIELD);
         emit(jo);
-        return true;
       }
       // .field!
       else if (set_field_string_p(str)) {
@@ -2379,7 +2374,6 @@
         char* tmp = substring(str, 0, strlen(str) -1);
         emit(str2jo(tmp));
         free(tmp);
-        return true;
       }
       // 'jo
       else if (str[0] == '\'' && strlen(str) != 1) {
@@ -2388,31 +2382,20 @@
         char* tmp = substring(str, 1, strlen(str));
         emit(str2jo(tmp));
         free(tmp);
-        return true;
       }
       // {...}
       else if (jo == FLOWER_BAR) {
         k_closure();
-        return true;
       }
       else {
         emit(jo);
-        return true;
       }
     }
-    bool compile_until_meet_jo(jo_t ending_jo) {
+    void compile_until_meet_jo(jo_t ending_jo) {
       while (true) {
         jo_t jo = read_jo();
-        if (jo == ending_jo) {
-          return true;
-        }
-        if (!compile_jo(jo)) {
-          report("- compile_until_meet_jo fail\n");
-          // report("  the rest of the ...\n");
-          // p_dump();
-          p_debug();
-          return false;
-        }
+        if (jo == ending_jo) { return; }
+        compile_jo(jo);
       }
     }
     jo_t compile_until_meet_jo_or_jo(jo_t ending_jo1, jo_t ending_jo2) {
