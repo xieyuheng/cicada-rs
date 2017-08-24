@@ -2429,13 +2429,8 @@
     void p_compile_until_round_ket() {
       compile_until_meet_jo(ROUND_KET);
     }
-    void p_bind_name() {
-      struct obj a = object_stack_pop();
-      struct obj b = object_stack_pop();
-      bind_name(b.data, a.tag, a.data);
-    }
     void expose_compiler() {
-      add_prim("bind-name", p_bind_name);
+
     }
     void k_ignore() {
       while (true) {
@@ -3853,6 +3848,51 @@
     void p_drop_reading_stack() {
       drop(reading_stack);
     }
+    void p_bind_name() {
+      struct obj a = object_stack_pop();
+      struct obj b = object_stack_pop();
+      bind_name(b.data, a.tag, a.data);
+    }
+    void p_jo_emit_call() {
+      struct obj a = object_stack_pop();
+      here(a.data);
+    }
+    void p_int_emit_data() {
+      struct obj a = object_stack_pop();
+      here(a.data);
+    }
+    void p_emit_lit() {
+      struct obj a = object_stack_pop();
+      here(JO_INS_LIT);
+      here(a.tag);
+      here(a.data);
+    }
+    void p_jo_emit_get_local() {
+      struct obj a = object_stack_pop();
+      here(JO_INS_GET_LOCAL);
+      here(a.data);
+    }
+    void p_jo_emit_set_local() {
+      struct obj a = object_stack_pop();
+      char* str = jo2str(a.data);
+      here(JO_INS_SET_LOCAL);
+      char* tmp = substring(str, 0, strlen(str) -1);
+      here(str2jo(tmp));
+      free(tmp);
+    }
+    void p_jo_emit_get_field() {
+      struct obj a = object_stack_pop();
+      here(JO_INS_GET_FIELD);
+      here(a.data);
+    }
+    void p_jo_emit_set_field() {
+      struct obj a = object_stack_pop();
+      char* str = jo2str(a.data);
+      here(JO_INS_SET_FIELD);
+      char* tmp = substring(str, 0, strlen(str) -1);
+      here(str2jo(tmp));
+      free(tmp);
+    }
     void expose_core() {
       add_prim("core-flag", p_core_flag);
       add_prim("core-flag-on", p_core_flag_on);
@@ -3860,6 +3900,18 @@
 
       add_prim("push-terminal-to-reading-stack", p_push_terminal_to_reading_stack);
       add_prim("drop-reading-stack", p_drop_reading_stack);
+
+      add_prim("bind-name", p_bind_name);
+
+      // note that, the notation of instruction is not exposed to jojo
+      add_prim("jo-emit-call", p_jo_emit_call);
+      add_prim("int-emit-data", p_int_emit_data);
+      add_prim("emit-lit", p_emit_lit);
+
+      add_prim("jo-emit-get-local", p_jo_emit_get_local);
+      add_prim("jo-emit-set-local", p_jo_emit_set_local);
+      add_prim("jo-emit-get-field", p_jo_emit_get_field);
+      add_prim("jo-emit-set-field", p_jo_emit_set_field);
     }
     void p1() {
       int file = open("README", O_RDWR);

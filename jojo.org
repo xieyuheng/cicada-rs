@@ -3,6 +3,13 @@
 
 * [todo-stack]
 
+*** 'here' => 'emit'
+*** 'add_' => 'plus_'
+*** bool compile_jo(jo_t jo) => void compile_jo(jo_t jo)
+*** add_atom define predicate -- just like add_data
+*** jo->int
+*** quote and backquote and comma as separator
+
 *** fix repl in core
 
     - expose reading_stack and input_stack
@@ -3618,21 +3625,12 @@
     }
     #+end_src
 
-*** p_bind_name
-
-    #+begin_src c
-    void p_bind_name() {
-      struct obj a = object_stack_pop();
-      struct obj b = object_stack_pop();
-      bind_name(b.data, a.tag, a.data);
-    }
-    #+end_src
 
 *** expose_compiler
 
     #+begin_src c
     void expose_compiler() {
-      add_prim("bind-name", p_bind_name);
+
     }
     #+end_src
 
@@ -5625,6 +5623,91 @@
     }
     #+end_src
 
+*** p_bind_name
+
+    #+begin_src c
+    void p_bind_name() {
+      struct obj a = object_stack_pop();
+      struct obj b = object_stack_pop();
+      bind_name(b.data, a.tag, a.data);
+    }
+    #+end_src
+
+*** p_jo_emit_call
+
+    #+begin_src c
+    void p_jo_emit_call() {
+      struct obj a = object_stack_pop();
+      here(a.data);
+    }
+    #+end_src
+
+*** p_int_emit_data
+
+    #+begin_src c
+    void p_int_emit_data() {
+      struct obj a = object_stack_pop();
+      here(a.data);
+    }
+    #+end_src
+
+*** p_emit_lit
+
+    #+begin_src c
+    void p_emit_lit() {
+      struct obj a = object_stack_pop();
+      here(JO_INS_LIT);
+      here(a.tag);
+      here(a.data);
+    }
+    #+end_src
+
+*** p_jo_emit_get_local
+
+    #+begin_src c
+    void p_jo_emit_get_local() {
+      struct obj a = object_stack_pop();
+      here(JO_INS_GET_LOCAL);
+      here(a.data);
+    }
+    #+end_src
+
+*** p_jo_emit_set_local
+
+    #+begin_src c
+    void p_jo_emit_set_local() {
+      struct obj a = object_stack_pop();
+      char* str = jo2str(a.data);
+      here(JO_INS_SET_LOCAL);
+      char* tmp = substring(str, 0, strlen(str) -1);
+      here(str2jo(tmp));
+      free(tmp);
+    }
+    #+end_src
+
+*** p_jo_emit_get_field
+
+    #+begin_src c
+    void p_jo_emit_get_field() {
+      struct obj a = object_stack_pop();
+      here(JO_INS_GET_FIELD);
+      here(a.data);
+    }
+    #+end_src
+
+*** p_jo_emit_set_field
+
+    #+begin_src c
+    void p_jo_emit_set_field() {
+      struct obj a = object_stack_pop();
+      char* str = jo2str(a.data);
+      here(JO_INS_SET_FIELD);
+      char* tmp = substring(str, 0, strlen(str) -1);
+      here(str2jo(tmp));
+      free(tmp);
+    }
+    #+end_src
+
 *** expose_core
 
     #+begin_src c
@@ -5635,6 +5718,18 @@
 
       add_prim("push-terminal-to-reading-stack", p_push_terminal_to_reading_stack);
       add_prim("drop-reading-stack", p_drop_reading_stack);
+
+      add_prim("bind-name", p_bind_name);
+
+      // note that, the notation of instruction is not exposed to jojo
+      add_prim("jo-emit-call", p_jo_emit_call);
+      add_prim("int-emit-data", p_int_emit_data);
+      add_prim("emit-lit", p_emit_lit);
+
+      add_prim("jo-emit-get-local", p_jo_emit_get_local);
+      add_prim("jo-emit-set-local", p_jo_emit_set_local);
+      add_prim("jo-emit-get-field", p_jo_emit_get_field);
+      add_prim("jo-emit-set-field", p_jo_emit_set_field);
     }
     #+end_src
 

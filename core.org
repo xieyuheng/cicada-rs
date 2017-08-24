@@ -124,7 +124,7 @@
       | [] | <vector>  | '[] | <vons> |
       | {} | <closure> | '{} | <fons> |
 
-*** list-like
+*** jexp
 
     #+begin_src jojo
     (+data <null>)
@@ -198,7 +198,7 @@
                 :l .cdr recur]))
     #+end_src
 
-*** >< repl
+*** ><>< repl
 
     - before call a repl one has to push an input_stack to reading_stack
 
@@ -222,59 +222,65 @@
       recur)
     #+end_src
 
-*** compile-jojo
+*** >< compile-jojo
 
     #+begin_src jojo
-    (note (+jojo emit-call )
-      (+jojo emit-raw-int )
-      (+jojo emit-lit ))
+    (note
+      (+jojo compile-jojo (-> :l jexp <cons> -- <jojo>)
+        new-jojo-from-compiling-stack-tos
+        swap compile-jojo/help)
 
-    (+jojo compile-jojo (-> :l jexp <cons> -- <jojo>)
-      new-jojo-from-compiling-stack-tos
-      swap compile-jojo/help)
+      (+jojo compile-jojo/jo (-> :jo --)
+        (cond
+          [:jo number-jo?] [:jo jo->int emit-lit]
+          [:jo get-local-jo?] [:jo jo-emit-get-local]
+          [:jo set-local-jo?] [:jo jo-emit-set-local]
+          [:jo get-field-jo?] [:jo jo-emit-get-field]
+          [:jo set-field-jo?] [:jo jo-emit-set-field]
+          else [:jo jo-emit-call]))
 
-    (+jojo compile-jojo/jo)
-
-    (+jojo compile-jojo/help (-> :l jexp <cons> --)
-      (if :l null? then
-          'end emit-call
-          0 emit-raw-int
-          0 emit-raw-int
-          end)
-      :l .car :jexp!
-      (cond [:jexp cons?] []
-            [:jexp vons?] []
-            [:jexp fons?] []
-            [:jexp string?] [:jexp emit-lit]
-            [:jexp jo?] [:jexp compile-jojo/jo])
-      :l .cdr recur)
+      (+jojo compile-jojo/help (-> :l jexp <cons> --)
+        (if :l null? then
+            'end jo-emit-call
+            0 int-emit-data
+            0 int-emit-data
+            end)
+        :l .car :jexp!
+        (cond [:jexp cons?] [:jexp .cdr :jexp .car jo-apply]
+              [:jexp vons?] []
+              [:jexp fons?] []
+              [:jexp string?] [:jexp emit-lit]
+              [:jexp jo?] [:jexp compile-jojo/jo])
+        :l .cdr recur))
     #+end_src
 
-*** (+jojo)
+*** >< (+jojo)
 
     #+begin_src jojo
-    (+jojo +jojo (-> :l --)
-      :l .car
-      :l .cdr compile-jojo
-      bind-name)
+    (note
+      (+jojo +jojo (-> :l --)
+        :l .car
+        :l .cdr compile-jojo
+        bind-name))
     #+end_src
 
-*** (run repl)
+*** >< (run repl)
 
     #+begin_src jojo
-    (run repl)
+    (note (run repl))
     #+end_src
 
-*** (run)
+*** >< (run)
 
     #+begin_src jojo
-    (+jojo run
-      )
+    (note (+jojo run
+            ))
     #+end_src
 
-*** the-story-begin
+*** >< the-story-begin
 
     #+begin_src jojo
-    (+jojo square dup mul)
-    (run )
+    (note
+      (+jojo square dup mul)
+      (run ))
     #+end_src
