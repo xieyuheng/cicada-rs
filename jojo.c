@@ -46,15 +46,21 @@
       }
       return result;
     }
-    bool isbarcket(char c) {
-      return (c == '(' ||
-              c == ')' ||
-              c == '[' ||
-              c == ']' ||
-              c == '{' ||
-              c == '}' ||
-              c == '"');
-    }
+      bool char_space_p(char c) {
+        return isspace(c);
+      }
+      bool char_delimiter_p(char c) {
+        return (c == '(' ||
+                c == ')' ||
+                c == '[' ||
+                c == ']' ||
+                c == '{' ||
+                c == '}' ||
+                c == '"' ||
+                c == ',' ||
+                c == '`' ||
+                c == '\'');
+      }
     cell char_to_nat(char c) {
       if (c >= '0' && c <= '9') {
         return (c - '0');
@@ -291,6 +297,9 @@
     jo_t FLOWER_BAR;
     jo_t FLOWER_KET;
     jo_t DOUBLE_QUOTE;
+    jo_t QUOTE;
+    jo_t BACKQUOTE;
+    jo_t COMMA;
 
     jo_t JO_INS_LIT;
     jo_t JO_INS_GET_LOCAL;
@@ -377,6 +386,15 @@
       }
       #define J0 (char*[]){0}
       #define J(...) generate_jo_array((char*[]){__VA_ARGS__, 0})
+    bool jo_delimiter_p(jo_t jo) {
+      char* str = jo2str(jo);
+      if (strlen(str) != 1) {
+        return false;
+      }
+      else {
+        return char_delimiter_p(str[0]);
+      }
+    }
     struct stack_link {
       cell* stack;
       struct stack_link* link;
@@ -2045,14 +2063,11 @@
     bool has_jo_p() {
       char c;
       while (true) {
-
         if (!has_byte_p()) {
           return false;
         }
-
         c = read_byte();
-
-        if (isspace(c)) {
+        if (char_space_p(c)) {
           // loop
         }
         else {
@@ -2075,7 +2090,8 @@
 
         if (!has_byte_p()) {
           if (!collecting) {
-            report("- p_read_jo meet end-of-file\n");
+            report("- p_read_jo fail\n");
+            report("  meet end-of-file when still collecting bytes\n");
             p_debug();
           }
           else {
@@ -2085,29 +2101,29 @@
 
         c = read_byte(); // report("- read_byte() : %c\n", c);
 
-        if (!collecting) {
-          if (isspace(c)) {
-            // loop
-          }
-          else {
-            collecting = true;
-            buf[cur] = c;
-            cur++;
-            if (isbarcket(c)) {
-              go = false;
-            }
-          }
-        }
-
-        else {
-          if (isbarcket(c) ||
-              isspace(c)) {
+        if (collecting) {
+          if (char_delimiter_p(c) ||
+              char_space_p(c)) {
             byte_unread(c);
             go = false;
           }
           else {
             buf[cur] = c;
             cur++;
+          }
+        }
+
+        else {
+          if (char_space_p(c)) {
+            // loop
+          }
+          else {
+            collecting = true;
+            buf[cur] = c;
+            cur++;
+            if (char_delimiter_p(c)) {
+              go = false;
+            }
           }
         }
       }
@@ -2390,13 +2406,24 @@
         emit(str2jo(tmp));
         free(tmp);
       }
-      // 'jo
-      else if (str[0] == '\'' && strlen(str) != 1) {
-        emit(JO_INS_LIT);
-        emit(TAG_JO);
-        char* tmp = substring(str, 1, strlen(str));
-        emit(str2jo(tmp));
-        free(tmp);
+      // ,
+      else if (jo == COMMA) {
+        // ignore
+      }
+      // ' jo
+      else if (str[0] == '\'') {
+        jo_t next_jo = read_jo();
+        if (jo_delimiter_p(next_jo)) {
+          report("- compile_jo fail\n");
+          report("  can not handle delimiter after ' in this reader\n");
+          report("  delimiter : %s\n", jo2str(next_jo));
+          p_debug();
+        }
+        else {
+          emit(JO_INS_LIT);
+          emit(TAG_JO);
+          emit(next_jo);
+        }
       }
       // {...}
       else if (jo == FLOWER_BAR) {
@@ -4149,6 +4176,9 @@
       FLOWER_BAR   =   str2jo("{");
       FLOWER_KET   =   str2jo("}");
       DOUBLE_QUOTE =   str2jo("\"");
+      QUOTE        =   str2jo("'");
+      BACKQUOTE    =   str2jo("`");
+      COMMA        =   str2jo(",");
 
       JO_INS_LIT       = str2jo("ins/lit");
       JO_INS_GET_LOCAL = str2jo("ins/get-local");
