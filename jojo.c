@@ -2266,36 +2266,6 @@
           return true;
         }
       }
-      // :local.field
-      bool get_local_field_string_p(char* str) {
-        if (str[0] != ':') {
-          return false;
-        }
-        else if (string_last_byte(str) == '!') {
-          return false;
-        }
-        else if (string_count_member(str, '.') != 1) {
-          return false;
-        }
-        else {
-          return true;
-        }
-      }
-      // :local.field!
-      bool set_local_field_string_p(char* str) {
-        if (str[0] != ':') {
-          return false;
-        }
-        else if (string_last_byte(str) != '!') {
-          return false;
-        }
-        else if (string_count_member(str, '.') != 1) {
-          return false;
-        }
-        else {
-          return true;
-        }
-      }
       // .field
       bool get_field_string_p(char* str) {
         if (str[0] != '.') {
@@ -3400,7 +3370,11 @@
     void p_square_ket()   { object_stack_push(TAG_JO, SQUARE_KET); }
     void p_flower_bar()   { object_stack_push(TAG_JO, FLOWER_BAR); }
     void p_flower_ket()   { object_stack_push(TAG_JO, FLOWER_KET); }
+
     void p_double_quote() { object_stack_push(TAG_JO, DOUBLE_QUOTE); }
+    void p_quote()        { object_stack_push(TAG_JO, QUOTE); }
+    void p_backquote()    { object_stack_push(TAG_JO, BACKQUOTE); }
+    void p_comma()        { object_stack_push(TAG_JO, COMMA); }
     void p_jo_write() {
       struct obj a = object_stack_pop();
       string_write(jo2str(a.data));
@@ -3417,21 +3391,49 @@
       struct obj a = object_stack_pop();
       object_stack_push(TAG_INT, string_to_int(jo2str(a.data)));
     }
+    void p_int_jo_p() {
+      struct obj a = object_stack_pop();
+      object_stack_push(TAG_BOOL, int_string_p(jo2str(a.data)));
+    }
+    void p_get_local_jo_p() {
+      struct obj a = object_stack_pop();
+      object_stack_push(TAG_BOOL, get_local_string_p(jo2str(a.data)));
+    }
+    void p_set_local_jo_p() {
+      struct obj a = object_stack_pop();
+      object_stack_push(TAG_BOOL, set_local_string_p(jo2str(a.data)));
+    }
+    void p_get_field_jo_p() {
+      struct obj a = object_stack_pop();
+      object_stack_push(TAG_BOOL, get_field_string_p(jo2str(a.data)));
+    }
+    void p_set_field_jo_p() {
+      struct obj a = object_stack_pop();
+      object_stack_push(TAG_BOOL, set_field_string_p(jo2str(a.data)));
+    }
     void expose_jo() {
-      plus_prim("round-bar", p_round_bar);
-      plus_prim("round-ket", p_round_ket);
-      plus_prim("square-bar", p_square_bar);
-      plus_prim("square-ket", p_square_ket);
-      plus_prim("flower-bar", p_flower_bar);
-      plus_prim("flower-ket", p_flower_ket);
+      plus_prim("round-bar",    p_round_bar);
+      plus_prim("round-ket",    p_round_ket);
+      plus_prim("square-bar",   p_square_bar);
+      plus_prim("square-ket",   p_square_ket);
+      plus_prim("flower-bar",   p_flower_bar);
+      plus_prim("flower-ket",   p_flower_ket);
+
       plus_prim("double-quote", p_double_quote);
+      plus_prim("quote",        p_quote);
+      plus_prim("backquote",    p_backquote);
+      plus_prim("comma",        p_comma);
 
-      plus_prim("jo-write", p_jo_write);
+      plus_prim("jo-write",  p_jo_write);
       plus_prim("jo-unread", p_jo_unread);
+      plus_prim("jo-apply",  p_jo_apply);
+      plus_prim("jo->int",   p_jo_to_int);
 
-      plus_prim("jo-apply", p_jo_apply);
-
-      plus_prim("jo->int", p_jo_to_int);
+      plus_prim("int-jo?",       p_int_jo_p);
+      plus_prim("get-local-jo?", p_get_local_jo_p);
+      plus_prim("set-local-jo?", p_set_local_jo_p);
+      plus_prim("get-field-jo?", p_get_field_jo_p);
+      plus_prim("set-field-jo?", p_set_field_jo_p);
     }
     void p_new_jojo_from_compiling_stack_tos() {
       object_stack_push(TAG_JOJO, tos(compiling_stack));
@@ -3528,7 +3530,11 @@
       plus_prim("closure-exe", p_closure_exe);
       plus_disp("exe", J("<closure>"), "<prim>", p_closure_exe);
 
-      plus_prim("apply", p_closure_exe);
+      plus_gene("apply", 1);
+      plus_disp("apply", J("<closure>"), "<prim>", p_closure_exe);
+      plus_disp("apply", J("<jojo>"), "<prim>", p_jojo_exe);
+      plus_prim("jojo-apply", p_jojo_exe);
+      plus_prim("closure-apply", p_closure_exe);
     }
     void p_tcp_socket_listen() {
       // [:service <string> :backlog <int>] -> [<socket>]
@@ -4260,7 +4266,7 @@
       init_kernel_signal_handler();
 
       // load_core();
-      path_load("core.jo");
+      // path_load("core.jo");
 
       p_repl_flag_on();
       repl(input_stack_terminal());

@@ -3,7 +3,42 @@
 
 * [todo-stack]
 
-*** re-define keywords
+*** fix repl
+
+    - before call a repl one has to push an input_stack to reading_stack
+
+      after the input_stack is empty
+      the repl returns
+
+      one has to drop reading_stack
+      and close input_stack
+
+      thus, the input_stack shoud be an argument of the repl
+
+    - x -
+      this might be not a good way to use the repl
+
+      maybe repl should only be used for terminal
+
+      we can redirect reader
+      but we should not use repl to do that
+
+      [meaningful distinctions deserve to be maintained.]
+
+      for example, when reading from file
+      we have information about position
+
+    - k -
+      since we are passing input_stack as an argument to repl
+      we already can make distinction in the function body of repl
+      maybe the problem is calling repl in repl
+      an wish the second repl to use the input_stack of the first repl
+
+    - we can share input_stack between them
+
+*** ready to re-define keywords
+
+*** (->)
 
 *** quote as in jexp
 
@@ -202,16 +237,6 @@
 
 *** ><>< repl
 
-    - before call a repl one has to push an input_stack to reading_stack
-
-      after the input_stack is empty
-      the repl returns
-
-      one has to drop reading_stack
-      and close input_stack
-
-      thus, the input_stack shoud be an argument of the repl
-
     #+begin_src jojo
     (+jojo repl
       push-terminal-to-reading-stack
@@ -227,56 +252,51 @@
 *** >< compile-jojo
 
     #+begin_src jojo
-    (note
-      (+jojo compile-jojo (-> :l jexp <cons> -- <jojo>)
-        new-jojo-from-compiling-stack-tos
-        swap compile-jojo/help)
+    (+jojo compile-jojo (-> jexp <cons> -- <jojo>)
+      new-jojo-from-compiling-stack-tos
+      swap compile-jojo/help)
 
-      (+jojo compile-jojo/jo (-> :jo --)
-        (cond
-          [:jo number-jo?] [:jo jo->int emit-lit]
-          [:jo get-local-jo?] [:jo jo-emit-get-local]
-          [:jo set-local-jo?] [:jo jo-emit-set-local]
-          [:jo get-field-jo?] [:jo jo-emit-get-field]
-          [:jo set-field-jo?] [:jo jo-emit-set-field]
-          else [:jo jo-emit-call]))
+    (+jojo compile-jojo/jo (-> :jo --)
+      (cond
+        [:jo int-jo?]       [:jo jo->int emit-lit]
+        [:jo get-local-jo?] [:jo jo-emit-get-local]
+        [:jo set-local-jo?] [:jo jo-emit-set-local]
+        [:jo get-field-jo?] [:jo jo-emit-get-field]
+        [:jo set-field-jo?] [:jo jo-emit-set-field]
+        else [:jo jo-emit-call]))
 
-      (+jojo compile-jojo/help (-> :l jexp <cons> --)
-        (if :l null? then
-            'end jo-emit-call
-            0 int-emit-data
-            0 int-emit-data
-            end)
-        :l .car :jexp!
-        (cond [:jexp cons?] [:jexp .cdr :jexp .car jo-apply]
-              [:jexp vons?] []
-              [:jexp fons?] []
-              [:jexp string?] [:jexp emit-lit]
-              [:jexp jo?] [:jexp compile-jojo/jo])
-        :l .cdr recur))
+    (+jojo compile-jojo/help (-> :l jexp <cons> --)
+      (if :l null? then
+          'end jo-emit-call
+          0 int-emit-data
+          0 int-emit-data
+          end)
+      :l .car :jexp!
+      (cond [:jexp cons?] [:jexp .cdr :jexp .car jo-apply]
+            [:jexp vons?] []
+            [:jexp fons?] []
+            [:jexp string?] [:jexp emit-lit]
+            [:jexp jo?] [:jexp compile-jojo/jo])
+      :l .cdr recur)
     #+end_src
 
-*** >< (+jojo)
+*** (+jojo)
 
     #+begin_src jojo
-    (note
-      (+jojo +jojo (-> :l --)
-        :l .car
-        :l .cdr compile-jojo
-        bind-name))
-    #+end_src
-
-*** >< (run repl)
-
-    #+begin_src jojo
-    (note (run repl))
+    (+jojo +jojo (-> :l --)
+      :l .car   dup jo-write newline
+      :l .cdr   dup jexp-write newline
+      compile-jojo
+      bind-name)
+    (run repl)
     #+end_src
 
 *** >< (run)
 
     #+begin_src jojo
-    (note (+jojo run
-            ))
+    (+jojo run
+      dup jexp-write newline
+      compile-jojo apply)
     #+end_src
 
 *** >< the-story-begin
