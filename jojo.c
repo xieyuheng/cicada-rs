@@ -1008,44 +1008,44 @@
         output_stack->pointer++;
       }
     }
-    struct obj {
-      jo_t tag;
-      cell data;
+    struct dp {
+      jo_t t;
+      cell d;
     };
 
-    struct stack* object_stack;
+    struct stack* ds;
 
-    struct obj object_stack_pop() {
-      struct obj p;
-      p.tag = pop(object_stack);
-      p.data = pop(object_stack);
+    struct dp ds_pop() {
+      struct dp p;
+      p.t = pop(ds);
+      p.d = pop(ds);
       return p;
     }
 
-    struct obj object_stack_tos() {
-      struct obj p;
-      p.tag = pop(object_stack);
-      p.data = pop(object_stack);
-      push(object_stack, p.data);
-      push(object_stack, p.tag);
+    struct dp ds_tos() {
+      struct dp p;
+      p.t = pop(ds);
+      p.d = pop(ds);
+      push(ds, p.d);
+      push(ds, p.t);
       return p;
     }
 
-    bool object_stack_empty_p() {
-      return stack_empty_p(object_stack);
+    bool ds_empty_p() {
+      return stack_empty_p(ds);
     }
 
-    void object_stack_push(jo_t tag, cell data) {
-      push(object_stack, data);
-      push(object_stack, tag);
+    void ds_push(jo_t tag, cell data) {
+      push(ds, data);
+      push(ds, tag);
     }
 
-    jo_t object_stack_peek_tag(cell index) {
-      return stack_peek(object_stack, (index*2) - 1);
+    jo_t ds_peek_tag(cell index) {
+      return stack_peek(ds, (index*2) - 1);
     }
 
-    cell object_stack_peek_data(cell index) {
-      return stack_peek(object_stack, (index*2));
+    cell ds_peek_data(cell index) {
+      return stack_peek(ds, (index*2));
     }
     struct local {
       jo_t name;
@@ -1056,67 +1056,67 @@
     #define LOCAL_RECORD_SIZE (32 * 1024)
     struct local local_record[LOCAL_RECORD_SIZE];
     cell current_local_counter = 0;
-    struct ret {
-      jo_t* jojo;
-      jo_t tag;
-      cell data;
-      cell local_counter;
+    struct rp {
+      jo_t* j;
+      jo_t  t;
+      cell  d;
+      cell  l;
     };
 
-    struct stack* return_stack;
+    struct stack* rs;
 
-    struct ret return_stack_pop() {
-      struct ret p;
-      p.jojo          = pop(return_stack);
-      p.tag           = pop(return_stack);
-      p.data          = pop(return_stack);
-      p.local_counter = pop(return_stack);
+    struct rp rs_pop() {
+      struct rp p;
+      p.j = pop(rs);
+      p.t = pop(rs);
+      p.d = pop(rs);
+      p.l = pop(rs);
       return p;
     }
 
-    void return_stack_drop() {
-      drop(return_stack);
-      drop(return_stack);
-      drop(return_stack);
-      drop(return_stack);
+    void rs_drop() {
+      drop(rs);
+      drop(rs);
+      drop(rs);
+      drop(rs);
     }
 
-    struct ret return_stack_tos() {
-      struct ret p;
-      p.jojo          = stack_peek(return_stack, 1);
-      p.tag           = stack_peek(return_stack, 2);
-      p.data          = stack_peek(return_stack, 3);
-      p.local_counter = stack_peek(return_stack, 4);
+    struct rp rs_tos() {
+      struct rp p;
+      p.j = stack_peek(rs, 1);
+      p.t = stack_peek(rs, 2);
+      p.d = stack_peek(rs, 3);
+      p.l = stack_peek(rs, 4);
       return p;
     }
 
-    bool return_stack_empty_p() {
-      return stack_empty_p(return_stack);
+    bool rs_empty_p() {
+      return stack_empty_p(rs);
     }
 
-    void return_stack_push(jo_t* jojo, jo_t tag, cell data, cell local_counter) {
-      push(return_stack, local_counter);
-      push(return_stack, data);
-      push(return_stack, tag);
-      push(return_stack, jojo);
+    void rs_push(jo_t* jojo, jo_t tag, cell data, cell local_counter) {
+      push(rs, local_counter);
+      push(rs, data);
+      push(rs, tag);
+      push(rs, jojo);
     }
 
-    cell return_stack_length() {
-      return stack_length(return_stack) / 4;
+    cell rs_length() {
+      return stack_length(rs) / 4;
     }
 
-    struct ret return_stack_ref(cell index) {
-      struct ret p;
-      p.jojo          = stack_ref(return_stack, index*4 + 3);
-      p.tag           = stack_ref(return_stack, index*4 + 2);
-      p.data          = stack_ref(return_stack, index*4 + 1);
-      p.local_counter = stack_ref(return_stack, index*4 + 0);
+    struct rp rs_ref(cell index) {
+      struct rp p;
+      p.j = stack_ref(rs, index*4 + 3);
+      p.t = stack_ref(rs, index*4 + 2);
+      p.d = stack_ref(rs, index*4 + 1);
+      p.l = stack_ref(rs, index*4 + 0);
       return p;
     }
 
-    void return_stack_inc() {
-      jo_t* jojo = pop(return_stack);
-      push(return_stack, jojo + 1);
+    void rs_inc() {
+      jo_t* jojo = pop(rs);
+      push(rs, jojo + 1);
     }
     typedef enum {
       GC_STATE_MARKING,
@@ -1128,26 +1128,24 @@
       GC_MARK_USING,
     } gc_mark_t;
 
-    struct object_entry {
+    struct gp { // gc point
       gc_mark_t mark;
       gc_actor_t gc_actor;
       cell fields_number;
-      cell pointer;
+      cell p; // actual data point
     };
 
-    #define OBJECT_RECORD_SIZE 64 * 1024
-    // #define OBJECT_RECORD_SIZE 3 // for testing
+    #define GR_SIZE 64 * 1024
+    // #define GR_SIZE 3 // for testing
 
-    struct object_entry object_record[OBJECT_RECORD_SIZE];
+    struct gp gr[GR_SIZE];
 
-    struct object_entry* object_record_pointer = object_record;
-    bool object_record_end_p() {
-      return object_record_pointer >= (object_record + OBJECT_RECORD_SIZE);
+    struct gp* gr_pointer = gr;
+    bool gr_end_p() {
+      return gr_pointer >= (gr + GR_SIZE);
     }
-    void init_object_record() {
-      bzero(object_record,
-            OBJECT_RECORD_SIZE *
-            sizeof(struct object_entry));
+    void init_gr() {
+      bzero(gr, GR_SIZE * sizeof(struct gp));
     }
     struct class {
       jo_t class_name;
@@ -1186,111 +1184,111 @@
         report("  class_name : %s\n", jo2str(class->class_name));
         p_debug();
       }
-      jo_t get_object_field_tag(object_entry, field_index)
-        struct object_entry* object_entry;
+      jo_t get_gp_field_tag(gp, field_index)
+        struct gp* gp;
         cell field_index;
       {
-        cell* fields = object_entry->pointer;
+        cell* fields = gp->p;
         return get_field_tag(fields, field_index);
       }
 
-      void set_object_field_tag(object_entry, field_index, tag)
-        struct object_entry* object_entry;
+      void set_gp_field_tag(gp, field_index, tag)
+        struct gp* gp;
         cell field_index;
         jo_t tag;
       {
-        cell* fields = object_entry->pointer;
+        cell* fields = gp->p;
         set_field_tag(fields, field_index, tag);
       }
 
-      cell get_object_field_data(object_entry, field_index)
-        struct object_entry* object_entry;
+      cell get_gp_field_data(gp, field_index)
+        struct gp* gp;
         cell field_index;
       {
-        cell* fields = object_entry->pointer;
+        cell* fields = gp->p;
         return get_field_data(fields, field_index);
       }
 
-      void set_object_field_data(object_entry, field_index, data)
-        struct object_entry* object_entry;
+      void set_gp_field_data(gp, field_index, data)
+        struct gp* gp;
         cell field_index;
         cell data;
       {
-        cell* fields = object_entry->pointer;
+        cell* fields = gp->p;
         set_field_data(fields, field_index, data);
       }
-    struct obj get_field(jo_t class_tag, struct object_entry* object_entry, jo_t name) {
+    struct dp get_field(jo_t class_tag, struct gp* gp, jo_t name) {
       struct class* class = class_tag->data;
       cell index = class_field_name_to_index(class, name);
-      jo_t tag = get_object_field_tag(object_entry, index);
-      cell data = get_object_field_data(object_entry, index);
+      jo_t tag = get_gp_field_tag(gp, index);
+      cell data = get_gp_field_data(gp, index);
 
       if (tag == TAG_UNINITIALISED_FIELD_PLACE_HOLDER) {
-        object_stack_push(class_tag, object_entry);
+        ds_push(class_tag, gp);
         report("- get_field fail\n");
         report("  field is uninitialised\n");
         report("  field_name : %s\n", jo2str(name));
         report("  class_name : %s\n", jo2str(class->class_name));
-        report("  see top of object_stack for the object\n");
+        report("  see top of ds for the data\n");
         p_debug();
       }
       else {
-        struct obj a;
-        a.tag = tag;
-        a.data = data;
+        struct dp a;
+        a.t = tag;
+        a.d = data;
         return a;
       }
     }
     void ins_get_field() {
-      struct ret rp = return_stack_tos();
-      return_stack_inc();
-      jo_t* jojo = rp.jojo;
+      struct rp p = rs_tos();
+      rs_inc();
+      jo_t* jojo = p.j;
       jo_t name = jojo[0];
 
-      struct obj a = object_stack_pop();
-      struct class* class = a.tag->data;
+      struct dp a = ds_pop();
+      struct class* class = a.t->data;
 
       cell index = class_field_name_to_index(class, name);
 
-      jo_t tag = get_object_field_tag(a.data, index);
-      cell data = get_object_field_data(a.data, index);
+      jo_t tag = get_gp_field_tag(a.d, index);
+      cell data = get_gp_field_data(a.d, index);
       if (tag == TAG_UNINITIALISED_FIELD_PLACE_HOLDER) {
-        object_stack_push(a.tag, a.data);
+        ds_push(a.t, a.d);
         report("- ins_get_field fail\n");
         report("  field is uninitialised\n");
         report("  field_name : %s\n", jo2str(name));
         report("  class_name : %s\n", jo2str(class->class_name));
-        report("  see top of object_stack for the object\n");
+        report("  see top of ds for the data\n");
         p_debug();
       }
       else {
-        object_stack_push(tag, data);
+        ds_push(tag, data);
       }
     }
     void ins_set_field() {
-      struct ret rp = return_stack_tos();
-      return_stack_inc();
-      jo_t* jojo = rp.jojo;
+      struct rp p = rs_tos();
+      rs_inc();
+      jo_t* jojo = p.j;
       jo_t name = jojo[0];
 
-      struct obj a = object_stack_pop();
-      struct class* class = a.tag->data;
+      struct dp a = ds_pop();
+      struct class* class = a.t->data;
 
       cell index = class_field_name_to_index(class, name);
 
-      struct obj b = object_stack_pop();
-      set_object_field_tag(a.data, index, b.tag);
-      set_object_field_data(a.data, index, b.data);
+      struct dp b = ds_pop();
+      set_gp_field_tag(a.d, index, b.t);
+      set_gp_field_data(a.d, index, b.d);
     }
     void mark_one(jo_t tag, cell data) {
       struct class* class = tag->data;
       class->gc_actor(GC_STATE_MARKING, data);
     }
-    void mark_object_record() {
+    void mark_gr() {
       // prepare
       cell i = 0;
-      while (i < OBJECT_RECORD_SIZE) {
-        object_record[i].mark = GC_MARK_FREE;
+      while (i < GR_SIZE) {
+        gr[i].mark = GC_MARK_FREE;
         i++;
       }
       // name_record as root
@@ -1300,11 +1298,11 @@
         mark_one(name->tag, name->data);
         i++;
       }
-      // object_stack as root
+      // ds as root
       i = 0;
-      while (i < stack_length(object_stack)) {
-        mark_one(stack_ref(object_stack, i+1),
-                 stack_ref(object_stack, i));
+      while (i < stack_length(ds)) {
+        mark_one(stack_ref(ds, i+1),
+                 stack_ref(ds, i));
         i++;
         i++;
       }
@@ -1316,18 +1314,18 @@
         i++;
       }
     }
-    void sweep_one(struct object_entry* object_entry) {
-      if (object_entry->mark == GC_MARK_USING) {
+    void sweep_one(struct gp* gp) {
+      if (gp->mark == GC_MARK_USING) {
         return;
       }
       else {
-        object_entry->gc_actor(GC_STATE_SWEEPING, object_entry);
+        gp->gc_actor(GC_STATE_SWEEPING, gp);
       }
     }
-    void sweep_object_record() {
+    void sweep_gr() {
       cell i = 0;
-      while (i < OBJECT_RECORD_SIZE) {
-        sweep_one(object_record + i);
+      while (i < GR_SIZE) {
+        sweep_one(gr + i);
         i++;
       }
     }
@@ -1337,75 +1335,75 @@
         else if (gc_state == GC_STATE_SWEEPING) {
         }
       }
-      void gc_free(gc_state_t gc_state, struct object_entry* object_entry) {
+      void gc_free(gc_state_t gc_state, struct gp* gp) {
         if (gc_state == GC_STATE_MARKING) {
-          object_entry->mark = GC_MARK_USING;
+          gp->mark = GC_MARK_USING;
         }
         else if (gc_state == GC_STATE_SWEEPING) {
-          free(object_entry->pointer);
+          free(gp->p);
         }
       }
-      void gc_recur(gc_state_t gc_state, struct object_entry* object_entry) {
+      void gc_recur(gc_state_t gc_state, struct gp* gp) {
         if (gc_state == GC_STATE_MARKING) {
-          if (object_entry->mark == GC_MARK_USING) { return; }
-          object_entry->mark = GC_MARK_USING;
-          cell fields_number = object_entry->fields_number;
-          cell* fields = object_entry->pointer;
+          if (gp->mark == GC_MARK_USING) { return; }
+          gp->mark = GC_MARK_USING;
+          cell fields_number = gp->fields_number;
+          cell* fields = gp->p;
           cell i = 0;
           while (i < fields_number) {
-            mark_one(get_object_field_tag(object_entry, i),
-                     get_object_field_data(object_entry, i));
+            mark_one(get_gp_field_tag(gp, i),
+                     get_gp_field_data(gp, i));
             i++;
           }
         }
         else if (gc_state == GC_STATE_SWEEPING) {
-          free(object_entry->pointer);
+          free(gp->p);
         }
       }
     void run_gc() {
-      mark_object_record();
-      sweep_object_record();
+      mark_gr();
+      sweep_gr();
     }
 
     // run_gc() {
     //   report("- run_gc()\n");
-    //   mark_object_record();
-    //   report("- after mark_object_record()\n");
-    //   sweep_object_record();
-    //   report("- after sweep_object_record()\n");
+    //   mark_gr();
+    //   report("- after mark_gr()\n");
+    //   sweep_gr();
+    //   report("- after sweep_gr()\n");
     // }
-    void next_free_record_object_entry() {
-      while (!object_record_end_p() &&
-             object_record_pointer->mark != GC_MARK_FREE) {
-        object_record_pointer++;
+    void next_free_record_gp() {
+      while (!gr_end_p() &&
+             gr_pointer->mark != GC_MARK_FREE) {
+        gr_pointer++;
       }
     }
 
-    struct object_entry* new_record_object_entry() {
-      next_free_record_object_entry();
-      if (!object_record_end_p()) {
-        return object_record_pointer++;
+    struct gp* new_record_gp() {
+      next_free_record_gp();
+      if (!gr_end_p()) {
+        return gr_pointer++;
       }
       else {
         run_gc();
-        object_record_pointer = object_record;
-        if (!object_record_end_p()) {
-          return object_record_pointer++;
+        gr_pointer = gr;
+        if (!gr_end_p()) {
+          return gr_pointer++;
         }
         else {
-          report("- new_record_object_entry fail\n");
-          report("  after gc, the object_record is still filled\n");
-          report("  OBJECT_RECORD_SIZE : %ld\n", OBJECT_RECORD_SIZE);
+          report("- new_record_gp fail\n");
+          report("  after gc, the gr is still filled\n");
+          report("  GR_SIZE : %ld\n", GR_SIZE);
           return 0;
         }
       }
     }
-    struct object_entry* new_static_object_entry() {
-      struct object_entry* object_entry = (struct object_entry*)
-        malloc(sizeof(struct object_entry));
-      return object_entry;
+    struct gp* new_static_gp() {
+      struct gp* gp = (struct gp*)
+        malloc(sizeof(struct gp));
+      return gp;
     }
-    struct object_entry* new(struct class* class) {
+    struct gp* new(struct class* class) {
       cell* fields = (cell*)malloc(class->fields_number*2*sizeof(cell));
 
       cell i = 0;
@@ -1414,12 +1412,12 @@
         i++;
       }
 
-      struct object_entry* object_entry = new_record_object_entry();
-      object_entry->gc_actor = gc_recur;
-      object_entry->pointer = fields;
-      object_entry->fields_number = class->fields_number;
+      struct gp* gp = new_record_gp();
+      gp->gc_actor = gc_recur;
+      gp->p = fields;
+      gp->fields_number = class->fields_number;
 
-      return object_entry;
+      return gp;
     }
       void plus_atom(class_name, gc_actor)
         char* class_name;
@@ -1495,16 +1493,16 @@
       bind_name(name, TAG_PRIM, fun);
     }
     void p_tag() {
-      struct obj a = object_stack_pop();
-      object_stack_push(TAG_JO, a.tag);
+      struct dp a = ds_pop();
+      ds_push(TAG_JO, a.t);
     }
     void p_eq_p() {
-      struct obj a = object_stack_pop();
-      struct obj b = object_stack_pop();
-      object_stack_push(TAG_BOOL, (b.tag == a.tag) && (b.data == a.data));
+      struct dp a = ds_pop();
+      struct dp b = ds_pop();
+      ds_push(TAG_BOOL, (b.t == a.t) && (b.d == a.d));
     }
-    void expose_object() {
-      init_object_record();
+    void expose_gc() {
+      init_gr();
 
       plus_prim("ins/get-field", ins_get_field);
       plus_prim("ins/set-field", ins_set_field);
@@ -1828,7 +1826,7 @@
           f();
         }
         else {
-          object_stack_push(disp_entry->tag, disp_entry->data);
+          ds_push(disp_entry->tag, disp_entry->data);
           disp_exe(JO_EXE->data, disp_entry->tag);
         }
       }
@@ -1846,7 +1844,7 @@
           f();
         }
         else {
-          object_stack_push(disp_entry->tag, disp_entry->data);
+          ds_push(disp_entry->tag, disp_entry->data);
           disp_exe(JO_EXE->data, disp_entry->tag);
         }
       }
@@ -1874,23 +1872,23 @@
           f();
         }
         else {
-          object_stack_push(multi_disp_entry->tag, multi_disp_entry->data);
+          ds_push(multi_disp_entry->tag, multi_disp_entry->data);
           disp_exe(JO_EXE->data, multi_disp_entry->tag);
         }
       }
     }
     void p_gene_exe() {
-      struct obj a = object_stack_pop();
-      struct gene* gene = a.data;
+      struct dp a = ds_pop();
+      struct gene* gene = a.d;
       if (gene->arity == 1) {
-        struct obj t = object_stack_tos();
-        disp_exe(gene, t.tag);
+        struct dp t = ds_tos();
+        disp_exe(gene, t.t);
       }
       else {
         jo_t tags[16];
         cell i = 0;
         while (i < gene->arity) {
-          tags[i] = object_stack_peek_tag(gene->arity - i);
+          tags[i] = ds_peek_tag(gene->arity - i);
           i++;
         }
         tags[i] = 0;
@@ -1898,48 +1896,48 @@
       }
     }
     void p_prim_exe() {
-      struct obj a = object_stack_pop();
-      primitive_t f = (primitive_t)a.data;
+      struct dp a = ds_pop();
+      primitive_t f = (primitive_t)a.d;
       f();
     }
     void p_jojo_exe() {
-      struct obj a = object_stack_pop();
-      jo_t* jojo = a.data;
-      return_stack_push(jojo, TAG_JOJO, jojo, current_local_counter);
+      struct dp a = ds_pop();
+      jo_t* jojo = a.d;
+      rs_push(jojo, TAG_JOJO, jojo, current_local_counter);
     }
     void p_set_global_variable_exe() {
-      struct obj b = object_stack_pop();
-      jo_t name = b.data;
-      struct obj a = object_stack_pop();
-      rebind_name(name, a.tag, a.data);
+      struct dp b = ds_pop();
+      jo_t name = b.d;
+      struct dp a = ds_pop();
+      rebind_name(name, a.t, a.d);
     }
     void p_data_constructor_exe() {
-      struct obj b = object_stack_pop();
-      struct class* class = b.data;
+      struct dp b = ds_pop();
+      struct class* class = b.d;
 
       cell* fields = (cell*)malloc(class->fields_number*2*sizeof(cell));
 
       cell i = 0;
       while (i < class->fields_number) {
-        struct obj a = object_stack_pop();
-        set_field_tag(fields, (class->fields_number - (i+1)), a.tag);
-        set_field_data(fields, (class->fields_number - (i+1)), a.data);
+        struct dp a = ds_pop();
+        set_field_tag(fields, (class->fields_number - (i+1)), a.t);
+        set_field_data(fields, (class->fields_number - (i+1)), a.d);
         i++;
       }
 
-      struct object_entry* object_entry = new_record_object_entry();
-      object_entry->gc_actor = gc_recur;
-      object_entry->pointer = fields;
-      object_entry->fields_number = class->fields_number;
+      struct gp* gp = new_record_gp();
+      gp->gc_actor = gc_recur;
+      gp->p = fields;
+      gp->fields_number = class->fields_number;
 
-      object_stack_push(class->class_name, object_entry);
+      ds_push(class->class_name, gp);
     }
     void p_data_predicate_exe() {
-      struct obj b = object_stack_pop();
-      struct class* class = b.data;
+      struct dp b = ds_pop();
+      struct class* class = b.d;
 
-      struct obj a = object_stack_pop();
-      object_stack_push(TAG_BOOL, (class->class_name == a.tag));
+      struct dp a = ds_pop();
+      ds_push(TAG_BOOL, (class->class_name == a.t));
     }
     jo_t* jojo_of(char* function_name) {
       jo_t name = str2jo(function_name);
@@ -1967,64 +1965,64 @@
         p_debug();
         return;
       }
-      object_stack_push(jo->tag, jo->data);
+      ds_push(jo->tag, jo->data);
       disp_exe_for_jo_apply(JO_EXE->data, jo->tag);
     }
     void eval() {
-      cell base = return_stack->pointer;
-      while (return_stack->pointer >= base) {
-        struct ret rp = return_stack_tos();
-        jo_t* jojo = rp.jojo;
+      cell base = rs->pointer;
+      while (rs->pointer >= base) {
+        struct rp p = rs_tos();
+        jo_t* jojo = p.j;
         jo_t jo = jojo[0];
         jo_t next_jo = jojo[1];
         if (next_jo == JO_END) {
           // tail call is handled here
-          return_stack_drop();
-          current_local_counter = rp.local_counter;
+          rs_drop();
+          current_local_counter = p.l;
           if (jo == JO_RECUR) {
-            object_stack_push(rp.tag, rp.data);
-            disp_exe(JO_EXE->data, rp.tag);
+            ds_push(p.t, p.d);
+            disp_exe(JO_EXE->data, p.t);
           }
           else {
             jo_apply(jo);
           }
         }
         else {
-          return_stack_inc();
+          rs_inc();
           jo_apply(jo);
         }
       }
     }
     void p_drop() {
-      object_stack_pop();
+      ds_pop();
     }
     void p_dup() {
-      struct obj a = object_stack_pop();
-      object_stack_push(a.tag, a.data);
-      object_stack_push(a.tag, a.data);
+      struct dp a = ds_pop();
+      ds_push(a.t, a.d);
+      ds_push(a.t, a.d);
     }
     void p_over() {
       // b a -> b a b
-      struct obj a = object_stack_pop();
-      struct obj b = object_stack_pop();
-      object_stack_push(b.tag, b.data);
-      object_stack_push(a.tag, a.data);
-      object_stack_push(b.tag, b.data);
+      struct dp a = ds_pop();
+      struct dp b = ds_pop();
+      ds_push(b.t, b.d);
+      ds_push(a.t, a.d);
+      ds_push(b.t, b.d);
     }
     void p_tuck() {
       // b a -> a b a
-      struct obj a = object_stack_pop();
-      struct obj b = object_stack_pop();
-      object_stack_push(a.tag, a.data);
-      object_stack_push(b.tag, b.data);
-      object_stack_push(a.tag, a.data);
+      struct dp a = ds_pop();
+      struct dp b = ds_pop();
+      ds_push(a.t, a.d);
+      ds_push(b.t, b.d);
+      ds_push(a.t, a.d);
     }
     void p_swap() {
       // b a -> a b
-      struct obj a = object_stack_pop();
-      struct obj b = object_stack_pop();
-      object_stack_push(a.tag, a.data);
-      object_stack_push(b.tag, b.data);
+      struct dp a = ds_pop();
+      struct dp b = ds_pop();
+      ds_push(a.t, a.d);
+      ds_push(b.t, b.d);
     }
     void expose_stack() {
       plus_prim("drop", p_drop);
@@ -2035,8 +2033,8 @@
     }
     void p_end() {
       // for 'p_step' which do not handle tail call
-      struct ret rp = return_stack_pop();
-      current_local_counter = rp.local_counter;
+      struct rp p = rs_pop();
+      current_local_counter = p.l;
     }
     void p_bye() {
       report("bye bye ^-^/\n");
@@ -2077,7 +2075,7 @@
       }
     }
     void p_has_jo_p() {
-      object_stack_push(TAG_BOOL, has_jo_p());
+      ds_push(TAG_BOOL, has_jo_p());
     }
     jo_t read_jo() {
       char buf[1024];
@@ -2132,7 +2130,7 @@
       return str2jo(buf);
     }
     void p_read_jo() {
-      object_stack_push(TAG_JO, read_jo());
+      ds_push(TAG_JO, read_jo());
     }
     void string_unread(char* str) {
       if (str[0] == '\0') {
@@ -2164,9 +2162,9 @@
     cell local_find(jo_t name) {
       // return index of local_record
       // -1 -- no found
-      struct ret rp = return_stack_tos();
+      struct rp p = rs_tos();
       cell cursor = current_local_counter - 1;
-      while (cursor >= rp.local_counter) {
+      while (cursor >= p.l) {
         if (local_record[cursor].name == name) {
           return cursor;
         }
@@ -2194,25 +2192,25 @@
       }
     }
     void ins_set_local() {
-      struct ret rp = return_stack_tos();
-      return_stack_inc();
-      jo_t* jojo = rp.jojo;
+      struct rp p = rs_tos();
+      rs_inc();
+      jo_t* jojo = p.j;
       jo_t name = jojo[0];
 
-      struct obj a = object_stack_pop();
-      set_local(name, a.tag, a.data);
+      struct dp a = ds_pop();
+      set_local(name, a.t, a.d);
     }
     void ins_get_local() {
-      struct ret rp = return_stack_tos();
-      return_stack_inc();
-      jo_t* jojo = rp.jojo;
+      struct rp p = rs_tos();
+      rs_inc();
+      jo_t* jojo = p.j;
       jo_t name = jojo[0];
 
       cell index = local_find(name);
 
       if (index != -1) {
         struct local lp = local_record[index];
-        object_stack_push(lp.local_tag, lp.local_data);
+        ds_push(lp.local_tag, lp.local_data);
       }
       else {
         report("- ins_get_local fatal error\n");
@@ -2325,13 +2323,13 @@
         }
       }
       char* str = strdup(buffer);
-      struct object_entry* object_entry = new_static_object_entry();
-      object_entry->gc_actor = gc_ignore;
-      object_entry->pointer = str;
+      struct gp* gp = new_static_gp();
+      gp->gc_actor = gc_ignore;
+      gp->p = str;
 
       emit(JO_INS_LIT);
       emit(TAG_STRING);
-      emit(object_entry);
+      emit(gp);
     }
     void k_closure();
 
@@ -2439,29 +2437,29 @@
       }
     }
     void ins_lit() {
-      struct ret rp = return_stack_tos();
-      return_stack_inc();
-      return_stack_inc();
-      jo_t* jojo = rp.jojo;
+      struct rp p = rs_tos();
+      rs_inc();
+      rs_inc();
+      jo_t* jojo = p.j;
       jo_t tag = jojo[0];
       cell data = jojo[1];
-      object_stack_push(tag, data);
+      ds_push(tag, data);
     }
     void ins_jmp() {
-      struct ret rp = return_stack_pop();
-      jo_t* jojo = rp.jojo;
+      struct rp p = rs_pop();
+      jo_t* jojo = p.j;
       cell offset = jojo[0];
-      return_stack_push(jojo + offset, rp.tag, rp.data, rp.local_counter);
+      rs_push(jojo + offset, p.t, p.d, p.l);
     }
     void ins_jz() {
-      struct ret rp = return_stack_tos();
-      return_stack_inc();
-      jo_t* jojo = rp.jojo;
+      struct rp p = rs_tos();
+      rs_inc();
+      jo_t* jojo = p.j;
       cell offset = jojo[0];
-      struct obj a = object_stack_pop();
-      if (a.tag == TAG_BOOL && a.data == false) {
-        struct ret rp1 = return_stack_pop();
-        return_stack_push(jojo + offset, rp.tag, rp.data, rp1.local_counter);
+      struct dp a = ds_pop();
+      if (a.t == TAG_BOOL && a.d == false) {
+        struct rp q = rs_pop();
+        rs_push(jojo + offset, p.t, p.d, q.l);
       }
     }
     //// without else
@@ -2603,9 +2601,9 @@
       }
     }
     void p_recur() {
-      struct ret rp = return_stack_tos();
-      object_stack_push(rp.tag, rp.data);
-      disp_exe(JO_EXE->data, rp.tag);
+      struct rp p = rs_tos();
+      ds_push(p.t, p.d);
+      disp_exe(JO_EXE->data, p.t);
     }
     void expose_control() {
       plus_prim("note", k_ignore);
@@ -2632,11 +2630,11 @@
         emit(0);
       }
 
-      return_stack_push(jojo, TAG_JOJO, jojo, current_local_counter);
+      rs_push(jojo, TAG_JOJO, jojo, current_local_counter);
       eval();
     }
     bool test_flag = false;
-    void p_test_flag() { object_stack_push(TAG_BOOL, test_flag); }
+    void p_test_flag() { ds_push(TAG_BOOL, test_flag); }
     void p_test_flag_on() { test_flag = true; }
     void p_test_flag_off() { test_flag = false; }
 
@@ -2648,8 +2646,8 @@
     void k_plus_var() {
       jo_t name = read_jo();
       k_run();
-      struct obj a = object_stack_pop();
-      bind_name(name, a.tag, a.data);
+      struct dp a = ds_pop();
+      bind_name(name, a.t, a.d);
 
       char name_buffer[1024];
       name_buffer[0] = '\0';
@@ -2798,12 +2796,12 @@
       plus_prim("+gene", k_plus_gene);
       plus_prim("+disp", k_plus_disp);
     }
-    void object_print(jo_t tag, cell data);
+    void data_print(jo_t tag, cell data);
 
     void local_env_print(struct local* lr) {
       report("{ ");
       while (lr->name != 0) {
-        object_print(lr->local_tag, lr->local_data);
+        data_print(lr->local_tag, lr->local_data);
         report("%s! ", jo2str(lr->name));
         lr++;
       }
@@ -2811,13 +2809,13 @@
     }
     void jojo_print(jo_t* jojo);
 
-    void object_print(jo_t tag, cell data) {
+    void data_print(jo_t tag, cell data) {
       if (tag == TAG_INT) {
         report("%ld ", data);
       }
       else if (tag == TAG_STRING) {
-        struct object_entry* str_obj = data;
-        char* str = str_obj->pointer;
+        struct gp* gp = data;
+        char* str = gp->p;
         report("\"%s\" ", str);
       }
       else if (tag == TAG_JO) {
@@ -2842,14 +2840,14 @@
         report("<local-env> ");
       }
       else if (tag == TAG_CLOSURE) {
-        struct object_entry* closure = data;
+        struct gp* closure = data;
 
-        struct obj a = get_field(TAG_CLOSURE, closure, str2jo(".local-env"));
-        struct object_entry* ao = a.data;
-        struct local* lr = ao->pointer;
+        struct dp a = get_field(TAG_CLOSURE, closure, str2jo(".local-env"));
+        struct gp* ao = a.d;
+        struct local* lr = ao->p;
 
-        struct obj b = get_field(TAG_CLOSURE, closure, str2jo(".jojo"));
-        jo_t* jojo = b.data;
+        struct dp b = get_field(TAG_CLOSURE, closure, str2jo(".jojo"));
+        jo_t* jojo = b.d;
 
         local_env_print(lr);
         report("+");
@@ -2866,7 +2864,7 @@
           break;
         }
         else if (jojo[0] == JO_INS_LIT) {
-          object_print(jojo[1], jojo[2]);
+          data_print(jojo[1], jojo[2]);
           jojo++;
           jojo++;
           jojo++;
@@ -2915,38 +2913,38 @@
       }
       report("] ");
     }
-    void p_print_object_stack() {
-      cell length = stack_length(object_stack);
+    void p_print_ds() {
+      cell length = stack_length(ds);
       report("  * %ld *  ", length/2);
       report("-- ");
       cell cursor = 0;
       while (cursor < length) {
-        object_print(stack_ref(object_stack, cursor+1),
-                     stack_ref(object_stack, cursor));
+        data_print(stack_ref(ds, cursor+1),
+                   stack_ref(ds, cursor));
         cursor++;
         cursor++;
       }
       report("--\n");
     }
-    void print_return_point(struct ret p) {
-      jo_t* jojo = p.jojo;
+    void print_return_point(struct rp p) {
+      jo_t* jojo = p.j;
       report("    - { %s } ", jo2str(*(jojo - 1)));
       jojo_print(jojo);
       report("\n");
     }
-    void p_print_return_stack() {
-      cell length = return_stack_length();
+    void p_print_rs() {
+      cell length = rs_length();
       report("  - return-stack * %ld * :\n", length);
       if (length == 0) { return; };
       cell index = 0;
       while (index < length - 1) {
-        struct ret p = return_stack_ref(index);
+        struct rp p = rs_ref(index);
         print_return_point(p);
         index++;
       }
-      { // tos of return_stack is special
-        struct ret p = return_stack_ref(index);
-        jo_t* jojo = p.jojo;
+      { // tos of rs is special
+        struct rp p = rs_ref(index);
+        jo_t* jojo = p.j;
         report("    - ");
         jojo_print(jojo);
         report("\n");
@@ -2955,7 +2953,7 @@
       }
     }
     bool repl_flag = false;
-    void p_repl_flag() { object_stack_push(TAG_BOOL, repl_flag); }
+    void p_repl_flag() { ds_push(TAG_BOOL, repl_flag); }
     void p_repl_flag_on() { repl_flag = true; }
     void p_repl_flag_off() { repl_flag = false; }
 
@@ -2969,7 +2967,7 @@
         if (s == ROUND_BAR) {
           jo_apply(read_jo());
           if (repl_flag) {
-            p_print_object_stack();
+            p_print_ds();
           }
         }
         else {
@@ -3002,7 +3000,7 @@
         }
         else if (jo == ROUND_BAR) {
           jo_apply(read_jo());
-          p_print_object_stack();
+          p_print_ds();
           report("debug[%ld]> ", debug_repl_level);
         }
         else {
@@ -3014,8 +3012,8 @@
     }
     void p_debug() {
       report("- in debug-repl [level %ld] >_<!\n", debug_repl_level);
-      p_print_return_stack();
-      p_print_object_stack();
+      p_print_rs();
+      p_print_ds();
       report("debug[%ld]> ", debug_repl_level);
       debug_repl_level++;
       debug_repl(input_stack_terminal());
@@ -3070,8 +3068,8 @@
     void report_one_step() {
       while (true) {
         if (pending_steps > 0) {
-          p_print_return_stack();
-          p_print_object_stack();
+          p_print_rs();
+          p_print_ds();
           stepper_counter++;
           report("- stepper counting : %ld\n", stepper_counter);
           pending_steps--;
@@ -3090,15 +3088,15 @@
           report("    help exit bye\n");
         }
         else if (jo == str2jo(".")) {
-          p_print_return_stack();
-          p_print_object_stack();
+          p_print_rs();
+          p_print_ds();
           stepper_counter++;
           report("- stepper counting : %ld\n", stepper_counter);
           return;
         }
         else if (nat_string_p(jo2str(jo))) {
-          p_print_return_stack();
-          p_print_object_stack();
+          p_print_rs();
+          p_print_ds();
           stepper_counter++;
           report("- stepper counting : %ld\n", stepper_counter);
           pending_steps = string_to_int(jo2str(jo)) - 1;
@@ -3125,22 +3123,22 @@
       stepper_counter = 0;
       pending_steps = 0;
       report("stepper> ");
-      cell base = return_stack->pointer;
-      while (return_stack->pointer >= base) {
+      cell base = rs->pointer;
+      while (rs->pointer >= base) {
         if (step_flag == false) { break; };
-        struct ret rp = return_stack_tos();
-        return_stack_inc();
-        jo_t* jojo = rp.jojo;
+        struct rp p = rs_tos();
+        rs_inc();
+        jo_t* jojo = p.j;
         jo_t jo = jojo[0];
         jo_apply(jo);
         {
           report_one_step();
         }
       }
-      if (return_stack->pointer >= base) {
+      if (rs->pointer >= base) {
         report("- exit stepper\n");
       }
-      if (return_stack->pointer < base) {
+      if (rs->pointer < base) {
         report("- the stepped jojo is finished\n");
         report("- automatically exit stepper\n");
       }
@@ -3151,24 +3149,24 @@
       plus_prim("step", p_step);
     }
     void p_true() {
-      object_stack_push(TAG_BOOL, true);
+      ds_push(TAG_BOOL, true);
     }
     void p_false() {
-      object_stack_push(TAG_BOOL, false);
+      ds_push(TAG_BOOL, false);
     }
     void p_not() {
-      struct obj a = object_stack_pop();
-      object_stack_push(TAG_BOOL, !a.data);
+      struct dp a = ds_pop();
+      ds_push(TAG_BOOL, !a.d);
     }
     void p_and() {
-      struct obj a = object_stack_pop();
-      struct obj b = object_stack_pop();
-      object_stack_push(TAG_BOOL, a.data && b.data);
+      struct dp a = ds_pop();
+      struct dp b = ds_pop();
+      ds_push(TAG_BOOL, a.d && b.d);
     }
     void p_or() {
-      struct obj a = object_stack_pop();
-      struct obj b = object_stack_pop();
-      object_stack_push(TAG_BOOL, a.data || b.data);
+      struct dp a = ds_pop();
+      struct dp b = ds_pop();
+      ds_push(TAG_BOOL, a.d || b.d);
     }
     void expose_bool() {
       plus_atom("<bool>", gc_ignore);
@@ -3186,69 +3184,69 @@
       }
     }
     void p_string_write() {
-      struct obj a = object_stack_pop();
-      struct object_entry* ao = a.data;
-      string_write(ao->pointer);
+      struct dp a = ds_pop();
+      struct gp* ao = a.d;
+      string_write(ao->p);
     }
     void p_string_len() {
-      struct obj a = object_stack_pop();
-      struct object_entry* ao = a.data;
-      object_stack_push(TAG_INT, strlen(ao->pointer));
+      struct dp a = ds_pop();
+      struct gp* ao = a.d;
+      ds_push(TAG_INT, strlen(ao->p));
     }
     void p_string_ref() {
-      struct obj a = object_stack_pop();
-      struct obj b = object_stack_pop();
-      struct object_entry* bo = b.data;
-      char* str = bo->pointer;
-      object_stack_push(TAG_BYTE, str[a.data]);
+      struct dp a = ds_pop();
+      struct dp b = ds_pop();
+      struct gp* bo = b.d;
+      char* str = bo->p;
+      ds_push(TAG_BYTE, str[a.d]);
     }
     void p_string_cat() {
-      struct obj a = object_stack_pop();
-      struct obj b = object_stack_pop();
-      struct object_entry* ao = a.data;
-      struct object_entry* bo = b.data;
-      char* str0 = bo->pointer;
-      char* str1 = ao->pointer;
+      struct dp a = ds_pop();
+      struct dp b = ds_pop();
+      struct gp* ao = a.d;
+      struct gp* bo = b.d;
+      char* str0 = bo->p;
+      char* str1 = ao->p;
 
       char* str2 = (char*)malloc(strlen(str0) + strlen(str1) + 1);
       str2[0] = '\0';
       strcat(str2, str0);
       strcat(str2, str1);
 
-      struct object_entry* object_entry = new_record_object_entry();
-      object_entry->gc_actor = gc_free;
-      object_entry->pointer = str2;
+      struct gp* gp = new_record_gp();
+      gp->gc_actor = gc_free;
+      gp->p = str2;
 
-      object_stack_push(TAG_STRING, object_entry);
+      ds_push(TAG_STRING, gp);
     }
     void p_string_slice() {
-      struct obj a = object_stack_pop();
-      struct obj b = object_stack_pop();
-      struct obj c = object_stack_pop();
-      struct object_entry* co = c.data;
-      char* str0 = co->pointer;
-      cell begin = b.data;
-      cell end = a.data;
+      struct dp a = ds_pop();
+      struct dp b = ds_pop();
+      struct dp c = ds_pop();
+      struct gp* co = c.d;
+      char* str0 = co->p;
+      cell begin = b.d;
+      cell end = a.d;
       char* str1 = substring(str0, begin, end);
 
-      struct object_entry* object_entry = new_record_object_entry();
-      object_entry->gc_actor = gc_free;
-      object_entry->pointer = str1;
+      struct gp* gp = new_record_gp();
+      gp->gc_actor = gc_free;
+      gp->p = str1;
 
-      object_stack_push(TAG_STRING, object_entry);
+      ds_push(TAG_STRING, gp);
     }
     void p_string_empty_p() {
-      struct obj a = object_stack_pop();
-      struct object_entry* ao = a.data;
-      char* str = ao->pointer;
-      object_stack_push(TAG_BOOL, str[0] == '\0');
+      struct dp a = ds_pop();
+      struct gp* ao = a.d;
+      char* str = ao->p;
+      ds_push(TAG_BOOL, str[0] == '\0');
     }
     void p_string_eq_p() {
-      struct obj a = object_stack_pop();
-      struct obj b = object_stack_pop();
-      struct object_entry* ao = a.data;
-      struct object_entry* bo = b.data;
-      object_stack_push(TAG_BOOL, string_equal(ao->pointer, ao->pointer));
+      struct dp a = ds_pop();
+      struct dp b = ds_pop();
+      struct gp* ao = a.d;
+      struct gp* bo = b.d;
+      ds_push(TAG_BOOL, string_equal(ao->p, ao->p));
     }
     void p_read_string() {
       char buffer[1024 * 1024];
@@ -3266,11 +3264,11 @@
         }
       }
       char* str = strdup(buffer);
-      struct object_entry* object_entry = new_record_object_entry();
-      object_entry->gc_actor = gc_ignore;
-      object_entry->pointer = str;
+      struct gp* gp = new_record_gp();
+      gp->gc_actor = gc_ignore;
+      gp->p = str;
 
-      object_stack_push(TAG_STRING, object_entry);
+      ds_push(TAG_STRING, gp);
     }
     void expose_string() {
       plus_prim("string-write", p_string_write);
@@ -3283,66 +3281,66 @@
       plus_prim("read-string", p_read_string);
     }
     void p_inc() {
-      struct obj a = object_stack_pop();
-      object_stack_push(TAG_INT, a.data + 1);
+      struct dp a = ds_pop();
+      ds_push(TAG_INT, a.d + 1);
     }
     void p_dec() {
-      struct obj a = object_stack_pop();
-      object_stack_push(TAG_INT, a.data - 1);
+      struct dp a = ds_pop();
+      ds_push(TAG_INT, a.d - 1);
     }
     void p_neg() {
-      struct obj a = object_stack_pop();
-      object_stack_push(TAG_INT, - a.data);
+      struct dp a = ds_pop();
+      ds_push(TAG_INT, - a.d);
     }
     void p_add() {
-      struct obj a = object_stack_pop();
-      struct obj b = object_stack_pop();
-      object_stack_push(TAG_INT, a.data + b.data);
+      struct dp a = ds_pop();
+      struct dp b = ds_pop();
+      ds_push(TAG_INT, a.d + b.d);
     }
     void p_sub() {
-      struct obj a = object_stack_pop();
-      struct obj b = object_stack_pop();
-      object_stack_push(TAG_INT, b.data - a.data);
+      struct dp a = ds_pop();
+      struct dp b = ds_pop();
+      ds_push(TAG_INT, b.d - a.d);
     }
     void p_mul() {
-      struct obj a = object_stack_pop();
-      struct obj b = object_stack_pop();
-      object_stack_push(TAG_INT, a.data * b.data);
+      struct dp a = ds_pop();
+      struct dp b = ds_pop();
+      ds_push(TAG_INT, a.d * b.d);
     }
     void p_div() {
-      struct obj a = object_stack_pop();
-      struct obj b = object_stack_pop();
-      object_stack_push(TAG_INT, b.data / a.data);
+      struct dp a = ds_pop();
+      struct dp b = ds_pop();
+      ds_push(TAG_INT, b.d / a.d);
     }
     void p_mod() {
-      struct obj a = object_stack_pop();
-      struct obj b = object_stack_pop();
-      object_stack_push(TAG_INT, b.data % a.data);
+      struct dp a = ds_pop();
+      struct dp b = ds_pop();
+      ds_push(TAG_INT, b.d % a.d);
     }
     void p_gt_p() {
-      struct obj a = object_stack_pop();
-      struct obj b = object_stack_pop();
-      object_stack_push(TAG_BOOL, b.data > a.data);
+      struct dp a = ds_pop();
+      struct dp b = ds_pop();
+      ds_push(TAG_BOOL, b.d > a.d);
     }
     void p_lt_p() {
-      struct obj a = object_stack_pop();
-      struct obj b = object_stack_pop();
-      object_stack_push(TAG_BOOL, b.data < a.data);
+      struct dp a = ds_pop();
+      struct dp b = ds_pop();
+      ds_push(TAG_BOOL, b.d < a.d);
     }
     void p_gteq_p() {
-      struct obj a = object_stack_pop();
-      struct obj b = object_stack_pop();
-      object_stack_push(TAG_BOOL, b.data >= a.data);
+      struct dp a = ds_pop();
+      struct dp b = ds_pop();
+      ds_push(TAG_BOOL, b.d >= a.d);
     }
     void p_lteq_p() {
-      struct obj a = object_stack_pop();
-      struct obj b = object_stack_pop();
-      object_stack_push(TAG_BOOL, b.data <= a.data);
+      struct dp a = ds_pop();
+      struct dp b = ds_pop();
+      ds_push(TAG_BOOL, b.d <= a.d);
     }
     void p_int_write() {
       char buffer [32];
-      struct obj a = object_stack_pop();
-      sprintf(buffer, "%ld", a.data);
+      struct dp a = ds_pop();
+      sprintf(buffer, "%ld", a.d);
       string_write(buffer);
     }
     void expose_int() {
@@ -3364,52 +3362,52 @@
 
       plus_prim("int-write", p_int_write);
     }
-    void p_round_bar()    { object_stack_push(TAG_JO, ROUND_BAR); }
-    void p_round_ket()    { object_stack_push(TAG_JO, ROUND_KET); }
-    void p_square_bar()   { object_stack_push(TAG_JO, SQUARE_BAR); }
-    void p_square_ket()   { object_stack_push(TAG_JO, SQUARE_KET); }
-    void p_flower_bar()   { object_stack_push(TAG_JO, FLOWER_BAR); }
-    void p_flower_ket()   { object_stack_push(TAG_JO, FLOWER_KET); }
+    void p_round_bar()    { ds_push(TAG_JO, ROUND_BAR); }
+    void p_round_ket()    { ds_push(TAG_JO, ROUND_KET); }
+    void p_square_bar()   { ds_push(TAG_JO, SQUARE_BAR); }
+    void p_square_ket()   { ds_push(TAG_JO, SQUARE_KET); }
+    void p_flower_bar()   { ds_push(TAG_JO, FLOWER_BAR); }
+    void p_flower_ket()   { ds_push(TAG_JO, FLOWER_KET); }
 
-    void p_double_quote() { object_stack_push(TAG_JO, DOUBLE_QUOTE); }
-    void p_quote()        { object_stack_push(TAG_JO, QUOTE); }
-    void p_backquote()    { object_stack_push(TAG_JO, BACKQUOTE); }
-    void p_comma()        { object_stack_push(TAG_JO, COMMA); }
+    void p_double_quote() { ds_push(TAG_JO, DOUBLE_QUOTE); }
+    void p_quote()        { ds_push(TAG_JO, QUOTE); }
+    void p_backquote()    { ds_push(TAG_JO, BACKQUOTE); }
+    void p_comma()        { ds_push(TAG_JO, COMMA); }
     void p_jo_write() {
-      struct obj a = object_stack_pop();
-      string_write(jo2str(a.data));
+      struct dp a = ds_pop();
+      string_write(jo2str(a.d));
     }
     void p_jo_unread() {
-      struct obj a = object_stack_pop();
-      jo_unread(a.data);
+      struct dp a = ds_pop();
+      jo_unread(a.d);
     }
     void p_jo_apply() {
-      struct obj a = object_stack_pop();
-      jo_apply(a.data);
+      struct dp a = ds_pop();
+      jo_apply(a.d);
     }
     void p_jo_to_int() {
-      struct obj a = object_stack_pop();
-      object_stack_push(TAG_INT, string_to_int(jo2str(a.data)));
+      struct dp a = ds_pop();
+      ds_push(TAG_INT, string_to_int(jo2str(a.d)));
     }
     void p_int_jo_p() {
-      struct obj a = object_stack_pop();
-      object_stack_push(TAG_BOOL, int_string_p(jo2str(a.data)));
+      struct dp a = ds_pop();
+      ds_push(TAG_BOOL, int_string_p(jo2str(a.d)));
     }
     void p_get_local_jo_p() {
-      struct obj a = object_stack_pop();
-      object_stack_push(TAG_BOOL, get_local_string_p(jo2str(a.data)));
+      struct dp a = ds_pop();
+      ds_push(TAG_BOOL, get_local_string_p(jo2str(a.d)));
     }
     void p_set_local_jo_p() {
-      struct obj a = object_stack_pop();
-      object_stack_push(TAG_BOOL, set_local_string_p(jo2str(a.data)));
+      struct dp a = ds_pop();
+      ds_push(TAG_BOOL, set_local_string_p(jo2str(a.d)));
     }
     void p_get_field_jo_p() {
-      struct obj a = object_stack_pop();
-      object_stack_push(TAG_BOOL, get_field_string_p(jo2str(a.data)));
+      struct dp a = ds_pop();
+      ds_push(TAG_BOOL, get_field_string_p(jo2str(a.d)));
     }
     void p_set_field_jo_p() {
-      struct obj a = object_stack_pop();
-      object_stack_push(TAG_BOOL, set_field_string_p(jo2str(a.data)));
+      struct dp a = ds_pop();
+      ds_push(TAG_BOOL, set_field_string_p(jo2str(a.d)));
     }
     void expose_jo() {
       plus_prim("round-bar",    p_round_bar);
@@ -3436,37 +3434,37 @@
       plus_prim("set-field-jo?", p_set_field_jo_p);
     }
     void p_new_jojo_from_compiling_stack_tos() {
-      object_stack_push(TAG_JOJO, tos(compiling_stack));
+      ds_push(TAG_JOJO, tos(compiling_stack));
     }
     void expose_jojo() {
       plus_prim("new-jojo-from-compiling-stack-tos",
                p_new_jojo_from_compiling_stack_tos);
     }
-    void gc_local_env(gc_state_t gc_state, struct object_entry* object_entry) {
+    void gc_local_env(gc_state_t gc_state, struct gp* gp) {
       if (gc_state == GC_STATE_MARKING) {
-        if (object_entry->mark == GC_MARK_USING) { return; }
-        object_entry->mark = GC_MARK_USING;
-        struct local* lr = object_entry->pointer;
+        if (gp->mark == GC_MARK_USING) { return; }
+        gp->mark = GC_MARK_USING;
+        struct local* lr = gp->p;
         while (lr->name != 0) {
             mark_one(lr->local_tag, lr->local_data);
           lr++;
         }
       }
       else if (gc_state == GC_STATE_SWEEPING) {
-        free(object_entry->pointer);
+        free(gp->p);
       }
     }
     // caller free
     struct local* current_local_record() {
-      struct ret rp = return_stack_tos();
-      cell length = current_local_counter - rp.local_counter;
+      struct rp p = rs_tos();
+      cell length = current_local_counter - p.l;
       cell i = 0;
       struct local* lr = (struct local*)
         malloc((length + 1) * sizeof(struct local));
       while (i < length) {
-        lr[i].name       = local_record[rp.local_counter + i].name;
-        lr[i].local_tag  = local_record[rp.local_counter + i].local_tag;
-        lr[i].local_data = local_record[rp.local_counter + i].local_data;
+        lr[i].name       = local_record[p.l + i].name;
+        lr[i].local_tag  = local_record[p.l + i].local_tag;
+        lr[i].local_data = local_record[p.l + i].local_data;
         i++;
       }
       lr[i].name = 0;
@@ -3474,10 +3472,10 @@
     }
     void p_current_local_env() {
       struct local* lr = current_local_record();
-      struct object_entry* object_entry = new_record_object_entry();
-      object_entry->gc_actor = gc_local_env;
-      object_entry->pointer = lr;
-      object_stack_push(str2jo("<local-env>"), object_entry);
+      struct gp* gp = new_record_gp();
+      gp->gc_actor = gc_local_env;
+      gp->p = lr;
+      ds_push(str2jo("<local-env>"), gp);
     }
     void set_local_record(struct local* lr) {
       while (lr->name != 0) {
@@ -3486,19 +3484,19 @@
       }
     }
     void p_closure_exe() {
-      struct obj c = object_stack_pop();
-      struct object_entry* closure = c.data;
+      struct dp c = ds_pop();
+      struct gp* closure = c.d;
 
-      struct obj a = get_field(TAG_CLOSURE, closure, str2jo(".local-env"));
-      struct object_entry* ao = a.data;
-      struct local* lr = ao->pointer;
+      struct dp a = get_field(TAG_CLOSURE, closure, str2jo(".local-env"));
+      struct gp* ao = a.d;
+      struct local* lr = ao->p;
 
-      struct obj b = get_field(TAG_CLOSURE, closure, str2jo(".jojo"));
-      jo_t* jojo = b.data;
+      struct dp b = get_field(TAG_CLOSURE, closure, str2jo(".jojo"));
+      jo_t* jojo = b.d;
 
       cell local_counter = current_local_counter;
       set_local_record(lr);
-      return_stack_push(jojo, TAG_CLOSURE, closure, local_counter);
+      rs_push(jojo, TAG_CLOSURE, closure, local_counter);
     }
     void k_closure() {
       jo_t* jojo = tos(compiling_stack);
@@ -3542,12 +3540,12 @@
       struct addrinfo hints, *servinfo, *p;
       int yes = 1;
 
-      struct obj a = object_stack_pop();
-      int backlog = a.data;
+      struct dp a = ds_pop();
+      int backlog = a.d;
 
-      struct obj b = object_stack_pop();
-      struct object_entry* bo = b.data;
-      char* service = bo->pointer;
+      struct dp b = ds_pop();
+      struct gp* bo = b.d;
+      char* service = bo->p;
 
       memset(&hints, 0, sizeof hints);
       hints.ai_family = AF_UNSPEC;
@@ -3599,7 +3597,7 @@
         p_debug();
       }
 
-      object_stack_push(str2jo("<socket>"), sockfd);
+      ds_push(str2jo("<socket>"), sockfd);
     }
     // get sockaddr, ipv4 or ipv6:
     void *get_in_addr(struct sockaddr *sa) {
@@ -3612,8 +3610,8 @@
       // [:sockfd <socket>] ->
       // [:newfd <socket> :connector-address <string>]
 
-      struct obj a = object_stack_pop();
-      int sockfd = a.data;
+      struct dp a = ds_pop();
+      int sockfd = a.d;
 
       struct sockaddr_storage their_addr; // connector's address information
       socklen_t sin_size;
@@ -3632,24 +3630,24 @@
                 str,
                 sizeof(str));
 
-      object_stack_push(str2jo("<socket>"), newfd);
+      ds_push(str2jo("<socket>"), newfd);
 
-      struct object_entry* object_entry = new_record_object_entry();
-      object_entry->gc_actor = gc_free;
-      object_entry->pointer = strdup(str);
+      struct gp* gp = new_record_gp();
+      gp->gc_actor = gc_free;
+      gp->p = strdup(str);
 
-      object_stack_push(TAG_STRING, object_entry);
+      ds_push(TAG_STRING, gp);
     }
     void p_tcp_socket_connect() {
       // [:host <string> :service <string>] -> [<socket>]
 
-      struct obj a = object_stack_pop();
-      struct object_entry* ao = a.data;
-      char* service = ao->pointer;
+      struct dp a = ds_pop();
+      struct gp* ao = a.d;
+      char* service = ao->p;
 
-      struct obj b = object_stack_pop();
-      struct object_entry* bo = b.data;
-      char* host = bo->pointer;
+      struct dp b = ds_pop();
+      struct gp* bo = b.d;
+      char* host = bo->p;
 
       struct addrinfo hints, *servinfo, *p;
 
@@ -3688,17 +3686,17 @@
         p_debug();
       }
 
-      object_stack_push(str2jo("<socket>"), sockfd);
+      ds_push(str2jo("<socket>"), sockfd);
     }
     void p_socket_send() {
       // [<socket> <string>] -> []
 
-      struct obj a = object_stack_pop();
-      struct object_entry* ao = a.data;
-      char* str = ao->pointer;
+      struct dp a = ds_pop();
+      struct gp* ao = a.d;
+      char* str = ao->p;
 
-      struct obj b = object_stack_pop();
-      int sockfd = b.data;
+      struct dp b = ds_pop();
+      int sockfd = b.d;
 
       if (send(sockfd, str, strlen(str), 0) == -1) {
         report("- p_socket_send fail\n");
@@ -3707,8 +3705,8 @@
     }
     void p_socket_recv() {
       // [<socket>] -> [<string>]
-      struct obj a = object_stack_pop();
-      int sockfd = a.data;
+      struct dp a = ds_pop();
+      int sockfd = a.d;
 
       char* buf[1024];
 
@@ -3718,16 +3716,16 @@
         perror("  recv error : ");
       }
 
-      struct object_entry* object_entry = new_record_object_entry();
-      object_entry->gc_actor = gc_free;
-      object_entry->pointer = strdup(buf);
+      struct gp* gp = new_record_gp();
+      gp->gc_actor = gc_free;
+      gp->p = strdup(buf);
 
-      object_stack_push(TAG_STRING, object_entry);
+      ds_push(TAG_STRING, gp);
     }
     void p_close() {
       // [:sockfd <socket>] -> []
-      struct obj a = object_stack_pop();
-      int sockfd = a.data;
+      struct dp a = ds_pop();
+      int sockfd = a.d;
       if (close(sockfd) == -1) {
         report("- p_close fail\n");
         perror("  close error : ");
@@ -3745,38 +3743,38 @@
     cell cmd_number;
 
     void p_cmd_number() {
-      object_stack_push(TAG_INT, cmd_number);
+      ds_push(TAG_INT, cmd_number);
     }
     char** cmd_string_array;
 
     void p_index_to_cmd_string() {
       // index -> string
-      struct obj a = object_stack_pop();
-      cell index = a.data;
+      struct dp a = ds_pop();
+      cell index = a.d;
       char* cmd_string = cmd_string_array[index];
 
-      struct object_entry* object_entry = new_record_object_entry();
-      object_entry->gc_actor = gc_free;
-      object_entry->pointer = strdup(cmd_string);
+      struct gp* gp = new_record_gp();
+      gp->gc_actor = gc_free;
+      gp->p = strdup(cmd_string);
 
-      object_stack_push(TAG_STRING, object_entry);
+      ds_push(TAG_STRING, gp);
     }
     void p_find_env_string() {
       // string -> [env-string true] or [false]
-      struct obj a = object_stack_pop();
-      struct object_entry* ao = a.data;
-      char* var_string = ao->pointer;
+      struct dp a = ds_pop();
+      struct gp* ao = a.d;
+      char* var_string = ao->p;
       char* env_string = getenv(var_string);
       if (env_string == 0) {
-        object_stack_push(TAG_BOOL, false);
+        ds_push(TAG_BOOL, false);
       }
       else {
-        struct object_entry* object_entry = new_record_object_entry();
-        object_entry->gc_actor = gc_free;
-        object_entry->pointer = strdup(env_string);
+        struct gp* gp = new_record_gp();
+        gp->gc_actor = gc_free;
+        gp->p = strdup(env_string);
 
-        object_stack_push(TAG_STRING, object_entry);
-        object_stack_push(TAG_BOOL, true);
+        ds_push(TAG_STRING, gp);
+        ds_push(TAG_BOOL, true);
       }
     }
     void expose_system() {
@@ -3879,7 +3877,7 @@
     void expose_cffi() {
       plus_prim("+clib", k_clib);
     }
-    void p_core_flag() { object_stack_push(TAG_BOOL, core_flag); }
+    void p_core_flag() { ds_push(TAG_BOOL, core_flag); }
     void p_core_flag_on() { core_flag = true; }
     void p_core_flag_off() { core_flag = false; }
     void load_core() {
@@ -3894,45 +3892,45 @@
       drop(reading_stack);
     }
     void p_bind_name() {
-      struct obj a = object_stack_pop();
-      struct obj b = object_stack_pop();
-      bind_name(b.data, a.tag, a.data);
+      struct dp a = ds_pop();
+      struct dp b = ds_pop();
+      bind_name(b.d, a.t, a.d);
     }
     void p_jo_emit_call() {
-      struct obj a = object_stack_pop();
-      emit(a.data);
+      struct dp a = ds_pop();
+      emit(a.d);
     }
     void p_int_emit_data() {
-      struct obj a = object_stack_pop();
-      emit(a.data);
+      struct dp a = ds_pop();
+      emit(a.d);
     }
     void p_emit_lit() {
-      struct obj a = object_stack_pop();
+      struct dp a = ds_pop();
       emit(JO_INS_LIT);
-      emit(a.tag);
-      emit(a.data);
+      emit(a.t);
+      emit(a.d);
     }
     void p_jo_emit_get_local() {
-      struct obj a = object_stack_pop();
+      struct dp a = ds_pop();
       emit(JO_INS_GET_LOCAL);
-      emit(a.data);
+      emit(a.d);
     }
     void p_jo_emit_set_local() {
-      struct obj a = object_stack_pop();
-      char* str = jo2str(a.data);
+      struct dp a = ds_pop();
+      char* str = jo2str(a.d);
       emit(JO_INS_SET_LOCAL);
       char* tmp = substring(str, 0, strlen(str) -1);
       emit(str2jo(tmp));
       free(tmp);
     }
     void p_jo_emit_get_field() {
-      struct obj a = object_stack_pop();
+      struct dp a = ds_pop();
       emit(JO_INS_GET_FIELD);
-      emit(a.data);
+      emit(a.d);
     }
     void p_jo_emit_set_field() {
-      struct obj a = object_stack_pop();
-      char* str = jo2str(a.data);
+      struct dp a = ds_pop();
+      char* str = jo2str(a.d);
       emit(JO_INS_SET_FIELD);
       char* tmp = substring(str, 0, strlen(str) -1);
       emit(str2jo(tmp));
@@ -3943,8 +3941,10 @@
       plus_prim("core-flag-on", p_core_flag_on);
       plus_prim("core-flag-off", p_core_flag_off);
 
-      plus_prim("push-terminal-to-reading-stack", p_push_terminal_to_reading_stack);
-      plus_prim("drop-reading-stack", p_drop_reading_stack);
+      plus_prim("push-terminal-to-reading-stack",
+                p_push_terminal_to_reading_stack);
+      plus_prim("drop-reading-stack",
+                p_drop_reading_stack);
 
       plus_prim("bind-name", p_bind_name);
 
@@ -4149,7 +4149,7 @@
       plus_prim("p2", p2);
       plus_prim("p3", p3);
       plus_prim("p4", p4);
-      plus_prim("print-object-stack", p_print_object_stack);
+      plus_prim("print-data-stack", p_print_ds);
     }
     void init_system() {
       setvbuf(stdout, 0, _IONBF, 0);
@@ -4220,8 +4220,8 @@
     jo_t jojo_area[1024 * 1024];
 
     void init_stacks() {
-      object_stack = new_stack("object_stack");
-      return_stack = new_stack("return_stack");
+      ds = new_stack("ds");
+      rs = new_stack("rs");
 
       compiling_stack = new_stack("compiling_stack");
       push(compiling_stack, jojo_area);
@@ -4232,7 +4232,7 @@
       push(writing_stack, output_stack_terminal());
     }
     void init_expose() {
-      expose_object();
+      expose_gc();
       expose_gene();
       expose_stack();
       expose_ending();
