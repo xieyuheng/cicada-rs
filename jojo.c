@@ -553,7 +553,7 @@
 
     #define INPUT_STACK_BLOCK_SIZE (4 * 1024)
     // #define INPUT_STACK_BLOCK_SIZE 1 // for testing
-    struct input_stack* input_stack_new(input_stack_type input_stack_type) {
+    struct input_stack* new_input_stack(input_stack_type input_stack_type) {
       struct input_stack* input_stack = (struct input_stack*)
         malloc(sizeof(struct input_stack));
       input_stack->pointer = INPUT_STACK_BLOCK_SIZE;
@@ -563,26 +563,26 @@
       input_stack->type = input_stack_type;
       return input_stack;
     }
-    struct input_stack* input_stack_file(int file) {
+    struct input_stack* file_input_stack(int file) {
       int file_flag = fcntl(file, F_GETFL);
       int access_mode = file_flag & O_ACCMODE;
       if (file_flag == -1) {
-        report("- input_stack_file fail\n");
+        report("- file_input_stack fail\n");
         perror("  fcntl error ");
         p_debug();
       }
-      struct input_stack* input_stack = input_stack_new(INPUT_STACK_REGULAR_FILE);
+      struct input_stack* input_stack = new_input_stack(INPUT_STACK_REGULAR_FILE);
       input_stack->file = file;
       return input_stack;
     }
-    struct input_stack* input_stack_string(char* string) {
-      struct input_stack* input_stack = input_stack_new(INPUT_STACK_STRING);
+    struct input_stack* string_input_stack(char* string) {
+      struct input_stack* input_stack = new_input_stack(INPUT_STACK_STRING);
       input_stack->string = string;
       input_stack->string_pointer = 0;
       return input_stack;
     }
-    struct input_stack* input_stack_terminal() {
-      struct input_stack* input_stack = input_stack_new(INPUT_STACK_TERMINAL);
+    struct input_stack* terminal_input_stack() {
+      struct input_stack* input_stack = new_input_stack(INPUT_STACK_TERMINAL);
       return input_stack;
     }
     void input_stack_free_link(struct input_stack_link* link) {
@@ -776,7 +776,7 @@
 
     #define OUTPUT_STACK_BLOCK_SIZE (4 * 1024)
     // #define OUTPUT_STACK_BLOCK_SIZE 1 // for testing
-    struct output_stack* output_stack_new(output_stack_type output_stack_type) {
+    struct output_stack* new_output_stack(output_stack_type output_stack_type) {
       struct output_stack* output_stack = (struct output_stack*)
         malloc(sizeof(struct output_stack));
       output_stack->pointer = 0;
@@ -785,31 +785,31 @@
       output_stack->type = output_stack_type;
       return output_stack;
     }
-    struct output_stack* output_stack_file(int file) {
+    struct output_stack* file_output_stack(int file) {
       int file_flag = fcntl(file, F_GETFL);
       int access_mode = file_flag & O_ACCMODE;
       if (file_flag == -1) {
-        report("- output_stack_file fail\n");
+        report("- file_output_stack fail\n");
         perror("  fcntl error ");
         p_debug();
       }
       else if (access_mode == O_WRONLY || access_mode == O_RDWR) {
-        struct output_stack* output_stack = output_stack_new(OUTPUT_STACK_REGULAR_FILE);
+        struct output_stack* output_stack = new_output_stack(OUTPUT_STACK_REGULAR_FILE);
         output_stack->file = file;
         return output_stack;
       }
       else {
-        report("- output_stack_file fail\n");
-        report("  output_stack_file fail\n");
+        report("- file_output_stack fail\n");
+        report("  file_output_stack fail\n");
         p_debug();
       }
     }
-    struct output_stack* output_stack_string() {
-      struct output_stack* output_stack = output_stack_new(OUTPUT_STACK_STRING);
+    struct output_stack* string_output_stack() {
+      struct output_stack* output_stack = new_output_stack(OUTPUT_STACK_STRING);
       return output_stack;
     }
-    struct output_stack* output_stack_terminal() {
-      struct output_stack* output_stack = output_stack_new(OUTPUT_STACK_TERMINAL);
+    struct output_stack* terminal_output_stack() {
+      struct output_stack* output_stack = new_output_stack(OUTPUT_STACK_TERMINAL);
       return output_stack;
     }
     void output_stack_free_link(struct output_stack_link* link) {
@@ -828,17 +828,17 @@
       free(output_stack->stack);
       free(output_stack);
     }
-    void output_stack_file_flush_link(int file, struct output_stack_link* link) {
+    void file_output_stack_flush_link(int file, struct output_stack_link* link) {
       if (link == 0) {
         return;
       }
       else {
-        output_stack_file_flush_link(file, link->link);
+        file_output_stack_flush_link(file, link->link);
         ssize_t real_bytes = write(file,
                                    link->stack,
                                    OUTPUT_STACK_BLOCK_SIZE);
         if (real_bytes != OUTPUT_STACK_BLOCK_SIZE) {
-          report("- output_stack_file_flush_link fail\n");
+          report("- file_output_stack_flush_link fail\n");
           report("  file descriptor : %ld\n", file);
           perror("  write error : ");
           p_debug();
@@ -846,14 +846,14 @@
       }
     }
 
-    void output_stack_file_flush(struct output_stack* output_stack) {
-      output_stack_file_flush_link(output_stack->file,
+    void file_output_stack_flush(struct output_stack* output_stack) {
+      file_output_stack_flush_link(output_stack->file,
                                    output_stack->link);
       ssize_t real_bytes = write(output_stack->file,
                                  output_stack->stack,
                                  output_stack->pointer);
       if (real_bytes != output_stack->pointer) {
-        report("- output_stack_file_flush fail\n");
+        report("- file_output_stack_flush fail\n");
         report("  file descriptor : %ld\n", output_stack->file);
         perror("  write error : ");
         p_debug();
@@ -864,38 +864,38 @@
         output_stack->pointer = 0;
       }
     }
-    cell output_stack_string_length_link(cell sum, struct output_stack_link* link) {
+    cell string_output_stack_length_link(cell sum, struct output_stack_link* link) {
       if (link == 0) {
         return sum;
       }
       else {
         return
           OUTPUT_STACK_BLOCK_SIZE +
-          output_stack_string_length_link(sum, link->link);
+          string_output_stack_length_link(sum, link->link);
       }
     }
 
-    cell output_stack_string_length(struct output_stack* output_stack) {
+    cell string_output_stack_length(struct output_stack* output_stack) {
       cell sum = strlen(output_stack->stack);
-      return output_stack_string_length_link(sum, output_stack->link);
+      return string_output_stack_length_link(sum, output_stack->link);
     }
 
 
-    char* output_stack_string_collect_link(char* buffer, struct output_stack_link* link) {
+    char* string_output_stack_collect_link(char* buffer, struct output_stack_link* link) {
       if (link == 0) {
         return buffer;
       }
       else {
-        buffer = output_stack_string_collect_link(buffer, link->link);
+        buffer = string_output_stack_collect_link(buffer, link->link);
         memcpy(buffer, link->stack, OUTPUT_STACK_BLOCK_SIZE);
         return buffer + OUTPUT_STACK_BLOCK_SIZE;
       }
     }
 
-    char* output_stack_string_collect(struct output_stack* output_stack) {
-      char* string = (char*)malloc(1 + output_stack_string_length(output_stack));
+    char* string_output_stack_collect(struct output_stack* output_stack) {
+      char* string = (char*)malloc(1 + string_output_stack_length(output_stack));
       char* buffer = string;
-      buffer = output_stack_string_collect_link(buffer, output_stack->link);
+      buffer = string_output_stack_collect_link(buffer, output_stack->link);
       memcpy(buffer, output_stack->stack, output_stack->pointer);
       buffer[output_stack->pointer] = '\0';
       return string;
@@ -1993,6 +1993,19 @@
         }
       }
     }
+    void p_end() {
+      // for 'p_step' which do not handle tail call
+      struct rp p = rs_pop();
+      current_local_counter = p.l;
+    }
+    void p_bye() {
+      report("bye bye ^-^/\n");
+      exit(0);
+    }
+    void expose_ending() {
+      plus_prim("end", p_end);
+      plus_prim("bye", p_bye);
+    }
     void p_drop() {
       ds_pop();
     }
@@ -2030,19 +2043,6 @@
       plus_prim("over", p_over);
       plus_prim("tuck", p_tuck);
       plus_prim("swap", p_swap);
-    }
-    void p_end() {
-      // for 'p_step' which do not handle tail call
-      struct rp p = rs_pop();
-      current_local_counter = p.l;
-    }
-    void p_bye() {
-      report("bye bye ^-^/\n");
-      exit(0);
-    }
-    void expose_ending() {
-      plus_prim("end", p_end);
-      plus_prim("bye", p_bye);
     }
     struct stack* reading_stack; // of input_stack
     struct stack* writing_stack; // of output_stack
@@ -2158,6 +2158,39 @@
       plus_prim("read-jo", p_read_jo);
       plus_prim("newline", p_newline);
       plus_prim("space", p_space);
+    }
+    void p_reading_stack_push() {
+      struct dp a = ds_pop();
+      push(reading_stack, a.d);
+    }
+    void p_reading_stack_tos() {
+      ds_push(str2jo("<input-stack>"), tos(reading_stack));
+    }
+    void p_reading_stack_pop() {
+      ds_push(str2jo("<input-stack>"), pop(reading_stack));
+    }
+    void p_reading_stack_drop() {
+      drop(reading_stack);
+    }
+    void p_terminal_input_stack() {
+      ds_push(str2jo("<input-stack>"), terminal_input_stack());
+    }
+    void p_input_stack_free() {
+      struct dp a = ds_pop();
+      input_stack_free(a.d);
+    }
+    void expose_io() {
+      plus_atom("<input-stack>", gc_ignore);
+
+
+      plus_prim("reading-stack-push", p_reading_stack_push);
+      plus_prim("reading-stack-tos", p_reading_stack_tos);
+      plus_prim("reading-stack-pop", p_reading_stack_pop);
+      plus_prim("reading-stack-drop", p_reading_stack_drop);
+
+      plus_prim("terminal-input-stack", p_terminal_input_stack);
+
+      plus_prim("input-stack-free", p_input_stack_free);
     }
     cell local_find(jo_t name) {
       // return index of local_record
@@ -3016,7 +3049,7 @@
       p_print_ds();
       report("debug[%ld]> ", debug_repl_level);
       debug_repl_level++;
-      debug_repl(input_stack_terminal());
+      debug_repl(terminal_input_stack());
       debug_repl_level--;
       report("- exit debug-repl [level %ld]\n", debug_repl_level);
     }
@@ -3117,7 +3150,7 @@
     }
     // do not handle tail call
     void p_step() {
-      struct input_stack* input_stack = input_stack_terminal();
+      struct input_stack* input_stack = terminal_input_stack();
       push(reading_stack, input_stack);
       step_flag = true;
       stepper_counter = 0;
@@ -3880,17 +3913,11 @@
     void p_core_flag() { ds_push(TAG_BOOL, core_flag); }
     void p_core_flag_on() { core_flag = true; }
     void p_core_flag_off() { core_flag = false; }
-    void load_core() {
-      #include "core.h"
-      core_jo[core_jo_len - 1] = '\0';
-      repl(input_stack_string(core_jo));
-    }
-    void p_push_terminal_to_reading_stack() {
-      push(reading_stack, input_stack_terminal());
-    }
-    void p_drop_reading_stack() {
-      drop(reading_stack);
-    }
+    // void load_core() {
+    //   #include "core.h"
+    //   core_jo[core_jo_len - 1] = '\0';
+    //   repl(string_input_stack((char*)core_jo));
+    // }
     void p_bind_name() {
       struct dp a = ds_pop();
       struct dp b = ds_pop();
@@ -3941,11 +3968,6 @@
       plus_prim("core-flag-on", p_core_flag_on);
       plus_prim("core-flag-off", p_core_flag_off);
 
-      plus_prim("push-terminal-to-reading-stack",
-                p_push_terminal_to_reading_stack);
-      plus_prim("drop-reading-stack",
-                p_drop_reading_stack);
-
       plus_prim("bind-name", p_bind_name);
 
       // note that, the notation of instruction is not exposed to jojo
@@ -3960,7 +3982,7 @@
     }
     void p1() {
       int file = open("README", O_RDWR);
-      struct input_stack* t0_stack = input_stack_file(file);
+      struct input_stack* t0_stack = file_input_stack(file);
       input_stack_push(t0_stack, '\n');
       input_stack_push(t0_stack, '\n');
       input_stack_push(t0_stack, '1');
@@ -3975,7 +3997,7 @@
       input_stack_free(t0_stack);
       report("- input_stack test0 finished\n");
 
-      struct input_stack* t1_stack = input_stack_terminal();
+      struct input_stack* t1_stack = terminal_input_stack();
       while (!input_stack_empty_p(t1_stack)) {
         char byte = input_stack_pop(t1_stack);
         report("\n> %c", byte);
@@ -3983,7 +4005,7 @@
       input_stack_free(t1_stack);
       report("- input_stack test1 finished\n");
 
-      struct input_stack* t2_stack = input_stack_string("1234567890");
+      struct input_stack* t2_stack = string_input_stack("1234567890");
       input_stack_push(t2_stack, '\n');
       input_stack_push(t2_stack, '\n');
       input_stack_push(t2_stack, '1');
@@ -4005,24 +4027,24 @@
                       (O_CREAT | O_RDWR),
                       (S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP | S_IROTH | S_IWOTH));
 
-      struct output_stack* t0_stack = output_stack_file(file);
+      struct output_stack* t0_stack = file_output_stack(file);
       output_stack_push(t0_stack, '1'); output_stack_pop(t0_stack);
       output_stack_push(t0_stack, '2');
       output_stack_push(t0_stack, '3'); output_stack_drop(t0_stack);
       output_stack_push(t0_stack, '4');
       output_stack_push(t0_stack, '\n');
-      output_stack_file_flush(t0_stack);
+      file_output_stack_flush(t0_stack);
       output_stack_push(t0_stack, '1');
       output_stack_push(t0_stack, '2'); output_stack_pop(t0_stack);
       output_stack_push(t0_stack, '3');
       output_stack_push(t0_stack, '4'); output_stack_drop(t0_stack);
       output_stack_push(t0_stack, '\n');
-      output_stack_file_flush(t0_stack);
+      file_output_stack_flush(t0_stack);
       output_stack_free(t0_stack);
       close(file);
       report("- output_stack test0 finished\n");
 
-      struct output_stack* t1_stack = output_stack_terminal();
+      struct output_stack* t1_stack = terminal_output_stack();
       output_stack_push(t1_stack, '\n');
       output_stack_push(t1_stack, '\n');
       output_stack_push(t1_stack, '1');
@@ -4034,7 +4056,7 @@
       output_stack_free(t1_stack);
       report("- output_stack test1 finished\n");
 
-      struct output_stack* t2_stack = output_stack_string();
+      struct output_stack* t2_stack = string_output_stack();
       output_stack_push(t2_stack, '1');
       output_stack_push(t2_stack, '2');
       report("- %c\n", output_stack_pop(t2_stack));
@@ -4042,7 +4064,7 @@
       output_stack_push(t2_stack, '4');
       report("- %c\n", output_stack_pop(t2_stack));
       output_stack_push(t2_stack, '\n');
-      char* collected_string = output_stack_string_collect(t2_stack);
+      char* collected_string = string_output_stack_collect(t2_stack);
       report("- collected_string : %s\n", collected_string);
       output_stack_free(t2_stack);
       report("- output_stack test2 finished\n");
@@ -4141,7 +4163,7 @@
         perror("file open failed");
         return;
       }
-      repl(input_stack_file(file));
+      repl(file_input_stack(file));
       close(file);
     }
     void expose_play() {
@@ -4229,7 +4251,7 @@
       reading_stack = new_stack("reading_stack");
 
       writing_stack = new_stack("writing_stack");
-      push(writing_stack, output_stack_terminal());
+      push(writing_stack, terminal_output_stack());
     }
     void init_expose() {
       expose_gc();
@@ -4237,6 +4259,7 @@
       expose_stack();
       expose_ending();
       expose_rw();
+      expose_io();
       expose_local();
       expose_compiler();
       expose_control();
@@ -4266,8 +4289,8 @@
       init_kernel_signal_handler();
 
       // load_core();
-      // path_load("core.jo");
+      path_load("core.jo");
 
       p_repl_flag_on();
-      repl(input_stack_terminal());
+      repl(terminal_input_stack());
     }

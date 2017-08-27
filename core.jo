@@ -73,9 +73,13 @@
         <null> [flower-bar jo-write space]
         <cons> [:l .car jexp-write
                 :l .cdr recur]))
-    (+jojo repl
-      push-terminal-to-reading-stack
-      (if has-jo? not then drop-reading-stack end)
+    (+jojo repl (-> :input-stack --)
+      :input-stack reading-stack-push
+      repl/loop
+      reading-stack-drop)
+
+    (+jojo repl/loop
+      (if has-jo? not then end)
       read-jo :jo!
       (if :jo round-bar eq? then
           read-jo
@@ -113,10 +117,10 @@
       :l .cdr   dup jexp-write newline
       compile-jojo
       bind-name)
-    (run repl)
+    (run reading-stack-tos repl)
     (+jojo run
       dup jexp-write newline
       compile-jojo apply)
-    (note
-      (+jojo square dup mul)
-      (run ))
+    (+jojo note)
+    (+jojo square dup mul)
+    (run 123 square int-write newline)

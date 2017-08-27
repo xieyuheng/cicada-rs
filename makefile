@@ -9,15 +9,15 @@ l = -ldl
 
 build:
 	make tangle
-	xxd -i core.jo > core.h 
+	#xxd -i core.jo > core.h 
 	$(cc) $(w) $(o) $(f) $(l) jojo.c -o jojo
 
 tangle:
 	./tool/tangle.js
 
-user-install:
-	$(copy) core ~/.jojo/
-	$(copy) module ~/.jojo/
+# user-install:
+# 	$(copy) core ~/.jojo/
+# 	$(copy) module ~/.jojo/
 
 clean:
 	rm jojo

@@ -90,18 +90,6 @@
 
     - to catch unnamed data into returned closure
 
-*** about algebraic data type
-
-    - 沒有構造子的
-      type-alias of sumtype
-      type-alias of function type
-      可以使得函數總是能作用與它可以所用於的類型
-      但是這可能並不是想要的性狀
-      因爲 即便是可以作用 也不想作用 而是要做更細緻的限制
-
-    - 也許對於動態語言來說
-      簡化的用法是合理的
-
 *** test
 
     - use EOPL to test the language
@@ -237,12 +225,16 @@
                 :l .cdr recur]))
     #+end_src
 
-*** ><>< repl
+*** repl
 
     #+begin_src jojo
-    (+jojo repl
-      push-terminal-to-reading-stack
-      (if has-jo? not then drop-reading-stack end)
+    (+jojo repl (-> :input-stack --)
+      :input-stack reading-stack-push
+      repl/loop
+      reading-stack-drop)
+
+    (+jojo repl/loop
+      (if has-jo? not then end)
       read-jo :jo!
       (if :jo round-bar eq? then
           read-jo
@@ -290,10 +282,10 @@
       :l .cdr   dup jexp-write newline
       compile-jojo
       bind-name)
-    (run repl)
+    (run reading-stack-tos repl)
     #+end_src
 
-*** >< (run)
+*** (run)
 
     #+begin_src jojo
     (+jojo run
@@ -301,10 +293,15 @@
       compile-jojo apply)
     #+end_src
 
+*** (note)
+
+    #+begin_src jojo
+    (+jojo note)
+    #+end_src
+
 *** >< the-story-begin
 
     #+begin_src jojo
-    (note
-      (+jojo square dup mul)
-      (run ))
+    (+jojo square dup mul)
+    (run 123 square int-write newline)
     #+end_src
