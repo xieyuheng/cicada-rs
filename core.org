@@ -1,11 +1,7 @@
 #+property: tangle core.jo
 #+title: core
-
+* do not use ' but use quote
 * [todo-stack]
-
-*** do not use ' but use quote, and
-
-*** [maybe] no backquote
 
 *** (let)
 
@@ -71,14 +67,23 @@
   (run core-flag-on)
   #+end_src
 
-* jexp
+* list
 
-*** list
+*** <null> <cons>
 
     #+begin_src jojo
     (+data <null>)
     (+data <cons> .car .cdr)
     #+end_src
+
+*** list-member?
+
+    #+begin_src jojo
+    (+jojo list-member? (->  -- <bool>)
+      )
+    #+end_src
+
+* jexp
 
 *** [note] jexp
 
@@ -171,7 +176,7 @@
 
     (+jojo compile-jojo/help (-> :list jexp list --)
       (if :list null? then
-          'end jo-emit-call
+          quote end jo-emit-call
           0 int-emit-data
           0 int-emit-data
           end)
@@ -228,14 +233,14 @@
 *** >< (if)
 
     #+begin_src jojo
-    (note (+jojo if-else-then
-            )
+    (+jojo if-else-then
+      )
 
-      (+jojo if-then
-        )
+    (+jojo if-then
+      )
 
-      (+jojo if (-> :l --)
-        ))
+    (+jojo if (-> :l --)
+      )
     #+end_src
 
 *** >< (cond)

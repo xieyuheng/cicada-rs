@@ -2417,6 +2417,23 @@
         if (jo_delimiter_p(next_jo)) {
           report("- compile_jo fail\n");
           report("  can not handle delimiter after ' in this reader\n");
+          report("  can only handle ' jo\n");
+          report("  delimiter : %s\n", jo2str(next_jo));
+          p_debug();
+        }
+        else {
+          emit(JO_INS_LIT);
+          emit(TAG_JO);
+          emit(next_jo);
+        }
+      }
+      // quote jo
+      else if (string_equal(str, "quote")) {
+        jo_t next_jo = read_jo();
+        if (jo_delimiter_p(next_jo)) {
+          report("- compile_jo fail\n");
+          report("  can not handle delimiter after 'quote' in this reader\n");
+          report("  can only handle quote jo\n");
           report("  delimiter : %s\n", jo2str(next_jo));
           p_debug();
         }
