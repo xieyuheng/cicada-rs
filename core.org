@@ -186,9 +186,9 @@
     #+begin_src jojo
     (note atom of jexp can only be <string> and <jo>)
     (note jexp
-      = jexp list
-      | <square-bar-ket>
-      | <flower-bar-ket>
+      = <cons> -- jexp list
+      | <square-bar-ket> -- jexp list square-bar-ket
+      | <flower-bar-ket> -- jexp list flower-bar-ket
       | <string>
       | <jo>)
 
@@ -204,7 +204,7 @@
       (cond [:jo round-bar eq?] [round-ket read-jexp/list]
             [:jo square-bar eq?] [square-ket read-jexp/list square-bar-ket]
             [:jo flower-bar eq?] [flower-ket read-jexp/list flower-bar-ket]
-            [:jo double-quote eq?] [read-string]
+            [:jo doublequote eq?] [read-string]
             else [:jo]))
 
     (+jojo read-jexp/list (-> :ket <jo> -- jexp list)
@@ -228,9 +228,9 @@
         <flower-bar-ket> [flower-bar jo-write space
                           :jexp .list jexp-list-write
                           flower-ket jo-write space]
-        <string> [double-quote jo-write
+        <string> [doublequote jo-write
                   :jexp string-write
-                  double-quote jo-write space]
+                  doublequote jo-write space]
         <jo> [:jexp jo-write space]))
 
     (+jojo jexp-list-write (-> :list jexp list --)
@@ -265,9 +265,9 @@
 
     #+begin_src jojo
     (+jojo compile-jojo (-> jexp list -- <jojo>)
-      new-jojo-from-compiling-stack-tos
+      compiling-stack-tos-as-jojo
       swap jexp-list-compile
-      quote end jo-emit-call
+      'end jo-emit-call
       0 int-emit-data
       0 int-emit-data)
     #+end_src
@@ -312,40 +312,55 @@
             else [:jo jo-emit-call]))
     #+end_src
 
-*** >< (if)
+*** (if)
 
     #+begin_src jojo
-    (note
+    (+jojo if-else-then (-> :body --)
+      :body {'then eq?} list-split (-> :question :then-else)
+      :then-else {'else eq?} list-split (-> :then :else)
+      :question jexp-list-compile
+      emit-jz :jz-address!
+      :then .cdr jexp-list-compile
+      emit-jmp :jmp-address!
+      :jz-address set-offset-to-here
+      :else .cdr jexp-list-compile
+      :jmp-address set-offset-to-here)
 
-      (+jojo if-else-then
-        )
+    (+jojo if-then (-> :body --)
+      :body {'then eq?} list-split (-> :question :then)
+      :question jexp-list-compile
+      emit-jz :jz-address!
+      :then .cdr jexp-list-compile
+      :jz-address set-offset-to-here)
 
-      (+jojo if-then (-> :list --)
-        :list {quote then eq?} list-split (-> :question :then)
-        :then .cdr (-> :answer)
-        ))
-
-    (+jojo core-if (-> :list --)
+    (+jojo core-if (-> :body --)
       (cond
-        [quote else :list list-member?
-         quote then :list list-member? and]
-        [:list if-else-then]
+        ['else :body list-member?
+         'then :body list-member? and]
+        [:body if-else-then]
 
-        [quote then :list list-member?] [:list if-then]
+        ['then :body list-member?] [:body if-then]
 
         else ["- if fail" string-write newline
               "  the body dose not has 'then" string-write newline
-              "  body : " string-write :list jexp-list-write newline
+              "  body : " string-write :body jexp-list-write newline
               debug]))
     #+end_src
 
+*** (cond)
+
+    #+begin_src jojo
+
+    #+end_src
+
+*** >< (case)
 
 *** (+jojo)
 
     #+begin_src jojo
-    (+jojo +jojo (-> :list jexp list --)
-      :list .car,  (note dup jo-write newline)
-      :list .cdr   (note dup jexp-list-write newline)
+    (+jojo +jojo (-> :body jexp list --)
+      :body .car,  (note dup jo-write newline)
+      :body .cdr   (note dup jexp-list-write newline)
       compile-jojo,
       bind-name)
     #+end_src
@@ -360,6 +375,8 @@
 
     #+begin_src jojo
     (+jojo if core-if)
+    (note (+jojo cond core-cond))
+    (note (+jojo case core-case))
     #+end_src
 
 *** >< (->)
@@ -385,10 +402,6 @@
     #+end_src
 
 *** >< (test)
-
-*** >< (cond)
-
-*** >< (case)
 
 *** >< {}
 

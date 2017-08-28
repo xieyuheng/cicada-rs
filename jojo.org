@@ -547,11 +547,12 @@
 
     #+begin_src c
     jo_t EMPTY_JO;
+
     jo_t TAG_PRIM;
     jo_t TAG_JOJO;
-    jo_t TAG_KEYWORD;
-    jo_t TAG_CLASS;
     jo_t TAG_CLOSURE;
+    jo_t TAG_ADDRESS;
+    jo_t TAG_CLASS;
 
     jo_t TAG_BOOL;
     jo_t TAG_INT;
@@ -567,9 +568,9 @@
     jo_t SQUARE_KET;
     jo_t FLOWER_BAR;
     jo_t FLOWER_KET;
-    jo_t DOUBLE_QUOTE;
-    jo_t QUOTE;
-    jo_t BACKQUOTE;
+    jo_t DOUBLEQUOTE;
+    jo_t SINGLEQUOTE;
+    jo_t QUASIQUOTE;
     jo_t COMMA;
 
     jo_t JO_INS_LIT;
@@ -2276,6 +2277,7 @@
 
       plus_atom("<prim>", gc_ignore);
       plus_atom("<jojo>", gc_ignore);
+      plus_atom("<address>", gc_ignore);
       plus_atom("<set-global-variable>", gc_ignore);
       plus_atom("<data-constructor>", gc_ignore);
       plus_atom("<data-predicate>", gc_ignore);
@@ -3577,7 +3579,7 @@
         emit(string_to_int(str));
       }
       // "string"
-      else if (jo == DOUBLE_QUOTE) {
+      else if (jo == DOUBLEQUOTE) {
         compile_string();
       }
       // :local
@@ -3615,22 +3617,6 @@
           report("- compile_jo fail\n");
           report("  can not handle delimiter after ' in this reader\n");
           report("  can only handle ' jo\n");
-          report("  delimiter : %s\n", jo2str(next_jo));
-          p_debug();
-        }
-        else {
-          emit(JO_INS_LIT);
-          emit(TAG_JO);
-          emit(next_jo);
-        }
-      }
-      // quote jo
-      else if (string_equal(str, "quote")) {
-        jo_t next_jo = read_jo();
-        if (jo_delimiter_p(next_jo)) {
-          report("- compile_jo fail\n");
-          report("  can not handle delimiter after 'quote' in this reader\n");
-          report("  can only handle quote jo\n");
           report("  delimiter : %s\n", jo2str(next_jo));
           p_debug();
         }
@@ -3756,14 +3742,14 @@
 *** k_if
 
     #+begin_src c
-    //// without else
+    //// if then
     //   (if a b p? then c d)
     //// ==>
     //     a b p? jz[:end-of-then]
     //     c d
     //   :end-of-then
 
-    //// with else
+    //// if then else
     //   (if a b p? then c d else e f)
     //// ==>
     //     a b p? jz[:end-of-then]
@@ -3775,20 +3761,20 @@
     void k_if() {
       compile_until_meet_jo(JO_THEN);
       emit(JO_INS_JZ);
-      jo_t* end_of_then = tos(compiling_stack);
+      cell* end_of_then = tos(compiling_stack);
       p_compiling_stack_inc();
       jo_t ending_jo = compile_until_meet_jo_or_jo(JO_ELSE, ROUND_KET);
       if (ending_jo == ROUND_KET) {
-        end_of_then[0] = (jo_t*)tos(compiling_stack) - end_of_then;
+        end_of_then[0] = (cell*)tos(compiling_stack) - end_of_then;
         return;
       }
       else {
         emit(JO_INS_JMP);
-        jo_t* end_of_else = tos(compiling_stack);
+        cell* end_of_else = tos(compiling_stack);
         p_compiling_stack_inc();
-        end_of_then[0] = (jo_t*)tos(compiling_stack) - end_of_then;
+        end_of_then[0] = (cell*)tos(compiling_stack) - end_of_then;
         p_compile_until_round_ket();
-        end_of_else[0] = (jo_t*)tos(compiling_stack) - end_of_else;
+        end_of_else[0] = (cell*)tos(compiling_stack) - end_of_else;
         return;
       }
     }
@@ -5026,9 +5012,9 @@
     void p_flower_bar()   { ds_push(TAG_JO, FLOWER_BAR); }
     void p_flower_ket()   { ds_push(TAG_JO, FLOWER_KET); }
 
-    void p_double_quote() { ds_push(TAG_JO, DOUBLE_QUOTE); }
-    void p_quote()        { ds_push(TAG_JO, QUOTE); }
-    void p_backquote()    { ds_push(TAG_JO, BACKQUOTE); }
+    void p_doublequote()  { ds_push(TAG_JO, DOUBLEQUOTE); }
+    void p_singlequote()  { ds_push(TAG_JO, SINGLEQUOTE); }
+    void p_quasiquote()   { ds_push(TAG_JO, QUASIQUOTE); }
     void p_comma()        { ds_push(TAG_JO, COMMA); }
     #+end_src
 
@@ -5124,9 +5110,9 @@
       plus_prim("flower-bar",   p_flower_bar);
       plus_prim("flower-ket",   p_flower_ket);
 
-      plus_prim("double-quote", p_double_quote);
-      plus_prim("quote",        p_quote);
-      plus_prim("backquote",    p_backquote);
+      plus_prim("doublequote",  p_doublequote);
+      plus_prim("singlequote",  p_singlequote);
+      plus_prim("quasiquote",   p_quasiquote);
       plus_prim("comma",        p_comma);
 
       plus_prim("jo-write",  p_jo_write);
@@ -5142,12 +5128,41 @@
     }
     #+end_src
 
-* <jojo>
+* <address>
 
-*** p_new_jojo_from_compiling_stack_tos
+*** p_compiling_stack_tos
 
     #+begin_src c
-    void p_new_jojo_from_compiling_stack_tos() {
+    void p_compiling_stack_tos() {
+      ds_push(TAG_ADDRESS, tos(compiling_stack));
+    }
+    #+end_src
+
+*** p_set_offset_to_here
+
+    #+begin_src c
+    void p_set_offset_to_here() {
+      struct dp a = ds_pop();
+      cell* address = a.d;
+      address[0] = (cell*)tos(compiling_stack) - address;
+    }
+    #+end_src
+
+*** expose_address
+
+    #+begin_src c
+    void expose_address() {
+      plus_prim("compiling-stack-tos", p_compiling_stack_tos);
+      plus_prim("set-offset-to-here", p_set_offset_to_here);
+    }
+    #+end_src
+
+* <jojo>
+
+*** p_compiling_stack_tos_as_jojo
+
+    #+begin_src c
+    void p_compiling_stack_tos_as_jojo() {
       ds_push(TAG_JOJO, tos(compiling_stack));
     }
     #+end_src
@@ -5156,8 +5171,8 @@
 
     #+begin_src c
     void expose_jojo() {
-      plus_prim("new-jojo-from-compiling-stack-tos",
-               p_new_jojo_from_compiling_stack_tos);
+      plus_prim("compiling-stack-tos-as-jojo",
+               p_compiling_stack_tos_as_jojo);
     }
     #+end_src
 
@@ -5708,7 +5723,7 @@
         if (s == ROUND_KET) {
           return;
         }
-        else if (s == DOUBLE_QUOTE) {
+        else if (s == DOUBLEQUOTE) {
           k_clib_one();
         }
         else {
@@ -5831,6 +5846,28 @@
     }
     #+end_src
 
+*** p_emit_jz
+
+    #+begin_src c
+    void p_emit_jz() {
+      emit(JO_INS_JZ);
+      jo_t* address = tos(compiling_stack);
+      p_compiling_stack_inc();
+      ds_push(TAG_ADDRESS, address);
+    }
+    #+end_src
+
+*** p_emit_jmp
+
+    #+begin_src c
+    void p_emit_jmp() {
+      emit(JO_INS_JMP);
+      jo_t* address = tos(compiling_stack);
+      p_compiling_stack_inc();
+      ds_push(TAG_ADDRESS, address);
+    }
+    #+end_src
+
 *** expose_core
 
     #+begin_src c
@@ -5850,6 +5887,9 @@
       plus_prim("jo-emit-set-local", p_jo_emit_set_local);
       plus_prim("jo-emit-get-field", p_jo_emit_get_field);
       plus_prim("jo-emit-set-field", p_jo_emit_set_field);
+
+      plus_prim("emit-jz", p_emit_jz);
+      plus_prim("emit-jmp", p_emit_jmp);
     }
     #+end_src
 
@@ -6106,6 +6146,7 @@
       TAG_PRIM         = str2jo("<prim>");
       TAG_JOJO         = str2jo("<jojo>");
       TAG_CLOSURE      = str2jo("<closure>");
+      TAG_ADDRESS      = str2jo("<address>");
       TAG_CLASS        = str2jo("<class>");
 
       TAG_BOOL         = str2jo("<bool>");
@@ -6123,9 +6164,9 @@
       SQUARE_KET   =   str2jo("]");
       FLOWER_BAR   =   str2jo("{");
       FLOWER_KET   =   str2jo("}");
-      DOUBLE_QUOTE =   str2jo("\"");
-      QUOTE        =   str2jo("'");
-      BACKQUOTE    =   str2jo("`");
+      DOUBLEQUOTE  =   str2jo("\"");
+      SINGLEQUOTE  =   str2jo("'");
+      QUASIQUOTE   =   str2jo("`");
       COMMA        =   str2jo(",");
 
       JO_INS_LIT       = str2jo("ins/lit");
@@ -6200,6 +6241,7 @@
       expose_string();
       expose_int();
       expose_jo();
+      expose_address();
       expose_jojo();
       expose_closure();
       expose_socket();
