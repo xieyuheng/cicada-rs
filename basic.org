@@ -185,10 +185,10 @@
 
     (+jojo write-tree-or-nothing
       (if dup nothing? then drop "nothing" string-write end)
-      (el {dup .car int-write space
-           .cdr int-write space
-           "cons" string-write space}
-          tree-write))
+      {dup .car int-write space
+       .cdr int-write space
+       "cons" string-write space}
+      tree-write)
 
     (run
       a-tree 1 leaf zip-tree

@@ -5,74 +5,57 @@
                 [:t1 .v :t2 .v cons leaf return-maybe]
                 [:t1 node? :t2 node? and]
                 (let-bind bind-maybe
-                  :l {:t1 .l :t2 .l zip-tree}
-                  :r {:t1 .r :t2 .r zip-tree}
-                  {:l :r node return-maybe})
+                  :l [:t1 .l :t2 .l zip-tree]
+                  :r [:t1 .r :t2 .r zip-tree]
+                  [:l :r node return-maybe])
                 else nothing)))
   (run core-flag-on)
-      (note jexp
-        = jexp <cons>
-        | jexp <vons>
-        | jexp <fons>
-        | <string>
-        | <jo>)
     (+data <null>)
     (+data <cons> .car .cdr)
-    (+data <vons> .var .vdr)
-    (+data <fons> .far .fdr)
+    (note atom of jexp can only be <string> and <jo>)
+    (note jexp
+      = <round-bar-ket>
+      | <square-bar-ket>
+      | <flower-bar-ket>
+      | <string>
+      | <jo>)
+
+    (+data <round-bar-ket>  .list)
+    (+data <square-bar-ket> .list)
+    (+data <flower-bar-ket> .list)
     (+jojo read-jexp (-> -- jexp)
       read-jo :jo!
-      (cond [:jo round-bar eq?]  [read-jexp/cons]
-            [:jo square-bar eq?] [read-jexp/vons]
-            [:jo flower-bar eq?] [read-jexp/fons]
+      (cond [:jo round-bar eq?] [round-ket read-jexp/list round-bar-ket]
+            [:jo square-bar eq?] [square-ket read-jexp/list square-bar-ket]
+            [:jo flower-bar eq?] [flower-ket read-jexp/list flower-bar-ket]
             [:jo double-quote eq?] [read-string]
             else [:jo]))
 
-    (+jojo read-jexp/cons
+    (+jojo read-jexp/list (-> :ket <jo> -- jexp list)
       read-jo :jo!
-      (if :jo round-ket eq?
+      (if :jo :ket eq?
           then null
-          else :jo jo-unread read-jexp recur cons))
-
-    (+jojo read-jexp/vons
-      read-jo :jo!
-      (if :jo round-ket eq?
-          then null
-          else :jo jo-unread read-jexp recur vons))
-
-    (+jojo read-jexp/fons
-      read-jo :jo!
-      (if :jo round-ket eq?
-          then null
-          else :jo jo-unread read-jexp recur fons))
+          else :jo jo-unread read-jexp, :ket recur, cons))
     (+jojo jexp-write (-> :jexp --)
       (case :jexp
-        <cons> [round-bar  jo-write space :jexp jexp-write/cons]
-        <vons> [square-bar jo-write space :jexp jexp-write/vons]
-        <fons> [flower-bar jo-write space :jexp jexp-write/fons]
+        <round-bar-ket>  [round-bar jo-write space
+                          :jexp .list jexp-write/list
+                          round-ket jo-write space]
+        <square-bar-ket> [square-bar jo-write space
+                          :jexp .list jexp-write/list
+                          square-ket jo-write space]
+        <flower-bar-ket> [flower-bar jo-write space
+                          :jexp .list jexp-write/list
+                          flower-ket jo-write space]
         <string> [double-quote jo-write
                   :jexp string-write
-                  double-quote jo-write
-                  space]
+                  double-quote jo-write space]
         <jo> [:jexp jo-write space]))
 
-    (+jojo jexp-write/cons (-> :l --)
-      (case :l
-        <null> [round-ket jo-write space]
-        <cons> [:l .car jexp-write
-                :l .cdr recur]))
-
-    (+jojo jexp-write/vons (-> :l --)
-      (case :l
-        <null> [square-bar jo-write space]
-        <cons> [:l .car jexp-write
-                :l .cdr recur]))
-
-    (+jojo jexp-write/fons (-> :l --)
-      (case :l
-        <null> [flower-bar jo-write space]
-        <cons> [:l .car jexp-write
-                :l .cdr recur]))
+    (+jojo jexp-write/list (-> :list jexp list --)
+      (case :list
+        <null> [space]
+        <cons> [:list .car jexp-write :list .cdr recur]))
     (+jojo repl (-> :input-stack --)
       :input-stack reading-stack-push
       repl/loop
@@ -83,44 +66,51 @@
       read-jo :jo!
       (if :jo round-bar eq? then
           read-jo
-          round-bar jo-unread read-jexp
+          round-bar jo-unread read-jexp .list
+          (note (-> jexp list -- [compiling-stack]))
           swap jo-apply)
       recur)
-    (+jojo compile-jojo (-> jexp <cons> -- <jojo>)
+    (+jojo compile-jojo (-> jexp list -- <jojo>)
       new-jojo-from-compiling-stack-tos
       swap compile-jojo/help)
 
-    (+jojo compile-jojo/jo (-> :jo --)
-      (cond
-        [:jo int-jo?]       [:jo jo->int emit-lit]
-        [:jo get-local-jo?] [:jo jo-emit-get-local]
-        [:jo set-local-jo?] [:jo jo-emit-set-local]
-        [:jo get-field-jo?] [:jo jo-emit-get-field]
-        [:jo set-field-jo?] [:jo jo-emit-set-field]
-        else [:jo jo-emit-call]))
-
-    (+jojo compile-jojo/help (-> :l jexp <cons> --)
-      (if :l null? then
+    (+jojo compile-jojo/help (-> :list jexp list --)
+      (if :list null? then
           'end jo-emit-call
           0 int-emit-data
           0 int-emit-data
           end)
-      :l .car :jexp!
-      (cond [:jexp cons?] [:jexp .cdr :jexp .car jo-apply]
-            [:jexp vons?] []
-            [:jexp fons?] []
+      :list .car :jexp!
+      (cond [:jexp round-bar-ket?] [:jexp .list .cdr
+                                    :jexp .list .car
+                                    jo-apply]
+            [:jexp square-bar-ket?] []
+            [:jexp flower-bar-ket?] []
             [:jexp string?] [:jexp emit-lit]
             [:jexp jo?] [:jexp compile-jojo/jo])
-      :l .cdr recur)
-    (+jojo +jojo (-> :l --)
-      :l .car   dup jo-write newline
-      :l .cdr   dup jexp-write newline
-      compile-jojo
-      bind-name)
+      :list .cdr recur)
+
+    (+jojo compile-jojo/jo (-> :jo --)
+      (cond [:jo int-jo?]       [:jo jo->int emit-lit]
+            [:jo get-local-jo?] [:jo jo-emit-get-local]
+            [:jo set-local-jo?] [:jo jo-emit-set-local]
+            [:jo get-field-jo?] [:jo jo-emit-get-field]
+            [:jo set-field-jo?] [:jo jo-emit-set-field]
+            else [:jo jo-emit-call]))
+    (+jojo +jojo (-> :list jexp list --)
+      :list .car, :list .cdr compile-jojo, bind-name)
+
     (run reading-stack-tos repl)
-    (+jojo run
-      dup jexp-write newline
-      compile-jojo apply)
-    (+jojo note)
+    (+jojo run compile-jojo apply)
+    (+jojo note drop)
+    (note (+jojo if-else-then
+            )
+
+      (+jojo if-then
+        )
+
+      (+jojo if (-> :l --)
+        ))
     (+jojo square dup mul)
     (run 123 square int-write newline)
+    (run terminal-input-stack repl)
