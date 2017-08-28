@@ -4305,7 +4305,7 @@
       init_kernel_signal_handler();
 
       // load_core();
-      path_load("core.jo");
+      // path_load("core.jo");
 
       p_repl_flag_on();
       repl(terminal_input_stack());

@@ -1,7 +1,17 @@
 #+property: tangle core.jo
 #+title: core
-* do not use ' but use quote
+
 * [todo-stack]
+
+*** semantic of quote
+
+    - quote must be consisted with the jexp reader
+
+    - {} can be changed to (closure)
+    - but how about [] ?
+    - give up the quotation of list ?
+
+*** zero follows 'end' means then end of jojo
 
 *** (let)
 
@@ -79,8 +89,94 @@
 *** list-member?
 
     #+begin_src jojo
-    (+jojo list-member? (->  -- <bool>)
-      )
+    (+jojo list-member? (-> :a :list -- <bool>)
+      (case :list
+        <null> false
+        <cons> [(if :a :list .car eq? then true end)
+                :a :list .cdr recur]))
+    #+end_src
+
+*** list-append
+
+    #+begin_src jojo
+    (+jojo list-append (-> :left :right -> list)
+      (case :left
+        <null> [:right]
+        <cons> [:left .cdr :right recur
+                :left .car swap cons]))
+    #+end_src
+
+*** list-left
+
+    #+begin_src jojo
+    (+jojo list-left (-> :list :pred -- left)
+      (cond [:list null?] [null]
+            [:list .car :pred apply] [null]
+            else [:list .car
+                  :list .cdr :pred recur
+                  cons]))
+    #+end_src
+
+*** list-right
+
+    #+begin_src jojo
+    (+jojo list-right (-> :list :pred -- right)
+      (cond [:list null?] [null]
+            [:list .car :pred apply] [:list]
+            else [:list .cdr :pred recur]))
+    #+end_src
+
+*** list-split
+
+    #+begin_src jojo
+    (+jojo list-split (-> :list :pred -- left right)
+      (cond [:list null?] [null null]
+            [:list .car :pred apply] [null :list]
+            else [:list .car
+                  :list .cdr :pred recur
+                  :right! cons :right]))
+    #+end_src
+
+*** [test]
+
+    #+begin_src jojo
+    (+jojo int-list-write
+      "'" string-write
+      round-bar jo-write space
+      int-list-write/loop
+      round-ket jo-write space)
+
+    (+jojo int-list-write/loop (-> :list --)
+      (case :list
+        <null> [space]
+        <cons> [:list .car int-write space
+                :list .cdr recur]))
+
+    (run
+      0 1 2 3 4 null
+      cons cons cons cons cons
+
+      5 6 7 8 9 null
+      cons cons cons cons cons
+
+      list-append
+      int-list-write newline)
+
+    (run
+      0 1 2 3 4 5 6 7 8 9 null
+      cons cons cons cons cons
+      cons cons cons cons cons
+
+      {5 gt?} list-left
+      int-list-write newline)
+
+    (run
+      0 1 2 3 4 5 6 7 8 9 null
+      cons cons cons cons cons
+      cons cons cons cons cons
+
+      {5 gteq?} list-split
+      int-list-write int-list-write newline)
     #+end_src
 
 * jexp
@@ -90,13 +186,12 @@
     #+begin_src jojo
     (note atom of jexp can only be <string> and <jo>)
     (note jexp
-      = <round-bar-ket>
+      = jexp list
       | <square-bar-ket>
       | <flower-bar-ket>
       | <string>
       | <jo>)
 
-    (+data <round-bar-ket>  .list)
     (+data <square-bar-ket> .list)
     (+data <flower-bar-ket> .list)
     #+end_src
@@ -106,7 +201,7 @@
     #+begin_src jojo
     (+jojo read-jexp (-> -- jexp)
       read-jo :jo!
-      (cond [:jo round-bar eq?] [round-ket read-jexp/list round-bar-ket]
+      (cond [:jo round-bar eq?] [round-ket read-jexp/list]
             [:jo square-bar eq?] [square-ket read-jexp/list square-bar-ket]
             [:jo flower-bar eq?] [flower-ket read-jexp/list flower-bar-ket]
             [:jo double-quote eq?] [read-string]
@@ -124,27 +219,25 @@
     #+begin_src jojo
     (+jojo jexp-write (-> :jexp --)
       (case :jexp
-        <round-bar-ket>  [round-bar jo-write space
-                          :jexp .list jexp-write/list
-                          round-ket jo-write space]
+        <cons>  [round-bar jo-write space
+                 :jexp jexp-list-write
+                 round-ket jo-write space]
         <square-bar-ket> [square-bar jo-write space
-                          :jexp .list jexp-write/list
+                          :jexp .list jexp-list-write
                           square-ket jo-write space]
         <flower-bar-ket> [flower-bar jo-write space
-                          :jexp .list jexp-write/list
+                          :jexp .list jexp-list-write
                           flower-ket jo-write space]
         <string> [double-quote jo-write
                   :jexp string-write
                   double-quote jo-write space]
         <jo> [:jexp jo-write space]))
 
-    (+jojo jexp-write/list (-> :list jexp list --)
+    (+jojo jexp-list-write (-> :list jexp list --)
       (case :list
         <null> [space]
         <cons> [:list .car jexp-write :list .cdr recur]))
     #+end_src
-
-*** ><
 
 * syntax
 
@@ -161,9 +254,10 @@
       read-jo :jo!
       (if :jo round-bar eq? then
           read-jo
-          round-bar jo-unread read-jexp .list
+          round-bar jo-unread read-jexp
           (note (-> jexp list -- [compiling-stack]))
           swap jo-apply)
+      (if repl-flag then print-data-stack)
       recur)
     #+end_src
 
@@ -172,25 +266,44 @@
     #+begin_src jojo
     (+jojo compile-jojo (-> jexp list -- <jojo>)
       new-jojo-from-compiling-stack-tos
-      swap compile-jojo/help)
+      swap jexp-list-compile
+      quote end jo-emit-call
+      0 int-emit-data
+      0 int-emit-data)
+    #+end_src
 
-    (+jojo compile-jojo/help (-> :list jexp list --)
-      (if :list null? then
-          quote end jo-emit-call
-          0 int-emit-data
-          0 int-emit-data
-          end)
-      :list .car :jexp!
-      (cond [:jexp round-bar-ket?] [:jexp .list .cdr
-                                    :jexp .list .car
-                                    jo-apply]
-            [:jexp square-bar-ket?] []
-            [:jexp flower-bar-ket?] []
-            [:jexp string?] [:jexp emit-lit]
-            [:jexp jo?] [:jexp compile-jojo/jo])
+*** jexp-list-compile
+
+    #+begin_src jojo
+    (+jojo jexp-list-compile (-> :list jexp list --)
+      (if :list null? then end)
+      :list .car jexp-compile
       :list .cdr recur)
+    #+end_src
 
-    (+jojo compile-jojo/jo (-> :jo --)
+*** jexp-compile
+
+    #+begin_src jojo
+    (+jojo jexp-compile (-> :jexp --)
+      (cond
+        [:jexp cons?]
+        [:jexp .cdr dup jexp-list-write newline
+         :jexp .car dup jo-write newline
+         jo-apply]
+
+        [:jexp square-bar-ket?] []
+
+        [:jexp flower-bar-ket?] []
+
+        [:jexp string?] [:jexp emit-lit]
+
+        [:jexp jo?] [:jexp jo-compile]))
+    #+end_src
+
+*** jo-compile
+
+    #+begin_src jojo
+    (+jojo jo-compile (-> :jo --)
       (cond [:jo int-jo?]       [:jo jo->int emit-lit]
             [:jo get-local-jo?] [:jo jo-emit-get-local]
             [:jo set-local-jo?] [:jo jo-emit-set-local]
@@ -199,13 +312,54 @@
             else [:jo jo-emit-call]))
     #+end_src
 
+*** >< (if)
+
+    #+begin_src jojo
+    (note
+
+      (+jojo if-else-then
+        )
+
+      (+jojo if-then (-> :list --)
+        :list {quote then eq?} list-split (-> :question :then)
+        :then .cdr (-> :answer)
+        ))
+
+    (+jojo core-if (-> :list --)
+      (cond
+        [quote else :list list-member?
+         quote then :list list-member? and]
+        [:list if-else-then]
+
+        [quote then :list list-member?] [:list if-then]
+
+        else ["- if fail" string-write newline
+              "  the body dose not has 'then" string-write newline
+              "  body : " string-write :list jexp-list-write newline
+              debug]))
+    #+end_src
+
+
 *** (+jojo)
 
     #+begin_src jojo
     (+jojo +jojo (-> :list jexp list --)
-      :list .car, :list .cdr compile-jojo, bind-name)
+      :list .car,  (note dup jo-write newline)
+      :list .cdr   (note dup jexp-list-write newline)
+      compile-jojo,
+      bind-name)
+    #+end_src
 
+*** run the new repl
+
+    #+begin_src jojo
     (run reading-stack-tos repl)
+    #+end_src
+
+*** new keywords
+
+    #+begin_src jojo
+    (+jojo if core-if)
     #+end_src
 
 *** >< (->)
@@ -230,18 +384,7 @@
     (+jojo note drop)
     #+end_src
 
-*** >< (if)
-
-    #+begin_src jojo
-    (+jojo if-else-then
-      )
-
-    (+jojo if-then
-      )
-
-    (+jojo if (-> :l --)
-      )
-    #+end_src
+*** >< (test)
 
 *** >< (cond)
 
@@ -249,10 +392,17 @@
 
 *** >< {}
 
-*** >< the-story-begin
+* [test]
 
-    #+begin_src jojo
-    (+jojo square dup mul)
-    (run 123 square int-write newline)
-    (run terminal-input-stack repl)
-    #+end_src
+  #+begin_src jojo
+  (+jojo square dup mul)
+  (run 123 square int-write newline)
+  #+end_src
+
+* >< the-story-begin
+
+  #+begin_src jojo
+  (+jojo the-story-begin
+    repl-flag-on terminal-input-stack repl)
+  (run the-story-begin)
+  #+end_src
