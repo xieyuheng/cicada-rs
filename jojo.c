@@ -17,8 +17,7 @@
   #include <netdb.h>
   #include <arpa/inet.h>
   typedef enum { false, true } bool;
-  // typedef intptr_t cell;
-  typedef intmax_t cell;
+  typedef intptr_t cell;
   typedef void (* primitive_t)();
     cell max(cell a, cell b) {
       if (a < b) {
@@ -413,6 +412,12 @@
         return char_delimiter_p(str[0]);
       }
     }
+    // void report_jotable() {
+    //   report("- report_jotable\n");
+    //   while () {
+
+    //   }
+    // }
     struct stack_link {
       cell* stack;
       struct stack_link* link;
@@ -1437,31 +1442,31 @@
 
       return gp;
     }
-      void plus_atom(class_name, gc_actor)
-        char* class_name;
-        gc_actor_t gc_actor;
-      {
-        struct class* class = (struct class*)
-          malloc(sizeof(struct class));
-        class->class_name = str2jo(class_name);
-        class->gc_actor = gc_actor;
+    void plus_atom(class_name, gc_actor)
+      char* class_name;
+      gc_actor_t gc_actor;
+    {
+      struct class* class = (struct class*)
+        malloc(sizeof(struct class));
+      class->class_name = str2jo(class_name);
+      class->gc_actor = gc_actor;
 
-        jo_t name = str2jo(class_name);
-        bind_name(name, str2jo("<class>"), class);
+      jo_t name = str2jo(class_name);
+      bind_name(name, TAG_CLASS, class);
 
-        char* tmp = substring(class_name, 1, strlen(class_name) -1);
-        jo_t data_constructor_name = str2jo(tmp);
-        free(tmp);
+      char* tmp = substring(class_name, 1, strlen(class_name) -1);
+      jo_t data_constructor_name = str2jo(tmp);
+      free(tmp);
 
-        char* tmp2 = malloc(strlen(jo2str(data_constructor_name) + 1 + 1));
-        tmp2[0] = '\0';
-        strcat(tmp2, jo2str(data_constructor_name));
-        strcat(tmp2, "?");
-        jo_t data_predicate_name = str2jo(tmp2);
-        free(tmp2);
+      char* tmp2 = malloc(strlen(jo2str(data_constructor_name) + 1 + 1));
+      tmp2[0] = '\0';
+      strcat(tmp2, jo2str(data_constructor_name));
+      strcat(tmp2, "?");
+      jo_t data_predicate_name = str2jo(tmp2);
+      free(tmp2);
 
-        bind_name(data_predicate_name, str2jo("<data-predicate>"), class);
-      }
+      bind_name(data_predicate_name, str2jo("<data-predicate>"), class);
+    }
       void plus_data(class_name, fields)
         char* class_name;
         jo_t* fields[];
@@ -1480,7 +1485,7 @@
         class->fields_number = i;
         class->fields = fields;
 
-        bind_name(name, str2jo("<class>"), class);
+        bind_name(name, TAG_CLASS, class);
 
         char* tmp = substring(class_name, 1, strlen(class_name) -1);
         jo_t data_constructor_name = str2jo(tmp);
@@ -4203,6 +4208,10 @@
         report("multi_disp_entry_2->data : %ld\n", multi_disp_entry_2->data);
       }
     }
+    void p5() {
+      report("sizeof(cell) : %ld\n", sizeof(cell));
+      report("sizeof(jo_t) : %ld\n", sizeof(jo_t));
+    }
     void path_load(char* path) {
       int file = open(path, O_RDONLY);
       if(file == -1) {
@@ -4218,6 +4227,7 @@
       plus_prim("p2", p2);
       plus_prim("p3", p3);
       plus_prim("p4", p4);
+      plus_prim("p5", p5);
       plus_prim("print-data-stack", p_print_ds);
     }
     void init_system() {
