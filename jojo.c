@@ -331,6 +331,7 @@
     jo_t JO_END;
     jo_t JO_RECUR;
     jo_t JO_CLOSURE;
+    jo_t JO_CURRENT_LOCAL_ENV;
 
     jo_t JO_LOCAL_DATA_IN;
     jo_t JO_LOCAL_DATA_OUT;
@@ -3588,7 +3589,7 @@
       emit(TAG_JOJO);
       emit(new_jojo);
 
-      emit(str2jo("current-local-env"));
+      emit(JO_CURRENT_LOCAL_ENV);
       emit(JO_CLOSURE);
     }
     void expose_closure() {
@@ -4289,6 +4290,8 @@
       JO_END       = str2jo("end");
       JO_RECUR     = str2jo("recur");
       JO_CLOSURE   = str2jo("closure");
+
+      JO_CURRENT_LOCAL_ENV   = str2jo("current-local-env");
 
       JO_LOCAL_DATA_IN = str2jo("local-data-in");
       JO_LOCAL_DATA_OUT = str2jo("local-data-out");

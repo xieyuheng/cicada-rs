@@ -84,18 +84,13 @@
     (note atom of jexp can only be <string> and <jo>)
     (note jexp
       = <cons> -- jexp list
-      | <square-bar-ket> -- jexp list square-bar-ket
-      | <flower-bar-ket> -- jexp list flower-bar-ket
       | <string>
       | <jo>)
-
-    (+data <square-bar-ket> .list)
-    (+data <flower-bar-ket> .list)
     (+jojo read-jexp (-> -- jexp)
       read-jo :jo!
       (cond [:jo round-bar eq?] [round-ket read-jexp/list]
-            [:jo square-bar eq?] [square-ket read-jexp/list square-bar-ket]
-            [:jo flower-bar eq?] [flower-ket read-jexp/list flower-bar-ket]
+            [:jo square-bar eq?] [square-ket read-jexp/list 'vec swap cons]
+            [:jo flower-bar eq?] [flower-ket read-jexp/list 'clo swap cons]
             [:jo doublequote eq?] [read-string]
             else [:jo]))
 
@@ -109,12 +104,6 @@
         <cons>  [round-bar jo-write space
                  :jexp jexp-list-write
                  round-ket jo-write space]
-        <square-bar-ket> [square-bar jo-write space
-                          :jexp .list jexp-list-write
-                          square-ket jo-write space]
-        <flower-bar-ket> [flower-bar jo-write space
-                          :jexp .list jexp-list-write
-                          flower-ket jo-write space]
         <string> [doublequote jo-write
                   :jexp string-write
                   doublequote jo-write space]
@@ -158,13 +147,7 @@
     (+jojo jexp-compile (-> :jexp --)
       (cond
         [:jexp cons?] [:jexp .cdr :jexp .car jo-apply]
-
-        [:jexp square-bar-ket?] []
-
-        [:jexp flower-bar-ket?] []
-
         [:jexp string?] [:jexp emit-lit]
-
         [:jexp jo?] [:jexp jo-compile]))
     (+jojo jo-compile (-> :jo --)
       (cond [:jo int-jo?]       [:jo jo->int emit-lit]
@@ -203,9 +186,10 @@
               "  the body dose not has 'then" string-write newline
               "  body : " string-write :body jexp-list-write newline
               debug]))
-    (+jojo maybe-square->list (-> :maybe -- list)
+    (+jojo maybe-vec->list (-> :maybe -- list)
       (cond
-        [:maybe square-bar-ket?] [:maybe .list]
+        [:maybe cons? not] [:maybe null cons]
+        [:maybe .car 'vec eq?] [:maybe .cdr]
         else [:maybe null cons]))
     (+jojo cond/expend (-> :body -- jexp)
       (cond
@@ -220,23 +204,23 @@
       (+jojo cond/if-then (-> :question :answer -- jexp)
         `(if @{(if :question 'else eq?
                    then '(true)
-                   else :question maybe-square->list)}
-             then @{:answer maybe-square->list})))
+                   else :question maybe-vec->list)}
+             then @{:answer maybe-vec->list})))
 
     (+jojo cond/if-then (-> :question :answer -- jexp)
       (if :question 'else eq?
           then 'true null cons
-          else :question maybe-square->list)
+          else :question maybe-vec->list)
       'then tail-cons
-      :answer maybe-square->list list-append
+      :answer maybe-vec->list list-append
       'if swap cons)
     (note
       (+jojo case/expend (-> :body -- jexp)
-        `(begin @{:body .car maybe-square->list}
+        `(begin @{:body .car maybe-vec->list}
                 {:body .cdr case/expend-rest})))
 
     (+jojo case/expend (-> :body -- jexp)
-      :body .car maybe-square->list
+      :body .car maybe-vec->list
       :body .cdr case/expend-rest tail-cons
       'begin swap cons)
 
@@ -254,7 +238,7 @@
         `(if @{(if :tag 'else eq?
                    then '(true)
                    else `(dup tag ' {:tag} eq?))}
-             then drop @{:answer maybe-square->list})))
+             then drop @{:answer maybe-vec->list})))
 
     (+jojo case/if-then (-> :tag :answer -- jexp)
       (if :tag 'else eq?
@@ -262,7 +246,7 @@
           else 'dup 'tag '' :tag 'eq? null cons cons cons cons cons)
       'then tail-cons
       'drop tail-cons
-      :answer maybe-square->list list-append
+      :answer maybe-vec->list list-append
       'if swap cons)
     (+jojo +jojo (-> :body jexp list --)
       :body .car, :body .cdr compile-jojo, bind-name)
