@@ -15,9 +15,10 @@
 
     - `(@{})
 
-*** [maybe] 'and' and 'or' should be implemented as macro
+*** top level keywords such as (run) can not be nested
 
-*** comma is special jo
+    - (run (run 1)) is not equal to
+      '('(1) run) run
 
 *** about monad
 
@@ -25,9 +26,13 @@
       1. inline monads
       2. uncurry functions
 
-*** test
+*** comma is special jo
 
-    - use EOPL to test the language
+*** better syntax check
+
+    - (+gene) and (+disp)
+
+*** use EOPL to test the language
 
 *** dynamic scope
 
@@ -42,10 +47,6 @@
     - 'write' as gene
 
     - dynamic scoped local for current indentation
-
-*** better syntax check
-
-    - (+gene) and (+disp)
 
 *** about closure
 
@@ -331,7 +332,7 @@
       (cond
         [:list null?] [end]
 
-        [:list .car ' ' eq?]
+        [:list .car '' eq?]
         [:list .cdr .car emit-lit
          :list .cdr .cdr recur]
 
@@ -554,9 +555,54 @@
       name-bind-disp-to-jojo)
     #+end_src
 
+*** (assert) & (assert!)
+
+    #+begin_src jojo
+    (+jojo assert-report (-> :body --)
+      "- assert fail" string-write newline
+      "  assertion : " string-write :body sexp-list-write newline)
+
+    (note
+      (+jojo assert/expend (-> :body -- sexp)
+        `(if @{:body} then end
+             else {:body} assert-report)))
+
+    (+jojo assert/expend (-> :body -- sexp)
+      :body
+      'then tail-cons
+      'end tail-cons
+      'else tail-cons
+      '' tail-cons
+      :body tail-cons
+      'assert-report tail-cons
+      'if swap cons)
+
+    (+jojo assert!-report (-> :body --)
+      "- assert! fail" string-write newline
+      "  assertion : " string-write :body sexp-list-write newline)
+
+    (note
+      (+jojo assert!/expend (-> :body -- sexp)
+        `(if @{:body} then end
+             else {:body} assert!-report)))
+
+    (+jojo assert!/expend (-> :body -- sexp)
+      :body
+      'then tail-cons
+      'end tail-cons
+      'else tail-cons
+      '' tail-cons
+      :body tail-cons
+      'assert!-report tail-cons
+      'debug tail-cons
+      'if swap cons)
+    #+end_src
+
 *** >< (test)
 
-*** >< (let)
+    #+begin_src jojo
+    (+jojo test )
+    #+end_src
 
 *** >< (let-bind) -- moand interface
 
@@ -589,16 +635,23 @@
     #+begin_src jojo
     (+jojo note drop)
     (+jojo run compile-jojo apply)
+
     (+jojo begin sexp-list-compile)
+
     (+jojo if core-if)
     (+jojo cond cond/expend sexp-compile)
     (+jojo case case/expend sexp-compile)
+
     (+jojo -> arrow/expend sexp-compile)
     (+jojo clo core-clo)
     (+jojo echo sexp-list-write newline)
+
     (+jojo +data plus-data)
     (+jojo +gene plus-gene)
     (+jojo +disp plus-disp)
+
+    (+jojo assert assert/expend sexp-compile)
+    (+jojo assert! assert!/expend sexp-compile)
     #+end_src
 
 * [test]
@@ -668,6 +721,9 @@
 
   #+begin_src jojo
   (+jojo the-story-begin
-    repl-flag-on terminal-input-stack repl)
+    core-flag-off
+    repl-flag-on
+    terminal-input-stack repl)
+
   (run the-story-begin)
   #+end_src

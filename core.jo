@@ -160,7 +160,7 @@
       (cond
         [:list null?] [end]
 
-        [:list .car ' ' eq?]
+        [:list .car '' eq?]
         [:list .cdr .car emit-lit
          :list .cdr .cdr recur]
 
@@ -319,6 +319,45 @@
       :tag-array-address
       :body .car
       name-bind-disp-to-jojo)
+    (+jojo assert-report (-> :body --)
+      "- assert fail" string-write newline
+      "  assertion : " string-write :body sexp-list-write newline)
+
+    (note
+      (+jojo assert/expend (-> :body -- sexp)
+        `(if @{:body} then end
+             else {:body} assert-report)))
+
+    (+jojo assert/expend (-> :body -- sexp)
+      :body
+      'then tail-cons
+      'end tail-cons
+      'else tail-cons
+      '' tail-cons
+      :body tail-cons
+      'assert-report tail-cons
+      'if swap cons)
+
+    (+jojo assert!-report (-> :body --)
+      "- assert! fail" string-write newline
+      "  assertion : " string-write :body sexp-list-write newline)
+
+    (note
+      (+jojo assert!/expend (-> :body -- sexp)
+        `(if @{:body} then end
+             else {:body} assert!-report)))
+
+    (+jojo assert!/expend (-> :body -- sexp)
+      :body
+      'then tail-cons
+      'end tail-cons
+      'else tail-cons
+      '' tail-cons
+      :body tail-cons
+      'assert!-report tail-cons
+      'debug tail-cons
+      'if swap cons)
+    (+jojo test )
     (note
       (+jojo zip-tree :t1! :t2!
         (note [tree tree] -> [maybe-tree])
@@ -337,16 +376,23 @@
     (run reading-stack-tos repl)
     (+jojo note drop)
     (+jojo run compile-jojo apply)
+
     (+jojo begin sexp-list-compile)
+
     (+jojo if core-if)
     (+jojo cond cond/expend sexp-compile)
     (+jojo case case/expend sexp-compile)
+
     (+jojo -> arrow/expend sexp-compile)
     (+jojo clo core-clo)
     (+jojo echo sexp-list-write newline)
+
     (+jojo +data plus-data)
     (+jojo +gene plus-gene)
     (+jojo +disp plus-disp)
+
+    (+jojo assert assert/expend sexp-compile)
+    (+jojo assert! assert!/expend sexp-compile)
   (+jojo square dup mul)
 
   (run 123 square int-write newline)
@@ -406,5 +452,8 @@
   (run 1 "two" ww nl)
   (note (run "two" 1 ww nl))
   (+jojo the-story-begin
-    repl-flag-on terminal-input-stack repl)
+    core-flag-off
+    repl-flag-on
+    terminal-input-stack repl)
+
   (run the-story-begin)
