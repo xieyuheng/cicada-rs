@@ -1469,47 +1469,41 @@
 
       bind_name(data_predicate_name, str2jo("<data-predicate>"), class);
     }
-      void plus_data(class_name, fields)
-        char* class_name;
-        jo_t* fields[];
-      {
-        struct class* class = (struct class*)
-          malloc(sizeof(struct class));
-        jo_t name = str2jo(class_name);
-        class->class_name = name;
-        class->gc_actor = gc_recur;
+    void plus_data(class_name, fields)
+      char* class_name;
+      jo_t* fields[];
+    {
+      struct class* class = (struct class*)
+        malloc(sizeof(struct class));
+      jo_t name = str2jo(class_name);
+      class->class_name = name;
+      class->gc_actor = gc_recur;
 
-        cell i = 0;
-        while (fields[i] != 0) {
-          i++;
-        }
-
-        class->fields_number = i;
-        class->fields = fields;
-
-        bind_name(name, TAG_CLASS, class);
-
-        char* tmp = substring(class_name, 1, strlen(class_name) -1);
-        jo_t data_constructor_name = str2jo(tmp);
-        free(tmp);
-
-        bind_name(data_constructor_name, str2jo("<data-constructor>"), class);
-
-        char* tmp2 = malloc(strlen(jo2str(data_constructor_name) + 1 + 1));
-        tmp2[0] = '\0';
-        strcat(tmp2, jo2str(data_constructor_name));
-        strcat(tmp2, "?");
-        jo_t data_predicate_name = str2jo(tmp2);
-        free(tmp2);
-
-        bind_name(data_predicate_name, str2jo("<data-predicate>"), class);
+      cell i = 0;
+      while (fields[i] != 0) {
+        i++;
       }
-      void _plus_data(name, fields)
-        jo_t name;
-        jo_t fields[];
-      {
-        plus_data(jo2str(name), fields);
-      }
+
+      class->fields_number = i;
+      class->fields = fields;
+
+      bind_name(name, TAG_CLASS, class);
+
+      char* tmp = substring(class_name, 1, strlen(class_name) -1);
+      jo_t data_constructor_name = str2jo(tmp);
+      free(tmp);
+
+      bind_name(data_constructor_name, str2jo("<data-constructor>"), class);
+
+      char* tmp2 = malloc(strlen(jo2str(data_constructor_name) + 1 + 1));
+      tmp2[0] = '\0';
+      strcat(tmp2, jo2str(data_constructor_name));
+      strcat(tmp2, "?");
+      jo_t data_predicate_name = str2jo(tmp2);
+      free(tmp2);
+
+      bind_name(data_predicate_name, str2jo("<data-predicate>"), class);
+    }
     void plus_prim(function_name, fun)
          char* function_name;
          primitive_t fun;
@@ -1542,7 +1536,6 @@
       plus_atom("<prim>", gc_ignore);
       plus_atom("<jojo>", gc_ignore);
       plus_atom("<address>", gc_ignore);
-      plus_atom("<set-global-variable>", gc_ignore);
       plus_atom("<data-constructor>", gc_ignore);
       plus_atom("<data-predicate>", gc_ignore);
 
@@ -1931,12 +1924,6 @@
       jo_t* jojo = a.d;
       rs_push(jojo, TAG_JOJO, jojo, current_local_counter);
     }
-    void p_set_global_variable_exe() {
-      struct dp b = ds_pop();
-      jo_t name = b.d;
-      struct dp a = ds_pop();
-      rebind_name(name, a.t, a.d);
-    }
     void p_data_constructor_exe() {
       struct dp b = ds_pop();
       struct class* class = b.d;
@@ -1976,12 +1963,10 @@
       plus_disp("exe", J("<prim>"), "<prim>", p_prim_exe);
       plus_disp("exe", J("<jojo>"), "<prim>", p_jojo_exe);
       plus_disp("exe", J("<gene>"), "<prim>", p_gene_exe);
-      plus_disp("exe", J("<set-global-variable>"),
-               "<prim>", p_set_global_variable_exe);
       plus_disp("exe", J("<data-constructor>"),
-               "<prim>", p_data_constructor_exe);
+                "<prim>", p_data_constructor_exe);
       plus_disp("exe", J("<data-predicate>"),
-               "<prim>", p_data_predicate_exe);
+                "<prim>", p_data_predicate_exe);
     }
     void p_debug();
 
@@ -2705,18 +2690,6 @@
         k_run();
       }
     }
-    void k_plus_var() {
-      jo_t name = read_jo();
-      k_run();
-      struct dp a = ds_pop();
-      bind_name(name, a.t, a.d);
-
-      char name_buffer[1024];
-      name_buffer[0] = '\0';
-      strcat(name_buffer, jo2str(name));
-      strcat(name_buffer, "!");
-      bind_name(str2jo(name_buffer), str2jo("<set-global-variable>"), name);
-    }
     #define MAX_FIELDS 1024
 
     void k_plus_data() {
@@ -2745,7 +2718,7 @@
         i--;
         fresh_fields[i] = fields[i];
       }
-      _plus_data(name, fresh_fields);
+      plus_data(jo2str(name), fresh_fields);
     }
     void k_arrow() {
       jo_t jo = read_jo();
@@ -2847,7 +2820,6 @@
       plus_prim("test-flag-on", p_test_flag_on);
       plus_prim("test-flag-off", p_test_flag_off);
 
-      plus_prim("+var", k_plus_var);
       plus_prim("->", k_arrow);
       plus_prim("+jojo", k_plus_jojo);
       plus_prim("+data", k_plus_data);
@@ -3870,8 +3842,8 @@
       // string -> [env-string true] or [false]
       struct dp a = ds_pop();
       struct gp* ao = a.d;
-      char* var_string = ao->p;
-      char* env_string = getenv(var_string);
+      char* arg_string = ao->p;
+      char* env_string = getenv(arg_string);
       if (env_string == 0) {
         ds_push(TAG_BOOL, false);
       }

@@ -62,7 +62,7 @@
 *** server
 
     #+begin_src jojo
-    (+var server "8888" 5 tcp-socket-listen)
+    (+jojo server "8888" 5 tcp-socket-listen)
     (+jojo run-server
       server socket-accept :addr! :client!
       "got a connection from " string-write :addr string-write newline
@@ -74,7 +74,7 @@
 *** client
 
     #+begin_src jojo
-    (+var clinet "cicada" "8888" tcp-socket-connect)
+    (+jojo clinet "cicada" "8888" tcp-socket-connect)
     (+jojo run-clinet
       clinet socket-recv string-write newline)
     (note (run run-clinet))
@@ -113,7 +113,7 @@
 *** [test] tree
 
     #+begin_src jojo
-    (+var a-tree
+    (+jojo a-tree
       1 leaf 2 leaf node
       3 leaf 4 leaf node
       5 leaf node
@@ -223,7 +223,7 @@
                 :t .r recur :r!
                 :l :r node]))
 
-    (+var tree-2
+    (+jojo tree-2
       "1" leaf "2" leaf node
       "3" leaf "4" leaf node
       "5" leaf node
