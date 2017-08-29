@@ -598,10 +598,16 @@
       'if swap cons)
     #+end_src
 
-*** >< (test)
+*** (test)
 
     #+begin_src jojo
-    (+jojo test )
+    (+jojo test/eval (-> :sexp --)
+      (case :sexp
+        <cons> [:sexp .cdr :sexp .car jo-apply]
+        else []))
+
+    (+jojo core-test (-> :body --)
+      (if test-flag then :body {test/eval} list-for-each))
     #+end_src
 
 *** >< (let-bind) -- moand interface
@@ -652,46 +658,61 @@
 
     (+jojo assert assert/expend sexp-compile)
     (+jojo assert! assert!/expend sexp-compile)
+    (+jojo test core-test)
     #+end_src
 
 * [test]
 
   #+begin_src jojo
-  (+jojo square dup mul)
+  (run test-flag-on)
 
-  (run 123 square int-write newline)
+  (test
 
-  (run 1 :x!
-    (if :x 1 eq?
-        then "is 1" string-write newline
-        else "not 1" string-write newline))
+    (+jojo square dup mul)
+    (run
+      (assert 2 square 4 eq?)))
 
-  (run 3 :x!
-    (cond
-      [:x 1 eq?] ["is 1" string-write newline]
-      [:x 2 eq?] ["is 2" string-write newline]
-      else ["not 1 not 2" string-write newline]))
 
-  (+jojo list-length-2
-    :list!
-    (case :list
-      <null> 0
-      <cons> [:list .cdr recur inc]))
+  (test
 
-  (run 1 2 3 4 5 null cons cons cons cons cons list-length-2 int-write newline)
+    (+jojo list-1
+      1 2 3 4 5 null cons cons cons cons cons)
 
-  (run
-    1 2 (-> :x :y --)
-    :y :y add int-write space
-    :y :y add int-write space
-    :x :x add int-write space newline)
+    (+jojo list-length/cond
+      :list!
+      (cond
+        [:list null?] [0]
+        else [:list .cdr recur inc]))
 
-  (+jojo com :m1! :m2!
-    {:m2 apply
-     :m1 apply})
-  (run {1} {2} com apply add int-write newline)
-  (run {1} {2} com {3} com apply add add int-write newline)
-  (run {1} {2} {3} com com apply add add int-write newline)
+    (run
+      (assert list-1 list-length/cond 5 eq?))
+
+    (+jojo list-length/case
+      :list!
+      (case :list
+        <null> 0
+        <cons> [:list .cdr recur inc]))
+
+    (run
+      (assert list-1 list-length/case 5 eq?)))
+
+  (test
+
+    (run
+      1 2 (-> :x :y --)
+      (assert :x 1 eq?)
+      (assert :y 1 eq?)))
+
+  (test
+
+    (+jojo com :m1! :m2!
+      {:m2 apply
+       :m1 apply})
+
+    (run
+      (assert {1} {2} com apply add 3 eq?)
+      (assert {1} {2} com {3} com apply add add 6 eq?)
+      (assert {1} {2} {3} com com apply add add 6 eq?)))
 
   (run
     (echo 1 2 3)
