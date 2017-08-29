@@ -3,8 +3,6 @@
 
 * [todo-stack]
 
-*** 'and' and 'or' should be implemented as macro
-
 *** better p_debug
 
     - some call to p_debug can not return
@@ -26,18 +24,6 @@
 
     - interface for dynamic scoped var in c code
       to replace global stacks
-
-*** pp -- pretty-print
-
-    - 'write' as gene
-
-    - [maybe]
-      re-design printing format
-      give up indentation
-      but not print in one line
-      to make it easier to read
-
-    - dynamic scoped var for current indentation
 
 * [todo-list]
 
@@ -4274,7 +4260,7 @@
         jojo_print(jojo);
       }
       else {
-        report("%s ", jo2str(tag));
+        report("%s %ld ", jo2str(tag), data);
       }
     }
     #+end_src
@@ -5202,6 +5188,23 @@
     }
     #+end_src
 
+*** p_compiling_stack_drop
+
+    #+begin_src c
+    void p_compiling_stack_drop() {
+      drop(compiling_stack);
+    }
+    #+end_src
+
+*** p_compiling_stack_push
+
+    #+begin_src c
+    void p_compiling_stack_push() {
+      struct dp a = ds_pop();
+      push(compiling_stack, a.d);
+    }
+    #+end_src
+
 *** p_set_offset_to_here
 
     #+begin_src c
@@ -5212,22 +5215,52 @@
     }
     #+end_src
 
+*** p_tag_change
+
+    #+begin_src c
+    void p_tag_change() {
+      struct dp a = ds_pop();
+      struct dp b = ds_pop();
+      ds_push(a.d, b.d);
+    }
+    #+end_src
+
 *** expose_address
 
     #+begin_src c
     void expose_address() {
       plus_prim("compiling-stack-tos", p_compiling_stack_tos);
+      plus_prim("compiling-stack-drop", p_compiling_stack_drop);
+      plus_prim("compiling-stack-push", p_compiling_stack_push);
+
       plus_prim("set-offset-to-here", p_set_offset_to_here);
+
+      plus_prim("tag-change", p_tag_change);
     }
     #+end_src
 
 * <jojo>
 
-*** p_compiling_stack_tos_as_jojo
+*** jojo_length
 
     #+begin_src c
-    void p_compiling_stack_tos_as_jojo() {
-      ds_push(TAG_JOJO, tos(compiling_stack));
+    cell jojo_length(jo_t* jojo) {
+      cell i = 0;
+      while (true) {
+        if (jojo[i] == JO_END && jojo[i+1] == 0) {return i+2;}
+        i++;
+      }
+    }
+    #+end_src
+
+*** p_jojo_copy
+
+    #+begin_src c
+    void p_jojo_copy() {
+      struct dp a = ds_pop();
+      jo_t* jojo = a.d;
+      jo_t* new_jojo = array_len_dup(jojo, jojo_length(jojo));
+      ds_push(TAG_JOJO, new_jojo);
     }
     #+end_src
 
@@ -5235,8 +5268,7 @@
 
     #+begin_src c
     void expose_jojo() {
-      plus_prim("compiling-stack-tos-as-jojo",
-               p_compiling_stack_tos_as_jojo);
+      plus_prim("jojo-copy", p_jojo_copy);
     }
     #+end_src
 
@@ -5344,7 +5376,6 @@
       emit(JO_INS_LIT);
       emit(TAG_JOJO);
       emit(new_jojo);
-
       emit(JO_CURRENT_LOCAL_ENV);
       emit(JO_CLOSURE);
     }

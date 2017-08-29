@@ -1,14 +1,3 @@
-      (note
-        (+jojo zip-tree :t1! :t2!
-          (note [tree tree] -> [maybe-tree])
-          (cond [:t1 leaf? :t2 leaf? and]
-                [:t1 .v :t2 .v cons leaf return-maybe]
-                [:t1 node? :t2 node? and]
-                (let-bind bind-maybe
-                  :l [:t1 .l :t2 .l zip-tree]
-                  :r [:t1 .r :t2 .r zip-tree]
-                  [:l :r node return-maybe])
-                else nothing)))
   (run core-flag-on)
     (+data <null>)
     (+data <cons> .car .cdr)
@@ -57,17 +46,13 @@
       (case :list
         <null> []
         <cons> [:list .car swap cons :list .cdr recur]))
-    (+jojo int-list-write
-      "'" string-write
-      round-bar jo-write space
-      int-list-write/loop
-      round-ket jo-write space)
-
-    (+jojo int-list-write/loop (-> :list --)
+    (+jojo list-write (-> :list :printer --)
       (case :list
-        <null> [space]
-        <cons> [:list .car int-write space
-                :list .cdr recur]))
+        <null> []
+        <cons> [:list .car :printer apply
+                :list .cdr :printer recur]))
+    (+jojo int-list-write
+      {int-write space} list-write newline)
 
     (run
       0 1 2 3 4 null
@@ -135,18 +120,18 @@
           else :jo jo-unread read-sexp, :ket recur, cons))
     (+jojo sexp-write (-> :sexp --)
       (case :sexp
-        <cons>  [round-bar jo-write space
-                 :sexp sexp-list-write
-                 round-ket jo-write space]
-        <string> [doublequote jo-write
-                  :sexp string-write
-                  doublequote jo-write space]
-        <jo> [:sexp jo-write space]))
+        <cons> [round-bar jo-write :sexp sexp-list-write
+                round-ket jo-write]
+        <string> [doublequote jo-write :sexp string-write
+                  doublequote jo-write]
+        <jo> [:sexp jo-write]))
 
     (+jojo sexp-list-write (-> :list sexp list --)
-      (case :list
-        <null> [space]
-        <cons> [:list .car sexp-write :list .cdr recur]))
+      (cond
+        [:list null?] []
+        [:list .cdr null?] [:list .car sexp-write]
+        else [:list .car sexp-write space
+              :list .cdr recur]))
     (+jojo repl (-> :input-stack --)
       :input-stack reading-stack-push
       repl/loop
@@ -163,9 +148,10 @@
       (if repl-flag then print-data-stack)
       recur)
     (+jojo compile-jojo (-> sexp list -- <jojo>)
-      compiling-stack-tos-as-jojo
+      compiling-stack-tos
       swap sexp-list-compile
-      emit-jojo-end)
+      emit-jojo-end
+      ' <jojo> tag-change)
     (+jojo sexp-list-compile (-> :list sexp list --)
       (cond
         [:list null?] [end]
@@ -286,10 +272,25 @@
       {get-local-jo->set-local-jo} list-map
       list-reverse
       'begin swap cons)
-    (+jojo clo clo/expend sexp-compile)
-
-    (note (+jojo clo/expend (-> :body -- sexp)
-            ))
+    (+jojo core-clo (-> :body --)
+      compiling-stack-tos :address!
+      :body compile-jojo jojo-copy :jojo!
+      compiling-stack-drop
+      :address compiling-stack-push
+      :jojo emit-lit
+      'current-local-env jo-emit-call
+      'closure jo-emit-call)
+    (note
+      (+jojo zip-tree :t1! :t2!
+        (note [tree tree] -> [maybe-tree])
+        (cond [:t1 leaf? :t2 leaf? and]
+              [:t1 .v :t2 .v cons leaf return-maybe]
+              [:t1 node? :t2 node? and]
+              (let-bind bind-maybe
+                :l [:t1 .l :t2 .l zip-tree]
+                :r [:t1 .r :t2 .r zip-tree]
+                [:l :r node return-maybe])
+              else nothing)))
     (+jojo +jojo (-> :body sexp list --)
       :body .car, :body .cdr compile-jojo, bind-name)
 
@@ -301,7 +302,10 @@
     (+jojo cond cond/expend sexp-compile)
     (+jojo case case/expend sexp-compile)
     (+jojo -> arrow/expend sexp-compile)
+    (+jojo clo core-clo)
+    (+jojo echo sexp-list-write newline)
   (+jojo square dup mul)
+
   (run 123 square int-write newline)
 
   (run 1 :x!
@@ -328,6 +332,14 @@
     :y :y add int-write space
     :y :y add int-write space
     :x :x add int-write space newline)
+
+  (run
+    (echo 1 2 3)
+    (echo (run
+            1 2 (-> :x :y --)
+            :y :y add int-write space
+            :y :y add int-write space
+            :x :x add int-write space newline)))
   (+jojo the-story-begin
     repl-flag-on terminal-input-stack repl)
   (run the-story-begin)

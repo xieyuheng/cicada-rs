@@ -2912,7 +2912,7 @@
         jojo_print(jojo);
       }
       else {
-        report("%s ", jo2str(tag));
+        report("%s %ld ", jo2str(tag), data);
       }
     }
     void jojo_print(jo_t* jojo) {
@@ -3508,21 +3508,47 @@
     void p_compiling_stack_tos() {
       ds_push(TAG_ADDRESS, tos(compiling_stack));
     }
+    void p_compiling_stack_drop() {
+      drop(compiling_stack);
+    }
+    void p_compiling_stack_push() {
+      struct dp a = ds_pop();
+      push(compiling_stack, a.d);
+    }
     void p_set_offset_to_here() {
       struct dp a = ds_pop();
       cell* address = a.d;
       address[0] = (cell*)tos(compiling_stack) - address;
     }
+    void p_tag_change() {
+      struct dp a = ds_pop();
+      struct dp b = ds_pop();
+      ds_push(a.d, b.d);
+    }
     void expose_address() {
       plus_prim("compiling-stack-tos", p_compiling_stack_tos);
+      plus_prim("compiling-stack-drop", p_compiling_stack_drop);
+      plus_prim("compiling-stack-push", p_compiling_stack_push);
+
       plus_prim("set-offset-to-here", p_set_offset_to_here);
+
+      plus_prim("tag-change", p_tag_change);
     }
-    void p_compiling_stack_tos_as_jojo() {
-      ds_push(TAG_JOJO, tos(compiling_stack));
+    cell jojo_length(jo_t* jojo) {
+      cell i = 0;
+      while (true) {
+        if (jojo[i] == JO_END && jojo[i+1] == 0) {return i+2;}
+        i++;
+      }
+    }
+    void p_jojo_copy() {
+      struct dp a = ds_pop();
+      jo_t* jojo = a.d;
+      jo_t* new_jojo = array_len_dup(jojo, jojo_length(jojo));
+      ds_push(TAG_JOJO, new_jojo);
     }
     void expose_jojo() {
-      plus_prim("compiling-stack-tos-as-jojo",
-               p_compiling_stack_tos_as_jojo);
+      plus_prim("jojo-copy", p_jojo_copy);
     }
     void gc_local_env(gc_state_t gc_state, struct gp* gp) {
       if (gc_state == GC_STATE_MARKING) {
@@ -3598,7 +3624,6 @@
       emit(JO_INS_LIT);
       emit(TAG_JOJO);
       emit(new_jojo);
-
       emit(JO_CURRENT_LOCAL_ENV);
       emit(JO_CLOSURE);
     }
