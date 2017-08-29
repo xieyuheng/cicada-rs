@@ -1,3 +1,4 @@
+#+html_head: <link rel="stylesheet" href="https://xieyuheng.github.io/asset/css/page.css" type="text/css" media="screen" />
 #+property: tangle core.jo
 #+title: core
 
@@ -623,17 +624,25 @@
               else nothing)))
     #+end_src
 
-*** (+jojo) & run new repl
+* re-define syntax
+
+  - the order matters
+
+*** (+jojo)
 
     #+begin_src jojo
     (+jojo +jojo (-> :body sexp list --)
       :body .cdr compile-jojo
       :body .car name-bind)
+    #+end_src
 
+*** run new repl
+
+    #+begin_src jojo
     (run reading-stack-tos repl)
     #+end_src
 
-*** new keywords
+*** redefine new keywords
 
     #+begin_src jojo
     (+jojo note drop)
