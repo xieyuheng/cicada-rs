@@ -276,19 +276,20 @@
       {get-local-jo->set-local-jo} list-map
       list-reverse
       'begin swap cons)
-    (+jojo core-clo (-> :body --)
+    (+jojo compile-jojo-copy (-> sexp list -- <jojo>)
       compiling-stack-tos :address!
-      :body compile-jojo jojo-copy :jojo!
+      compile-jojo jojo-copy
       compiling-stack-drop
-      :address compiling-stack-push
-      :jojo emit-lit
+      :address compiling-stack-push)
+    (+jojo core-clo
+      compile-jojo-copy emit-lit
       'current-local-env jo-emit
       'closure jo-emit)
     (+jojo plus-data (-> :body --)
       (if :body .car tag-jo? not then
           "- plus-data fail" string-write newline
           "  name must be of form <...>" string-write newline
-          "  name : " string-write :body .car jo-write newline
+          "  body : " string-write :body sexp-list-write newline
           end)
       compiling-stack-tos :address!
       :body .cdr
@@ -296,6 +297,28 @@
       {jo-emit} list-for-each
       emit-zero
       :address :body .car name-bind-data)
+    (+jojo plus-gene (-> :body --)
+      :body .cdr .car :arrow-sexp!
+      :arrow-sexp .cdr
+      {'-- eq?} list-left
+      {get-local-jo?} list-filter
+      list-length
+      :body .car name-bind-gene)
+    (+jojo plus-disp (-> :body --)
+      :body .cdr .car :arrow-sexp!
+      :body .cdr :rest-body!
+
+      :arrow-sexp .cdr
+      {'-- eq?} list-left
+      {tag-jo?} list-filter
+      compiling-stack-tos :tag-array-address!
+      {jo-emit} list-for-each
+      emit-zero
+
+      :rest-body compile-jojo-copy
+      :tag-array-address
+      :body .car
+      name-bind-disp-to-jojo)
     (note
       (+jojo zip-tree :t1! :t2!
         (note [tree tree] -> [maybe-tree])
@@ -322,6 +345,8 @@
     (+jojo clo core-clo)
     (+jojo echo sexp-list-write newline)
     (+jojo +data plus-data)
+    (+jojo +gene plus-gene)
+    (+jojo +disp plus-disp)
   (+jojo square dup mul)
 
   (run 123 square int-write newline)
@@ -351,6 +376,13 @@
     :y :y add int-write space
     :x :x add int-write space newline)
 
+  (+jojo com :m1! :m2!
+    {:m2 apply
+     :m1 apply})
+  (run {1} {2} com apply add int-write newline)
+  (run {1} {2} com {3} com apply add add int-write newline)
+  (run {1} {2} {3} com com apply add add int-write newline)
+
   (run
     (echo 1 2 3)
     (echo (run
@@ -358,6 +390,21 @@
             :y :y add int-write space
             :y :y add int-write space
             :x :x add int-write space newline)))
+
+  (+jojo nl newline)
+
+  (+gene w (-> :x --))
+  (+disp w (-> <int> --) int-write)
+  (+disp w (-> <string> --) string-write)
+  (run
+    1 w space "one" w nl)
+
+  (+gene ww (-> :a :b --))
+  (+disp ww (-> <int> <int> --) swap int-write space int-write)
+  (+disp ww (-> <int> <string> --) swap int-write space string-write)
+  (run 1 2 ww nl)
+  (run 1 "two" ww nl)
+  (note (run "two" 1 ww nl))
   (+jojo the-story-begin
     repl-flag-on terminal-input-stack repl)
   (run the-story-begin)

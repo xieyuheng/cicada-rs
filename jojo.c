@@ -1469,7 +1469,7 @@
 
       bind_name(data_predicate_name, str2jo("<data-predicate>"), class);
     }
-    // fields are shared
+    // argument 'fields' is shared
     void plus_data(char* class_name,
                    jo_t* fields) {
       struct class* class = (struct class*)
@@ -1676,6 +1676,7 @@
         return (sum
                 % (multi_disp->size - 1)) + 1;
       }
+      // argument 'key' is shared
       void multi_disp_insert_entry(multi_disp_entry, key, tag, data)
            struct multi_disp_entry* multi_disp_entry;
            jo_t* key;
@@ -1683,7 +1684,7 @@
            cell data;
       {
         if (0 == multi_disp_entry->key) {
-          multi_disp_entry->key = array_dup(key);
+          multi_disp_entry->key = key;
           multi_disp_entry->tag = tag;
           multi_disp_entry->data = data;
         }
@@ -1702,6 +1703,7 @@
           multi_disp_insert_entry(multi_disp_entry->rest, key, tag, data);
         }
       }
+      // argument 'key' is shared
       void multi_disp_insert(multi_disp, key, tag, data)
            struct multi_disp* multi_disp;
            jo_t* key;
@@ -1803,6 +1805,7 @@
 
       bind_name(name, str2jo("<gene>"), gene);
     }
+    // argument 'tags' is shared
     void plus_disp(gene_name, tags, tag_name, data)
       char* gene_name;
       jo_t* tags;
@@ -2800,7 +2803,7 @@
         compile_until_meet_jo(ROUND_KET);
         emit_jojo_end();
       }
-      plus_disp(jo2str(gene_name), tags, "<jojo>", jojo);
+      plus_disp(jo2str(gene_name), array_dup(tags), "<jojo>", jojo);
     }
     void expose_top() {
       plus_prim("run", k_run);
@@ -4021,6 +4024,21 @@
       struct dp b = ds_pop();
       plus_data(jo2str(name), b.d);
     }
+    void p_name_bind_gene() {
+      struct dp a = ds_pop();
+      jo_t name = a.d;
+      struct dp b = ds_pop();
+      plus_gene(jo2str(name), b.d);
+    }
+    void p_name_bind_disp_to_jojo() {
+      struct dp a = ds_pop();
+      jo_t name = a.d;
+      struct dp b = ds_pop();
+      jo_t* tags = b.d;
+      struct dp c = ds_pop();
+      jo_t* jojo = c.d;
+      plus_disp(jo2str(name), tags, "<jojo>", jojo);
+    }
     void expose_core() {
       plus_prim("core-flag", p_core_flag);
       plus_prim("core-flag-on", p_core_flag_on);
@@ -4043,6 +4061,8 @@
       plus_prim("emit-jojo-end", emit_jojo_end);
 
       plus_prim("name-bind-data", p_name_bind_data);
+      plus_prim("name-bind-gene", p_name_bind_gene);
+      plus_prim("name-bind-disp-to-jojo", p_name_bind_disp_to_jojo);
     }
     void p1() {
       int file = open("README", O_RDWR);

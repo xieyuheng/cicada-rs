@@ -2205,7 +2205,7 @@
 *** plus_data
 
     #+begin_src c
-    // fields are shared
+    // argument 'fields' is shared
     void plus_data(char* class_name,
                    jo_t* fields) {
       struct class* class = (struct class*)
@@ -2509,6 +2509,7 @@
 ***** multi_disp_insert_entry
 
       #+begin_src c
+      // argument 'key' is shared
       void multi_disp_insert_entry(multi_disp_entry, key, tag, data)
            struct multi_disp_entry* multi_disp_entry;
            jo_t* key;
@@ -2516,7 +2517,7 @@
            cell data;
       {
         if (0 == multi_disp_entry->key) {
-          multi_disp_entry->key = array_dup(key);
+          multi_disp_entry->key = key;
           multi_disp_entry->tag = tag;
           multi_disp_entry->data = data;
         }
@@ -2540,6 +2541,7 @@
 ***** multi_disp_insert
 
       #+begin_src c
+      // argument 'key' is shared
       void multi_disp_insert(multi_disp, key, tag, data)
            struct multi_disp* multi_disp;
            jo_t* key;
@@ -2676,6 +2678,7 @@
 *** plus_disp
 
     #+begin_src c
+    // argument 'tags' is shared
     void plus_disp(gene_name, tags, tag_name, data)
       char* gene_name;
       jo_t* tags;
@@ -4109,7 +4112,7 @@
         compile_until_meet_jo(ROUND_KET);
         emit_jojo_end();
       }
-      plus_disp(jo2str(gene_name), tags, "<jojo>", jojo);
+      plus_disp(jo2str(gene_name), array_dup(tags), "<jojo>", jojo);
     }
     #+end_src
 
@@ -5921,6 +5924,31 @@
     }
     #+end_src
 
+*** p_name_bind_gene
+
+    #+begin_src c
+    void p_name_bind_gene() {
+      struct dp a = ds_pop();
+      jo_t name = a.d;
+      struct dp b = ds_pop();
+      plus_gene(jo2str(name), b.d);
+    }
+    #+end_src
+
+*** p_name_bind_disp_to_jojo
+
+    #+begin_src c
+    void p_name_bind_disp_to_jojo() {
+      struct dp a = ds_pop();
+      jo_t name = a.d;
+      struct dp b = ds_pop();
+      jo_t* tags = b.d;
+      struct dp c = ds_pop();
+      jo_t* jojo = c.d;
+      plus_disp(jo2str(name), tags, "<jojo>", jojo);
+    }
+    #+end_src
+
 *** expose_core
 
     #+begin_src c
@@ -5946,6 +5974,8 @@
       plus_prim("emit-jojo-end", emit_jojo_end);
 
       plus_prim("name-bind-data", p_name_bind_data);
+      plus_prim("name-bind-gene", p_name_bind_gene);
+      plus_prim("name-bind-disp-to-jojo", p_name_bind_disp_to_jojo);
     }
     #+end_src
 
