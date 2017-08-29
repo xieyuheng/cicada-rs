@@ -81,38 +81,38 @@
 
       {5 gteq?} list-split
       int-list-write int-list-write newline)
-    (note atom of jexp can only be <string> and <jo>)
-    (note jexp
-      = <cons> -- jexp list
+    (note atom of sexp can only be <string> and <jo>)
+    (note sexp
+      = <cons> -- sexp list
       | <string>
       | <jo>)
-    (+jojo read-jexp (-> -- jexp)
+    (+jojo read-sexp (-> -- sexp)
       read-jo :jo!
-      (cond [:jo round-bar eq?] [round-ket read-jexp/list]
-            [:jo square-bar eq?] [square-ket read-jexp/list 'vec swap cons]
-            [:jo flower-bar eq?] [flower-ket read-jexp/list 'clo swap cons]
+      (cond [:jo round-bar eq?] [round-ket read-sexp/list]
+            [:jo square-bar eq?] [square-ket read-sexp/list 'vec swap cons]
+            [:jo flower-bar eq?] [flower-ket read-sexp/list 'clo swap cons]
             [:jo doublequote eq?] [read-string]
             else [:jo]))
 
-    (+jojo read-jexp/list (-> :ket <jo> -- jexp list)
+    (+jojo read-sexp/list (-> :ket <jo> -- sexp list)
       read-jo :jo!
       (if :jo :ket eq?
           then null
-          else :jo jo-unread read-jexp, :ket recur, cons))
-    (+jojo jexp-write (-> :jexp --)
-      (case :jexp
+          else :jo jo-unread read-sexp, :ket recur, cons))
+    (+jojo sexp-write (-> :sexp --)
+      (case :sexp
         <cons>  [round-bar jo-write space
-                 :jexp jexp-list-write
+                 :sexp sexp-list-write
                  round-ket jo-write space]
         <string> [doublequote jo-write
-                  :jexp string-write
+                  :sexp string-write
                   doublequote jo-write space]
-        <jo> [:jexp jo-write space]))
+        <jo> [:sexp jo-write space]))
 
-    (+jojo jexp-list-write (-> :list jexp list --)
+    (+jojo sexp-list-write (-> :list sexp list --)
       (case :list
         <null> [space]
-        <cons> [:list .car jexp-write :list .cdr recur]))
+        <cons> [:list .car sexp-write :list .cdr recur]))
     (+jojo repl (-> :input-stack --)
       :input-stack reading-stack-push
       repl/loop
@@ -123,18 +123,18 @@
       read-jo :jo!
       (if :jo round-bar eq? then
           read-jo
-          round-bar jo-unread read-jexp
-          (note (-> jexp list -- [compiling-stack]))
+          round-bar jo-unread read-sexp
+          (note (-> sexp list -- [compiling-stack]))
           swap jo-apply)
       (if repl-flag then print-data-stack)
       recur)
-    (+jojo compile-jojo (-> jexp list -- <jojo>)
+    (+jojo compile-jojo (-> sexp list -- <jojo>)
       compiling-stack-tos-as-jojo
-      swap jexp-list-compile
+      swap sexp-list-compile
       'end jo-emit-call
       0 int-emit-data
       0 int-emit-data)
-    (+jojo jexp-list-compile (-> :list jexp list --)
+    (+jojo sexp-list-compile (-> :list sexp list --)
       (cond
         [:list null?] [end]
 
@@ -142,13 +142,13 @@
         [:list .cdr .car emit-lit
          :list .cdr .cdr recur]
 
-        else [:list .car jexp-compile
+        else [:list .car sexp-compile
               :list .cdr recur]))
-    (+jojo jexp-compile (-> :jexp --)
+    (+jojo sexp-compile (-> :sexp --)
       (cond
-        [:jexp cons?] [:jexp .cdr :jexp .car jo-apply]
-        [:jexp string?] [:jexp emit-lit]
-        [:jexp jo?] [:jexp jo-compile]))
+        [:sexp cons?] [:sexp .cdr :sexp .car jo-apply]
+        [:sexp string?] [:sexp emit-lit]
+        [:sexp jo?] [:sexp jo-compile]))
     (+jojo jo-compile (-> :jo --)
       (cond [:jo int-jo?]       [:jo jo->int emit-lit]
             [:jo get-local-jo?] [:jo jo-emit-get-local]
@@ -159,19 +159,19 @@
     (+jojo if-else-then (-> :body --)
       :body {'then eq?} list-split (-> :question :then-else)
       :then-else {'else eq?} list-split (-> :then :else)
-      :question jexp-list-compile
+      :question sexp-list-compile
       emit-jz :jz-address!
-      :then .cdr jexp-list-compile
+      :then .cdr sexp-list-compile
       emit-jmp :jmp-address!
       :jz-address set-offset-to-here
-      :else .cdr jexp-list-compile
+      :else .cdr sexp-list-compile
       :jmp-address set-offset-to-here)
 
     (+jojo if-then (-> :body --)
       :body {'then eq?} list-split (-> :question :then)
-      :question jexp-list-compile
+      :question sexp-list-compile
       emit-jz :jz-address!
-      :then .cdr jexp-list-compile
+      :then .cdr sexp-list-compile
       :jz-address set-offset-to-here)
 
     (+jojo core-if (-> :body --)
@@ -184,14 +184,14 @@
 
         else ["- if fail" string-write newline
               "  the body dose not has 'then" string-write newline
-              "  body : " string-write :body jexp-list-write newline
+              "  body : " string-write :body sexp-list-write newline
               debug]))
     (+jojo maybe-vec->list (-> :maybe -- list)
       (cond
         [:maybe cons? not] [:maybe null cons]
         [:maybe .car 'vec eq?] [:maybe .cdr]
         else [:maybe null cons]))
-    (+jojo cond/expend (-> :body -- jexp)
+    (+jojo cond/expend (-> :body -- sexp)
       (cond
         [:body list-length 2 eq?]
         [:body .car :body .cdr .car cond/if-then]
@@ -201,13 +201,13 @@
               :body .cdr .cdr recur tail-cons]))
 
     (note
-      (+jojo cond/if-then (-> :question :answer -- jexp)
+      (+jojo cond/if-then (-> :question :answer -- sexp)
         `(if @{(if :question 'else eq?
                    then '(true)
                    else :question maybe-vec->list)}
              then @{:answer maybe-vec->list})))
 
-    (+jojo cond/if-then (-> :question :answer -- jexp)
+    (+jojo cond/if-then (-> :question :answer -- sexp)
       (if :question 'else eq?
           then 'true null cons
           else :question maybe-vec->list)
@@ -215,16 +215,16 @@
       :answer maybe-vec->list list-append
       'if swap cons)
     (note
-      (+jojo case/expend (-> :body -- jexp)
+      (+jojo case/expend (-> :body -- sexp)
         `(begin @{:body .car maybe-vec->list}
                 {:body .cdr case/expend-rest})))
 
-    (+jojo case/expend (-> :body -- jexp)
+    (+jojo case/expend (-> :body -- sexp)
       :body .car maybe-vec->list
       :body .cdr case/expend-rest tail-cons
       'begin swap cons)
 
-    (+jojo case/expend-rest (-> :body -- jexp)
+    (+jojo case/expend-rest (-> :body -- sexp)
       (cond
         [:body list-length 2 eq?]
         [:body .car :body .cdr .car case/if-then]
@@ -234,13 +234,13 @@
               :body .cdr .cdr recur tail-cons]))
 
     (note
-      (+jojo case/if-then (-> :tag :answer -- jexp)
+      (+jojo case/if-then (-> :tag :answer -- sexp)
         `(if @{(if :tag 'else eq?
                    then '(true)
                    else `(dup tag ' {:tag} eq?))}
              then drop @{:answer maybe-vec->list})))
 
-    (+jojo case/if-then (-> :tag :answer -- jexp)
+    (+jojo case/if-then (-> :tag :answer -- sexp)
       (if :tag 'else eq?
           then 'true null cons
           else 'dup 'tag '' :tag 'eq? null cons cons cons cons cons)
@@ -248,15 +248,15 @@
       'drop tail-cons
       :answer maybe-vec->list list-append
       'if swap cons)
-    (+jojo +jojo (-> :body jexp list --)
+    (+jojo +jojo (-> :body sexp list --)
       :body .car, :body .cdr compile-jojo, bind-name)
     (run reading-stack-tos repl)
     (+jojo note drop)
     (+jojo run compile-jojo apply)
-    (+jojo begin jexp-list-compile)
+    (+jojo begin sexp-list-compile)
     (+jojo if core-if)
-    (+jojo cond cond/expend jexp-compile)
-    (+jojo case2 case/expend dup jexp-write newline jexp-compile)
+    (+jojo cond cond/expend sexp-compile)
+    (+jojo case2 case/expend dup sexp-write newline sexp-compile)
   (+jojo square dup mul)
   (run 123 square int-write newline)
 
