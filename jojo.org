@@ -2205,10 +2205,9 @@
 *** plus_data
 
     #+begin_src c
-    void plus_data(class_name, fields)
-      char* class_name;
-      jo_t* fields[];
-    {
+    // fields are shared
+    void plus_data(char* class_name,
+                   jo_t* fields) {
       struct class* class = (struct class*)
         malloc(sizeof(struct class));
       jo_t name = str2jo(class_name);
@@ -2692,19 +2691,6 @@
       else {
         multi_disp_insert(gene->multi_disp, tags, tag, data);
       }
-    }
-    #+end_src
-
-*** _plus_disp
-
-    #+begin_src c
-    void _plus_disp(gene_name, tags, tag_name, data)
-      jo_t gene_name;
-      jo_t* tags;
-      jo_t tag_name;
-      cell data;
-    {
-      plus_disp(jo2str(gene_name), tags, jo2str(tag_name), data);
     }
     #+end_src
 
@@ -4123,8 +4109,7 @@
         compile_until_meet_jo(ROUND_KET);
         emit_jojo_end();
       }
-
-      _plus_disp(gene_name, tags, TAG_JOJO, jojo);
+      plus_disp(jo2str(gene_name), tags, "<jojo>", jojo);
     }
     #+end_src
 
@@ -5086,6 +5071,15 @@
     }
     #+end_src
 
+*** p_tag_jo_p
+
+    #+begin_src c
+    void p_tag_jo_p() {
+      struct dp a = ds_pop();
+      ds_push(TAG_BOOL, tag_string_p(jo2str(a.d)));
+    }
+    #+end_src
+
 *** p_get_local_jo_to_set_local_jo
 
     #+begin_src c
@@ -5128,6 +5122,7 @@
       plus_prim("set-local-jo?", p_set_local_jo_p);
       plus_prim("get-field-jo?", p_get_field_jo_p);
       plus_prim("set-field-jo?", p_set_field_jo_p);
+      plus_prim("tag-jo?", p_tag_jo_p);
 
       plus_prim("get-local-jo->set-local-jo", p_get_local_jo_to_set_local_jo);
     }
@@ -5809,20 +5804,20 @@
     // }
     #+end_src
 
-*** p_bind_name
+*** p_name_bind
 
     #+begin_src c
-    void p_bind_name() {
-      struct dp a = ds_pop();
+    void p_name_bind() {
       struct dp b = ds_pop();
+      struct dp a = ds_pop();
       bind_name(b.d, a.t, a.d);
     }
     #+end_src
 
-*** p_jo_emit_call
+*** p_jo_emit
 
     #+begin_src c
-    void p_jo_emit_call() {
+    void p_jo_emit() {
       struct dp a = ds_pop();
       emit(a.d);
     }
@@ -5836,6 +5831,14 @@
       emit(JO_INS_LIT);
       emit(a.t);
       emit(a.d);
+    }
+    #+end_src
+
+*** p_emit_zero
+
+    #+begin_src c
+    void p_emit_zero() {
+      emit(0);
     }
     #+end_src
 
@@ -5907,6 +5910,17 @@
     }
     #+end_src
 
+*** p_name_bind_data
+
+    #+begin_src c
+    void p_name_bind_data() {
+      struct dp a = ds_pop();
+      jo_t name = a.d;
+      struct dp b = ds_pop();
+      plus_data(jo2str(name), b.d);
+    }
+    #+end_src
+
 *** expose_core
 
     #+begin_src c
@@ -5915,11 +5929,12 @@
       plus_prim("core-flag-on", p_core_flag_on);
       plus_prim("core-flag-off", p_core_flag_off);
 
-      plus_prim("bind-name", p_bind_name);
+      plus_prim("name-bind", p_name_bind);
 
       // note that, the notation of instruction is not exposed to jojo
-      plus_prim("jo-emit-call", p_jo_emit_call);
+      plus_prim("jo-emit", p_jo_emit);
       plus_prim("emit-lit", p_emit_lit);
+      plus_prim("emit-zero", p_emit_zero);
 
       plus_prim("jo-emit-get-local", p_jo_emit_get_local);
       plus_prim("jo-emit-set-local", p_jo_emit_set_local);
@@ -5928,8 +5943,9 @@
 
       plus_prim("emit-jz", p_emit_jz);
       plus_prim("emit-jmp", p_emit_jmp);
-
       plus_prim("emit-jojo-end", emit_jojo_end);
+
+      plus_prim("name-bind-data", p_name_bind_data);
     }
     #+end_src
 

@@ -36,6 +36,10 @@
       (case :list
         <null> null
         <cons> [:list .car :fun apply :list .cdr :fun recur cons]))
+    (+jojo list-for-each (-> :list :fun --)
+      (case :list
+        <null> []
+        <cons> [:list .car :fun apply :list .cdr :fun recur]))
     (+jojo list-filter (-> :list :pred -- list)
       (cond [:list null?] [null]
             [:list .car :pred apply] [:list .car :list .cdr :pred recur cons]
@@ -173,7 +177,7 @@
             [:jo set-local-jo?] [:jo jo-emit-set-local]
             [:jo get-field-jo?] [:jo jo-emit-get-field]
             [:jo set-field-jo?] [:jo jo-emit-set-field]
-            else [:jo jo-emit-call]))
+            else [:jo jo-emit]))
     (+jojo if-else-then (-> :body --)
       :body {'then eq?} list-split (-> :question :then-else)
       :then-else {'else eq?} list-split (-> :then :else)
@@ -278,9 +282,20 @@
       compiling-stack-drop
       :address compiling-stack-push
       :jojo emit-lit
-      'current-local-env jo-emit-call
-      'closure jo-emit-call)
-    (+jojo +data )
+      'current-local-env jo-emit
+      'closure jo-emit)
+    (+jojo plus-data (-> :body --)
+      (if :body .car tag-jo? not then
+          "- plus-data fail" string-write newline
+          "  name must be of form <...>" string-write newline
+          "  name : " string-write :body .car jo-write newline
+          end)
+      compiling-stack-tos :address!
+      :body .cdr
+      {get-field-jo?} list-filter
+      {jo-emit} list-for-each
+      emit-zero
+      :address :body .car name-bind-data)
     (note
       (+jojo zip-tree :t1! :t2!
         (note [tree tree] -> [maybe-tree])
@@ -293,7 +308,8 @@
                 [:l :r node return-maybe])
               else nothing)))
     (+jojo +jojo (-> :body sexp list --)
-      :body .car, :body .cdr compile-jojo, bind-name)
+      :body .cdr compile-jojo
+      :body .car name-bind)
 
     (run reading-stack-tos repl)
     (+jojo note drop)
@@ -305,6 +321,7 @@
     (+jojo -> arrow/expend sexp-compile)
     (+jojo clo core-clo)
     (+jojo echo sexp-list-write newline)
+    (+jojo +data plus-data)
   (+jojo square dup mul)
 
   (run 123 square int-write newline)

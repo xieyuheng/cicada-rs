@@ -154,6 +154,15 @@
         <cons> [:list .car :fun apply :list .cdr :fun recur cons]))
     #+end_src
 
+*** list-for-each
+
+    #+begin_src jojo
+    (+jojo list-for-each (-> :list :fun --)
+      (case :list
+        <null> []
+        <cons> [:list .car :fun apply :list .cdr :fun recur]))
+    #+end_src
+
 *** list-filter
 
     #+begin_src jojo
@@ -353,7 +362,7 @@
             [:jo set-local-jo?] [:jo jo-emit-set-local]
             [:jo get-field-jo?] [:jo jo-emit-get-field]
             [:jo set-field-jo?] [:jo jo-emit-set-field]
-            else [:jo jo-emit-call]))
+            else [:jo jo-emit]))
     #+end_src
 
 *** (if)
@@ -488,14 +497,25 @@
       compiling-stack-drop
       :address compiling-stack-push
       :jojo emit-lit
-      'current-local-env jo-emit-call
-      'closure jo-emit-call)
+      'current-local-env jo-emit
+      'closure jo-emit)
     #+end_src
 
 *** (+data)
 
     #+begin_src jojo
-    (+jojo +data )
+    (+jojo plus-data (-> :body --)
+      (if :body .car tag-jo? not then
+          "- plus-data fail" string-write newline
+          "  name must be of form <...>" string-write newline
+          "  name : " string-write :body .car jo-write newline
+          end)
+      compiling-stack-tos :address!
+      :body .cdr
+      {get-field-jo?} list-filter
+      {jo-emit} list-for-each
+      emit-zero
+      :address :body .car name-bind-data)
     #+end_src
 
 *** >< (+gene)
@@ -526,7 +546,8 @@
 
     #+begin_src jojo
     (+jojo +jojo (-> :body sexp list --)
-      :body .car, :body .cdr compile-jojo, bind-name)
+      :body .cdr compile-jojo
+      :body .car name-bind)
 
     (run reading-stack-tos repl)
     #+end_src
@@ -543,6 +564,7 @@
     (+jojo -> arrow/expend sexp-compile)
     (+jojo clo core-clo)
     (+jojo echo sexp-list-write newline)
+    (+jojo +data plus-data)
     #+end_src
 
 * [test]
