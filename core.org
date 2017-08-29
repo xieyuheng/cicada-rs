@@ -3,13 +3,21 @@
 
 * [todo-stack]
 
-*** semantic of quote
+*** prepare for the semantic of quote
+
+    - {} to (closure)
+    - [] to (vector)
+
+*** semantic of quote and quasiquote
 
     - quote must be consisted with the jexp reader
+      thus <int> and and <bool>
+      - how about other literal data ?
+      - how about the number tower ?
 
-    - {} can be changed to (closure)
-    - but how about [] ?
-    - give up the quotation of list ?
+    - quasiquote
+      `({})
+      `(@{})
 
 *** zero follows 'end' means then end of jojo
 
@@ -77,6 +85,16 @@
   (run core-flag-on)
   #+end_src
 
+* <int>
+
+*** even?
+
+    #+begin_src jojo
+
+    #+end_src
+
+*** odd?
+
 * list
 
 *** <null> <cons>
@@ -84,6 +102,15 @@
     #+begin_src jojo
     (+data <null>)
     (+data <cons> .car .cdr)
+    #+end_src
+
+*** list-length
+
+    #+begin_src jojo
+    (+jojo list-length (-> :list -> <int>)
+      (case :list
+        <null> 0
+        <cons> [:list .cdr recur inc]))
     #+end_src
 
 *** list-member?
@@ -104,6 +131,12 @@
         <null> [:right]
         <cons> [:left .cdr :right recur
                 :left .car swap cons]))
+    #+end_src
+
+*** tail-cons
+
+    #+begin_src jojo
+    (+jojo tail-cons null cons list-append)
     #+end_src
 
 *** list-left
@@ -276,9 +309,15 @@
 
     #+begin_src jojo
     (+jojo jexp-list-compile (-> :list jexp list --)
-      (if :list null? then end)
-      :list .car jexp-compile
-      :list .cdr recur)
+      (cond
+        [:list null?] [end]
+
+        [:list .car ' ' eq?]
+        [:list .cdr .car emit-lit
+         :list .cdr .cdr recur]
+
+        else [:list .car jexp-compile
+              :list .cdr recur]))
     #+end_src
 
 *** jexp-compile
@@ -286,10 +325,7 @@
     #+begin_src jojo
     (+jojo jexp-compile (-> :jexp --)
       (cond
-        [:jexp cons?]
-        [:jexp .cdr dup jexp-list-write newline
-         :jexp .car dup jo-write newline
-         jo-apply]
+        [:jexp cons?] [:jexp .cdr :jexp .car jo-apply]
 
         [:jexp square-bar-ket?] []
 
@@ -347,22 +383,87 @@
               debug]))
     #+end_src
 
+*** maybe-square->list
+
+    #+begin_src jojo
+    (+jojo maybe-square->list (-> :maybe -- list)
+      (cond
+        [:maybe square-bar-ket?] [:maybe .list]
+        else [:maybe null cons]))
+    #+end_src
+
 *** (cond)
 
     #+begin_src jojo
+    (+jojo cond/expend (-> :body -- jexp)
+      (cond
+        [:body list-length 2 eq?]
+        [:body .car :body .cdr .car cond/if-then]
 
+        else [:body .car :body .cdr .car cond/if-then
+              'else tail-cons
+              :body .cdr .cdr recur tail-cons]))
+
+    (note
+      (+jojo cond/if-then (-> :question :answer -- jexp)
+        `(if @{(if :question 'else eq?
+                   then '(true)
+                   else :question maybe-square->list)}
+             then @{:answer maybe-square->list})))
+
+    (+jojo cond/if-then (-> :question :answer -- jexp)
+      (if :question 'else eq?
+          then 'true null cons
+          else :question maybe-square->list)
+      'then tail-cons
+      :answer maybe-square->list list-append
+      'if swap cons)
     #+end_src
 
-*** >< (case)
+*** (case)
+
+    #+begin_src jojo
+    (note
+      (+jojo case/expend (-> :body -- jexp)
+        `(begin @{:body .car maybe-square->list}
+                {:body .cdr case/expend-rest})))
+
+    (+jojo case/expend (-> :body -- jexp)
+      :body .car maybe-square->list
+      :body .cdr case/expend-rest tail-cons
+      'begin swap cons)
+
+    (+jojo case/expend-rest (-> :body -- jexp)
+      (cond
+        [:body list-length 2 eq?]
+        [:body .car :body .cdr .car case/if-then]
+
+        else [:body .car :body .cdr .car case/if-then
+              'else tail-cons
+              :body .cdr .cdr recur tail-cons]))
+
+    (note
+      (+jojo case/if-then (-> :tag :answer -- jexp)
+        `(if @{(if :tag 'else eq?
+                   then '(true)
+                   else `(dup tag ' {:tag} eq?))}
+             then drop @{:answer maybe-square->list})))
+
+    (+jojo case/if-then (-> :tag :answer -- jexp)
+      (if :tag 'else eq?
+          then 'true null cons
+          else 'dup 'tag '' :tag 'eq? null cons cons cons cons cons)
+      'then tail-cons
+      'drop tail-cons
+      :answer maybe-square->list list-append
+      'if swap cons)
+    #+end_src
 
 *** (+jojo)
 
     #+begin_src jojo
     (+jojo +jojo (-> :body jexp list --)
-      :body .car,  (note dup jo-write newline)
-      :body .cdr   (note dup jexp-list-write newline)
-      compile-jojo,
-      bind-name)
+      :body .car, :body .cdr compile-jojo, bind-name)
     #+end_src
 
 *** run the new repl
@@ -371,12 +472,25 @@
     (run reading-stack-tos repl)
     #+end_src
 
+*** (note)
+
+    #+begin_src jojo
+    (+jojo note drop)
+    #+end_src
+
+*** (run)
+
+    #+begin_src jojo
+    (+jojo run compile-jojo apply)
+    #+end_src
+
 *** new keywords
 
     #+begin_src jojo
+    (+jojo begin jexp-list-compile)
     (+jojo if core-if)
-    (note (+jojo cond core-cond))
-    (note (+jojo case core-case))
+    (+jojo cond cond/expend jexp-compile)
+    (+jojo case2 case/expend dup jexp-write newline jexp-compile)
     #+end_src
 
 *** >< (->)
@@ -389,18 +503,6 @@
 
 *** >< (+disp)
 
-*** (run)
-
-    #+begin_src jojo
-    (+jojo run compile-jojo apply)
-    #+end_src
-
-*** (note)
-
-    #+begin_src jojo
-    (+jojo note drop)
-    #+end_src
-
 *** >< (test)
 
 *** >< {}
@@ -410,6 +512,25 @@
   #+begin_src jojo
   (+jojo square dup mul)
   (run 123 square int-write newline)
+
+  (run 1 :x!
+    (if :x 1 eq?
+        then "is 1" string-write newline
+        else "not 1" string-write newline))
+
+  (run 3 :x!
+    (cond
+      [:x 1 eq?] ["is 1" string-write newline]
+      [:x 2 eq?] ["is 2" string-write newline]
+      else ["not 1 not 2" string-write newline]))
+
+  (+jojo list-length-2
+    :list!
+    (case2 :list
+      <null> 0
+      <cons> [:list .cdr recur inc]))
+
+  (run 1 2 3 4 null cons cons cons cons list-length-2 int-write newline)
   #+end_src
 
 * >< the-story-begin

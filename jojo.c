@@ -49,6 +49,14 @@
       bool char_space_p(char c) {
         return isspace(c);
       }
+      bool char_bar_ket_p(char c) {
+        return (c == '(' ||
+                c == ')' ||
+                c == '[' ||
+                c == ']' ||
+                c == '{' ||
+                c == '}');
+      }
       bool char_delimiter_p(char c) {
         return (c == '(' ||
                 c == ')' ||
@@ -387,6 +395,15 @@
       }
       #define J0 (char*[]){0}
       #define J(...) generate_jo_array((char*[]){__VA_ARGS__, 0})
+    bool jo_bar_ket_p(jo_t jo) {
+      char* str = jo2str(jo);
+      if (strlen(str) != 1) {
+        return false;
+      }
+      else {
+        return char_bar_ket_p(str[0]);
+      }
+    }
     bool jo_delimiter_p(jo_t jo) {
       char* str = jo2str(jo);
       if (strlen(str) != 1) {
@@ -2416,9 +2433,9 @@
       // ' jo
       else if (str[0] == '\'') {
         jo_t next_jo = read_jo();
-        if (jo_delimiter_p(next_jo)) {
+        if (jo_bar_ket_p(next_jo)) {
           report("- compile_jo fail\n");
-          report("  can not handle delimiter after ' in this reader\n");
+          report("  can not handle bar-ket after ' in this reader\n");
           report("  can only handle ' jo\n");
           report("  delimiter : %s\n", jo2str(next_jo));
           p_debug();
@@ -2540,7 +2557,7 @@
       else { compile_jo(first_jo); }
     }
     //   (case [...]
-    //     data-constructor-name [...]
+    //     tag [...]
     //     ...)
     //// ==>
     //     [...]
@@ -2563,7 +2580,7 @@
         emit(str2jo("dup"));
         emit(str2jo("tag"));
         {
-          char* tmp = malloc(strlen(jo2str(dc) + 2 + 1));
+          char* tmp = malloc(strlen(jo2str(dc) + 1));
           tmp[0] = '\0';
           strcat(tmp, jo2str(dc));
           emit(JO_INS_LIT); emit(TAG_JO); emit(str2jo(tmp));
@@ -2619,7 +2636,7 @@
         jo_unread(s);
         compile_maybe_square();
         emit(JO_INS_JZ);
-        jo_t* end_of_this_cond = tos(compiling_stack);
+        cell* end_of_this_cond = tos(compiling_stack);
         p_compiling_stack_inc();
 
         compile_maybe_square();
@@ -2628,12 +2645,12 @@
         counter++;
         p_compiling_stack_inc();
 
-        end_of_this_cond[0] = (jo_t*)tos(compiling_stack) - end_of_this_cond;
+        end_of_this_cond[0] = (cell*)tos(compiling_stack) - end_of_this_cond;
       }
       while (counter > 0) {
         counter--;
-        jo_t* end_of_cond = cond_ends[counter];
-        end_of_cond[0] = (jo_t*)tos(compiling_stack) - end_of_cond;
+        cell* end_of_cond = cond_ends[counter];
+        end_of_cond[0] = (cell*)tos(compiling_stack) - end_of_cond;
       }
     }
     void p_recur() {
@@ -2649,6 +2666,7 @@
       plus_prim("ins/jz", ins_jz);
 
       plus_prim("if", k_if);
+      plus_prim("begin", p_compile_until_round_ket);
 
       plus_prim("case", k_case);
       plus_prim("cond", k_cond);
@@ -4320,7 +4338,7 @@
       init_kernel_signal_handler();
 
       // load_core();
-      // path_load("core.jo");
+      path_load("core.jo");
 
       p_repl_flag_on();
       repl(terminal_input_stack());

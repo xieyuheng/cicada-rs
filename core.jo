@@ -10,8 +10,13 @@
                   [:l :r node return-maybe])
                 else nothing)))
   (run core-flag-on)
+
     (+data <null>)
     (+data <cons> .car .cdr)
+    (+jojo list-length (-> :list -> <int>)
+      (case :list
+        <null> 0
+        <cons> [:list .cdr recur inc]))
     (+jojo list-member? (-> :a :list -- <bool>)
       (case :list
         <null> false
@@ -22,6 +27,7 @@
         <null> [:right]
         <cons> [:left .cdr :right recur
                 :left .car swap cons]))
+    (+jojo tail-cons null cons list-append)
     (+jojo list-left (-> :list :pred -- left)
       (cond [:list null?] [null]
             [:list .car :pred apply] [null]
@@ -140,15 +146,18 @@
       0 int-emit-data
       0 int-emit-data)
     (+jojo jexp-list-compile (-> :list jexp list --)
-      (if :list null? then end)
-      :list .car jexp-compile
-      :list .cdr recur)
+      (cond
+        [:list null?] [end]
+
+        [:list .car ' ' eq?]
+        [:list .cdr .car emit-lit
+         :list .cdr .cdr recur]
+
+        else [:list .car jexp-compile
+              :list .cdr recur]))
     (+jojo jexp-compile (-> :jexp --)
       (cond
-        [:jexp cons?]
-        [:jexp .cdr dup jexp-list-write newline
-         :jexp .car dup jo-write newline
-         jo-apply]
+        [:jexp cons?] [:jexp .cdr :jexp .car jo-apply]
 
         [:jexp square-bar-ket?] []
 
@@ -194,17 +203,97 @@
               "  the body dose not has 'then" string-write newline
               "  body : " string-write :body jexp-list-write newline
               debug]))
+    (+jojo maybe-square->list (-> :maybe -- list)
+      (cond
+        [:maybe square-bar-ket?] [:maybe .list]
+        else [:maybe null cons]))
+    (+jojo cond/expend (-> :body -- jexp)
+      (cond
+        [:body list-length 2 eq?]
+        [:body .car :body .cdr .car cond/if-then]
+
+        else [:body .car :body .cdr .car cond/if-then
+              'else tail-cons
+              :body .cdr .cdr recur tail-cons]))
+
+    (note
+      (+jojo cond/if-then (-> :question :answer -- jexp)
+        `(if @{(if :question 'else eq?
+                   then '(true)
+                   else :question maybe-square->list)}
+             then @{:answer maybe-square->list})))
+
+    (+jojo cond/if-then (-> :question :answer -- jexp)
+      (if :question 'else eq?
+          then 'true null cons
+          else :question maybe-square->list)
+      'then tail-cons
+      :answer maybe-square->list list-append
+      'if swap cons)
+    (note
+      (+jojo case/expend (-> :body -- jexp)
+        `(begin @{:body .car maybe-square->list}
+                {:body .cdr case/expend-rest})))
+
+    (+jojo case/expend (-> :body -- jexp)
+      :body .car maybe-square->list
+      :body .cdr case/expend-rest tail-cons
+      'begin swap cons)
+
+    (+jojo case/expend-rest (-> :body -- jexp)
+      (cond
+        [:body list-length 2 eq?]
+        [:body .car :body .cdr .car case/if-then]
+
+        else [:body .car :body .cdr .car case/if-then
+              'else tail-cons
+              :body .cdr .cdr recur tail-cons]))
+
+    (note
+      (+jojo case/if-then (-> :tag :answer -- jexp)
+        `(if @{(if :tag 'else eq?
+                   then '(true)
+                   else `(dup tag ' {:tag} eq?))}
+             then drop @{:answer maybe-square->list})))
+
+    (+jojo case/if-then (-> :tag :answer -- jexp)
+      (if :tag 'else eq?
+          then 'true null cons
+          else 'dup 'tag '' :tag 'eq? null cons cons cons cons cons)
+      'then tail-cons
+      'drop tail-cons
+      :answer maybe-square->list list-append
+      'if swap cons)
     (+jojo +jojo (-> :body jexp list --)
-      :body .car,  (note dup jo-write newline)
-      :body .cdr   (note dup jexp-list-write newline)
-      compile-jojo,
-      bind-name)
+      :body .car, :body .cdr compile-jojo, bind-name)
     (run reading-stack-tos repl)
-    (+jojo if core-if)
-    (+jojo run compile-jojo apply)
     (+jojo note drop)
+    (+jojo run compile-jojo apply)
+    (+jojo begin jexp-list-compile)
+    (+jojo if core-if)
+    (+jojo cond cond/expend jexp-compile)
+    (+jojo case2 case/expend dup jexp-write newline jexp-compile)
   (+jojo square dup mul)
   (run 123 square int-write newline)
+
+  (run 1 :x!
+    (if :x 1 eq?
+        then "is 1" string-write newline
+        else "not 1" string-write newline))
+
+  (run 3 :x!
+    (cond
+      [:x 1 eq?] ["is 1" string-write newline]
+      [:x 2 eq?] ["is 2" string-write newline]
+      else ["not 1 not 2" string-write newline]))
+
+  (+jojo list-length-2
+    :list!
+    (case2 :list
+      <null> 0
+      <cons> [:list .cdr recur inc]))
+
+  (run 1 2 3 4 null cons cons cons cons list-length-2 int-write newline)
   (+jojo the-story-begin
     repl-flag-on terminal-input-stack repl)
   (run the-story-begin)
