@@ -7,11 +7,10 @@
 
     - quote must be consisted with the sexp reader
 
-    - quasiquote
-      `({})
-      `(@{})
+*** quasiquote
 
-*** zero follows 'end' means then end of jojo
+    - `({})
+    - `(@{})
 
 *** (let)
 
@@ -76,16 +75,6 @@
   #+begin_src jojo
   (run core-flag-on)
   #+end_src
-
-* <int>
-
-*** even?
-
-    #+begin_src jojo
-
-    #+end_src
-
-*** odd?
 
 * list
 
@@ -162,6 +151,35 @@
                   :right! cons :right]))
     #+end_src
 
+*** list-map
+
+    #+begin_src jojo
+    (+jojo list-map (-> :list :fun -- list)
+      (case :list
+        <null> null
+        <cons> [:list .car :fun apply :list .cdr :fun recur cons]))
+    #+end_src
+
+*** list-filter
+
+    #+begin_src jojo
+    (+jojo list-filter (-> :list :pred -- list)
+      (cond [:list null?] [null]
+            [:list .car :pred apply] [:list .car :list .cdr :pred recur cons]
+            else [:list .cdr :pred recur]))
+    #+end_src
+
+*** list-reverse
+
+    #+begin_src jojo
+    (+jojo list-reverse null swap list-reverse-swap-append)
+
+    (+jojo list-reverse-swap-append (-> left :list -- list)
+      (case :list
+        <null> []
+        <cons> [:list .car swap cons :list .cdr recur]))
+    #+end_src
+
 *** [test]
 
     #+begin_src jojo
@@ -202,6 +220,27 @@
 
       {5 gteq?} list-split
       int-list-write int-list-write newline)
+
+    (run
+      0 1 2 3 4 5 6 7 8 9 null
+      cons cons cons cons cons
+      cons cons cons cons cons
+
+      {inc inc inc} list-map int-list-write newline)
+
+    (run
+      0 1 2 3 4 5 6 7 8 9 null
+      cons cons cons cons cons
+      cons cons cons cons cons
+
+      {2 mod 0 eq?} list-filter int-list-write newline)
+
+    (run
+      0 1 2 3 4 5 6 7 8 9 null
+      cons cons cons cons cons
+      cons cons cons cons cons
+
+      list-reverse int-list-write newline)
     #+end_src
 
 * sexp
@@ -281,9 +320,7 @@
     (+jojo compile-jojo (-> sexp list -- <jojo>)
       compiling-stack-tos-as-jojo
       swap sexp-list-compile
-      'end jo-emit-call
-      0 int-emit-data
-      0 int-emit-data)
+      emit-jojo-end)
     #+end_src
 
 *** sexp-list-compile
@@ -435,41 +472,46 @@
       'if swap cons)
     #+end_src
 
-*** (+jojo)
+*** (->)
+
+    #+begin_src jojo
+    (+jojo arrow/expend (-> :body -- sexp)
+      :body {'-- eq?} list-left
+      {get-local-jo?} list-filter
+      {get-local-jo->set-local-jo} list-map
+      list-reverse
+      'begin swap cons)
+    #+end_src
+
+*** (clo)
+
+    #+begin_src jojo
+    (+jojo clo clo/expend sexp-compile)
+
+    (note (+jojo clo/expend (-> :body -- sexp)
+            ))
+    #+end_src
+
+*** (+jojo) & run new repl
 
     #+begin_src jojo
     (+jojo +jojo (-> :body sexp list --)
       :body .car, :body .cdr compile-jojo, bind-name)
-    #+end_src
 
-*** run the new repl
-
-    #+begin_src jojo
     (run reading-stack-tos repl)
-    #+end_src
-
-*** (note)
-
-    #+begin_src jojo
-    (+jojo note drop)
-    #+end_src
-
-*** (run)
-
-    #+begin_src jojo
-    (+jojo run compile-jojo apply)
     #+end_src
 
 *** new keywords
 
     #+begin_src jojo
+    (+jojo note drop)
+    (+jojo run compile-jojo apply)
     (+jojo begin sexp-list-compile)
     (+jojo if core-if)
     (+jojo cond cond/expend sexp-compile)
-    (+jojo case2 case/expend dup sexp-write newline sexp-compile)
+    (+jojo case case/expend sexp-compile)
+    (+jojo -> arrow/expend sexp-compile)
     #+end_src
-
-*** >< (->)
 
 *** >< (+var)
 
@@ -480,8 +522,6 @@
 *** >< (+disp)
 
 *** >< (test)
-
-*** >< {}
 
 * [test]
 
@@ -502,11 +542,17 @@
 
   (+jojo list-length-2
     :list!
-    (case2 :list
+    (case :list
       <null> 0
       <cons> [:list .cdr recur inc]))
 
-  (run 1 2 3 4 null cons cons cons cons list-length-2 int-write newline)
+  (run 1 2 3 4 5 null cons cons cons cons cons list-length-2 int-write newline)
+
+  (run
+    1 2 (-> :x :y --)
+    :y :y add int-write space
+    :y :y add int-write space
+    :x :x add int-write space newline)
   #+end_src
 
 * >< the-story-begin

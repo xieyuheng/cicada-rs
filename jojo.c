@@ -2293,6 +2293,10 @@
       jojo[0] = n;
       push(compiling_stack, jojo + 1);
     }
+    void emit_jojo_end() {
+      emit(JO_END);
+      emit(0);
+    }
       // :local
       bool get_local_string_p(char* str) {
         if (str[0] != ':') {
@@ -2685,9 +2689,7 @@
 
       {
         compile_until_meet_jo(ROUND_KET);
-        emit(JO_END);
-        emit(0);
-        emit(0);
+        emit_jojo_end();
       }
 
       rs_push(jojo, TAG_JOJO, jojo, current_local_counter);
@@ -2769,9 +2771,7 @@
 
       {
         compile_until_meet_jo(ROUND_KET);
-        emit(JO_END);
-        emit(0);
-        emit(0);
+        emit_jojo_end();
       }
 
       bind_name(fun_name, TAG_JOJO, jojo);
@@ -2834,9 +2834,7 @@
       jo_t* jojo = tos(compiling_stack);
       {
         compile_until_meet_jo(ROUND_KET);
-        emit(JO_END);
-        emit(0);
-        emit(0);
+        emit_jojo_end();
       }
 
       _plus_disp(gene_name, tags, TAG_JOJO, jojo);
@@ -2920,7 +2918,8 @@
     void jojo_print(jo_t* jojo) {
       report("[ ");
       while (true) {
-        if (jojo[0] == 0 && jojo[1] == 0) {
+        if (jojo[0] == JO_END && jojo[1] == 0) {
+          report("end ");
           break;
         }
         else if (jojo[0] == JO_INS_LIT) {
@@ -3469,6 +3468,17 @@
       struct dp a = ds_pop();
       ds_push(TAG_BOOL, set_field_string_p(jo2str(a.d)));
     }
+    void p_get_local_jo_to_set_local_jo() {
+      struct dp a = ds_pop();
+      char* str = jo2str(a.d);
+      char* tmp = (char*)malloc(strlen(str) +1);
+      tmp[0] = '\0';
+      strcat(tmp, str);
+      strcat(tmp, "!");
+      jo_t jo = str2jo(tmp);
+      free(tmp);
+      ds_push(TAG_JO, jo);
+    }
     void expose_jo() {
       plus_prim("round-bar",    p_round_bar);
       plus_prim("round-ket",    p_round_ket);
@@ -3492,6 +3502,8 @@
       plus_prim("set-local-jo?", p_set_local_jo_p);
       plus_prim("get-field-jo?", p_get_field_jo_p);
       plus_prim("set-field-jo?", p_set_field_jo_p);
+
+      plus_prim("get-local-jo->set-local-jo", p_get_local_jo_to_set_local_jo);
     }
     void p_compiling_stack_tos() {
       ds_push(TAG_ADDRESS, tos(compiling_stack));
@@ -3575,9 +3587,7 @@
 
       {
         compile_until_meet_jo(FLOWER_KET);
-        emit(JO_END);
-        emit(0);
-        emit(0);
+        emit_jojo_end();
       }
 
       jo_t* new_jojo =
@@ -3966,10 +3976,6 @@
       struct dp a = ds_pop();
       emit(a.d);
     }
-    void p_int_emit_data() {
-      struct dp a = ds_pop();
-      emit(a.d);
-    }
     void p_emit_lit() {
       struct dp a = ds_pop();
       emit(JO_INS_LIT);
@@ -4023,7 +4029,6 @@
 
       // note that, the notation of instruction is not exposed to jojo
       plus_prim("jo-emit-call", p_jo_emit_call);
-      plus_prim("int-emit-data", p_int_emit_data);
       plus_prim("emit-lit", p_emit_lit);
 
       plus_prim("jo-emit-get-local", p_jo_emit_get_local);
@@ -4033,6 +4038,8 @@
 
       plus_prim("emit-jz", p_emit_jz);
       plus_prim("emit-jmp", p_emit_jmp);
+
+      plus_prim("emit-jojo-end", emit_jojo_end);
     }
     void p1() {
       int file = open("README", O_RDWR);
