@@ -175,9 +175,9 @@
         [:sexp jo?] [:sexp jo-compile]))
     (+jojo jo-compile (-> :jo --)
       (cond [:jo int-jo?]       [:jo jo->int emit-lit]
-            [:jo get-local-jo?] [:jo jo-emit-get-local]
+            [:jo local-jo?] [:jo jo-emit-local]
             [:jo set-local-jo?] [:jo jo-emit-set-local]
-            [:jo get-field-jo?] [:jo jo-emit-get-field]
+            [:jo field-jo?] [:jo jo-emit-field]
             [:jo set-field-jo?] [:jo jo-emit-set-field]
             else [:jo jo-emit]))
     (+jojo if-else-then (-> :body --)
@@ -270,8 +270,8 @@
       :answer tail-cons)
     (+jojo arrow/expend (-> :body -- sexp)
       :body {'-- eq?} list-left
-      {get-local-jo?} list-filter
-      {get-local-jo->set-local-jo} list-map
+      {local-jo?} list-filter
+      {local-jo->set-local-jo} list-map
       list-reverse
       'begin swap cons)
     (+jojo compile-jojo-copy (-> sexp list -- <jojo>)
@@ -291,7 +291,7 @@
           end)
       compiling-stack-tos :address!
       :body .cdr
-      {get-field-jo?} list-filter
+      {field-jo?} list-filter
       {jo-emit} list-for-each
       emit-zero
       :address :body .car name-bind-data)
@@ -299,7 +299,7 @@
       :body .cdr .car :arrow-sexp!
       :arrow-sexp .cdr
       {'-- eq?} list-left
-      {get-local-jo?} list-filter
+      {local-jo?} list-filter
       list-length
       :body .car name-bind-gene)
     (+jojo plus-disp (-> :body --)
@@ -368,27 +368,26 @@
         :r [:t1 .r :t2 .r zip-tree]
         [:l :r node return-maybe])
       (begin
-        :t1 .l :t2 .l tree-zip
-        {:l! :t1 .r :t2 .r tree-zip
-         {:r! :l :r node return-maybe}
+        [:t1 .l :t2 .l tree-zip]
+        {:l! [:t1 .r :t2 .r zip-tree]
+         {:r! [:l :r node return-maybe]}
          bind-maybe}
         bind-maybe)
       (begin
-        :t1 .l :t2 .l tree-zip {:l!
-        :t1 .r :t2 .r tree-zip {:r!
-        :l :r node return-maybe} bind-maybe} bind-maybe))
+        [:t1 .l :t2 .l tree-zip] {:l!
+        [:t1 .r :t2 .r zip-tree] {:r!
+        [:l :r node return-maybe]} bind-maybe} bind-maybe))
 
     (note
       (+jojo let-bind/expend (-> :body -- sexp)
         :body .car :body .cdr let-bind/expend-recur
         'begin swap cons)
 
-      (+jojo let-bind/expend-recur (-> :binder :body -- sexp-list)
+      (+jojo let-bind/expend-recur (-> :binder :rest -- sexp)
         (cond
-          [:body list-length 1 eq?]
-          [:body .car ><><>< ]
+          [:rest list-length 1 eq?] [:rest .car]
 
-          [:body .car set-local-jo?] []
+          [:rest .car local-jo?] []
 
           else [])))
     (+jojo +jojo (-> :body sexp list --)

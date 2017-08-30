@@ -310,9 +310,9 @@
     jo_t COMMA;
 
     jo_t JO_INS_LIT;
-    jo_t JO_INS_GET_LOCAL;
+    jo_t JO_INS_LOCAL;
     jo_t JO_INS_SET_LOCAL;
-    jo_t JO_INS_GET_FIELD;
+    jo_t JO_INS_FIELD;
     jo_t JO_INS_SET_FIELD;
 
     jo_t JO_INS_JMP;
@@ -1522,7 +1522,7 @@
     void expose_gc() {
       init_gr();
 
-      plus_prim("ins/get-field", ins_get_field);
+      plus_prim("ins/field", ins_get_field);
       plus_prim("ins/set-field", ins_set_field);
 
       plus_atom("<byte>", gc_ignore);
@@ -2238,7 +2238,7 @@
       struct dp a = ds_pop();
       set_local(name, a.t, a.d);
     }
-    void ins_get_local() {
+    void ins_local() {
       struct rp p = rs_tos();
       rs_inc();
       jo_t* jojo = p.j;
@@ -2251,14 +2251,14 @@
         ds_push(lp.local_tag, lp.local_data);
       }
       else {
-        report("- ins_get_local fatal error\n");
+        report("- ins_local fatal error\n");
         report("  name is not bound\n");
         report("  name : %s\n", jo2str(name));
         p_debug();
       }
     }
     void expose_local() {
-      plus_prim("ins/get-local", ins_get_local);
+      plus_prim("ins/local", ins_local);
       plus_prim("ins/set-local", ins_set_local);
     }
     struct stack* compiling_stack; // of jojo
@@ -2394,7 +2394,7 @@
       }
       // :local
       else if (get_local_string_p(str)) {
-        emit(JO_INS_GET_LOCAL);
+        emit(JO_INS_LOCAL);
         emit(jo);
       }
       // :local!
@@ -2406,7 +2406,7 @@
       }
       // .field
       else if (get_field_string_p(str)) {
-        emit(JO_INS_GET_FIELD);
+        emit(JO_INS_FIELD);
         emit(jo);
       }
       // .field!
@@ -2913,8 +2913,8 @@
           jojo++;
           jojo++;
         }
-        else if (jojo[0] == JO_INS_GET_LOCAL ||
-                 jojo[0] == JO_INS_GET_FIELD) {
+        else if (jojo[0] == JO_INS_LOCAL ||
+                 jojo[0] == JO_INS_FIELD) {
           report("%s ", jo2str(jojo[1]));
           jojo++;
           jojo++;
@@ -3417,7 +3417,7 @@
       struct dp a = ds_pop();
       ds_push(TAG_BOOL, int_string_p(jo2str(a.d)));
     }
-    void p_get_local_jo_p() {
+    void p_local_jo_p() {
       struct dp a = ds_pop();
       ds_push(TAG_BOOL, get_local_string_p(jo2str(a.d)));
     }
@@ -3425,7 +3425,7 @@
       struct dp a = ds_pop();
       ds_push(TAG_BOOL, set_local_string_p(jo2str(a.d)));
     }
-    void p_get_field_jo_p() {
+    void p_field_jo_p() {
       struct dp a = ds_pop();
       ds_push(TAG_BOOL, get_field_string_p(jo2str(a.d)));
     }
@@ -3467,13 +3467,13 @@
       plus_prim("jo->int",   p_jo_to_int);
 
       plus_prim("int-jo?",       p_int_jo_p);
-      plus_prim("get-local-jo?", p_get_local_jo_p);
+      plus_prim("local-jo?",     p_local_jo_p);
       plus_prim("set-local-jo?", p_set_local_jo_p);
-      plus_prim("get-field-jo?", p_get_field_jo_p);
+      plus_prim("field-jo?",     p_field_jo_p);
       plus_prim("set-field-jo?", p_set_field_jo_p);
-      plus_prim("tag-jo?", p_tag_jo_p);
+      plus_prim("tag-jo?",       p_tag_jo_p);
 
-      plus_prim("get-local-jo->set-local-jo", p_get_local_jo_to_set_local_jo);
+      plus_prim("local-jo->set-local-jo", p_get_local_jo_to_set_local_jo);
     }
     void p_compiling_stack_tos() {
       ds_push(TAG_ADDRESS, tos(compiling_stack));
@@ -3980,9 +3980,9 @@
     void p_emit_zero() {
       emit(0);
     }
-    void p_jo_emit_get_local() {
+    void p_jo_emit_local() {
       struct dp a = ds_pop();
-      emit(JO_INS_GET_LOCAL);
+      emit(JO_INS_LOCAL);
       emit(a.d);
     }
     void p_jo_emit_set_local() {
@@ -3993,9 +3993,9 @@
       emit(str2jo(tmp));
       free(tmp);
     }
-    void p_jo_emit_get_field() {
+    void p_jo_emit_field() {
       struct dp a = ds_pop();
-      emit(JO_INS_GET_FIELD);
+      emit(JO_INS_FIELD);
       emit(a.d);
     }
     void p_jo_emit_set_field() {
@@ -4051,9 +4051,9 @@
       plus_prim("emit-lit", p_emit_lit);
       plus_prim("emit-zero", p_emit_zero);
 
-      plus_prim("jo-emit-get-local", p_jo_emit_get_local);
+      plus_prim("jo-emit-local",     p_jo_emit_local);
       plus_prim("jo-emit-set-local", p_jo_emit_set_local);
-      plus_prim("jo-emit-get-field", p_jo_emit_get_field);
+      plus_prim("jo-emit-field",     p_jo_emit_field);
       plus_prim("jo-emit-set-field", p_jo_emit_set_field);
 
       plus_prim("emit-jz", p_emit_jz);
@@ -4299,9 +4299,9 @@
       COMMA        =   str2jo(",");
 
       JO_INS_LIT       = str2jo("ins/lit");
-      JO_INS_GET_LOCAL = str2jo("ins/get-local");
+      JO_INS_LOCAL     = str2jo("ins/local");
       JO_INS_SET_LOCAL = str2jo("ins/set-local");
-      JO_INS_GET_FIELD = str2jo("ins/get-field");
+      JO_INS_FIELD     = str2jo("ins/field");
       JO_INS_SET_FIELD = str2jo("ins/set-field");
 
       JO_INS_JMP = str2jo("ins/jmp");
