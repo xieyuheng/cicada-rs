@@ -1,3 +1,17 @@
+(note
+
+  (+jojo bind
+    (-> (: :1m [:<1> <monad>])
+        (: :1-2m (-> :<1> -- :<2> <monad>))
+     -- (: :2m [:<2> <monad>]))
+    dummy {drop :1m} :1-2m compose apply)
+
+  (+jojo compose
+    (-> (: :0-1m (-> :<0> -- :<1> <monad>))
+        (: :1-2m (-> :<1> -- :<2> <monad>))
+     -- (: :0-2m (-> :<0> -- :<2> <monad>)))
+    {:0-1m apply :1-2m bind}))
+
 (+data <leaf> .v)
 (+data <node> .l .r)
 
@@ -49,6 +63,30 @@
 
     else nothing))
 
+(note
+  (+jojo tree-zip (-> :t1 :t2 -- tree maybe)
+    (cond
+      [:t1 leaf? :t2 leaf? and]
+      [:t1 .v :t2 .v cons leaf return-maybe]
+
+      [:t1 node? :t2 node? and]
+      (let-bind bind-maybe
+        :l [:t1 .l :t2 .l tree-zip]
+        :r [:t1 .r :t2 .r tree-zip]
+        [:l :r node return-maybe])
+
+      else nothing)))
+
+(note
+  (+jojo tree-zip (-> :t1 :t2 -- tree maybe)
+    (case [:t1 :t2]
+      <leaf> <leaf> [:t1 .v :t2 .v cons leaf return-maybe]
+      <node> <node> (let-bind bind-maybe
+                      :l [:t1 .l :t2 .l tree-zip]
+                      :r [:t1 .r :t2 .r tree-zip]
+                      [:l :r node return-maybe])
+      else nothing)))
+
 (+jojo maybe-write (-> :m :f --)
   (case :m
     <nothing> ['nothing jo-write space]
@@ -73,41 +111,27 @@
 (run tree-2 1 leaf
   tree-zip tree-maybe-write)
 
-(+jojo number-tree
-  (note (-> <int>, :<t> <tree> -- <int>, <int> <tree>))
-  :t!
-  (case :t
+(+jojo number-tree (-> number, :tree -- number, tree)
+  (case :tree
     <leaf> [dup inc swap leaf]
-    <node> [:t .l recur :l!
-            :t .r recur :r!
+    <node> [:tree .l recur :l!
+            :tree .r recur :r!
             :l :r node]))
 
-(+jojo tree-2
-  "1" leaf "2" leaf node
-  "3" leaf "4" leaf node
-  "5" leaf node
-  node)
+(test
 
-(run
-  tree-2
-  0 swap number-tree
-  swap drop
-  {int-write space} tree-write newline)
+  (+jojo tree-2
+    "1" leaf "2" leaf node
+    "3" leaf "4" leaf node
+    "5" leaf node
+    node)
+
+  (run
+    tree-2
+    0 swap number-tree
+    swap drop
+    {int-write space} tree-write newline))
 
 (note
   (+jojo return-list)
   (+jojo bind-list))
-
-(note
-
-  (+jojo bind
-    (-> (: :1m [:<1> <monad>])
-        (: :1-2m (-> :<1> -- :<2> <monad>))
-     -- (: :2m [:<2> <monad>]))
-    dummy {drop :1m} :1-2m compose apply)
-
-  (+jojo compose
-    (-> (: :0-1m (-> :<0> -- :<1> <monad>))
-        (: :1-2m (-> :<1> -- :<2> <monad>))
-     -- (: :0-2m (-> :<0> -- :<2> <monad>)))
-    {:0-1m apply :1-2m bind}))

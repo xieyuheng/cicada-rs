@@ -378,18 +378,33 @@
         [:t1 .r :t2 .r zip-tree] {:r!
         [:l :r node return-maybe]} bind-maybe} bind-maybe))
 
-    (note
-      (+jojo let-bind/expend (-> :body -- sexp)
-        :body .car :body .cdr let-bind/expend-recur
-        'begin swap cons)
+    (+jojo let-bind/expend (-> :body -- sexp)
+      :body .car :body .cdr let-bind/expend-recur)
 
-      (+jojo let-bind/expend-recur (-> :binder :rest -- sexp)
-        (cond
-          [:rest list-length 1 eq?] [:rest .car]
+    (+jojo let-bind/expend-recur (-> :binder :rest -- sexp)
+      (cond
+        [:rest list-length 1 eq?]
+        [:rest .car]
 
-          [:rest .car local-jo?] []
+        [:rest .car local-jo?]
+        ['begin null cons
+         :rest .cdr .car tail-cons
+         (begin
+           'clo null cons
+           :rest .car local-jo->set-local-jo tail-cons
+           :binder :rest .cdr .cdr recur tail-cons)
+         tail-cons
+         :binder tail-cons]
 
-          else [])))
+        else
+        ['begin null cons
+         :rest .car tail-cons
+         (begin
+           'clo null cons
+           'drop tail-cons
+           :binder :rest .cdr recur tail-cons)
+         tail-cons
+         :binder tail-cons]))
     (+jojo +jojo (-> :body sexp list --)
       :body .cdr compile-jojo
       :body .car name-bind)
