@@ -4,6 +4,8 @@
 
 * [todo-stack]
 
+*** (case) handles multi argument
+
 *** about monad
 
     - learn more about monad by
@@ -267,7 +269,7 @@
     (+jojo read-sexp (-> -- sexp)
       read-jo :jo!
       (cond [:jo round-bar eq?] [round-ket read-sexp/list]
-            [:jo square-bar eq?] [square-ket read-sexp/list 'vec swap cons]
+            [:jo square-bar eq?] [square-ket read-sexp/list 'begin swap cons]
             [:jo flower-bar eq?] [flower-ket read-sexp/list 'clo swap cons]
             [:jo doublequote eq?] [read-string]
             else [:jo]))
@@ -402,42 +404,33 @@
               debug]))
     #+end_src
 
-*** maybe-vec->list
-
-    #+begin_src jojo
-    (+jojo maybe-vec->list (-> :maybe -- list)
-      (cond
-        [:maybe cons? not] [:maybe null cons]
-        [:maybe .car 'vec eq?] [:maybe .cdr]
-        else [:maybe null cons]))
-    #+end_src
-
 *** (cond)
 
     #+begin_src jojo
     (+jojo cond/expend (-> :body -- sexp)
       (cond
         [:body list-length 2 eq?]
-        [:body .car :body .cdr .car cond/if-then]
+        [:body .car :body .cdr .car cond/expend-if-then]
 
-        else [:body .car :body .cdr .car cond/if-then
+        else [:body .car :body .cdr .car cond/expend-if-then
               'else tail-cons
               :body .cdr .cdr recur tail-cons]))
 
     (note
-      (+jojo cond/if-then (-> :question :answer -- sexp)
-        `(if @{(if :question 'else eq?
-                   then '(true)
-                   else :question maybe-vec->list)}
-             then @{:answer maybe-vec->list})))
+      (+jojo cond/expend-if-then (-> :question :answer -- sexp)
+        `(if {(if :question 'else eq?
+                  then 'true
+                  else :question)}
+             then {:answer})))
 
-    (+jojo cond/if-then (-> :question :answer -- sexp)
+    (+jojo cond/expend-if-then (-> :question :answer -- sexp)
+      'if null cons
       (if :question 'else eq?
-          then 'true null cons
-          else :question maybe-vec->list)
+          then 'true
+          else :question)
+      tail-cons
       'then tail-cons
-      :answer maybe-vec->list list-append
-      'if swap cons)
+      :answer tail-cons)
     #+end_src
 
 *** (case)
@@ -445,38 +438,38 @@
     #+begin_src jojo
     (note
       (+jojo case/expend (-> :body -- sexp)
-        `(begin @{:body .car maybe-vec->list}
-                {:body .cdr case/expend-rest})))
+        `(begin {:body .car} {:body .cdr case/expend-rest})))
 
     (+jojo case/expend (-> :body -- sexp)
-      :body .car maybe-vec->list
-      :body .cdr case/expend-rest tail-cons
-      'begin swap cons)
+      'begin null cons
+      :body .car tail-cons
+      :body .cdr case/expend-rest tail-cons)
 
     (+jojo case/expend-rest (-> :body -- sexp)
       (cond
         [:body list-length 2 eq?]
-        [:body .car :body .cdr .car case/if-then]
+        [:body .car :body .cdr .car case/expend-if-then]
 
-        else [:body .car :body .cdr .car case/if-then
+        else [:body .car :body .cdr .car case/expend-if-then
               'else tail-cons
               :body .cdr .cdr recur tail-cons]))
 
     (note
-      (+jojo case/if-then (-> :tag :answer -- sexp)
-        `(if @{(if :tag 'else eq?
-                   then '(true)
-                   else `(dup tag ' {:tag} eq?))}
-             then drop @{:answer maybe-vec->list})))
+      (+jojo case/expend-if-then (-> :tag :answer -- sexp)
+        `(if {(if :tag 'else eq?
+                  then 'true
+                  else `(begin dup tag ' {:tag} eq?))}
+             then drop {:answer})))
 
-    (+jojo case/if-then (-> :tag :answer -- sexp)
+    (+jojo case/expend-if-then (-> :tag :answer -- sexp)
+      'if null cons
       (if :tag 'else eq?
-          then 'true null cons
-          else 'dup 'tag '' :tag 'eq? null cons cons cons cons cons)
+          then 'true
+          else 'begin 'dup 'tag '' :tag 'eq? null cons cons cons cons cons cons)
+      tail-cons
       'then tail-cons
       'drop tail-cons
-      :answer maybe-vec->list list-append
-      'if swap cons)
+      :answer tail-cons)
     #+end_src
 
 *** (->)
@@ -618,31 +611,35 @@
 *** >< (let-bind) -- moand interface
 
     #+begin_src jojo
+    (note example
+      (let-bind bind-maybe
+        :l [:t1 .l :t2 .l zip-tree]
+        :r [:t1 .r :t2 .r zip-tree]
+        [:l :r node return-maybe])
+      (begin
+        :t1 .l :t2 .l tree-zip
+        {:l! :t1 .r :t2 .r tree-zip
+         {:r! :l :r node return-maybe}
+         bind-maybe}
+        bind-maybe)
+      (begin
+        :t1 .l :t2 .l tree-zip {:l!
+        :t1 .r :t2 .r tree-zip {:r!
+        :l :r node return-maybe} bind-maybe} bind-maybe))
+
     (note
       (+jojo let-bind/expend (-> :body -- sexp)
-        )
+        :body .car :body .cdr let-bind/expend-recur
+        'begin swap cons)
 
-      (let-bind bind-maybe
-        :l [:t1 .l :t2 .l zip-tree]
-        :r [:t1 .r :t2 .r zip-tree]
-        [:l :r node return-maybe])
+      (+jojo let-bind/expend-recur (-> :binder :body -- sexp-list)
+        (cond
+          [:body list-length 1 eq?]
+          [:body .car ><><>< ]
 
-      (let-bind bind-maybe
-        :l [:t1 .l :t2 .l zip-tree]
-        :r [:t1 .r :t2 .r zip-tree]
-        [:l :r node return-maybe])
+          [:body .car set-local-jo?] []
 
-      (note
-        (+jojo zip-tree :t1! :t2!
-          (note [tree tree] -> [maybe-tree])
-          (cond [:t1 leaf? :t2 leaf? and]
-                [:t1 .v :t2 .v cons leaf return-maybe]
-                [:t1 node? :t2 node? and]
-                (let-bind bind-maybe
-                  :l [:t1 .l :t2 .l zip-tree]
-                  :r [:t1 .r :t2 .r zip-tree]
-                  [:l :r node return-maybe])
-                else nothing))))
+          else [])))
     #+end_src
 
 * re-define syntax

@@ -1,0 +1,22 @@
+#+title: socket
+
+* server
+
+  #+begin_src jojo
+  (+jojo server "8888" 5 tcp-socket-listen)
+  (+jojo run-server
+    server socket-accept :addr! :client!
+    "got a connection from " string-write :addr string-write newline
+    :client "thank you for connecting" socket-send
+    :client close recur)
+  (note (run run-server))
+  #+end_src
+
+* client
+
+  #+begin_src jojo
+  (+jojo clinet "cicada" "8888" tcp-socket-connect)
+  (+jojo run-clinet
+    clinet socket-recv string-write newline)
+  (note (run run-clinet))
+  #+end_src
