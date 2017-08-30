@@ -2678,12 +2678,6 @@
     void p_test_flag() { ds_push(TAG_BOOL, test_flag); }
     void p_test_flag_on() { test_flag = true; }
     void p_test_flag_off() { test_flag = false; }
-
-    void k_test() {
-      if (test_flag) {
-        k_run();
-      }
-    }
     #define MAX_FIELDS 1024
 
     void k_plus_data() {
@@ -2808,7 +2802,6 @@
     void expose_top() {
       plus_prim("run", k_run);
 
-      plus_prim("test", k_test);
       plus_prim("test-flag", p_test_flag);
       plus_prim("test-flag-on", p_test_flag_on);
       plus_prim("test-flag-off", p_test_flag_off);

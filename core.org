@@ -4,7 +4,9 @@
 
 * [todo-stack]
 
-*** (case) handles multi argument
+*** little syntax check for (cond) (+gene) (+disp)
+
+*** (case) handles multi argument [with little syntax check]
 
 *** about monad
 
@@ -30,8 +32,6 @@
       '('(1) run) run
 
 *** comma is special jo
-
-*** little syntax check for (cond) (case) (+gene) (+disp)
 *** use EOPL to test the language
 
 *** dynamic scope
@@ -64,7 +64,10 @@
 * flag
 
   #+begin_src jojo
-  (run core-flag-on)
+  (run
+    core-flag-on
+    test-flag-on
+    repl-flag-off)
   #+end_src
 
 * list
@@ -84,6 +87,10 @@
         <null> 0
         <cons> [:list .cdr recur inc]))
     #+end_src
+
+*** >< list-any?
+
+*** >< list-every?
 
 *** list-member?
 
@@ -190,10 +197,10 @@
                 :list .cdr :printer recur]))
     #+end_src
 
-*** >< list-equal?
+*** >< list-eqv?
 
     #+begin_src jojo
-    (note (+jojo list-equal? (-> :l1 :l2 -- <bool>)
+    (note (+jojo list-eqv? (-> :l1 :l2 :eqv -- <bool>)
             ))
     #+end_src
 
@@ -656,9 +663,7 @@
          :binder tail-cons]))
     #+end_src
 
-* re-define syntax
-
-  - the order matters
+* re-define syntax -- the order matters
 
 *** (+jojo)
 
@@ -702,12 +707,6 @@
     #+end_src
 
 * [test]
-
-*** test-flag-on
-
-    #+begin_src jojo
-    (run test-flag-on)
-    #+end_src
 
 *** (+jojo)
 
@@ -810,6 +809,7 @@
   #+begin_src jojo
   (+jojo the-story-begin
     core-flag-off
+    test-flag-off
     repl-flag-on
     terminal-input-stack repl)
 

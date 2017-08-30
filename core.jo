@@ -1,4 +1,7 @@
-  (run core-flag-on)
+  (run
+    core-flag-on
+    test-flag-on
+    repl-flag-off)
     (+data <null>)
     (+data <cons> .car .cdr)
     (+jojo list-length (-> :list -> <int>)
@@ -55,7 +58,7 @@
         <null> []
         <cons> [:list .car :printer apply
                 :list .cdr :printer recur]))
-    (note (+jojo list-equal? (-> :l1 :l2 -- <bool>)
+    (note (+jojo list-eqv? (-> :l1 :l2 :eqv -- <bool>)
             ))
     (+jojo int-list-write
       {int-write space} list-write newline)
@@ -431,7 +434,6 @@
     (+jojo test core-test)
 
     (+jojo let-bind let-bind/expend sexp-compile)
-    (run test-flag-on)
     (test
 
       (+jojo square dup mul)
@@ -500,6 +502,7 @@
       (note (run "two" 1 ww nl)))
   (+jojo the-story-begin
     core-flag-off
+    test-flag-off
     repl-flag-on
     terminal-input-stack repl)
 
