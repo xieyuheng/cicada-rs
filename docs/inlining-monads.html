@@ -3,7 +3,7 @@
 "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en">
 <head>
-<!-- 2017-08-20 Sun 16:06 -->
+<!-- 2017-08-31 Thu 02:19 -->
 <meta http-equiv="Content-Type" content="text/html;charset=utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>inlining monads</title>
@@ -67,34 +67,34 @@ for the JavaScript code in this tag.
 <h2>overview</h2>
 <div id="text-table-of-contents">
 <ul>
-<li><a href="#org9775593">intro</a></li>
-<li><a href="#orgd220d42">number-tree</a>
+<li><a href="#orgb65ea45">intro</a></li>
+<li><a href="#org861fe39">number-tree</a>
 <ul>
-<li><a href="#orge0d0136">tree</a></li>
-<li><a href="#orga2ec711">number-tree &#x2013; state monad</a></li>
-<li><a href="#orgf484c71">number-tree &#x2013; inline</a></li>
-<li><a href="#org5c29b05">number-tree &#x2013; inline and uncurry</a></li>
-<li><a href="#org1698c4b"><span class="done _test_">[test]</span> number-tree</a></li>
+<li><a href="#orgb6c2978">tree</a></li>
+<li><a href="#org6a37d0f">number-tree &#x2013; state monad</a></li>
+<li><a href="#org9d8b8b6">number-tree &#x2013; inline</a></li>
+<li><a href="#org4cb9ff6">number-tree &#x2013; inline and uncurry</a></li>
+<li><a href="#org7eb7aa5"><span class="done _test_">[test]</span> number-tree</a></li>
 </ul>
 </li>
-<li><a href="#orgc2b9b62">zip-tree</a>
+<li><a href="#orgb2e9acf">zip-tree</a>
 <ul>
-<li><a href="#orge1f10ae"><span class="todo _note_">[note]</span> </a></li>
-<li><a href="#org2cc0a22">zip-tree &#x2013; do not handle error</a></li>
-<li><a href="#org27918d9">zip-tree &#x2013; maybe</a></li>
-<li><a href="#org69e2f49">zip-tree &#x2013; maybe monad</a></li>
-<li><a href="#orgbf1cea8"><span class="done _test_">[test]</span> zip-tree &#x2013; maybe</a></li>
-<li><a href="#org1875af6">zip-tree &#x2013; inline and uncurry</a></li>
-<li><a href="#orgcf8a9f6"><span class="done _test_">[test]</span> zip-tree</a></li>
+<li><a href="#orge417dca"><span class="todo _note_">[note]</span> </a></li>
+<li><a href="#orgcf26099">zip-tree &#x2013; do not handle error</a></li>
+<li><a href="#org9331c7f">zip-tree &#x2013; maybe</a></li>
+<li><a href="#orgb6b9a9">zip-tree &#x2013; maybe monad</a></li>
+<li><a href="#orgab6d64c"><span class="done _test_">[test]</span> zip-tree &#x2013; maybe</a></li>
+<li><a href="#orgf780368">zip-tree &#x2013; inline and uncurry</a></li>
+<li><a href="#orga714f2a"><span class="done _test_">[test]</span> zip-tree</a></li>
 </ul>
 </li>
 </ul>
 </div>
 </div>
 
-<div id="outline-container-org9775593" class="outline-2">
-<h2 id="org9775593">intro</h2>
-<div class="outline-text-2" id="text-org9775593">
+<div id="outline-container-orgb65ea45" class="outline-2">
+<h2 id="orgb65ea45">intro</h2>
+<div class="outline-text-2" id="text-orgb65ea45">
 <ul class="org-ul">
 <li><p>state monad is exactly what I need when writing interpreters.</p><p>I need to pass environment as extra argument through an interpreter,</p><p>this extra argument can be captured by state monad.</p></li>
 
@@ -104,12 +104,12 @@ for the JavaScript code in this tag.
 </div>
 </div>
 
-<div id="outline-container-orgd220d42" class="outline-2">
-<h2 id="orgd220d42">number-tree</h2>
-<div class="outline-text-2" id="text-orgd220d42">
-</div><div id="outline-container-orge0d0136" class="outline-3">
-<h3 id="orge0d0136">tree</h3>
-<div class="outline-text-3" id="text-orge0d0136">
+<div id="outline-container-org861fe39" class="outline-2">
+<h2 id="org861fe39">number-tree</h2>
+<div class="outline-text-2" id="text-org861fe39">
+</div><div id="outline-container-orgb6c2978" class="outline-3">
+<h3 id="orgb6c2978">tree</h3>
+<div class="outline-text-3" id="text-orgb6c2978">
 <div class="org-src-container">
 
 <pre class="src src-jojo"><span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">+data</span> <span style="color: #66d9ef; font-weight: bold;">&lt;leaf&gt;</span> .v<span style="color: #696969;">)</span>
@@ -118,35 +118,35 @@ for the JavaScript code in this tag.
 <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">+jojo</span> tree-write <span style="color: #fd971f;">:f!</span> <span style="color: #fd971f;">:t!</span>
   <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">case</span> <span style="color: #a6e22e;">:t</span>
     <span style="color: #66d9ef; font-weight: bold;">&lt;leaf&gt;</span> <span style="color: #797979;">[</span><span style="color: #a6e22e;">:t</span> <span style="color: #ae81ff;">.v</span> <span style="color: #a6e22e;">:f</span> apply <span style="color: #e6db74;">"leaf"</span> string-write space<span style="color: #797979;">]</span>
-    <span style="color: #66d9ef; font-weight: bold;">&lt;node&gt;</span> <span style="color: #797979;">[</span><span style="color: #a6e22e;">:t</span> <span style="color: #ae81ff;">.l</span> <span style="color: #a6e22e;">:f</span> <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">recur</span><span style="color: #696969;">)</span>
-            <span style="color: #a6e22e;">:t</span> <span style="color: #ae81ff;">.r</span> <span style="color: #a6e22e;">:f</span> <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">recur</span><span style="color: #696969;">)</span> <span style="color: #e6db74;">"node"</span> string-write space<span style="color: #797979;">]</span><span style="color: #696969;">))</span>
+    <span style="color: #66d9ef; font-weight: bold;">&lt;node&gt;</span> <span style="color: #797979;">[</span><span style="color: #a6e22e;">:t</span> <span style="color: #ae81ff;">.l</span> <span style="color: #a6e22e;">:f</span> <span style="color: #696969;">(</span><span style="color: #66d9ef; font-weight: bold;">recur</span><span style="color: #696969;">)</span>
+            <span style="color: #a6e22e;">:t</span> <span style="color: #ae81ff;">.r</span> <span style="color: #a6e22e;">:f</span> <span style="color: #696969;">(</span><span style="color: #66d9ef; font-weight: bold;">recur</span><span style="color: #696969;">)</span> <span style="color: #e6db74;">"node"</span> string-write space<span style="color: #797979;">]</span><span style="color: #696969;">))</span>
 
 <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">+jojo</span> tree-map <span style="color: #fd971f;">:f!</span> <span style="color: #fd971f;">:t!</span>
   <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">case</span> <span style="color: #a6e22e;">:t</span>
     <span style="color: #66d9ef; font-weight: bold;">&lt;leaf&gt;</span> <span style="color: #797979;">[</span><span style="color: #a6e22e;">:t</span> <span style="color: #ae81ff;">.v</span> <span style="color: #a6e22e;">:f</span> apply leaf<span style="color: #797979;">]</span>
-    <span style="color: #66d9ef; font-weight: bold;">&lt;node&gt;</span> <span style="color: #797979;">[</span><span style="color: #a6e22e;">:t</span> <span style="color: #ae81ff;">.l</span> <span style="color: #a6e22e;">:f</span> <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">recur</span><span style="color: #696969;">)</span>
-            <span style="color: #a6e22e;">:t</span> <span style="color: #ae81ff;">.r</span> <span style="color: #a6e22e;">:f</span> <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">recur</span><span style="color: #696969;">)</span> node<span style="color: #797979;">]</span><span style="color: #696969;">))</span>
+    <span style="color: #66d9ef; font-weight: bold;">&lt;node&gt;</span> <span style="color: #797979;">[</span><span style="color: #a6e22e;">:t</span> <span style="color: #ae81ff;">.l</span> <span style="color: #a6e22e;">:f</span> <span style="color: #696969;">(</span><span style="color: #66d9ef; font-weight: bold;">recur</span><span style="color: #696969;">)</span>
+            <span style="color: #a6e22e;">:t</span> <span style="color: #ae81ff;">.r</span> <span style="color: #a6e22e;">:f</span> <span style="color: #696969;">(</span><span style="color: #66d9ef; font-weight: bold;">recur</span><span style="color: #696969;">)</span> node<span style="color: #797979;">]</span><span style="color: #696969;">))</span>
 </pre>
 </div>
 </div>
 </div>
 
-<div id="outline-container-orga2ec711" class="outline-3">
-<h3 id="orga2ec711">number-tree &#x2013; state monad</h3>
-<div class="outline-text-3" id="text-orga2ec711">
+<div id="outline-container-org6a37d0f" class="outline-3">
+<h3 id="org6a37d0f">number-tree &#x2013; state monad</h3>
+<div class="outline-text-3" id="text-org6a37d0f">
 <div class="org-src-container">
 
 <pre class="src src-jojo"><span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">+jojo</span> return-state
   <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">note</span> <span style="color: #696969;">(</span><span style="color: #66d9ef; font-weight: bold;">-&gt;</span> <span style="color: #66d9ef; font-weight: bold;">&lt;v&gt;</span> <span style="color: #66d9ef; font-weight: bold;">--</span> <span style="color: #696969;">(</span><span style="color: #66d9ef; font-weight: bold;">-&gt;</span> <span style="color: #66d9ef; font-weight: bold;">&lt;s&gt;</span> <span style="color: #66d9ef; font-weight: bold;">--</span> <span style="color: #66d9ef; font-weight: bold;">&lt;s&gt;</span> <span style="color: #66d9ef; font-weight: bold;">&lt;v&gt;</span><span style="color: #696969;">)))</span>
   <span style="color: #fd971f;">:v!</span>
-  <span style="color: #696969;">(</span><span style="color: #ae81ff;">%</span> :v<span style="color: #696969;">))</span>
+  <span style="color: #B380A8;">{</span>:v<span style="color: #B380A8;">}</span><span style="color: #696969;">)</span>
 
 <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">+jojo</span> bind-state
   <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">note</span> <span style="color: #696969;">(</span><span style="color: #66d9ef; font-weight: bold;">-&gt;</span> <span style="color: #696969;">(</span><span style="color: #66d9ef; font-weight: bold;">-&gt;</span> <span style="color: #66d9ef; font-weight: bold;">&lt;s&gt;</span> <span style="color: #66d9ef; font-weight: bold;">--</span> <span style="color: #66d9ef; font-weight: bold;">&lt;s&gt;</span> <span style="color: #66d9ef; font-weight: bold;">&lt;v1&gt;</span><span style="color: #696969;">)</span>
             <span style="color: #696969;">(</span><span style="color: #66d9ef; font-weight: bold;">-&gt;</span> <span style="color: #66d9ef; font-weight: bold;">&lt;v1&gt;</span> <span style="color: #66d9ef; font-weight: bold;">--</span> <span style="color: #696969;">(</span><span style="color: #66d9ef; font-weight: bold;">-&gt;</span> <span style="color: #66d9ef; font-weight: bold;">&lt;s&gt;</span> <span style="color: #66d9ef; font-weight: bold;">--</span> <span style="color: #66d9ef; font-weight: bold;">&lt;s&gt;</span> <span style="color: #66d9ef; font-weight: bold;">&lt;v2&gt;</span><span style="color: #696969;">))</span>
          <span style="color: #66d9ef; font-weight: bold;">--</span> <span style="color: #696969;">(</span><span style="color: #66d9ef; font-weight: bold;">-&gt;</span> <span style="color: #66d9ef; font-weight: bold;">&lt;s&gt;</span> <span style="color: #66d9ef; font-weight: bold;">--</span> <span style="color: #66d9ef; font-weight: bold;">&lt;s&gt;</span> <span style="color: #66d9ef; font-weight: bold;">&lt;v2&gt;</span><span style="color: #696969;">)))</span>
   <span style="color: #fd971f;">:f!</span> <span style="color: #fd971f;">:m!</span>
-  <span style="color: #696969;">(</span><span style="color: #ae81ff;">%</span> <span style="color: #a6e22e;">:m</span> apply <span style="color: #a6e22e;">:f</span> apply apply<span style="color: #696969;">))</span>
+  <span style="color: #B380A8;">{</span><span style="color: #a6e22e;">:m</span> apply <span style="color: #a6e22e;">:f</span> apply apply<span style="color: #B380A8;">}</span><span style="color: #696969;">)</span>
 
 <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">+jojo</span> tick
   <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">note</span> <span style="color: #696969;">(</span><span style="color: #66d9ef; font-weight: bold;">-&gt;</span> <span style="color: #66d9ef; font-weight: bold;">&lt;int&gt;</span> <span style="color: #66d9ef; font-weight: bold;">--</span> <span style="color: #66d9ef; font-weight: bold;">&lt;int&gt;</span> <span style="color: #66d9ef; font-weight: bold;">&lt;int&gt;</span><span style="color: #696969;">))</span>
@@ -157,22 +157,22 @@ for the JavaScript code in this tag.
          <span style="color: #66d9ef; font-weight: bold;">--</span> <span style="color: #696969;">(</span><span style="color: #66d9ef; font-weight: bold;">-&gt;</span> <span style="color: #66d9ef; font-weight: bold;">&lt;int&gt;</span> <span style="color: #66d9ef; font-weight: bold;">--</span> <span style="color: #66d9ef; font-weight: bold;">&lt;int&gt;</span> <span style="color: #66d9ef; font-weight: bold;">&lt;tree&gt;</span><span style="color: #696969;">)))</span>
   <span style="color: #fd971f;">:t!</span>
   <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">case</span> <span style="color: #a6e22e;">:t</span>
-    <span style="color: #66d9ef; font-weight: bold;">&lt;leaf&gt;</span> <span style="color: #797979;">[</span><span style="color: #696969;">(</span><span style="color: #ae81ff;">%</span> tick<span style="color: #696969;">)</span>
-            <span style="color: #696969;">(</span><span style="color: #ae81ff;">%</span> <span style="color: #fd971f;">:s!</span> <span style="color: #a6e22e;">:s</span> leaf return-state<span style="color: #696969;">)</span>
+    <span style="color: #66d9ef; font-weight: bold;">&lt;leaf&gt;</span> <span style="color: #797979;">[</span><span style="color: #B380A8;">{</span>tick<span style="color: #B380A8;">}</span>
+            <span style="color: #B380A8;">{</span><span style="color: #fd971f;">:s!</span> <span style="color: #a6e22e;">:s</span> leaf return-state<span style="color: #B380A8;">}</span>
             bind-state<span style="color: #797979;">]</span>
     <span style="color: #66d9ef; font-weight: bold;">&lt;node&gt;</span> <span style="color: #797979;">[</span><span style="color: #a6e22e;">:t</span> <span style="color: #ae81ff;">.l</span> number-tree
-            <span style="color: #696969;">(</span><span style="color: #ae81ff;">%</span> <span style="color: #fd971f;">:l!</span> <span style="color: #a6e22e;">:t</span> <span style="color: #ae81ff;">.r</span> number-tree
-               <span style="color: #696969;">(</span><span style="color: #ae81ff;">%</span> <span style="color: #fd971f;">:r!</span> <span style="color: #a6e22e;">:l</span> <span style="color: #a6e22e;">:r</span> node return-state<span style="color: #696969;">)</span>
-               bind-state<span style="color: #696969;">)</span>
+            <span style="color: #B380A8;">{</span><span style="color: #fd971f;">:l!</span> <span style="color: #a6e22e;">:t</span> <span style="color: #ae81ff;">.r</span> number-tree
+             <span style="color: #B380A8;">{</span><span style="color: #fd971f;">:r!</span> <span style="color: #a6e22e;">:l</span> <span style="color: #a6e22e;">:r</span> node return-state<span style="color: #B380A8;">}</span>
+             bind-state<span style="color: #B380A8;">}</span>
             bind-state<span style="color: #797979;">]</span><span style="color: #696969;">))</span>
 </pre>
 </div>
 </div>
 </div>
 
-<div id="outline-container-orgf484c71" class="outline-3">
-<h3 id="orgf484c71">number-tree &#x2013; inline</h3>
-<div class="outline-text-3" id="text-orgf484c71">
+<div id="outline-container-org9d8b8b6" class="outline-3">
+<h3 id="org9d8b8b6">number-tree &#x2013; inline</h3>
+<div class="outline-text-3" id="text-org9d8b8b6">
 <div class="org-src-container">
 
 <pre class="src src-jojo"><span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">+jojo</span> tick
@@ -183,18 +183,18 @@ for the JavaScript code in this tag.
   <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">note</span> <span style="color: #696969;">(</span><span style="color: #66d9ef; font-weight: bold;">-&gt;</span> <span style="color: #a6e22e;">:&lt;t&gt;</span> <span style="color: #66d9ef; font-weight: bold;">&lt;tree&gt;</span> <span style="color: #66d9ef; font-weight: bold;">--</span> <span style="color: #696969;">(</span><span style="color: #66d9ef; font-weight: bold;">-&gt;</span> <span style="color: #66d9ef; font-weight: bold;">&lt;int&gt;</span> <span style="color: #66d9ef; font-weight: bold;">--</span> <span style="color: #66d9ef; font-weight: bold;">&lt;int&gt;</span> <span style="color: #66d9ef; font-weight: bold;">&lt;tree&gt;</span><span style="color: #696969;">)))</span>
   <span style="color: #fd971f;">:t!</span>
   <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">case</span> <span style="color: #a6e22e;">:t</span>
-    <span style="color: #66d9ef; font-weight: bold;">&lt;leaf&gt;</span> <span style="color: #696969;">(</span><span style="color: #ae81ff;">%</span> <span style="color: #fd971f;">:x!</span> <span style="color: #a6e22e;">:x</span> inc <span style="color: #a6e22e;">:x</span> leaf<span style="color: #696969;">)</span>
-    <span style="color: #66d9ef; font-weight: bold;">&lt;node&gt;</span> <span style="color: #696969;">(</span><span style="color: #ae81ff;">%</span> <span style="color: #a6e22e;">:t</span> <span style="color: #ae81ff;">.l</span> number-tree apply <span style="color: #fd971f;">:l!</span>
-              <span style="color: #a6e22e;">:t</span> <span style="color: #ae81ff;">.r</span> number-tree apply <span style="color: #fd971f;">:r!</span>
-              <span style="color: #a6e22e;">:l</span> <span style="color: #a6e22e;">:r</span> node<span style="color: #696969;">)))</span>
+    <span style="color: #66d9ef; font-weight: bold;">&lt;leaf&gt;</span> <span style="color: #B380A8;">{</span><span style="color: #fd971f;">:x!</span> <span style="color: #a6e22e;">:x</span> inc <span style="color: #a6e22e;">:x</span> leaf<span style="color: #B380A8;">}</span>
+    <span style="color: #66d9ef; font-weight: bold;">&lt;node&gt;</span> <span style="color: #B380A8;">{</span><span style="color: #a6e22e;">:t</span> <span style="color: #ae81ff;">.l</span> number-tree apply <span style="color: #fd971f;">:l!</span>
+            <span style="color: #a6e22e;">:t</span> <span style="color: #ae81ff;">.r</span> number-tree apply <span style="color: #fd971f;">:r!</span>
+            <span style="color: #a6e22e;">:l</span> <span style="color: #a6e22e;">:r</span> node<span style="color: #B380A8;">}</span><span style="color: #696969;">))</span>
 </pre>
 </div>
 </div>
 </div>
 
-<div id="outline-container-org5c29b05" class="outline-3">
-<h3 id="org5c29b05">number-tree &#x2013; inline and uncurry</h3>
-<div class="outline-text-3" id="text-org5c29b05">
+<div id="outline-container-org4cb9ff6" class="outline-3">
+<h3 id="org4cb9ff6">number-tree &#x2013; inline and uncurry</h3>
+<div class="outline-text-3" id="text-org4cb9ff6">
 <div class="org-src-container">
 
 <pre class="src src-jojo"><span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">+jojo</span> number-tree
@@ -202,23 +202,23 @@ for the JavaScript code in this tag.
   <span style="color: #fd971f;">:t!</span>
   <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">case</span> <span style="color: #a6e22e;">:t</span>
     <span style="color: #66d9ef; font-weight: bold;">&lt;leaf&gt;</span> <span style="color: #797979;">[</span>dup inc swap leaf<span style="color: #797979;">]</span>
-    <span style="color: #66d9ef; font-weight: bold;">&lt;node&gt;</span> <span style="color: #797979;">[</span><span style="color: #a6e22e;">:t</span> <span style="color: #ae81ff;">.l</span> <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">recur</span><span style="color: #696969;">)</span> <span style="color: #fd971f;">:l!</span>
-            <span style="color: #a6e22e;">:t</span> <span style="color: #ae81ff;">.r</span> <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">recur</span><span style="color: #696969;">)</span> <span style="color: #fd971f;">:r!</span>
+    <span style="color: #66d9ef; font-weight: bold;">&lt;node&gt;</span> <span style="color: #797979;">[</span><span style="color: #a6e22e;">:t</span> <span style="color: #ae81ff;">.l</span> <span style="color: #696969;">(</span><span style="color: #66d9ef; font-weight: bold;">recur</span><span style="color: #696969;">)</span> <span style="color: #fd971f;">:l!</span>
+            <span style="color: #a6e22e;">:t</span> <span style="color: #ae81ff;">.r</span> <span style="color: #696969;">(</span><span style="color: #66d9ef; font-weight: bold;">recur</span><span style="color: #696969;">)</span> <span style="color: #fd971f;">:r!</span>
             <span style="color: #a6e22e;">:l</span> <span style="color: #a6e22e;">:r</span> node<span style="color: #797979;">]</span><span style="color: #696969;">))</span>
 </pre>
 </div>
 </div>
 </div>
 
-<div id="outline-container-org1698c4b" class="outline-3">
-<h3 id="org1698c4b"><span class="done _test_">[test]</span> number-tree</h3>
-<div class="outline-text-3" id="text-org1698c4b">
+<div id="outline-container-org7eb7aa5" class="outline-3">
+<h3 id="org7eb7aa5"><span class="done _test_">[test]</span> number-tree</h3>
+<div class="outline-text-3" id="text-org7eb7aa5">
 <div class="org-src-container">
 
 <pre class="src src-jojo"><span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">+jojo</span> test-number-tree
   <span style="color: #ae81ff;">0</span> swap number-tree
   swap drop
-  <span style="color: #696969;">(</span><span style="color: #ae81ff;">%</span> int-write space<span style="color: #696969;">)</span> tree-write newline<span style="color: #696969;">)</span>
+  <span style="color: #B380A8;">{</span>int-write space<span style="color: #B380A8;">}</span> tree-write newline<span style="color: #696969;">)</span>
 
 <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">+var</span> tree-1
   <span style="color: #e6db74;">"1"</span> leaf <span style="color: #e6db74;">"2"</span> leaf node
@@ -233,12 +233,12 @@ for the JavaScript code in this tag.
 </div>
 </div>
 
-<div id="outline-container-orgc2b9b62" class="outline-2">
-<h2 id="orgc2b9b62">zip-tree</h2>
-<div class="outline-text-2" id="text-orgc2b9b62">
-</div><div id="outline-container-orge1f10ae" class="outline-3">
-<h3 id="orge1f10ae"><span class="todo _note_">[note]</span> </h3>
-<div class="outline-text-3" id="text-orge1f10ae">
+<div id="outline-container-orgb2e9acf" class="outline-2">
+<h2 id="orgb2e9acf">zip-tree</h2>
+<div class="outline-text-2" id="text-orgb2e9acf">
+</div><div id="outline-container-orge417dca" class="outline-3">
+<h3 id="orge417dca"><span class="todo _note_">[note]</span> </h3>
+<div class="outline-text-3" id="text-orge417dca">
 <ul class="org-ul">
 <li><p>the experiment gose in three steps</p><p><ol class="org-ol"></p><p><li>implement the moand</li></p><p><li>inline and simplify</li></p><p><li>uncurry and simplify</li></ol></p></li>
 
@@ -246,24 +246,24 @@ for the JavaScript code in this tag.
 </div>
 </div>
 
-<div id="outline-container-org2cc0a22" class="outline-3">
-<h3 id="org2cc0a22">zip-tree &#x2013; do not handle error</h3>
-<div class="outline-text-3" id="text-org2cc0a22">
+<div id="outline-container-orgcf26099" class="outline-3">
+<h3 id="orgcf26099">zip-tree &#x2013; do not handle error</h3>
+<div class="outline-text-3" id="text-orgcf26099">
 <div class="org-src-container">
 
 <pre class="src src-jojo"><span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">+jojo</span> zip-tree <span style="color: #fd971f;">:t1!</span> <span style="color: #fd971f;">:t2!</span>
   <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">note</span> <span style="color: #797979;">[</span>tree tree<span style="color: #797979;">]</span> <span style="color: #66d9ef; font-weight: bold;">--</span> <span style="color: #797979;">[</span>tree<span style="color: #797979;">]</span><span style="color: #696969;">)</span>
   <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">cond</span> <span style="color: #797979;">[</span><span style="color: #a6e22e;">:t1</span> leaf? <span style="color: #a6e22e;">:t2</span> leaf? and<span style="color: #797979;">]</span> <span style="color: #797979;">[</span><span style="color: #a6e22e;">:t1</span> <span style="color: #ae81ff;">.v</span> <span style="color: #a6e22e;">:t2</span> <span style="color: #ae81ff;">.v</span> cons leaf<span style="color: #797979;">]</span>
-        <span style="color: #797979;">[</span><span style="color: #a6e22e;">:t1</span> node? <span style="color: #a6e22e;">:t2</span> node? and<span style="color: #797979;">]</span> <span style="color: #797979;">[</span><span style="color: #a6e22e;">:t1</span> <span style="color: #ae81ff;">.l</span> <span style="color: #a6e22e;">:t2</span> <span style="color: #ae81ff;">.l</span> <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">recur</span><span style="color: #696969;">)</span>
-                                   <span style="color: #a6e22e;">:t1</span> <span style="color: #ae81ff;">.r</span> <span style="color: #a6e22e;">:t2</span> <span style="color: #ae81ff;">.r</span> <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">recur</span><span style="color: #696969;">)</span> node<span style="color: #797979;">]</span><span style="color: #696969;">))</span>
+        <span style="color: #797979;">[</span><span style="color: #a6e22e;">:t1</span> node? <span style="color: #a6e22e;">:t2</span> node? and<span style="color: #797979;">]</span> <span style="color: #797979;">[</span><span style="color: #a6e22e;">:t1</span> <span style="color: #ae81ff;">.l</span> <span style="color: #a6e22e;">:t2</span> <span style="color: #ae81ff;">.l</span> <span style="color: #696969;">(</span><span style="color: #66d9ef; font-weight: bold;">recur</span><span style="color: #696969;">)</span>
+                                   <span style="color: #a6e22e;">:t1</span> <span style="color: #ae81ff;">.r</span> <span style="color: #a6e22e;">:t2</span> <span style="color: #ae81ff;">.r</span> <span style="color: #696969;">(</span><span style="color: #66d9ef; font-weight: bold;">recur</span><span style="color: #696969;">)</span> node<span style="color: #797979;">]</span><span style="color: #696969;">))</span>
 </pre>
 </div>
 </div>
 </div>
 
-<div id="outline-container-org27918d9" class="outline-3">
-<h3 id="org27918d9">zip-tree &#x2013; maybe</h3>
-<div class="outline-text-3" id="text-org27918d9">
+<div id="outline-container-org9331c7f" class="outline-3">
+<h3 id="org9331c7f">zip-tree &#x2013; maybe</h3>
+<div class="outline-text-3" id="text-org9331c7f">
 <div class="org-src-container">
 
 <pre class="src src-jojo"><span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">+jojo</span> zip-tree <span style="color: #fd971f;">:t1!</span> <span style="color: #fd971f;">:t2!</span>
@@ -271,9 +271,9 @@ for the JavaScript code in this tag.
   <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">cond</span> <span style="color: #797979;">[</span><span style="color: #a6e22e;">:t1</span> leaf? <span style="color: #a6e22e;">:t2</span> leaf? and<span style="color: #797979;">]</span>
         <span style="color: #797979;">[</span><span style="color: #a6e22e;">:t1</span> <span style="color: #ae81ff;">.v</span> <span style="color: #a6e22e;">:t2</span> <span style="color: #ae81ff;">.v</span> cons leaf just<span style="color: #797979;">]</span>
         <span style="color: #797979;">[</span><span style="color: #a6e22e;">:t1</span> node? <span style="color: #a6e22e;">:t2</span> node? and<span style="color: #797979;">]</span>
-        <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">case</span> <span style="color: #797979;">[</span><span style="color: #a6e22e;">:t1</span> <span style="color: #ae81ff;">.l</span> <span style="color: #a6e22e;">:t2</span> <span style="color: #ae81ff;">.l</span> <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">recur</span><span style="color: #696969;">)</span> dup <span style="color: #fd971f;">:lm!</span><span style="color: #797979;">]</span>
+        <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">case</span> <span style="color: #797979;">[</span><span style="color: #a6e22e;">:t1</span> <span style="color: #ae81ff;">.l</span> <span style="color: #a6e22e;">:t2</span> <span style="color: #ae81ff;">.l</span> <span style="color: #696969;">(</span><span style="color: #66d9ef; font-weight: bold;">recur</span><span style="color: #696969;">)</span> dup <span style="color: #fd971f;">:lm!</span><span style="color: #797979;">]</span>
           <span style="color: #66d9ef; font-weight: bold;">&lt;nothing&gt;</span> nothing
-          <span style="color: #66d9ef; font-weight: bold;">&lt;just&gt;</span> <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">case</span> <span style="color: #797979;">[</span><span style="color: #a6e22e;">:t1</span> <span style="color: #ae81ff;">.r</span> <span style="color: #a6e22e;">:t2</span> <span style="color: #ae81ff;">.r</span> <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">recur</span><span style="color: #696969;">)</span> dup <span style="color: #fd971f;">:rm!</span><span style="color: #797979;">]</span>
+          <span style="color: #66d9ef; font-weight: bold;">&lt;just&gt;</span> <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">case</span> <span style="color: #797979;">[</span><span style="color: #a6e22e;">:t1</span> <span style="color: #ae81ff;">.r</span> <span style="color: #a6e22e;">:t2</span> <span style="color: #ae81ff;">.r</span> <span style="color: #696969;">(</span><span style="color: #66d9ef; font-weight: bold;">recur</span><span style="color: #696969;">)</span> dup <span style="color: #fd971f;">:rm!</span><span style="color: #797979;">]</span>
                    <span style="color: #66d9ef; font-weight: bold;">&lt;nothing&gt;</span> nothing
                    <span style="color: #66d9ef; font-weight: bold;">&lt;just&gt;</span> <span style="color: #797979;">[</span><span style="color: #a6e22e;">:lm</span> <span style="color: #ae81ff;">.v</span> <span style="color: #a6e22e;">:rm</span> <span style="color: #ae81ff;">.v</span> node just<span style="color: #797979;">]</span><span style="color: #696969;">))</span>
         <span style="color: #66d9ef; font-weight: bold;">else</span> nothing<span style="color: #696969;">))</span>
@@ -282,9 +282,9 @@ for the JavaScript code in this tag.
 </div>
 </div>
 
-<div id="outline-container-org69e2f49" class="outline-3">
-<h3 id="org69e2f49">zip-tree &#x2013; maybe monad</h3>
-<div class="outline-text-3" id="text-org69e2f49">
+<div id="outline-container-orgb6b9a9" class="outline-3">
+<h3 id="orgb6b9a9">zip-tree &#x2013; maybe monad</h3>
+<div class="outline-text-3" id="text-orgb6b9a9">
 <div class="org-src-container">
 
 <pre class="src src-jojo"><span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">+jojo</span> return-maybe just<span style="color: #696969;">)</span>
@@ -300,9 +300,9 @@ for the JavaScript code in this tag.
         <span style="color: #797979;">[</span><span style="color: #a6e22e;">:t1</span> <span style="color: #ae81ff;">.v</span> <span style="color: #a6e22e;">:t2</span> <span style="color: #ae81ff;">.v</span> cons leaf return-maybe<span style="color: #797979;">]</span>
         <span style="color: #797979;">[</span><span style="color: #a6e22e;">:t1</span> node? <span style="color: #a6e22e;">:t2</span> node? and<span style="color: #797979;">]</span>
         <span style="color: #797979;">[</span><span style="color: #a6e22e;">:t1</span> <span style="color: #ae81ff;">.l</span> <span style="color: #a6e22e;">:t2</span> <span style="color: #ae81ff;">.l</span> zip-tree
-         <span style="color: #696969;">(</span><span style="color: #ae81ff;">%</span> <span style="color: #fd971f;">:l!</span> <span style="color: #a6e22e;">:t1</span> <span style="color: #ae81ff;">.r</span> <span style="color: #a6e22e;">:t2</span> <span style="color: #ae81ff;">.r</span> zip-tree
-            <span style="color: #696969;">(</span><span style="color: #ae81ff;">%</span> <span style="color: #fd971f;">:r!</span> <span style="color: #a6e22e;">:l</span> <span style="color: #a6e22e;">:r</span> node return-maybe<span style="color: #696969;">)</span>
-            bind-maybe<span style="color: #696969;">)</span>
+         <span style="color: #B380A8;">{</span><span style="color: #fd971f;">:l!</span> <span style="color: #a6e22e;">:t1</span> <span style="color: #ae81ff;">.r</span> <span style="color: #a6e22e;">:t2</span> <span style="color: #ae81ff;">.r</span> zip-tree
+          <span style="color: #B380A8;">{</span><span style="color: #fd971f;">:r!</span> <span style="color: #a6e22e;">:l</span> <span style="color: #a6e22e;">:r</span> node return-maybe<span style="color: #B380A8;">}</span>
+          bind-maybe<span style="color: #B380A8;">}</span>
          bind-maybe<span style="color: #797979;">]</span>
         <span style="color: #66d9ef; font-weight: bold;">else</span> nothing<span style="color: #696969;">))</span>
 </pre>
@@ -310,9 +310,9 @@ for the JavaScript code in this tag.
 </div>
 </div>
 
-<div id="outline-container-orgbf1cea8" class="outline-3">
-<h3 id="orgbf1cea8"><span class="done _test_">[test]</span> zip-tree &#x2013; maybe</h3>
-<div class="outline-text-3" id="text-orgbf1cea8">
+<div id="outline-container-orgab6d64c" class="outline-3">
+<h3 id="orgab6d64c"><span class="done _test_">[test]</span> zip-tree &#x2013; maybe</h3>
+<div class="outline-text-3" id="text-orgab6d64c">
 <div class="org-src-container">
 
 <pre class="src src-jojo"><span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">+jojo</span> maybe-write <span style="color: #fd971f;">:f!</span> <span style="color: #fd971f;">:m!</span>
@@ -322,10 +322,10 @@ for the JavaScript code in this tag.
 
 <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">+jojo</span> test-zip-tree
   zip-tree
-  <span style="color: #696969;">(</span><span style="color: #ae81ff;">%</span> <span style="color: #696969;">(</span><span style="color: #ae81ff;">%</span> dup <span style="color: #ae81ff;">.cdr</span> int-write space
-        <span style="color: #ae81ff;">.car</span> int-write space
-        <span style="color: #e6db74;">"cons"</span> string-write space<span style="color: #696969;">)</span>
-     tree-write<span style="color: #696969;">)</span>
+  <span style="color: #B380A8;">{{</span>dup <span style="color: #ae81ff;">.cdr</span> int-write space
+    <span style="color: #ae81ff;">.car</span> int-write space
+    <span style="color: #e6db74;">"cons"</span> string-write space<span style="color: #B380A8;">}</span>
+   tree-write<span style="color: #B380A8;">}</span>
   maybe-write<span style="color: #696969;">)</span>
 
 <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">+var</span> tree-2
@@ -344,9 +344,9 @@ for the JavaScript code in this tag.
 </div>
 </div>
 
-<div id="outline-container-org1875af6" class="outline-3">
-<h3 id="org1875af6">zip-tree &#x2013; inline and uncurry</h3>
-<div class="outline-text-3" id="text-org1875af6">
+<div id="outline-container-orgf780368" class="outline-3">
+<h3 id="orgf780368">zip-tree &#x2013; inline and uncurry</h3>
+<div class="outline-text-3" id="text-orgf780368">
 <div class="org-src-container">
 
 <pre class="src src-jojo"><span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">+jojo</span> zip-tree <span style="color: #fd971f;">:t1!</span> <span style="color: #fd971f;">:t2!</span>
@@ -363,9 +363,9 @@ for the JavaScript code in this tag.
 </div>
 </div>
 
-<div id="outline-container-orgcf8a9f6" class="outline-3">
-<h3 id="orgcf8a9f6"><span class="done _test_">[test]</span> zip-tree</h3>
-<div class="outline-text-3" id="text-orgcf8a9f6">
+<div id="outline-container-orga714f2a" class="outline-3">
+<h3 id="orga714f2a"><span class="done _test_">[test]</span> zip-tree</h3>
+<div class="outline-text-3" id="text-orga714f2a">
 <div class="org-src-container">
 
 <pre class="src src-jojo"><span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">+var</span> tree-2
@@ -376,9 +376,9 @@ for the JavaScript code in this tag.
 
 <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">+jojo</span> write-tree-or-nothing
   <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">if</span> dup nothing? <span style="color: #66d9ef; font-weight: bold;">then</span> drop <span style="color: #e6db74;">"nothing"</span> string-write <span style="color: #66d9ef; font-weight: bold;">end</span><span style="color: #696969;">)</span>
-  <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">el</span> <span style="color: #696969;">(</span><span style="color: #ae81ff;">%</span> dup <span style="color: #ae81ff;">.cdr</span> int-write space
-         <span style="color: #ae81ff;">.car</span> int-write space
-         <span style="color: #e6db74;">"cons"</span> string-write space<span style="color: #696969;">)</span>
+  <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">el</span> <span style="color: #B380A8;">{</span>dup <span style="color: #ae81ff;">.cdr</span> int-write space
+       <span style="color: #ae81ff;">.car</span> int-write space
+       <span style="color: #e6db74;">"cons"</span> string-write space<span style="color: #B380A8;">}</span>
       tree-write<span style="color: #696969;">))</span>
 
 <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">run</span>

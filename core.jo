@@ -55,6 +55,8 @@
         <null> []
         <cons> [:list .car :printer apply
                 :list .cdr :printer recur]))
+    (note (+jojo list-equal? (-> :l1 :l2 -- <bool>)
+            ))
     (+jojo int-list-write
       {int-write space} list-write newline)
 
@@ -365,20 +367,33 @@
     (+jojo core-test (-> :body --)
       (if test-flag then :body {test/eval} list-for-each))
     (note
-      (+jojo zip-tree :t1! :t2!
-        (note [tree tree] -> [maybe-tree])
-        (cond [:t1 leaf? :t2 leaf? and]
-              [:t1 .v :t2 .v cons leaf return-maybe]
-              [:t1 node? :t2 node? and]
-              (let-bind bind-maybe
-                :l [:t1 .l :t2 .l zip-tree]
-                :r [:t1 .r :t2 .r zip-tree]
-                [:l :r node return-maybe])
-              else nothing)))
+      (+jojo let-bind/expend (-> :body -- sexp)
+        )
+
+      (let-bind bind-maybe
+        :l [:t1 .l :t2 .l zip-tree]
+        :r [:t1 .r :t2 .r zip-tree]
+        [:l :r node return-maybe])
+
+      (let-bind bind-maybe
+        :l [:t1 .l :t2 .l zip-tree]
+        :r [:t1 .r :t2 .r zip-tree]
+        [:l :r node return-maybe])
+
+      (note
+        (+jojo zip-tree :t1! :t2!
+          (note [tree tree] -> [maybe-tree])
+          (cond [:t1 leaf? :t2 leaf? and]
+                [:t1 .v :t2 .v cons leaf return-maybe]
+                [:t1 node? :t2 node? and]
+                (let-bind bind-maybe
+                  :l [:t1 .l :t2 .l zip-tree]
+                  :r [:t1 .r :t2 .r zip-tree]
+                  [:l :r node return-maybe])
+                else nothing))))
     (+jojo +jojo (-> :body sexp list --)
       :body .cdr compile-jojo
       :body .car name-bind)
-
     (run reading-stack-tos repl)
     (+jojo note drop)
     (+jojo run compile-jojo apply)
@@ -400,78 +415,75 @@
     (+jojo assert assert/expend sexp-compile)
     (+jojo assert! assert!/expend sexp-compile)
     (+jojo test core-test)
-  (run test-flag-on)
 
-  (test
+    (+jojo let-bind let-bind/expend sexp-compile)
+    (run test-flag-on)
+    (test
 
-    (+jojo square dup mul)
-    (run
-      (assert 2 square 4 eq?)))
+      (+jojo square dup mul)
+      (run
+        (assert 2 square 4 eq?)))
+    (test
 
+      (+jojo list-1
+        1 2 3 4 5 null cons cons cons cons cons)
 
-  (test
+      (+jojo list-length/cond
+        :list!
+        (cond
+          [:list null?] [0]
+          else [:list .cdr recur inc]))
 
-    (+jojo list-1
-      1 2 3 4 5 null cons cons cons cons cons)
+      (run
+        (assert list-1 list-length/cond 5 eq?))
 
-    (+jojo list-length/cond
-      :list!
-      (cond
-        [:list null?] [0]
-        else [:list .cdr recur inc]))
+      (+jojo list-length/case
+        :list!
+        (case :list
+          <null> 0
+          <cons> [:list .cdr recur inc]))
 
-    (run
-      (assert list-1 list-length/cond 5 eq?))
+      (run
+        (assert list-1 list-length/case 5 eq?)))
+    (test
 
-    (+jojo list-length/case
-      :list!
-      (case :list
-        <null> 0
-        <cons> [:list .cdr recur inc]))
+      (run
+        1 2 (-> :x :y --)
+        (assert :x 1 eq?)
+        (assert :y 1 eq?)))
+    (test
 
-    (run
-      (assert list-1 list-length/case 5 eq?)))
+      (+jojo com :m1! :m2!
+        {:m2 apply
+         :m1 apply})
 
-  (test
+      (run
+        (assert {1} {2} com apply add 3 eq?)
+        (assert {1} {2} com {3} com apply add add 6 eq?)
+        (assert {1} {2} {3} com com apply add add 6 eq?)))
+    (test
+      (run
+        (echo 1 2 3)
+        (echo (run
+                1 2 (-> :x :y --)
+                :y :y add int-write space
+                :y :y add int-write space
+                :x :x add int-write space newline))))
+    (test
+      (+jojo nl newline)
 
-    (run
-      1 2 (-> :x :y --)
-      (assert :x 1 eq?)
-      (assert :y 1 eq?)))
+      (+gene w (-> :x --))
+      (+disp w (-> <int> --) int-write)
+      (+disp w (-> <string> --) string-write)
+      (run
+        1 w space "one" w nl)
 
-  (test
-
-    (+jojo com :m1! :m2!
-      {:m2 apply
-       :m1 apply})
-
-    (run
-      (assert {1} {2} com apply add 3 eq?)
-      (assert {1} {2} com {3} com apply add add 6 eq?)
-      (assert {1} {2} {3} com com apply add add 6 eq?)))
-
-  (run
-    (echo 1 2 3)
-    (echo (run
-            1 2 (-> :x :y --)
-            :y :y add int-write space
-            :y :y add int-write space
-            :x :x add int-write space newline)))
-
-  (+jojo nl newline)
-
-  (+gene w (-> :x --))
-  (+disp w (-> <int> --) int-write)
-  (+disp w (-> <string> --) string-write)
-  (run
-    1 w space "one" w nl)
-
-  (+gene ww (-> :a :b --))
-  (+disp ww (-> <int> <int> --) swap int-write space int-write)
-  (+disp ww (-> <int> <string> --) swap int-write space string-write)
-  (run 1 2 ww nl)
-  (run 1 "two" ww nl)
-  (note (run "two" 1 ww nl))
+      (+gene ww (-> :a :b --))
+      (+disp ww (-> <int> <int> --) swap int-write space int-write)
+      (+disp ww (-> <int> <string> --) swap int-write space string-write)
+      (run 1 2 ww nl)
+      (run 1 "two" ww nl)
+      (note (run "two" 1 ww nl)))
   (+jojo the-story-begin
     core-flag-off
     repl-flag-on
