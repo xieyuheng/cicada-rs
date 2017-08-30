@@ -4,6 +4,10 @@
 
 * [todo-stack]
 
+*** should we use #t #f for literal <bool> ?
+
+*** comma is special jo
+
 *** little syntax check for (cond) (+gene) (+disp)
 
 *** (case) handles multi argument [with little syntax check]
@@ -14,7 +18,7 @@
       1. inline monads
       2. uncurry functions
 
-*** semantic of quote and quasiquote
+*** quote
 
     - quote must be consisted with the sexp reader
 
@@ -31,7 +35,6 @@
     - (run (run 1)) is not equal to
       '('(1) run) run
 
-*** comma is special jo
 *** use EOPL to test the language
 
 *** dynamic scope
@@ -88,18 +91,22 @@
         <cons> [:list .cdr recur inc]))
     #+end_src
 
-*** >< list-any?
-
-*** >< list-every?
-
-*** list-member?
+*** list-any?
 
     #+begin_src jojo
-    (+jojo list-member? (-> :a :list -- <bool>)
-      (case :list
-        <null> false
-        <cons> [(if :a :list .car eq? then true end)
-                :a :list .cdr recur]))
+    (+jojo list-any? (-> :list :pred -> <bool>)
+      (cond [:list null?] [false]
+            [:list .car :pred apply] [true]
+            else [:list .cdr :pred recur]))
+    #+end_src
+
+*** list-every?
+
+    #+begin_src jojo
+    (+jojo list-every? (-> :list :pred -> <bool>)
+      (cond [:list null?] [true]
+            [:list .car :pred apply not] [false]
+            else [:list .cdr :pred recur]))
     #+end_src
 
 *** list-append
@@ -197,65 +204,15 @@
                 :list .cdr :printer recur]))
     #+end_src
 
-*** >< list-eqv?
+*** list-eqv?
 
     #+begin_src jojo
-    (note (+jojo list-eqv? (-> :l1 :l2 :eqv -- <bool>)
-            ))
-    #+end_src
-
-*** [test]
-
-    #+begin_src jojo
-    (+jojo int-list-write
-      {int-write space} list-write newline)
-
-    (run
-      0 1 2 3 4 null
-      cons cons cons cons cons
-
-      5 6 7 8 9 null
-      cons cons cons cons cons
-
-      list-append
-      int-list-write newline)
-
-    (run
-      0 1 2 3 4 5 6 7 8 9 null
-      cons cons cons cons cons
-      cons cons cons cons cons
-
-      {5 gt?} list-left
-      int-list-write newline)
-
-    (run
-      0 1 2 3 4 5 6 7 8 9 null
-      cons cons cons cons cons
-      cons cons cons cons cons
-
-      {5 gteq?} list-split
-      int-list-write int-list-write newline)
-
-    (run
-      0 1 2 3 4 5 6 7 8 9 null
-      cons cons cons cons cons
-      cons cons cons cons cons
-
-      {inc inc inc} list-map int-list-write newline)
-
-    (run
-      0 1 2 3 4 5 6 7 8 9 null
-      cons cons cons cons cons
-      cons cons cons cons cons
-
-      {2 mod 0 eq?} list-filter int-list-write newline)
-
-    (run
-      0 1 2 3 4 5 6 7 8 9 null
-      cons cons cons cons cons
-      cons cons cons cons cons
-
-      list-reverse int-list-write newline)
+    (+jojo list-eqv? (-> :l1 :l2 :eqv -- <bool>)
+      (cond [:l1 null? :l2 null? and] [true]
+            [:l1 null?] [false]
+            [:l2 null?] [false]
+            [:l1 .car :l2 .car :eqv apply not] [false]
+            else [:l1 .cdr :l2 .cdr :eqv recur]))
     #+end_src
 
 * sexp
@@ -399,11 +356,11 @@
 
     (+jojo core-if (-> :body --)
       (cond
-        ['else :body list-member?
-         'then :body list-member? and]
+        [:body {'else eq?} list-any?
+         :body {'then eq?} list-any? and]
         [:body if-else-then]
 
-        ['then :body list-member?] [:body if-then]
+        [:body {'then eq?} list-any?] [:body if-then]
 
         else ["- if fail" string-write newline
               "  the body dose not has 'then" string-write newline
@@ -708,6 +665,90 @@
 
 * [test]
 
+*** list
+
+    #+begin_src jojo
+    (test
+      (run
+        (assert
+          0 1 2 3 4 null
+          cons cons cons cons cons
+          5 6 7 8 9 null
+          cons cons cons cons cons
+          list-append
+
+          0 1 2 3 4
+          5 6 7 8 9 null
+          cons cons cons cons cons
+          cons cons cons cons cons
+
+          {eq?} list-eqv?)
+
+        (assert
+          0 1 2 3 4 5 6 7 8 9 null
+          cons cons cons cons cons
+          cons cons cons cons cons
+          {5 gt?} list-left
+
+          0 1 2 3 4 null
+          cons cons cons cons cons
+
+          {eq?} list-eqv?)
+
+        (assert
+          0 1 2 3 4 5 6 7 8 9 null
+          cons cons cons cons cons
+          cons cons cons cons cons
+          {5 gteq?} list-split
+
+          swap
+          0 1 2 3 4 null
+          cons cons cons cons cons
+          {eq?} list-eqv?
+
+          swap
+          5 6 7 8 9 null
+          cons cons cons cons cons
+          {eq?} list-eqv?
+
+          and)
+
+        (assert
+          0 1 2 3 4 5 6 7 8 9 null
+          cons cons cons cons cons
+          cons cons cons cons cons
+          {inc} list-map
+
+          1 2 3 4 5 6 7 8 9 10 null
+          cons cons cons cons cons
+          cons cons cons cons cons
+
+          {eq?} list-eqv?)
+
+        (assert
+          0 1 2 3 4 5 6 7 8 9 null
+          cons cons cons cons cons
+          cons cons cons cons cons
+          {2 mod 0 eq?} list-filter
+
+          0 2 4 6 8 null
+          cons cons cons cons cons
+
+          {eq?} list-eqv?)
+
+        (assert
+          0 1 2 3 4 5 6 7 8 9 null
+          cons cons cons cons cons
+          cons cons cons cons cons
+          list-reverse
+
+          9 8 7 6 5 4 3 2 1 0 null
+          cons cons cons cons cons
+          cons cons cons cons cons
+
+          {eq?} list-eqv?)))
+    #+end_src
+
 *** (+jojo)
 
     #+begin_src jojo
@@ -813,5 +854,5 @@
     repl-flag-on
     terminal-input-stack repl)
 
-  (run the-story-begin)
+  (run print-data-stack the-story-begin)
   #+end_src
