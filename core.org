@@ -4,7 +4,13 @@
 
 * [todo-stack]
 
+*** `(... (% ...) ...)
+
+    - (% ...) means (append-return-data ...)
+
 *** should we use #t #f for literal <bool> ?
+
+*** how to test io functions ?
 
 *** comma is special jo
 
@@ -17,18 +23,6 @@
     - learn more about monad by
       1. inline monads
       2. uncurry functions
-
-*** quote
-
-    - quote must be consisted with the sexp reader
-
-    - also consisted with sexp-write
-
-*** quasiquote
-
-    - `({})
-
-    - `(@{})
 
 *** top level keywords such as (run) can not be nested
 
@@ -232,13 +226,22 @@
     #+begin_src jojo
     (+jojo read-sexp (-> -- sexp)
       read-jo :jo!
-      (cond [:jo round-bar eq?] [round-ket read-sexp/list]
-            [:jo square-bar eq?] [square-ket read-sexp/list 'begin swap cons]
-            [:jo flower-bar eq?] [flower-ket read-sexp/list 'clo swap cons]
-            [:jo doublequote eq?] [read-string]
-            else [:jo]))
+      (cond
+        [:jo round-bar eq?]
+        [round-ket read-sexp-list-until-ket]
 
-    (+jojo read-sexp/list (-> :ket <jo> -- sexp list)
+        [:jo square-bar eq?]
+        [square-ket read-sexp-list-until-ket 'begin swap cons]
+
+        [:jo flower-bar eq?]
+        [flower-ket read-sexp-list-until-ket 'clo swap cons]
+
+        [:jo doublequote eq?]
+        [read-string]
+
+        else [:jo]))
+
+    (+jojo read-sexp-list-until-ket (-> :ket <jo> -- sexp list)
       read-jo :jo!
       (if :jo :ket eq?
           then null
@@ -304,6 +307,10 @@
         [:list null?] [end]
 
         [:list .car '' eq?]
+        [:list .cdr .car emit-lit
+         :list .cdr .cdr recur]
+
+        [:list .car '` eq?]
         [:list .cdr .car emit-lit
          :list .cdr .cdr recur]
 
@@ -382,10 +389,10 @@
 
     (note
       (+jojo cond/expend-if-then (-> :question :answer -- sexp)
-        `(if {(if :question 'else eq?
-                  then 'true
-                  else :question)}
-             then {:answer})))
+        `(if (@ (if :question 'else eq?
+                    then 'true
+                    else :question))
+             then (@ :answer))))
 
     (+jojo cond/expend-if-then (-> :question :answer -- sexp)
       'if null cons
@@ -402,7 +409,7 @@
     #+begin_src jojo
     (note
       (+jojo case/expend (-> :body -- sexp)
-        `(begin {:body .car} {:body .cdr case/expend-rest})))
+        `(begin (@ :body .car) (@ :body .cdr case/expend-rest))))
 
     (+jojo case/expend (-> :body -- sexp)
       'begin null cons
@@ -420,16 +427,17 @@
 
     (note
       (+jojo case/expend-if-then (-> :tag :answer -- sexp)
-        `(if {(if :tag 'else eq?
-                  then 'true
-                  else `(begin dup tag ' {:tag} eq?))}
-             then drop {:answer})))
+        `(if (@ (if :tag 'else eq?
+                    then 'true
+                    else `(begin dup tag (@ :tag) eq?)))
+             then drop (@ :answer))))
 
     (+jojo case/expend-if-then (-> :tag :answer -- sexp)
       'if null cons
       (if :tag 'else eq?
           then 'true
-          else 'begin 'dup 'tag '' :tag 'eq? null cons cons cons cons cons cons)
+          else 'begin 'dup 'tag '' :tag 'eq?
+          null cons cons cons cons cons cons)
       tail-cons
       'then tail-cons
       'drop tail-cons
@@ -671,17 +679,10 @@
     (test
       (run
         (assert
-          0 1 2 3 4 null
-          cons cons cons cons cons
-          5 6 7 8 9 null
-          cons cons cons cons cons
+          '(0 1 2 3 4)
+          '(5 6 7 8 9)
           list-append
-
-          0 1 2 3 4
-          5 6 7 8 9 null
-          cons cons cons cons cons
-          cons cons cons cons cons
-
+          '(0 1 2 3 4 5 6 7 8 9)
           {eq?} list-eqv?)
 
         (assert

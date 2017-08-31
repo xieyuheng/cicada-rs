@@ -306,7 +306,7 @@
     jo_t FLOWER_KET;
     jo_t DOUBLEQUOTE;
     jo_t SINGLEQUOTE;
-    jo_t QUASIQUOTE;
+    jo_t BACKQUOTE;
     jo_t COMMA;
 
     jo_t JO_INS_LIT;
@@ -3388,7 +3388,7 @@
 
     void p_doublequote()  { ds_push(TAG_JO, DOUBLEQUOTE); }
     void p_singlequote()  { ds_push(TAG_JO, SINGLEQUOTE); }
-    void p_quasiquote()   { ds_push(TAG_JO, QUASIQUOTE); }
+    void p_backquote()    { ds_push(TAG_JO, BACKQUOTE); }
     void p_comma()        { ds_push(TAG_JO, COMMA); }
     void p_jo_write() {
       struct dp a = ds_pop();
@@ -3451,7 +3451,7 @@
 
       plus_prim("doublequote",  p_doublequote);
       plus_prim("singlequote",  p_singlequote);
-      plus_prim("quasiquote",   p_quasiquote);
+      plus_prim("backquote",    p_backquote);
       plus_prim("comma",        p_comma);
 
       plus_prim("jo-write",  p_jo_write);
@@ -4288,7 +4288,7 @@
       FLOWER_KET   =   str2jo("}");
       DOUBLEQUOTE  =   str2jo("\"");
       SINGLEQUOTE  =   str2jo("'");
-      QUASIQUOTE   =   str2jo("`");
+      BACKQUOTE    =   str2jo("`");
       COMMA        =   str2jo(",");
 
       JO_INS_LIT       = str2jo("ins/lit");
