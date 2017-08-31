@@ -2091,16 +2091,16 @@
     jo_t read_jo() {
       char buf[1024];
       cell cur = 0;
-      cell collecting = false;
+      cell collecting_bytes = false;
       char c;
       char go = true;
 
       while (go) {
 
         if (!has_byte_p()) {
-          if (!collecting) {
+          if (!collecting_bytes) {
             report("- p_read_jo fail\n");
-            report("  meet end-of-file when still collecting bytes\n");
+            report("  meet end-of-file when still collecting_bytes bytes\n");
             p_debug();
           }
           else {
@@ -2110,7 +2110,7 @@
 
         c = read_byte(); // report("- read_byte() : %c\n", c);
 
-        if (collecting) {
+        if (collecting_bytes) {
           if (char_delimiter_p(c) ||
               char_space_p(c)) {
             byte_unread(c);
@@ -2127,7 +2127,7 @@
             // loop
           }
           else {
-            collecting = true;
+            collecting_bytes = true;
             buf[cur] = c;
             cur++;
             if (char_delimiter_p(c)) {
@@ -3211,7 +3211,7 @@
       struct gp* ao = a.d;
       string_write(ao->p);
     }
-    void p_string_len() {
+    void p_string_length() {
       struct dp a = ds_pop();
       struct gp* ao = a.d;
       ds_push(TAG_INT, strlen(ao->p));
@@ -3295,7 +3295,7 @@
     }
     void expose_string() {
       plus_prim("string-write", p_string_write);
-      plus_prim("string-len", p_string_len);
+      plus_prim("string-length", p_string_length);
       plus_prim("string-ref", p_string_ref);
       plus_prim("string-cat", p_string_cat);
       plus_prim("string-slice", p_string_slice);
@@ -3576,17 +3576,17 @@
       array[i*2+1]    = v.t;
       array[i*2+1 +1] = v.d;
     }
-    void p_collecting() {
-      ds_push(str2jo("<collecting>"), 0);
+    void p_mark() {
+      ds_push(str2jo("<mark>"), 0);
     }
     cell collect_find_length() {
       cell len = 0;
-      while (ds_peek_tag(len+1) != str2jo("<collecting>")) {
+      while (ds_peek_tag(len+1) != str2jo("<mark>")) {
         len++;
       }
       return len;
     }
-    void p_collect_to_array() {
+    void p_collect() {
       cell len = collect_find_length();
       cell* array = (cell*)malloc((len*2 + 1) * sizeof(cell));
       bzero(array, (len*2 + 1) * sizeof(cell));
@@ -3613,9 +3613,9 @@
       plus_prim("array-ref", p_array_ref);
       plus_prim("array-set", p_array_set);
 
-      plus_atom("<collecting>", gc_ignore);
-      plus_prim("collecting", p_collecting);
-      plus_prim("collect-to-array", p_collect_to_array);
+      plus_atom("<mark>", gc_ignore);
+      plus_prim("mark", p_mark);
+      plus_prim("collect", p_collect);
 
       plus_atom("<array>", gc_free);
     }

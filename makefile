@@ -10,7 +10,7 @@ l = -ldl
 build:
 	make tangle
 	#xxd -i core.jo > core.h
-	$(cc) $(w) $(o) $(f) $(l) jojo.c -o jojo
+	time $(cc) $(w) $(o) $(f) $(l) jojo.c -o jojo
 
 tangle:
 	./tool/tangle.js
