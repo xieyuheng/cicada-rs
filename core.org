@@ -4,8 +4,6 @@
 
 * [todo-stack]
 
-*** comma is special jo
-
 *** how to test io functions ?
 
     - with-output-to-string ?
@@ -415,10 +413,11 @@
     #+begin_src jojo
     (+jojo jo-compile (-> :jo --)
       (cond [:jo int-jo?]       [:jo jo->int emit-lit]
-            [:jo local-jo?] [:jo jo-emit-local]
+            [:jo local-jo?]     [:jo jo-emit-local]
             [:jo set-local-jo?] [:jo jo-emit-set-local]
-            [:jo field-jo?] [:jo jo-emit-field]
+            [:jo field-jo?]     [:jo jo-emit-field]
             [:jo set-field-jo?] [:jo jo-emit-set-field]
+            [:jo comma eq?]     []
             else [:jo jo-emit]))
     #+end_src
 
