@@ -294,6 +294,7 @@
     jo_t TAG_INT;
     jo_t TAG_BYTE;
     jo_t TAG_STRING;
+    jo_t TAG_ARRAY;
     jo_t TAG_JO;
 
     jo_t TAG_UNINITIALISED_FIELD_PLACE_HOLDER;
@@ -1045,6 +1046,11 @@
       p.t = pop(ds);
       p.d = pop(ds);
       return p;
+    }
+
+    void ds_drop() {
+      drop(ds);
+      drop(ds);
     }
 
     struct dp ds_tos() {
@@ -3513,6 +3519,106 @@
     void expose_jojo() {
       plus_prim("jojo-copy", p_jojo_copy);
     }
+    void p_new_array() {
+      struct dp a = ds_pop();
+      cell len = a.d;
+      cell* array = (cell*)malloc((len*2 + 1) * sizeof(cell));
+      bzero(array, (len*2 + 1) * sizeof(cell));
+      array[0] = len;
+
+      struct gp* gp = new_record_gp();
+      gp->gc_actor = gc_free;
+      gp->p = array;
+      ds_push(TAG_ARRAY, gp);
+    }
+    void p_array_length() {
+      struct dp a = ds_pop();
+      struct gp* gp = a.d;
+      cell* array = gp->p;
+      ds_push(TAG_INT, array[0]);
+    }
+    void p_array_ref() {
+      struct dp a = ds_pop();
+      cell i = a.d;
+      struct dp b = ds_pop();
+      struct gp* bo = b.d;
+      cell* array = bo->p;
+      if (i >= array[0]) {
+        report("- p_array_ref fail\n");
+        report("  array is not long enough for the index\n");
+        report("  index : %ld\n", i);
+        report("  array length : %ld\n", array[0]);
+        p_debug();
+      }
+      else if (array[i*2 +1] == 0) {
+        report("- p_array_ref fail\n");
+        report("  the index entry of array is not initialized\n");
+        report("  index : %ld\n", i);
+        p_debug();
+      }
+      ds_push(array[i*2 +1], array[i*2+1 +1]);
+    }
+    void p_array_set() {
+      struct dp v = ds_pop();
+      struct dp a = ds_pop();
+      cell i = a.d;
+      struct dp b = ds_pop();
+      struct gp* bo = b.d;
+      cell* array = bo->p;
+      if (i >= array[0]) {
+        report("- p_array_set fail\n");
+        report("  array is not long enough for the index\n");
+        report("  index : %ld\n", i);
+        report("  array length : %ld\n", array[0]);
+        report("  value to set : %s %ld\n", jo2str(v.t), v.d);
+        p_debug();
+      }
+      array[i*2+1]    = v.t;
+      array[i*2+1 +1] = v.d;
+    }
+    void p_collecting() {
+      ds_push(str2jo("<collecting>"), 0);
+    }
+    cell collect_find_length() {
+      cell len = 0;
+      while (ds_peek_tag(len+1) != str2jo("<collecting>")) {
+        len++;
+      }
+      return len;
+    }
+    void p_collect_to_array() {
+      cell len = collect_find_length();
+      cell* array = (cell*)malloc((len*2 + 1) * sizeof(cell));
+      bzero(array, (len*2 + 1) * sizeof(cell));
+      array[0] = len;
+
+      cell counter = 0;
+      while (counter < len) {
+        cell i = (len -1) - counter;
+        struct dp v = ds_pop();
+        array[i*2+1]    = v.t;
+        array[i*2+1 +1] = v.d;
+        counter++;
+      }
+      ds_drop();
+
+      struct gp* gp = new_record_gp();
+      gp->gc_actor = gc_free;
+      gp->p = array;
+      ds_push(TAG_ARRAY, gp);
+    }
+    void expose_array() {
+      plus_prim("new-array", p_new_array);
+      plus_prim("array-length", p_array_length);
+      plus_prim("array-ref", p_array_ref);
+      plus_prim("array-set", p_array_set);
+
+      plus_atom("<collecting>", gc_ignore);
+      plus_prim("collecting", p_collecting);
+      plus_prim("collect-to-array", p_collect_to_array);
+
+      plus_atom("<array>", gc_free);
+    }
     void gc_local_env(gc_state_t gc_state, struct gp* gp) {
       if (gc_state == GC_STATE_MARKING) {
         if (gp->mark == GC_MARK_USING) { return; }
@@ -4275,6 +4381,7 @@
       TAG_INT          = str2jo("<int>");
       TAG_BYTE         = str2jo("<byte>");
       TAG_STRING       = str2jo("<string>");
+      TAG_ARRAY        = str2jo("<array>");
       TAG_JO           = str2jo("<jo>");
 
       TAG_UNINITIALISED_FIELD_PLACE_HOLDER =
@@ -4358,6 +4465,7 @@
       expose_jo();
       expose_address();
       expose_jojo();
+      expose_array();
       expose_closure();
       expose_socket();
       expose_system();

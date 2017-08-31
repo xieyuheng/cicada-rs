@@ -4,6 +4,13 @@
     repl-flag-off)
     (+data <null>)
     (+data <cons> .car .cdr)
+    (+jojo array->list 0 right-of-array->list)
+
+    (+jojo right-of-array->list (-> :array :index -- list)
+      (cond [:index :array array-length gteq?] [null]
+            else [:array :index inc recur
+                  :array :index array-ref
+                  swap cons]))
     (+jojo list-length (-> :list -> <int>)
       (case :list
         <null> 0
@@ -158,19 +165,19 @@
       :body {'then eq?} list-split (-> :question :then-else)
       :then-else {'else eq?} list-split (-> :then :else)
       :question sexp-list-compile
-      emit-jz :jz-address!
+      emit-jz :address-for-jz!
       :then .cdr sexp-list-compile
-      emit-jmp :jmp-address!
-      :jz-address set-offset-to-here
+      emit-jmp :address-for-jmp!
+      :address-for-jz set-offset-to-here
       :else .cdr sexp-list-compile
-      :jmp-address set-offset-to-here)
+      :address-for-jmp set-offset-to-here)
 
     (+jojo if-then (-> :body --)
       :body {'then eq?} list-split (-> :question :then)
       :question sexp-list-compile
-      emit-jz :jz-address!
+      emit-jz :address-for-jz!
       :then .cdr sexp-list-compile
-      :jz-address set-offset-to-here)
+      :address-for-jz set-offset-to-here)
 
     (+jojo core-if (-> :body --)
       (cond
@@ -178,7 +185,8 @@
          :body {'then eq?} list-any? and]
         [:body if-else-then]
 
-        [:body {'then eq?} list-any?] [:body if-then]
+        [:body {'then eq?} list-any?]
+        [:body if-then]
 
         else ["- if fail" string-write newline
               "  the body dose not has 'then" string-write newline
@@ -284,12 +292,12 @@
       :arrow-sexp .cdr
       {'-- eq?} list-left
       {tag-jo?} list-filter
-      compiling-stack-tos :tag-array-address!
+      compiling-stack-tos :address-of-tags!
       {jo-emit} list-for-each
       emit-zero
 
       :rest-body compile-jojo-copy
-      :tag-array-address
+      :address-of-tags
       :body .car
       name-bind-disp-to-jojo)
     (+jojo assert-report (-> :body --)
@@ -407,7 +415,19 @@
 
     (+jojo let-bind let-bind/expend sexp-compile)
     (test
+
       (run
+
+        (assert
+          collecting 0 1 2 3 4
+          collect-to-array
+          array->list
+
+          0 1 2 3 4 null
+          cons cons cons cons cons
+
+          {eq?} list-eqv?)
+
         (assert
           '(0 1 2 3 4)
           '(5 6 7 8 9)
