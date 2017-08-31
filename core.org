@@ -4,19 +4,27 @@
 
 * [todo-stack]
 
-*** how to test io functions ?
-
-    - with-output-to-string ?
+*** (case) handles multi argument
 
 *** little syntax check for (cond) (+gene) (+disp)
 
-*** (case) handles multi argument [with little syntax check]
+*** runtime error for (cond) miss match
+
+*** little syntax check for (quote) (partquote)
+
+*** little syntax check for (case)
+
+*** runtime error for (case) miss match
 
 *** about monad
 
     - learn more about monad by
       1. inline monads
       2. uncurry functions
+
+*** how to test io functions ?
+
+    - with-output-to-string ?
 
 *** top level keywords such as (run) can not be nested
 
@@ -381,7 +389,7 @@
           else :sexp sexp-compile))
     #+end_src
 
-*** sexp-partquote-compile/recur
+*** sexp-partquote-compile/recur -- depends on (list)
 
     #+begin_src jojo
     (+jojo sexp-partquote-compile/recur (-> :sexp --)
@@ -495,50 +503,6 @@
       :answer tail-cons)
     #+end_src
 
-*** (case)
-
-    #+begin_src jojo
-    (note
-      (+jojo case/expend (-> :body -- sexp)
-        `(begin (@ :body .car) (@ :body .cdr case/expend-rest))))
-
-    (+jojo case/expend (-> :body -- sexp)
-      'begin null cons
-      :body .car tail-cons
-      :body .cdr case/expend-rest tail-cons)
-
-    (+jojo case/expend-rest (-> :body -- sexp)
-      (cond
-        [:body list-length 2 eq?]
-        [:body .car :body .cdr .car case/expend-if-then]
-
-        else [:body .car :body .cdr .car case/expend-if-then
-              'else tail-cons
-              :body .cdr .cdr recur tail-cons]))
-
-    (note
-      (+jojo case/expend-if-then (-> :tag :answer -- sexp)
-        `(if (@ (if :tag 'else eq?
-                    then 'true
-                    else `(begin dup tag (@ :tag) eq?)))
-             then drop (@ :answer))))
-
-    (+jojo case/expend-if-then (-> :tag :answer -- sexp)
-      'if null cons
-      (if :tag 'else eq?
-          then 'true
-          else
-          'begin null cons
-          'dup tail-cons
-          'tag tail-cons
-          'quote null cons :tag tail-cons tail-cons
-          'eq? tail-cons)
-      tail-cons
-      'then tail-cons
-      'drop tail-cons
-      :answer tail-cons)
-    #+end_src
-
 *** (->)
 
     #+begin_src jojo
@@ -639,7 +603,6 @@
     (+jojo clo core-clo)
 
     (+jojo cond cond/expend sexp-compile)
-    (+jojo case case/expend sexp-compile)
     (+jojo -> arrow/expend sexp-compile)
 
     (+jojo +data plus-data)
@@ -704,9 +667,7 @@
 
     #+begin_src jojo
     (+jojo test/eval (-> :sexp --)
-      (case :sexp
-        <cons> [:sexp .cdr :sexp .car jo-apply]
-        else []))
+      (if :sexp cons? then :sexp .cdr :sexp .car jo-apply))
 
     (+jojo test (-> :body --)
       (if test-flag then :body {test/eval} list-for-each))
@@ -752,6 +713,38 @@
            {drop
             (@ :binder :rest .cdr recur)}
            (@ :binder)]]))
+    #+end_src
+
+*** (case)
+
+    #+begin_src jojo
+    (+jojo case case/expend sexp-compile)
+
+    (+jojo case/expend (-> :body -- sexp)
+      `(begin (list (@ :body .car)) {tag} list-map
+         (@ :body .cdr case/expend-rest)))
+
+    (+jojo case/expend-rest (-> :body -- sexp)
+      (cond
+        [:body list-length 2 eq?]
+        [:body .car :body .cdr .car case/expend-if-then]
+
+        else [:body .car :body .cdr .car case/expend-if-then
+              'else tail-cons
+              :body .cdr .cdr recur tail-cons]))
+
+    (+jojo case/expend-if-then (-> :tags :answer -- sexp)
+      (cond [:tags 'else eq?]
+            `(if true
+                 then drop (@ :answer))
+
+            [:tags cons?]
+            `(if dup (quote (@ :tags .cdr)) {eq?} list-eqv?
+                 then drop (@ :answer))
+
+            else
+            `(if dup .car (quote (@ :tags)) eq?
+                 then drop (@ :answer))))
     #+end_src
 
 * [test]
@@ -809,26 +802,17 @@
         (assert 2 square 4 eq?)))
     #+end_src
 
-*** (cond) & (case)
+*** (cond)
 
     #+begin_src jojo
     (test
-      (+jojo list-1
-        1 2 3 4 5 null cons cons cons cons cons)
       (+jojo list-length/cond
         :list!
         (cond
           [:list null?] [0]
           else [:list .cdr recur inc]))
       (run
-        (assert list-1 list-length/cond 5 eq?))
-      (+jojo list-length/case
-        :list!
-        (case :list
-          <null> 0
-          <cons> [:list .cdr recur inc]))
-      (run
-        (assert list-1 list-length/case 5 eq?)))
+        (assert (list 1 2 3 4 5) list-length/cond 5 eq?)))
     #+end_src
 
 *** (->)
@@ -870,7 +854,7 @@
         (assert  "123" "123" add-two 6 eq?)))
     #+end_src
 
-*** partquote
+*** (partquote)
 
     #+begin_src jojo
     (test
@@ -895,6 +879,19 @@
         (assert
           `(((@ `(((@ 1)))))) .car .car .car .car
           1 eq?)))
+    #+end_src
+
+*** (case)
+
+    #+begin_src jojo
+    (note
+      (+jojo list-length/case
+        :list!
+        (case [:list :list]
+          [<null> <null>] 0
+          [<cons> <cons>] [:list .cdr recur inc]))
+      (run
+        (assert (list 1 2 3 4 5) list-length/case 5 eq?)))
     #+end_src
 
 * the-story-begin

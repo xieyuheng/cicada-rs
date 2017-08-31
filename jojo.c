@@ -3063,7 +3063,10 @@
 
         sigemptyset(&kernel_signal_action.sa_mask);
 
-        kernel_signal_action.sa_flags = SA_SIGINFO | SA_NODEFER | SA_RESTART;
+        kernel_signal_action.sa_flags
+          = SA_SIGINFO
+          // | SA_NODEFER
+          | SA_RESTART;
         kernel_signal_action.sa_sigaction = kernel_signal_handler;
 
         int sig_array[] = { SIGSEGV, SIGBUS, SIGFPE, SIGILL,
@@ -4138,6 +4141,11 @@
       jo_t* jojo = c.d;
       plus_disp(jo2str(name), tags, "<jojo>", jojo);
     }
+    void p_class_to_tag() {
+      struct dp a = ds_pop();
+      struct class* class = a.d;
+      ds_push(TAG_JO, class->class_name);
+    }
     void expose_core() {
       plus_prim("core-flag", p_core_flag);
       plus_prim("core-flag-on", p_core_flag_on);
@@ -4162,6 +4170,8 @@
       plus_prim("name-bind-data", p_name_bind_data);
       plus_prim("name-bind-gene", p_name_bind_gene);
       plus_prim("name-bind-disp-to-jojo", p_name_bind_disp_to_jojo);
+
+      plus_prim("class->tag", p_class_to_tag);
     }
     void p1() {
       int file = open("README", O_RDWR);

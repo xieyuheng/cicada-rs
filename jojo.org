@@ -4473,7 +4473,10 @@
 
         sigemptyset(&kernel_signal_action.sa_mask);
 
-        kernel_signal_action.sa_flags = SA_SIGINFO | SA_NODEFER | SA_RESTART;
+        kernel_signal_action.sa_flags
+          = SA_SIGINFO
+          // | SA_NODEFER
+          | SA_RESTART;
         kernel_signal_action.sa_sigaction = kernel_signal_handler;
 
         int sig_array[] = { SIGSEGV, SIGBUS, SIGFPE, SIGILL,
@@ -6091,6 +6094,16 @@
     }
     #+end_src
 
+*** p_class_to_tag
+
+    #+begin_src c
+    void p_class_to_tag() {
+      struct dp a = ds_pop();
+      struct class* class = a.d;
+      ds_push(TAG_JO, class->class_name);
+    }
+    #+end_src
+
 *** expose_core
 
     #+begin_src c
@@ -6118,6 +6131,8 @@
       plus_prim("name-bind-data", p_name_bind_data);
       plus_prim("name-bind-gene", p_name_bind_gene);
       plus_prim("name-bind-disp-to-jojo", p_name_bind_disp_to_jojo);
+
+      plus_prim("class->tag", p_class_to_tag);
     }
     #+end_src
 
