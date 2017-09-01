@@ -4,8 +4,6 @@
 
 * [todo-stack]
 
-
-
 *** about monad
 
     - learn more about monad by
@@ -311,16 +309,24 @@
 *** compile-jojo
 
     #+begin_src jojo
-    (+jojo compile-jojo (-> sexp list -- <jojo>)
+    (+jojo compile-jojo (-> :body -- <jojo>)
       compiling-stack-tos :address!
-      compile-jojo/help jojo-copy
+      :body sexp-list-compile
+       emit-jojo-end
+      :address '<jojo> tag-change jojo-copy
       compiling-stack-drop :address compiling-stack-push)
+    #+end_src
 
-    (+jojo compile-jojo/help (-> sexp list -- <jojo>)
-      compiling-stack-tos
-      swap sexp-list-compile
-      emit-jojo-end
-      '<jojo> tag-change)
+*** jo-list-compile-cells
+
+    #+begin_src jojo
+    (+jojo jo-list-compile-cells (-> :list -- <address>)
+      compiling-stack-tos :address!
+      :list {jo-emit} list-for-each
+      emit-zero
+      :address cells-copy :new-address!
+      compiling-stack-drop :address compiling-stack-push
+      :new-address)
     #+end_src
 
 *** sexp-list-compile
@@ -515,14 +521,12 @@
           "  name must be of form <...>" string-write newline
           "  body : " string-write :body sexp-list-write newline
           end)
-      compiling-stack-tos :address!
+
       :body .cdr
       {field-jo?} list-filter
-      {jo-emit} list-for-each
-      emit-zero
-      :address cells-dup :new-address!
-      compiling-stack-drop :address compiling-stack-push
-      :new-address :body .car name-bind-data)
+      jo-list-compile-cells :address!
+
+      :address :body .car name-bind-data)
     #+end_src
 
 *** (+gene)
@@ -549,13 +553,10 @@
       :arrow-sexp .cdr
       {'-- eq?} list-left
       {tag-jo?} list-filter
-      compiling-stack-tos :address-of-tags!
-      {jo-emit} list-for-each
-      emit-zero
-      :address-of-tags cells-dup :new-address-of-tags!
-      compiling-stack-drop :address-of-tags compiling-stack-push
+      jo-list-compile-cells :address-of-tags!
+
       :rest-body compile-jojo
-      :new-address-of-tags
+      :address-of-tags
       :body .car
       name-bind-disp-to-jojo)
     #+end_src

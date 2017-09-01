@@ -4083,7 +4083,7 @@
       struct class* class = a.d;
       ds_push(TAG_JO, class->class_name);
     }
-    void p_cells_dup() {
+    void p_cells_copy() {
       struct dp a = ds_pop();
       ds_push(TAG_ADDRESS, array_dup(a.d));
     }
@@ -4114,7 +4114,7 @@
 
       plus_prim("class->tag", p_class_to_tag);
 
-      plus_prim("cells-dup", p_cells_dup);
+      plus_prim("cells-copy", p_cells_copy);
     }
     void path_load(char* path) {
       int file = open(path, O_RDONLY);

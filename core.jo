@@ -140,16 +140,19 @@
       compile-jojo apply
       (if repl-flag then print-data-stack)
       recur)
-    (+jojo compile-jojo (-> sexp list -- <jojo>)
+    (+jojo compile-jojo (-> :body -- <jojo>)
       compiling-stack-tos :address!
-      compile-jojo/help jojo-copy
+      :body sexp-list-compile
+       emit-jojo-end
+      :address '<jojo> tag-change jojo-copy
       compiling-stack-drop :address compiling-stack-push)
-
-    (+jojo compile-jojo/help (-> sexp list -- <jojo>)
-      compiling-stack-tos
-      swap sexp-list-compile
-      emit-jojo-end
-      '<jojo> tag-change)
+    (+jojo jo-list-compile-cells (-> :list -- <address>)
+      compiling-stack-tos :address!
+      :list {jo-emit} list-for-each
+      emit-zero
+      :address cells-copy :new-address!
+      compiling-stack-drop :address compiling-stack-push
+      :new-address)
     (note
       [:list .car singlequote eq?]
       [:list .cdr .car emit-lit
@@ -284,14 +287,12 @@
           "  name must be of form <...>" string-write newline
           "  body : " string-write :body sexp-list-write newline
           end)
-      compiling-stack-tos :address!
+
       :body .cdr
       {field-jo?} list-filter
-      {jo-emit} list-for-each
-      emit-zero
-      :address cells-dup :new-address!
-      compiling-stack-drop :address compiling-stack-push
-      :new-address :body .car name-bind-data)
+      jo-list-compile-cells :address!
+
+      :address :body .car name-bind-data)
     (+jojo plus-gene (-> :body --)
       :body .cdr .car :arrow-sexp!
       :arrow-sexp .cdr
@@ -306,13 +307,10 @@
       :arrow-sexp .cdr
       {'-- eq?} list-left
       {tag-jo?} list-filter
-      compiling-stack-tos :address-of-tags!
-      {jo-emit} list-for-each
-      emit-zero
-      :address-of-tags cells-dup :new-address-of-tags!
-      compiling-stack-drop :address-of-tags compiling-stack-push
+      jo-list-compile-cells :address-of-tags!
+
       :rest-body compile-jojo
-      :new-address-of-tags
+      :address-of-tags
       :body .car
       name-bind-disp-to-jojo)
     (+jojo +jojo (-> :body sexp list --)
