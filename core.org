@@ -6,8 +6,6 @@
 
 *** little syntax check for (cond) (case) (+gene) (+disp)
 
-*** runtime error for (cond) (case) miss match
-
 *** little syntax check for (quote) (partquote)
 
 *** about monad
@@ -474,11 +472,18 @@
     (+jojo cond/expend (-> :body -- sexp)
       (cond
         [:body list-length 2 eq?]
-        [:body .car :body .cdr .car cond/expend-if-then]
+        [:body .car :body .cdr .car cond/expend-if-then
+         'else tail-cons
+         'cond/miss-match-report tail-cons
+         'debug tail-cons]
 
-        else [:body .car :body .cdr .car cond/expend-if-then
-              'else tail-cons
-              :body .cdr .cdr recur tail-cons]))
+        else
+        [:body .car :body .cdr .car cond/expend-if-then
+         'else tail-cons
+         :body .cdr .cdr recur tail-cons]))
+
+    (+jojo cond/miss-match-report
+      "- (cond) miss match" string-write newline)
 
     (note
       (+jojo cond/expend-if-then (-> :question :answer -- sexp)
@@ -721,11 +726,15 @@
     (+jojo case/expend-rest (-> :body -- sexp)
       (cond
         [:body list-length 2 eq?]
-        [:body .car :body .cdr .car case/expend-if-then]
+        [:body .car :body .cdr .car case/expend-if-then
+         '(else "- (case) miss match" string-write newline
+                debug)
+         list-append]
 
-        else [:body .car :body .cdr .car case/expend-if-then
-              'else tail-cons
-              :body .cdr .cdr recur tail-cons]))
+        else
+        [:body .car :body .cdr .car case/expend-if-then
+         `(else (@ :body .cdr .cdr recur))
+         list-append]))
 
     (+jojo case/expend-if-then (-> :tags :answer -- sexp)
       (cond [:tags 'else eq?]
@@ -744,7 +753,7 @@
             else [:tag1 :tag2 eq?]))
     #+end_src
 
-* [test]
+* [test] syntax
 
 *** (list)
 
@@ -891,6 +900,157 @@
         (assert (list 1 2 3 4 5) list-length/case 5 eq?)))
     #+end_src
 
+* monad
+
+*** [note] bind and compose can implement each ohter
+
+    #+begin_src jojo
+    (note
+
+      (+jojo bind
+        (-> (: :1m [:<1> <monad>])
+            (: :1-2m (-> :<1> -- :<2> <monad>))
+         -- (: :2m [:<2> <monad>]))
+        dummy {drop :1m} :1-2m compose apply)
+
+      (+jojo compose
+        (-> (: :0-1m (-> :<0> -- :<1> <monad>))
+            (: :1-2m (-> :<1> -- :<2> <monad>))
+         -- (: :0-2m (-> :<0> -- :<2> <monad>)))
+        {:0-1m apply :1-2m bind}))
+    #+end_src
+
+*** maybe monad
+
+    #+begin_src jojo
+    (+data <nothing>)
+    (+data <just> .v)
+
+    (+jojo return-maybe just)
+
+    (+jojo bind-maybe (-> :m :v->m -- maybe)
+      (case :m
+        <nothing> nothing
+        <just> [:m .v :v->m apply]))
+    #+end_src
+
+*** >< list monad
+
+    #+begin_src jojo
+    (note
+      (+jojo return-list)
+      (+jojo bind-list))
+    #+end_src
+
+* [test] monad
+
+*** tree
+
+    #+begin_src jojo
+    (+data <leaf> .v)
+    (+data <node> .l .r)
+    #+end_src
+
+*** tree-write
+
+    #+begin_src jojo
+    (+jojo tree-write (-> :tree :fun --)
+      (case :tree
+        <leaf> [:tree .v :fun apply "leaf" string-write space]
+        <node> [:tree .l :fun recur
+                :tree .r :fun recur "node" string-write space]))
+    #+end_src
+
+*** tree-map
+
+    #+begin_src jojo
+    (+jojo tree-map (-> :tree :fun -- tree)
+      (case :tree
+        <leaf> [:tree .v :fun apply leaf]
+        <node> [:tree .l :fun recur
+                :tree .r :fun recur node]))
+    #+end_src
+
+*** [test] tree
+
+    #+begin_src jojo
+    (test
+
+      (+jojo tree-1
+        1 leaf 2 leaf node
+        3 leaf 4 leaf node
+        5 leaf node
+        node)
+
+      (run tree-1
+        {100 add} tree-map
+        {int-write space} tree-write))
+    #+end_src
+
+*** [test] tree-zip -- maybe monad
+
+    #+begin_src jojo
+    (test
+
+      (+jojo tree-zip (-> :t1 :t2 -- tree maybe)
+        (case [:t1 :t2]
+          [<leaf> <leaf>] [:t1 .v :t2 .v cons leaf return-maybe]
+          [<node> <node>] (let-bind bind-maybe
+                            :l [:t1 .l :t2 .l tree-zip]
+                            :r [:t1 .r :t2 .r tree-zip]
+                            [:l :r node return-maybe])
+          else nothing))
+
+      (+jojo maybe-write (-> :m :f --)
+        (case :m
+          <nothing> ['nothing jo-write space]
+          <just> [:m .v :f apply 'just jo-write space]))
+
+      (+jojo tree-maybe-write
+        {{dup .cdr int-write space
+          .car int-write space
+          "cons" string-write space}
+         tree-write}
+        maybe-write)
+
+      (+jojo tree-2
+        1 leaf 2 leaf node
+        3 leaf 4 leaf node
+        5 leaf node
+        node)
+
+      (run tree-2 dup
+        tree-zip tree-maybe-write newline)
+
+      (run tree-2 1 leaf
+        tree-zip tree-maybe-write newline))
+    #+end_src
+
+*** [test] number-tree -- intrinsic state monad
+
+    #+begin_src jojo
+    (test
+
+      (+jojo number-tree (-> number, :tree -- number, tree)
+        (case :tree
+          <leaf> [dup inc swap leaf]
+          <node> [:tree .l recur :l!
+                  :tree .r recur :r!
+                  :l :r node]))
+
+      (+jojo tree-3
+        "1" leaf "2" leaf node
+        "3" leaf "4" leaf node
+        "5" leaf node
+        node)
+
+      (run
+        tree-3
+        0 swap number-tree
+        swap drop
+        {int-write space} tree-write newline))
+    #+end_src
+
 * the-story-begin
 
   #+begin_src jojo
@@ -898,7 +1058,8 @@
     core-flag-off
     test-flag-off
     repl-flag-on
+    print-data-stack
     terminal-input-stack repl)
 
-  (run print-data-stack the-story-begin)
+  (run the-story-begin)
   #+end_src
