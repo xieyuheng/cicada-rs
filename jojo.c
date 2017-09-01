@@ -3450,6 +3450,21 @@
       free(tmp);
       ds_push(TAG_JO, jo);
     }
+    bool underscore_string_p(char* str) {
+      if (*str == '\0') {
+        return true;
+      }
+      else if (*str != '_') {
+        return false;
+      }
+      else {
+        return underscore_string_p(str++);
+      }
+    }
+    void p_underscore_jo_p() {
+      struct dp a = ds_pop();
+      ds_push(TAG_BOOL, underscore_string_p(jo2str(a.d)));
+    }
     void expose_jo() {
       plus_prim("round-bar",    p_round_bar);
       plus_prim("round-ket",    p_round_ket);
@@ -3476,6 +3491,8 @@
       plus_prim("tag-jo?",       p_tag_jo_p);
 
       plus_prim("local-jo->set-local-jo", p_get_local_jo_to_set_local_jo);
+
+      plus_prim("underscore-jo?",       p_underscore_jo_p);
     }
     void p_compiling_stack_tos() {
       ds_push(TAG_ADDRESS, tos(compiling_stack));

@@ -425,14 +425,17 @@
       (cond [:tags 'else eq?]
             `(if true
                  then drop (@ :answer))
-
             [:tags cons?]
-            `(if dup (quote (@ :tags .cdr)) {eq?} list-eqv?
+            `(if dup (quote (@ :tags .cdr)) {case/match?} list-eqv?
                  then drop (@ :answer))
-
             else
-            `(if dup .car (quote (@ :tags)) eq?
+            `(if dup .car (quote (@ :tags)) case/match?
                  then drop (@ :answer))))
+
+    (+jojo case/match? (-> :tag1 :tag2 -- <bool>)
+      (cond [:tag1 underscore-jo?] [true]
+            [:tag2 underscore-jo?] [true]
+            else [:tag1 :tag2 eq?]))
     (test
       (run
         (assert
@@ -530,12 +533,12 @@
         (assert
           `(((@ `(((@ 1)))))) .car .car .car .car
           1 eq?)))
-    (note
+    (test
       (+jojo list-length/case
         :list!
-        (case [:list :list]
-          [<null> <null>] 0
-          [<cons> <cons>] [:list .cdr recur inc]))
+        (case :list
+          <null> 0
+          <cons> [:list .cdr recur inc]))
       (run
         (assert (list 1 2 3 4 5) list-length/case 5 eq?)))
   (+jojo the-story-begin

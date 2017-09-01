@@ -51,44 +51,14 @@
     <nothing> nothing
     <just> [:m .v :v->m apply]))
 
-(note
-  (+jojo tree-zip (-> :t1 :t2 -- tree maybe)
-    (cond
-      [:t1 leaf? :t2 leaf? and]
-      [:t1 .v :t2 .v cons leaf return-maybe]
-
-      [:t1 node? :t2 node? and]
-      [:t1 .l :t2 .l tree-zip
-       {:l! :t1 .r :t2 .r tree-zip
-        {:r! :l :r node return-maybe}
-        bind-maybe}
-       bind-maybe]
-
-      else nothing)))
-
-(note
-  (+jojo tree-zip (-> :t1 :t2 -- tree maybe)
-    (cond
-      [:t1 leaf? :t2 leaf? and]
-      [:t1 .v :t2 .v cons leaf return-maybe]
-
-      [:t1 node? :t2 node? and]
-      (let-bind bind-maybe
-        :l [:t1 .l :t2 .l tree-zip]
-        :r [:t1 .r :t2 .r tree-zip]
-        [:l :r node return-maybe])
-
-      else nothing)))
-
 (+jojo tree-zip (-> :t1 :t2 -- tree maybe)
   (case [:t1 :t2]
-    [<leaf> <leaf>] [:t1 .v :t2 .v cons leaf return-maybe end]
-    [<node> <node>] [(let-bind bind-maybe
-                       :l [:t1 .l :t2 .l tree-zip]
-                       :r [:t1 .r :t2 .r tree-zip]
-                       [:l :r node return-maybe])
-                     end])
-  nothing)
+    [<leaf> <leaf>] [:t1 .v :t2 .v cons leaf return-maybe]
+    [<node> <node>] (let-bind bind-maybe
+                      :l [:t1 .l :t2 .l tree-zip]
+                      :r [:t1 .r :t2 .r tree-zip]
+                      [:l :r node return-maybe])
+    else nothing))
 
 (+jojo maybe-write (-> :m :f --)
   (case :m

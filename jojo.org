@@ -5102,6 +5102,31 @@
     }
     #+end_src
 
+*** underscore_string_p
+
+    #+begin_src c
+    bool underscore_string_p(char* str) {
+      if (*str == '\0') {
+        return true;
+      }
+      else if (*str != '_') {
+        return false;
+      }
+      else {
+        return underscore_string_p(str++);
+      }
+    }
+    #+end_src
+
+*** p_underscore_jo_p
+
+    #+begin_src c
+    void p_underscore_jo_p() {
+      struct dp a = ds_pop();
+      ds_push(TAG_BOOL, underscore_string_p(jo2str(a.d)));
+    }
+    #+end_src
+
 *** expose_jo
 
     #+begin_src c
@@ -5131,6 +5156,8 @@
       plus_prim("tag-jo?",       p_tag_jo_p);
 
       plus_prim("local-jo->set-local-jo", p_get_local_jo_to_set_local_jo);
+
+      plus_prim("underscore-jo?",       p_underscore_jo_p);
     }
     #+end_src
 
