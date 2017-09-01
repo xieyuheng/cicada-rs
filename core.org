@@ -4,26 +4,13 @@
 
 * [todo-stack]
 
-*** little syntax check for (cond) (case) (+gene) (+disp)
 
-*** little syntax check for (quote) (partquote)
 
 *** about monad
 
     - learn more about monad by
       1. inline monads
       2. uncurry functions
-
-*** how to test io functions ?
-
-    - with-output-to-string ?
-
-*** top level keywords such as (run) can not be nested
-
-    - (run (run 1)) is not equal to
-      '('(1) run) run
-
-*** use EOPL to test the language
 
 *** dynamic scope
 
@@ -32,6 +19,12 @@
 
     - function with effect on tos of global stack
       can be replaced by dynamic scoped local
+
+*** how to test io functions ?
+
+    - with-output-to-string ?
+
+*** use EOPL to test the language
 
 *** pp -- pretty-print
 
@@ -55,10 +48,9 @@
 * flag
 
   #+begin_src jojo
-  (run
-    core-flag-on
-    test-flag-on
-    repl-flag-off)
+  core-flag-on
+  test-flag-on
+  repl-flag-off
   #+end_src
 
 * list
@@ -310,12 +302,8 @@
 
     (+jojo repl/loop
       (if has-jo? not then end)
-      read-jo :jo!
-      (if :jo round-bar eq? then
-          read-jo
-          round-bar jo-unread read-sexp
-          (note (-> sexp list -- [compiling-stack]))
-          swap jo-apply)
+      read-sexp null cons
+      compile-jojo apply
       (if repl-flag then print-data-stack)
       recur)
     #+end_src
@@ -324,6 +312,11 @@
 
     #+begin_src jojo
     (+jojo compile-jojo (-> sexp list -- <jojo>)
+      compiling-stack-tos :address!
+      compile-jojo/help jojo-copy
+      compiling-stack-drop :address compiling-stack-push)
+
+    (+jojo compile-jojo/help (-> sexp list -- <jojo>)
       compiling-stack-tos
       swap sexp-list-compile
       emit-jojo-end
@@ -461,7 +454,7 @@
 
     #+begin_src jojo
     (+jojo core-clo
-      compile-jojo-copy emit-lit
+      compile-jojo emit-lit
       'current-local-env jo-emit
       'closure jo-emit)
     #+end_src
@@ -513,16 +506,6 @@
       'begin swap cons)
     #+end_src
 
-*** compile-jojo-copy
-
-    #+begin_src jojo
-    (+jojo compile-jojo-copy (-> sexp list -- <jojo>)
-      compiling-stack-tos :address!
-      compile-jojo jojo-copy
-      compiling-stack-drop
-      :address compiling-stack-push)
-    #+end_src
-
 *** (+data)
 
     #+begin_src jojo
@@ -537,7 +520,9 @@
       {field-jo?} list-filter
       {jo-emit} list-for-each
       emit-zero
-      :address :body .car name-bind-data)
+      :address cells-dup :new-address!
+      compiling-stack-drop :address compiling-stack-push
+      :new-address :body .car name-bind-data)
     #+end_src
 
 *** (+gene)
@@ -567,9 +552,10 @@
       compiling-stack-tos :address-of-tags!
       {jo-emit} list-for-each
       emit-zero
-
-      :rest-body compile-jojo-copy
-      :address-of-tags
+      :address-of-tags cells-dup :new-address-of-tags!
+      compiling-stack-drop :address-of-tags compiling-stack-push
+      :rest-body compile-jojo
+      :new-address-of-tags
       :body .car
       name-bind-disp-to-jojo)
     #+end_src
@@ -587,14 +573,13 @@
 *** run new repl
 
     #+begin_src jojo
-    (run reading-stack-tos repl)
+    reading-stack-tos repl
     #+end_src
 
 *** redefine new keywords
 
     #+begin_src jojo
     (+jojo note drop)
-    (+jojo run compile-jojo apply)
 
     (+jojo begin sexp-list-compile)
 
@@ -665,11 +650,8 @@
 *** (test)
 
     #+begin_src jojo
-    (+jojo test/eval (-> :sexp --)
-      (if :sexp cons? then :sexp .cdr :sexp .car jo-apply))
-
     (+jojo test (-> :body --)
-      (if test-flag then :body {test/eval} list-for-each))
+      (if test-flag then :body begin))
     #+end_src
 
 *** (let-bind) -- moand interface
@@ -759,44 +741,43 @@
 
     #+begin_src jojo
     (test
-      (run
-        (assert
-          mark 0 1 2 3 4 collect
-          array->list
-          (list 0 1 2 3 4)
-          {eq?} list-eqv?)
-        (assert
-          (list 0 1 2 3 4)
-          (list 5 6 7 8 9)
-          list-append
-          (list 0 1 2 3 4 5 6 7 8 9)
-          {eq?} list-eqv?)
-        (assert
-          (list 0 1 2 3 4 5 6 7 8 9)
-          {5 gteq?} list-left
-          (list 0 1 2 3 4)
-          {eq?} list-eqv?)
-        (assert
-          (list 0 1 2 3 4 5 6 7 8 9)
-          {5 gteq?} list-split
-          swap (list 0 1 2 3 4) {eq?} list-eqv?
-          swap (list 5 6 7 8 9) {eq?} list-eqv?
-          and)
-        (assert
-          (list 0 1 2 3 4 5 6 7 8 9)
-          {inc} list-map
-          (list 1 2 3 4 5 6 7 8 9 10)
-          {eq?} list-eqv?)
-        (assert
-          (list 0 1 2 3 4 5 6 7 8 9)
-          {2 mod 0 eq?} list-filter
-          (list 0 2 4 6 8)
-          {eq?} list-eqv?)
-        (assert
-          (list 0 1 2 3 4 5 6 7 8 9)
-          list-reverse
-          (list 9 8 7 6 5 4 3 2 1 0)
-          {eq?} list-eqv?)))
+      (assert
+        mark 0 1 2 3 4 collect
+        array->list
+        (list 0 1 2 3 4)
+        {eq?} list-eqv?)
+      (assert
+        (list 0 1 2 3 4)
+        (list 5 6 7 8 9)
+        list-append
+        (list 0 1 2 3 4 5 6 7 8 9)
+        {eq?} list-eqv?)
+      (assert
+        (list 0 1 2 3 4 5 6 7 8 9)
+        {5 gteq?} list-left
+        (list 0 1 2 3 4)
+        {eq?} list-eqv?)
+      (assert
+        (list 0 1 2 3 4 5 6 7 8 9)
+        {5 gteq?} list-split
+        swap (list 0 1 2 3 4) {eq?} list-eqv?
+        swap (list 5 6 7 8 9) {eq?} list-eqv?
+        and)
+      (assert
+        (list 0 1 2 3 4 5 6 7 8 9)
+        {inc} list-map
+        (list 1 2 3 4 5 6 7 8 9 10)
+        {eq?} list-eqv?)
+      (assert
+        (list 0 1 2 3 4 5 6 7 8 9)
+        {2 mod 0 eq?} list-filter
+        (list 0 2 4 6 8)
+        {eq?} list-eqv?)
+      (assert
+        (list 0 1 2 3 4 5 6 7 8 9)
+        list-reverse
+        (list 9 8 7 6 5 4 3 2 1 0)
+        {eq?} list-eqv?))
     #+end_src
 
 *** (+jojo)
@@ -804,8 +785,7 @@
     #+begin_src jojo
     (test
       (+jojo square dup mul)
-      (run
-        (assert 2 square 4 eq?)))
+      (assert 2 square 4 eq?))
     #+end_src
 
 *** (cond)
@@ -817,18 +797,7 @@
         (cond
           [:list null?] [0]
           else [:list .cdr recur inc]))
-      (run
-        (assert (list 1 2 3 4 5) list-length/cond 5 eq?)))
-    #+end_src
-
-*** (->)
-
-    #+begin_src jojo
-    (test
-      (run
-        1 2 (-> :x :y --)
-        (assert :x 1 eq?)
-        (assert :y 2 eq?)))
+      (assert (list 1 2 3 4 5) list-length/cond 5 eq?))
     #+end_src
 
 *** (clo)
@@ -837,10 +806,9 @@
     (test
       (+jojo com (-> :m1 :m2 -- jojo)
         {:m1 apply :m2 apply})
-      (run
-        (assert {1} {2} com apply add 3 eq?)
-        (assert {1} {2} com {3} com apply add add 6 eq?)
-        (assert {1} {2} {3} com com apply add add 6 eq?)))
+      (assert {1} {2} com apply add 3 eq?)
+      (assert {1} {2} com {3} com apply add add 6 eq?)
+      (assert {1} {2} {3} com com apply add add 6 eq?))
     #+end_src
 
 *** (+gene) & (+disp)
@@ -853,11 +821,10 @@
       (+disp add-two (-> <int> <int> --) add)
       (+disp add-two (-> <string> <string> --)
         string-length swap string-length add)
-      (run
-        (assert "123" 3 add-two 6 eq?)
-        (assert  3 "123" add-two 6 eq?)
-        (assert  3 3 add-two 6 eq?)
-        (assert  "123" "123" add-two 6 eq?)))
+      (assert "123" 3 add-two 6 eq?)
+      (assert  3 "123" add-two 6 eq?)
+      (assert  3 3 add-two 6 eq?)
+      (assert  "123" "123" add-two 6 eq?))
     #+end_src
 
 *** (partquote)
@@ -866,25 +833,24 @@
     (test
       (+jojo one-two-three 'one 'two 'three)
       (+jojo one-two-three-list '(one two three))
-      (run
-        (assert
-          `(1 2 3)
-          '(1 2 3)
-          {eq?} list-eqv?)
-        (assert
-          `(1 2 3 (@ one-two-three) 1 2 3)
-          '(1 2 3 one two three 1 2 3)
-          {eq?} list-eqv?)
-        (assert
-          `(1 2 3 (@ one-two-three-list list-spread) 1 2 3)
-          '(1 2 3 one two three 1 2 3)
-          {eq?} list-eqv?)
-        (assert
-          `(((@ 1))) .car .car
-          1 eq?)
-        (assert
-          `(((@ `(((@ 1)))))) .car .car .car .car
-          1 eq?)))
+      (assert
+        `(1 2 3)
+        '(1 2 3)
+        {eq?} list-eqv?)
+      (assert
+        `(1 2 3 (@ one-two-three) 1 2 3)
+        '(1 2 3 one two three 1 2 3)
+        {eq?} list-eqv?)
+      (assert
+        `(1 2 3 (@ one-two-three-list list-spread) 1 2 3)
+        '(1 2 3 one two three 1 2 3)
+        {eq?} list-eqv?)
+      (assert
+        `(((@ 1))) .car .car
+        1 eq?)
+      (assert
+        `(((@ `(((@ 1)))))) .car .car .car .car
+        1 eq?))
     #+end_src
 
 *** (case)
@@ -896,8 +862,7 @@
         (case :list
           <null> 0
           <cons> [:list .cdr recur inc]))
-      (run
-        (assert (list 1 2 3 4 5) list-length/case 5 eq?)))
+      (assert (list 1 2 3 4 5) list-length/case 5 eq?))
     #+end_src
 
 * monad
@@ -944,37 +909,25 @@
 
 * [test] monad
 
-*** tree
-
-    #+begin_src jojo
-    (+data <leaf> .v)
-    (+data <node> .l .r)
-    #+end_src
-
-*** tree-write
-
-    #+begin_src jojo
-    (+jojo tree-write (-> :tree :fun --)
-      (case :tree
-        <leaf> [:tree .v :fun apply "leaf" string-write space]
-        <node> [:tree .l :fun recur
-                :tree .r :fun recur "node" string-write space]))
-    #+end_src
-
-*** tree-map
-
-    #+begin_src jojo
-    (+jojo tree-map (-> :tree :fun -- tree)
-      (case :tree
-        <leaf> [:tree .v :fun apply leaf]
-        <node> [:tree .l :fun recur
-                :tree .r :fun recur node]))
-    #+end_src
-
-*** [test] tree
+*** tree & tree-map & tree-write
 
     #+begin_src jojo
     (test
+
+      (+data <leaf> .v)
+      (+data <node> .l .r)
+
+      (+jojo tree-map (-> :tree :fun -- tree)
+        (case :tree
+          <leaf> [:tree .v :fun apply leaf]
+          <node> [:tree .l :fun recur
+                  :tree .r :fun recur node]))
+
+      (+jojo tree-write (-> :tree :fun --)
+        (case :tree
+          <leaf> [:tree .v :fun apply "leaf" string-write space]
+          <node> [:tree .l :fun recur
+                  :tree .r :fun recur "node" string-write space]))
 
       (+jojo tree-1
         1 leaf 2 leaf node
@@ -982,12 +935,12 @@
         5 leaf node
         node)
 
-      (run tree-1
-        {100 add} tree-map
-        {int-write space} tree-write))
+      tree-1
+      {100 add} tree-map
+      {int-write space} tree-write)
     #+end_src
 
-*** [test] tree-zip -- maybe monad
+*** tree-zip -- maybe monad
 
     #+begin_src jojo
     (test
@@ -1019,14 +972,14 @@
         5 leaf node
         node)
 
-      (run tree-2 dup
-        tree-zip tree-maybe-write newline)
+      tree-2 dup
+      tree-zip tree-maybe-write newline
 
-      (run tree-2 1 leaf
-        tree-zip tree-maybe-write newline))
+      tree-2 1 leaf
+      tree-zip tree-maybe-write newline)
     #+end_src
 
-*** [test] number-tree -- intrinsic state monad
+*** number-tree -- intrinsic state monad
 
     #+begin_src jojo
     (test
@@ -1044,11 +997,10 @@
         "5" leaf node
         node)
 
-      (run
-        tree-3
-        0 swap number-tree
-        swap drop
-        {int-write space} tree-write newline))
+      tree-3
+      0 swap number-tree
+      swap drop
+      {int-write space} tree-write newline)
     #+end_src
 
 * the-story-begin
@@ -1061,5 +1013,5 @@
     print-data-stack
     terminal-input-stack repl)
 
-  (run the-story-begin)
+  the-story-begin
   #+end_src

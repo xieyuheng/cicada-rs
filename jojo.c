@@ -2473,6 +2473,16 @@
     void p_compile_until_round_ket() {
       compile_until_meet_jo(ROUND_KET);
     }
+    jo_t* compile_jojo_until_ket(jo_t ket) {
+      jo_t* jojo = tos(compiling_stack);
+      compile_until_meet_jo(ket);
+      emit_jojo_end();
+      cell jojo_len = (cell*)tos(compiling_stack) - (cell*)jojo;
+      jo_t* new_jojo = array_len_dup(jojo, jojo_len);
+      drop(compiling_stack);
+      push(compiling_stack, jojo);
+      return new_jojo;
+    }
     void expose_compiler() {
 
     }
@@ -2671,17 +2681,6 @@
 
       plus_prim("recur", p_recur);
     }
-    void k_run() {
-      jo_t* jojo = tos(compiling_stack);
-
-      {
-        compile_until_meet_jo(ROUND_KET);
-        emit_jojo_end();
-      }
-
-      rs_push(jojo, TAG_JOJO, jojo, current_local_counter);
-      eval();
-    }
     bool test_flag = false;
     void p_test_flag() { ds_push(TAG_BOOL, test_flag); }
     void p_test_flag_on() { test_flag = true; }
@@ -2736,80 +2735,10 @@
     }
     void k_plus_jojo() {
       jo_t fun_name = read_jo();
-      jo_t* jojo = tos(compiling_stack);
-
-      {
-        compile_until_meet_jo(ROUND_KET);
-        emit_jojo_end();
-      }
-
+      jo_t* jojo = compile_jojo_until_ket(ROUND_KET);
       bind_name(fun_name, TAG_JOJO, jojo);
     }
-    cell k_plus_gene_count_arity_from_type() {
-      cell arity = 0;
-      while (true) {
-        jo_t jo = read_jo();
-        if (jo == str2jo("--")) {
-          k_ignore();
-          break;
-        }
-        else if (jo == ROUND_KET) {
-          break;
-        }
-        arity++;
-      }
-      return arity;
-    }
-    void k_plus_gene() {
-      jo_t gene_name = read_jo();
-      read_jo(); // drop '('
-      read_jo(); // drop '->'
-      cell arity = k_plus_gene_count_arity_from_type();
-      k_ignore();
-      plus_gene(jo2str(gene_name), arity);
-    }
-    void k_plus_disp_collect_tags_from_type(jo_t* tags) {
-      jo_t jo = read_jo();
-      if (jo == str2jo("--")) {
-        k_ignore();
-        tags[0] = 0;
-        return;
-      }
-      else if (jo == ROUND_KET) {
-        tags[0] = 0;
-        return;
-      }
-      else if (get_local_string_p(jo2str(jo))) {
-        k_plus_disp_collect_tags_from_type(tags);
-        emit(JO_INS_SET_LOCAL);
-        emit(jo);
-      }
-      else if (tag_string_p(jo2str(jo))) {
-        tags[0] = jo;
-        k_plus_disp_collect_tags_from_type(tags+1);
-      }
-      else {
-        k_plus_disp_collect_tags_from_type(tags);
-      }
-    }
-    void k_plus_disp() {
-      jo_t gene_name = read_jo();
-      jo_t tags[16];
-      read_jo(); // drop '('
-      read_jo(); // drop '->'
-
-      k_plus_disp_collect_tags_from_type(tags);
-
-      jo_t* jojo = tos(compiling_stack);
-      {
-        compile_until_meet_jo(ROUND_KET);
-        emit_jojo_end();
-      }
-      plus_disp(jo2str(gene_name), array_dup(tags), "<jojo>", jojo);
-    }
     void expose_top() {
-      plus_prim("run", k_run);
-
       plus_prim("test-flag", p_test_flag);
       plus_prim("test-flag-on", p_test_flag_on);
       plus_prim("test-flag-off", p_test_flag_off);
@@ -2817,8 +2746,6 @@
       plus_prim("->", k_arrow);
       plus_prim("+jojo", k_plus_jojo);
       plus_prim("+data", k_plus_data);
-      plus_prim("+gene", k_plus_gene);
-      plus_prim("+disp", k_plus_disp);
     }
     void data_print(jo_t tag, cell data);
 
@@ -2988,15 +2915,17 @@
         if (!has_jo_p()) {
           return;
         }
-        jo_t s = read_jo();
-        if (s == ROUND_BAR) {
-          jo_apply(read_jo());
-          if (repl_flag) {
-            p_print_ds();
-          }
-        }
-        else {
-          // loop
+        jo_t* jojo = tos(compiling_stack);
+        compile_jo(read_jo());
+        emit_jojo_end();
+        cell jojo_len = (cell*)tos(compiling_stack) - (cell*)jojo;
+        jo_t* new_jojo = array_len_dup(jojo, jojo_len);
+        drop(compiling_stack);
+        push(compiling_stack, jojo);
+        rs_push(new_jojo, TAG_JOJO, new_jojo, current_local_counter);
+        eval();
+        if (repl_flag) {
+          p_print_ds();
         }
       }
       drop(reading_stack);
@@ -3700,21 +3629,10 @@
       rs_push(jojo, TAG_CLOSURE, closure, local_counter);
     }
     void k_closure() {
-      jo_t* jojo = tos(compiling_stack);
-
-      {
-        compile_until_meet_jo(FLOWER_KET);
-        emit_jojo_end();
-      }
-
-      jo_t* new_jojo =
-        array_len_dup(jojo, (cell*)tos(compiling_stack) - (cell*)jojo);
-      drop(compiling_stack);
-      push(compiling_stack, jojo);
-
+      jo_t* jojo = compile_jojo_until_ket(FLOWER_KET);
       emit(JO_INS_LIT);
       emit(TAG_JOJO);
-      emit(new_jojo);
+      emit(jojo);
       emit(JO_CURRENT_LOCAL_ENV);
       emit(JO_CLOSURE);
     }
@@ -4165,6 +4083,10 @@
       struct class* class = a.d;
       ds_push(TAG_JO, class->class_name);
     }
+    void p_cells_dup() {
+      struct dp a = ds_pop();
+      ds_push(TAG_ADDRESS, array_dup(a.d));
+    }
     void expose_core() {
       plus_prim("core-flag", p_core_flag);
       plus_prim("core-flag-on", p_core_flag_on);
@@ -4191,6 +4113,8 @@
       plus_prim("name-bind-disp-to-jojo", p_name_bind_disp_to_jojo);
 
       plus_prim("class->tag", p_class_to_tag);
+
+      plus_prim("cells-dup", p_cells_dup);
     }
     void path_load(char* path) {
       int file = open(path, O_RDONLY);
