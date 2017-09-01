@@ -202,13 +202,21 @@
          'swap jo-emit
          'cons jo-emit]))
     (+jojo jo-compile (-> :jo --)
-      (cond [:jo int-jo?]       [:jo jo->int emit-lit]
-            [:jo local-jo?]     [:jo jo-emit-local]
-            [:jo set-local-jo?] [:jo jo-emit-set-local]
-            [:jo field-jo?]     [:jo jo-emit-field]
-            [:jo set-field-jo?] [:jo jo-emit-set-field]
-            [:jo comma eq?]     []
-            else [:jo jo-emit]))
+      (cond
+        [:jo int-jo?] [:jo jo->int emit-lit]
+
+        [:jo local-jo?]     [:jo jo-emit-local]
+        [:jo set-local-jo?] [:jo jo-emit-set-local]
+
+        [:jo dynamic-local-jo?]     [:jo jo-emit-dynamic-local]
+        [:jo set-dynamic-local-jo?] [:jo jo-emit-set-dynamic-local]
+
+        [:jo field-jo?]     [:jo jo-emit-field]
+        [:jo set-field-jo?] [:jo jo-emit-set-field]
+
+        [:jo comma eq?] []
+
+        else [:jo jo-emit]))
     (+jojo if-else-then (-> :body --)
       :body {'then eq?} list-split (-> :question :then-else)
       :then-else {'else eq?} list-split (-> :then :else)
@@ -532,6 +540,14 @@
           <null> 0
           <cons> [:list .cdr recur inc]))
       (assert (list 1 2 3 4 5) list-length/case 5 eq?))
+    (note
+      (+jojo fun-1
+        ::dynamic-local string-write newline)
+      (+jojo fun-2
+        "dynamic2" ::dynamic-local!
+        fun-1)
+      fun-2
+      (begin "dynamic1" ::dynamic-local! fun-1))
     (note
 
       (+jojo bind

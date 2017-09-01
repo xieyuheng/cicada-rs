@@ -4,12 +4,6 @@
 
 * [todo-stack]
 
-*** about monad
-
-    - learn more about monad by
-      1. inline monads
-      2. uncurry functions
-
 *** dynamic scope
 
     - a closure's dynamic scoped local
@@ -17,6 +11,12 @@
 
     - function with effect on tos of global stack
       can be replaced by dynamic scoped local
+
+*** about monad
+
+    - learn more about monad by
+      1. inline monads
+      2. uncurry functions
 
 *** how to test io functions ?
 
@@ -29,10 +29,6 @@
     - 'write' as gene
 
     - dynamic scoped local for current indentation
-
-*** about closure
-
-    - to catch unnamed data into returned closure
 
 *** module system
 
@@ -411,13 +407,21 @@
 
     #+begin_src jojo
     (+jojo jo-compile (-> :jo --)
-      (cond [:jo int-jo?]       [:jo jo->int emit-lit]
-            [:jo local-jo?]     [:jo jo-emit-local]
-            [:jo set-local-jo?] [:jo jo-emit-set-local]
-            [:jo field-jo?]     [:jo jo-emit-field]
-            [:jo set-field-jo?] [:jo jo-emit-set-field]
-            [:jo comma eq?]     []
-            else [:jo jo-emit]))
+      (cond
+        [:jo int-jo?] [:jo jo->int emit-lit]
+
+        [:jo local-jo?]     [:jo jo-emit-local]
+        [:jo set-local-jo?] [:jo jo-emit-set-local]
+
+        [:jo dynamic-local-jo?]     [:jo jo-emit-dynamic-local]
+        [:jo set-dynamic-local-jo?] [:jo jo-emit-set-dynamic-local]
+
+        [:jo field-jo?]     [:jo jo-emit-field]
+        [:jo set-field-jo?] [:jo jo-emit-set-field]
+
+        [:jo comma eq?] []
+
+        else [:jo jo-emit]))
     #+end_src
 
 *** (if)
@@ -864,6 +868,19 @@
           <null> 0
           <cons> [:list .cdr recur inc]))
       (assert (list 1 2 3 4 5) list-length/case 5 eq?))
+    #+end_src
+
+*** dynamic-local
+
+    #+begin_src jojo
+    (note
+      (+jojo fun-1
+        ::dynamic-local string-write newline)
+      (+jojo fun-2
+        "dynamic2" ::dynamic-local!
+        fun-1)
+      fun-2
+      (begin "dynamic1" ::dynamic-local! fun-1))
     #+end_src
 
 * monad

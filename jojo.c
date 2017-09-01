@@ -313,8 +313,13 @@
     jo_t COMMA;
 
     jo_t JO_INS_LIT;
+
     jo_t JO_INS_LOCAL;
     jo_t JO_INS_SET_LOCAL;
+
+    jo_t JO_INS_DYNAMIC_LOCAL;
+    jo_t JO_INS_SET_DYNAMIC_LOCAL;
+
     jo_t JO_INS_FIELD;
     jo_t JO_INS_SET_FIELD;
 
@@ -1086,14 +1091,24 @@
       cell local_data;
     };
 
-    #define LOCAL_RECORD_SIZE (32 * 1024)
+    #define LOCAL_RECORD_SIZE (16 * 1024)
     struct local local_record[LOCAL_RECORD_SIZE];
     cell current_local_counter = 0;
+    struct dynamic_local {
+      jo_t name;
+      cell dynamic_local_tag;
+      cell dynamic_local_data;
+    };
+
+    #define DYNAMIC_LOCAL_RECORD_SIZE (4 * 1024)
+    struct dynamic_local dynamic_local_record[DYNAMIC_LOCAL_RECORD_SIZE];
+    cell current_dynamic_local_counter = 0;
     struct rp {
       jo_t* j;
       jo_t  t;
       cell  d;
       cell  l;
+      cell  y;
     };
 
     struct stack* rs;
@@ -1104,10 +1119,12 @@
       p.t = pop(rs);
       p.d = pop(rs);
       p.l = pop(rs);
+      p.y = pop(rs);
       return p;
     }
 
     void rs_drop() {
+      drop(rs);
       drop(rs);
       drop(rs);
       drop(rs);
@@ -1120,6 +1137,7 @@
       p.t = stack_peek(rs, 2);
       p.d = stack_peek(rs, 3);
       p.l = stack_peek(rs, 4);
+      p.y = stack_peek(rs, 5);
       return p;
     }
 
@@ -1127,7 +1145,12 @@
       return stack_empty_p(rs);
     }
 
-    void rs_push(jo_t* jojo, jo_t tag, cell data, cell local_counter) {
+    void rs_push(jo_t* jojo,
+                 jo_t tag,
+                 cell data,
+                 cell local_counter,
+                 cell dynamic_local_counter) {
+      push(rs, dynamic_local_counter);
       push(rs, local_counter);
       push(rs, data);
       push(rs, tag);
@@ -1135,15 +1158,16 @@
     }
 
     cell rs_length() {
-      return stack_length(rs) / 4;
+      return stack_length(rs) / 5;
     }
 
     struct rp rs_ref(cell index) {
       struct rp p;
-      p.j = stack_ref(rs, index*4 + 3);
-      p.t = stack_ref(rs, index*4 + 2);
-      p.d = stack_ref(rs, index*4 + 1);
-      p.l = stack_ref(rs, index*4 + 0);
+      p.j = stack_ref(rs, index*5 + 4);
+      p.t = stack_ref(rs, index*5 + 3);
+      p.d = stack_ref(rs, index*5 + 2);
+      p.l = stack_ref(rs, index*5 + 1);
+      p.y = stack_ref(rs, index*5 + 0);
       return p;
     }
 
@@ -1924,7 +1948,11 @@
     void p_jojo_exe() {
       struct dp a = ds_pop();
       jo_t* jojo = a.d;
-      rs_push(jojo, TAG_JOJO, jojo, current_local_counter);
+      rs_push(jojo,
+              TAG_JOJO,
+              jojo,
+              current_local_counter,
+              current_dynamic_local_counter);
     }
     void p_data_constructor_exe() {
       struct dp b = ds_pop();
@@ -1992,9 +2020,10 @@
           // tail call is handled here
           rs_drop();
           current_local_counter = p.l;
+          // ><><>< current_dynamic_local_counter = p.y;
           if (jo == JO_RECUR) {
             ds_push(p.t, p.d);
-            disp_exe(JO_EXE->data, p.t);
+            disp_exe_for_jo_apply(JO_EXE->data, p.t);
           }
           else {
             jo_apply(jo);
@@ -2010,6 +2039,7 @@
       // for 'p_step' which do not handle tail call
       struct rp p = rs_pop();
       current_local_counter = p.l;
+      current_dynamic_local_counter = p.y;
     }
     void p_bye() {
       report("bye bye ^-^/\n");
@@ -2220,6 +2250,25 @@
       }
       return -1;
     }
+    void ins_local() {
+      struct rp p = rs_tos();
+      rs_inc();
+      jo_t* jojo = p.j;
+      jo_t name = jojo[0];
+
+      cell index = local_find(name);
+
+      if (index != -1) {
+        struct local lp = local_record[index];
+        ds_push(lp.local_tag, lp.local_data);
+      }
+      else {
+        report("- ins_local fatal error\n");
+        report("  name is not bound\n");
+        report("  name : %s\n", jo2str(name));
+        p_debug();
+      }
+    }
     void set_local(jo_t name, jo_t tag, cell data) {
       if (current_local_counter < LOCAL_RECORD_SIZE) {
         local_record[current_local_counter].name = name;
@@ -2246,28 +2295,93 @@
       struct dp a = ds_pop();
       set_local(name, a.t, a.d);
     }
-    void ins_local() {
+    void expose_local() {
+      plus_prim("ins/local", ins_local);
+      plus_prim("ins/set-local", ins_set_local);
+    }
+    cell dynamic_local_find(jo_t name) {
+      // return index of local_record
+      // -1 -- no found
+      cell cursor = current_dynamic_local_counter - 1;
+
+      report("- dynamic_local_find\n");
+      report("  current_dynamic_local_counter : %ld\n", current_dynamic_local_counter);
+      report("  init cursor : %ld\n", cursor);
+
+      while (cursor >= 0) {
+
+        report("  cursor : %ld\n", cursor);
+        report("  name : %s\n", jo2str(name));
+        report("  dynamic_local_record[cursor].name : %s\n",
+               jo2str(dynamic_local_record[cursor].name));
+
+        if (dynamic_local_record[cursor].name == name) {
+          return cursor;
+        }
+        else {
+          cursor--;
+        }
+      }
+      return -1;
+    }
+    void ins_dynamic_local() {
       struct rp p = rs_tos();
       rs_inc();
       jo_t* jojo = p.j;
       jo_t name = jojo[0];
 
-      cell index = local_find(name);
+      cell index = dynamic_local_find(name);
 
       if (index != -1) {
-        struct local lp = local_record[index];
-        ds_push(lp.local_tag, lp.local_data);
+        struct dynamic_local lp = dynamic_local_record[index];
+        ds_push(lp.dynamic_local_tag,
+                lp.dynamic_local_data);
       }
       else {
-        report("- ins_local fatal error\n");
+        report("- ins_dynamic_local fatal error\n");
         report("  name is not bound\n");
         report("  name : %s\n", jo2str(name));
         p_debug();
       }
     }
-    void expose_local() {
-      plus_prim("ins/local", ins_local);
-      plus_prim("ins/set-local", ins_set_local);
+    void set_dynamic_local(jo_t name, jo_t tag, cell data) {
+      if (current_dynamic_local_counter < DYNAMIC_LOCAL_RECORD_SIZE) {
+        dynamic_local_record[current_dynamic_local_counter].name = name;
+        dynamic_local_record[current_dynamic_local_counter].dynamic_local_tag = tag;
+        dynamic_local_record[current_dynamic_local_counter].dynamic_local_data = data;
+
+        report("- set_dynamic_local\n");
+        report("  > %s\n", jo2str(dynamic_local_record[current_dynamic_local_counter].name));
+        report("  > %s\n", jo2str(dynamic_local_record[current_dynamic_local_counter].dynamic_local_tag));
+        report("  > %ld\n", dynamic_local_record[current_dynamic_local_counter].dynamic_local_data);
+
+        current_dynamic_local_counter++;
+
+        report("  > %ld\n", current_dynamic_local_counter);
+      }
+      else {
+        report("- set_dynamic_local fail\n");
+        report("  dynamic_local_record is filled\n");
+        report("  DYNAMIC_LOCAL_RECORD_SIZE : %ld\n",
+               DYNAMIC_LOCAL_RECORD_SIZE);
+        report("  name : %s\n", jo2str(name));
+        report("  tag : %s\n", jo2str(tag));
+        report("  data : %ld\n", data);
+        p_debug();
+      }
+    }
+    void ins_set_dynamic_local() {
+      struct rp p = rs_tos();
+      rs_inc();
+      jo_t* jojo = p.j;
+      jo_t name = jojo[0];
+
+      struct dp a = ds_pop();
+      set_dynamic_local(name, a.t, a.d);
+    }
+    void expose_dynamic_local() {
+      plus_prim("ins/dynamic-local", ins_dynamic_local);
+      plus_prim("ins/set-dynamic-local", ins_set_dynamic_local);
     }
     struct stack* compiling_stack; // of jojo
 
@@ -2285,8 +2399,11 @@
       emit(0);
     }
       // :local
-      bool get_local_string_p(char* str) {
+      bool local_string_p(char* str) {
         if (str[0] != ':') {
+          return false;
+        }
+        else if (string_count_member(str, ':') != 1) {
           return false;
         }
         else if (string_last_byte(str) == '!') {
@@ -2304,6 +2421,9 @@
         if (str[0] != ':') {
           return false;
         }
+        else if (string_count_member(str, ':') != 1) {
+          return false;
+        }
         else if (string_last_byte(str) != '!') {
           return false;
         }
@@ -2315,7 +2435,7 @@
         }
       }
       // .field
-      bool get_field_string_p(char* str) {
+      bool field_string_p(char* str) {
         if (str[0] != '.') {
           return false;
         }
@@ -2401,7 +2521,7 @@
         compile_string();
       }
       // :local
-      else if (get_local_string_p(str)) {
+      else if (local_string_p(str)) {
         emit(JO_INS_LOCAL);
         emit(jo);
       }
@@ -2413,7 +2533,7 @@
         free(tmp);
       }
       // .field
-      else if (get_field_string_p(str)) {
+      else if (field_string_p(str)) {
         emit(JO_INS_FIELD);
         emit(jo);
       }
@@ -2510,7 +2630,7 @@
       struct rp p = rs_pop();
       jo_t* jojo = p.j;
       cell offset = jojo[0];
-      rs_push(jojo + offset, p.t, p.d, p.l);
+      rs_push(jojo + offset, p.t, p.d, p.l, p.y);
     }
     void ins_jz() {
       struct rp p = rs_tos();
@@ -2520,7 +2640,7 @@
       struct dp a = ds_pop();
       if (a.t == TAG_BOOL && a.d == false) {
         struct rp q = rs_pop();
-        rs_push(jojo + offset, p.t, p.d, q.l);
+        rs_push(jojo + offset, p.t, p.d, q.l, q.y);
       }
     }
     //// if then
@@ -2724,7 +2844,7 @@
       else if (jo == ROUND_KET) {
         return;
       }
-      else if (get_local_string_p(jo2str(jo))) {
+      else if (local_string_p(jo2str(jo))) {
         k_arrow();
         emit(JO_INS_SET_LOCAL);
         emit(jo);
@@ -2842,12 +2962,14 @@
           jojo++;
         }
         else if (jojo[0] == JO_INS_LOCAL ||
+                 jojo[0] == JO_INS_DYNAMIC_LOCAL ||
                  jojo[0] == JO_INS_FIELD) {
           report("%s ", jo2str(jojo[1]));
           jojo++;
           jojo++;
         }
         else if (jojo[0] == JO_INS_SET_LOCAL ||
+                 jojo[0] == JO_INS_SET_DYNAMIC_LOCAL ||
                  jojo[0] == JO_INS_SET_FIELD) {
           report("%s! ", jo2str(jojo[1]));
           jojo++;
@@ -2922,7 +3044,11 @@
         jo_t* new_jojo = array_len_dup(jojo, jojo_len);
         drop(compiling_stack);
         push(compiling_stack, jojo);
-        rs_push(new_jojo, TAG_JOJO, new_jojo, current_local_counter);
+        rs_push(new_jojo,
+                TAG_JOJO,
+                new_jojo,
+                current_local_counter,
+                current_dynamic_local_counter);
         eval();
         if (repl_flag) {
           p_print_ds();
@@ -3352,7 +3478,7 @@
     }
     void p_local_jo_p() {
       struct dp a = ds_pop();
-      ds_push(TAG_BOOL, get_local_string_p(jo2str(a.d)));
+      ds_push(TAG_BOOL, local_string_p(jo2str(a.d)));
     }
     void p_set_local_jo_p() {
       struct dp a = ds_pop();
@@ -3360,7 +3486,7 @@
     }
     void p_field_jo_p() {
       struct dp a = ds_pop();
-      ds_push(TAG_BOOL, get_field_string_p(jo2str(a.d)));
+      ds_push(TAG_BOOL, field_string_p(jo2str(a.d)));
     }
     void p_set_field_jo_p() {
       struct dp a = ds_pop();
@@ -3369,17 +3495,6 @@
     void p_tag_jo_p() {
       struct dp a = ds_pop();
       ds_push(TAG_BOOL, tag_string_p(jo2str(a.d)));
-    }
-    void p_get_local_jo_to_set_local_jo() {
-      struct dp a = ds_pop();
-      char* str = jo2str(a.d);
-      char* tmp = (char*)malloc(strlen(str) +1);
-      tmp[0] = '\0';
-      strcat(tmp, str);
-      strcat(tmp, "!");
-      jo_t jo = str2jo(tmp);
-      free(tmp);
-      ds_push(TAG_JO, jo);
     }
     bool underscore_string_p(char* str) {
       if (*str == '\0') {
@@ -3395,6 +3510,47 @@
     void p_underscore_jo_p() {
       struct dp a = ds_pop();
       ds_push(TAG_BOOL, underscore_string_p(jo2str(a.d)));
+    }
+    void p_get_local_jo_to_set_local_jo() {
+      struct dp a = ds_pop();
+      char* str = jo2str(a.d);
+      char* tmp = (char*)malloc(strlen(str) +1);
+      tmp[0] = '\0';
+      strcat(tmp, str);
+      strcat(tmp, "!");
+      jo_t jo = str2jo(tmp);
+      free(tmp);
+      ds_push(TAG_JO, jo);
+    }
+    bool dynamic_local_string_p(char* str) {
+      if (strlen(str) <= 2) {
+        return false;
+      }
+      else if (str[0] != ':') {
+        return false;
+      }
+      else {
+        return local_string_p(str+1);
+      }
+    }
+    bool set_dynamic_local_string_p(char* str) {
+      if (strlen(str) <= 2) {
+        return false;
+      }
+      else if (str[0] != ':') {
+        return false;
+      }
+      else {
+        return set_local_string_p(str+1);
+      }
+    }
+    void p_dynamic_local_jo_p() {
+      struct dp a = ds_pop();
+      ds_push(TAG_BOOL, dynamic_local_string_p(jo2str(a.d)));
+    }
+    void p_set_dynamic_local_jo_p() {
+      struct dp a = ds_pop();
+      ds_push(TAG_BOOL, set_dynamic_local_string_p(jo2str(a.d)));
     }
     void expose_jo() {
       plus_prim("round-bar",    p_round_bar);
@@ -3421,9 +3577,12 @@
       plus_prim("set-field-jo?", p_set_field_jo_p);
       plus_prim("tag-jo?",       p_tag_jo_p);
 
-      plus_prim("local-jo->set-local-jo", p_get_local_jo_to_set_local_jo);
-
       plus_prim("underscore-jo?",       p_underscore_jo_p);
+
+      plus_prim("dynamic-local-jo?",    p_dynamic_local_jo_p);
+      plus_prim("set-dynamic-local-jo?",    p_set_dynamic_local_jo_p);
+
+      plus_prim("local-jo->set-local-jo", p_get_local_jo_to_set_local_jo);
     }
     void p_compiling_stack_tos() {
       ds_push(TAG_ADDRESS, tos(compiling_stack));
@@ -3626,7 +3785,11 @@
 
       cell local_counter = current_local_counter;
       set_local_record(lr);
-      rs_push(jojo, TAG_CLOSURE, closure, local_counter);
+      rs_push(jojo,
+              TAG_CLOSURE,
+              closure,
+              local_counter,
+              current_dynamic_local_counter);
     }
     void k_closure() {
       jo_t* jojo = compile_jojo_until_ket(FLOWER_KET);
@@ -4032,6 +4195,19 @@
       emit(str2jo(tmp));
       free(tmp);
     }
+    void p_jo_emit_dynamic_local() {
+      struct dp a = ds_pop();
+      emit(JO_INS_DYNAMIC_LOCAL);
+      emit(a.d);
+    }
+    void p_jo_emit_set_dynamic_local() {
+      struct dp a = ds_pop();
+      char* str = jo2str(a.d);
+      emit(JO_INS_SET_DYNAMIC_LOCAL);
+      char* tmp = substring(str, 0, strlen(str) -1);
+      emit(str2jo(tmp));
+      free(tmp);
+    }
     void p_jo_emit_field() {
       struct dp a = ds_pop();
       emit(JO_INS_FIELD);
@@ -4040,8 +4216,8 @@
     void p_jo_emit_set_field() {
       struct dp a = ds_pop();
       char* str = jo2str(a.d);
-      emit(JO_INS_SET_FIELD);
       char* tmp = substring(str, 0, strlen(str) -1);
+      emit(JO_INS_SET_FIELD);
       emit(str2jo(tmp));
       free(tmp);
     }
@@ -4101,6 +4277,10 @@
 
       plus_prim("jo-emit-local",     p_jo_emit_local);
       plus_prim("jo-emit-set-local", p_jo_emit_set_local);
+
+      plus_prim("jo-emit-dynamic-local", p_jo_emit_dynamic_local);
+      plus_prim("jo-emit-set-dynamic-local", p_jo_emit_set_dynamic_local);
+
       plus_prim("jo-emit-field",     p_jo_emit_field);
       plus_prim("jo-emit-set-field", p_jo_emit_set_field);
 
@@ -4169,8 +4349,13 @@
       COMMA        =   str2jo(",");
 
       JO_INS_LIT       = str2jo("ins/lit");
+
       JO_INS_LOCAL     = str2jo("ins/local");
       JO_INS_SET_LOCAL = str2jo("ins/set-local");
+
+      JO_INS_DYNAMIC_LOCAL = str2jo("ins/dynamic-local");
+      JO_INS_SET_DYNAMIC_LOCAL = str2jo("ins/set-dynamic-local");
+
       JO_INS_FIELD     = str2jo("ins/field");
       JO_INS_SET_FIELD = str2jo("ins/set-field");
 
@@ -4202,7 +4387,7 @@
       JO_LOCAL_IN = str2jo("local-in");
       JO_LOCAL_OUT = str2jo("local-out");
     }
-    jo_t jojo_area[1024 * 1024];
+    jo_t jojo_area[64 * 1024];
 
     void init_stacks() {
       ds = new_stack("ds");
@@ -4224,6 +4409,7 @@
       expose_rw();
       expose_io();
       expose_local();
+      expose_dynamic_local();
       expose_compiler();
       expose_control();
       expose_top();
