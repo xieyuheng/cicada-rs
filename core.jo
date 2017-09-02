@@ -540,14 +540,23 @@
           <null> 0
           <cons> [:list .cdr recur inc]))
       (assert (list 1 2 3 4 5) list-length/case 5 eq?))
-    (note
+    (test
       (+jojo fun-1
-        ::dynamic-local string-write newline)
+        ::dynamic-local)
       (+jojo fun-2
-        "dynamic2" ::dynamic-local!
-        fun-1)
-      fun-2
-      (begin "dynamic1" ::dynamic-local! fun-1))
+        'dynamic-of-fun-2 ::dynamic-local!
+        fun-1
+        nop)
+      (assert
+
+        'dynamic-of-fun-2 fun-2 eq?)
+      (assert
+        'dynamic-of-top-begin ::dynamic-local!
+        fun-2
+        fun-1
+        swap 'dynamic-of-fun-2 eq?
+        swap 'dynamic-of-top-begin eq?
+        and))
     (note
 
       (+jojo bind
@@ -652,6 +661,10 @@
       0 swap number-tree
       swap drop
       {int-write space} tree-write newline)
+    (+jojo times (-> :fun :n --)
+      (if :n 0 lteq? then end)
+      :fun apply
+      :fun :n dec recur)
   (+jojo the-story-begin
     core-flag-off
     test-flag-off

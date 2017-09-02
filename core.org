@@ -873,14 +873,22 @@
 *** dynamic-local
 
     #+begin_src jojo
-    (note
+    (test
       (+jojo fun-1
-        ::dynamic-local string-write newline)
+        ::dynamic-local)
       (+jojo fun-2
-        "dynamic2" ::dynamic-local!
-        fun-1)
-      fun-2
-      (begin "dynamic1" ::dynamic-local! fun-1))
+        'dynamic-of-fun-2 ::dynamic-local!
+        fun-1
+        nop)
+      (assert
+        'dynamic-of-fun-2 fun-2 eq?)
+      (assert
+        'dynamic-of-top-begin ::dynamic-local!
+        fun-2
+        fun-1
+        swap 'dynamic-of-fun-2 eq?
+        swap 'dynamic-of-top-begin eq?
+        and))
     #+end_src
 
 * monad
@@ -1019,6 +1027,17 @@
       0 swap number-tree
       swap drop
       {int-write space} tree-write newline)
+    #+end_src
+
+* combinator
+
+*** times
+
+    #+begin_src jojo
+    (+jojo times (-> :fun :n --)
+      (if :n 0 lteq? then end)
+      :fun apply
+      :fun :n dec recur)
     #+end_src
 
 * the-story-begin

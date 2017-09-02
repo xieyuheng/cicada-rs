@@ -2947,7 +2947,7 @@
           // tail call is handled here
           rs_drop();
           current_local_counter = p.l;
-          // ><><>< current_dynamic_local_counter = p.y;
+          current_dynamic_local_counter = p.y;
           if (jo == JO_RECUR) {
             ds_push(p.t, p.d);
             disp_exe_for_jo_apply(JO_EXE->data, p.t);
@@ -2986,12 +2986,21 @@
     }
     #+end_src
 
+*** p_nop
+
+    #+begin_src c
+    void p_nop() {
+      // do nothing
+    }
+    #+end_src
+
 *** expose_ending
 
     #+begin_src c
     void expose_ending() {
       plus_prim("end", p_end);
       plus_prim("bye", p_bye);
+      plus_prim("nop", p_nop);
     }
     #+end_src
 
@@ -3431,16 +3440,16 @@
       // -1 -- no found
       cell cursor = current_dynamic_local_counter - 1;
 
-      report("- dynamic_local_find\n");
-      report("  current_dynamic_local_counter : %ld\n", current_dynamic_local_counter);
-      report("  init cursor : %ld\n", cursor);
+      // report("- dynamic_local_find\n");
+      // report("  current_dynamic_local_counter : %ld\n", current_dynamic_local_counter);
+      // report("  init cursor : %ld\n", cursor);
 
       while (cursor >= 0) {
 
-        report("  cursor : %ld\n", cursor);
-        report("  name : %s\n", jo2str(name));
-        report("  dynamic_local_record[cursor].name : %s\n",
-               jo2str(dynamic_local_record[cursor].name));
+        // report("  cursor : %ld\n", cursor);
+        // report("  name : %s\n", jo2str(name));
+        // report("  dynamic_local_record[cursor].name : %s\n",
+        //        jo2str(dynamic_local_record[cursor].name));
 
         if (dynamic_local_record[cursor].name == name) {
           return cursor;
@@ -3486,15 +3495,12 @@
         dynamic_local_record[current_dynamic_local_counter].name = name;
         dynamic_local_record[current_dynamic_local_counter].dynamic_local_tag = tag;
         dynamic_local_record[current_dynamic_local_counter].dynamic_local_data = data;
-
-        report("- set_dynamic_local\n");
-        report("  > %s\n", jo2str(dynamic_local_record[current_dynamic_local_counter].name));
-        report("  > %s\n", jo2str(dynamic_local_record[current_dynamic_local_counter].dynamic_local_tag));
-        report("  > %ld\n", dynamic_local_record[current_dynamic_local_counter].dynamic_local_data);
-
+        // report("- set_dynamic_local\n");
+        // report("  > %s\n", jo2str(dynamic_local_record[current_dynamic_local_counter].name));
+        // report("  > %s\n", jo2str(dynamic_local_record[current_dynamic_local_counter].dynamic_local_tag));
+        // report("  > %ld\n", dynamic_local_record[current_dynamic_local_counter].dynamic_local_data);
         current_dynamic_local_counter++;
-
-        report("  > %ld\n", current_dynamic_local_counter);
+        // report("  > %ld\n", current_dynamic_local_counter);
       }
       else {
         report("- set_dynamic_local fail\n");
