@@ -422,12 +422,17 @@
         return char_delimiter_p(str[0]);
       }
     }
-    // void report_jotable() {
-    //   report("- report_jotable\n");
-    //   while () {
-
-    //   }
-    // }
+    bool in_jotable_p(cell x) {
+      jo_t jo = x;
+      cell offset = ((cell)jo - (cell)jotable);
+      cell unit = (sizeof(struct jotable_entry));
+      // report("- in_jotable_p\n");
+      // report("  offset : %ld\n", offset);
+      // report("  unit : %ld\n", unit);
+      // report("  result : %ld\n", offset % unit);
+      if (offset <= 0) { return false; }
+      else { return offset % unit == 0; }
+    }
     struct stack_link {
       cell* stack;
       struct stack_link* link;
@@ -1085,6 +1090,17 @@
     cell ds_peek_data(cell index) {
       return stack_peek(ds, (index*2));
     }
+
+    struct dp ds_ref(cell index) {
+      struct dp p;
+      p.t = stack_ref(ds, index*2 + 1);
+      p.d = stack_ref(ds, index*2 + 0);
+      return p;
+    }
+
+    cell ds_length() {
+      return stack_length(ds) / 2;
+    }
     struct local {
       jo_t name;
       cell local_tag;
@@ -1357,10 +1373,9 @@
       }
       // ds as root
       i = 0;
-      while (i < stack_length(ds)) {
-        mark_one(stack_ref(ds, i+1),
-                 stack_ref(ds, i));
-        i++;
+      while (i < ds_length()) {
+      struct dp a = ds_ref(i);
+        mark_one(a.t, a.d);
         i++;
       }
       // local_record as root
@@ -2925,6 +2940,9 @@
         report("+");
         jojo_print(jojo);
       }
+      else if (in_jotable_p(tag)) {
+        report("<unknow-tag:%ld> %ld ", tag, data);
+      }
       else {
         report("%s %ld ", jo2str(tag), data);
       }
@@ -2989,15 +3007,13 @@
       report("] ");
     }
     void p_print_ds() {
-      cell length = stack_length(ds);
-      report("  * %ld *  ", length/2);
+      report("  * %ld *  ", ds_length());
       report("-- ");
-      cell cursor = 0;
-      while (cursor < length) {
-        data_print(stack_ref(ds, cursor+1),
-                   stack_ref(ds, cursor));
-        cursor++;
-        cursor++;
+      cell i = 0;
+      while (i < ds_length()) {
+        struct dp a = ds_ref(i);
+        data_print(a.t, a.d);
+        i++;
       }
       report("--\n");
     }
@@ -4160,11 +4176,11 @@
     void p_core_flag() { ds_push(TAG_BOOL, core_flag); }
     void p_core_flag_on() { core_flag = true; }
     void p_core_flag_off() { core_flag = false; }
-    // void load_core() {
-    //   #include "core.h"
-    //   core_jo[core_jo_len - 1] = '\0';
-    //   repl(string_input_stack((char*)core_jo));
-    // }
+    void load_core() {
+      #include "core.h"
+      core_jo[core_jo_len - 1] = '\0';
+      repl(string_input_stack((char*)core_jo));
+    }
     void p_name_bind() {
       struct dp b = ds_pop();
       struct dp a = ds_pop();
@@ -4297,6 +4313,11 @@
 
       plus_prim("cells-copy", p_cells_copy);
     }
+    void p1() {
+      in_jotable_p(1);
+      in_jotable_p(TAG_JO);
+      in_jotable_p("asd");
+    }
     void path_load(char* path) {
       int file = open(path, O_RDONLY);
       if(file == -1) {
@@ -4308,6 +4329,7 @@
       close(file);
     }
     void expose_play() {
+      plus_prim("p1", p1);
       plus_prim("print-data-stack", p_print_ds);
     }
     void init_system() {
@@ -4440,8 +4462,8 @@
       init_expose();
       init_kernel_signal_handler();
 
-      // load_core();
-      path_load("core.jo");
+      load_core();
+      // path_load("core.jo");
 
       p_repl_flag_on();
       repl(terminal_input_stack());
