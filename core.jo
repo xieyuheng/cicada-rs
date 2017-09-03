@@ -681,11 +681,34 @@
       (if :n 0 lteq? then end)
       :fun apply
       :fun :n dec recur)
-  (+jojo the-story-begin
-    core-flag-off
-    test-flag-off
-    repl-flag-on
-    print-data-stack
-    terminal-input-stack repl)
+    (+jojo path-load
+      path-open-read
+      (if not then
+          "- path-load fail" string-write newline
+          error-number-print newline
+          debug)
+      file-input-stack repl)
+    (+jojo welcome-to-jojo
+      "welcome to jojo's programming adventure ^-^/" string-write newline)
+    (+jojo set-cmd-flag)
+    (+jojo load-cmd-path 1 load-cmd-path/loop)
 
-  the-story-begin
+    (+jojo load-cmd-path/loop (-> :index --)
+      (if :index cmd-number eq? then end)
+      :index index->cmd-string :path!
+      (note (if :path path-readable? not then ><><><))
+      :path path-load :index inc recur)
+    (+jojo the-story-begin
+      core-flag-off
+      test-flag-off
+      repl-flag-on
+
+      (if cmd-number 1 eq? then
+          welcome-to-jojo
+          print-data-stack
+          terminal-input-stack repl end)
+
+      set-cmd-flag
+      load-cmd-path)
+
+    the-story-begin

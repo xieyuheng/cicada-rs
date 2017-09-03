@@ -6,8 +6,6 @@
 
 *** command line interface
 
-*** with-output-to-string
-
 *** 'write' as gene
 
 *** 'equal?' as gene
@@ -15,8 +13,6 @@
 *** 'pp' as gene -- pretty-print
 
     - dynamic scoped local for current indentation
-
-*** use EOPL to test the language
 
 *** module system
 
@@ -26,6 +22,12 @@
     - move socket to module
 
     - improve socket API
+
+*** publish sexp and html to file
+
+*** something like 'with-output-to-string' & 'with-output-to-file'
+
+*** use EOPL to test the language
 
 * flag
 
@@ -1050,15 +1052,66 @@
       :fun :n dec recur)
     #+end_src
 
+* >< write -- gene
+
+* >< equal? -- gene
+
+* <file>
+
+*** path-load
+
+    #+begin_src jojo
+    (+jojo path-load
+      path-open-read
+      (if not then
+          "- path-load fail" string-write newline
+          error-number-print newline
+          debug)
+      file-input-stack repl)
+    #+end_src
+
 * the-story-begin
 
-  #+begin_src jojo
-  (+jojo the-story-begin
-    core-flag-off
-    test-flag-off
-    repl-flag-on
-    print-data-stack
-    terminal-input-stack repl)
+*** welcome-to-jojo
 
-  the-story-begin
-  #+end_src
+    #+begin_src jojo
+    (+jojo welcome-to-jojo
+      "welcome to jojo's programming adventure ^-^/" string-write newline)
+    #+end_src
+
+*** >< set-cmd-flag
+
+    #+begin_src jojo
+    (+jojo set-cmd-flag)
+    #+end_src
+
+*** load-cmd-path
+
+    #+begin_src jojo
+    (+jojo load-cmd-path 1 load-cmd-path/loop)
+
+    (+jojo load-cmd-path/loop (-> :index --)
+      (if :index cmd-number eq? then end)
+      :index index->cmd-string :path!
+      (note (if :path path-readable? not then ><><><))
+      :path path-load :index inc recur)
+    #+end_src
+
+*** the-story-begin
+
+    #+begin_src jojo
+    (+jojo the-story-begin
+      core-flag-off
+      test-flag-off
+      repl-flag-on
+
+      (if cmd-number 1 eq? then
+          welcome-to-jojo
+          print-data-stack
+          terminal-input-stack repl end)
+
+      set-cmd-flag
+      load-cmd-path)
+
+    the-story-begin
+    #+end_src

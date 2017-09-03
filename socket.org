@@ -3,20 +3,34 @@
 * server
 
   #+begin_src jojo
-  (+jojo server "8888" 5 tcp-socket-listen)
   (+jojo run-server
-    server socket-accept :addr! :client!
-    "got a connection from " string-write :addr string-write newline
+    "12345" 256 tcp-socket-listen
+    run-server/loop)
+
+  (+jojo run-server/loop (-> :socket --)
+    :socket socket-accept (-> :client :addr)
+
+    "got a connection from " string-write
+    :addr string-write
+    newline
+
     :client "thank you for connecting" socket-send
-    :client close recur)
-  (note (run run-server))
+    :client socket-close
+
+    :socket recur)
+
+  run-server
   #+end_src
 
 * client
 
   #+begin_src jojo
-  (+jojo clinet "cicada" "8888" tcp-socket-connect)
   (+jojo run-clinet
-    clinet socket-recv string-write newline)
-  (note (run run-clinet))
+    "cicada" "12345"
+    tcp-socket-connect
+    socket-recv
+    string-write
+    newline)
+
+  {run-clinet} 10000 times
   #+end_src

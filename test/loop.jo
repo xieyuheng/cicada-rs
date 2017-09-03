@@ -1,12 +1,12 @@
 (note
   (+jojo t (-> <int> -- <int>)
     (if dup 1000000 eq? then int-write newline end)
-    (el inc recur))
-  (run 0 t bye))
+    inc recur)
+  0 t bye)
 
 (+jojo t
   0
-  (% (if dup 1000000 eq? then int-write newline end)
-     (el inc recur))
+  {(if dup 1000000 eq? then int-write newline end)
+   inc recur}
   apply)
-(run t bye)
+t bye

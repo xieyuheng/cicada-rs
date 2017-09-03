@@ -2949,8 +2949,8 @@
         struct gp* closure = data;
 
         struct dp a = get_field(TAG_CLOSURE, closure, str2jo(".local-env"));
-        struct gp* ao = a.d;
-        struct local* lr = ao->p;
+        struct gp* ap = a.d;
+        struct local* lr = ap->p;
 
         struct dp b = get_field(TAG_CLOSURE, closure, str2jo(".jojo"));
         jo_t* jojo = b.d;
@@ -3181,6 +3181,8 @@
         }
       }
     void expose_repl() {
+      plus_prim("print-data-stack", p_print_ds);
+
       plus_prim("repl-flag", p_repl_flag);
       plus_prim("repl-flag-on", p_repl_flag_on);
       plus_prim("repl-flag-off", p_repl_flag_off);
@@ -3308,28 +3310,28 @@
     }
     void p_string_write() {
       struct dp a = ds_pop();
-      struct gp* ao = a.d;
-      string_write(ao->p);
+      struct gp* ap = a.d;
+      string_write(ap->p);
     }
     void p_string_length() {
       struct dp a = ds_pop();
-      struct gp* ao = a.d;
-      ds_push(TAG_INT, strlen(ao->p));
+      struct gp* ap = a.d;
+      ds_push(TAG_INT, strlen(ap->p));
     }
     void p_string_ref() {
       struct dp a = ds_pop();
       struct dp b = ds_pop();
-      struct gp* bo = b.d;
-      char* str = bo->p;
+      struct gp* bp = b.d;
+      char* str = bp->p;
       ds_push(TAG_BYTE, str[a.d]);
     }
     void p_string_cat() {
       struct dp a = ds_pop();
       struct dp b = ds_pop();
-      struct gp* ao = a.d;
-      struct gp* bo = b.d;
-      char* str0 = bo->p;
-      char* str1 = ao->p;
+      struct gp* ap = a.d;
+      struct gp* bp = b.d;
+      char* str0 = bp->p;
+      char* str1 = ap->p;
 
       char* str2 = (char*)malloc(strlen(str0) + strlen(str1) + 1);
       str2[0] = '\0';
@@ -3360,16 +3362,16 @@
     }
     void p_string_empty_p() {
       struct dp a = ds_pop();
-      struct gp* ao = a.d;
-      char* str = ao->p;
+      struct gp* ap = a.d;
+      char* str = ap->p;
       ds_push(TAG_BOOL, str[0] == '\0');
     }
     void p_string_eq_p() {
       struct dp a = ds_pop();
       struct dp b = ds_pop();
-      struct gp* ao = a.d;
-      struct gp* bo = b.d;
-      ds_push(TAG_BOOL, string_equal(ao->p, ao->p));
+      struct gp* ap = a.d;
+      struct gp* bp = b.d;
+      ds_push(TAG_BOOL, string_equal(ap->p, ap->p));
     }
     void p_read_string() {
       char buffer[1024 * 1024];
@@ -3644,6 +3646,42 @@
       struct dp b = ds_pop();
       ds_push(a.d, b.d);
     }
+    void p_allocate () {
+      struct dp a = ds_pop();
+      ds_push(TAG_ADDRESS, calloc(a.d, 1));
+    }
+    void p_free () {
+      struct dp a = ds_pop();
+      free(a.d);
+    }
+    void p_set_cell() {
+      // cell address ->
+      struct dp a = ds_pop();
+      cell* address = a.d;
+      struct dp b = ds_pop();
+      cell value = b.d;
+      address[0] = value;
+    }
+    void p_get_cell() {
+      // address -> cell
+      struct dp a = ds_pop();
+      cell* address = a.d;
+      ds_push(TAG_INT, address[0]);
+    }
+    void p_set_byte() {
+      // byte address ->
+      struct dp a = ds_pop();
+      char* address = a.d;
+      struct dp b = ds_pop();
+      char value = b.d;
+      address[0] = value;
+    }
+    void p_get_byte() {
+      // address -> byte
+      struct dp a = ds_pop();
+      char* address = a.d;
+      ds_push(TAG_BYTE, address[0]);
+    }
     void expose_address() {
       plus_prim("compiling-stack-tos", p_compiling_stack_tos);
       plus_prim("compiling-stack-drop", p_compiling_stack_drop);
@@ -3652,6 +3690,14 @@
       plus_prim("set-offset-to-here", p_set_offset_to_here);
 
       plus_prim("tag-change", p_tag_change);
+
+      plus_prim("allocate", p_allocate);
+      plus_prim("free", p_free);
+
+      plus_prim("set-cell", p_set_cell);
+      plus_prim("get-cell", p_get_cell);
+      plus_prim("set-byte", p_set_byte);
+      plus_prim("get-byte", p_get_byte);
     }
     cell jojo_length(jo_t* jojo) {
       cell i = 0;
@@ -3691,8 +3737,8 @@
       struct dp a = ds_pop();
       cell i = a.d;
       struct dp b = ds_pop();
-      struct gp* bo = b.d;
-      cell* array = bo->p;
+      struct gp* bp = b.d;
+      cell* array = bp->p;
       if (i >= array[0]) {
         report("- p_array_ref fail\n");
         report("  array is not long enough for the index\n");
@@ -3713,8 +3759,8 @@
       struct dp a = ds_pop();
       cell i = a.d;
       struct dp b = ds_pop();
-      struct gp* bo = b.d;
-      cell* array = bo->p;
+      struct gp* bp = b.d;
+      cell* array = bp->p;
       if (i >= array[0]) {
         report("- p_array_set fail\n");
         report("  array is not long enough for the index\n");
@@ -3817,8 +3863,8 @@
       struct gp* closure = c.d;
 
       struct dp a = get_field(TAG_CLOSURE, closure, str2jo(".local-env"));
-      struct gp* ao = a.d;
-      struct local* lr = ao->p;
+      struct gp* ap = a.d;
+      struct local* lr = ap->p;
 
       struct dp b = get_field(TAG_CLOSURE, closure, str2jo(".jojo"));
       jo_t* jojo = b.d;
@@ -3853,6 +3899,136 @@
       plus_prim("jojo-apply", p_jojo_exe);
       plus_prim("closure-apply", p_closure_exe);
     }
+    void p_error_number_print() {
+      // errno -> {terminal-output}
+      struct dp a = ds_pop();
+      int no = a.d;
+      report("%s", strerror(no));
+    }
+    void path_open(int flag) {
+      // [path] -> [file true] or [errno false]
+      struct dp a = ds_pop();
+      struct gp* ap = a.d;
+      char* path = ap->p;
+
+      int fd = open(path, flag);
+      if (fd == -1) {
+        ds_push(TAG_INT, errno);
+        ds_push(TAG_BOOL, false);
+      }
+      else {
+        ds_push(str2jo("<file>"), fd);
+        ds_push(TAG_BOOL, true);
+      }
+    }
+
+    void p_path_open_read() {
+      path_open(O_RDONLY);
+    }
+    void p_path_open_write() {
+      path_open(O_WRONLY);
+    }
+    void p_path_open_read_and_write() {
+      path_open(O_RDWR);
+    }
+    void p_path_open_create() {
+      // [path] -> [file true] or [errno false]
+      struct dp a = ds_pop();
+      struct gp* ap = a.d;
+      char* path = ap->p;
+
+      int fd = open(path, O_CREAT | O_RDWR);
+      if (fd == -1) {
+        ds_push(TAG_INT, errno);
+        ds_push(TAG_BOOL, false);
+      }
+      else {
+        ds_push(str2jo("<file>"), fd);
+        ds_push(TAG_BOOL, true);
+      }
+    }
+    void p_file_close() {
+      // [:fd] -> []
+      // error reasons :
+      // 1. to close an unopened file descriptor
+      // 2. close the same file descriptor twice
+      // 3. error conditions for specific file system
+      //    to diagnose during a close operation
+      //    - for example, NFS (Network File System)
+      struct dp a = ds_pop();
+      int fd = a.d;
+      if (close(fd) == -1) {
+        report("- p_close fail\n");
+        perror("  close error : ");
+      };
+    }
+    void p_file_read() {
+      // [requested-bytes buffer file] ->
+      // [real-bytes true] or [errno false]
+      // partial read reasons :
+      //   1. [regular-file] end-of-file is reached
+      //   2. [terminal] meets '\n'
+      struct dp a = ds_pop();
+      int fd = a.d;
+      struct dp b = ds_pop();
+      void* buffer = b.d;
+      struct dp c = ds_pop();
+      size_t want_bytes = c.d;
+
+      ssize_t real_bytes = read(fd, buffer, want_bytes);
+      if (real_bytes == -1) {
+        ds_push(TAG_INT, errno);
+        ds_push(TAG_BOOL, false);
+      }
+      else {
+        ds_push(TAG_BYTE, real_bytes);
+        ds_push(TAG_BOOL, true);
+      }
+    }
+    void p_file_write() {
+      // [want-bytes buffer file] ->
+      // [real-bytes true] or [errno false]
+      // - partial write reasons
+      //   1. disk was filled
+      //   2. the process resource limit on file sizes was reached
+      struct dp a = ds_pop();
+      int fd = a.d;
+      struct dp b = ds_pop();
+      void* buffer = b.d;
+      struct dp c = ds_pop();
+      size_t want_bytes = c.d;
+
+      ssize_t real_bytes = write(fd, buffer, want_bytes);
+      if (real_bytes == -1) {
+        ds_push(TAG_INT, errno);
+        ds_push(TAG_BOOL, false);
+      }
+      else {
+        ds_push(TAG_BYTE, real_bytes);
+        ds_push(TAG_BOOL, true);
+      }
+    }
+    void p_file_input_stack() {
+      struct dp a = ds_pop();
+      int fd = a.d;
+      ds_push(jo2str("<input-stack>"), file_input_stack(fd));
+    }
+    void expose_file() {
+      plus_atom("<file>", gc_ignore);
+
+      plus_prim("error-number-print", p_error_number_print);
+
+      plus_prim("path-open-read", p_path_open_read);
+      plus_prim("path-open-write", p_path_open_write);
+      plus_prim("path-open-read-and-write", p_path_open_read_and_write);
+      plus_prim("path-open-create", p_path_open_create);
+      plus_prim("file-close", p_file_close);
+      plus_prim("file-read", p_file_read);
+      plus_prim("file-write", p_file_write);
+
+      plus_prim("file-input-stack", p_file_input_stack);
+
+    }
     void p_tcp_socket_listen() {
       // [:service <string> :backlog <int>] -> [<socket>]
 
@@ -3863,8 +4039,8 @@
       int backlog = a.d;
 
       struct dp b = ds_pop();
-      struct gp* bo = b.d;
-      char* service = bo->p;
+      struct gp* bp = b.d;
+      char* service = bp->p;
 
       memset(&hints, 0, sizeof hints);
       hints.ai_family = AF_UNSPEC;
@@ -3961,12 +4137,12 @@
       // [:host <string> :service <string>] -> [<socket>]
 
       struct dp a = ds_pop();
-      struct gp* ao = a.d;
-      char* service = ao->p;
+      struct gp* ap = a.d;
+      char* service = ap->p;
 
       struct dp b = ds_pop();
-      struct gp* bo = b.d;
-      char* host = bo->p;
+      struct gp* bp = b.d;
+      char* host = bp->p;
 
       struct addrinfo hints, *servinfo, *p;
 
@@ -4011,8 +4187,8 @@
       // [<socket> <string>] -> []
 
       struct dp a = ds_pop();
-      struct gp* ao = a.d;
-      char* str = ao->p;
+      struct gp* ap = a.d;
+      char* str = ap->p;
 
       struct dp b = ds_pop();
       int sockfd = b.d;
@@ -4041,23 +4217,15 @@
 
       ds_push(TAG_STRING, gp);
     }
-    void p_close() {
-      // [:sockfd <socket>] -> []
-      struct dp a = ds_pop();
-      int sockfd = a.d;
-      if (close(sockfd) == -1) {
-        report("- p_close fail\n");
-        perror("  close error : ");
-      };
-    }
     void expose_socket() {
       plus_atom("<socket>", gc_ignore);
+
       plus_prim("tcp-socket-listen", p_tcp_socket_listen);
       plus_prim("socket-accept", p_socket_accept);
       plus_prim("tcp-socket-connect", p_tcp_socket_connect);
       plus_prim("socket-send", p_socket_send);
       plus_prim("socket-recv", p_socket_recv);
-      plus_prim("close", p_close);
+      plus_prim("socket-close", p_file_close);
     }
     cell cmd_number;
 
@@ -4081,8 +4249,8 @@
     void p_find_env_string() {
       // string -> [env-string true] or [false]
       struct dp a = ds_pop();
-      struct gp* ao = a.d;
-      char* arg_string = ao->p;
+      struct gp* ap = a.d;
+      char* arg_string = ap->p;
       char* env_string = getenv(arg_string);
       if (env_string == 0) {
         ds_push(TAG_BOOL, false);
@@ -4345,23 +4513,10 @@
       plus_prim("cells-copy", p_cells_copy);
     }
     void p1() {
-      in_jotable_p(1);
-      in_jotable_p(TAG_JO);
-      in_jotable_p("asd");
-    }
-    void path_load(char* path) {
-      int file = open(path, O_RDONLY);
-      if(file == -1) {
-        report("- path_load fail : %s\n", path);
-        perror("file open failed");
-        return;
-      }
-      repl(file_input_stack(file));
-      close(file);
+
     }
     void expose_play() {
       plus_prim("p1", p1);
-      plus_prim("print-data-stack", p_print_ds);
     }
     void init_system() {
       setvbuf(stdout, 0, _IONBF, 0);
@@ -4477,6 +4632,7 @@
       expose_jojo();
       expose_array();
       expose_closure();
+      expose_file();
       expose_socket();
       expose_system();
       expose_core();
@@ -4494,7 +4650,6 @@
       init_kernel_signal_handler();
 
       load_core();
-      // path_load("core.jo");
 
       p_repl_flag_on();
       repl(terminal_input_stack());
