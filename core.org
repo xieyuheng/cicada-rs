@@ -4,8 +4,6 @@
 
 * [todo-stack]
 
-*** fix tests
-
 *** with-output-to-string
 
 *** 'write' as gene
@@ -924,7 +922,7 @@
 
 * [test] monad
 
-*** tree & tree-map & tree-write
+*** tree
 
     #+begin_src jojo
     (test
@@ -932,27 +930,41 @@
       (+data <leaf> .v)
       (+data <node> .l .r)
 
+      (+jojo tree-1
+        1 leaf 2 leaf node
+        3 leaf 4 leaf node
+        5 leaf node
+        node))
+    #+end_src
+
+*** tree-map
+
+    #+begin_src jojo
+    (test
+
       (+jojo tree-map (-> :tree :fun -- tree)
         (case :tree
           <leaf> [:tree .v :fun apply leaf]
           <node> [:tree .l :fun recur
                   :tree .r :fun recur node]))
 
-      (+jojo tree-write (-> :tree :fun --)
-        (case :tree
-          <leaf> [:tree .v :fun apply "leaf" string-write space]
-          <node> [:tree .l :fun recur
-                  :tree .r :fun recur "node" string-write space]))
+      (+jojo tree-eqv? (-> :t1 :t2 :eqv --)
+        (case [:t1 :t2]
+          [<leaf> <leaf>] [:t1 .v :t2 .v :eqv apply]
+          [<node> <node>] (if :t1 .l :t2 .l :eqv recur not
+                              then false
+                              else :t1 .r :t2 .r :eqv recur)
+          else false))
 
-      (+jojo tree-1
-        1 leaf 2 leaf node
-        3 leaf 4 leaf node
-        5 leaf node
-        node)
+      (assert
+        tree-1 {100 add} tree-map
 
-      tree-1
-      {100 add} tree-map
-      {int-write space} tree-write)
+        101 leaf 102 leaf node
+        103 leaf 104 leaf node
+        105 leaf node
+        node
+
+        {eq?} tree-eqv?))
     #+end_src
 
 *** tree-zip -- maybe monad
@@ -974,24 +986,25 @@
           <nothing> ['nothing jo-write space]
           <just> [:m .v :f apply 'just jo-write space]))
 
-      (+jojo tree-maybe-write
-        {{dup .cdr int-write space
-          .car int-write space
-          "cons" string-write space}
-         tree-write}
-        maybe-write)
+      (assert
+        tree-1 dup tree-zip tag '<just> eq?)
 
       (+jojo tree-2
-        1 leaf 2 leaf node
-        3 leaf 4 leaf node
-        5 leaf node
+        1 1 cons leaf 2 2 cons leaf node
+        3 3 cons leaf 4 4 cons leaf node
+        5 5 cons leaf node
         node)
 
-      tree-2 dup
-      tree-zip tree-maybe-write newline
+      (assert
+        tree-1 dup tree-zip .v
+        tree-2
+        { (-> :c1 :c2)
+          :c1 .car :c2 .car eq?
+          :c1 .cdr :c2 .cdr eq? and
+        } tree-eqv?)
 
-      tree-2 1 leaf
-      tree-zip tree-maybe-write newline)
+      (assert
+        tree-1 1 leaf tree-zip nothing?))
     #+end_src
 
 *** number-tree -- intrinsic state monad
@@ -1012,10 +1025,10 @@
         "5" leaf node
         node)
 
-      tree-3
-      0 swap number-tree
-      swap drop
-      {int-write space} tree-write newline)
+      (assert
+        0 tree-3 number-tree swap drop
+        tree-1 {dec} tree-map
+        {eq?} tree-eqv?))
     #+end_src
 
 * combinator

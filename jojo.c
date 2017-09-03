@@ -2067,7 +2067,7 @@
       // do nothing
     }
     void expose_ending() {
-      // plus_prim("end", p_end);
+      plus_prim("end", p_end);
       plus_prim("bye", p_bye);
       plus_prim("nop", p_nop);
     }
