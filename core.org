@@ -525,12 +525,18 @@
 
     #+begin_src jojo
     (+jojo plus-gene (-> :body --)
+      :body .car :name!
+      :body .cdr :rest-body!
       :body .cdr .car :arrow-sexp!
+
       :arrow-sexp .cdr
       {'-- eq?} list-left
       {local-jo?} list-filter
       list-length
-      :body .car name-bind-gene)
+      :name name-bind-gene
+
+      :rest-body compile-jojo
+      :name name-bind-disp-default-to-jojo)
     #+end_src
 
 *** (+disp)
@@ -539,8 +545,9 @@
 
     #+begin_src jojo
     (+jojo plus-disp (-> :body --)
-      :body .cdr .car :arrow-sexp!
+      :body .car :name!
       :body .cdr :rest-body!
+      :body .cdr .car :arrow-sexp!
 
       :arrow-sexp .cdr
       {'-- eq?} list-left
@@ -549,8 +556,7 @@
 
       :rest-body compile-jojo
       :address-of-tags
-      :body .car
-      name-bind-disp-to-jojo)
+      :name name-bind-disp-to-jojo)
     #+end_src
 
 * re-define syntax -- the order matters
@@ -807,16 +813,18 @@
 
     #+begin_src jojo
     (test
-      (+gene add-two (-> :x :y --))
+      (+gene add-two (-> :x :y --) 0)
       (+disp add-two (-> <string> <int> --) swap string-length add)
       (+disp add-two (-> <int> <string> --) string-length add)
       (+disp add-two (-> <int> <int> --) add)
       (+disp add-two (-> <string> <string> --)
         string-length swap string-length add)
+
       (assert "123" 3 add-two 6 eq?)
-      (assert  3 "123" add-two 6 eq?)
-      (assert  3 3 add-two 6 eq?)
-      (assert  "123" "123" add-two 6 eq?))
+      (assert 3 "123" add-two 6 eq?)
+      (assert 3 3 add-two 6 eq?)
+      (assert "123" "123" add-two 6 eq?)
+      (assert '123 "123" add-two 0 eq?))
     #+end_src
 
 *** (partquote)

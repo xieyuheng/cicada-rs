@@ -1826,6 +1826,8 @@
         }
       }
     struct gene {
+      jo_t tag;
+      cell data;
       union {
         jo_t disp;
         jo_t* multi_disp;
@@ -1839,6 +1841,8 @@
       jo_t name = str2jo(function_name);
       struct gene* gene = (struct gene*)
         malloc(sizeof(struct gene));
+      bzero(gene, sizeof(struct gene));
+
       gene->arity = arity;
 
       if (arity == 1) {
@@ -1869,34 +1873,33 @@
         multi_disp_insert(gene->multi_disp, tags, tag, data);
       }
     }
+    void plus_disp_default(gene_name, tag_name, data)
+      char* gene_name;
+      char* tag_name;
+      cell data;
+    {
+      jo_t name = str2jo(gene_name);
+      jo_t tag = str2jo(tag_name);
+      struct gene* gene = name->data;
+      gene->tag = tag;
+      gene->data = data;
+    }
     void disp_exe(struct gene* gene, jo_t tag) {
       struct disp* disp = gene->disp;
       struct disp_entry* disp_entry =
         disp_find(disp, tag);
       if (disp_entry == 0) {
-        report("- disp_exe meet unknow tag\n");
-        report("  tag : %s\n", jo2str(tag));
-        disp_print(disp);
-        p_debug();
-        return;
-      }
-      else {
-        if (disp_entry->tag == TAG_PRIM) {
-          primitive_t f = (primitive_t)disp_entry->data;
-          f();
+        if (gene->tag != 0) {
+          ds_push(gene->tag, gene->data);
+          disp_exe(JO_EXE->data, gene->tag);
         }
         else {
-          ds_push(disp_entry->tag, disp_entry->data);
-          disp_exe(JO_EXE->data, disp_entry->tag);
+          report("- disp_exe meet unknow tag\n");
+          report("  tag : %s\n", jo2str(tag));
+          disp_print(disp);
+          p_debug();
+          return;
         }
-      }
-    }
-    void disp_exe_for_jo_apply(struct gene* gene, jo_t tag) {
-      struct disp* disp = gene->disp;
-      struct disp_entry* disp_entry =
-        disp_find(disp, tag);
-      if (disp_entry == 0) {
-        return;
       }
       else {
         if (disp_entry->tag == TAG_PRIM) {
@@ -1914,17 +1917,23 @@
       struct multi_disp_entry* multi_disp_entry =
         multi_disp_find(multi_disp, tags);
       if (multi_disp_entry == 0) {
-        report("- multi_disp_exe meet unknow tags\n");
-        report("  tags : ");
-        cell i = 0;
-        while (tags[i] != 0) {
-          report("%s ", jo2str(tags[i]));
-          i++;
+        if (gene->tag != 0) {
+          ds_push(gene->tag, gene->data);
+          disp_exe(JO_EXE->data, gene->tag);
         }
-        report("  \n");
-        multi_disp_print(multi_disp);
-        p_debug();
-        return;
+        else {
+          report("- multi_disp_exe meet unknow tags\n");
+          report("  tags : ");
+          cell i = 0;
+          while (tags[i] != 0) {
+            report("%s ", jo2str(tags[i]));
+            i++;
+          }
+          report("  \n");
+          multi_disp_print(multi_disp);
+          p_debug();
+          return;
+        }
       }
       else {
         if (multi_disp_entry->tag == TAG_PRIM) {
@@ -1997,6 +2006,9 @@
       struct dp a = ds_pop();
       ds_push(TAG_BOOL, (class->class_name == a.t));
     }
+    void p_default_exe() {
+      // leave the data be.
+    }
     jo_t* jojo_of(char* function_name) {
       jo_t name = str2jo(function_name);
       return name->data;
@@ -2004,7 +2016,7 @@
 
     void expose_gene() {
       plus_gene("exe", 1);
-
+      plus_disp_default("exe", "<prim>", p_default_exe);
       plus_disp("exe", J("<prim>"), "<prim>", p_prim_exe);
       plus_disp("exe", J("<jojo>"), "<prim>", p_jojo_exe);
       plus_disp("exe", J("<gene>"), "<prim>", p_gene_exe);
@@ -2022,7 +2034,7 @@
         return;
       }
       ds_push(jo->tag, jo->data);
-      disp_exe_for_jo_apply(JO_EXE->data, jo->tag);
+      disp_exe(JO_EXE->data, jo->tag);
     }
     void eval_one_step() {
       struct rp p = rs_tos();
@@ -2036,7 +2048,7 @@
         current_dynamic_local_counter = p.y;
         if (jo == JO_RECUR) {
           ds_push(p.t, p.d);
-          disp_exe_for_jo_apply(JO_EXE->data, p.t);
+          disp_exe(JO_EXE->data, p.t);
         }
         else {
           jo_apply(jo);
@@ -4282,6 +4294,13 @@
       jo_t* jojo = c.d;
       plus_disp(jo2str(name), tags, "<jojo>", jojo);
     }
+    void p_name_bind_disp_defalut_to_jojo() {
+      struct dp a = ds_pop();
+      jo_t name = a.d;
+      struct dp c = ds_pop();
+      jo_t* jojo = c.d;
+      plus_disp_default(jo2str(name), "<jojo>", jojo);
+    }
     void p_class_to_tag() {
       struct dp a = ds_pop();
       struct class* class = a.d;
@@ -4319,6 +4338,7 @@
       plus_prim("name-bind-data", p_name_bind_data);
       plus_prim("name-bind-gene", p_name_bind_gene);
       plus_prim("name-bind-disp-to-jojo", p_name_bind_disp_to_jojo);
+      plus_prim("name-bind-disp-default-to-jojo", p_name_bind_disp_defalut_to_jojo);
 
       plus_prim("class->tag", p_class_to_tag);
 
