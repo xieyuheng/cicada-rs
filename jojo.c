@@ -2024,30 +2024,33 @@
       ds_push(jo->tag, jo->data);
       disp_exe_for_jo_apply(JO_EXE->data, jo->tag);
     }
+    void eval_one_step() {
+      struct rp p = rs_tos();
+      jo_t* jojo = p.j;
+      jo_t jo = jojo[0];
+      jo_t next_jo = jojo[1];
+      if (next_jo == JO_END) {
+        // tail call is handled here
+        rs_drop();
+        current_local_counter = p.l;
+        current_dynamic_local_counter = p.y;
+        if (jo == JO_RECUR) {
+          ds_push(p.t, p.d);
+          disp_exe_for_jo_apply(JO_EXE->data, p.t);
+        }
+        else {
+          jo_apply(jo);
+        }
+      }
+      else {
+        rs_inc();
+        jo_apply(jo);
+      }
+    }
     void eval() {
       cell base = rs->pointer;
       while (rs->pointer >= base) {
-        struct rp p = rs_tos();
-        jo_t* jojo = p.j;
-        jo_t jo = jojo[0];
-        jo_t next_jo = jojo[1];
-        if (next_jo == JO_END) {
-          // tail call is handled here
-          rs_drop();
-          current_local_counter = p.l;
-          current_dynamic_local_counter = p.y;
-          if (jo == JO_RECUR) {
-            ds_push(p.t, p.d);
-            disp_exe_for_jo_apply(JO_EXE->data, p.t);
-          }
-          else {
-            jo_apply(jo);
-          }
-        }
-        else {
-          rs_inc();
-          jo_apply(jo);
-        }
+        eval_one_step();
       }
     }
     void p_end() {
@@ -2064,7 +2067,7 @@
       // do nothing
     }
     void expose_ending() {
-      plus_prim("end", p_end);
+      // plus_prim("end", p_end);
       plus_prim("bye", p_bye);
       plus_prim("nop", p_nop);
     }
@@ -2885,14 +2888,18 @@
     }
     void data_print(jo_t tag, cell data);
 
+    bool local_env_empty_p(struct local* lr) {
+      return lr->name == 0;
+    }
+
     void local_env_print(struct local* lr) {
-      report("{ ");
+      report("| ");
       while (lr->name != 0) {
         data_print(lr->local_tag, lr->local_data);
         report("%s! ", jo2str(lr->name));
         lr++;
       }
-      report("}");
+      report("|");
     }
     void jojo_print(jo_t* jojo);
 
@@ -2924,7 +2931,7 @@
       else if (tag == str2jo("<local-env>")) {
         struct local* lr = data;
         local_env_print(lr);
-        report("<local-env> ");
+        report(" ");
       }
       else if (tag == TAG_CLOSURE) {
         struct gp* closure = data;
@@ -2936,19 +2943,24 @@
         struct dp b = get_field(TAG_CLOSURE, closure, str2jo(".jojo"));
         jo_t* jojo = b.d;
 
-        local_env_print(lr);
-        report("+");
-        jojo_print(jojo);
+        if (local_env_empty_p(lr)) {
+          jojo_print(jojo);
+        }
+        else {
+          local_env_print(lr);
+          report("+");
+          jojo_print(jojo);
+        }
       }
-      else if (in_jotable_p(tag)) {
-        report("<unknow-tag:%ld> %ld ", tag, data);
+      else if (!in_jotable_p(tag)) {
+        report("[<unknow-tag:%ld> %ld] ", tag, data);
       }
       else {
-        report("%s %ld ", jo2str(tag), data);
+        report("[%s %ld] ", jo2str(tag), data);
       }
     }
     void jojo_print(jo_t* jojo) {
-      report("[ ");
+      report("{ ");
       while (true) {
         if (jojo[0] == JO_END && jojo[1] == 0) {
           report("end ");
@@ -3004,7 +3016,7 @@
           jojo++;
         }
       }
-      report("] ");
+      report("} ");
     }
     void p_print_ds() {
       report("  * %ld *  ", ds_length());
@@ -3019,7 +3031,7 @@
     }
     void print_return_point(struct rp p) {
       jo_t* jojo = p.j;
-      report("    - { %s } ", jo2str(*(jojo - 1)));
+      report("    >> %s << ", jo2str(*(jojo - 1)));
       jojo_print(jojo);
       report("\n");
     }
@@ -3036,7 +3048,7 @@
       { // tos of rs is special
         struct rp p = rs_ref(index);
         jo_t* jojo = p.j;
-        report("    - ");
+        report("    => ");
         jojo_print(jojo);
         report("\n");
         index++;
@@ -3047,29 +3059,31 @@
     void p_repl_flag() { ds_push(TAG_BOOL, repl_flag); }
     void p_repl_flag_on() { repl_flag = true; }
     void p_repl_flag_off() { repl_flag = false; }
-
+    void repl_one_step() {
+      jo_t* jojo = tos(compiling_stack);
+      compile_jo(read_jo());
+      emit_jojo_end();
+      cell jojo_len = (cell*)tos(compiling_stack) - (cell*)jojo;
+      jo_t* new_jojo = array_len_dup(jojo, jojo_len);
+      drop(compiling_stack);
+      push(compiling_stack, jojo);
+      rs_push(new_jojo,
+              TAG_JOJO,
+              new_jojo,
+              current_local_counter,
+              current_dynamic_local_counter);
+      eval();
+      if (repl_flag) {
+        p_print_ds();
+      }
+    }
     void repl(struct input_stack* input_stack) {
       push(reading_stack, input_stack);
       while (true) {
         if (!has_jo_p()) {
           return;
         }
-        jo_t* jojo = tos(compiling_stack);
-        compile_jo(read_jo());
-        emit_jojo_end();
-        cell jojo_len = (cell*)tos(compiling_stack) - (cell*)jojo;
-        jo_t* new_jojo = array_len_dup(jojo, jojo_len);
-        drop(compiling_stack);
-        push(compiling_stack, jojo);
-        rs_push(new_jojo,
-                TAG_JOJO,
-                new_jojo,
-                current_local_counter,
-                current_dynamic_local_counter);
-        eval();
-        if (repl_flag) {
-          p_print_ds();
-        }
+        repl_one_step();
       }
       drop(reading_stack);
       input_stack_free(input_stack);
@@ -3223,25 +3237,22 @@
       stepper_counter = 0;
       pending_steps = 0;
       report("stepper> ");
+
       cell base = rs->pointer;
       while (rs->pointer >= base) {
-        if (step_flag == false) { break; };
-        struct rp p = rs_tos();
-        rs_inc();
-        jo_t* jojo = p.j;
-        jo_t jo = jojo[0];
-        jo_apply(jo);
-        {
-          report_one_step();
-        }
+        eval_one_step();
+        report_one_step();
       }
+
       if (rs->pointer >= base) {
         report("- exit stepper\n");
       }
+
       if (rs->pointer < base) {
         report("- the stepped jojo is finished\n");
         report("- automatically exit stepper\n");
       }
+
       drop(reading_stack);
       input_stack_free(input_stack);
     }
