@@ -1,10 +1,15 @@
 #!/usr/bin/env jojo
 
-(run (jojo null
-           (int 1) cons
-           (int 2) cons
-           (int 3) cons
-           dup list/print newline
-           (jojo inc) (~ map: (data)) list/print newline)
-     (~ repeat: (data (int 100)))
-     bye)
+(note
+  {(list 1 2 3) dup {int-write space} list-write newline
+   {inc} list-map {int-write space} list-write newline}
+  100000 times
+  bye)
+
+(+jojo test-1 (-> :counter --)
+  (if :counter 100000 gt? then end)
+  (list 1 2 3) dup {int-write space} list-write newline
+  {inc} list-map {int-write space} list-write newline
+  :counter inc recur)
+0 test-1
+bye

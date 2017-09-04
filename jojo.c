@@ -88,6 +88,22 @@
       vdprintf(STDERR_FILENO, format, arg_list);
       va_end(arg_list);
     }
+    void report_in_red(char* format, ...) {
+      va_list arg_list;
+      va_start(arg_list, format);
+      dprintf(STDERR_FILENO, "\e[31m");
+      vdprintf(STDERR_FILENO, format, arg_list);
+      dprintf(STDERR_FILENO, "\e[0m");
+      va_end(arg_list);
+    }
+    void report_in_green(char* format, ...) {
+      va_list arg_list;
+      va_start(arg_list, format);
+      dprintf(STDERR_FILENO, "\e[32m");
+      vdprintf(STDERR_FILENO, format, arg_list);
+      dprintf(STDERR_FILENO, "\e[0m");
+      va_end(arg_list);
+    }
       bool string_equal(char* s1, char* s2) {
         if (strcmp(s1, s2) == 0) {
           return true;
@@ -290,6 +306,8 @@
     jo_t TAG_ADDRESS;
     jo_t TAG_CLASS;
 
+    jo_t TAG_LOCAL_ENV;
+
     jo_t TAG_BOOL;
     jo_t TAG_INT;
     jo_t TAG_BYTE;
@@ -300,6 +318,15 @@
     jo_t TAG_MARK;
 
     jo_t TAG_UNINITIALISED_FIELD_PLACE_HOLDER;
+
+    jo_t TAG_FILE;
+    jo_t TAG_SOCKET;
+    jo_t TAG_INPUT_STACK;
+
+    jo_t TAG_DATA_PREDICATE;
+    jo_t TAG_DATA_CONSTRUCTOR;
+
+    jo_t TAG_GENE;
 
     jo_t ROUND_BAR;
     jo_t ROUND_KET;
@@ -1207,12 +1234,11 @@
       cell fields_number;
       cell p; // actual data point
     };
-
     #define GR_SIZE 64 * 1024
+    // #define GR_SIZE 1024
     // #define GR_SIZE 3 // for testing
 
     struct gp gr[GR_SIZE];
-
     struct gp* gr_pointer = gr;
     bool gr_end_p() {
       return gr_pointer >= (gr + GR_SIZE);
@@ -1226,70 +1252,60 @@
       cell fields_number;
       jo_t* fields;
     };
-      jo_t get_field_tag(cell* fields, cell field_index) {
-        return fields[field_index*2+1];
-      }
+    jo_t get_field_tag(cell* fields, cell field_index) {
+      return fields[field_index*2+1];
+    }
 
-      void set_field_tag(cell* fields, cell field_index, jo_t tag) {
-        fields[field_index*2+1] = tag;
-      }
+    void set_field_tag(cell* fields, cell field_index, jo_t tag) {
+      fields[field_index*2+1] = tag;
+    }
 
-      cell get_field_data(cell* fields, cell field_index) {
-        return fields[field_index*2];
-      }
+    cell get_field_data(cell* fields, cell field_index) {
+      return fields[field_index*2];
+    }
 
-      void set_field_data(cell* fields, cell field_index, cell data) {
-        fields[field_index*2] = data;
+    void set_field_data(cell* fields, cell field_index, cell data) {
+      fields[field_index*2] = data;
+    }
+    // assume exist
+    jo_t class_index_to_field_name(struct class* class, cell index) {
+      return class->fields[index];
+    }
+    // assume exist
+    cell class_field_name_to_index(struct class* class, jo_t field_name) {
+      cell i = 0;
+      while (i < class->fields_number) {
+        if (class->fields[i] == field_name) { return i; }
+        i++;
       }
-      // assume exist
-      jo_t class_index_to_field_name(struct class* class, cell index) {
-        return class->fields[index];
-      }
-      // assume exist
-      cell class_field_name_to_index(struct class* class, jo_t field_name) {
-        cell i = 0;
-        while (i < class->fields_number) {
-          if (class->fields[i] == field_name) { return i; }
-          i++;
-        }
-        report("- class_field_name_to_index fail\n");
-        report("  field_name : %s\n", jo2str(field_name));
-        report("  class_name : %s\n", jo2str(class->class_name));
-        p_debug();
-      }
-      jo_t get_gp_field_tag(gp, field_index)
-        struct gp* gp;
-        cell field_index;
-      {
-        cell* fields = gp->p;
-        return get_field_tag(fields, field_index);
-      }
+      report("- class_field_name_to_index fail\n");
+      report("  field_name : %s\n", jo2str(field_name));
+      report("  class_name : %s\n", jo2str(class->class_name));
+      p_debug();
+    }
+    jo_t get_gp_field_tag(struct gp* gp, cell field_index) {
+      cell* fields = gp->p;
+      return get_field_tag(fields, field_index);
+    }
 
-      void set_gp_field_tag(gp, field_index, tag)
-        struct gp* gp;
-        cell field_index;
-        jo_t tag;
-      {
-        cell* fields = gp->p;
-        set_field_tag(fields, field_index, tag);
-      }
+    void set_gp_field_tag(struct gp* gp,
+                          cell field_index,
+                          jo_t tag) {
+      cell* fields = gp->p;
+      set_field_tag(fields, field_index, tag);
+    }
 
-      cell get_gp_field_data(gp, field_index)
-        struct gp* gp;
-        cell field_index;
-      {
-        cell* fields = gp->p;
-        return get_field_data(fields, field_index);
-      }
+    cell get_gp_field_data(struct gp* gp, cell field_index) {
+      cell* fields = gp->p;
+      return get_field_data(fields, field_index);
+    }
 
-      void set_gp_field_data(gp, field_index, data)
-        struct gp* gp;
-        cell field_index;
-        cell data;
-      {
-        cell* fields = gp->p;
-        set_field_data(fields, field_index, data);
-      }
+    void set_gp_field_data(struct gp* gp,
+                           cell field_index,
+                           cell data) {
+      cell* fields = gp->p;
+      set_field_data(fields, field_index, data);
+    }
     struct dp get_field(jo_t class_tag, struct gp* gp, jo_t name) {
       struct class* class = class_tag->data;
       cell index = class_field_name_to_index(class, name);
@@ -1354,9 +1370,17 @@
       set_gp_field_data(a.d, index, b.d);
     }
     void mark_one(jo_t tag, cell data) {
+      // report("- mark_one begin\n");
+      // if (!in_jotable_p(tag)) { report("  bad-tag : %ld\n", tag); }
+      // else { report("  tag : %s\n", jo2str(tag)); }
+
       struct class* class = tag->data;
       class->gc_actor(GC_STATE_MARKING, data);
+
+      // report("- mark_one end\n");
     }
+    void data_print(jo_t tag, cell data);
+
     void mark_gr() {
       // prepare
       cell i = 0;
@@ -1364,20 +1388,24 @@
         gr[i].mark = GC_MARK_FREE;
         i++;
       }
-      // name_record as root
-      i = 0;
-      while (i < name_record_counter) {
-        jo_t name = name_record[i];
-        mark_one(name->tag, name->data);
-        i++;
-      }
+
+      // // there are no global variable
+      // // name_record as root
+      // i = 0;
+      // while (i < name_record_counter) {
+      //   jo_t name = name_record[i];
+      //   mark_one(name->tag, name->data);
+      //   i++;
+      // }
+
       // ds as root
       i = 0;
       while (i < ds_length()) {
-      struct dp a = ds_ref(i);
+        struct dp a = ds_ref(i);
         mark_one(a.t, a.d);
         i++;
       }
+
       // local_record as root
       i = 0;
       while (i < current_local_counter) {
@@ -1392,6 +1420,7 @@
       }
       else {
         gp->gc_actor(GC_STATE_SWEEPING, gp);
+        return;
       }
     }
     void sweep_gr() {
@@ -1409,26 +1438,32 @@
       }
       void gc_free(gc_state_t gc_state, struct gp* gp) {
         if (gc_state == GC_STATE_MARKING) {
+          // report_in_red("- gc_free : GC_STATE_MARKING\n");
+          // sleep(1);
           gp->mark = GC_MARK_USING;
         }
         else if (gc_state == GC_STATE_SWEEPING) {
+          // report_in_green("- gc_free : GC_STATE_SWEEPING\n");
           free(gp->p);
         }
       }
       void gc_recur(gc_state_t gc_state, struct gp* gp) {
         if (gc_state == GC_STATE_MARKING) {
+          // report_in_red("- gc_recur : GC_STATE_MARKING\n");
+          // sleep(1);
           if (gp->mark == GC_MARK_USING) { return; }
           gp->mark = GC_MARK_USING;
           cell fields_number = gp->fields_number;
-          cell* fields = gp->p;
           cell i = 0;
           while (i < fields_number) {
             mark_one(get_gp_field_tag(gp, i),
                      get_gp_field_data(gp, i));
             i++;
+
           }
         }
         else if (gc_state == GC_STATE_SWEEPING) {
+          // report_in_green("- gc_recur : GC_STATE_SWEEPING\n");
           free(gp->p);
         }
       }
@@ -1437,12 +1472,13 @@
       sweep_gr();
     }
 
-    // run_gc() {
+    // void run_gc() {
     //   report("- run_gc()\n");
     //   mark_gr();
     //   report("- after mark_gr()\n");
     //   sweep_gr();
     //   report("- after sweep_gr()\n");
+    //   sleep(1);
     // }
     void next_free_record_gp() {
       while (!gr_end_p() &&
@@ -1480,7 +1516,7 @@
 
       cell i = 0;
       while (i < class->fields_number) {
-        set_field_tag(fields, i, str2jo("<uninitialised-field-place-holder>"));
+        set_field_tag(fields, i, TAG_UNINITIALISED_FIELD_PLACE_HOLDER);
         i++;
       }
 
@@ -1514,7 +1550,7 @@
       jo_t data_predicate_name = str2jo(tmp2);
       free(tmp2);
 
-      bind_name(data_predicate_name, str2jo("<data-predicate>"), class);
+      bind_name(data_predicate_name, TAG_DATA_PREDICATE, class);
     }
     // argument 'fields' is shared
     void plus_data(char* class_name,
@@ -1522,16 +1558,21 @@
       struct class* class = (struct class*)
         malloc(sizeof(struct class));
       jo_t name = str2jo(class_name);
-      class->class_name = name;
-      class->gc_actor = gc_recur;
 
+      class->class_name = name;
       cell i = 0;
       while (fields[i] != 0) {
         i++;
       }
-
-      class->fields_number = i;
-      class->fields = fields;
+      if (i == 0) {
+        class->gc_actor = gc_ignore;
+        class->fields_number = i;
+      }
+      else {
+        class->gc_actor = gc_recur;
+        class->fields_number = i;
+        class->fields = fields;
+      }
 
       bind_name(name, TAG_CLASS, class);
 
@@ -1539,7 +1580,7 @@
       jo_t data_constructor_name = str2jo(tmp);
       free(tmp);
 
-      bind_name(data_constructor_name, str2jo("<data-constructor>"), class);
+      bind_name(data_constructor_name, TAG_DATA_CONSTRUCTOR, class);
 
       char* tmp2 = malloc(strlen(jo2str(data_constructor_name) + 1 + 1));
       tmp2[0] = '\0';
@@ -1548,7 +1589,7 @@
       jo_t data_predicate_name = str2jo(tmp2);
       free(tmp2);
 
-      bind_name(data_predicate_name, str2jo("<data-predicate>"), class);
+      bind_name(data_predicate_name, TAG_DATA_PREDICATE, class);
     }
     void plus_prim(function_name, fun)
          char* function_name;
@@ -1571,6 +1612,8 @@
 
       plus_prim("ins/field", ins_get_field);
       plus_prim("ins/set-field", ins_set_field);
+
+      plus_atom("<class>", gc_ignore);
 
       plus_atom("<byte>", gc_ignore);
       plus_atom("<int>", gc_ignore);
@@ -1854,7 +1897,7 @@
         gene->multi_disp = multi_disp;
       }
 
-      bind_name(name, str2jo("<gene>"), gene);
+      bind_name(name, TAG_GENE, gene);
     }
     // argument 'tags' is shared
     void plus_disp(gene_name, tags, tag_name, data)
@@ -1981,23 +2024,27 @@
     void p_data_constructor_exe() {
       struct dp b = ds_pop();
       struct class* class = b.d;
+      cell fields_number = class->fields_number;
 
-      cell* fields = (cell*)malloc(class->fields_number*2*sizeof(cell));
-
-      cell i = 0;
-      while (i < class->fields_number) {
-        struct dp a = ds_pop();
-        set_field_tag(fields, (class->fields_number - (i+1)), a.t);
-        set_field_data(fields, (class->fields_number - (i+1)), a.d);
-        i++;
+      if (fields_number == 0) {
+        ds_push(class->class_name, 0);
       }
-
-      struct gp* gp = new_record_gp();
-      gp->gc_actor = gc_recur;
-      gp->p = fields;
-      gp->fields_number = class->fields_number;
-
-      ds_push(class->class_name, gp);
+      else {
+        struct gp* gp = new_record_gp();
+        cell* fields = (cell*)
+          malloc(fields_number*2*sizeof(cell));
+        cell i = 0;
+        while (i < fields_number) {
+          struct dp a = ds_pop();
+          set_field_tag(fields, (fields_number - (i+1)), a.t);
+          set_field_data(fields, (fields_number - (i+1)), a.d);
+          i++;
+        }
+        gp->gc_actor = gc_recur;
+        gp->p = fields;
+        gp->fields_number = fields_number;
+        ds_push(class->class_name, gp);
+      }
     }
     void p_data_predicate_exe() {
       struct dp b = ds_pop();
@@ -2241,16 +2288,16 @@
       push(reading_stack, a.d);
     }
     void p_reading_stack_tos() {
-      ds_push(str2jo("<input-stack>"), tos(reading_stack));
+      ds_push(TAG_INPUT_STACK, tos(reading_stack));
     }
     void p_reading_stack_pop() {
-      ds_push(str2jo("<input-stack>"), pop(reading_stack));
+      ds_push(TAG_INPUT_STACK, pop(reading_stack));
     }
     void p_reading_stack_drop() {
       drop(reading_stack);
     }
     void p_terminal_input_stack() {
-      ds_push(str2jo("<input-stack>"), terminal_input_stack());
+      ds_push(TAG_INPUT_STACK, terminal_input_stack());
     }
     void p_input_stack_free() {
       struct dp a = ds_pop();
@@ -2940,7 +2987,7 @@
         jo_t* jojo = data;
         jojo_print(jojo);
       }
-      else if (tag == str2jo("<local-env>")) {
+      else if (tag == TAG_LOCAL_ENV) {
         struct local* lr = data;
         local_env_print(lr);
         report(" ");
@@ -2965,17 +3012,17 @@
         }
       }
       else if (!in_jotable_p(tag)) {
-        report("[<unknow-tag:%ld> %ld] ", tag, data);
+        report("[<bad-tag:%ld> %ld] ", tag, data);
       }
       else {
         report("[%s %ld] ", jo2str(tag), data);
       }
     }
     void jojo_print(jo_t* jojo) {
-      report("{ ");
+      report("{");
       while (true) {
         if (jojo[0] == JO_END && jojo[1] == 0) {
-          report("end ");
+          report("}");
           break;
         }
         else if (jojo[0] == JO_INS_LIT) {
@@ -3028,7 +3075,6 @@
           jojo++;
         }
       }
-      report("} ");
     }
     void p_print_ds() {
       report("  * %ld *  ", ds_length());
@@ -3085,9 +3131,6 @@
               current_local_counter,
               current_dynamic_local_counter);
       eval();
-      if (repl_flag) {
-        p_print_ds();
-      }
     }
     void repl(struct input_stack* input_stack) {
       push(reading_stack, input_stack);
@@ -3096,6 +3139,9 @@
           return;
         }
         repl_one_step();
+        if (repl_flag) {
+          p_print_ds();
+        }
       }
       drop(reading_stack);
       input_stack_free(input_stack);
@@ -3108,27 +3154,9 @@
         if (!has_jo_p()) {
           return;
         }
-        jo_t jo = read_jo();
-        if (jo == str2jo("help")) {
-          report("- debug-repl usage :\n");
-          report("  - available commands :\n");
-          report("    help exit bye\n");
-        }
-        else if (jo == str2jo("exit")) {
-          return;
-        }
-        else if (jo == str2jo("bye")) {
-          p_bye();
-          return;
-        }
-        else if (jo == ROUND_BAR) {
-          jo_apply(read_jo());
-          p_print_ds();
-          report("debug[%ld]> ", debug_repl_level);
-        }
-        else {
-          // loop
-        }
+        repl_one_step();
+        p_print_ds();
+        report("debug[%ld]> ", debug_repl_level);
       }
       drop(reading_stack);
       input_stack_free(input_stack);
@@ -3169,8 +3197,11 @@
           | SA_RESTART;
         kernel_signal_action.sa_sigaction = kernel_signal_handler;
 
-        int sig_array[] = { SIGSEGV, SIGBUS, SIGFPE, SIGILL,
-                            SIGPIPE, SIGSYS, SIGXCPU, SIGXFSZ};
+        int sig_array[] = {};
+
+        // int sig_array[] = { SIGSEGV, SIGBUS, SIGFPE, SIGILL,
+        //                     SIGPIPE, SIGSYS, SIGXCPU, SIGXFSZ};
+
         int sig_array_length = sizeof(sig_array)/sizeof(sig_array[0]);
         cell i = 0;
         while (i < sig_array_length) {
@@ -3810,6 +3841,7 @@
       plus_prim("array-set", p_array_set);
 
       plus_atom("<mark>", gc_ignore);
+
       plus_prim("mark", p_mark);
       plus_prim("collect", p_collect);
 
@@ -3817,6 +3849,8 @@
     }
     void gc_local_env(gc_state_t gc_state, struct gp* gp) {
       if (gc_state == GC_STATE_MARKING) {
+        // report_in_red("- gc_local_env : GC_STATE_MARKING\n");
+        // sleep(1);
         if (gp->mark == GC_MARK_USING) { return; }
         gp->mark = GC_MARK_USING;
         struct local* lr = gp->p;
@@ -3826,6 +3860,7 @@
         }
       }
       else if (gc_state == GC_STATE_SWEEPING) {
+        // report_in_green("- gc_local_env : GC_STATE_SWEEPING\n");
         free(gp->p);
       }
     }
@@ -3850,7 +3885,7 @@
       struct gp* gp = new_record_gp();
       gp->gc_actor = gc_local_env;
       gp->p = lr;
-      ds_push(str2jo("<local-env>"), gp);
+      ds_push(TAG_LOCAL_ENV, gp);
     }
     void set_local_record(struct local* lr) {
       while (lr->name != 0) {
@@ -3887,6 +3922,7 @@
     }
     void expose_closure() {
       plus_prim("current-local-env", p_current_local_env);
+
       plus_atom("<local-env>", gc_local_env);
 
       plus_data("<closure>", J(".jojo", ".local-env"));
@@ -3917,7 +3953,7 @@
         ds_push(TAG_BOOL, false);
       }
       else {
-        ds_push(str2jo("<file>"), fd);
+        ds_push(TAG_FILE, fd);
         ds_push(TAG_BOOL, true);
       }
     }
@@ -3943,7 +3979,7 @@
         ds_push(TAG_BOOL, false);
       }
       else {
-        ds_push(str2jo("<file>"), fd);
+        ds_push(TAG_FILE, fd);
         ds_push(TAG_BOOL, true);
       }
     }
@@ -4011,7 +4047,7 @@
     void p_file_input_stack() {
       struct dp a = ds_pop();
       int fd = a.d;
-      ds_push(jo2str("<input-stack>"), file_input_stack(fd));
+      ds_push(TAG_INPUT_STACK, file_input_stack(fd));
     }
     void expose_file() {
       plus_atom("<file>", gc_ignore);
@@ -4027,7 +4063,6 @@
       plus_prim("file-write", p_file_write);
 
       plus_prim("file-input-stack", p_file_input_stack);
-
     }
     void p_tcp_socket_listen() {
       // [:service <string> :backlog <int>] -> [<socket>]
@@ -4092,7 +4127,7 @@
         p_debug();
       }
 
-      ds_push(str2jo("<socket>"), sockfd);
+      ds_push(TAG_SOCKET, sockfd);
     }
     // get sockaddr, ipv4 or ipv6:
     void *get_in_addr(struct sockaddr *sa) {
@@ -4125,7 +4160,7 @@
                 str,
                 sizeof(str));
 
-      ds_push(str2jo("<socket>"), newfd);
+      ds_push(TAG_SOCKET, newfd);
 
       struct gp* gp = new_record_gp();
       gp->gc_actor = gc_free;
@@ -4181,7 +4216,7 @@
         p_debug();
       }
 
-      ds_push(str2jo("<socket>"), sockfd);
+      ds_push(TAG_SOCKET, sockfd);
     }
     void p_socket_send() {
       // [<socket> <string>] -> []
@@ -4488,6 +4523,7 @@
       // note that, the notation of instruction is not exposed to jojo
       plus_prim("jo-emit", p_jo_emit);
       plus_prim("emit-lit", p_emit_lit);
+      plus_prim("string-emit", p_emit_lit);
       plus_prim("emit-zero", p_emit_zero);
 
       plus_prim("jo-emit-local",     p_jo_emit_local);
@@ -4512,8 +4548,21 @@
 
       plus_prim("cells-copy", p_cells_copy);
     }
+    void report_local_record() {
+      report("- report_local_record\n");
+      cell i = 0;
+      while (i < current_local_counter) {
+        report("  - name : %s\n", jo2str(local_record[i].name));
+        report("    tag : %s\n", jo2str(local_record[i].local_tag));
+        report("    data : %ld\n", local_record[i].local_data);
+        i++;
+      }
+    }
+    void expose_report() {
+      plus_prim("report-local-record", report_local_record);
+    }
     void p1() {
-
+      report("\e[31m Hello World \e[0m\n");
     }
     void expose_play() {
       plus_prim("p1", p1);
@@ -4534,6 +4583,9 @@
       TAG_ADDRESS      = str2jo("<address>");
       TAG_CLASS        = str2jo("<class>");
 
+      TAG_LOCAL_ENV    = str2jo("<local-env>");
+
+
       TAG_BOOL         = str2jo("<bool>");
       TAG_INT          = str2jo("<int>");
       TAG_BYTE         = str2jo("<byte>");
@@ -4545,6 +4597,15 @@
 
       TAG_UNINITIALISED_FIELD_PLACE_HOLDER =
         str2jo("<uninitialised-field-place-holder>");
+
+      TAG_FILE         = str2jo("<file>");
+      TAG_SOCKET       = str2jo("<socket>");
+      TAG_INPUT_STACK  = str2jo("<input-stack>");
+
+      TAG_DATA_PREDICATE = str2jo("<data-predicate>");
+      TAG_DATA_CONSTRUCTOR = str2jo("<data-constructor>");
+
+      TAG_GENE = str2jo("<gene>");
 
       ROUND_BAR    =   str2jo("(");
       ROUND_KET    =   str2jo(")");
@@ -4636,6 +4697,7 @@
       expose_socket();
       expose_system();
       expose_core();
+      expose_report();
       expose_play();
     }
     int main(int argc, char** argv) {

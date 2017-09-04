@@ -3,7 +3,7 @@
 #cc=gcc
 cc=clang
 w='-Wno-int-conversion -Wno-incompatible-pointer-types -Wno-return-type -Wunused-value'
-o='-O2'
+o=''
 f='-rdynamic'
 l='-ldl'
 

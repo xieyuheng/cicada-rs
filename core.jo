@@ -153,15 +153,6 @@
       :address cells-copy :new-address!
       compiling-stack-drop :address compiling-stack-push
       :new-address)
-    (note
-      [:list .car singlequote eq?]
-      [:list .cdr .car emit-lit
-       :list .cdr .cdr recur]
-
-      [:list .car backquote eq?]
-      [:list .cdr .car sexp-partquote-compile
-       :list .cdr .cdr recur])
-
     (+jojo sexp-list-compile (-> :list sexp list --)
       (case :list
         <null> []
@@ -171,34 +162,66 @@
       (case :sexp
         <null>   [:sexp emit-lit]
         <cons>   [:sexp .cdr :sexp .car jo-apply]
-        <string> [:sexp emit-lit]
+        <string> [:sexp string-emit]
         <jo>     [:sexp jo-compile]))
-    (+jojo quote .car emit-lit)
-    (+jojo partquote .car sexp-partquote-compile)
-    (+jojo sexp-partquote-compile (-> :sexp --)
+    (+jojo quote {sexp-quote-compile} list-for-each)
+    (+jojo sexp-quote-compile (-> :sexp --)
       (if :sexp cons?
-          then :sexp sexp-partquote-compile/recur
-          else :sexp sexp-compile))
-    (+jojo sexp-partquote-compile/recur (-> :sexp --)
+          then :sexp sexp-list-quote-compile
+          else :sexp emit-lit))
+    (+jojo sexp-list-quote-compile (-> :list --)
       (cond
-        [:sexp null?]
+        [:list null?]
         [null emit-lit]
 
-        [:sexp .car cons? not]
-        [:sexp .cdr recur
-         :sexp .car emit-lit
+        [:list .car string?]
+        [:list .cdr recur
+         :list .car string-emit
          'swap jo-emit
          'cons jo-emit]
 
-        [:sexp .car .car '@ eq?]
-        [:sexp .cdr recur
-         'list :sexp .car .cdr cons sexp-compile
+        [:list .car jo?]
+        [:list .cdr recur
+         :list .car emit-lit
+         'swap jo-emit
+         'cons jo-emit]
+
+        else
+        [:list .cdr recur
+         :list .car recur
+         'swap jo-emit
+         'cons jo-emit]))
+    (+jojo partquote {sexp-partquote-compile} list-for-each)
+    (+jojo sexp-partquote-compile (-> :sexp --)
+      (if :sexp cons?
+          then :sexp sexp-list-partquote-compile
+          else :sexp sexp-compile))
+    (+jojo sexp-list-partquote-compile (-> :list --)
+      (cond
+        [:list null?]
+        [null emit-lit]
+
+        [:list .car string?]
+        [:list .cdr recur
+         :list .car string-emit
+         'swap jo-emit
+         'cons jo-emit]
+
+        [:list .car jo?]
+        [:list .cdr recur
+         :list .car emit-lit
+         'swap jo-emit
+         'cons jo-emit]
+
+        [:list .car .car '@ eq?]
+        [:list .cdr recur
+         :list .car .cdr list/expend sexp-compile
          'swap jo-emit
          'list-append jo-emit]
 
         else
-        [:sexp .cdr recur
-         :sexp .car recur
+        [:list .cdr recur
+         :list .car recur
          'swap jo-emit
          'cons jo-emit]))
     (+jojo jo-compile (-> :jo --)
@@ -367,7 +390,7 @@
            else
            "- assert fail" string-write newline
            "  assertion : " string-write
-           '(@ :body) sexp-list-write newline))
+           (quote (@ :body)) sexp-list-write newline))
 
     (+jojo assert! assert!/expend sexp-compile)
 
@@ -377,7 +400,7 @@
            else
            "- assert! fail" string-write newline
            "  assertion : " string-write
-           '(@ :body) sexp-list-write newline
+           (quote (@ :body)) sexp-list-write newline
            debug))
     (+jojo test (-> :body --)
       (if test-flag then :body begin))
@@ -408,16 +431,16 @@
         [:rest .car]
 
         [:rest .car local-jo?]
-        [`[(@ :rest .cdr .car)
-            {(@ :rest .car local-jo->set-local-jo
-                :binder :rest .cdr .cdr recur)}
-            (@ :binder)]]
+        `[(@ :rest .cdr .car)
+          {(@ :rest .car local-jo->set-local-jo
+              :binder :rest .cdr .cdr recur)}
+          (@ :binder)]
 
         else
-        [`[(@ :rest .car)
-           {drop
-            (@ :binder :rest .cdr recur)}
-           (@ :binder)]]))
+        `[(@ :rest .car)
+          {drop
+           (@ :binder :rest .cdr recur)}
+          (@ :binder)]))
     (+jojo case case/expend sexp-compile)
 
     (+jojo case/expend (-> :body -- sexp)
@@ -428,7 +451,7 @@
       (cond
         [:body list-length 2 eq?]
         [:body .car :body .cdr .car case/expend-if-then
-         '(else "- (case) miss match" string-write newline
+         `(else "- (case) miss match" string-write newline
                 debug)
          list-append]
 
@@ -523,7 +546,7 @@
       (+jojo one-two-three 'one 'two 'three)
       (+jojo one-two-three-list '(one two three))
       (assert
-        `(1 2 3)
+        '(1 2 3)
         '(1 2 3)
         {eq?} list-eqv?)
       (assert
@@ -698,17 +721,20 @@
       :index index->cmd-string :path!
       (note (if :path path-readable? not then ><><><))
       :path path-load :index inc recur)
+    (+jojo #!/usr/bin/env)
+    (+jojo jojo)
     (+jojo the-story-begin
       core-flag-off
       test-flag-off
-      repl-flag-on
 
       (if cmd-number 1 eq? then
+          repl-flag-on
           welcome-to-jojo
           print-data-stack
           terminal-input-stack repl end)
 
       set-cmd-flag
+      repl-flag-off
       load-cmd-path)
 
     the-story-begin
