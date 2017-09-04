@@ -3,8 +3,8 @@
 #cc=gcc
 cc=clang
 w='-Wno-int-conversion -Wno-incompatible-pointer-types -Wno-return-type -Wunused-value'
-o=''
-f='-rdynamic -g'
+o='-O2'
+f='-rdynamic'
 l='-ldl'
 
 build() {
@@ -13,10 +13,18 @@ build() {
     $cc $w $o $f $l jojo.c -o jojo
 }
 
-build
+clean() {
+    rm -f jojo
+    rm -f core.jojo.*
+}
 
-# if [ $# -eq 0 ]; then
-#     default
-# else
-#     $1
-# fi
+default() {
+    clean
+    build
+}
+
+if [ $# -eq 0 ]; then
+    default
+else
+    $1
+fi

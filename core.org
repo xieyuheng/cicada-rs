@@ -354,29 +354,32 @@
 *** (quote)
 
     #+begin_src jojo
-    (+jojo quote {sexp-quote-compile} list-for-each)
+    (+jojo quote {emit-lit} list-for-each)
 
-    (+jojo sexp-quote-compile (-> :sexp --)
-      (if :sexp cons?
-          then :sexp sexp-list-quote-compile
-          else :sexp emit-lit))
+    (note
+      (+jojo quote {sexp-quote-compile} list-for-each)
 
-    (+jojo sexp-list-quote-compile (-> :list --)
-      (cond
-        [:list null?]
-        [null emit-lit]
+      (+jojo sexp-quote-compile (-> :sexp --)
+        (if :sexp cons?
+            then :sexp sexp-list-quote-compile
+            else :sexp emit-lit))
 
-        [:list .car cons? not]
-        [:list .cdr recur
-         :list .car emit-lit
-         'swap jo-emit
-         'cons jo-emit]
+      (+jojo sexp-list-quote-compile (-> :list --)
+        (cond
+          [:list null?]
+          [null emit-lit]
 
-        else
-        [:list .cdr recur
-         :list .car recur
-         'swap jo-emit
-         'cons jo-emit]))
+          [:list .car cons? not]
+          [:list .cdr recur
+           :list .car emit-lit
+           'swap jo-emit
+           'cons jo-emit]
+
+          else
+          [:list .cdr recur
+           :list .car recur
+           'swap jo-emit
+           'cons jo-emit])))
     #+end_src
 
 *** (partquote)

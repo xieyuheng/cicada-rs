@@ -4,10 +4,6 @@
 
 * [todo-stack]
 
-*** gc actor for jojo
-
-    - no new_static_gp, let emit-lit be.
-
 *** better file io
 
 *** report address info for debug
@@ -620,10 +616,6 @@
     jo_t JO_INS_JMP;
     jo_t JO_INS_JZ;
 
-    jo_t JO_INS_TAIL_CALL;
-    jo_t JO_INS_LOOP;
-    jo_t JO_INS_RECUR;
-
     jo_t JO_NULL;
     jo_t JO_THEN;
     jo_t JO_ELSE;
@@ -634,15 +626,6 @@
     jo_t JO_RECUR;
     jo_t JO_CLOSURE;
     jo_t JO_CURRENT_LOCAL_ENV;
-
-    jo_t JO_LOCAL_DATA_IN;
-    jo_t JO_LOCAL_DATA_OUT;
-
-    jo_t JO_LOCAL_TAG_IN;
-    jo_t JO_LOCAL_TAG_OUT;
-
-    jo_t JO_LOCAL_IN;
-    jo_t JO_LOCAL_OUT;
     #+end_src
 
 *** name_record
@@ -2076,14 +2059,13 @@
         i++;
       }
 
-      // // there are no global variable
-      // // name_record as root
-      // i = 0;
-      // while (i < name_record_counter) {
-      //   jo_t name = name_record[i];
-      //   mark_one_data(name->tag, name->data);
-      //   i++;
-      // }
+      // name_record as root
+      i = 0;
+      while (i < name_record_counter) {
+        jo_t name = name_record[i];
+        mark_one_data(name->tag, name->data);
+        i++;
+      }
 
       // ds as root
       i = 0;
@@ -2200,30 +2182,6 @@
       }
       #+end_src
 
-***** gc_jojo
-
-      #+begin_src c
-      // void gc_jojo(gc_state_t gc_state, struct gp* gp) {
-      //   if (gc_state == GC_STATE_MARKING) {
-      //     // report_in_red("- gc_jojo : GC_STATE_MARKING\n");
-      //     // sleep(1);
-      //     if (gp->mark == GC_MARK_USING) { return; }
-      //     gp->mark = GC_MARK_USING;
-      //     cell fields_number = gp->fields_number;
-      //     cell i = 0;
-      //     while (i < fields_number) {
-      //       mark_one_data(get_gp_field_tag(gp, i),
-      //                get_gp_field_data(gp, i));
-      //       i++;
-      //     }
-      //   }
-      //   else if (gc_state == GC_STATE_SWEEPING) {
-      //     // report_in_green("- gc_jojo : GC_STATE_SWEEPING\n");
-      //     free(jojo);
-      //   }
-      // }
-      #+end_src
-
 *** new_record_gp
 
     #+begin_src c
@@ -2252,18 +2210,6 @@
           return 0;
         }
       }
-    }
-    #+end_src
-
-*** new_jojo_gp
-
-    #+begin_src c
-    struct gp* new_jojo_gp(jo_t* jojo) {
-      struct class* class = TAG_JOJO->data;
-      struct gp* gp = new_record_gp();
-      gp->class = class;
-      gp->p = jojo;
-      return gp;
     }
     #+end_src
 
@@ -2391,13 +2337,91 @@
       plus_atom("<uninitialised-field-place-holder>", gc_ignore);
 
       plus_atom("<prim>", gc_ignore);
-      plus_atom("<jojo>", gc_ignore);
       plus_atom("<address>", gc_ignore);
       plus_atom("<data-constructor>", gc_ignore);
       plus_atom("<data-predicate>", gc_ignore);
 
       plus_prim("tag", p_tag);
       plus_prim("eq?", p_eq_p);
+    }
+    #+end_src
+
+* <jojo>
+
+*** new_jojo_gp
+
+    #+begin_src c
+    struct gp* new_jojo_gp(jo_t* jojo) {
+      struct class* class = TAG_JOJO->data;
+      struct gp* gp = new_record_gp();
+      gp->class = class;
+      gp->p = jojo;
+      return gp;
+    }
+    #+end_src
+
+*** jojo_length
+
+    #+begin_src c
+    cell jojo_length(jo_t* jojo) {
+      cell i = 0;
+      while (true) {
+        if (jojo[i] == JO_END && jojo[i+1] == 0) {return i+2;}
+        i++;
+      }
+    }
+    #+end_src
+
+*** p_new_jojo
+
+    #+begin_src c
+    void p_new_jojo() {
+      struct dp a = ds_pop();
+      jo_t* jojo = a.d;
+      jo_t* new_jojo = array_len_dup(jojo, jojo_length(jojo));
+      ds_push(TAG_JOJO, new_jojo_gp(new_jojo));
+    }
+    #+end_src
+
+*** gc_jojo
+
+    #+begin_src c
+    void gc_jojo(gc_state_t gc_state, struct gp* gp) {
+      if (gc_state == GC_STATE_MARKING) {
+        // report_in_red("- gc_jojo : GC_STATE_MARKING\n");
+        // sleep(1);
+        if (gp->mark == GC_MARK_USING) { return; }
+        gp->mark = GC_MARK_USING;
+        jo_t* jojo = gp->p;
+        cell i = 0;
+        while (true) {
+          if (jojo[i] == JO_END && jojo[i+1] == 0) { return; }
+          if (jojo[i] == JO_INS_LIT && in_jotable_p(jojo[i+1])) {
+            mark_one_data(jojo[i+1],
+                          jojo[i+2]);
+            i++;
+            i++;
+            i++;
+          }
+          else {
+            i++;
+          }
+        }
+      }
+      else if (gc_state == GC_STATE_SWEEPING) {
+        // report_in_green("- gc_jojo : GC_STATE_SWEEPING\n");
+        free(gp->p);
+      }
+    }
+    #+end_src
+
+*** expose_jojo
+
+    #+begin_src c
+    void expose_jojo() {
+      plus_atom("<jojo>", gc_jojo);
+
+      plus_prim("new-jojo", p_new_jojo);
     }
     #+end_src
 
@@ -4095,7 +4119,9 @@
           char* tmp = malloc(strlen(jo2str(dc) + 1));
           tmp[0] = '\0';
           strcat(tmp, jo2str(dc));
-          emit(JO_INS_LIT); emit(TAG_JO); emit(str2jo(tmp));
+          emit(JO_INS_LIT);
+          emit(TAG_JO);
+          emit(str2jo(tmp));
           free(tmp);
         }
         emit(str2jo("eq?"));
@@ -4407,16 +4433,6 @@
           jojo++;
           jojo++;
         }
-        else if (jojo[0] == JO_INS_LOOP) {
-          report("(loop) ");
-          jojo++;
-          jojo++;
-        }
-        else if (jojo[0] == JO_INS_RECUR) {
-          report("(recur) ");
-          jojo++;
-          jojo++;
-        }
         else if (jojo[0] == JO_INS_LOCAL ||
                  jojo[0] == JO_INS_DYNAMIC_LOCAL ||
                  jojo[0] == JO_INS_FIELD) {
@@ -4428,11 +4444,6 @@
                  jojo[0] == JO_INS_SET_DYNAMIC_LOCAL ||
                  jojo[0] == JO_INS_SET_FIELD) {
           report("%s! ", jo2str(jojo[1]));
-          jojo++;
-          jojo++;
-        }
-        else if (jojo[0] == JO_INS_TAIL_CALL) {
-          report("(tail-call %s) ", jo2str(jojo[1]));
           jojo++;
           jojo++;
         }
@@ -5524,39 +5535,6 @@
       plus_prim("get-cell", p_get_cell);
       plus_prim("set-byte", p_set_byte);
       plus_prim("get-byte", p_get_byte);
-    }
-    #+end_src
-
-* <jojo>
-
-*** jojo_length
-
-    #+begin_src c
-    cell jojo_length(jo_t* jojo) {
-      cell i = 0;
-      while (true) {
-        if (jojo[i] == JO_END && jojo[i+1] == 0) {return i+2;}
-        i++;
-      }
-    }
-    #+end_src
-
-*** p_new_jojo
-
-    #+begin_src c
-    void p_new_jojo() {
-      struct dp a = ds_pop();
-      jo_t* jojo = a.d;
-      jo_t* new_jojo = array_len_dup(jojo, jojo_length(jojo));
-      ds_push(TAG_JOJO, new_jojo_gp(new_jojo));
-    }
-    #+end_src
-
-*** expose_jojo
-
-    #+begin_src c
-    void expose_jojo() {
-      plus_prim("new-jojo", p_new_jojo);
     }
     #+end_src
 
@@ -6831,10 +6809,6 @@
       JO_INS_JMP = str2jo("ins/jmp");
       JO_INS_JZ  = str2jo("ins/jz");
 
-      JO_INS_TAIL_CALL = str2jo("ins/tail-call");
-      JO_INS_LOOP = str2jo("ins/loop");
-      JO_INS_RECUR = str2jo("ins/recur");
-
       JO_NULL     = str2jo("null");
       JO_THEN     = str2jo("then");
       JO_ELSE     = str2jo("else");
@@ -6846,15 +6820,6 @@
       JO_CLOSURE   = str2jo("closure");
 
       JO_CURRENT_LOCAL_ENV   = str2jo("current-local-env");
-
-      JO_LOCAL_DATA_IN = str2jo("local-data-in");
-      JO_LOCAL_DATA_OUT = str2jo("local-data-out");
-
-      JO_LOCAL_TAG_IN = str2jo("local-tag-in");
-      JO_LOCAL_TAG_OUT = str2jo("local-tag-out");
-
-      JO_LOCAL_IN = str2jo("local-in");
-      JO_LOCAL_OUT = str2jo("local-out");
     }
     #+end_src
 
