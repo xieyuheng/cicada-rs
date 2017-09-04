@@ -1365,8 +1365,6 @@
 
       // report("- mark_one_data end\n");
     }
-    void data_print(jo_t tag, cell data);
-
     void mark_gr() {
       // prepare
       cell i = 0;
@@ -2566,34 +2564,8 @@
           return true;
         }
       }
-    void compile_string() {
-      // "..."
-      char buffer[1024 * 1024];
-      cell cursor = 0;
-      while (true) {
-        char c = read_byte();
-        if (c == '"') {
-          buffer[cursor] = '\0';
-          cursor++;
-          break;
-        }
-        else {
-          buffer[cursor] = c;
-          cursor++;
-        }
-      }
-      char* str = strdup(buffer);
-
-      struct class* class = TAG_STRING->data;
-      struct gp* gp = new_record_gp();
-      gp->class = class;
-      gp->p = str;
-
-      emit(JO_INS_LIT);
-      emit(TAG_STRING);
-      emit(gp);
-    }
     void k_closure();
+    void compile_string();
 
     void compile_jo(jo_t jo) {
       if (jo == ROUND_BAR) {
@@ -2971,7 +2943,7 @@
       report("| ");
       while (lr->name != 0) {
         data_print(lr->local_tag, lr->local_data);
-        report("%s! ", jo2str(lr->name));
+        report(" %s! ", jo2str(lr->name));
         lr++;
       }
       report("|");
@@ -2980,23 +2952,23 @@
 
     void data_print(jo_t tag, cell data) {
       if (tag == TAG_INT) {
-        report("%ld ", data);
+        report("%ld", data);
       }
       else if (tag == TAG_STRING) {
         struct gp* gp = data;
         char* str = gp->p;
-        report("\"%s\" ", str);
+        report("\"%s\"", str);
       }
       else if (tag == TAG_JO) {
         jo_t jo = data;
-        report("'%s ", jo2str(jo));
+        report("'%s", jo2str(jo));
       }
       else if (tag == TAG_BOOL) {
         if (data) {
-          report("true ");
+          report("true");
         }
         else {
-          report("flase ");
+          report("flase");
         }
       }
       else if (tag == TAG_JOJO) {
@@ -3007,17 +2979,19 @@
       else if (tag == TAG_LOCAL_ENV) {
         struct local* lr = data;
         local_env_print(lr);
-        report(" ");
       }
       else if (tag == TAG_CLOSURE) {
         struct gp* closure = data;
 
-        struct dp a = get_field(TAG_CLOSURE, closure, str2jo(".local-env"));
+        struct dp a = get_field(TAG_CLOSURE, closure,
+                                str2jo(".local-env"));
         struct gp* ap = a.d;
         struct local* lr = ap->p;
 
-        struct dp b = get_field(TAG_CLOSURE, closure, str2jo(".jojo"));
-        jo_t* jojo = b.d;
+        struct dp b = get_field(TAG_CLOSURE, closure,
+                                str2jo(".jojo"));
+        struct gp* jojo_gp = b.d;
+        jo_t* jojo = jojo_gp->p;
 
         if (local_env_empty_p(lr)) {
           jojo_print(jojo);
@@ -3029,54 +3003,58 @@
         }
       }
       else if (!in_jotable_p(tag)) {
-        report("[<bad-tag:%ld> %ld] ", tag, data);
+        report("[<bad-tag:%ld> %ld]", tag, data);
       }
       else {
-        report("[%s %ld] ", jo2str(tag), data);
+        report("[%s %ld]", jo2str(tag), data);
       }
+    }
+    jo_t* jojo_print_one(jo_t* jojo) {
+      if (jojo[0] == JO_INS_LIT) {
+        data_print(jojo[1], jojo[2]);
+        jojo++;
+        jojo++;
+        jojo++;
+      }
+      else if (jojo[0] == JO_INS_JZ) {
+        report("(jz %ld)", jojo[1]);
+        jojo++;
+        jojo++;
+      }
+      else if (jojo[0] == JO_INS_JMP) {
+        report("(jmp %ld)", jojo[1]);
+        jojo++;
+        jojo++;
+      }
+      else if (jojo[0] == JO_INS_LOCAL ||
+               jojo[0] == JO_INS_DYNAMIC_LOCAL ||
+               jojo[0] == JO_INS_FIELD) {
+        report("%s", jo2str(jojo[1]));
+        jojo++;
+        jojo++;
+      }
+      else if (jojo[0] == JO_INS_SET_LOCAL ||
+               jojo[0] == JO_INS_SET_DYNAMIC_LOCAL ||
+               jojo[0] == JO_INS_SET_FIELD) {
+        report("%s!", jo2str(jojo[1]));
+        jojo++;
+        jojo++;
+      }
+      else {
+        report("%s", jo2str(jojo[0]));
+        jojo++;
+      }
+      return jojo;
     }
     void jojo_print(jo_t* jojo) {
       report("{");
       while (true) {
-        if (jojo[0] == JO_END && jojo[1] == 0) {
-          report("}");
-          break;
-        }
-        else if (jojo[0] == JO_INS_LIT) {
-          data_print(jojo[1], jojo[2]);
-          jojo++;
-          jojo++;
-          jojo++;
-        }
-        else if (jojo[0] == JO_INS_JZ) {
-          report("(jz %ld) ", jojo[1]);
-          jojo++;
-          jojo++;
-        }
-        else if (jojo[0] == JO_INS_JMP) {
-          report("(jmp %ld) ", jojo[1]);
-          jojo++;
-          jojo++;
-        }
-        else if (jojo[0] == JO_INS_LOCAL ||
-                 jojo[0] == JO_INS_DYNAMIC_LOCAL ||
-                 jojo[0] == JO_INS_FIELD) {
-          report("%s ", jo2str(jojo[1]));
-          jojo++;
-          jojo++;
-        }
-        else if (jojo[0] == JO_INS_SET_LOCAL ||
-                 jojo[0] == JO_INS_SET_DYNAMIC_LOCAL ||
-                 jojo[0] == JO_INS_SET_FIELD) {
-          report("%s! ", jo2str(jojo[1]));
-          jojo++;
-          jojo++;
-        }
-        else {
-          report("%s ", jo2str(jojo[0]));
-          jojo++;
-        }
+        if (jojo[0] == JO_END && jojo[1] == 0) { break; }
+        jojo = jojo_print_one(jojo);
+        if (jojo[0] == JO_END && jojo[1] == 0) { break; }
+        report(" ");
       }
+      report("}");
     }
     void p_print_ds() {
       report("  * %ld *  ", ds_length());
@@ -3084,7 +3062,7 @@
       cell i = 0;
       while (i < ds_length()) {
         struct dp a = ds_ref(i);
-        data_print(a.t, a.d);
+        data_print(a.t, a.d);  report(" ");
         i++;
       }
       report("--\n");
@@ -3335,6 +3313,35 @@
       plus_prim("and", p_and);
       plus_prim("or", p_or);
     }
+    struct gp* new_string_gp(char* str) {
+      struct class* class = TAG_STRING->data;
+      struct gp* gp = new_record_gp();
+      gp->class = class;
+      gp->p = str;
+      return gp;
+    }
+    void compile_string() {
+      // "..."
+      char buffer[1024 * 1024];
+      cell cursor = 0;
+      while (true) {
+        char c = read_byte();
+        if (c == '"') {
+          buffer[cursor] = '\0';
+          cursor++;
+          break;
+        }
+        else {
+          buffer[cursor] = c;
+          cursor++;
+        }
+      }
+      char* str = strdup(buffer);
+
+      emit(JO_INS_LIT);
+      emit(TAG_STRING);
+      emit(new_string_gp(str));
+    }
     void string_write(char* str) {
       while (str[0] != '\0') {
         byte_write(str[0]);
@@ -3371,12 +3378,7 @@
       strcat(str2, str0);
       strcat(str2, str1);
 
-      struct class* class = TAG_STRING->data;
-      struct gp* gp = new_record_gp();
-      gp->class = class;
-      gp->p = str2;
-
-      ds_push(TAG_STRING, gp);
+      ds_push(TAG_STRING, new_string_gp(str2));
     }
     void p_string_slice() {
       struct dp a = ds_pop();
@@ -3388,12 +3390,7 @@
       cell end = a.d;
       char* str1 = substring(str0, begin, end);
 
-      struct class* class = TAG_STRING->data;
-      struct gp* gp = new_record_gp();
-      gp->class = class;
-      gp->p = str1;
-
-      ds_push(TAG_STRING, gp);
+      ds_push(TAG_STRING, new_string_gp(str1));
     }
     void p_string_empty_p() {
       struct dp a = ds_pop();
@@ -3425,12 +3422,7 @@
       }
       char* str = strdup(buffer);
 
-      struct class* class = TAG_STRING->data;
-      struct gp* gp = new_record_gp();
-      gp->class = class;
-      gp->p = str;
-
-      ds_push(TAG_STRING, gp);
+      ds_push(TAG_STRING, new_string_gp(str));
     }
     void expose_string() {
       plus_prim("string-write", p_string_write);
@@ -3736,6 +3728,13 @@
       plus_prim("set-byte", p_set_byte);
       plus_prim("get-byte", p_get_byte);
     }
+    struct gp* new_array_gp(cell* array) {
+      struct class* class = TAG_ARRAY->data;
+      struct gp* gp = new_record_gp();
+      gp->class = class;
+      gp->p = array;
+      return gp;
+    }
     void p_new_array() {
       struct dp a = ds_pop();
       cell len = a.d;
@@ -3743,12 +3742,7 @@
       bzero(array, (len*2 + 1) * sizeof(cell));
       array[0] = len;
 
-      struct class* class = TAG_ARRAY->data;
-      struct gp* gp = new_record_gp();
-      gp->class = class;
-      gp->p = array;
-
-      ds_push(TAG_ARRAY, gp);
+      ds_push(TAG_ARRAY, new_array_gp(array));
     }
     void p_array_length() {
       struct dp a = ds_pop();
@@ -3821,13 +3815,7 @@
       }
       ds_drop();
 
-
-      struct class* class = TAG_ARRAY->data;
-      struct gp* gp = new_record_gp();
-      gp->class = class;
-      gp->p = array;
-
-      ds_push(TAG_ARRAY, gp);
+      ds_push(TAG_ARRAY, new_array_gp(array));
     }
     void expose_array() {
       plus_prim("new-array", p_new_array);
@@ -3895,11 +3883,13 @@
       struct dp c = ds_pop();
       struct gp* closure = c.d;
 
-      struct dp a = get_field(TAG_CLOSURE, closure, str2jo(".local-env"));
+      struct dp a = get_field(TAG_CLOSURE, closure,
+                              str2jo(".local-env"));
       struct gp* ap = a.d;
       struct local* lr = ap->p;
 
-      struct dp b = get_field(TAG_CLOSURE, closure, str2jo(".jojo"));
+      struct dp b = get_field(TAG_CLOSURE, closure,
+                              str2jo(".jojo"));
       struct gp* jojo_gp = b.d;
       jo_t* jojo = jojo_gp->p;
 
@@ -4164,13 +4154,7 @@
                 sizeof(str));
 
       ds_push(TAG_SOCKET, newfd);
-
-      struct class* class = TAG_STRING->data;
-      struct gp* gp = new_record_gp();
-      gp->class = class;
-      gp->p = strdup(str);
-
-      ds_push(TAG_STRING, gp);
+      ds_push(TAG_STRING, new_string_gp(str));
     }
     void p_tcp_socket_connect() {
       // [:host <string> :service <string>] -> [<socket>]
@@ -4250,12 +4234,7 @@
         perror("  recv error : ");
       }
 
-      struct class* class = TAG_STRING->data;
-      struct gp* gp = new_record_gp();
-      gp->class = class;
-      gp->p = strdup(buf);
-
-      ds_push(TAG_STRING, gp);
+      ds_push(TAG_STRING, new_string_gp(strdup(buf)));
     }
     void expose_socket() {
       plus_atom("<socket>", gc_ignore);
@@ -4280,12 +4259,7 @@
       cell index = a.d;
       char* cmd_string = cmd_string_array[index];
 
-      struct class* class = TAG_STRING->data;
-      struct gp* gp = new_record_gp();
-      gp->class = class;
-      gp->p = strdup(cmd_string);
-
-      ds_push(TAG_STRING, gp);
+      ds_push(TAG_STRING, new_string_gp(strdup(cmd_string)));
     }
     void p_find_env_string() {
       // string -> [env-string true] or [false]
@@ -4297,12 +4271,7 @@
         ds_push(TAG_BOOL, false);
       }
       else {
-        struct class* class = TAG_STRING->data;
-        struct gp* gp = new_record_gp();
-        gp->class = class;
-        gp->p = strdup(env_string);
-
-        ds_push(TAG_STRING, gp);
+        ds_push(TAG_STRING, new_string_gp(strdup(env_string)));
         ds_push(TAG_BOOL, true);
       }
     }

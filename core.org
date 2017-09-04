@@ -4,6 +4,10 @@
 
 * [todo-stack]
 
+*** cmd-list
+
+*** read-line
+
 *** command line interface
 
 *** 'write' as gene
@@ -19,9 +23,10 @@
     - only use "~/.jojo"
       to make the behaviour of module system simple
 
-    - move socket to module
+*** socket module
 
-    - improve socket API
+    - move socket to module,
+      and learn from nanomsg.
 
 *** something like 'with-output-to-string' & 'with-output-to-file'
 
@@ -1072,6 +1077,20 @@
 
 * >< equal? -- gene
 
+* system
+
+*** cmd-list
+
+    #+begin_src jojo
+    (+jojo cmd-list 0 cmd-list/loop)
+
+    (+jojo cmd-list/loop (-> :index --)
+      (cond [:index cmd-number eq?] null
+            else [:index index->cmd-string
+                  :index inc recur
+                  cons]))
+    #+end_src
+
 * <file>
 
 *** path-load
@@ -1093,12 +1112,6 @@
     #+begin_src jojo
     (+jojo welcome-to-jojo
       "welcome to jojo's programming adventure ^-^/" string-write newline)
-    #+end_src
-
-*** >< set-cmd-flag
-
-    #+begin_src jojo
-    (+jojo set-cmd-flag)
     #+end_src
 
 *** load-cmd-path
@@ -1123,19 +1136,28 @@
 *** the-story-begin
 
     #+begin_src jojo
+    (note
+      (+jojo the-story-begin
+        core-flag-off
+        test-flag-off
+
+        (if cmd-number 1 eq? then
+            repl-flag-on
+            welcome-to-jojo
+            print-data-stack
+            terminal-input-stack repl end)
+
+        repl-flag-off
+        load-cmd-path))
+
     (+jojo the-story-begin
       core-flag-off
       test-flag-off
 
-      (if cmd-number 1 eq? then
-          repl-flag-on
-          welcome-to-jojo
-          print-data-stack
-          terminal-input-stack repl end)
-
-      set-cmd-flag
-      repl-flag-off
-      load-cmd-path)
+      repl-flag-on
+      welcome-to-jojo
+      print-data-stack
+      terminal-input-stack repl)
 
     the-story-begin
     #+end_src
