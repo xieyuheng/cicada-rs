@@ -4,8 +4,6 @@
 
 * [todo-stack]
 
-*** cmd-list
-
 *** read-line
 
 *** command line interface
@@ -1114,18 +1112,6 @@
       "welcome to jojo's programming adventure ^-^/" string-write newline)
     #+end_src
 
-*** load-cmd-path
-
-    #+begin_src jojo
-    (+jojo load-cmd-path 1 load-cmd-path/loop)
-
-    (+jojo load-cmd-path/loop (-> :index --)
-      (if :index cmd-number eq? then end)
-      :index index->cmd-string :path!
-      (note (if :path path-readable? not then ><><><))
-      :path path-load :index inc recur)
-    #+end_src
-
 *** ><
 
     #+begin_src jojo
@@ -1136,28 +1122,19 @@
 *** the-story-begin
 
     #+begin_src jojo
-    (note
-      (+jojo the-story-begin
-        core-flag-off
-        test-flag-off
-
-        (if cmd-number 1 eq? then
-            repl-flag-on
-            welcome-to-jojo
-            print-data-stack
-            terminal-input-stack repl end)
-
-        repl-flag-off
-        load-cmd-path))
-
     (+jojo the-story-begin
       core-flag-off
       test-flag-off
 
-      repl-flag-on
-      welcome-to-jojo
-      print-data-stack
-      terminal-input-stack repl)
+      (if cmd-number 1 eq? then
+          repl-flag-on
+          welcome-to-jojo
+          print-data-stack
+          terminal-input-stack repl end)
+
+      repl-flag-off
+      cmd-list .cdr {path-load} list-for-each
+      bye)
 
     the-story-begin
     #+end_src
