@@ -1230,8 +1230,7 @@
 
     struct gp { // gc point
       gc_mark_t mark;
-      gc_actor_t gc_actor;
-      cell fields_number;
+      struct class* class;
       cell p; // actual data point
     };
     #define GR_SIZE 64 * 1024
@@ -1419,7 +1418,7 @@
         return;
       }
       else {
-        gp->gc_actor(GC_STATE_SWEEPING, gp);
+        gp->class->gc_actor(GC_STATE_SWEEPING, gp);
         return;
       }
     }
@@ -1430,6 +1429,19 @@
         i++;
       }
     }
+    void run_gc() {
+      mark_gr();
+      sweep_gr();
+    }
+
+    // void run_gc() {
+    //   report("- run_gc()\n");
+    //   mark_gr();
+    //   report("- after mark_gr()\n");
+    //   sweep_gr();
+    //   report("- after sweep_gr()\n");
+    //   sleep(1);
+    // }
       void gc_ignore(gc_state_t gc_state, cell data) {
         if (gc_state == GC_STATE_MARKING) {
         }
@@ -1453,13 +1465,12 @@
           // sleep(1);
           if (gp->mark == GC_MARK_USING) { return; }
           gp->mark = GC_MARK_USING;
-          cell fields_number = gp->fields_number;
+          cell fields_number = gp->class->fields_number;
           cell i = 0;
           while (i < fields_number) {
             mark_one(get_gp_field_tag(gp, i),
                      get_gp_field_data(gp, i));
             i++;
-
           }
         }
         else if (gc_state == GC_STATE_SWEEPING) {
@@ -1467,19 +1478,25 @@
           free(gp->p);
         }
       }
-    void run_gc() {
-      mark_gr();
-      sweep_gr();
-    }
-
-    // void run_gc() {
-    //   report("- run_gc()\n");
-    //   mark_gr();
-    //   report("- after mark_gr()\n");
-    //   sweep_gr();
-    //   report("- after sweep_gr()\n");
-    //   sleep(1);
-    // }
+      // void gc_jojo(gc_state_t gc_state, struct gp* gp) {
+      //   if (gc_state == GC_STATE_MARKING) {
+      //     // report_in_red("- gc_jojo : GC_STATE_MARKING\n");
+      //     // sleep(1);
+      //     if (gp->mark == GC_MARK_USING) { return; }
+      //     gp->mark = GC_MARK_USING;
+      //     cell fields_number = gp->fields_number;
+      //     cell i = 0;
+      //     while (i < fields_number) {
+      //       mark_one(get_gp_field_tag(gp, i),
+      //                get_gp_field_data(gp, i));
+      //       i++;
+      //     }
+      //   }
+      //   else if (gc_state == GC_STATE_SWEEPING) {
+      //     // report_in_green("- gc_jojo : GC_STATE_SWEEPING\n");
+      //     free(jojo);
+      //   }
+      // }
     void next_free_record_gp() {
       while (!gr_end_p() &&
              gr_pointer->mark != GC_MARK_FREE) {
@@ -1505,27 +1522,6 @@
           return 0;
         }
       }
-    }
-    struct gp* new_static_gp() {
-      struct gp* gp = (struct gp*)
-        malloc(sizeof(struct gp));
-      return gp;
-    }
-    struct gp* new(struct class* class) {
-      cell* fields = (cell*)malloc(class->fields_number*2*sizeof(cell));
-
-      cell i = 0;
-      while (i < class->fields_number) {
-        set_field_tag(fields, i, TAG_UNINITIALISED_FIELD_PLACE_HOLDER);
-        i++;
-      }
-
-      struct gp* gp = new_record_gp();
-      gp->gc_actor = gc_recur;
-      gp->p = fields;
-      gp->fields_number = class->fields_number;
-
-      return gp;
     }
     void plus_atom(class_name, gc_actor)
       char* class_name;
@@ -2040,9 +2036,8 @@
           set_field_data(fields, (fields_number - (i+1)), a.d);
           i++;
         }
-        gp->gc_actor = gc_recur;
+        gp->class = class;
         gp->p = fields;
-        gp->fields_number = fields_number;
         ds_push(class->class_name, gp);
       }
     }
@@ -2571,8 +2566,10 @@
         }
       }
       char* str = strdup(buffer);
-      struct gp* gp = new_static_gp();
-      gp->gc_actor = gc_ignore;
+
+      struct class* class = TAG_STRING->data;
+      struct gp* gp = new_record_gp();
+      gp->class = class;
       gp->p = str;
 
       emit(JO_INS_LIT);
@@ -3369,8 +3366,9 @@
       strcat(str2, str0);
       strcat(str2, str1);
 
+      struct class* class = TAG_STRING->data;
       struct gp* gp = new_record_gp();
-      gp->gc_actor = gc_free;
+      gp->class = class;
       gp->p = str2;
 
       ds_push(TAG_STRING, gp);
@@ -3385,8 +3383,9 @@
       cell end = a.d;
       char* str1 = substring(str0, begin, end);
 
+      struct class* class = TAG_STRING->data;
       struct gp* gp = new_record_gp();
-      gp->gc_actor = gc_free;
+      gp->class = class;
       gp->p = str1;
 
       ds_push(TAG_STRING, gp);
@@ -3420,8 +3419,10 @@
         }
       }
       char* str = strdup(buffer);
+
+      struct class* class = TAG_STRING->data;
       struct gp* gp = new_record_gp();
-      gp->gc_actor = gc_ignore;
+      gp->class = class;
       gp->p = str;
 
       ds_push(TAG_STRING, gp);
@@ -3753,9 +3754,11 @@
       bzero(array, (len*2 + 1) * sizeof(cell));
       array[0] = len;
 
+      struct class* class = TAG_ARRAY->data;
       struct gp* gp = new_record_gp();
-      gp->gc_actor = gc_free;
+      gp->class = class;
       gp->p = array;
+
       ds_push(TAG_ARRAY, gp);
     }
     void p_array_length() {
@@ -3829,9 +3832,12 @@
       }
       ds_drop();
 
+
+      struct class* class = TAG_ARRAY->data;
       struct gp* gp = new_record_gp();
-      gp->gc_actor = gc_free;
+      gp->class = class;
       gp->p = array;
+
       ds_push(TAG_ARRAY, gp);
     }
     void expose_array() {
@@ -3882,9 +3888,12 @@
     }
     void p_current_local_env() {
       struct local* lr = current_local_record();
+
+      struct class* class = TAG_LOCAL_ENV->data;
       struct gp* gp = new_record_gp();
-      gp->gc_actor = gc_local_env;
+      gp->class = class;
       gp->p = lr;
+
       ds_push(TAG_LOCAL_ENV, gp);
     }
     void set_local_record(struct local* lr) {
@@ -4162,8 +4171,9 @@
 
       ds_push(TAG_SOCKET, newfd);
 
+      struct class* class = TAG_STRING->data;
       struct gp* gp = new_record_gp();
-      gp->gc_actor = gc_free;
+      gp->class = class;
       gp->p = strdup(str);
 
       ds_push(TAG_STRING, gp);
@@ -4246,8 +4256,9 @@
         perror("  recv error : ");
       }
 
+      struct class* class = TAG_STRING->data;
       struct gp* gp = new_record_gp();
-      gp->gc_actor = gc_free;
+      gp->class = class;
       gp->p = strdup(buf);
 
       ds_push(TAG_STRING, gp);
@@ -4275,8 +4286,9 @@
       cell index = a.d;
       char* cmd_string = cmd_string_array[index];
 
+      struct class* class = TAG_STRING->data;
       struct gp* gp = new_record_gp();
-      gp->gc_actor = gc_free;
+      gp->class = class;
       gp->p = strdup(cmd_string);
 
       ds_push(TAG_STRING, gp);
@@ -4291,8 +4303,9 @@
         ds_push(TAG_BOOL, false);
       }
       else {
+        struct class* class = TAG_STRING->data;
         struct gp* gp = new_record_gp();
-        gp->gc_actor = gc_free;
+        gp->class = class;
         gp->p = strdup(env_string);
 
         ds_push(TAG_STRING, gp);

@@ -2,15 +2,7 @@
 #+property: tangle core.jo
 #+title: core
 
-
 * [todo-stack]
-
-*** fix string-emit
-
-    - if we do not scan jojo at each run_gc,
-      macro can not leave gc data in function body.
-
-*** note about emit-lit, jo-emit, jo-compile
 
 *** command line interface
 
@@ -31,9 +23,13 @@
 
     - improve socket API
 
+*** something like 'with-output-to-string' & 'with-output-to-file'
+
+* [todo-list]
+
 *** publish sexp and html to file
 
-*** something like 'with-output-to-string' & 'with-output-to-file'
+*** compile sexp to c
 
 *** use EOPL to test the language
 
@@ -282,23 +278,23 @@
               :list .cdr recur]))
     #+end_src
 
-* syntax
+* repl
 
-*** repl
+  #+begin_src jojo
+  (+jojo repl (-> :input-stack --)
+    :input-stack reading-stack-push
+    repl/loop
+    reading-stack-drop)
 
-    #+begin_src jojo
-    (+jojo repl (-> :input-stack --)
-      :input-stack reading-stack-push
-      repl/loop
-      reading-stack-drop)
+  (+jojo repl/loop
+    (if has-jo? not then end)
+    read-sexp null cons
+    compile-jojo apply
+    (if repl-flag then print-data-stack)
+    recur)
+  #+end_src
 
-    (+jojo repl/loop
-      (if has-jo? not then end)
-      read-sexp null cons
-      compile-jojo apply
-      (if repl-flag then print-data-stack)
-      recur)
-    #+end_src
+* compiler
 
 *** compile-jojo
 
@@ -309,18 +305,6 @@
        emit-jojo-end
       :address '<jojo> tag-change jojo-copy
       compiling-stack-drop :address compiling-stack-push)
-    #+end_src
-
-*** jo-list-compile-cells
-
-    #+begin_src jojo
-    (+jojo jo-list-compile-cells (-> :list -- <address>)
-      compiling-stack-tos :address!
-      :list {jo-emit} list-for-each
-      emit-zero
-      :address cells-copy :new-address!
-      compiling-stack-drop :address compiling-stack-push
-      :new-address)
     #+end_src
 
 *** sexp-list-compile
@@ -340,98 +324,8 @@
       (case :sexp
         <null>   [:sexp emit-lit]
         <cons>   [:sexp .cdr :sexp .car jo-apply]
-        <string> [:sexp string-emit]
+        <string> [:sexp emit-lit]
         <jo>     [:sexp jo-compile]))
-    #+end_src
-
-*** (quote)
-
-    #+begin_src jojo
-    (+jojo quote {sexp-quote-compile} list-for-each)
-    #+end_src
-
-*** sexp-quote-compile
-
-    #+begin_src jojo
-    (+jojo sexp-quote-compile (-> :sexp --)
-      (if :sexp cons?
-          then :sexp sexp-list-quote-compile
-          else :sexp emit-lit))
-    #+end_src
-
-*** sexp-list-quote-compile
-
-    #+begin_src jojo
-    (+jojo sexp-list-quote-compile (-> :list --)
-      (cond
-        [:list null?]
-        [null emit-lit]
-
-        [:list .car string?]
-        [:list .cdr recur
-         :list .car string-emit
-         'swap jo-emit
-         'cons jo-emit]
-
-        [:list .car jo?]
-        [:list .cdr recur
-         :list .car emit-lit
-         'swap jo-emit
-         'cons jo-emit]
-
-        else
-        [:list .cdr recur
-         :list .car recur
-         'swap jo-emit
-         'cons jo-emit]))
-    #+end_src
-
-*** (partquote)
-
-    #+begin_src jojo
-    (+jojo partquote {sexp-partquote-compile} list-for-each)
-    #+end_src
-
-*** sexp-partquote-compile
-
-    #+begin_src jojo
-    (+jojo sexp-partquote-compile (-> :sexp --)
-      (if :sexp cons?
-          then :sexp sexp-list-partquote-compile
-          else :sexp sexp-compile))
-    #+end_src
-
-*** sexp-list-partquote-compile -- depends on (list)
-
-    #+begin_src jojo
-    (+jojo sexp-list-partquote-compile (-> :list --)
-      (cond
-        [:list null?]
-        [null emit-lit]
-
-        [:list .car string?]
-        [:list .cdr recur
-         :list .car string-emit
-         'swap jo-emit
-         'cons jo-emit]
-
-        [:list .car jo?]
-        [:list .cdr recur
-         :list .car emit-lit
-         'swap jo-emit
-         'cons jo-emit]
-
-        [:list .car .car '@ eq?]
-        [:list .cdr recur
-         :list .car .cdr list/expend sexp-compile
-         'swap jo-emit
-         'list-append jo-emit]
-
-        else
-        [:list .cdr recur
-         :list .car recur
-         'swap jo-emit
-         'cons jo-emit]))
     #+end_src
 
 *** jo-compile
@@ -453,6 +347,72 @@
         [:jo comma eq?] []
 
         else [:jo jo-emit]))
+    #+end_src
+
+* basic syntax
+
+*** (quote)
+
+    #+begin_src jojo
+    (+jojo quote {sexp-quote-compile} list-for-each)
+
+    (+jojo sexp-quote-compile (-> :sexp --)
+      (if :sexp cons?
+          then :sexp sexp-list-quote-compile
+          else :sexp emit-lit))
+
+    (+jojo sexp-list-quote-compile (-> :list --)
+      (cond
+        [:list null?]
+        [null emit-lit]
+
+        [:list .car cons? not]
+        [:list .cdr recur
+         :list .car emit-lit
+         'swap jo-emit
+         'cons jo-emit]
+
+        else
+        [:list .cdr recur
+         :list .car recur
+         'swap jo-emit
+         'cons jo-emit]))
+    #+end_src
+
+*** (partquote)
+
+    #+begin_src jojo
+    (+jojo partquote {sexp-partquote-compile} list-for-each)
+
+    (+jojo sexp-partquote-compile (-> :sexp --)
+      (if :sexp cons?
+          then :sexp sexp-list-partquote-compile
+          else :sexp emit-lit))
+
+    (note this function depends on (list))
+
+    (+jojo sexp-list-partquote-compile (-> :list --)
+      (cond
+        [:list null?]
+        [null emit-lit]
+
+        [:list .car cons? not]
+        [:list .cdr recur
+         :list .car emit-lit
+         'swap jo-emit
+         'cons jo-emit]
+
+        [:list .car .car '@ eq?]
+        [:list .cdr recur
+         :list .car .cdr list/expend sexp-compile
+         'swap jo-emit
+         'list-append jo-emit]
+
+        else
+        [:list .cdr recur
+         :list .car recur
+         'swap jo-emit
+         'cons jo-emit]))
     #+end_src
 
 *** (if)
@@ -547,6 +507,18 @@
       'begin swap cons)
     #+end_src
 
+*** jo-list-compile-cells
+
+    #+begin_src jojo
+    (+jojo jo-list-compile-cells (-> :list -- <address>)
+      compiling-stack-tos :address!
+      :list {jo-emit} list-for-each
+      emit-zero
+      :address cells-copy :new-address!
+      compiling-stack-drop :address compiling-stack-push
+      :new-address)
+    #+end_src
+
 *** (+data)
 
     #+begin_src jojo
@@ -602,7 +574,7 @@
       :name name-bind-disp-to-jojo)
     #+end_src
 
-* re-define syntax -- the order matters
+* re-define (+jojo) and basic syntax -- the order matters
 
 *** (+jojo)
 
