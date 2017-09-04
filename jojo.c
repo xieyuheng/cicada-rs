@@ -1368,15 +1368,15 @@
       set_gp_field_tag(a.d, index, b.t);
       set_gp_field_data(a.d, index, b.d);
     }
-    void mark_one(jo_t tag, cell data) {
-      // report("- mark_one begin\n");
+    void mark_one_data(jo_t tag, cell data) {
+      // report("- mark_one_data begin\n");
       // if (!in_jotable_p(tag)) { report("  bad-tag : %ld\n", tag); }
       // else { report("  tag : %s\n", jo2str(tag)); }
 
       struct class* class = tag->data;
       class->gc_actor(GC_STATE_MARKING, data);
 
-      // report("- mark_one end\n");
+      // report("- mark_one_data end\n");
     }
     void data_print(jo_t tag, cell data);
 
@@ -1393,7 +1393,7 @@
       // i = 0;
       // while (i < name_record_counter) {
       //   jo_t name = name_record[i];
-      //   mark_one(name->tag, name->data);
+      //   mark_one_data(name->tag, name->data);
       //   i++;
       // }
 
@@ -1401,19 +1401,19 @@
       i = 0;
       while (i < ds_length()) {
         struct dp a = ds_ref(i);
-        mark_one(a.t, a.d);
+        mark_one_data(a.t, a.d);
         i++;
       }
 
       // local_record as root
       i = 0;
       while (i < current_local_counter) {
-        mark_one(local_record[i].local_tag,
-                 local_record[i].local_data);
+        mark_one_data(local_record[i].local_tag,
+                      local_record[i].local_data);
         i++;
       }
     }
-    void sweep_one(struct gp* gp) {
+    void sweep_one_gp(struct gp* gp) {
       if (gp->mark == GC_MARK_USING) {
         return;
       }
@@ -1425,7 +1425,7 @@
     void sweep_gr() {
       cell i = 0;
       while (i < GR_SIZE) {
-        sweep_one(gr + i);
+        sweep_one_gp(gr + i);
         i++;
       }
     }
@@ -1468,8 +1468,8 @@
           cell fields_number = gp->class->fields_number;
           cell i = 0;
           while (i < fields_number) {
-            mark_one(get_gp_field_tag(gp, i),
-                     get_gp_field_data(gp, i));
+            mark_one_data(get_gp_field_tag(gp, i),
+                          get_gp_field_data(gp, i));
             i++;
           }
         }
@@ -1487,7 +1487,7 @@
       //     cell fields_number = gp->fields_number;
       //     cell i = 0;
       //     while (i < fields_number) {
-      //       mark_one(get_gp_field_tag(gp, i),
+      //       mark_one_data(get_gp_field_tag(gp, i),
       //                get_gp_field_data(gp, i));
       //       i++;
       //     }
@@ -1522,6 +1522,13 @@
           return 0;
         }
       }
+    }
+    struct gp* new_jojo_gp(jo_t* jojo) {
+      struct class* class = TAG_JOJO->data;
+      struct gp* gp = new_record_gp();
+      gp->class = class;
+      gp->p = jojo;
+      return gp;
     }
     void plus_atom(class_name, gc_actor)
       char* class_name;
@@ -2010,10 +2017,12 @@
     }
     void p_jojo_exe() {
       struct dp a = ds_pop();
-      jo_t* jojo = a.d;
+      struct gp* jojo_gp = a.d;
+      jo_t* jojo = jojo_gp->p;
+
       rs_push(jojo,
               TAG_JOJO,
-              jojo,
+              jojo_gp,
               current_local_counter,
               current_dynamic_local_counter);
     }
@@ -2027,6 +2036,8 @@
       }
       else {
         struct gp* gp = new_record_gp();
+        gp->class = class;
+
         cell* fields = (cell*)
           malloc(fields_number*2*sizeof(cell));
         cell i = 0;
@@ -2036,8 +2047,8 @@
           set_field_data(fields, (fields_number - (i+1)), a.d);
           i++;
         }
-        gp->class = class;
         gp->p = fields;
+
         ds_push(class->class_name, gp);
       }
     }
@@ -2051,11 +2062,6 @@
     void p_default_exe() {
       // leave the data be.
     }
-    jo_t* jojo_of(char* function_name) {
-      jo_t name = str2jo(function_name);
-      return name->data;
-    }
-
     void expose_gene() {
       plus_gene("exe", 1);
       plus_disp_default("exe", "<prim>", p_default_exe);
@@ -2931,7 +2937,7 @@
     void k_plus_jojo() {
       jo_t fun_name = read_jo();
       jo_t* jojo = compile_jojo_until_ket(ROUND_KET);
-      bind_name(fun_name, TAG_JOJO, jojo);
+      bind_name(fun_name, TAG_JOJO, new_jojo_gp(jojo));
     }
     void expose_top() {
       plus_prim("test-flag", p_test_flag);
@@ -2981,7 +2987,8 @@
         }
       }
       else if (tag == TAG_JOJO) {
-        jo_t* jojo = data;
+        struct gp* jojo_gp = data;
+        jo_t* jojo = jojo_gp->p;
         jojo_print(jojo);
       }
       else if (tag == TAG_LOCAL_ENV) {
@@ -3124,7 +3131,7 @@
       push(compiling_stack, jojo);
       rs_push(new_jojo,
               TAG_JOJO,
-              new_jojo,
+              new_jojo_gp(new_jojo),
               current_local_counter,
               current_dynamic_local_counter);
       eval();
@@ -3738,14 +3745,14 @@
         i++;
       }
     }
-    void p_jojo_copy() {
+    void p_new_jojo() {
       struct dp a = ds_pop();
       jo_t* jojo = a.d;
       jo_t* new_jojo = array_len_dup(jojo, jojo_length(jojo));
-      ds_push(TAG_JOJO, new_jojo);
+      ds_push(TAG_JOJO, new_jojo_gp(new_jojo));
     }
     void expose_jojo() {
-      plus_prim("jojo-copy", p_jojo_copy);
+      plus_prim("new-jojo", p_new_jojo);
     }
     void p_new_array() {
       struct dp a = ds_pop();
@@ -3861,7 +3868,7 @@
         gp->mark = GC_MARK_USING;
         struct local* lr = gp->p;
         while (lr->name != 0) {
-            mark_one(lr->local_tag, lr->local_data);
+            mark_one_data(lr->local_tag, lr->local_data);
           lr++;
         }
       }
@@ -3911,10 +3918,15 @@
       struct local* lr = ap->p;
 
       struct dp b = get_field(TAG_CLOSURE, closure, str2jo(".jojo"));
-      jo_t* jojo = b.d;
+      struct gp* jojo_gp = b.d;
+      jo_t* jojo = jojo_gp->p;
 
+      // save current_local_counter
       cell local_counter = current_local_counter;
+
+      // with side effect on current_local_counter
       set_local_record(lr);
+
       rs_push(jojo,
               TAG_CLOSURE,
               closure,
@@ -3925,7 +3937,7 @@
       jo_t* jojo = compile_jojo_until_ket(FLOWER_KET);
       emit(JO_INS_LIT);
       emit(TAG_JOJO);
-      emit(jojo);
+      emit(new_jojo_gp(jojo));
       emit(JO_CURRENT_LOCAL_ENV);
       emit(JO_CLOSURE);
     }
