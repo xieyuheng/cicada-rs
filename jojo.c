@@ -2180,17 +2180,44 @@
     }
     struct stack* reading_stack; // of input_stack
     struct stack* writing_stack; // of output_stack
+    void p_reading_stack_push() {
+      struct dp a = ds_pop();
+      push(reading_stack, a.d);
+    }
+    void p_reading_stack_tos() {
+      ds_push(TAG_INPUT_STACK, tos(reading_stack));
+    }
+    void p_reading_stack_pop() {
+      ds_push(TAG_INPUT_STACK, pop(reading_stack));
+    }
+    void p_reading_stack_drop() {
+      drop(reading_stack);
+    }
+    void p_terminal_input_stack() {
+      ds_push(TAG_INPUT_STACK, terminal_input_stack());
+    }
+    void p_input_stack_free() {
+      struct dp a = ds_pop();
+      input_stack_free(a.d);
+    }
     bool has_byte_p() {
       return !input_stack_empty_p(tos(reading_stack));
     }
     char read_byte() {
       return input_stack_pop(tos(reading_stack));
     }
+    void p_read_byte() {
+      ds_push(TAG_BYTE, read_byte());
+    }
     void byte_unread(char b) {
       input_stack_push(tos(reading_stack), b);
     }
     void byte_write(char b) {
       output_stack_push(tos(writing_stack), b);
+    }
+    void p_byte_write() {
+      struct dp a = ds_pop();
+      byte_write(a.d);
     }
     bool has_jo_p() {
       char c;
@@ -2275,6 +2302,11 @@
         byte_unread(str[0]);
       }
     }
+    void p_string_unread() {
+      struct dp a = ds_pop();
+      struct gp* ap = a.d;
+      string_unread(ap->p);
+    }
     void jo_unread(jo_t jo) {
       char* str = jo2str(jo);
       // byte_unread(' ');
@@ -2287,35 +2319,8 @@
     void p_space() {
       output_stack_push(tos(writing_stack), ' ');
     }
-    void expose_rw() {
-      plus_prim("has-jo?", p_has_jo_p);
-      plus_prim("read-jo", p_read_jo);
-      plus_prim("newline", p_newline);
-      plus_prim("space", p_space);
-    }
-    void p_reading_stack_push() {
-      struct dp a = ds_pop();
-      push(reading_stack, a.d);
-    }
-    void p_reading_stack_tos() {
-      ds_push(TAG_INPUT_STACK, tos(reading_stack));
-    }
-    void p_reading_stack_pop() {
-      ds_push(TAG_INPUT_STACK, pop(reading_stack));
-    }
-    void p_reading_stack_drop() {
-      drop(reading_stack);
-    }
-    void p_terminal_input_stack() {
-      ds_push(TAG_INPUT_STACK, terminal_input_stack());
-    }
-    void p_input_stack_free() {
-      struct dp a = ds_pop();
-      input_stack_free(a.d);
-    }
     void expose_io() {
       plus_atom("<input-stack>", gc_ignore);
-
 
       plus_prim("reading-stack-push", p_reading_stack_push);
       plus_prim("reading-stack-tos", p_reading_stack_tos);
@@ -2323,8 +2328,18 @@
       plus_prim("reading-stack-drop", p_reading_stack_drop);
 
       plus_prim("terminal-input-stack", p_terminal_input_stack);
-
       plus_prim("input-stack-free", p_input_stack_free);
+
+      plus_prim("read-byte", p_read_byte);
+      plus_prim("byte-write", p_byte_write);
+
+      plus_prim("has-jo?", p_has_jo_p);
+      plus_prim("read-jo", p_read_jo);
+
+      plus_prim("string-unread", p_string_unread);
+
+      plus_prim("newline", p_newline);
+      plus_prim("space", p_space);
     }
     cell local_find(jo_t name) {
       // return index of local_record
@@ -3381,6 +3396,7 @@
       ds_push(TAG_STRING, new_string_gp(str2));
     }
     void p_string_slice() {
+      // [<string> begin end] -> [<string>]
       struct dp a = ds_pop();
       struct dp b = ds_pop();
       struct dp c = ds_pop();
@@ -3420,9 +3436,24 @@
           cursor++;
         }
       }
-      char* str = strdup(buffer);
-
-      ds_push(TAG_STRING, new_string_gp(str));
+      ds_push(TAG_STRING, new_string_gp(strdup(buffer)));
+    }
+    void p_read_line() {
+      char buffer[1024 * 1024];
+      cell cursor = 0;
+      while (true) {
+        char c = read_byte();
+        if (c == '\n') {
+          buffer[cursor] = '\0';
+          cursor++;
+          break;
+        }
+        else {
+          buffer[cursor] = c;
+          cursor++;
+        }
+      }
+      ds_push(TAG_STRING, new_string_gp(strdup(buffer)));
     }
     void expose_string() {
       plus_prim("string-write", p_string_write);
@@ -3433,6 +3464,7 @@
       plus_prim("string-empty?", p_string_empty_p);
       plus_prim("string-eq?", p_string_eq_p);
       plus_prim("read-string", p_read_string);
+      plus_prim("read-line", p_read_line);
     }
     void p_inc() {
       struct dp a = ds_pop();
@@ -4639,7 +4671,6 @@
       expose_gene();
       expose_stack();
       expose_ending();
-      expose_rw();
       expose_io();
       expose_local();
       expose_dynamic_local();

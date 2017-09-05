@@ -708,29 +708,40 @@
             else [:index index->cmd-string
                   :index inc recur
                   cons]))
-    (+jojo path-load
-      path-open-read
+    (+jojo maybe-drop-shabang (-> :input-stack -- <input-stack>)
+      :input-stack reading-stack-push
+      read-line :line!
+      (cond [:line string-length 3 lteq?] [:line string-unread]
+            [:line 0 2 string-slice "#!" string-eq?] []
+            else [:line string-unread])
+      reading-stack-pop)
+    (+jojo path-load (-> :path --)
+      :path path-open-read
       (if not then
           "- path-load fail" string-write newline
-          error-number-print newline
+          "  path : " string-write :path string-write newline
+          "  " string-write error-number-print newline
           debug)
-      file-input-stack repl)
+      file-input-stack
+      maybe-drop-shabang
+      repl)
     (+jojo welcome-to-jojo
       "welcome to jojo's programming adventure ^-^/" string-write newline)
-    (+jojo #!/usr/bin/env)
-    (+jojo jojo)
     (+jojo the-story-begin
       core-flag-off
       test-flag-off
-
-      (if cmd-number 1 eq? then
-          repl-flag-on
-          welcome-to-jojo
-          print-data-stack
-          terminal-input-stack repl end)
-
       repl-flag-off
-      cmd-list .cdr {path-load} list-for-each
-      bye)
+
+      (cond
+        [cmd-number 1 eq?]
+        [repl-flag-on
+         welcome-to-jojo
+         print-data-stack
+         terminal-input-stack repl
+         end]
+
+        else
+        [cmd-list .cdr .car path-load
+         bye]))
 
     the-story-begin

@@ -2,11 +2,10 @@
 #+property: tangle core.jo
 #+title: core
 
+* command line interface
 * [todo-stack]
 
-*** read-line
-
-*** command line interface
+*** report exit repl
 
 *** 'write' as gene
 
@@ -1091,16 +1090,31 @@
 
 * <file>
 
+*** maybe-drop-shabang
+
+    #+begin_src jojo
+    (+jojo maybe-drop-shabang (-> :input-stack -- <input-stack>)
+      :input-stack reading-stack-push
+      read-line :line!
+      (cond [:line string-length 3 lteq?] [:line string-unread]
+            [:line 0 2 string-slice "#!" string-eq?] []
+            else [:line string-unread])
+      reading-stack-pop)
+    #+end_src
+
 *** path-load
 
     #+begin_src jojo
-    (+jojo path-load
-      path-open-read
+    (+jojo path-load (-> :path --)
+      :path path-open-read
       (if not then
           "- path-load fail" string-write newline
-          error-number-print newline
+          "  path : " string-write :path string-write newline
+          "  " string-write error-number-print newline
           debug)
-      file-input-stack repl)
+      file-input-stack
+      maybe-drop-shabang
+      repl)
     #+end_src
 
 * the-story-begin
@@ -1112,29 +1126,25 @@
       "welcome to jojo's programming adventure ^-^/" string-write newline)
     #+end_src
 
-*** ><
-
-    #+begin_src jojo
-    (+jojo #!/usr/bin/env)
-    (+jojo jojo)
-    #+end_src
-
 *** the-story-begin
 
     #+begin_src jojo
     (+jojo the-story-begin
       core-flag-off
       test-flag-off
-
-      (if cmd-number 1 eq? then
-          repl-flag-on
-          welcome-to-jojo
-          print-data-stack
-          terminal-input-stack repl end)
-
       repl-flag-off
-      cmd-list .cdr {path-load} list-for-each
-      bye)
+
+      (cond
+        [cmd-number 1 eq?]
+        [repl-flag-on
+         welcome-to-jojo
+         print-data-stack
+         terminal-input-stack repl
+         end]
+
+        else
+        [cmd-list .cdr .car path-load
+         bye]))
 
     the-story-begin
     #+end_src
