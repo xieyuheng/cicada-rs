@@ -709,8 +709,10 @@
             else [:index index->cmd-string
                   :index inc recur
                   cons]))
-    (note (+jojo dash-prefixed-jo? (-> :jo -- <bool>)
-            :jo jo->string ))
+    (+jojo dash-prefixed-string? (-> :str -- <bool>)
+      (cond [:str string-length 1 lt?] false
+            [:str 0 string-ref (byte -) eq?] true
+            else false))
     (+jojo maybe-drop-shabang (-> :input-stack -- <input-stack>)
       :input-stack reading-stack-push
       read-line :line!
@@ -730,8 +732,6 @@
       repl)
     (+jojo welcome-to-jojo
       "welcome to jojo's programming adventure ^-^/" string-write newline)
-    (+jojo help
-      "home page :: https://xieyuheng.github.io/jojo" string-write newline)
     (+jojo the-story-begin
       core-flag-off
       test-flag-off
