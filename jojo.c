@@ -3575,6 +3575,11 @@
       struct dp a = ds_pop();
       ds_push(TAG_INT, string_to_int(jo2str(a.d)));
     }
+    void p_jo_to_byte() {
+      struct dp a = ds_pop();
+      char* str = jo2str(a.d);
+      ds_push(TAG_BYTE, str[0]);
+    }
     void p_int_jo_p() {
       struct dp a = ds_pop();
       ds_push(TAG_BOOL, int_string_p(jo2str(a.d)));
@@ -3655,6 +3660,11 @@
       struct dp a = ds_pop();
       ds_push(TAG_BOOL, set_dynamic_local_string_p(jo2str(a.d)));
     }
+    void p_jo_to_string() {
+      struct dp a = ds_pop();
+      jo_t jo = a.d;
+      ds_push(TAG_STRING, new_string_gp(strdup(jo2str(jo))));
+    }
     void expose_jo() {
       plus_prim("round-bar",    p_round_bar);
       plus_prim("round-ket",    p_round_ket);
@@ -3672,6 +3682,7 @@
       plus_prim("jo-unread", p_jo_unread);
       plus_prim("jo-apply",  p_jo_apply);
       plus_prim("jo->int",   p_jo_to_int);
+      plus_prim("jo->byte",  p_jo_to_byte);
 
       plus_prim("int-jo?",       p_int_jo_p);
       plus_prim("local-jo?",     p_local_jo_p);
@@ -3686,6 +3697,8 @@
       plus_prim("set-dynamic-local-jo?",    p_set_dynamic_local_jo_p);
 
       plus_prim("local-jo->set-local-jo", p_get_local_jo_to_set_local_jo);
+
+      plus_prim("jo->string", p_jo_to_string);
     }
     void p_compiling_stack_tos() {
       ds_push(TAG_ADDRESS, tos(compiling_stack));

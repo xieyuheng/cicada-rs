@@ -1,7 +1,6 @@
 #+html_head: <link rel="stylesheet" href="https://xieyuheng.github.io/asset/css/page.css" type="text/css" media="screen" />
 #+property: tangle core.jo
 #+title: core
-
 * command line interface
 * [todo-stack]
 
@@ -1074,6 +1073,14 @@
 
 * >< equal? -- gene
 
+* byte
+
+*** (byte)
+
+    #+begin_src jojo
+    (+jojo byte {jo->byte emit-lit} list-for-each)
+    #+end_src
+
 * system
 
 *** cmd-list
@@ -1086,6 +1093,13 @@
             else [:index index->cmd-string
                   :index inc recur
                   cons]))
+    #+end_src
+
+*** dash-prefixed-jo?
+
+    #+begin_src jojo
+    (note (+jojo dash-prefixed-jo? (-> :jo -- <bool>)
+            :jo jo->string ))
     #+end_src
 
 * <file>
@@ -1124,6 +1138,13 @@
     #+begin_src jojo
     (+jojo welcome-to-jojo
       "welcome to jojo's programming adventure ^-^/" string-write newline)
+    #+end_src
+
+*** help
+
+    #+begin_src jojo
+    (+jojo help
+      "home page :: https://xieyuheng.github.io/jojo" string-write newline)
     #+end_src
 
 *** the-story-begin

@@ -701,6 +701,7 @@
       (if :n 0 lteq? then end)
       :fun apply
       :fun :n dec recur)
+    (+jojo byte {jo->byte emit-lit} list-for-each)
     (+jojo cmd-list 0 cmd-list/loop)
 
     (+jojo cmd-list/loop (-> :index --)
@@ -708,6 +709,8 @@
             else [:index index->cmd-string
                   :index inc recur
                   cons]))
+    (note (+jojo dash-prefixed-jo? (-> :jo -- <bool>)
+            :jo jo->string ))
     (+jojo maybe-drop-shabang (-> :input-stack -- <input-stack>)
       :input-stack reading-stack-push
       read-line :line!
@@ -727,6 +730,8 @@
       repl)
     (+jojo welcome-to-jojo
       "welcome to jojo's programming adventure ^-^/" string-write newline)
+    (+jojo help
+      "home page :: https://xieyuheng.github.io/jojo" string-write newline)
     (+jojo the-story-begin
       core-flag-off
       test-flag-off
