@@ -1,6 +1,18 @@
   core-flag-on
   test-flag-on
   repl-flag-off
+    (+jojo array-eqv? (-> :x :y :pred -- <bool>)
+      (if :x array-length
+          :y array-length
+          eq? not then false end)
+      :x :y :pred 0 array-eqv?/loop)
+
+    (+jojo array-eqv?/loop (-> :x :y :pred :index -- <bool>)
+      (if :index :x array-length gteq? then true end)
+      (if :x :index array-ref
+          :y :index array-ref
+          :pred apply not then false end)
+      :x :y :pred :index inc recur)
     (+data <null>)
     (+data <cons> .car .cdr)
     (+jojo list? (-> :x -- <bool>)
@@ -696,16 +708,18 @@
       (if :n 0 lteq? then end)
       :fun apply
       :fun :n dec recur)
+    (+jojo write w)
+
     (+gene w (-> :x --) :x data-print)
 
     (+disp w (-> <int> --) int-write)
     (+disp w (-> <string> --) string-write)
     (+disp w (-> <jo> --) jo-write)
-    (+disp w (-> <byte> --) byte-write)
+    (+disp w (-> <byte> --) "(byte " w byte-write ")" w)
 
     (+disp w (-> <null> --) drop "()" w)
-    (+disp w (-> <cons> --) list-write)
 
+    (+disp w (-> <cons> --) list-write)
     (+jojo list-write (-> :list --)
       "(" w :list list-write/loop ")" w)
     (+jojo list-write/loop (-> :list --)
@@ -714,7 +728,30 @@
         [:list .cdr null?] [:list .car w]
         else [:list .car w space
               :list .cdr recur]))
+
+    (+disp w (-> <array> --) array-write)
+    (+jojo array-write (-> :array --)
+      (if :array array-length 0 eq? then "(array)" w end)
+      "(array " w
+      :array 0 array-write/loop
+      ")" w)
+    (+jojo array-write/loop (-> :array :index --)
+      (if :index :array array-length 1 sub eq? then
+          :array :index array-ref w end)
+      :array :index array-ref w space
+      :array :index inc recur)
     (+jojo nl newline)
+    (+gene equal? (-> :x :y -- <bool>) :x :y eq?)
+
+    (+disp equal? (-> <string> <string> -- <bool>) string-eq?)
+    (+disp equal? (-> :x <cons> :y <cons> -- <bool>)
+      (if :x .car :y .car equal? not
+          then false
+          else :x .cdr :y .cdr equal?))
+
+    (+disp equal? (-> <array> <array> -- <bool>)
+      {equal?} array-eqv?)
+
     (+jojo byte {jo->byte emit-lit} list-for-each)
     (+jojo cmd-list 0 cmd-list/loop)
 
