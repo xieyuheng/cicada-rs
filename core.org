@@ -4,10 +4,6 @@
 
 * [todo-stack]
 
-*** report exit repl
-
-*** 'write' as gene
-
 *** 'equal?' as gene
 
 *** 'pp' as gene -- pretty-print
@@ -192,16 +188,6 @@
       (case :list
         <null> []
         <cons> [:list .car swap cons :list .cdr recur]))
-    #+end_src
-
-*** list-write
-
-    #+begin_src jojo
-    (+jojo list-write (-> :list :printer --)
-      (case :list
-        <null> []
-        <cons> [:list .car :printer apply
-                :list .cdr :printer recur]))
     #+end_src
 
 *** list-eqv?
@@ -588,7 +574,7 @@
       :body .car name-bind)
     #+end_src
 
-*** run new repl
+*** run repl
 
     #+begin_src jojo
     reading-stack-tos repl
@@ -1069,7 +1055,36 @@
       :fun :n dec recur)
     #+end_src
 
-* >< write -- gene
+* w -- write -- gene
+
+*** w
+
+    #+begin_src jojo
+    (+gene w (-> :x --) :x data-print)
+
+    (+disp w (-> <int> --) int-write)
+    (+disp w (-> <string> --) string-write)
+    (+disp w (-> <jo> --) jo-write)
+    (+disp w (-> <byte> --) byte-write)
+
+    (+disp w (-> <null> --) drop "()" w)
+    (+disp w (-> <cons> --) list-write)
+
+    (+jojo list-write (-> :list --)
+      "(" w :list list-write/loop ")" w)
+    (+jojo list-write/loop (-> :list --)
+      (cond
+        [:list null?] []
+        [:list .cdr null?] [:list .car w]
+        else [:list .car w space
+              :list .cdr recur]))
+    #+end_src
+
+*** nl
+
+    #+begin_src jojo
+    (+jojo nl newline)
+    #+end_src
 
 * >< equal? -- gene
 
@@ -1124,9 +1139,9 @@
     (+jojo path-load (-> :path --)
       :path path-open-read
       (if not then
-          "- path-load fail" string-write newline
-          "  path : " string-write :path string-write newline
-          "  " string-write error-number-print newline
+          "- path-load fail" w nl
+          "  path : " w :path w nl
+          "  " w error-number-print nl
           debug)
       file-input-stack
       maybe-drop-shabang
@@ -1139,7 +1154,7 @@
 
     #+begin_src jojo
     (+jojo welcome-to-jojo
-      "welcome to jojo's programming adventure ^-^/" string-write newline)
+      "welcome to jojo's programming adventure ^-^/" w nl)
     #+end_src
 
 *** the-story-begin
@@ -1158,9 +1173,7 @@
          terminal-input-stack repl
          end]
 
-        else
-        [cmd-list .cdr .car path-load
-         bye]))
+        else [cmd-list .cdr .car path-load]))
 
     the-story-begin
     #+end_src

@@ -71,11 +71,6 @@
       (case :list
         <null> []
         <cons> [:list .car swap cons :list .cdr recur]))
-    (+jojo list-write (-> :list :printer --)
-      (case :list
-        <null> []
-        <cons> [:list .car :printer apply
-                :list .cdr :printer recur]))
     (+jojo list-eqv? (-> :l1 :l2 :eqv -- <bool>)
       (cond [:l1 null? :l2 null? and] [true]
             [:l1 null?] [false]
@@ -701,6 +696,25 @@
       (if :n 0 lteq? then end)
       :fun apply
       :fun :n dec recur)
+    (+gene w (-> :x --) :x data-print)
+
+    (+disp w (-> <int> --) int-write)
+    (+disp w (-> <string> --) string-write)
+    (+disp w (-> <jo> --) jo-write)
+    (+disp w (-> <byte> --) byte-write)
+
+    (+disp w (-> <null> --) drop "()" w)
+    (+disp w (-> <cons> --) list-write)
+
+    (+jojo list-write (-> :list --)
+      "(" w :list list-write/loop ")" w)
+    (+jojo list-write/loop (-> :list --)
+      (cond
+        [:list null?] []
+        [:list .cdr null?] [:list .car w]
+        else [:list .car w space
+              :list .cdr recur]))
+    (+jojo nl newline)
     (+jojo byte {jo->byte emit-lit} list-for-each)
     (+jojo cmd-list 0 cmd-list/loop)
 
@@ -723,15 +737,15 @@
     (+jojo path-load (-> :path --)
       :path path-open-read
       (if not then
-          "- path-load fail" string-write newline
-          "  path : " string-write :path string-write newline
-          "  " string-write error-number-print newline
+          "- path-load fail" w nl
+          "  path : " w :path w nl
+          "  " w error-number-print nl
           debug)
       file-input-stack
       maybe-drop-shabang
       repl)
     (+jojo welcome-to-jojo
-      "welcome to jojo's programming adventure ^-^/" string-write newline)
+      "welcome to jojo's programming adventure ^-^/" w nl)
     (+jojo the-story-begin
       core-flag-off
       test-flag-off
@@ -745,8 +759,6 @@
          terminal-input-stack repl
          end]
 
-        else
-        [cmd-list .cdr .car path-load
-         bye]))
+        else [cmd-list .cdr .car path-load]))
 
     the-story-begin

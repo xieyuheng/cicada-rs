@@ -13,7 +13,7 @@
 
 *** expose address_jo_p and address_gp_p for debug
 
-*** fix debug repl
+*** fix debug_repl
 
 *** report_local_record
 
@@ -4402,6 +4402,15 @@
     }
     #+end_src
 
+*** p_data_print
+
+    #+begin_src c
+    void p_data_print() {
+      struct dp a = ds_pop();
+      data_print(a.t, a.d);
+    }
+    #+end_src
+
 *** jojo_print_one
 
     #+begin_src c
@@ -4686,6 +4695,7 @@
 
     #+begin_src c
     void expose_repl() {
+      plus_prim("data-print", p_data_print);
       plus_prim("print-data-stack", p_print_ds);
 
       plus_prim("repl-flag", p_repl_flag);
@@ -6946,7 +6956,7 @@
 
       load_core();
 
-      p_repl_flag_on();
-      repl(terminal_input_stack());
+      // p_repl_flag_on();
+      // repl(terminal_input_stack());
     }
     #+end_src

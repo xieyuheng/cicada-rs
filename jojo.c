@@ -3024,6 +3024,10 @@
         report("[%s %ld]", jo2str(tag), data);
       }
     }
+    void p_data_print() {
+      struct dp a = ds_pop();
+      data_print(a.t, a.d);
+    }
     jo_t* jojo_print_one(jo_t* jojo) {
       if (jojo[0] == JO_INS_LIT) {
         data_print(jojo[1], jojo[2]);
@@ -3207,6 +3211,7 @@
         }
       }
     void expose_repl() {
+      plus_prim("data-print", p_data_print);
       plus_prim("print-data-stack", p_print_ds);
 
       plus_prim("repl-flag", p_repl_flag);
@@ -4720,6 +4725,6 @@
 
       load_core();
 
-      p_repl_flag_on();
-      repl(terminal_input_stack());
+      // p_repl_flag_on();
+      // repl(terminal_input_stack());
     }
