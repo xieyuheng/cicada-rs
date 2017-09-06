@@ -1,6 +1,11 @@
   core-flag-on
   test-flag-on
   repl-flag-off
+    (+jojo jo-append (-> :jo1 :jo2 -- <jo>)
+      :jo1 jo->string
+      :jo2 jo->string
+      string-append
+      string->jo)
     (+jojo array-eqv? (-> :x :y :pred -- <bool>)
       (if :x array-length
           :y array-length
@@ -13,8 +18,16 @@
           :y :index array-ref
           :pred apply not then false end)
       :x :y :pred :index inc recur)
+  (+data <pair> .left .right)
     (+data <null>)
     (+data <cons> .car .cdr)
+
+    (+jojo cons
+      (if dup null? then <cons> new end)
+      (if dup cons? then <cons> new end)
+      "- cons fail" string-write newline
+      "  cdr of cons must be <null> or <cons>" string-write newline
+      debug)
     (+jojo list? (-> :x -- <bool>)
       (case :x
         <null> true
@@ -654,7 +667,7 @@
 
       (+jojo tree-zip (-> :t1 :t2 -- tree maybe)
         (case [:t1 :t2]
-          [<leaf> <leaf>] [:t1 .v :t2 .v cons leaf return-maybe]
+          [<leaf> <leaf>] [:t1 .v :t2 .v pair leaf return-maybe]
           [<node> <node>] (let-bind bind-maybe
                             :l [:t1 .l :t2 .l tree-zip]
                             :r [:t1 .r :t2 .r tree-zip]
@@ -670,18 +683,18 @@
         tree-1 dup tree-zip tag '<just> eq?)
 
       (+jojo tree-2
-        1 1 cons leaf 2 2 cons leaf node
-        3 3 cons leaf 4 4 cons leaf node
-        5 5 cons leaf node
+        1 1 pair leaf 2 2 pair leaf node
+        3 3 pair leaf 4 4 pair leaf node
+        5 5 pair leaf node
         node)
 
       (assert
         tree-1 dup tree-zip .v
         tree-2
-        { (-> :c1 :c2)
-          :c1 .car :c2 .car eq?
-          :c1 .cdr :c2 .cdr eq? and
-        } tree-eqv?)
+        {(-> :pair1 :pair2)
+         :pair1 .left :pair2 .left eq?
+         :pair1 .right :pair2 .right eq? and}
+        tree-eqv?)
 
       (assert
         tree-1 1 leaf tree-zip nothing?))
@@ -780,6 +793,63 @@
       file-input-stack
       maybe-drop-shabang
       repl)
+    (+jojo <table> .rest .key .value)
+    (+jojo tab)
+    (+jojo table-find (-> :key -- value <bool>)
+      )
+    (note
+      (+jojo +module (-> :body --)
+        :body .car :name!
+        :body .cdr :rest!
+
+        :rest :name
+        module/generate-define-table
+        :define-table!
+
+        :rest :name
+        module/generate-export-table
+        :export-table!
+
+        :define-table
+        :export-table
+        module/export-check
+
+        :rest
+        module/collect-import-table-list
+        {table-merge} list-fold
+        :define-table table-merge
+        :rename-table!
+
+        :rest
+        {><><>< sexp not for module} list-filter
+        {:rename-table sexp-table-substitute} list-map
+        sexp-list-compile
+
+        :export-table
+        :name name-bind))
+    (note
+
+      (+module hi/0.0.1
+        (export
+          hi1
+          hi2
+          hi3)
+        (+jojo hi1 "hi1" w)
+        (+jojo hi2 "hi2" w)
+        (+jojo hi3 "hi2" w))
+
+      (+module hiya/0.0.1
+        (import
+          hi/0.0.1)
+        (export
+          hiya)
+        (+jojo ya "ya" w)
+        (+jojo hiya hi ya))
+
+      (begin
+        hi/0.0.1:hi
+        hiya/0.0.1:ya
+        hiya/0.0.1:hiya))
     (+jojo welcome-to-jojo
       "welcome to jojo's programming adventure ^-^/" w nl)
     (+jojo the-story-begin

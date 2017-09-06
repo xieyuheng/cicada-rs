@@ -1568,6 +1568,32 @@
       struct dp b = ds_pop();
       ds_push(TAG_BOOL, (b.t == a.t) && (b.d == a.d));
     }
+    void p_new() {
+      struct dp b = ds_pop();
+      struct class* class = b.d;
+      cell fields_number = class->fields_number;
+
+      if (fields_number == 0) {
+        ds_push(class->class_name, 0);
+      }
+      else {
+        struct gp* gp = new_record_gp();
+        gp->class = class;
+
+        cell* fields = (cell*)
+          malloc(fields_number*2*sizeof(cell));
+        cell i = 0;
+        while (i < fields_number) {
+          struct dp a = ds_pop();
+          set_field_tag(fields, (fields_number - (i+1)), a.t);
+          set_field_data(fields, (fields_number - (i+1)), a.d);
+          i++;
+        }
+        gp->p = fields;
+
+        ds_push(class->class_name, gp);
+      }
+    }
     void expose_gc() {
       init_gr();
 
@@ -1590,6 +1616,8 @@
 
       plus_prim("tag", p_tag);
       plus_prim("eq?", p_eq_p);
+
+      plus_prim("new", p_new);
     }
     struct gp* new_jojo_gp(jo_t* jojo) {
       struct class* class = TAG_JOJO->data;
@@ -3385,7 +3413,7 @@
       char* str = bp->p;
       ds_push(TAG_BYTE, str[a.d]);
     }
-    void p_string_cat() {
+    void p_string_append() {
       struct dp a = ds_pop();
       struct dp b = ds_pop();
       struct gp* ap = a.d;
@@ -3460,16 +3488,25 @@
       }
       ds_push(TAG_STRING, new_string_gp(strdup(buffer)));
     }
+    void p_string_to_jo() {
+      struct dp a = ds_pop();
+      struct gp* ap = a.d;
+      char* str = ap->p;
+      ds_push(TAG_JO, str2jo(str));
+    }
     void expose_string() {
       plus_prim("string-write", p_string_write);
       plus_prim("string-length", p_string_length);
       plus_prim("string-ref", p_string_ref);
-      plus_prim("string-cat", p_string_cat);
+      plus_prim("string-append", p_string_append);
       plus_prim("string-slice", p_string_slice);
       plus_prim("string-empty?", p_string_empty_p);
       plus_prim("string-eq?", p_string_eq_p);
+
       plus_prim("read-string", p_read_string);
       plus_prim("read-line", p_read_line);
+
+      plus_prim("string->jo", p_string_to_jo);
     }
     void p_inc() {
       struct dp a = ds_pop();

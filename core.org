@@ -6,8 +6,9 @@
 
 *** module system
 
-    - only use "~/.jojo"
-      to make the behaviour of module system simple
+*** the little schemer
+
+*** use EOPL to test the language
 
 *** socket module
 
@@ -20,8 +21,6 @@
 
 *** compile sexp to c
 
-*** use EOPL to test the language
-
 * flag
 
   #+begin_src jojo
@@ -29,6 +28,18 @@
   test-flag-on
   repl-flag-off
   #+end_src
+
+* <jo>
+
+*** jo-append
+
+    #+begin_src jojo
+    (+jojo jo-append (-> :jo1 :jo2 -- <jo>)
+      :jo1 jo->string
+      :jo2 jo->string
+      string-append
+      string->jo)
+    #+end_src
 
 * array
 
@@ -49,6 +60,12 @@
       :x :y :pred :index inc recur)
     #+end_src
 
+* pair
+
+  #+begin_src jojo
+  (+data <pair> .left .right)
+  #+end_src
+
 * list
 
 *** <null> <cons>
@@ -56,6 +73,13 @@
     #+begin_src jojo
     (+data <null>)
     (+data <cons> .car .cdr)
+
+    (+jojo cons
+      (if dup null? then <cons> new end)
+      (if dup cons? then <cons> new end)
+      "- cons fail" string-write newline
+      "  cdr of cons must be <null> or <cons>" string-write newline
+      debug)
     #+end_src
 
 *** list?
@@ -575,9 +599,9 @@
       :name name-bind-disp-to-jojo)
     #+end_src
 
-* re-define (+jojo) and basic syntax -- the order matters
+* reboot basic syntax -- the order matters
 
-*** (+jojo)
+*** re-define (+jojo)
 
     #+begin_src jojo
     (+jojo +jojo (-> :body sexp list --)
@@ -585,13 +609,13 @@
       :body .car name-bind)
     #+end_src
 
-*** run repl
+*** run new repl
 
     #+begin_src jojo
     reading-stack-tos repl
     #+end_src
 
-*** redefine new keywords
+*** re-define new keywords
 
     #+begin_src jojo
     (+jojo note drop)
@@ -998,7 +1022,7 @@
 
       (+jojo tree-zip (-> :t1 :t2 -- tree maybe)
         (case [:t1 :t2]
-          [<leaf> <leaf>] [:t1 .v :t2 .v cons leaf return-maybe]
+          [<leaf> <leaf>] [:t1 .v :t2 .v pair leaf return-maybe]
           [<node> <node>] (let-bind bind-maybe
                             :l [:t1 .l :t2 .l tree-zip]
                             :r [:t1 .r :t2 .r tree-zip]
@@ -1014,18 +1038,18 @@
         tree-1 dup tree-zip tag '<just> eq?)
 
       (+jojo tree-2
-        1 1 cons leaf 2 2 cons leaf node
-        3 3 cons leaf 4 4 cons leaf node
-        5 5 cons leaf node
+        1 1 pair leaf 2 2 pair leaf node
+        3 3 pair leaf 4 4 pair leaf node
+        5 5 pair leaf node
         node)
 
       (assert
         tree-1 dup tree-zip .v
         tree-2
-        { (-> :c1 :c2)
-          :c1 .car :c2 .car eq?
-          :c1 .cdr :c2 .cdr eq? and
-        } tree-eqv?)
+        {(-> :pair1 :pair2)
+         :pair1 .left :pair2 .left eq?
+         :pair1 .right :pair2 .right eq? and}
+        tree-eqv?)
 
       (assert
         tree-1 1 leaf tree-zip nothing?))
@@ -1186,6 +1210,116 @@
       file-input-stack
       maybe-drop-shabang
       repl)
+    #+end_src
+
+* table
+
+*** <table>
+
+    #+begin_src jojo
+    (+jojo <table> .rest .key .value)
+    #+end_src
+
+*** (tab)
+
+    #+begin_src jojo
+    (+jojo tab)
+    #+end_src
+
+*** table-find
+
+    #+begin_src jojo
+    (+jojo table-find (-> :key -- value <bool>)
+      )
+    #+end_src
+
+* >< module
+
+*** [note] module system
+
+    - a module is simply a dir of files,
+      with a module.jo in the dir,
+      to store meta data of the module.
+
+    - every module has a version, and the dir of a module
+      should be "<module-name>/<version>/*"
+
+    - a module will be installed to "~/.jojo"
+      as "~/.jojo/module/<module-name>/<version>/*"
+
+    - re-load -
+      - problem  : loaded module can not be re-load
+      - solution : to maintain a record of loaded modules
+
+    - unique-name -
+      - problem  : a name must be resolved to an unique-name
+      - solution : (export) and (import)
+        - in jotable, all defined name
+          are unique as "module#version:name"
+        - names in core can be viewed as automatically imported,
+          one can use (shadow) to shadow them
+
+*** >< (+module)
+
+    #+begin_src jojo
+    (note
+      (+jojo +module (-> :body --)
+        :body .car :name!
+        :body .cdr :rest!
+
+        :rest :name
+        module/generate-define-table
+        :define-table!
+
+        :rest :name
+        module/generate-export-table
+        :export-table!
+
+        :define-table
+        :export-table
+        module/export-check
+
+        :rest
+        module/collect-import-table-list
+        {table-merge} list-fold
+        :define-table table-merge
+        :rename-table!
+
+        :rest
+        {><><>< sexp not for module} list-filter
+        {:rename-table sexp-table-substitute} list-map
+        sexp-list-compile
+
+        :export-table
+        :name name-bind))
+    #+end_src
+
+*** [test]
+
+    #+begin_src jojo
+    (note
+
+      (+module hi/0.0.1
+        (export
+          hi1
+          hi2
+          hi3)
+        (+jojo hi1 "hi1" w)
+        (+jojo hi2 "hi2" w)
+        (+jojo hi3 "hi2" w))
+
+      (+module hiya/0.0.1
+        (import
+          hi/0.0.1)
+        (export
+          hiya)
+        (+jojo ya "ya" w)
+        (+jojo hiya hi ya))
+
+      (begin
+        hi/0.0.1:hi
+        hiya/0.0.1:ya
+        hiya/0.0.1:hiya))
     #+end_src
 
 * the-story-begin
