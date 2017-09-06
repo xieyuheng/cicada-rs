@@ -248,7 +248,7 @@
     struct jotable_entry jotable[JOTABLE_SIZE];
 
     // thus (jotable + index) is jo
-    bool used_jo_p(jo_t jo) {
+    bool jo_bound_p(jo_t jo) {
       return jo->tag != 0;
     }
     cell string_to_sum(char* str) {
@@ -377,7 +377,7 @@
     void bind_name(jo_t name,
                    jo_t tag,
                    cell data) {
-      if (used_jo_p(name) && !core_flag) {
+      if (jo_bound_p(name) && !core_flag) {
         report("- bind_name can not rebind\n");
         report("  name : %s\n", jo2str(name));
         report("  tag : %s\n", jo2str(tag));
@@ -2087,13 +2087,15 @@
     void p_debug();
 
     void jo_apply(jo_t jo) {
-      if (!used_jo_p(jo)) {
-        report("- jo_apply meet undefined jo : %s\n", jo2str(jo));
+      if (!jo_bound_p(jo)) {
+        report("- jo_apply fail\n");
+        report("  jo is not bound : %s\n", jo2str(jo));
         p_debug();
-        return;
       }
-      ds_push(jo->tag, jo->data);
-      disp_exe(JO_EXE->data, jo->tag);
+      else {
+        ds_push(jo->tag, jo->data);
+        disp_exe(JO_EXE->data, jo->tag);
+      }
     }
     void eval_one_step() {
       struct rp p = rs_tos();
@@ -3688,6 +3690,11 @@
       jo_t jo = a.d;
       ds_push(TAG_STRING, new_string_gp(strdup(jo2str(jo))));
     }
+    void p_jo_bound_p() {
+      struct dp a = ds_pop();
+      jo_t jo = a.d;
+      ds_push(TAG_BOOL, jo_bound_p(jo));
+    }
     void expose_jo() {
       plus_prim("round-bar",    p_round_bar);
       plus_prim("round-ket",    p_round_ket);
@@ -3722,6 +3729,8 @@
       plus_prim("local-jo->set-local-jo", p_get_local_jo_to_set_local_jo);
 
       plus_prim("jo->string", p_jo_to_string);
+
+      plus_prim("jo-bound?", p_jo_bound_p);
     }
     void p_compiling_stack_tos() {
       ds_push(TAG_ADDRESS, tos(compiling_stack));

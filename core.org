@@ -4,7 +4,7 @@
 
 * [todo-stack]
 
-*** module system
+*** module/collect-import-table-list should load modules
 
 *** the little schemer
 
@@ -313,8 +313,11 @@
 
   (+jojo repl/loop
     (if has-jo? not then end)
-    read-sexp null cons
-    compile-jojo apply
+    read-sexp
+    (cond [dup jo-bound? not]
+          ["- jo is not bound : " string-write
+           jo-write newline]
+          else [null cons compile-jojo apply])
     (if repl-flag then print-data-stack)
     recur)
   #+end_src
@@ -473,7 +476,7 @@
         [:body {'then eq?} list-any?]
         [:body if-then]
 
-        else ["- if fail" string-write newline
+        else ["- (if) fail" string-write newline
               "  the body dose not has 'then" string-write newline
               "  body : " string-write :body sexp-list-write newline
               debug]))
@@ -505,7 +508,7 @@
          :body .cdr .cdr recur tail-cons]))
 
     (+jojo cond/miss-match-report
-      "- (cond) miss match" string-write newline)
+      "- runtime (cond) miss match" string-write newline)
 
     (note
       (+jojo cond/expend-if-then (-> :question :answer -- sexp)
@@ -552,7 +555,7 @@
     #+begin_src jojo
     (+jojo plus-data (-> :body --)
       (if :body .car tag-jo? not then
-          "- plus-data fail" string-write newline
+          "- (+data) fail" string-write newline
           "  name must be of form <...>" string-write newline
           "  body : " string-write :body sexp-list-write newline
           end)
@@ -672,7 +675,7 @@
       `(if (@ :body list-spread)
            then
            else
-           "- assert fail" string-write newline
+           "- (assert) fail" string-write newline
            "  assertion : " string-write
            (quote (@ :body)) sexp-list-write newline))
 
@@ -682,7 +685,7 @@
       `(if (@ :body list-spread)
            then
            else
-           "- assert! fail" string-write newline
+           "- (assert!) fail" string-write newline
            "  assertion : " string-write
            (quote (@ :body)) sexp-list-write newline
            debug))
@@ -750,7 +753,7 @@
       (cond
         [:body list-length 2 eq?]
         [:body .car :body .cdr .car case/expend-if-then
-         `(else "- (case) miss match" string-write newline
+         `(else "- runtime (case) miss match" string-write newline
                 debug)
          list-append]
 
@@ -774,6 +777,14 @@
       (cond [:tag1 underscore-jo?] [true]
             [:tag2 underscore-jo?] [true]
             else [:tag1 :tag2 eq?]))
+    #+end_src
+
+*** (run)
+
+    #+begin_src jojo
+    (+jojo run sexp-list-run)
+    (+jojo sexp-list-run compile-jojo apply)
+    (+jojo sexp-run null cons run)
     #+end_src
 
 * [test] syntax
@@ -1329,10 +1340,35 @@
 *** table-merge
 
     #+begin_src jojo
-    (+jojo table-merge (-> :1 :2 -- table true or false)
-      (cond [] []
-            [] []
-            else []))
+    (+jojo table-merge (-> :base :src -- table true or key false)
+      (cond [:src null?] [:base true]
+            [:base :src .key table-find]
+            (if :src .value equal?
+                then :base :src .rest recur
+                else :src .key false end)
+            else [:base :src .key :src .value tab
+                  :src .rest recur]))
+    #+end_src
+
+*** table-eq?
+
+    #+begin_src jojo
+    (+jojo table-eq? (-> :t1 :t2 -- <bool>)
+      (if :t1 :t2 table-contain? not
+          then false end
+          else :t2 :t1 table-contain?))
+    #+end_src
+
+*** [test]
+
+    #+begin_src jojo
+    (test
+      (assert
+        (table 1 "1", 2 "2", 3 "3")
+        (table 2 "2", 3 "3", 4 "4")
+        (assert table-merge)
+        (table 1 "1", 2 "2", 3 "3", 4 "4")
+        table-eq?))
     #+end_src
 
 * byte
@@ -1443,25 +1479,34 @@
       :export-table
       module/export-check
 
-      (note :rest
-        module/collect-import-table-list
-        {table-merge} list-foldr
-        :define-table table-merge
-        :rename-table!)
+      :rest module/collect-import-table-list
+      :import-table-list!
 
-      (note
-        :rest
-        {><><>< sexp not for module} list-filter
-        {:rename-table sexp-table-substitute} list-map
-        sexp-list-compile)
+      :import-table-list
+      {(if table-merge not then
+           "- fail to merge import-table-list" w nl
+           "  import-table-list : " w :import-table-list w nl
+           "  key : " w w nl
+           "  module name : " w :name w nl
+           debug)}
+      null swap list-foldr :import-table!
 
-      (note
-        :export-table
-        :name name-bind)
+      :import-table :define-table
+      (if table-merge not then
+          "- fail to merge import-table with define-table" w nl
+          "  import-table : " w :import-table w nl
+          "  define-table : " w :define-table w nl
+          "  key : " w w nl
+          "  module name : " w :name w nl
+          debug)
+      :rename-table!
 
-      (list
-        :define-table
-        :export-table)
+      :rest
+      {sexp-for-module? not} list-filter
+      {:rename-table sexp-table-substitute} list-map
+      sexp-list-compile
+
+      :export-table
       :name name-bind)
     #+end_src
 
@@ -1471,19 +1516,16 @@
     (+jojo module/generate-define-table
       (-> :list :name -- table)
       :list
-      {:sexp!
+      {(-> :sexp)
        (cond [:sexp cons? not] false
              ['(+jojo +gene +disp) {:sexp .car eq?} list-any?] true
              else false)}
-      list-filter
-      {.cdr .car}
-      list-map
-      null
+      list-filter {.cdr .car} list-map
       {(-> :s :table -- table)
        :table :s
        :name ': jo-append :s jo-append
        tab}
-      list-foldr)
+      null swap list-foldr)
     #+end_src
 
 *** module/generate-export-table
@@ -1492,19 +1534,18 @@
     (+jojo module/generate-export-table
       (-> :list :name -- table)
       :list
-      {:sexp!
+      {(-> :sexp)
        (cond [:sexp cons? not] false
              ['export :sexp .car eq?] true
              else false)}
-      list-filter
-      {.cdr} list-map
+      list-filter {.cdr} list-map
       null {list-append} list-foldr
-      null
+
       {(-> :s :table -- table)
        :table :s
        :name ': jo-append :s jo-append
        tab}
-      list-foldr)
+      null swap list-foldr)
     #+end_src
 
 *** module/export-check
@@ -1520,38 +1561,75 @@
       debug)
     #+end_src
 
-*** >< module/collect-import-table-list
+*** module/collect-import-table-list
 
     #+begin_src jojo
-    (+jojo module/collect-import-table-list )
+    (+jojo module/collect-import-table-list
+      {(-> :sexp)
+       (cond [:sexp cons? not] false
+             ['import :sexp .car eq?] true
+             else false)}
+      list-filter {.cdr} list-map
+      null {list-append} list-foldr
+      list/expend sexp-run)
+    #+end_src
+
+*** sexp-for-module?
+
+    #+begin_src jojo
+    (+jojo sexp-for-module? (-> :sexp -- <bool>)
+      '(import export)
+      {:jo! (if :sexp cons? not
+                then true end
+                else :jo :sexp .car eq?)}
+      list-any?)
+    #+end_src
+
+*** sexp-table-substitute
+
+    #+begin_src jojo
+    (+jojo sexp-table-substitute (-> :sexp :table -- sexp)
+      (cond [:sexp cons?]
+            [:sexp .car :table recur
+             :sexp .cdr {:table sexp-table-substitute} list-map
+             cons]
+            else (if :table :sexp table-find then end
+                     else :sexp)))
     #+end_src
 
 *** [test]
 
     #+begin_src jojo
-    (note
+    (test
 
       (+module hi/0.0.1
         (export
           hi1 hi3 hi5)
-        (+jojo hi1 "hi1" w)
-        (+jojo hi2 "hi2" w)
-        (+jojo hi3 "hi" w)
-        (+jojo hi4 "hi4" w)
-        (+jojo hi5 "hi5" w))
+        (+jojo hi1 "hi1")
+        (+jojo hi2 "hi2")
+        (+jojo hi3 "hi")
+        (+jojo hi4 "hi4")
+        (+jojo hi5 "hi5"))
+
+      (+module ya/0.0.1
+        (export
+          ya1 ya3 ya5)
+        (+jojo ya1 "ya1")
+        (+jojo ya2 "ya2")
+        (+jojo ya3 "ya")
+        (+jojo ya4 "ya4")
+        (+jojo ya5 "ya5"))
 
       (+module hiya/0.0.1
         (import
-          hi/0.0.1)
+          hi/0.0.1
+          ya/0.0.1)
         (export
           hiya)
-        (+jojo ya "ya" w)
-        (+jojo hiya hi ya))
+        (+jojo hiya hi3 ya3 string-append))
 
-      (begin
-        hi/0.0.1:hi
-        hiya/0.0.1:ya
-        hiya/0.0.1:hiya))
+      (assert
+        hiya/0.0.1:hiya "hiya" equal?))
     #+end_src
 
 * the-story-begin
