@@ -1326,6 +1326,15 @@
             else false))
     #+end_src
 
+*** table-merge
+
+    #+begin_src jojo
+    (+jojo table-merge (-> :1 :2 -- table true or false)
+      (cond [] []
+            [] []
+            else []))
+    #+end_src
+
 * byte
 
 *** (byte)
@@ -1386,31 +1395,75 @@
       repl)
     #+end_src
 
-* >< module
+* module
 
 *** [note] module system
 
-    - a module is simply a dir of files,
+    - a module in jojo is a global name
+      stores a table of exported names,
+
+    - while a module in file system is a dir of files,
       with a module.jo in the dir,
       to store meta data of the module.
 
-    - every module has a version, and the dir of a module
-      should be "<module-name>/<version>/*"
+    - every module has a version,
+      - in jojo, the global name
+        should be "<module-name>/<version>"
+      - in file system, the dir of a module
+        should be "<module-name>/<version>/*"
 
     - a module will be installed to "~/.jojo"
       as "~/.jojo/module/<module-name>/<version>/*"
 
-    - re-load -
-      - problem  : loaded module can not be re-load
-      - solution : to maintain a record of loaded modules
+    - module system solves two problems :
 
-    - unique-name -
-      - problem  : a name must be resolved to an unique-name
-      - solution : (export) and (import)
-        - in jotable, all defined name
-          are unique as "module#version:name"
-        - names in core can be viewed as automatically imported,
-          one can use (shadow) to shadow them
+      - re-load problem :
+        when used by multiple clients,
+        a module should only be loaded once.
+
+      - unique-name problem :
+        a name must be resolved to an unique-name
+
+*** (+module)
+
+    #+begin_src jojo
+    (+jojo +module (-> :body --)
+      :body .car :name!
+      :body .cdr :rest!
+
+      :rest :name
+      module/generate-define-table
+      :define-table!
+
+      :rest :name
+      module/generate-export-table
+      :export-table!
+
+      :define-table
+      :export-table
+      module/export-check
+
+      (note :rest
+        module/collect-import-table-list
+        {table-merge} list-foldr
+        :define-table table-merge
+        :rename-table!)
+
+      (note
+        :rest
+        {><><>< sexp not for module} list-filter
+        {:rename-table sexp-table-substitute} list-map
+        sexp-list-compile)
+
+      (note
+        :export-table
+        :name name-bind)
+
+      (list
+        :define-table
+        :export-table)
+      :name name-bind)
+    #+end_src
 
 *** module/generate-define-table
 
@@ -1467,46 +1520,10 @@
       debug)
     #+end_src
 
-*** (+module)
+*** >< module/collect-import-table-list
 
     #+begin_src jojo
-    (+jojo +module (-> :body --)
-      :body .car :name!
-      :body .cdr :rest!
-
-      :rest :name
-      module/generate-define-table
-      :define-table!
-
-      :rest :name
-      module/generate-export-table
-      :export-table!
-
-      :define-table
-      :export-table
-      module/export-check
-
-      (note
-        :rest
-        module/collect-import-table-list
-        {table-merge} list-fold
-        :define-table table-merge
-        :rename-table!)
-
-      (note
-        :rest
-        {><><>< sexp not for module} list-filter
-        {:rename-table sexp-table-substitute} list-map
-        sexp-list-compile)
-
-      (note
-        :export-table
-        :name name-bind)
-
-      (list
-        :define-table
-        :export-table)
-      :name name-bind)
+    (+jojo module/collect-import-table-list )
     #+end_src
 
 *** [test]

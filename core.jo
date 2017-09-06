@@ -865,6 +865,8 @@
                 then :large :small .rest recur
                 else false)
             else false))
+    (+jojo table-merge (-> :1 :2 -- table true or false)
+      )
     (+jojo byte {jo->byte emit-lit} list-for-each)
     (+jojo cmd-list 0 cmd-list/loop)
 
@@ -894,6 +896,42 @@
       file-input-stack
       maybe-drop-shabang
       repl)
+    (+jojo +module (-> :body --)
+      :body .car :name!
+      :body .cdr :rest!
+
+      :rest :name
+      module/generate-define-table
+      :define-table!
+
+      :rest :name
+      module/generate-export-table
+      :export-table!
+
+      :define-table
+      :export-table
+      module/export-check
+
+      :rest
+      module/collect-import-table-list
+      {table-merge} list-foldr
+      :define-table table-merge
+      :rename-table!
+
+      (note
+        :rest
+        {><><>< sexp not for module} list-filter
+        {:rename-table sexp-table-substitute} list-map
+        sexp-list-compile)
+
+      (note
+        :export-table
+        :name name-bind)
+
+      (list
+        :define-table
+        :export-table)
+      :name name-bind)
     (+jojo module/generate-define-table
       (-> :list :name -- table)
       :list
@@ -934,43 +972,7 @@
       "  define-table : " w :define-table w nl
       "  export-table : " w :export-table w nl
       debug)
-    (+jojo +module (-> :body --)
-      :body .car :name!
-      :body .cdr :rest!
-
-      :rest :name
-      module/generate-define-table
-      :define-table!
-
-      :rest :name
-      module/generate-export-table
-      :export-table!
-
-      :define-table
-      :export-table
-      module/export-check
-
-      (note
-        :rest
-        module/collect-import-table-list
-        {table-merge} list-fold
-        :define-table table-merge
-        :rename-table!)
-
-      (note
-        :rest
-        {><><>< sexp not for module} list-filter
-        {:rename-table sexp-table-substitute} list-map
-        sexp-list-compile)
-
-      (note
-        :export-table
-        :name name-bind)
-
-      (list
-        :define-table
-        :export-table)
-      :name name-bind)
+    (+jojo module/collect-import-table-list )
     (note
 
       (+module hi/0.0.1
