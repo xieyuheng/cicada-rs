@@ -29,6 +29,15 @@
   repl-flag-off
   #+end_src
 
+* <int>
+
+*** even & odd
+
+    #+begin_src jojo
+    (+jojo even? 2 mod 0 eq?)
+    (+jojo odd? even? not)
+    #+end_src
+
 * <jo>
 
 *** jo-append
@@ -59,12 +68,6 @@
           :pred apply not then false end)
       :x :y :pred :index inc recur)
     #+end_src
-
-* pair
-
-  #+begin_src jojo
-  (+data <pair> .left .right)
-  #+end_src
 
 * list
 
@@ -429,7 +432,7 @@
 
         [:list .car .car '@ eq?]
         [:list .cdr recur
-         :list .car .cdr list/expend sexp-compile
+         :list .car .cdr list
          'swap jo-emit
          'list-append jo-emit]
 
@@ -779,38 +782,45 @@
 
     #+begin_src jojo
     (test
+
       (assert
         mark 0 1 2 3 4 collect
         array->list
         (list 0 1 2 3 4)
         {eq?} list-eqv?)
+
       (assert
         (list 0 1 2 3 4)
         (list 5 6 7 8 9)
         list-append
         (list 0 1 2 3 4 5 6 7 8 9)
         {eq?} list-eqv?)
+
       (assert
         (list 0 1 2 3 4 5 6 7 8 9)
         {5 gteq?} list-left
         (list 0 1 2 3 4)
         {eq?} list-eqv?)
+
       (assert
         (list 0 1 2 3 4 5 6 7 8 9)
         {5 gteq?} list-split
         swap (list 0 1 2 3 4) {eq?} list-eqv?
         swap (list 5 6 7 8 9) {eq?} list-eqv?
         and)
+
       (assert
         (list 0 1 2 3 4 5 6 7 8 9)
         {inc} list-map
         (list 1 2 3 4 5 6 7 8 9 10)
         {eq?} list-eqv?)
+
       (assert
         (list 0 1 2 3 4 5 6 7 8 9)
         {2 mod 0 eq?} list-filter
         (list 0 2 4 6 8)
         {eq?} list-eqv?)
+
       (assert
         (list 0 1 2 3 4 5 6 7 8 9)
         list-reverse
@@ -968,6 +978,14 @@
       (+jojo bind-list))
     #+end_src
 
+* pair
+
+*** <pair>
+
+    #+begin_src jojo
+    (+data <pair> .l .r)
+    #+end_src
+
 * [test] monad
 
 *** tree
@@ -1047,8 +1065,8 @@
         tree-1 dup tree-zip .v
         tree-2
         {(-> :pair1 :pair2)
-         :pair1 .left :pair2 .left eq?
-         :pair1 .right :pair2 .right eq? and}
+         :pair1 .l :pair2 .l eq?
+         :pair1 .r :pair2 .r eq? and}
         tree-eqv?)
 
       (assert
@@ -1105,28 +1123,49 @@
     (+disp w (-> <byte> --) "(byte " w byte-write ")" w)
 
     (+disp w (-> <null> --) drop "()" w)
+    #+end_src
 
+*** list-write
+
+    #+begin_src jojo
     (+disp w (-> <cons> --) list-write)
+
     (+jojo list-write (-> :list --)
       "(" w :list list-write/loop ")" w)
+
     (+jojo list-write/loop (-> :list --)
       (cond
         [:list null?] []
         [:list .cdr null?] [:list .car w]
         else [:list .car w space
               :list .cdr recur]))
+    #+end_src
 
+*** array-write
+
+    #+begin_src jojo
     (+disp w (-> <array> --) array-write)
+
     (+jojo array-write (-> :array --)
       (if :array array-length 0 eq? then "(array)" w end)
-      "(array " w
-      :array 0 array-write/loop
-      ")" w)
+      "(array " w :array 0 array-write/loop ")" w)
+
     (+jojo array-write/loop (-> :array :index --)
       (if :index :array array-length 1 sub eq? then
           :array :index array-ref w end)
       :array :index array-ref w space
       :array :index inc recur)
+    #+end_src
+
+*** pair-write
+
+    #+begin_src jojo
+    (+disp w (-> <pair>) pair-write)
+
+    (+jojo pair-write (-> :pair --)
+      :pair .l w space
+      :pair .r w space
+      "pair" w)
     #+end_src
 
 *** nl
@@ -1150,6 +1189,141 @@
 
     (+disp equal? (-> <array> <array> -- <bool>)
       {equal?} array-eqv?)
+
+    (+disp equal? (-> :x <pair> :y <pair> -- <bool>)
+      (if :x .l :y .l equal? not
+          then false
+          else :x .r :y .r equal?))
+    #+end_src
+
+* more list
+
+*** list-foldr
+
+    #+begin_src jojo
+    (+jojo list-foldr (-> a :list, :b, :a-b->b -- b)
+      (case :list
+        <null> :b
+        <cons> [:list .car
+                :list .cdr :b :a-b->b recur
+                :a-b->b apply]))
+    #+end_src
+
+*** list-foldl
+
+    #+begin_src jojo
+    (+jojo list-foldl (-> a :list, :b, :b-a->b -- b)
+      (case :list
+        <null> :b
+        <cons> [:list .cdr :b :b-a->b recur
+                :list .car
+                :b-a->b apply]))
+    #+end_src
+
+*** [test]
+
+    #+begin_src jojo
+    (test
+
+      (assert
+        (list 0 1 2 3 4 5) () {pair} list-foldr
+        0 1 2 3 4 5 () pair pair pair pair pair pair
+        equal?)
+
+      (assert
+        (list 0 1 2 3 4 5) () {pair} list-foldl
+        () 5 pair 4 pair 3 pair 2 pair 1 pair 0 pair
+        equal?)
+
+      (assert
+        (list
+          (list 1 2 3)
+          (list 4 5 6)
+          (list 7 8 9))
+        () {list-append} list-foldr
+
+        (list 1 2 3, 4 5 6, 7 8 9)
+        equal?)
+
+      (assert
+        (list
+          (list 1 2 3)
+          (list 4 5 6)
+          (list 7 8 9))
+        () {list-append} list-foldl
+        (list 7 8 9, 4 5 6, 1 2 3)
+        equal?))
+    #+end_src
+
+* table
+
+*** <tab>
+
+    #+begin_src jojo
+    (+data <tab> .rest .key .value)
+    #+end_src
+
+*** list->tab
+
+    #+begin_src jojo
+    (+jojo list->table (-> :list -- table)
+      (if :list list-length odd? then
+          "- list->table fail" w nl
+          "  length of list is not even" w nl
+          "  length : " w :list list-length w nl
+          "  list : " w :list w nl
+          debug)
+      :list list->table/recur)
+
+    (+jojo list->table/recur (-> :list -- table)
+      (case :list
+        <null> null
+        <cons> [:list .cdr .cdr recur
+                :list .car :list .cdr .car
+                tab]))
+    #+end_src
+
+*** table
+
+    #+begin_src jojo
+    (+jojo table list 'list->table jo-emit)
+    #+end_src
+
+*** table-write
+
+    #+begin_src jojo
+    (+disp w (-> <tab>) table-write)
+
+    (+jojo table-write (-> :table --)
+      "(table " w :table table-write/loop ")" w)
+
+    (+jojo table-write/loop (-> :table --)
+      (cond
+        [:table null?] []
+        [:table .rest null?] [:table .key w space :table .value w]
+        else [:table .key w space :table .value w comma w space
+              :table .rest recur]))
+    #+end_src
+
+*** table-find
+
+    #+begin_src jojo
+    (+jojo table-find (-> :table :key -- value true or false)
+      (cond [:table null?] false
+            [:table .key :key equal?] [:table .value true]
+            else [:table .rest :key recur]))
+    #+end_src
+
+*** table-contain?
+
+    #+begin_src jojo
+    (+jojo table-contain? (-> :large :small -- <bool>)
+      (cond [:small null?] true
+            [:large :small .key table-find]
+            (if :small .value equal?
+                then :large :small .rest recur
+                else false)
+            else false))
     #+end_src
 
 * byte
@@ -1212,27 +1386,6 @@
       repl)
     #+end_src
 
-* table
-
-*** <table>
-
-    #+begin_src jojo
-    (+jojo <table> .rest .key .value)
-    #+end_src
-
-*** (tab)
-
-    #+begin_src jojo
-    (+jojo tab)
-    #+end_src
-
-*** table-find
-
-    #+begin_src jojo
-    (+jojo table-find (-> :key -- value <bool>)
-      )
-    #+end_src
-
 * >< module
 
 *** [note] module system
@@ -1259,39 +1412,101 @@
         - names in core can be viewed as automatically imported,
           one can use (shadow) to shadow them
 
-*** >< (+module)
+*** module/generate-define-table
 
     #+begin_src jojo
-    (note
-      (+jojo +module (-> :body --)
-        :body .car :name!
-        :body .cdr :rest!
+    (+jojo module/generate-define-table
+      (-> :list :name -- table)
+      :list
+      {:sexp!
+       (cond [:sexp cons? not] false
+             ['(+jojo +gene +disp) {:sexp .car eq?} list-any?] true
+             else false)}
+      list-filter
+      {.cdr .car}
+      list-map
+      null
+      {(-> :s :table -- table)
+       :table :s
+       :name ': jo-append :s jo-append
+       tab}
+      list-foldr)
+    #+end_src
 
-        :rest :name
-        module/generate-define-table
-        :define-table!
+*** module/generate-export-table
 
-        :rest :name
-        module/generate-export-table
-        :export-table!
+    #+begin_src jojo
+    (+jojo module/generate-export-table
+      (-> :list :name -- table)
+      :list
+      {:sexp!
+       (cond [:sexp cons? not] false
+             ['export :sexp .car eq?] true
+             else false)}
+      list-filter
+      {.cdr} list-map
+      null {list-append} list-foldr
+      null
+      {(-> :s :table -- table)
+       :table :s
+       :name ': jo-append :s jo-append
+       tab}
+      list-foldr)
+    #+end_src
 
-        :define-table
-        :export-table
-        module/export-check
+*** module/export-check
 
+    #+begin_src jojo
+    (+jojo module/export-check
+      (-> :define-table :export-table --)
+      (if :define-table :export-table table-contain? then end)
+      "- module/export-check fail" w nl
+      "  define-table does not contain export-table" w nl
+      "  define-table : " w :define-table w nl
+      "  export-table : " w :export-table w nl
+      debug)
+    #+end_src
+
+*** (+module)
+
+    #+begin_src jojo
+    (+jojo +module (-> :body --)
+      :body .car :name!
+      :body .cdr :rest!
+
+      :rest :name
+      module/generate-define-table
+      :define-table!
+
+      :rest :name
+      module/generate-export-table
+      :export-table!
+
+      :define-table
+      :export-table
+      module/export-check
+
+      (note
         :rest
         module/collect-import-table-list
         {table-merge} list-fold
         :define-table table-merge
-        :rename-table!
+        :rename-table!)
 
+      (note
         :rest
         {><><>< sexp not for module} list-filter
         {:rename-table sexp-table-substitute} list-map
-        sexp-list-compile
+        sexp-list-compile)
 
+      (note
         :export-table
-        :name name-bind))
+        :name name-bind)
+
+      (list
+        :define-table
+        :export-table)
+      :name name-bind)
     #+end_src
 
 *** [test]
@@ -1301,12 +1516,12 @@
 
       (+module hi/0.0.1
         (export
-          hi1
-          hi2
-          hi3)
+          hi1 hi3 hi5)
         (+jojo hi1 "hi1" w)
         (+jojo hi2 "hi2" w)
-        (+jojo hi3 "hi2" w))
+        (+jojo hi3 "hi" w)
+        (+jojo hi4 "hi4" w)
+        (+jojo hi5 "hi5" w))
 
       (+module hiya/0.0.1
         (import
@@ -1338,7 +1553,6 @@
       core-flag-off
       test-flag-off
       repl-flag-off
-
       (cond
         [cmd-number 1 eq?]
         [repl-flag-on
@@ -1346,7 +1560,6 @@
          print-data-stack
          terminal-input-stack repl
          end]
-
         else [cmd-list .cdr .car path-load]))
 
     the-story-begin

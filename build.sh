@@ -20,7 +20,7 @@ clean() {
 
 default() {
     clean
-    build
+    time build
 }
 
 if [ $# -eq 0 ]; then

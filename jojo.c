@@ -2063,32 +2063,6 @@
               current_local_counter,
               current_dynamic_local_counter);
     }
-    void p_data_constructor_exe() {
-      struct dp b = ds_pop();
-      struct class* class = b.d;
-      cell fields_number = class->fields_number;
-
-      if (fields_number == 0) {
-        ds_push(class->class_name, 0);
-      }
-      else {
-        struct gp* gp = new_record_gp();
-        gp->class = class;
-
-        cell* fields = (cell*)
-          malloc(fields_number*2*sizeof(cell));
-        cell i = 0;
-        while (i < fields_number) {
-          struct dp a = ds_pop();
-          set_field_tag(fields, (fields_number - (i+1)), a.t);
-          set_field_data(fields, (fields_number - (i+1)), a.d);
-          i++;
-        }
-        gp->p = fields;
-
-        ds_push(class->class_name, gp);
-      }
-    }
     void p_data_predicate_exe() {
       struct dp b = ds_pop();
       struct class* class = b.d;
@@ -2106,7 +2080,7 @@
       plus_disp("exe", J("<jojo>"), "<prim>", p_jojo_exe);
       plus_disp("exe", J("<gene>"), "<prim>", p_gene_exe);
       plus_disp("exe", J("<data-constructor>"),
-                "<prim>", p_data_constructor_exe);
+                "<prim>", p_new);
       plus_disp("exe", J("<data-predicate>"),
                 "<prim>", p_data_predicate_exe);
     }
@@ -2983,13 +2957,20 @@
     }
 
     void local_env_print(struct local* lr) {
-      report("| ");
-      while (lr->name != 0) {
-        data_print(lr->local_tag, lr->local_data);
-        report(" %s! ", jo2str(lr->name));
-        lr++;
+      if (local_env_empty_p(lr)) {
+        report("{}");
       }
-      report("|");
+      else {
+        report("{");
+        while ((lr+1)->name != 0) {
+          data_print(lr->local_tag, lr->local_data);
+          report(" %s! ", jo2str(lr->name));
+          lr++;
+        }
+        data_print(lr->local_tag, lr->local_data);
+        report(" %s!", jo2str(lr->name));
+        report("}");
+      }
     }
     void jojo_print(jo_t* jojo);
 
