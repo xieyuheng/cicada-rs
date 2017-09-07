@@ -4,8 +4,6 @@
 
 * [todo-stack]
 
-*** use null-table instead of null
-
 *** test table processing in module system
 
 *** module/collect-import-table-list should load modules
@@ -311,34 +309,74 @@
 
 * repl
 
-  #+begin_src jojo
-  (+jojo repl (-> :input-stack --)
-    :input-stack reading-stack-push
-    repl/loop
-    reading-stack-drop)
+*** repl
 
-  (+jojo repl/loop
-    (if has-jo? not then end)
-    read-sexp
-    (cond [dup jo-bound? not]
-          ["- jo is not bound : " string-write
-           jo-write newline]
-          else [null cons compile-jojo apply])
-    (if repl-flag then print-data-stack)
-    recur)
-  #+end_src
+    #+begin_src jojo
+    (+jojo repl (-> :input-stack --)
+      :input-stack reading-stack-push
+      repl/loop
+      reading-stack-drop)
+
+    (+jojo repl/loop
+      (if has-jo? not then end)
+      read-sexp sexp-eval
+      (if repl-flag then print-data-stack)
+      recur)
+    #+end_src
+
+*** sexp-eval
+
+    #+begin_src jojo
+    (+jojo sexp-eval (-> :sexp --)
+      (case :sexp
+        <null>   [:sexp sexp-compile-jojo apply]
+        <cons>   [:sexp sexp-compile-jojo apply]
+        <string> [:sexp sexp-compile-jojo apply]
+        <jo>     [:sexp jo-eval]))
+    #+end_src
+
+*** jo-eval
+
+    #+begin_src jojo
+    (+jojo jo-eval (-> :jo --)
+      (cond
+        [:jo int-jo?] [:jo sexp-compile-jojo apply]
+
+        [:jo local-jo?
+         :jo set-local-jo? or
+         :jo dynamic-local-jo? or
+         :jo set-dynamic-local-jo? or
+         :jo field-jo? or
+         :jo set-field-jo? or]
+        ["- jo-eval can not handle : " string-write
+         :jo jo-write newline]
+
+        [:jo comma eq?] []
+
+        [:jo jo-bound? not]
+        ["- jo is not bound : " string-write
+         :jo jo-write newline]
+
+        else [:jo sexp-compile-jojo apply]))
+    #+end_src
 
 * compiler
 
-*** compile-jojo
+*** body-compile-jojo
 
     #+begin_src jojo
-    (+jojo compile-jojo (-> :body -- <jojo>)
+    (+jojo body-compile-jojo (-> :body -- <jojo>)
       compiling-stack-tos :address!
       :body sexp-list-compile
        emit-jojo-end
       :address new-jojo
       compiling-stack-drop :address compiling-stack-push)
+    #+end_src
+
+*** sexp-compile-jojo
+
+    #+begin_src jojo
+    (+jojo sexp-compile-jojo null cons body-compile-jojo)
     #+end_src
 
 *** sexp-list-compile
@@ -492,7 +530,7 @@
 
     #+begin_src jojo
     (+jojo core-clo
-      compile-jojo emit-lit
+      body-compile-jojo emit-lit
       'current-local-env jo-emit
       'closure jo-emit)
     #+end_src
@@ -587,7 +625,7 @@
       list-length
       :name name-bind-gene
 
-      :rest-body compile-jojo
+      :rest-body body-compile-jojo
       :name name-bind-disp-default-to-jojo)
     #+end_src
 
@@ -606,7 +644,7 @@
       {tag-jo?} list-filter
       jo-list-compile-cells :address-of-tags!
 
-      :rest-body compile-jojo
+      :rest-body body-compile-jojo
       :address-of-tags
       :name name-bind-disp-to-jojo)
     #+end_src
@@ -617,7 +655,7 @@
 
     #+begin_src jojo
     (+jojo +jojo (-> :body sexp list --)
-      :body .cdr compile-jojo
+      :body .cdr body-compile-jojo
       :body .car name-bind)
     #+end_src
 
@@ -789,7 +827,7 @@
 
     #+begin_src jojo
     (+jojo run sexp-list-run)
-    (+jojo sexp-list-run compile-jojo apply)
+    (+jojo sexp-list-run body-compile-jojo apply)
     (+jojo sexp-run null cons run)
     #+end_src
 
@@ -1138,13 +1176,13 @@
     (+disp w (-> <string> --) string-write)
     (+disp w (-> <jo> --) jo-write)
     (+disp w (-> <byte> --) "(byte " w byte-write ")" w)
-
-    (+disp w (-> <null> --) drop "()" w)
     #+end_src
 
 *** list-write
 
     #+begin_src jojo
+    (+disp w (-> <null> --) drop "()" w)
+
     (+disp w (-> <cons> --) list-write)
 
     (+jojo list-write (-> :list --)
@@ -1295,7 +1333,7 @@
 
     (+jojo list->table/recur (-> :list -- table)
       (case :list
-        <null> null
+        <null> null-tab
         <cons> [:list .cdr .cdr recur
                 :list .car :list .cdr .car
                 tab]))
@@ -1310,15 +1348,18 @@
 *** table-write
 
     #+begin_src jojo
+    (+disp w (-> <null-tab>) drop "(table)" w)
+
     (+disp w (-> <tab>) table-write)
 
     (+jojo table-write (-> :table --)
+      (if :table null-tab? then "(table)" w end)
       "(table " w :table table-write/loop ")" w)
 
     (+jojo table-write/loop (-> :table --)
       (cond
-        [:table null?] []
-        [:table .rest null?] [:table .key w space :table .value w]
+        [:table null-tab?] []
+        [:table .rest null-tab?] [:table .key w space :table .value w]
         else [:table .key w space :table .value w comma w space
               :table .rest recur]))
     #+end_src
@@ -1327,7 +1368,7 @@
 
     #+begin_src jojo
     (+jojo table-find (-> :table :key -- value true or false)
-      (cond [:table null?] false
+      (cond [:table null-tab?] false
             [:table .key :key equal?] [:table .value true]
             else [:table .rest :key recur]))
     #+end_src
@@ -1336,7 +1377,7 @@
 
     #+begin_src jojo
     (+jojo table-contain? (-> :large :small -- <bool>)
-      (cond [:small null?] true
+      (cond [:small null-tab?] true
             [:large :small .key table-find]
             (if :small .value equal?
                 then :large :small .rest recur
@@ -1348,7 +1389,7 @@
 
     #+begin_src jojo
     (+jojo table-merge (-> :base :src -- table true or key false)
-      (cond [:src null?] [:base true]
+      (cond [:src null-tab?] [:base true]
             [:base :src .key table-find]
             (if :src .value equal?
                 then :base :src .rest recur
@@ -1512,7 +1553,7 @@
            "  key : " w w nl
            "  module name : " w :name w nl
            debug)}
-      null swap list-foldr :import-table!
+      null-tab swap list-foldr :import-table!
 
       :import-table :define-table
       (if table-merge not then
@@ -1548,7 +1589,7 @@
        :table :s
        :name ': jo-append :s jo-append
        tab}
-      null swap list-foldr)
+      null-tab swap list-foldr)
     #+end_src
 
 *** module/generate-export-table
@@ -1568,7 +1609,7 @@
        :table :s
        :name ': jo-append :s jo-append
        tab}
-      null swap list-foldr)
+      null-tab swap list-foldr)
     #+end_src
 
 *** module/export-check
@@ -1662,8 +1703,8 @@
 
       #+begin_src jojo
       (note take r7rs import declaration for example
-        (import <import-set>) where
-        <import-set>
+        (import <import-set>)
+        where <import-set>
         = <library-name>
         | (only <import-set> <identifier> ...)
         | (except <import-set> <identifier> ...)
