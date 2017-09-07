@@ -1,8 +1,7 @@
 #+html_head: <link rel="stylesheet" href="https://xieyuheng.github.io/asset/css/page.css" type="text/css" media="screen" />
 #+property: tangle core.jo
 #+title: core
-* (run) to use module at top level
-* module/collect-import-table-list should load modules
+* module/import-one should load modules
 * (include)
 * check jo-bound? for module
 * [todo-stack]
@@ -427,7 +426,7 @@
 *** sexp-run
 
     #+begin_src jojo
-    (+jojo sexp-run null cons sexp-list-run)
+    (+jojo sexp-run sexp-compile-jojo apply)
     #+end_src
 
 * basic syntax
@@ -1563,15 +1562,14 @@
 *** (+module)
 
     #+begin_src jojo
-    (+jojo +module (-> :body --)
-      :body .car :name!
-      :body .cdr :rest!
+    (+jojo +module
+      dup .car :name! .cdr :body!
 
-      :rest :name
+      :body :name
       module/generate-define-table
       :define-table!
 
-      :rest :name
+      :body :name
       module/generate-export-table
       :export-table!
 
@@ -1579,12 +1577,12 @@
       :export-table
       module/export-check
 
-      :rest module/collect-import-table-list
+      :body module/collect-import-table-list
       :import-table-list!
 
       :import-table-list
       {(if table-merge not then
-           "- fail to merge import-table-list" w nl
+           "- (+module) fail to merge import-table-list" w nl
            "  import-table-list : " w :import-table-list w nl
            "  key : " w w nl
            "  module name : " w :name w nl
@@ -1593,7 +1591,7 @@
 
       :import-table :define-table
       (if table-merge not then
-          "- fail to merge import-table with define-table" w nl
+          "- (+module) fail to merge import-table with define-table" w nl
           "  import-table : " w :import-table w nl
           "  define-table : " w :define-table w nl
           "  key : " w w nl
@@ -1601,7 +1599,7 @@
           debug)
       :rename-table!
 
-      :rest
+      :body
       {sexp-for-module? not} list-filter
       {:rename-table sexp-table-substitute} list-map
       sexp-list-compile
@@ -1676,7 +1674,7 @@
     #+begin_src jojo
     (+jojo module/import-one
       (note dup .car :name!)
-      (note swap .cdr)
+      (note .cdr)
       sexp-list-run)
     #+end_src
 
@@ -1685,8 +1683,7 @@
     #+begin_src jojo
     (+jojo sexp-for-module? (-> :sexp -- <bool>)
       '(import export)
-      {:jo! (if :sexp cons? not
-                then true end
+      {:jo! (if :sexp cons? not then false
                 else :jo :sexp .car eq?)}
       list-any?)
     #+end_src
@@ -1701,6 +1698,29 @@
              cons]
             else (if :table :sexp table-find then end
                      else :sexp)))
+    #+end_src
+
+*** (run)
+
+    #+begin_src jojo
+    (+jojo run (-> :body --)
+      :body module/collect-import-table-list
+      :import-table-list!
+
+      :import-table-list
+      {(if table-merge not then
+           "- (run) fail to merge import-table-list" w nl
+           "  import-table-list : " w :import-table-list w nl
+           "  key : " w w nl
+           debug)}
+      null-table swap list-foldr :import-table!
+
+      :import-table :rename-table!
+
+      :body
+      {sexp-for-module? not} list-filter
+      {:rename-table sexp-table-substitute} list-map
+      sexp-list-run)
     #+end_src
 
 *** [test]
@@ -1734,7 +1754,11 @@
         (+jojo hiya hi3 ya3 string-append))
 
       (assert
-        hiya/0.0.1:hiya "hiya" equal?))
+        hiya/0.0.1:hiya "hiya" equal?)
+
+      (assert
+        (run (import hiya/0.0.1)
+          hiya "hiya" equal?)))
     #+end_src
 
 *** [note] table processing in module system
@@ -1812,7 +1836,11 @@
         (+jojo hiya hi ya string-append))
 
       (assert
-        hiya/0.0.2:hiya "hiya" equal?))
+        hiya/0.0.2:hiya "hiya" equal?)
+
+      (assert
+        (run (import hiya/0.0.2)
+          hiya "hiya" equal?)))
     #+end_src
 
 *** import-only
@@ -1885,13 +1913,11 @@
         (+jojo hiya hi ya string-append))
 
       (assert
-        hiya/0.0.3:hiya "hiya" equal?))
-    #+end_src
+        hiya/0.0.3:hiya "hiya" equal?)
 
-*** >< (run)
-
-    #+begin_src jojo
-
+      (assert
+        (run (import hiya/0.0.3)
+          hiya "hiya" equal?)))
     #+end_src
 
 * the-story-begin

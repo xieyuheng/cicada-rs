@@ -221,7 +221,7 @@
 
         else [:jo jo-emit]))
     (+jojo sexp-list-run sexp-list-compile-jojo apply)
-    (+jojo sexp-run null cons sexp-list-run)
+    (+jojo sexp-run sexp-compile-jojo apply)
     (+jojo quote {emit-lit} list-for-each)
 
     (note
@@ -976,15 +976,14 @@
       file-input-stack
       maybe-drop-shabang
       repl)
-    (+jojo +module (-> :body --)
-      :body .car :name!
-      :body .cdr :rest!
+    (+jojo +module
+      dup .car :name! .cdr :body!
 
-      :rest :name
+      :body :name
       module/generate-define-table
       :define-table!
 
-      :rest :name
+      :body :name
       module/generate-export-table
       :export-table!
 
@@ -992,12 +991,12 @@
       :export-table
       module/export-check
 
-      :rest module/collect-import-table-list
+      :body module/collect-import-table-list
       :import-table-list!
 
       :import-table-list
       {(if table-merge not then
-           "- fail to merge import-table-list" w nl
+           "- (+module) fail to merge import-table-list" w nl
            "  import-table-list : " w :import-table-list w nl
            "  key : " w w nl
            "  module name : " w :name w nl
@@ -1006,7 +1005,7 @@
 
       :import-table :define-table
       (if table-merge not then
-          "- fail to merge import-table with define-table" w nl
+          "- (+module) fail to merge import-table with define-table" w nl
           "  import-table : " w :import-table w nl
           "  define-table : " w :define-table w nl
           "  key : " w w nl
@@ -1014,7 +1013,7 @@
           debug)
       :rename-table!
 
-      :rest
+      :body
       {sexp-for-module? not} list-filter
       {:rename-table sexp-table-substitute} list-map
       sexp-list-compile
@@ -1059,12 +1058,11 @@
       {.cdr module/import-one} list-map)
     (+jojo module/import-one
       (note dup .car :name!)
-      (note swap .cdr)
+      (note .cdr)
       sexp-list-run)
     (+jojo sexp-for-module? (-> :sexp -- <bool>)
       '(import export)
-      {:jo! (if :sexp cons? not
-                then true end
+      {:jo! (if :sexp cons? not then false
                 else :jo :sexp .car eq?)}
       list-any?)
     (+jojo sexp-table-substitute (-> :sexp :table -- sexp)
@@ -1074,6 +1072,24 @@
              cons]
             else (if :table :sexp table-find then end
                      else :sexp)))
+    (+jojo run (-> :body --)
+      :body module/collect-import-table-list
+      :import-table-list!
+
+      :import-table-list
+      {(if table-merge not then
+           "- (run) fail to merge import-table-list" w nl
+           "  import-table-list : " w :import-table-list w nl
+           "  key : " w w nl
+           debug)}
+      null-table swap list-foldr :import-table!
+
+      :import-table :rename-table!
+
+      :body
+      {sexp-for-module? not} list-filter
+      {:rename-table sexp-table-substitute} list-map
+      sexp-list-run)
     (test
 
       (+module hi/0.0.1
@@ -1102,7 +1118,11 @@
         (+jojo hiya hi3 ya3 string-append))
 
       (assert
-        hiya/0.0.1:hiya "hiya" equal?))
+        hiya/0.0.1:hiya "hiya" equal?)
+
+      (assert
+        (run (import hiya/0.0.1)
+          hiya "hiya" equal?)))
       (note take r7rs import declaration for example
         (import <import-set>)
         where <import-set>
@@ -1167,7 +1187,11 @@
         (+jojo hiya hi ya string-append))
 
       (assert
-        hiya/0.0.2:hiya "hiya" equal?))
+        hiya/0.0.2:hiya "hiya" equal?)
+
+      (assert
+        (run (import hiya/0.0.2)
+          hiya "hiya" equal?)))
     (+jojo import-only (-> table :list -- table)
       {(-> :name -- <bool>)
        :list {:name eq?} list-any?}
@@ -1215,8 +1239,11 @@
         (+jojo hiya hi ya string-append))
 
       (assert
-        hiya/0.0.3:hiya "hiya" equal?))
+        hiya/0.0.3:hiya "hiya" equal?)
 
+      (assert
+        (run (import hiya/0.0.3)
+          hiya "hiya" equal?)))
     (+jojo welcome-to-jojo
       "welcome to jojo's programming adventure ^-^/" w nl)
     (+jojo the-story-begin
