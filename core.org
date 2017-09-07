@@ -1,11 +1,12 @@
 #+html_head: <link rel="stylesheet" href="https://xieyuheng.github.io/asset/css/page.css" type="text/css" media="screen" />
 #+property: tangle core.jo
 #+title: core
-
-* check jo-bound? for module
+* (run) to use module at top level
 * module/collect-import-table-list should load modules
 * (include)
+* check jo-bound? for module
 * [todo-stack]
+
 *** the little schemer
 
 *** use EOPL to test the language
@@ -358,10 +359,10 @@
 
 * compiler
 
-*** body-compile-jojo
+*** sexp-list-compile-jojo
 
     #+begin_src jojo
-    (+jojo body-compile-jojo (-> :body -- <jojo>)
+    (+jojo sexp-list-compile-jojo (-> :body -- <jojo>)
       compiling-stack-tos :address!
       :body sexp-list-compile
        emit-jojo-end
@@ -372,7 +373,7 @@
 *** sexp-compile-jojo
 
     #+begin_src jojo
-    (+jojo sexp-compile-jojo null cons body-compile-jojo)
+    (+jojo sexp-compile-jojo null cons sexp-list-compile-jojo)
     #+end_src
 
 *** sexp-list-compile
@@ -415,6 +416,18 @@
         [:jo comma eq?] []
 
         else [:jo jo-emit]))
+    #+end_src
+
+*** sexp-list-run
+
+    #+begin_src jojo
+    (+jojo sexp-list-run sexp-list-compile-jojo apply)
+    #+end_src
+
+*** sexp-run
+
+    #+begin_src jojo
+    (+jojo sexp-run null cons sexp-list-run)
     #+end_src
 
 * basic syntax
@@ -526,7 +539,7 @@
 
     #+begin_src jojo
     (+jojo core-clo
-      body-compile-jojo emit-lit
+      sexp-list-compile-jojo emit-lit
       'current-local-env jo-emit
       'closure jo-emit)
     #+end_src
@@ -621,7 +634,7 @@
       list-length
       :name name-bind-gene
 
-      :rest-body body-compile-jojo
+      :rest-body sexp-list-compile-jojo
       :name name-bind-disp-default-to-jojo)
     #+end_src
 
@@ -640,7 +653,7 @@
       {tag-jo?} list-filter
       jo-list-compile-cells :address-of-tags!
 
-      :rest-body body-compile-jojo
+      :rest-body sexp-list-compile-jojo
       :address-of-tags
       :name name-bind-disp-to-jojo)
     #+end_src
@@ -651,7 +664,7 @@
 
     #+begin_src jojo
     (+jojo +jojo (-> :body sexp list --)
-      :body .cdr body-compile-jojo
+      :body .cdr sexp-list-compile-jojo
       :body .car name-bind)
     #+end_src
 
@@ -817,14 +830,6 @@
       (cond [:tag1 underscore-jo?] [true]
             [:tag2 underscore-jo?] [true]
             else [:tag1 :tag2 eq?]))
-    #+end_src
-
-*** (run)
-
-    #+begin_src jojo
-    (+jojo run sexp-list-run)
-    (+jojo sexp-list-run body-compile-jojo apply)
-    (+jojo sexp-run null cons run)
     #+end_src
 
 * [test] syntax
@@ -1271,6 +1276,13 @@
                 :b-a->b apply]))
     #+end_src
 
+*** list-member?
+
+    #+begin_src jojo
+    (+jojo list-member? (-> :list :x -- <bool>)
+      :list {:x equal?} list-any?)
+    #+end_src
+
 *** [test]
 
     #+begin_src jojo
@@ -1598,17 +1610,23 @@
       :name name-bind)
     #+end_src
 
+*** list-car-filter
+
+    #+begin_src jojo
+    (+jojo list-car-filter (-> list :pred -- list)
+      {:x! (if :x cons? not then false
+               else :x .car :pred apply)}
+      list-filter)
+    #+end_src
+
 *** module/generate-define-table
 
     #+begin_src jojo
     (+jojo module/generate-define-table
       (-> :list :name -- table)
       :list
-      {(-> :sexp)
-       (cond [:sexp cons? not] false
-             ['(+jojo +gene +disp) {:sexp .car eq?} list-any?] true
-             else false)}
-      list-filter {.cdr .car} list-map
+      {'(+jojo +gene +disp) swap list-member?}
+      list-car-filter {.cdr .car} list-map
       {(-> :s :table -- table)
        :table :s
        :name ': jo-append :s jo-append
@@ -1622,13 +1640,9 @@
     (+jojo module/generate-export-table
       (-> :list :name -- table)
       :list
-      {(-> :sexp)
-       (cond [:sexp cons? not] false
-             ['export :sexp .car eq?] true
-             else false)}
-      list-filter {.cdr} list-map
+      {'export eq?}
+      list-car-filter {.cdr} list-map
       null {list-append} list-foldr
-
       {(-> :s :table -- table)
        :table :s
        :name ': jo-append :s jo-append
@@ -1653,13 +1667,17 @@
 
     #+begin_src jojo
     (+jojo module/collect-import-table-list
-      {(-> :sexp)
-       (cond [:sexp cons? not] false
-             ['import :sexp .car eq?] true
-             else false)}
-      list-filter {.cdr} list-map
-      null {list-append} list-foldr
-      list/expend sexp-run)
+      {'import eq?} list-car-filter
+      {.cdr module/import-one} list-map)
+    #+end_src
+
+*** module/import-one
+
+    #+begin_src jojo
+    (+jojo module/import-one
+      (note dup .car :name!)
+      (note swap .cdr)
+      sexp-list-run)
     #+end_src
 
 *** sexp-for-module?
@@ -1709,9 +1727,8 @@
         (+jojo ya5 "ya5"))
 
       (+module hiya/0.0.1
-        (import
-          hi/0.0.1
-          ya/0.0.1)
+        (import hi/0.0.1)
+        (import ya/0.0.1)
         (export
           hiya)
         (+jojo hiya hi3 ya3 string-append))
@@ -1781,14 +1798,12 @@
         (+jojo ya5 "ya5"))
 
       (+module hiya/0.0.2
-        (import
-          hi/0.0.2
+        (import hi/0.0.2
           {'hi3 eq?} table-key-filter
           {'hi- swap jo-append} table-key-map
           {(if dup 'hi-hi3 eq? then drop 'hi)}
-          table-key-map
-
-          ya/0.0.2
+          table-key-map)
+        (import ya/0.0.2
           {'ya3 eq?} table-key-filter
           {(if dup 'ya3 eq? then drop 'ya)}
           table-key-map)
@@ -1858,13 +1873,11 @@
         (+jojo ya5 "ya5"))
 
       (+module hiya/0.0.3
-        (import
-          hi/0.0.3
+        (import hi/0.0.3
           '(hi3) import-only
           'hi- import-prefix
-          (table 'hi-hi3 'hi) import-rename
-
-          ya/0.0.3
+          (table 'hi-hi3 'hi) import-rename)
+        (import ya/0.0.3
           '(ya3) import-only
           (table 'ya3 'ya) import-rename)
         (export
@@ -1873,6 +1886,12 @@
 
       (assert
         hiya/0.0.3:hiya "hiya" equal?))
+    #+end_src
+
+*** >< (run)
+
+    #+begin_src jojo
+
     #+end_src
 
 * the-story-begin
