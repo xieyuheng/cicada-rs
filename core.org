@@ -1,15 +1,10 @@
 #+html_head: <link rel="stylesheet" href="https://xieyuheng.github.io/asset/css/page.css" type="text/css" media="screen" />
 #+property: tangle core.jo
 #+title: core
-
+* check jo-bound? for module
+* module/collect-import-table-list should load modules
+* (include)
 * [todo-stack]
-
-*** test table processing in module system
-
-*** module/collect-import-table-list should load modules
-
-*** (include)
-
 *** the little schemer
 
 *** use EOPL to test the language
@@ -1398,41 +1393,59 @@
                   :src .rest recur]))
     #+end_src
 
-*** table-eq?
+*** table-equal?
 
     #+begin_src jojo
-    (+jojo table-eq? (-> :t1 :t2 -- <bool>)
+    (+jojo table-equal? (-> :t1 :t2 -- <bool>)
       (if :t1 :t2 table-contain? not
           then false end
           else :t2 :t1 table-contain?))
     #+end_src
 
-*** >< table-key-filter
+*** table-key-filter
 
     #+begin_src jojo
     (+jojo table-key-filter (-> :table :pred -- :table)
-      (cond [:table null?] null
-            [] []
-            else []))
+      (cond [:table null-tab?] null-tab
+            [:table .key :pred apply]
+            [:table .rest :pred recur
+             :table .key :table .value tab]
+            else [:table .rest :pred recur]))
     #+end_src
 
-*** >< table-key-map
+*** table-key-map
 
     #+begin_src jojo
     (+jojo table-key-map (-> :table :fun -- :table)
-      )
+      (cond [:table null-tab?] null-tab
+            else [:table .rest :fun recur
+                  :table .key :fun apply
+                  :table .value tab]))
     #+end_src
 
 *** [test]
 
     #+begin_src jojo
     (test
+
       (assert
         (table 1 "1", 2 "2", 3 "3")
         (table 2 "2", 3 "3", 4 "4")
         (assert table-merge)
         (table 1 "1", 2 "2", 3 "3", 4 "4")
-        table-eq?))
+        table-equal?)
+
+      (assert
+        (table 1 "1", 2 "2", 3 "3", 4 "4")
+        {even?} table-key-filter
+        (table 2 "2", 4 "4")
+        table-equal?)
+
+      (assert
+        (table 1 "1", 2 "2", 3 "3", 4 "4")
+        {dec} table-key-map
+        (table 0 "1", 1 "2", 2 "3", 3 "4")
+        table-equal?))
     #+end_src
 
 * byte
@@ -1723,7 +1736,7 @@
         only   : {<name> eq?} table-key-filter
         except : {<name> eq? not} table-key-filter
         prefix : {<prefix> swap jo-append} table-key-map
-        rename : {(if dup <old> eq? then <new> end)} table-key-map)
+        rename : {(if dup <old> eq? then drop <new> else)} table-key-map)
 
       (note we can abstract those special use of
         table processing functions :
@@ -1732,14 +1745,6 @@
         <prefix> import-prefix
         '(table <old> <new>, ...) import-rename)
       #+end_src
-
-*** >< import-only
-
-*** >< import-except
-
-*** >< import-prefix
-
-*** >< import-rename
 
 *** [test] table processing in module system
 
@@ -1766,14 +1771,97 @@
 
       (+module hiya/0.0.2
         (import
-          hi/0.0.1
-          ya/0.0.1)
+          hi/0.0.2
+          {'hi3 eq?} table-key-filter
+          {'hi- swap jo-append} table-key-map
+          {(if dup 'hi-hi3 eq? then drop 'hi)}
+          table-key-map
+
+          ya/0.0.2
+          {'ya3 eq?} table-key-filter
+          {(if dup 'ya3 eq? then drop 'ya)}
+          table-key-map)
         (export
           hiya)
-        (+jojo hiya hi3 ya3 string-append))
+        (+jojo hiya hi ya string-append))
 
       (assert
         hiya/0.0.2:hiya "hiya" equal?))
+    #+end_src
+
+*** import-only
+
+    #+begin_src jojo
+    (+jojo import-only (-> table :list -- table)
+      {(-> :name -- <bool>)
+       :list {:name eq?} list-any?}
+      table-key-filter)
+    #+end_src
+
+*** import-except
+
+    #+begin_src jojo
+    (+jojo import-except (-> table :list -- table)
+      {(-> :name -- <bool>)
+       :list {:name eq? not} list-any?}
+      table-key-filter)
+    #+end_src
+
+*** import-prefix
+
+    #+begin_src jojo
+    (+jojo import-prefix (-> table :prefix-jo -- table)
+      {:prefix-jo swap jo-append}
+      table-key-map)
+    #+end_src
+
+*** import-rename
+
+    #+begin_src jojo
+    (+jojo import-rename (-> table :renaming -- table)
+      {:renaming sexp-table-substitute}
+      table-key-map)
+    #+end_src
+
+*** [test] table processing in module system again
+
+    #+begin_src jojo
+    (test
+
+      (+module hi/0.0.3
+        (export
+          hi1 hi3 hi5)
+        (+jojo hi1 "hi1")
+        (+jojo hi2 "hi2")
+        (+jojo hi3 "hi")
+        (+jojo hi4 "hi4")
+        (+jojo hi5 "hi5"))
+
+      (+module ya/0.0.3
+        (export
+          ya1 ya3 ya5)
+        (+jojo ya1 "ya1")
+        (+jojo ya2 "ya2")
+        (+jojo ya3 "ya")
+        (+jojo ya4 "ya4")
+        (+jojo ya5 "ya5"))
+
+      (+module hiya/0.0.3
+        (import
+          hi/0.0.3
+          '(hi3) import-only
+          'hi- import-prefix
+          (table 'hi-hi3 'hi) import-rename
+
+          ya/0.0.3
+          '(ya3) import-only
+          (table 'ya3 'ya) import-rename)
+        (export
+          hiya)
+        (+jojo hiya hi ya string-append))
+
+      (assert
+        hiya/0.0.3:hiya "hiya" equal?))
     #+end_src
 
 * the-story-begin

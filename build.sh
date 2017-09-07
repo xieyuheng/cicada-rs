@@ -25,6 +25,10 @@ clean() {
     rm -f core.jojo.*
 }
 
+run() {
+    ./jojo
+}
+
 default() {
     clean
     tangle
@@ -35,6 +39,7 @@ test() {
     clean
     tangle
     time fast_build
+    run
 }
 
 if [ $# -eq 0 ]; then
