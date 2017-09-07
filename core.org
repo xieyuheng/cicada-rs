@@ -4,7 +4,13 @@
 
 * [todo-stack]
 
+*** use null-table instead of null
+
+*** test table processing in module system
+
 *** module/collect-import-table-list should load modules
+
+*** (include)
 
 *** the little schemer
 
@@ -1268,10 +1274,11 @@
 
 * table
 
-*** <tab>
+*** <tab> & <null-tab>
 
     #+begin_src jojo
     (+data <tab> .rest .key .value)
+    (+data <null-tab>)
     #+end_src
 
 *** list->tab
@@ -1357,6 +1364,22 @@
       (if :t1 :t2 table-contain? not
           then false end
           else :t2 :t1 table-contain?))
+    #+end_src
+
+*** >< table-key-filter
+
+    #+begin_src jojo
+    (+jojo table-key-filter (-> :table :pred -- :table)
+      (cond [:table null?] null
+            [] []
+            else []))
+    #+end_src
+
+*** >< table-key-map
+
+    #+begin_src jojo
+    (+jojo table-key-map (-> :table :fun -- :table)
+      )
     #+end_src
 
 *** [test]
@@ -1630,6 +1653,86 @@
 
       (assert
         hiya/0.0.1:hiya "hiya" equal?))
+    #+end_src
+
+*** [note] table processing in module system
+
+    - we can use table processing functions
+      to handle the name unique-name binding
+
+      #+begin_src jojo
+      (note take r7rs import declaration for example
+        (import <import-set>) where
+        <import-set>
+        = <library-name>
+        | (only <import-set> <identifier> ...)
+        | (except <import-set> <identifier> ...)
+        | (prefix <import-set> <identifier>)
+        | (rename <import-set> (<old-identifier> <new-identifier>) ...) )
+
+      (note in jojo we can use table processing functions like :
+        '(<name> ...) only
+        '(<name> ...) except
+        <prefix> prefix
+        '(table <old> <new>, ...) rename)
+
+      (note but these names are too general
+        for table processing functions
+        we use the following instead :
+        only   : {<name> eq?} table-key-filter
+        except : {<name> eq? not} table-key-filter
+        prefix : {<prefix> swap jo-append} table-key-map
+        rename : {(if dup <old> eq? then <new> end)} table-key-map)
+
+      (note we can abstract those special use of
+        table processing functions :
+        '(<name> ...) import-only
+        '(<name> ...) import-except
+        <prefix> import-prefix
+        '(table <old> <new>, ...) import-rename)
+      #+end_src
+
+*** >< import-only
+
+*** >< import-except
+
+*** >< import-prefix
+
+*** >< import-rename
+
+*** [test] table processing in module system
+
+    #+begin_src jojo
+    (test
+
+      (+module hi/0.0.2
+        (export
+          hi1 hi3 hi5)
+        (+jojo hi1 "hi1")
+        (+jojo hi2 "hi2")
+        (+jojo hi3 "hi")
+        (+jojo hi4 "hi4")
+        (+jojo hi5 "hi5"))
+
+      (+module ya/0.0.2
+        (export
+          ya1 ya3 ya5)
+        (+jojo ya1 "ya1")
+        (+jojo ya2 "ya2")
+        (+jojo ya3 "ya")
+        (+jojo ya4 "ya4")
+        (+jojo ya5 "ya5"))
+
+      (+module hiya/0.0.2
+        (import
+          hi/0.0.1
+          ya/0.0.1)
+        (export
+          hiya)
+        (+jojo hiya hi3 ya3 string-append))
+
+      (assert
+        hiya/0.0.2:hiya "hiya" equal?))
     #+end_src
 
 * the-story-begin

@@ -833,6 +833,7 @@
         (list 7 8 9, 4 5 6, 1 2 3)
         equal?))
     (+data <tab> .rest .key .value)
+    (+data <null-tab>)
     (+jojo list->table (-> :list -- table)
       (if :list list-length odd? then
           "- list->table fail" w nl
@@ -883,6 +884,12 @@
       (if :t1 :t2 table-contain? not
           then false end
           else :t2 :t1 table-contain?))
+    (+jojo table-key-filter (-> :table :pred -- :table)
+      (cond [:table null?] null
+            [] []
+            else []))
+    (+jojo table-key-map (-> :table :fun -- :table)
+      )
     (test
       (assert
         (table 1 "1", 2 "2", 3 "3")
@@ -1051,6 +1058,65 @@
 
       (assert
         hiya/0.0.1:hiya "hiya" equal?))
+      (note take r7rs import declaration for example
+        (import <import-set>) where
+        <import-set>
+        = <library-name>
+        | (only <import-set> <identifier> ...)
+        | (except <import-set> <identifier> ...)
+        | (prefix <import-set> <identifier>)
+        | (rename <import-set> (<old-identifier> <new-identifier>) ...) )
+
+      (note in jojo we can use table processing functions like :
+        '(<name> ...) only
+        '(<name> ...) except
+        <prefix> prefix
+        '(table <old> <new>, ...) rename)
+
+      (note but these names are too general
+        for table processing functions
+        we use the following instead :
+        only   : {<name> eq?} table-key-filter
+        except : {<name> eq? not} table-key-filter
+        prefix : {<prefix> swap jo-append} table-key-map
+        rename : {(if dup <old> eq? then <new> end)} table-key-map)
+
+      (note we can abstract those special use of
+        table processing functions :
+        '(<name> ...) import-only
+        '(<name> ...) import-except
+        <prefix> import-prefix
+        '(table <old> <new>, ...) import-rename)
+    (test
+
+      (+module hi/0.0.2
+        (export
+          hi1 hi3 hi5)
+        (+jojo hi1 "hi1")
+        (+jojo hi2 "hi2")
+        (+jojo hi3 "hi")
+        (+jojo hi4 "hi4")
+        (+jojo hi5 "hi5"))
+
+      (+module ya/0.0.2
+        (export
+          ya1 ya3 ya5)
+        (+jojo ya1 "ya1")
+        (+jojo ya2 "ya2")
+        (+jojo ya3 "ya")
+        (+jojo ya4 "ya4")
+        (+jojo ya5 "ya5"))
+
+      (+module hiya/0.0.2
+        (import
+          hi/0.0.1
+          ya/0.0.1)
+        (export
+          hiya)
+        (+jojo hiya hi3 ya3 string-append))
+
+      (assert
+        hiya/0.0.2:hiya "hiya" equal?))
     (+jojo welcome-to-jojo
       "welcome to jojo's programming adventure ^-^/" w nl)
     (+jojo the-story-begin
