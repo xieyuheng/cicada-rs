@@ -3357,7 +3357,6 @@
         char c = read_byte();
         if (c == '"') {
           buffer[cursor] = '\0';
-          cursor++;
           break;
         }
         else {
@@ -3433,7 +3432,7 @@
       struct dp b = ds_pop();
       struct gp* ap = a.d;
       struct gp* bp = b.d;
-      ds_push(TAG_BOOL, string_equal(ap->p, ap->p));
+      ds_push(TAG_BOOL, string_equal(ap->p, bp->p));
     }
     void p_read_string() {
       char buffer[1024 * 1024];
@@ -3442,7 +3441,6 @@
         char c = read_byte();
         if (c == '"') {
           buffer[cursor] = '\0';
-          cursor++;
           break;
         }
         else {
@@ -3458,8 +3456,9 @@
       while (true) {
         char c = read_byte();
         if (c == '\n') {
-          buffer[cursor] = '\0';
+          buffer[cursor] = '\n';
           cursor++;
+          buffer[cursor] = '\0';
           break;
         }
         else {

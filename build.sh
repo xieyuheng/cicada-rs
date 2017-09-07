@@ -7,6 +7,11 @@ o='-O2'
 f='-rdynamic'
 l='-ldl'
 
+
+copy() {
+    rsync --recursive --links --perms --times --group --owner --devices --specials --verbose --human-readable $@
+}
+
 tangle() {
     ./tool/tangle.js
     xxd -i core.jo > core.h
@@ -33,6 +38,10 @@ default() {
     clean
     tangle
     time build
+}
+
+install_module() {
+    copy ./module ~/.jojo/
 }
 
 test() {

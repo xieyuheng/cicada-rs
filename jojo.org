@@ -4,6 +4,10 @@
 
 * [todo-stack]
 
+*** fix the use of reading-stack-drop
+
+    - p_reading_stack_drop does not free the input_stack
+
 *** better file io
 
     - with the help of <input-stack>
@@ -4902,7 +4906,6 @@
         char c = read_byte();
         if (c == '"') {
           buffer[cursor] = '\0';
-          cursor++;
           break;
         }
         else {
@@ -5018,7 +5021,7 @@
       struct dp b = ds_pop();
       struct gp* ap = a.d;
       struct gp* bp = b.d;
-      ds_push(TAG_BOOL, string_equal(ap->p, ap->p));
+      ds_push(TAG_BOOL, string_equal(ap->p, bp->p));
     }
     #+end_src
 
@@ -5032,7 +5035,6 @@
         char c = read_byte();
         if (c == '"') {
           buffer[cursor] = '\0';
-          cursor++;
           break;
         }
         else {
@@ -5053,8 +5055,9 @@
       while (true) {
         char c = read_byte();
         if (c == '\n') {
-          buffer[cursor] = '\0';
+          buffer[cursor] = '\n';
           cursor++;
+          buffer[cursor] = '\0';
           break;
         }
         else {

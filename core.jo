@@ -966,6 +966,14 @@
             [:line 0 2 string-slice "#!" string-eq?] []
             else [:line string-unread])
       reading-stack-pop)
+    (+jojo input-stack-read-sexp-list
+      (-> :input-stack -- sexp list)
+      :input-stack reading-stack-push
+      read-sexp-list-to-the-end
+      reading-stack-drop)
+    (+jojo read-sexp-list-to-the-end (-> -- sexp list)
+      (if has-jo? not then null end)
+      read-sexp recur cons)
     (+jojo path-load (-> :path --)
       :path path-open-read
       (if not then
@@ -975,7 +983,8 @@
           debug)
       file-input-stack
       maybe-drop-shabang
-      repl)
+      input-stack-read-sexp-list
+      sexp-list-run)
     (+jojo +module
       dup .car :name! .cdr :body!
 
@@ -1056,10 +1065,17 @@
     (+jojo module/collect-import-table-list
       {'import eq?} list-car-filter
       {.cdr module/import-one} list-map)
-    (+jojo module/import-one
-      (note dup .car :name!)
-      (note .cdr)
-      sexp-list-run)
+    (+jojo module/import-one (-> :body -- table)
+      :body .car :name!
+      (if :name module-loaded? not then
+          :name module-load)
+      :body sexp-list-run :result!
+      (if :result table? then :result end)
+      "- module/import-one fail" w nl
+      "  result of body is not table" w nl
+      "  body : " w :body w nl
+      "  result : " w :result w nl
+      debug)
     (+jojo sexp-for-module? (-> :sexp -- <bool>)
       '(import export)
       {:jo! (if :sexp cons? not then false
@@ -1072,6 +1088,15 @@
              cons]
             else (if :table :sexp table-find then end
                      else :sexp)))
+    (+jojo module-loaded? (-> :name -- <bool>)
+      (if :name jo-bound?
+          then :name sexp-run table?
+          else false))
+    (+jojo module-load (-> :name --)
+      "/home/xyh/.jojo/module/"
+      :name jo->string string-append
+      "/module.jo" string-append
+      path-load)
     (+jojo run (-> :body --)
       :body module/collect-import-table-list
       :import-table-list!
@@ -1090,39 +1115,6 @@
       {sexp-for-module? not} list-filter
       {:rename-table sexp-table-substitute} list-map
       sexp-list-run)
-    (test
-
-      (+module hi/0.0.1
-        (export
-          hi1 hi3 hi5)
-        (+jojo hi1 "hi1")
-        (+jojo hi2 "hi2")
-        (+jojo hi3 "hi")
-        (+jojo hi4 "hi4")
-        (+jojo hi5 "hi5"))
-
-      (+module ya/0.0.1
-        (export
-          ya1 ya3 ya5)
-        (+jojo ya1 "ya1")
-        (+jojo ya2 "ya2")
-        (+jojo ya3 "ya")
-        (+jojo ya4 "ya4")
-        (+jojo ya5 "ya5"))
-
-      (+module hiya/0.0.1
-        (import hi/0.0.1)
-        (import ya/0.0.1)
-        (export
-          hiya)
-        (+jojo hiya hi3 ya3 string-append))
-
-      (assert
-        hiya/0.0.1:hiya "hiya" equal?)
-
-      (assert
-        (run (import hiya/0.0.1)
-          hiya "hiya" equal?)))
       (note take r7rs import declaration for example
         (import <import-set>)
         where <import-set>
@@ -1152,46 +1144,6 @@
         '(<name> ...) import-except
         <prefix> import-prefix
         '(table <old> <new>, ...) import-rename)
-    (test
-
-      (+module hi/0.0.2
-        (export
-          hi1 hi3 hi5)
-        (+jojo hi1 "hi1")
-        (+jojo hi2 "hi2")
-        (+jojo hi3 "hi")
-        (+jojo hi4 "hi4")
-        (+jojo hi5 "hi5"))
-
-      (+module ya/0.0.2
-        (export
-          ya1 ya3 ya5)
-        (+jojo ya1 "ya1")
-        (+jojo ya2 "ya2")
-        (+jojo ya3 "ya")
-        (+jojo ya4 "ya4")
-        (+jojo ya5 "ya5"))
-
-      (+module hiya/0.0.2
-        (import hi/0.0.2
-          {'hi3 eq?} table-key-filter
-          {'hi- swap jo-append} table-key-map
-          {(if dup 'hi-hi3 eq? then drop 'hi)}
-          table-key-map)
-        (import ya/0.0.2
-          {'ya3 eq?} table-key-filter
-          {(if dup 'ya3 eq? then drop 'ya)}
-          table-key-map)
-        (export
-          hiya)
-        (+jojo hiya hi ya string-append))
-
-      (assert
-        hiya/0.0.2:hiya "hiya" equal?)
-
-      (assert
-        (run (import hiya/0.0.2)
-          hiya "hiya" equal?)))
     (+jojo import-only (-> table :list -- table)
       {(-> :name -- <bool>)
        :list {:name eq?} list-any?}
@@ -1208,7 +1160,7 @@
       table-key-map)
     (test
 
-      (+module hi/0.0.3
+      (+module hi/0.0.0
         (export
           hi1 hi3 hi5)
         (+jojo hi1 "hi1")
@@ -1217,7 +1169,7 @@
         (+jojo hi4 "hi4")
         (+jojo hi5 "hi5"))
 
-      (+module ya/0.0.3
+      (+module ya/0.0.0
         (export
           ya1 ya3 ya5)
         (+jojo ya1 "ya1")
@@ -1226,12 +1178,12 @@
         (+jojo ya4 "ya4")
         (+jojo ya5 "ya5"))
 
-      (+module hiya/0.0.3
-        (import hi/0.0.3
+      (+module hiya/0.0.0
+        (import hi/0.0.0
           '(hi3) import-only
           'hi- import-prefix
           (table 'hi-hi3 'hi) import-rename)
-        (import ya/0.0.3
+        (import ya/0.0.0
           '(ya3) import-only
           (table 'ya3 'ya) import-rename)
         (export
@@ -1239,24 +1191,25 @@
         (+jojo hiya hi ya string-append))
 
       (assert
-        hiya/0.0.3:hiya "hiya" equal?)
+        hiya/0.0.0:hiya "hiya" equal?)
 
       (assert
-        (run (import hiya/0.0.3)
+        (run (import hiya/0.0.0)
           hiya "hiya" equal?)))
     (+jojo welcome-to-jojo
       "welcome to jojo's programming adventure ^-^/" w nl)
     (+jojo the-story-begin
-      core-flag-off
-      test-flag-off
-      repl-flag-off
       (cond
         [cmd-number 1 eq?]
         [repl-flag-on
          welcome-to-jojo
          print-data-stack
-         terminal-input-stack repl
-         end]
-        else [cmd-list .cdr .car path-load]))
+         terminal-input-stack repl]
+
+        else
+        [core-flag-off
+         test-flag-off
+         repl-flag-off
+         cmd-list .cdr .car path-load]))
 
     the-story-begin
