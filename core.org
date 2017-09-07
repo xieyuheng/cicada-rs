@@ -1,7 +1,6 @@
 #+html_head: <link rel="stylesheet" href="https://xieyuheng.github.io/asset/css/page.css" type="text/css" media="screen" />
 #+property: tangle core.jo
 #+title: core
-* (include)
 * check jo-bound? for module
 * [todo-stack]
 
@@ -1536,16 +1535,17 @@
 
     #+begin_src jojo
     (+jojo path-load (-> :path --)
-      :path path-open-read
+      :path path->real-path :real-path!
+      :real-path path-open-read
       (if not then
           "- path-load fail" w nl
           "  path : " w :path w nl
+          "  real-path : " w :real-path w nl
           "  " w error-number-print nl
           debug)
       file-input-stack
       maybe-drop-shabang
-      input-stack-read-sexp-list
-      sexp-list-run)
+      repl)
     #+end_src
 
 * module
@@ -1582,6 +1582,8 @@
     #+begin_src jojo
     (+jojo +module
       dup .car :name! .cdr :body!
+
+      :body expend-include :body!
 
       :body :name
       module/generate-define-table
@@ -1624,6 +1626,43 @@
 
       :export-table
       :name name-bind)
+    #+end_src
+
+*** expend-include
+
+    #+begin_src jojo
+    (+jojo expend-include (-> :body -- body)
+      (cond [:body null?] null
+            [:body .car cons? not] [:body .car :body .cdr recur cons]
+            [:body .car .car 'include eq?]
+            [:body .car .cdr path-list-read-sexp-list
+             :body .cdr recur
+             list-append]
+            else [:body .car :body .cdr recur cons]))
+    #+end_src
+
+*** path-list-read-sexp-list
+
+    #+begin_src jojo
+    (+jojo path-list-read-sexp-list
+      {path-read-sexp-list} list-map
+      null {list-append} list-foldr)
+    #+end_src
+
+*** path-read-sexp-list
+
+    #+begin_src jojo
+    (+jojo path-read-sexp-list (-> :path --)
+      :path path->real-path :real-path!
+      :real-path path-open-read
+      (if not then
+          "- path-read-sexp-list fail" w nl
+          "  path : " w :path w nl
+          "  real-path : " w :real-path w nl
+          "  " w error-number-print nl
+          debug)
+      file-input-stack
+      input-stack-read-sexp-list)
     #+end_src
 
 *** list-car-filter

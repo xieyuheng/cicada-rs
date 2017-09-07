@@ -974,7 +974,22 @@
     (+jojo read-sexp-list-to-the-end (-> -- sexp list)
       (if has-jo? not then null end)
       read-sexp recur cons)
+    (note
+      (+jojo path-load (-> :path --)
+        :path path->real-path :path!
+        :path path-open-read
+        (if not then
+            "- path-load fail" w nl
+            "  path : " w :path w nl
+            "  " w error-number-print nl
+            debug)
+        file-input-stack
+        maybe-drop-shabang
+        input-stack-read-sexp-list
+        sexp-list-run))
+
     (+jojo path-load (-> :path --)
+      :path path->real-path :path!
       :path path-open-read
       (if not then
           "- path-load fail" w nl
@@ -983,10 +998,11 @@
           debug)
       file-input-stack
       maybe-drop-shabang
-      input-stack-read-sexp-list
-      sexp-list-run)
+      repl)
     (+jojo +module
       dup .car :name! .cdr :body!
+
+      :body expend-include :body!
 
       :body :name
       module/generate-define-table
@@ -1029,6 +1045,27 @@
 
       :export-table
       :name name-bind)
+    (+jojo expend-include (-> :body -- body)
+      (cond [:body null?] null
+            [:body .car cons? not] [:body .car :body .cdr recur cons]
+            [:body .car .car 'include eq?]
+            [:body .car .cdr path-list-read-sexp-list
+             :body .cdr recur
+             list-append]
+            else [:body .car :body .cdr recur cons]))
+    (+jojo path-list-read-sexp-list
+      {path-read-sexp-list} list-map
+      null {list-append} list-foldr)
+    (+jojo path-read-sexp-list (-> :path --)
+      :path path->real-path :path!
+      :path path-open-read
+      (if not then
+          "- path-read-sexp-list fail" w nl
+          "  path : " w :path w nl
+          "  " w error-number-print nl
+          debug)
+      file-input-stack
+      input-stack-read-sexp-list)
     (+jojo list-car-filter (-> list :pred -- list)
       {:x! (if :x cons? not then false
                else :x .car :pred apply)}

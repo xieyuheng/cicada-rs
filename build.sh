@@ -48,6 +48,7 @@ test() {
     clean
     tangle
     time fast_build
+    install_module
     run
 }
 
