@@ -1,6 +1,7 @@
 #+html_head: <link rel="stylesheet" href="https://xieyuheng.github.io/asset/css/page.css" type="text/css" media="screen" />
 #+property: tangle core.jo
 #+title: core
+
 * check jo-bound? for module
 * module/collect-import-table-list should load modules
 * (include)
@@ -70,7 +71,7 @@
 
 * list
 
-*** <null> <cons>
+*** <null> & <cons>
 
     #+begin_src jojo
     (+data <null>)
@@ -1307,14 +1308,24 @@
 
 * table
 
-*** <tab> & <null-tab>
+*** <null-table> & <cons-table>
 
     #+begin_src jojo
-    (+data <tab> .rest .key .value)
-    (+data <null-tab>)
+    (+data <null-table>)
+    (+data <cons-table> .rest .key .value)
     #+end_src
 
-*** list->tab
+*** table?
+
+    #+begin_src jojo
+    (+jojo table? (-> :x -- <bool>)
+      (case :x
+        <null-table> true
+        <cons-table> true
+        else false))
+    #+end_src
+
+*** list->table
 
     #+begin_src jojo
     (+jojo list->table (-> :list -- table)
@@ -1328,10 +1339,10 @@
 
     (+jojo list->table/recur (-> :list -- table)
       (case :list
-        <null> null-tab
+        <null> null-table
         <cons> [:list .cdr .cdr recur
                 :list .car :list .cdr .car
-                tab]))
+                cons-table]))
     #+end_src
 
 *** table
@@ -1343,18 +1354,18 @@
 *** table-write
 
     #+begin_src jojo
-    (+disp w (-> <null-tab>) drop "(table)" w)
+    (+disp w (-> <null-table>) drop "(table)" w)
 
-    (+disp w (-> <tab>) table-write)
+    (+disp w (-> <cons-table>) table-write)
 
     (+jojo table-write (-> :table --)
-      (if :table null-tab? then "(table)" w end)
+      (if :table null-table? then "(table)" w end)
       "(table " w :table table-write/loop ")" w)
 
     (+jojo table-write/loop (-> :table --)
       (cond
-        [:table null-tab?] []
-        [:table .rest null-tab?] [:table .key w space :table .value w]
+        [:table null-table?] []
+        [:table .rest null-table?] [:table .key w space :table .value w]
         else [:table .key w space :table .value w comma w space
               :table .rest recur]))
     #+end_src
@@ -1363,7 +1374,7 @@
 
     #+begin_src jojo
     (+jojo table-find (-> :table :key -- value true or false)
-      (cond [:table null-tab?] false
+      (cond [:table null-table?] false
             [:table .key :key equal?] [:table .value true]
             else [:table .rest :key recur]))
     #+end_src
@@ -1372,7 +1383,7 @@
 
     #+begin_src jojo
     (+jojo table-contain? (-> :large :small -- <bool>)
-      (cond [:small null-tab?] true
+      (cond [:small null-table?] true
             [:large :small .key table-find]
             (if :small .value equal?
                 then :large :small .rest recur
@@ -1384,12 +1395,12 @@
 
     #+begin_src jojo
     (+jojo table-merge (-> :base :src -- table true or key false)
-      (cond [:src null-tab?] [:base true]
+      (cond [:src null-table?] [:base true]
             [:base :src .key table-find]
             (if :src .value equal?
                 then :base :src .rest recur
                 else :src .key false end)
-            else [:base :src .key :src .value tab
+            else [:base :src .key :src .value cons-table
                   :src .rest recur]))
     #+end_src
 
@@ -1406,10 +1417,10 @@
 
     #+begin_src jojo
     (+jojo table-key-filter (-> :table :pred -- :table)
-      (cond [:table null-tab?] null-tab
+      (cond [:table null-table?] null-table
             [:table .key :pred apply]
             [:table .rest :pred recur
-             :table .key :table .value tab]
+             :table .key :table .value cons-table]
             else [:table .rest :pred recur]))
     #+end_src
 
@@ -1417,10 +1428,10 @@
 
     #+begin_src jojo
     (+jojo table-key-map (-> :table :fun -- :table)
-      (cond [:table null-tab?] null-tab
+      (cond [:table null-table?] null-table
             else [:table .rest :fun recur
                   :table .key :fun apply
-                  :table .value tab]))
+                  :table .value cons-table]))
     #+end_src
 
 *** [test]
@@ -1566,7 +1577,7 @@
            "  key : " w w nl
            "  module name : " w :name w nl
            debug)}
-      null-tab swap list-foldr :import-table!
+      null-table swap list-foldr :import-table!
 
       :import-table :define-table
       (if table-merge not then
@@ -1601,8 +1612,8 @@
       {(-> :s :table -- table)
        :table :s
        :name ': jo-append :s jo-append
-       tab}
-      null-tab swap list-foldr)
+       cons-table}
+      null-table swap list-foldr)
     #+end_src
 
 *** module/generate-export-table
@@ -1621,8 +1632,8 @@
       {(-> :s :table -- table)
        :table :s
        :name ': jo-append :s jo-append
-       tab}
-      null-tab swap list-foldr)
+       cons-table}
+      null-table swap list-foldr)
     #+end_src
 
 *** module/export-check

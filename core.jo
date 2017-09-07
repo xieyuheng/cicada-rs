@@ -855,8 +855,13 @@
         () {list-append} list-foldl
         (list 7 8 9, 4 5 6, 1 2 3)
         equal?))
-    (+data <tab> .rest .key .value)
-    (+data <null-tab>)
+    (+data <null-table>)
+    (+data <cons-table> .rest .key .value)
+    (+jojo table? (-> :x -- <bool>)
+      (case :x
+        <null-table> true
+        <cons-table> true
+        else false))
     (+jojo list->table (-> :list -- table)
       (if :list list-length odd? then
           "- list->table fail" w nl
@@ -868,59 +873,59 @@
 
     (+jojo list->table/recur (-> :list -- table)
       (case :list
-        <null> null-tab
+        <null> null-table
         <cons> [:list .cdr .cdr recur
                 :list .car :list .cdr .car
-                tab]))
+                cons-table]))
     (+jojo table list 'list->table jo-emit)
-    (+disp w (-> <null-tab>) drop "(table)" w)
+    (+disp w (-> <null-table>) drop "(table)" w)
 
-    (+disp w (-> <tab>) table-write)
+    (+disp w (-> <cons-table>) table-write)
 
     (+jojo table-write (-> :table --)
-      (if :table null-tab? then "(table)" w end)
+      (if :table null-table? then "(table)" w end)
       "(table " w :table table-write/loop ")" w)
 
     (+jojo table-write/loop (-> :table --)
       (cond
-        [:table null-tab?] []
-        [:table .rest null-tab?] [:table .key w space :table .value w]
+        [:table null-table?] []
+        [:table .rest null-table?] [:table .key w space :table .value w]
         else [:table .key w space :table .value w comma w space
               :table .rest recur]))
     (+jojo table-find (-> :table :key -- value true or false)
-      (cond [:table null-tab?] false
+      (cond [:table null-table?] false
             [:table .key :key equal?] [:table .value true]
             else [:table .rest :key recur]))
     (+jojo table-contain? (-> :large :small -- <bool>)
-      (cond [:small null-tab?] true
+      (cond [:small null-table?] true
             [:large :small .key table-find]
             (if :small .value equal?
                 then :large :small .rest recur
                 else false)
             else false))
     (+jojo table-merge (-> :base :src -- table true or key false)
-      (cond [:src null-tab?] [:base true]
+      (cond [:src null-table?] [:base true]
             [:base :src .key table-find]
             (if :src .value equal?
                 then :base :src .rest recur
                 else :src .key false end)
-            else [:base :src .key :src .value tab
+            else [:base :src .key :src .value cons-table
                   :src .rest recur]))
     (+jojo table-equal? (-> :t1 :t2 -- <bool>)
       (if :t1 :t2 table-contain? not
           then false end
           else :t2 :t1 table-contain?))
     (+jojo table-key-filter (-> :table :pred -- :table)
-      (cond [:table null-tab?] null-tab
+      (cond [:table null-table?] null-table
             [:table .key :pred apply]
             [:table .rest :pred recur
-             :table .key :table .value tab]
+             :table .key :table .value cons-table]
             else [:table .rest :pred recur]))
     (+jojo table-key-map (-> :table :fun -- :table)
-      (cond [:table null-tab?] null-tab
+      (cond [:table null-table?] null-table
             else [:table .rest :fun recur
                   :table .key :fun apply
-                  :table .value tab]))
+                  :table .value cons-table]))
     (test
 
       (assert
@@ -996,7 +1001,7 @@
            "  key : " w w nl
            "  module name : " w :name w nl
            debug)}
-      null-tab swap list-foldr :import-table!
+      null-table swap list-foldr :import-table!
 
       :import-table :define-table
       (if table-merge not then
@@ -1026,8 +1031,8 @@
       {(-> :s :table -- table)
        :table :s
        :name ': jo-append :s jo-append
-       tab}
-      null-tab swap list-foldr)
+       cons-table}
+      null-table swap list-foldr)
     (+jojo module/generate-export-table
       (-> :list :name -- table)
       :list
@@ -1041,8 +1046,8 @@
       {(-> :s :table -- table)
        :table :s
        :name ': jo-append :s jo-append
-       tab}
-      null-tab swap list-foldr)
+       cons-table}
+      null-table swap list-foldr)
     (+jojo module/export-check
       (-> :define-table :export-table --)
       (if :define-table :export-table table-contain? then end)
