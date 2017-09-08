@@ -1,12 +1,16 @@
 #+html_head: <link rel="stylesheet" href="https://xieyuheng.github.io/asset/css/page.css" type="text/css" media="screen" />
 #+property: tangle core.jo
 #+title: core
-* check jo-bound? for module
+
 * [todo-stack]
 
-*** the little schemer
+*** EOPL
 
-*** use EOPL to test the language
+*** minikanren
+
+*** close file opened by path-open-read
+
+*** check jo-bound? for module
 
 *** socket module
 
@@ -1566,7 +1570,7 @@
         should be "<module-name>/<version>/*"
 
     - a module will be installed to "~/.jojo"
-      as "~/.jojo/module/<module-name>/<version>/*"
+      as "~/.jojo/modules/<module-name>/<version>/*"
 
     - module system solves two problems :
 
@@ -1777,7 +1781,13 @@
 
     #+begin_src jojo
     (+jojo module-load (-> :name --)
-      "/home/xyh/.jojo/module/"
+      "HOME" find-env-string
+      (if not then
+          "- module-load fail" w nl
+          "  system env variable HOME empty" w nl
+          "  trying to load : " w :name w nl
+          debug)
+      "/.jojo/modules/" string-append
       :name jo->string string-append
       "/module.jo" string-append
       path-load)

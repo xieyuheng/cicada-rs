@@ -974,26 +974,13 @@
     (+jojo read-sexp-list-to-the-end (-> -- sexp list)
       (if has-jo? not then null end)
       read-sexp recur cons)
-    (note
-      (+jojo path-load (-> :path --)
-        :path path->real-path :path!
-        :path path-open-read
-        (if not then
-            "- path-load fail" w nl
-            "  path : " w :path w nl
-            "  " w error-number-print nl
-            debug)
-        file-input-stack
-        maybe-drop-shabang
-        input-stack-read-sexp-list
-        sexp-list-run))
-
     (+jojo path-load (-> :path --)
-      :path path->real-path :path!
-      :path path-open-read
+      :path path->real-path :real-path!
+      :real-path path-open-read
       (if not then
           "- path-load fail" w nl
           "  path : " w :path w nl
+          "  real-path : " w :real-path w nl
           "  " w error-number-print nl
           debug)
       file-input-stack
@@ -1057,11 +1044,12 @@
       {path-read-sexp-list} list-map
       null {list-append} list-foldr)
     (+jojo path-read-sexp-list (-> :path --)
-      :path path->real-path :path!
-      :path path-open-read
+      :path path->real-path :real-path!
+      :real-path path-open-read
       (if not then
           "- path-read-sexp-list fail" w nl
           "  path : " w :path w nl
+          "  real-path : " w :real-path w nl
           "  " w error-number-print nl
           debug)
       file-input-stack
@@ -1130,7 +1118,13 @@
           then :name sexp-run table?
           else false))
     (+jojo module-load (-> :name --)
-      "/home/xyh/.jojo/module/"
+      "HOME" find-env-string
+      (if not then
+          "- module-load fail" w nl
+          "  system env variable HOME empty" w nl
+          "  trying to load : " w :name w nl
+          debug)
+      "/.jojo/modules/" string-append
       :name jo->string string-append
       "/module.jo" string-append
       path-load)
