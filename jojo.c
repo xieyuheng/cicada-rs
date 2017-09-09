@@ -3604,27 +3604,57 @@
     }
     void p_int_jo_p() {
       struct dp a = ds_pop();
-      ds_push(TAG_BOOL, int_string_p(jo2str(a.d)));
+      if (a.t != TAG_JO) {
+        ds_push(TAG_BOOL, false);
+      }
+      else {
+        ds_push(TAG_BOOL, int_string_p(jo2str(a.d)));
+      }
     }
     void p_local_jo_p() {
       struct dp a = ds_pop();
-      ds_push(TAG_BOOL, local_string_p(jo2str(a.d)));
+      if (a.t != TAG_JO) {
+        ds_push(TAG_BOOL, false);
+      }
+      else {
+        ds_push(TAG_BOOL, local_string_p(jo2str(a.d)));
+      }
     }
     void p_set_local_jo_p() {
       struct dp a = ds_pop();
-      ds_push(TAG_BOOL, set_local_string_p(jo2str(a.d)));
+      if (a.t != TAG_JO) {
+        ds_push(TAG_BOOL, false);
+      }
+      else {
+        ds_push(TAG_BOOL, set_local_string_p(jo2str(a.d)));
+      }
     }
     void p_field_jo_p() {
       struct dp a = ds_pop();
-      ds_push(TAG_BOOL, field_string_p(jo2str(a.d)));
+      if (a.t != TAG_JO) {
+        ds_push(TAG_BOOL, false);
+      }
+      else {
+        ds_push(TAG_BOOL, field_string_p(jo2str(a.d)));
+      }
     }
     void p_set_field_jo_p() {
       struct dp a = ds_pop();
-      ds_push(TAG_BOOL, set_field_string_p(jo2str(a.d)));
+      if (a.t != TAG_JO) {
+        ds_push(TAG_BOOL, false);
+      }
+      else {
+        ds_push(TAG_BOOL, set_field_string_p(jo2str(a.d)));
+      }
     }
     void p_tag_jo_p() {
       struct dp a = ds_pop();
-      ds_push(TAG_BOOL, tag_string_p(jo2str(a.d)));
+      if (a.t != TAG_JO) {
+        ds_push(TAG_BOOL, false);
+      }
+      else {
+        ds_push(TAG_BOOL, tag_string_p(jo2str(a.d)));
+      }
     }
     bool underscore_string_p(char* str) {
       if (*str == '\0') {
@@ -3639,7 +3669,12 @@
     }
     void p_underscore_jo_p() {
       struct dp a = ds_pop();
-      ds_push(TAG_BOOL, underscore_string_p(jo2str(a.d)));
+      if (a.t != TAG_JO) {
+        ds_push(TAG_BOOL, false);
+      }
+      else {
+        ds_push(TAG_BOOL, underscore_string_p(jo2str(a.d)));
+      }
     }
     void p_get_local_jo_to_set_local_jo() {
       struct dp a = ds_pop();
@@ -3676,11 +3711,21 @@
     }
     void p_dynamic_local_jo_p() {
       struct dp a = ds_pop();
-      ds_push(TAG_BOOL, dynamic_local_string_p(jo2str(a.d)));
+      if (a.t != TAG_JO) {
+        ds_push(TAG_BOOL, false);
+      }
+      else {
+        ds_push(TAG_BOOL, dynamic_local_string_p(jo2str(a.d)));
+      }
     }
     void p_set_dynamic_local_jo_p() {
       struct dp a = ds_pop();
-      ds_push(TAG_BOOL, set_dynamic_local_string_p(jo2str(a.d)));
+      if (a.t != TAG_JO) {
+        ds_push(TAG_BOOL, false);
+      }
+      else {
+        ds_push(TAG_BOOL, set_dynamic_local_string_p(jo2str(a.d)));
+      }
     }
     void p_jo_to_string() {
       struct dp a = ds_pop();
@@ -3689,8 +3734,13 @@
     }
     void p_jo_bound_p() {
       struct dp a = ds_pop();
-      jo_t jo = a.d;
-      ds_push(TAG_BOOL, jo_bound_p(jo));
+      if (a.t != TAG_JO) {
+        ds_push(TAG_BOOL, false);
+      }
+      else {
+        jo_t jo = a.d;
+        ds_push(TAG_BOOL, jo_bound_p(jo));
+      }
     }
     void expose_jo() {
       plus_prim("round-bar",    p_round_bar);
