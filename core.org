@@ -1,14 +1,12 @@
 #+html_head: <link rel="stylesheet" href="https://xieyuheng.github.io/asset/css/page.css" type="text/css" media="screen" />
 #+property: tangle core.jo
 #+title: core
-* move tests out of core
+
 * [todo-stack]
 
-*** better error report for runtime (case) miss-match
+*** move tests out of core
 
 *** minikanren
-
-*** close file opened by path-open-read
 
 *** check jo-bound? for module
 
@@ -1586,16 +1584,18 @@
     #+begin_src jojo
     (+jojo path-load (-> :path --)
       :path path->reading-path :real-path!
-      :real-path path-open-read
-      (if not then :error-number!
-          "- path-load fail" w nl
-          "  path : " w :path w nl
-          "  real-path : " w :real-path w nl
-          "  " w :error-number error-number-print nl
-          debug)
-      file-input-stack
-      maybe-drop-shabang
-      repl)
+      (cond [:real-path path-open-read]
+            [:file!
+             :file file-input-stack
+             maybe-drop-shabang
+             repl
+             :file file-close]
+            else [:error-number!
+                  "- path-load fail" w nl
+                  "  path : " w :path w nl
+                  "  real-path : " w :real-path w nl
+                  "  " w :error-number error-number-print nl
+                  debug]))
     #+end_src
 
 * module
@@ -1704,15 +1704,16 @@
     #+begin_src jojo
     (+jojo path-read-sexp-list (-> :path --)
       :path path->reading-path :real-path!
-      :real-path path-open-read
-      (if not then :error-number!
-          "- path-read-sexp-list fail" w nl
-          "  path : " w :path w nl
-          "  real-path : " w :real-path w nl
-          "  " w :error-number error-number-print nl
-          debug)
-      file-input-stack
-      input-stack-read-sexp-list)
+      (cond [:real-path path-open-read]
+            [:file! :file file-input-stack
+             input-stack-read-sexp-list
+             :file file-close]
+            else [:error-number!
+                  "- path-read-sexp-list fail" w nl
+                  "  path : " w :path w nl
+                  "  real-path : " w :real-path w nl
+                  "  " w :error-number error-number-print nl
+                  debug]))
     #+end_src
 
 *** list-car-filter
