@@ -991,6 +991,10 @@
       (if :path absolute-path?
           then :path
           else current-reading-dir :path string-append))
+    (+jojo path-readable? (-> :path -- <bool>)
+      (if :path path-open-read
+          then file-close true
+          else drop false))
     (+jojo path-load (-> :path --)
       :path path->reading-path :real-path!
       :real-path path-open-read
@@ -1139,9 +1143,9 @@
       :dir "/modules/" string-append
       :name jo->string string-append
       "/module.jo" string-append :path!
-      (if :path path-open-read
-          then file-close :path true
-          else drop false))
+      (if :path path-readable?
+          then :path true
+          else false))
 
     (+jojo module-find-path
       (-> :name -- path true or false)

@@ -6,23 +6,27 @@ w='-Wno-int-conversion -Wno-incompatible-pointer-types -Wno-return-type -Wunused
 o='-O2'
 f='-rdynamic'
 l='-ldl'
-
+d='-g'
 
 copy() {
     rsync --recursive --links --perms --times --group --owner --devices --specials --verbose --human-readable $@
 }
 
 tangle() {
-    ./tool/tangle.js
+    ./tools/tangle.js
     xxd -i core.jo > core.h
 }
 
 build() {
-    $cc $w $o $f $l jojo.c -o jojo
+    $cc $w $f $l $o jojo.c -o jojo
 }
 
 fast_build() {
     $cc $w $f $l jojo.c -o jojo
+}
+
+debug_build() {
+    $cc $w $f $l $d jojo.c -o jojo
 }
 
 clean() {
@@ -40,11 +44,18 @@ default() {
     time build
 }
 
-test() {
+install_modules_to_default_usr_jojo_dir () {
+    copy modules ~/.jojo/
+}
+
+remove_all_modules_in_default_usr_jojo_dir () {
+    rm -rf ~/.jojo/modules/
+}
+
+fast() {
     clean
     tangle
     time fast_build
-    run
 }
 
 if [ $# -eq 0 ]; then
