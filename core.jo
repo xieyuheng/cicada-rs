@@ -959,7 +959,6 @@
       (cond [:str string-length 1 lt?] false
             [:str 0 string-ref (byte -) eq?] true
             else false))
-    (+jojo current-reading-dir "" path->reading-path)
     (+jojo usr-jojo-dir
       (cond ["USR_JOJO_DIR" find-env-string] []
             ["HOME" find-env-string] ["/.jojo" string-append]
@@ -985,6 +984,13 @@
     (+jojo read-sexp-list-to-the-end (-> -- sexp list)
       (if has-jo? not then null end)
       read-sexp recur cons)
+    (+jojo absolute-path? (-> :path -- <bool>)
+      (if :path string-length 0 eq? then false end)
+      :path 0 string-ref (byte /) eq?)
+    (+jojo path->reading-path (-> :path -- path)
+      (if :path absolute-path?
+          then :path
+          else current-reading-dir :path string-append))
     (+jojo path-load (-> :path --)
       :path path->reading-path :real-path!
       :real-path path-open-read
@@ -1130,8 +1136,7 @@
           else false))
     (+jojo module-find-path-from-dir
       (-> :dir :name -- path true or false)
-      :dir
-      "/modules/" string-append
+      :dir "/modules/" string-append
       :name jo->string string-append
       "/module.jo" string-append :path!
       (if :path path-open-read
@@ -1140,7 +1145,7 @@
 
     (+jojo module-find-path
       (-> :name -- path true or false)
-      (cond [current-reading-dir :name module-find-path-from-dir] true
+      (cond [current-running-dir :name module-find-path-from-dir] true
             [usr-jojo-dir :name module-find-path-from-dir] true
             [sys-jojo-dir :name module-find-path-from-dir] true
             else false))
