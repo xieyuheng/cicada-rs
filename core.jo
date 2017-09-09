@@ -161,7 +161,7 @@
       (if repl-flag then print-data-stack)
       recur)
 
-    (+jojo repl-over-repl-in-c
+    (+jojo repl-over-the-repl-in-c
       repl/loop)
     (+jojo sexp-eval (-> :sexp --)
       (case :sexp
@@ -402,7 +402,7 @@
     (+jojo +jojo (-> :body sexp list --)
       :body .cdr sexp-list-compile-jojo
       :body .car name-bind)
-    repl-over-repl-in-c
+    repl-over-the-repl-in-c
     (+jojo note drop)
 
     (+jojo begin sexp-list-compile)
