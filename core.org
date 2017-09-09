@@ -4,7 +4,11 @@
 
 * [todo-stack]
 
-*** top level (import)
+*** fix readable test
+
+    - do not use path-open-read
+
+*** [maybe] top level (import)
 
 *** better error report for runtime (case) miss-match
 
@@ -1505,6 +1509,32 @@
             else false))
     #+end_src
 
+*** current-reading-dir
+
+    #+begin_src jojo
+    (+jojo current-reading-dir "" path->reading-path)
+    #+end_src
+
+*** usr-jojo-dir
+
+    #+begin_src jojo
+    (+jojo usr-jojo-dir
+      (cond ["USR_JOJO_DIR" find-env-string] []
+            ["HOME" find-env-string] ["/.jojo" string-append]
+            else ["- usr-jojo-dir fail" w nl
+                  "  system env USR_JOJO_DIR is empty" w nl
+                  "  system env HOME is empty" w nl
+                  debug]))
+    #+end_src
+
+*** sys-jojo-dir
+
+    #+begin_src jojo
+    (+jojo sys-jojo-dir
+      (cond ["SYS_JOJO_DIR" find-env-string] []
+            else "/usr/lib/jojo"))
+    #+end_src
+
 * <file>
 
 *** maybe-drop-shabang
@@ -1541,13 +1571,13 @@
 
     #+begin_src jojo
     (+jojo path-load (-> :path --)
-      :path path->real-path :real-path!
+      :path path->reading-path :real-path!
       :real-path path-open-read
-      (if not then
+      (if not then :error-number!
           "- path-load fail" w nl
           "  path : " w :path w nl
           "  real-path : " w :real-path w nl
-          "  " w error-number-print nl
+          "  " w :error-number error-number-print nl
           debug)
       file-input-stack
       maybe-drop-shabang
@@ -1659,13 +1689,13 @@
 
     #+begin_src jojo
     (+jojo path-read-sexp-list (-> :path --)
-      :path path->real-path :real-path!
+      :path path->reading-path :real-path!
       :real-path path-open-read
-      (if not then
+      (if not then :error-number!
           "- path-read-sexp-list fail" w nl
           "  path : " w :path w nl
           "  real-path : " w :real-path w nl
-          "  " w error-number-print nl
+          "  " w :error-number error-number-print nl
           debug)
       file-input-stack
       input-stack-read-sexp-list)
@@ -1779,20 +1809,40 @@
           else false))
     #+end_src
 
+*** module-find-path
+
+    #+begin_src jojo
+    (+jojo module-find-path-from-dir
+      (-> :dir :name -- path true or false)
+      :dir
+      "/modules/" string-append
+      :name jo->string string-append
+      "/module.jo" string-append :path!
+      (if :path path-open-read
+          then file-close :path true
+          else drop false))
+
+    (+jojo module-find-path
+      (-> :name -- path true or false)
+      (cond [current-reading-dir :name module-find-path-from-dir] true
+            [usr-jojo-dir :name module-find-path-from-dir] true
+            [sys-jojo-dir :name module-find-path-from-dir] true
+            else false))
+    #+end_src
+
 *** module-load
 
     #+begin_src jojo
     (+jojo module-load (-> :name --)
-      "HOME" find-env-string
-      (if not then
+      (if :name module-find-path
+          then path-load
+          else
           "- module-load fail" w nl
-          "  system env variable HOME empty" w nl
-          "  trying to load : " w :name w nl
-          debug)
-      "/.jojo/modules/" string-append
-      :name jo->string string-append
-      "/module.jo" string-append
-      path-load)
+          "  can not find module : " w :name w nl
+          "  current-reading-dir : " w current-reading-dir w nl
+          "  usr-jojo-dir : " w usr-jojo-dir w nl
+          "  sys-jojo-dir : " w sys-jojo-dir w nl
+          debug))
     #+end_src
 
 *** (run)

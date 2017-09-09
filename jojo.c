@@ -4176,7 +4176,7 @@
     }
 
     // caller free
-    char* path_to_real_path(char* path) {
+    char* path_to_reading_path(char* path) {
       struct input_stack* current_input_stack = tos(reading_stack);
       if (path[0] == '/') { return path; }
 
@@ -4194,7 +4194,7 @@
         ssize_t real_bytes = readlink(proc_link_path,
                                       real_reading_path, PATH_MAX);
         if (real_bytes == -1) {
-          report("- path_to_real_path fail to readlink\n");
+          report("- path_to_reading_path fail to readlink\n");
           report("  proc_link_path : %s\n", proc_link_path);
           perror("  readlink ");
           free(proc_link_path);
@@ -4209,18 +4209,18 @@
         return real_reading_path;
       }
       else {
-        report("- path_to_real_path fail\n");
+        report("- path_to_reading_path fail\n");
         report("  unknown current_input_stack type\n");
         report("  path : %s\n", path);
         free(real_reading_path);
         p_debug();
       }
     }
-    void p_path_to_real_path() {
+    void p_path_to_reading_path() {
       struct dp a = ds_pop();
       struct gp* ap = a.d;
       char* path = ap->p;
-      char* real_path = path_to_real_path(path);
+      char* real_path = path_to_reading_path(path);
       ds_push(TAG_STRING, new_string_gp(real_path));
     }
     void expose_file() {
@@ -4238,7 +4238,7 @@
 
       plus_prim("file-input-stack", p_file_input_stack);
 
-      plus_prim("path->real-path", p_path_to_real_path);
+      plus_prim("path->reading-path", p_path_to_reading_path);
     }
     void p_tcp_socket_listen() {
       // [:service <string> :backlog <int>] -> [<socket>]
@@ -4488,7 +4488,7 @@
           cursor++;
         }
       }
-      char* real_read_path = path_to_real_path(path);
+      char* real_read_path = path_to_reading_path(path);
       free(path);
       void* lib = dlopen(real_read_path, RTLD_LAZY);
       if (lib == 0) {

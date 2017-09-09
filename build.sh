@@ -40,15 +40,10 @@ default() {
     time build
 }
 
-install_modules() {
-    copy ./modules ~/.jojo/
-}
-
 test() {
     clean
     tangle
     time fast_build
-    install_modules
     run
 }
 
