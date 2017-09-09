@@ -767,8 +767,7 @@
       else if (input_stack->type == INPUT_STACK_STRING) {
         return input_stack->string[input_stack->string_pointer] == '\0';
       }
-      // else if (input_stack->type == INPUT_STACK_TERMINAL)
-      else {
+      else if (input_stack->type == INPUT_STACK_TERMINAL) {
         ssize_t real_bytes = read(STDIN_FILENO,
                                   input_stack->stack,
                                   INPUT_STACK_BLOCK_SIZE);
@@ -780,6 +779,11 @@
           input_stack->end_pointer = real_bytes;
           return false;
         }
+      }
+      else {
+        report("- input_stack_empty_p fail\n");
+        report("  meet unknow input_stack type\n");
+        report("  type code : %ld\n", input_stack->type);
       }
     }
     char input_stack_pop(struct input_stack* input_stack) {
@@ -1025,9 +1029,13 @@
       else if (output_stack->type == OUTPUT_STACK_STRING) {
         return true;
       }
-      // else if (output_stack->type == OUTPUT_STACK_TERMINAL)
-      else {
+      else if (output_stack->type == OUTPUT_STACK_TERMINAL) {
         return true;
+      }
+      else {
+        report("- output_stack_empty_p fail\n");
+        report("  meet unknow output_stack type\n");
+        report("  type code : %ld\n", output_stack->type);
       }
     }
     char output_stack_pop(struct output_stack* output_stack) {
@@ -2204,6 +2212,10 @@
       struct dp a = ds_pop();
       input_stack_free(a.d);
     }
+    void p_input_stack_empty_p() {
+      struct dp a = ds_pop();
+      ds_push(TAG_BOOL, input_stack_empty_p(a.d));
+    }
     bool has_byte_p() {
       return !input_stack_empty_p(tos(reading_stack));
     }
@@ -2333,6 +2345,7 @@
 
       plus_prim("terminal-input-stack", p_terminal_input_stack);
       plus_prim("input-stack-free", p_input_stack_free);
+      plus_prim("input-stack-empty?", p_input_stack_empty_p);
 
       plus_prim("read-byte", p_read_byte);
       plus_prim("byte-write", p_byte_write);

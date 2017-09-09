@@ -39,8 +39,8 @@ run() {
 }
 
 default() {
-    clean
     tangle
+    clean
     time build
 }
 
@@ -53,8 +53,8 @@ remove_all_modules_in_default_usr_jojo_dir () {
 }
 
 fast() {
-    clean
     tangle
+    clean
     time fast_build
 }
 

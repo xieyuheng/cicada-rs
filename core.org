@@ -6,20 +6,25 @@
 
 *** move tests out of core
 
-*** minikanren
-
-*** check jo-bound? for module
-
-*** socket module
-
-    - move socket to module,
-      and learn from nanomsg.
-
 *** something like 'with-output-to-string' & 'with-output-to-file'
 
-*** publish sexp as html to file
+*** module
 
-*** compile sexp to c
+***** move socket to module
+
+***** bind nanomsg
+
+***** check jo-bound? for module
+
+*** plan
+
+***** minikanren
+
+***** use jojo to write tangle
+
+***** publish sexp as html to file
+
+***** compile sexp to c
 
 * flag
 
@@ -308,16 +313,19 @@
 *** repl
 
     #+begin_src jojo
-    (+jojo repl (-> :input-stack --)
-      :input-stack reading-stack-push
+    (+jojo repl (-> <input-stack> --)
+      reading-stack-push
       repl/loop
-      reading-stack-drop)
+      reading-stack-pop input-stack-free)
 
     (+jojo repl/loop
       (if has-jo? not then end)
       read-sexp sexp-eval
       (if repl-flag then print-data-stack)
       recur)
+
+    (+jojo repl-over-repl-in-c
+      repl/loop)
     #+end_src
 
 *** sexp-eval
@@ -667,10 +675,10 @@
       :body .car name-bind)
     #+end_src
 
-*** run new repl
+*** run repl-over-repl-in-c
 
     #+begin_src jojo
-    reading-stack-tos repl
+    repl-over-repl-in-c
     #+end_src
 
 *** re-define new keywords
@@ -1526,8 +1534,10 @@
 *** maybe-drop-shabang
 
     #+begin_src jojo
-    (+jojo maybe-drop-shabang (-> :input-stack -- <input-stack>)
-      :input-stack reading-stack-push
+    (+jojo maybe-drop-shabang
+      (-> <input-stack> -- <input-stack>)
+      (if dup input-stack-empty? then end)
+      reading-stack-push
       read-line :line!
       (cond [:line string-length 3 lteq?] [:line string-unread]
             [:line 0 2 string-slice "#!" string-eq?] []
@@ -1539,10 +1549,10 @@
 
     #+begin_src jojo
     (+jojo input-stack-read-sexp-list
-      (-> :input-stack -- sexp list)
-      :input-stack reading-stack-push
+      (-> <input-stack> -- sexp list)
+      reading-stack-push
       read-sexp-list-to-the-end
-      reading-stack-drop)
+      reading-stack-pop input-stack-free)
     #+end_src
 
 *** read-sexp-list-to-the-end

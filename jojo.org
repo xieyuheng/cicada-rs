@@ -6,10 +6,6 @@
 
 *** fix cffi
 
-*** fix the use of reading-stack-drop
-
-    - p_reading_stack_drop does not free the input_stack
-
 *** better file io
 
     - with the help of <input-stack>
@@ -1202,7 +1198,8 @@
     - note the semantic of 'input_stack_empty_p'.
 
       when one asks 'input_stack_empty_p',
-      there is already one byte readed into the input_stack.
+      there is already one byte readed from the input_stack,
+      and then unreaded.
 
     #+begin_src c
     bool input_stack_empty_p(struct input_stack* input_stack) {
@@ -1226,8 +1223,7 @@
       else if (input_stack->type == INPUT_STACK_STRING) {
         return input_stack->string[input_stack->string_pointer] == '\0';
       }
-      // else if (input_stack->type == INPUT_STACK_TERMINAL)
-      else {
+      else if (input_stack->type == INPUT_STACK_TERMINAL) {
         ssize_t real_bytes = read(STDIN_FILENO,
                                   input_stack->stack,
                                   INPUT_STACK_BLOCK_SIZE);
@@ -1239,6 +1235,11 @@
           input_stack->end_pointer = real_bytes;
           return false;
         }
+      }
+      else {
+        report("- input_stack_empty_p fail\n");
+        report("  meet unknow input_stack type\n");
+        report("  type code : %ld\n", input_stack->type);
       }
     }
     #+end_src
@@ -1586,9 +1587,13 @@
       else if (output_stack->type == OUTPUT_STACK_STRING) {
         return true;
       }
-      // else if (output_stack->type == OUTPUT_STACK_TERMINAL)
-      else {
+      else if (output_stack->type == OUTPUT_STACK_TERMINAL) {
         return true;
+      }
+      else {
+        report("- output_stack_empty_p fail\n");
+        report("  meet unknow output_stack type\n");
+        report("  type code : %ld\n", output_stack->type);
       }
     }
     #+end_src
@@ -3282,6 +3287,15 @@
     }
     #+end_src
 
+*** p_input_stack_empty_p
+
+    #+begin_src c
+    void p_input_stack_empty_p() {
+      struct dp a = ds_pop();
+      ds_push(TAG_BOOL, input_stack_empty_p(a.d));
+    }
+    #+end_src
+
 *** has_byte_p
 
     #+begin_src c
@@ -3492,6 +3506,7 @@
 
       plus_prim("terminal-input-stack", p_terminal_input_stack);
       plus_prim("input-stack-free", p_input_stack_free);
+      plus_prim("input-stack-empty?", p_input_stack_empty_p);
 
       plus_prim("read-byte", p_read_byte);
       plus_prim("byte-write", p_byte_write);
