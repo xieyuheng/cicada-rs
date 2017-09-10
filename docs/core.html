@@ -3,7 +3,7 @@
 "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en">
 <head>
-<!-- 2017-09-07 Thu 03:17 -->
+<!-- 2017-09-10 Sun 21:04 -->
 <meta http-equiv="Content-Type" content="text/html;charset=utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>core</title>
@@ -67,247 +67,307 @@ for the JavaScript code in this tag.
 <h2>overview</h2>
 <div id="text-table-of-contents">
 <ul>
-<li><a href="#orgb5e03da"><span class="done _todo_stack_">[todo-stack]</span> </a>
+<li><a href="#org9888c5a"><span class="done _todo_stack_">[todo-stack]</span> </a>
 <ul>
-<li><a href="#orgdbe813a">module system</a></li>
-<li><a href="#org92788d5">the little schemer</a></li>
-<li><a href="#orgf1b9055">use EOPL to test the language</a></li>
-<li><a href="#org60ac203">socket module</a></li>
-<li><a href="#org3baa902">something like 'with-output-to-string' &amp; 'with-output-to-file'</a></li>
-<li><a href="#org2c65b23">publish sexp as html to file</a></li>
-<li><a href="#orga8e29ab">compile sexp to c</a></li>
+<li><a href="#orgb09c90b">move tests out of core</a></li>
+<li><a href="#orgea192c4">something like 'with-output-to-string' &amp; 'with-output-to-file'</a></li>
+<li><a href="#org688be40">module</a>
+<ul>
+<li><a href="#org72cc2bc">move socket to module</a></li>
+<li><a href="#orga5751fd">bind nanomsg</a></li>
+<li><a href="#org35d23e8">check jo-bound? for module</a></li>
 </ul>
 </li>
-<li><a href="#org5a30a4c">flag</a></li>
-<li><a href="#org98f7b41">&lt;int&gt;</a>
+<li><a href="#orgafc76f6">plan</a>
 <ul>
-<li><a href="#orge11d3a8">even &amp; odd</a></li>
+<li><a href="#org9a9788">minikanren</a></li>
+<li><a href="#org7cf41f0">use jojo to write tangle</a></li>
+<li><a href="#orgedbd99b">publish sexp as html to file</a></li>
+<li><a href="#org378b6f5">compile sexp to c</a></li>
 </ul>
 </li>
-<li><a href="#org2d3edd3">&lt;jo&gt;</a>
-<ul>
-<li><a href="#orgb31d7d0">jo-append</a></li>
 </ul>
 </li>
-<li><a href="#orga18ca0a">array</a>
+<li><a href="#org12425ba">flag</a></li>
+<li><a href="#orgfdf3d12">&lt;int&gt;</a>
 <ul>
-<li><a href="#orgcc256cc">array-eqv?</a></li>
+<li><a href="#orgafd6714">even &amp; odd</a></li>
 </ul>
 </li>
-<li><a href="#orgb977551">list</a>
+<li><a href="#org731bbe1">&lt;jo&gt;</a>
 <ul>
-<li><a href="#orge249bb6">&lt;null&gt; &lt;cons&gt;</a></li>
-<li><a href="#orgcad9179">list?</a></li>
-<li><a href="#orga3be333">array-&gt;list</a></li>
-<li><a href="#orgf6a6892">list-spread</a></li>
-<li><a href="#org4552b0">list-length</a></li>
-<li><a href="#orge099e4a">list-any?</a></li>
-<li><a href="#org8d01e2c">list-every?</a></li>
-<li><a href="#org8a88e09">list-append</a></li>
-<li><a href="#org9114a69">tail-cons</a></li>
-<li><a href="#org911ed79">list-left</a></li>
-<li><a href="#orgd9b91ad">list-right</a></li>
-<li><a href="#org8552de1">list-split</a></li>
-<li><a href="#orgd7febe9">list-map</a></li>
-<li><a href="#org7efab0f">list-for-each</a></li>
-<li><a href="#org360e70f">list-filter</a></li>
-<li><a href="#org48f94ab">list-reverse</a></li>
-<li><a href="#orge63a401">list-eqv?</a></li>
+<li><a href="#orgd67393e">jo-append</a></li>
 </ul>
 </li>
-<li><a href="#org92dc112">sexp</a>
+<li><a href="#org201eb29">array</a>
 <ul>
-<li><a href="#org9cf2d34"><span class="todo _note_">[note]</span> sexp</a></li>
-<li><a href="#org8f76424">read-sexp</a></li>
-<li><a href="#org804d72">sexp-write</a></li>
+<li><a href="#org364e00d">array-eqv?</a></li>
 </ul>
 </li>
-<li><a href="#org5d2d1c1">repl</a></li>
-<li><a href="#orgf73b55c">compiler</a>
+<li><a href="#orgfc9fccb">list</a>
 <ul>
-<li><a href="#org6eab9f0">compile-jojo</a></li>
-<li><a href="#org5d9474c">sexp-list-compile</a></li>
-<li><a href="#orge84b29f">sexp-compile</a></li>
-<li><a href="#orgf361fa3">jo-compile</a></li>
+<li><a href="#org4df55ec">&lt;null&gt; &amp; &lt;cons&gt;</a></li>
+<li><a href="#org25ce5cc">list?</a></li>
+<li><a href="#org84363eb">array-&gt;list</a></li>
+<li><a href="#orgd374a2e">list-spread</a></li>
+<li><a href="#org6f48ea8">list-length</a></li>
+<li><a href="#org251ae65">list-any?</a></li>
+<li><a href="#orgb570139">list-every?</a></li>
+<li><a href="#org87f60f7">list-append</a></li>
+<li><a href="#orgdfd05a2">tail-cons</a></li>
+<li><a href="#orga256770">list-left</a></li>
+<li><a href="#org80bac18">list-right</a></li>
+<li><a href="#orgfdff38c">list-split</a></li>
+<li><a href="#org690c815">list-map</a></li>
+<li><a href="#org5d15b89">list-for-each</a></li>
+<li><a href="#org7726646">list-filter</a></li>
+<li><a href="#org601b886">list-reverse</a></li>
+<li><a href="#orgf8aa132">list-eqv?</a></li>
 </ul>
 </li>
-<li><a href="#org15233a5">basic syntax</a>
+<li><a href="#org8813254">sexp</a>
 <ul>
-<li><a href="#orgf92922e">(quote)</a></li>
-<li><a href="#org9252fa0">(partquote)</a></li>
-<li><a href="#org3b6ad33">(if)</a></li>
-<li><a href="#org8797e9a">(clo)</a></li>
-<li><a href="#orgc49cd79">(cond)</a></li>
-<li><a href="#org7e23c63">(-&gt;)</a></li>
-<li><a href="#org15ff9a">jo-list-compile-cells</a></li>
-<li><a href="#org7acef8e">(+data)</a></li>
-<li><a href="#orgc22a64">(+gene)</a></li>
-<li><a href="#org9657892">(+disp)</a></li>
+<li><a href="#orgb4187fa"><span class="todo _note_">[note]</span> sexp</a></li>
+<li><a href="#orgc443c69">read-sexp</a></li>
+<li><a href="#org44b7af7">sexp-write</a></li>
 </ul>
 </li>
-<li><a href="#orgbf642e5">reboot basic syntax &#x2013; the order matters</a>
+<li><a href="#org3a5fd9c">repl</a>
 <ul>
-<li><a href="#org3fa1154">re-define (+jojo)</a></li>
-<li><a href="#org921e78b">run new repl</a></li>
-<li><a href="#org1392cc3">re-define new keywords</a></li>
+<li><a href="#org343d655">repl</a></li>
+<li><a href="#org5edbc11">sexp-eval</a></li>
+<li><a href="#orga509781">jo-eval</a></li>
 </ul>
 </li>
-<li><a href="#orgb5e0ba9">more syntax</a>
+<li><a href="#orgf95e6c9">compiler</a>
 <ul>
-<li><a href="#org22c92be">(array)</a></li>
-<li><a href="#orge689123">(list)</a></li>
-<li><a href="#org76ac198">(assert) &amp; (assert!)</a></li>
-<li><a href="#org9d8dc01">(test)</a></li>
-<li><a href="#org7660f8a">(let-bind) &#x2013; moand interface</a></li>
-<li><a href="#orga76af3b">(case)</a></li>
+<li><a href="#orgbdca701">sexp-list-compile-jojo</a></li>
+<li><a href="#orgd206643">sexp-compile-jojo</a></li>
+<li><a href="#org33f3d51">sexp-list-compile</a></li>
+<li><a href="#org587bb23">sexp-compile</a></li>
+<li><a href="#orgdc3ca59">jo-compile</a></li>
+<li><a href="#org3db3fb1">sexp-list-run</a></li>
+<li><a href="#org26d2e48">sexp-run</a></li>
 </ul>
 </li>
-<li><a href="#org8bdfd6d"><span class="done _test_">[test]</span> syntax</a>
+<li><a href="#orgfc5fd22">basic syntax</a>
 <ul>
-<li><a href="#orgb38c8a1">(list)</a></li>
-<li><a href="#orgac8f36b">(+jojo)</a></li>
-<li><a href="#orgd8d958e">(cond)</a></li>
-<li><a href="#org8c25a69">(clo)</a></li>
-<li><a href="#orgeeb2b7e">(+gene) &amp; (+disp)</a></li>
-<li><a href="#org923ea04">(partquote)</a></li>
-<li><a href="#org61e2fdf">(case)</a></li>
-<li><a href="#org49f6324">dynamic-local</a></li>
+<li><a href="#org17e6309">(quote)</a></li>
+<li><a href="#orgd01af03">(partquote)</a></li>
+<li><a href="#org14b8c7e">(if)</a></li>
+<li><a href="#org7bed707">(clo)</a></li>
+<li><a href="#orgc7ca753">(cond)</a></li>
+<li><a href="#org9fd277a">(-&gt;)</a></li>
+<li><a href="#orgf46163a">jo-list-compile-cells</a></li>
+<li><a href="#org1cd2874">(+data)</a></li>
+<li><a href="#org595d49d">(+gene)</a></li>
+<li><a href="#org1e13c7b">(+disp)</a></li>
 </ul>
 </li>
-<li><a href="#org4596f29">monad</a>
+<li><a href="#orgebe41be">reboot basic syntax &#x2013; the order matters</a>
 <ul>
-<li><a href="#org25114e1"><span class="todo _note_">[note]</span> bind and compose can implement each ohter</a></li>
-<li><a href="#org9f6cf0">maybe monad</a></li>
-<li><a href="#org7a2d275"><span class="todo _gt__lt_">&gt;&lt;</span> list monad</a></li>
+<li><a href="#org16be717">re-define (+jojo)</a></li>
+<li><a href="#orgc238b51">run repl-over-the-repl-in-c</a></li>
+<li><a href="#orgbc8d3c4">re-define new keywords</a></li>
 </ul>
 </li>
-<li><a href="#orge4875e9">pair</a>
+<li><a href="#orgaf2f794">more syntax</a>
 <ul>
-<li><a href="#orgc98db2b">&lt;pair&gt;</a></li>
+<li><a href="#orga39ebc8">(array)</a></li>
+<li><a href="#org8641159">(list)</a></li>
+<li><a href="#org89f808">(assert) &amp; (assert!)</a></li>
+<li><a href="#orgdbd39a8">(test)</a></li>
+<li><a href="#orgd11f9ed">(let-bind) &#x2013; moand interface</a></li>
+<li><a href="#orgdc56a02">(case)</a></li>
 </ul>
 </li>
-<li><a href="#org7ebda0e"><span class="done _test_">[test]</span> monad</a>
+<li><a href="#org8de9f07"><span class="done _test_">[test]</span> syntax</a>
 <ul>
-<li><a href="#org950cc46">tree</a></li>
-<li><a href="#orgd81e4ae">tree-map</a></li>
-<li><a href="#org73dda33">tree-zip &#x2013; maybe monad</a></li>
-<li><a href="#org1247fa1">number-tree &#x2013; intrinsic state monad</a></li>
+<li><a href="#orgd2ba725">(list)</a></li>
+<li><a href="#org895e512">(+jojo)</a></li>
+<li><a href="#orgd2de96f">(cond)</a></li>
+<li><a href="#org1171b3a">(clo)</a></li>
+<li><a href="#org95580a7">(+gene) &amp; (+disp)</a></li>
+<li><a href="#org4e1af71">(partquote)</a></li>
+<li><a href="#org798b3b1">(case)</a></li>
+<li><a href="#org2488844">dynamic-local</a></li>
 </ul>
 </li>
-<li><a href="#orgd10c097">combinator</a>
+<li><a href="#org9f3976a">monad</a>
 <ul>
-<li><a href="#org922e634">times</a></li>
+<li><a href="#org8df13f3"><span class="todo _note_">[note]</span> bind and compose can implement each ohter</a></li>
+<li><a href="#org7e6b6b6">maybe monad</a></li>
+<li><a href="#orgad84d9d"><span class="todo _gt__lt_">&gt;&lt;</span> list monad</a></li>
 </ul>
 </li>
-<li><a href="#org4b0a02b">w &#x2013; write &#x2013; gene</a>
+<li><a href="#org9b3b539">pair</a>
 <ul>
-<li><a href="#org33d1e4d">w</a></li>
-<li><a href="#org1a4f6cf">list-write</a></li>
-<li><a href="#org41ef599">array-write</a></li>
-<li><a href="#orgaa9f831">pair-write</a></li>
-<li><a href="#org6b55da5">nl</a></li>
+<li><a href="#orge14697d">&lt;pair&gt;</a></li>
 </ul>
 </li>
-<li><a href="#orgc6f23a7">equal? &#x2013; gene</a>
+<li><a href="#orgc4d1c4a"><span class="done _test_">[test]</span> monad</a>
 <ul>
-<li><a href="#orgc143030">equal?</a></li>
+<li><a href="#org11118e3">tree</a></li>
+<li><a href="#org12773d1">tree-map</a></li>
+<li><a href="#orgeed520f">tree-zip &#x2013; maybe monad</a></li>
+<li><a href="#org340f258">number-tree &#x2013; intrinsic state monad</a></li>
 </ul>
 </li>
-<li><a href="#org8d68e07">more list</a>
+<li><a href="#org2a0f727">combinator</a>
 <ul>
-<li><a href="#org652eed3">list-foldr</a></li>
-<li><a href="#org2b5f645">list-foldl</a></li>
-<li><a href="#org5719ad2"><span class="done _test_">[test]</span> </a></li>
+<li><a href="#org4c67128">times</a></li>
 </ul>
 </li>
-<li><a href="#org705d447">table</a>
+<li><a href="#org8f33667">w &#x2013; write &#x2013; gene</a>
 <ul>
-<li><a href="#org54348ba">&lt;tab&gt;</a></li>
-<li><a href="#org52591c6">list-&gt;tab</a></li>
-<li><a href="#org37d081d">table</a></li>
-<li><a href="#orgd1f2bac">table-write</a></li>
-<li><a href="#org9d4d084">table-find</a></li>
-<li><a href="#orgf3e28eb">table-contain?</a></li>
-<li><a href="#org67e490e">table-merge</a></li>
+<li><a href="#org1f3905a">w</a></li>
+<li><a href="#orgc115449">list-write</a></li>
+<li><a href="#orgc0ac377">array-write</a></li>
+<li><a href="#org235f43b">pair-write</a></li>
+<li><a href="#orgbaecb9a">nl</a></li>
 </ul>
 </li>
-<li><a href="#orgd8bf95a">byte</a>
+<li><a href="#org37e3cc5">equal? &#x2013; gene</a>
 <ul>
-<li><a href="#orgb0f66f9">(byte)</a></li>
+<li><a href="#org348f2dd">equal?</a></li>
 </ul>
 </li>
-<li><a href="#orgf0f5ee2">system</a>
+<li><a href="#org5cf0a56">more list</a>
 <ul>
-<li><a href="#org56d4596">cmd-list</a></li>
-<li><a href="#org1afabae">dash-prefixed-string?</a></li>
+<li><a href="#org66eb002">list-foldr</a></li>
+<li><a href="#org69cbdd5">list-foldl</a></li>
+<li><a href="#org4df696f">list-member?</a></li>
+<li><a href="#orgabd7858"><span class="done _test_">[test]</span> </a></li>
 </ul>
 </li>
-<li><a href="#org3cac127">&lt;file&gt;</a>
+<li><a href="#orgfcc1855">table</a>
 <ul>
-<li><a href="#org45817be">maybe-drop-shabang</a></li>
-<li><a href="#org885a118">path-load</a></li>
+<li><a href="#org4a13537">&lt;null-table&gt; &amp; &lt;cons-table&gt;</a></li>
+<li><a href="#orga30d2ca">table?</a></li>
+<li><a href="#org8a9083b">list-&gt;table</a></li>
+<li><a href="#orgc797d3">table</a></li>
+<li><a href="#org50164f8">table-write</a></li>
+<li><a href="#org920fb6a">table-find</a></li>
+<li><a href="#orgf0d114e">table-contain?</a></li>
+<li><a href="#org77c4069">table-merge</a></li>
+<li><a href="#org4cf3a5">table-equal?</a></li>
+<li><a href="#org1cd1bf9">table-key-filter</a></li>
+<li><a href="#org33078a3">table-key-map</a></li>
+<li><a href="#org831907d"><span class="done _test_">[test]</span> </a></li>
 </ul>
 </li>
-<li><a href="#orgefb8d02">module</a>
+<li><a href="#org3a7dcc8">byte</a>
 <ul>
-<li><a href="#orga03a6ff"><span class="todo _note_">[note]</span> module system</a></li>
-<li><a href="#org7e05659">(+module)</a></li>
-<li><a href="#orgd822e50">module/generate-define-table</a></li>
-<li><a href="#org6b8a535">module/generate-export-table</a></li>
-<li><a href="#org4a656b1">module/export-check</a></li>
-<li><a href="#org63836a6"><span class="todo _gt__lt_">&gt;&lt;</span> module/collect-import-table-list</a></li>
-<li><a href="#orgfefbc6e"><span class="done _test_">[test]</span> </a></li>
+<li><a href="#orga4ea10f">(byte)</a></li>
 </ul>
 </li>
-<li><a href="#org5730ecc">the-story-begin</a>
+<li><a href="#org16d20a9">system</a>
 <ul>
-<li><a href="#org432a59">welcome-to-jojo</a></li>
-<li><a href="#org843c0dd">the-story-begin</a></li>
+<li><a href="#org4208c06">cmd-list</a></li>
+<li><a href="#orgc060d80">dash-prefixed-string?</a></li>
+<li><a href="#orgac07d41">usr-jojo-dir</a></li>
+<li><a href="#org52d85c">sys-jojo-dir</a></li>
+</ul>
+</li>
+<li><a href="#org52bedf8">&lt;file&gt;</a>
+<ul>
+<li><a href="#orgaccc20d">maybe-drop-shabang</a></li>
+<li><a href="#org81c0519">input-stack-read-sexp-list</a></li>
+<li><a href="#org87805d0">read-sexp-list-to-the-end</a></li>
+<li><a href="#org8a57b77">absolute-path?</a></li>
+<li><a href="#org495ccca">path-&gt;reading-path</a></li>
+<li><a href="#org8d6ae58">path-readable?</a></li>
+<li><a href="#org26f7b7d">path-load</a></li>
+</ul>
+</li>
+<li><a href="#orgbe1addc">module</a>
+<ul>
+<li><a href="#org46520fa"><span class="todo _note_">[note]</span> module system</a></li>
+<li><a href="#org110b77a">(+module)</a></li>
+<li><a href="#org4d97901">expend-include</a></li>
+<li><a href="#org9476a29">path-list-read-sexp-list</a></li>
+<li><a href="#org3c3e980">path-read-sexp-list</a></li>
+<li><a href="#org44a18eb">list-car-filter</a></li>
+<li><a href="#org70431d9">module/generate-define-table</a></li>
+<li><a href="#orgc233da0">module/generate-export-table</a></li>
+<li><a href="#orgf903601">module/export-check</a></li>
+<li><a href="#org4d83273">module/collect-import-table-list</a></li>
+<li><a href="#org53507c1">module/import-one</a></li>
+<li><a href="#org5798ab1">sexp-for-module?</a></li>
+<li><a href="#orgc1f6779">sexp-table-substitute</a></li>
+<li><a href="#org91650c1">module-loaded?</a></li>
+<li><a href="#orgc01d2b3">module-find-path</a></li>
+<li><a href="#org824815e">module-load</a></li>
+<li><a href="#orgc84ee69">(run)</a></li>
+<li><a href="#orga3441e0"><span class="todo _note_">[note]</span> table processing in module system</a></li>
+<li><a href="#orgbb5fe23">import-only</a></li>
+<li><a href="#org95e8960">import-except</a></li>
+<li><a href="#orgf5ced9d">import-prefix</a></li>
+<li><a href="#org98fc7c4">import-rename</a></li>
+<li><a href="#org4441e44"><span class="done _test_">[test]</span> </a></li>
+</ul>
+</li>
+<li><a href="#orgead2737">the-story-begin</a>
+<ul>
+<li><a href="#org4522278">welcome-to-jojo</a></li>
+<li><a href="#org2623eae">the-story-begin</a></li>
 </ul>
 </li>
 </ul>
 </div>
 </div>
 
-<div id="outline-container-orgb5e03da" class="outline-2">
-<h2 id="orgb5e03da"><span class="done _todo_stack_">[todo-stack]</span> </h2>
-<div class="outline-text-2" id="text-orgb5e03da">
-</div><div id="outline-container-orgdbe813a" class="outline-3">
-<h3 id="orgdbe813a">module system</h3>
+<div id="outline-container-org9888c5a" class="outline-2">
+<h2 id="org9888c5a"><span class="done _todo_stack_">[todo-stack]</span> </h2>
+<div class="outline-text-2" id="text-org9888c5a">
+</div><div id="outline-container-orgb09c90b" class="outline-3">
+<h3 id="orgb09c90b">move tests out of core</h3>
 </div>
 
-<div id="outline-container-org92788d5" class="outline-3">
-<h3 id="org92788d5">the little schemer</h3>
+<div id="outline-container-orgea192c4" class="outline-3">
+<h3 id="orgea192c4">something like 'with-output-to-string' &amp; 'with-output-to-file'</h3>
 </div>
 
-<div id="outline-container-orgf1b9055" class="outline-3">
-<h3 id="orgf1b9055">use EOPL to test the language</h3>
+<div id="outline-container-org688be40" class="outline-3">
+<h3 id="org688be40">module</h3>
+<div class="outline-text-3" id="text-org688be40">
+</div><div id="outline-container-org72cc2bc" class="outline-4">
+<h4 id="org72cc2bc">move socket to module</h4>
 </div>
 
-<div id="outline-container-org60ac203" class="outline-3">
-<h3 id="org60ac203">socket module</h3>
-<div class="outline-text-3" id="text-org60ac203">
-<ul class="org-ul">
-<li><p>move socket to module,</p><p>and learn from nanomsg.</p></li></ul>
-</div>
+<div id="outline-container-orga5751fd" class="outline-4">
+<h4 id="orga5751fd">bind nanomsg</h4>
 </div>
 
-<div id="outline-container-org3baa902" class="outline-3">
-<h3 id="org3baa902">something like 'with-output-to-string' &amp; 'with-output-to-file'</h3>
-</div>
-
-<div id="outline-container-org2c65b23" class="outline-3">
-<h3 id="org2c65b23">publish sexp as html to file</h3>
-</div>
-
-<div id="outline-container-orga8e29ab" class="outline-3">
-<h3 id="orga8e29ab">compile sexp to c</h3>
+<div id="outline-container-org35d23e8" class="outline-4">
+<h4 id="org35d23e8">check jo-bound? for module</h4>
 </div>
 </div>
 
-<div id="outline-container-org5a30a4c" class="outline-2">
-<h2 id="org5a30a4c">flag</h2>
-<div class="outline-text-2" id="text-org5a30a4c">
+<div id="outline-container-orgafc76f6" class="outline-3">
+<h3 id="orgafc76f6">plan</h3>
+<div class="outline-text-3" id="text-orgafc76f6">
+</div><div id="outline-container-org9a9788" class="outline-4">
+<h4 id="org9a9788">minikanren</h4>
+</div>
+
+<div id="outline-container-org7cf41f0" class="outline-4">
+<h4 id="org7cf41f0">use jojo to write tangle</h4>
+</div>
+
+<div id="outline-container-orgedbd99b" class="outline-4">
+<h4 id="orgedbd99b">publish sexp as html to file</h4>
+</div>
+
+<div id="outline-container-org378b6f5" class="outline-4">
+<h4 id="org378b6f5">compile sexp to c</h4>
+</div>
+</div>
+</div>
+
+<div id="outline-container-org12425ba" class="outline-2">
+<h2 id="org12425ba">flag</h2>
+<div class="outline-text-2" id="text-org12425ba">
 <div class="org-src-container">
 
 <pre class="src src-jojo">core-flag-on
@@ -318,12 +378,12 @@ repl-flag-off
 </div>
 </div>
 
-<div id="outline-container-org98f7b41" class="outline-2">
-<h2 id="org98f7b41">&lt;int&gt;</h2>
-<div class="outline-text-2" id="text-org98f7b41">
-</div><div id="outline-container-orge11d3a8" class="outline-3">
-<h3 id="orge11d3a8">even &amp; odd</h3>
-<div class="outline-text-3" id="text-orge11d3a8">
+<div id="outline-container-orgfdf3d12" class="outline-2">
+<h2 id="orgfdf3d12">&lt;int&gt;</h2>
+<div class="outline-text-2" id="text-orgfdf3d12">
+</div><div id="outline-container-orgafd6714" class="outline-3">
+<h3 id="orgafd6714">even &amp; odd</h3>
+<div class="outline-text-3" id="text-orgafd6714">
 <div class="org-src-container">
 
 <pre class="src src-jojo"><span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">+jojo</span> even? <span style="color: #ae81ff;">2</span> mod <span style="color: #ae81ff;">0</span> eq?<span style="color: #696969;">)</span>
@@ -334,12 +394,12 @@ repl-flag-off
 </div>
 </div>
 
-<div id="outline-container-org2d3edd3" class="outline-2">
-<h2 id="org2d3edd3">&lt;jo&gt;</h2>
-<div class="outline-text-2" id="text-org2d3edd3">
-</div><div id="outline-container-orgb31d7d0" class="outline-3">
-<h3 id="orgb31d7d0">jo-append</h3>
-<div class="outline-text-3" id="text-orgb31d7d0">
+<div id="outline-container-org731bbe1" class="outline-2">
+<h2 id="org731bbe1">&lt;jo&gt;</h2>
+<div class="outline-text-2" id="text-org731bbe1">
+</div><div id="outline-container-orgd67393e" class="outline-3">
+<h3 id="orgd67393e">jo-append</h3>
+<div class="outline-text-3" id="text-orgd67393e">
 <div class="org-src-container">
 
 <pre class="src src-jojo"><span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">+jojo</span> jo-append <span style="color: #696969;">(</span><span style="color: #66d9ef; font-weight: bold;">-&gt;</span> <span style="color: #a6e22e;">:jo1</span> <span style="color: #a6e22e;">:jo2</span> <span style="color: #66d9ef; font-weight: bold;">--</span> <span style="color: #66d9ef; font-weight: bold;">&lt;jo&gt;</span><span style="color: #696969;">)</span>
@@ -353,12 +413,12 @@ repl-flag-off
 </div>
 </div>
 
-<div id="outline-container-orga18ca0a" class="outline-2">
-<h2 id="orga18ca0a">array</h2>
-<div class="outline-text-2" id="text-orga18ca0a">
-</div><div id="outline-container-orgcc256cc" class="outline-3">
-<h3 id="orgcc256cc">array-eqv?</h3>
-<div class="outline-text-3" id="text-orgcc256cc">
+<div id="outline-container-org201eb29" class="outline-2">
+<h2 id="org201eb29">array</h2>
+<div class="outline-text-2" id="text-org201eb29">
+</div><div id="outline-container-org364e00d" class="outline-3">
+<h3 id="org364e00d">array-eqv?</h3>
+<div class="outline-text-3" id="text-org364e00d">
 <div class="org-src-container">
 
 <pre class="src src-jojo"><span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">+jojo</span> array-eqv? <span style="color: #696969;">(</span><span style="color: #66d9ef; font-weight: bold;">-&gt;</span> <span style="color: #a6e22e;">:x</span> <span style="color: #a6e22e;">:y</span> <span style="color: #a6e22e;">:pred</span> <span style="color: #66d9ef; font-weight: bold;">--</span> <span style="color: #66d9ef; font-weight: bold;">&lt;bool&gt;</span><span style="color: #696969;">)</span>
@@ -379,12 +439,12 @@ repl-flag-off
 </div>
 </div>
 
-<div id="outline-container-orgb977551" class="outline-2">
-<h2 id="orgb977551">list</h2>
-<div class="outline-text-2" id="text-orgb977551">
-</div><div id="outline-container-orge249bb6" class="outline-3">
-<h3 id="orge249bb6">&lt;null&gt; &lt;cons&gt;</h3>
-<div class="outline-text-3" id="text-orge249bb6">
+<div id="outline-container-orgfc9fccb" class="outline-2">
+<h2 id="orgfc9fccb">list</h2>
+<div class="outline-text-2" id="text-orgfc9fccb">
+</div><div id="outline-container-org4df55ec" class="outline-3">
+<h3 id="org4df55ec">&lt;null&gt; &amp; &lt;cons&gt;</h3>
+<div class="outline-text-3" id="text-org4df55ec">
 <div class="org-src-container">
 
 <pre class="src src-jojo"><span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">+data</span> <span style="color: #66d9ef; font-weight: bold;">&lt;null&gt;</span><span style="color: #696969;">)</span>
@@ -401,9 +461,9 @@ repl-flag-off
 </div>
 </div>
 
-<div id="outline-container-orgcad9179" class="outline-3">
-<h3 id="orgcad9179">list?</h3>
-<div class="outline-text-3" id="text-orgcad9179">
+<div id="outline-container-org25ce5cc" class="outline-3">
+<h3 id="org25ce5cc">list?</h3>
+<div class="outline-text-3" id="text-org25ce5cc">
 <div class="org-src-container">
 
 <pre class="src src-jojo"><span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">+jojo</span> list? <span style="color: #696969;">(</span><span style="color: #66d9ef; font-weight: bold;">-&gt;</span> <span style="color: #a6e22e;">:x</span> <span style="color: #66d9ef; font-weight: bold;">--</span> <span style="color: #66d9ef; font-weight: bold;">&lt;bool&gt;</span><span style="color: #696969;">)</span>
@@ -416,9 +476,9 @@ repl-flag-off
 </div>
 </div>
 
-<div id="outline-container-orga3be333" class="outline-3">
-<h3 id="orga3be333">array-&gt;list</h3>
-<div class="outline-text-3" id="text-orga3be333">
+<div id="outline-container-org84363eb" class="outline-3">
+<h3 id="org84363eb">array-&gt;list</h3>
+<div class="outline-text-3" id="text-org84363eb">
 <div class="org-src-container">
 
 <pre class="src src-jojo"><span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">+jojo</span> array-&gt;list <span style="color: #ae81ff;">0</span> right-of-array-&gt;list<span style="color: #696969;">)</span>
@@ -433,9 +493,9 @@ repl-flag-off
 </div>
 </div>
 
-<div id="outline-container-orgf6a6892" class="outline-3">
-<h3 id="orgf6a6892">list-spread</h3>
-<div class="outline-text-3" id="text-orgf6a6892">
+<div id="outline-container-orgd374a2e" class="outline-3">
+<h3 id="orgd374a2e">list-spread</h3>
+<div class="outline-text-3" id="text-orgd374a2e">
 <div class="org-src-container">
 
 <pre class="src src-jojo"><span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">+jojo</span> list-spread <span style="color: #696969;">(</span><span style="color: #66d9ef; font-weight: bold;">-&gt;</span> <span style="color: #a6e22e;">:list</span> <span style="color: #66d9ef; font-weight: bold;">--</span><span style="color: #696969;">)</span>
@@ -447,9 +507,9 @@ repl-flag-off
 </div>
 </div>
 
-<div id="outline-container-org4552b0" class="outline-3">
-<h3 id="org4552b0">list-length</h3>
-<div class="outline-text-3" id="text-org4552b0">
+<div id="outline-container-org6f48ea8" class="outline-3">
+<h3 id="org6f48ea8">list-length</h3>
+<div class="outline-text-3" id="text-org6f48ea8">
 <div class="org-src-container">
 
 <pre class="src src-jojo"><span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">+jojo</span> list-length <span style="color: #696969;">(</span><span style="color: #66d9ef; font-weight: bold;">-&gt;</span> <span style="color: #a6e22e;">:list</span> <span style="color: #66d9ef; font-weight: bold;">-&gt;</span> <span style="color: #66d9ef; font-weight: bold;">&lt;int&gt;</span><span style="color: #696969;">)</span>
@@ -461,9 +521,9 @@ repl-flag-off
 </div>
 </div>
 
-<div id="outline-container-orge099e4a" class="outline-3">
-<h3 id="orge099e4a">list-any?</h3>
-<div class="outline-text-3" id="text-orge099e4a">
+<div id="outline-container-org251ae65" class="outline-3">
+<h3 id="org251ae65">list-any?</h3>
+<div class="outline-text-3" id="text-org251ae65">
 <div class="org-src-container">
 
 <pre class="src src-jojo"><span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">+jojo</span> list-any? <span style="color: #696969;">(</span><span style="color: #66d9ef; font-weight: bold;">-&gt;</span> <span style="color: #a6e22e;">:list</span> <span style="color: #a6e22e;">:pred</span> <span style="color: #66d9ef; font-weight: bold;">-&gt;</span> <span style="color: #66d9ef; font-weight: bold;">&lt;bool&gt;</span><span style="color: #696969;">)</span>
@@ -475,9 +535,9 @@ repl-flag-off
 </div>
 </div>
 
-<div id="outline-container-org8d01e2c" class="outline-3">
-<h3 id="org8d01e2c">list-every?</h3>
-<div class="outline-text-3" id="text-org8d01e2c">
+<div id="outline-container-orgb570139" class="outline-3">
+<h3 id="orgb570139">list-every?</h3>
+<div class="outline-text-3" id="text-orgb570139">
 <div class="org-src-container">
 
 <pre class="src src-jojo"><span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">+jojo</span> list-every? <span style="color: #696969;">(</span><span style="color: #66d9ef; font-weight: bold;">-&gt;</span> <span style="color: #a6e22e;">:list</span> <span style="color: #a6e22e;">:pred</span> <span style="color: #66d9ef; font-weight: bold;">-&gt;</span> <span style="color: #66d9ef; font-weight: bold;">&lt;bool&gt;</span><span style="color: #696969;">)</span>
@@ -489,9 +549,9 @@ repl-flag-off
 </div>
 </div>
 
-<div id="outline-container-org8a88e09" class="outline-3">
-<h3 id="org8a88e09">list-append</h3>
-<div class="outline-text-3" id="text-org8a88e09">
+<div id="outline-container-org87f60f7" class="outline-3">
+<h3 id="org87f60f7">list-append</h3>
+<div class="outline-text-3" id="text-org87f60f7">
 <div class="org-src-container">
 
 <pre class="src src-jojo"><span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">+jojo</span> list-append <span style="color: #696969;">(</span><span style="color: #66d9ef; font-weight: bold;">-&gt;</span> <span style="color: #a6e22e;">:left</span> <span style="color: #a6e22e;">:right</span> <span style="color: #66d9ef; font-weight: bold;">-&gt;</span> list<span style="color: #696969;">)</span>
@@ -504,9 +564,9 @@ repl-flag-off
 </div>
 </div>
 
-<div id="outline-container-org9114a69" class="outline-3">
-<h3 id="org9114a69">tail-cons</h3>
-<div class="outline-text-3" id="text-org9114a69">
+<div id="outline-container-orgdfd05a2" class="outline-3">
+<h3 id="orgdfd05a2">tail-cons</h3>
+<div class="outline-text-3" id="text-orgdfd05a2">
 <div class="org-src-container">
 
 <pre class="src src-jojo"><span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">+jojo</span> tail-cons null cons list-append<span style="color: #696969;">)</span>
@@ -515,9 +575,9 @@ repl-flag-off
 </div>
 </div>
 
-<div id="outline-container-org911ed79" class="outline-3">
-<h3 id="org911ed79">list-left</h3>
-<div class="outline-text-3" id="text-org911ed79">
+<div id="outline-container-orga256770" class="outline-3">
+<h3 id="orga256770">list-left</h3>
+<div class="outline-text-3" id="text-orga256770">
 <div class="org-src-container">
 
 <pre class="src src-jojo"><span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">+jojo</span> list-left <span style="color: #696969;">(</span><span style="color: #66d9ef; font-weight: bold;">-&gt;</span> <span style="color: #a6e22e;">:list</span> <span style="color: #a6e22e;">:pred</span> <span style="color: #66d9ef; font-weight: bold;">--</span> left<span style="color: #696969;">)</span>
@@ -531,9 +591,9 @@ repl-flag-off
 </div>
 </div>
 
-<div id="outline-container-orgd9b91ad" class="outline-3">
-<h3 id="orgd9b91ad">list-right</h3>
-<div class="outline-text-3" id="text-orgd9b91ad">
+<div id="outline-container-org80bac18" class="outline-3">
+<h3 id="org80bac18">list-right</h3>
+<div class="outline-text-3" id="text-org80bac18">
 <div class="org-src-container">
 
 <pre class="src src-jojo"><span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">+jojo</span> list-right <span style="color: #696969;">(</span><span style="color: #66d9ef; font-weight: bold;">-&gt;</span> <span style="color: #a6e22e;">:list</span> <span style="color: #a6e22e;">:pred</span> <span style="color: #66d9ef; font-weight: bold;">--</span> right<span style="color: #696969;">)</span>
@@ -545,9 +605,9 @@ repl-flag-off
 </div>
 </div>
 
-<div id="outline-container-org8552de1" class="outline-3">
-<h3 id="org8552de1">list-split</h3>
-<div class="outline-text-3" id="text-org8552de1">
+<div id="outline-container-orgfdff38c" class="outline-3">
+<h3 id="orgfdff38c">list-split</h3>
+<div class="outline-text-3" id="text-orgfdff38c">
 <div class="org-src-container">
 
 <pre class="src src-jojo"><span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">+jojo</span> list-split <span style="color: #696969;">(</span><span style="color: #66d9ef; font-weight: bold;">-&gt;</span> <span style="color: #a6e22e;">:list</span> <span style="color: #a6e22e;">:pred</span> <span style="color: #66d9ef; font-weight: bold;">--</span> left right<span style="color: #696969;">)</span>
@@ -561,9 +621,9 @@ repl-flag-off
 </div>
 </div>
 
-<div id="outline-container-orgd7febe9" class="outline-3">
-<h3 id="orgd7febe9">list-map</h3>
-<div class="outline-text-3" id="text-orgd7febe9">
+<div id="outline-container-org690c815" class="outline-3">
+<h3 id="org690c815">list-map</h3>
+<div class="outline-text-3" id="text-org690c815">
 <div class="org-src-container">
 
 <pre class="src src-jojo"><span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">+jojo</span> list-map <span style="color: #696969;">(</span><span style="color: #66d9ef; font-weight: bold;">-&gt;</span> <span style="color: #a6e22e;">:list</span> <span style="color: #a6e22e;">:fun</span> <span style="color: #66d9ef; font-weight: bold;">--</span> list<span style="color: #696969;">)</span>
@@ -575,9 +635,9 @@ repl-flag-off
 </div>
 </div>
 
-<div id="outline-container-org7efab0f" class="outline-3">
-<h3 id="org7efab0f">list-for-each</h3>
-<div class="outline-text-3" id="text-org7efab0f">
+<div id="outline-container-org5d15b89" class="outline-3">
+<h3 id="org5d15b89">list-for-each</h3>
+<div class="outline-text-3" id="text-org5d15b89">
 <div class="org-src-container">
 
 <pre class="src src-jojo"><span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">+jojo</span> list-for-each <span style="color: #696969;">(</span><span style="color: #66d9ef; font-weight: bold;">-&gt;</span> <span style="color: #a6e22e;">:list</span> <span style="color: #a6e22e;">:fun</span> <span style="color: #66d9ef; font-weight: bold;">--</span><span style="color: #696969;">)</span>
@@ -589,9 +649,9 @@ repl-flag-off
 </div>
 </div>
 
-<div id="outline-container-org360e70f" class="outline-3">
-<h3 id="org360e70f">list-filter</h3>
-<div class="outline-text-3" id="text-org360e70f">
+<div id="outline-container-org7726646" class="outline-3">
+<h3 id="org7726646">list-filter</h3>
+<div class="outline-text-3" id="text-org7726646">
 <div class="org-src-container">
 
 <pre class="src src-jojo"><span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">+jojo</span> list-filter <span style="color: #696969;">(</span><span style="color: #66d9ef; font-weight: bold;">-&gt;</span> <span style="color: #a6e22e;">:list</span> <span style="color: #a6e22e;">:pred</span> <span style="color: #66d9ef; font-weight: bold;">--</span> list<span style="color: #696969;">)</span>
@@ -603,9 +663,9 @@ repl-flag-off
 </div>
 </div>
 
-<div id="outline-container-org48f94ab" class="outline-3">
-<h3 id="org48f94ab">list-reverse</h3>
-<div class="outline-text-3" id="text-org48f94ab">
+<div id="outline-container-org601b886" class="outline-3">
+<h3 id="org601b886">list-reverse</h3>
+<div class="outline-text-3" id="text-org601b886">
 <div class="org-src-container">
 
 <pre class="src src-jojo"><span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">+jojo</span> list-reverse null swap list-reverse-swap-append<span style="color: #696969;">)</span>
@@ -619,9 +679,9 @@ repl-flag-off
 </div>
 </div>
 
-<div id="outline-container-orge63a401" class="outline-3">
-<h3 id="orge63a401">list-eqv?</h3>
-<div class="outline-text-3" id="text-orge63a401">
+<div id="outline-container-orgf8aa132" class="outline-3">
+<h3 id="orgf8aa132">list-eqv?</h3>
+<div class="outline-text-3" id="text-orgf8aa132">
 <div class="org-src-container">
 
 <pre class="src src-jojo"><span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">+jojo</span> list-eqv? <span style="color: #696969;">(</span><span style="color: #66d9ef; font-weight: bold;">-&gt;</span> <span style="color: #a6e22e;">:l1</span> <span style="color: #a6e22e;">:l2</span> <span style="color: #a6e22e;">:eqv</span> <span style="color: #66d9ef; font-weight: bold;">--</span> <span style="color: #66d9ef; font-weight: bold;">&lt;bool&gt;</span><span style="color: #696969;">)</span>
@@ -636,12 +696,12 @@ repl-flag-off
 </div>
 </div>
 
-<div id="outline-container-org92dc112" class="outline-2">
-<h2 id="org92dc112">sexp</h2>
-<div class="outline-text-2" id="text-org92dc112">
-</div><div id="outline-container-org9cf2d34" class="outline-3">
-<h3 id="org9cf2d34"><span class="todo _note_">[note]</span> sexp</h3>
-<div class="outline-text-3" id="text-org9cf2d34">
+<div id="outline-container-org8813254" class="outline-2">
+<h2 id="org8813254">sexp</h2>
+<div class="outline-text-2" id="text-org8813254">
+</div><div id="outline-container-orgb4187fa" class="outline-3">
+<h3 id="orgb4187fa"><span class="todo _note_">[note]</span> sexp</h3>
+<div class="outline-text-3" id="text-orgb4187fa">
 <div class="org-src-container">
 
 <pre class="src src-jojo"><span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">note</span> sexp
@@ -653,9 +713,9 @@ repl-flag-off
 </div>
 </div>
 
-<div id="outline-container-org8f76424" class="outline-3">
-<h3 id="org8f76424">read-sexp</h3>
-<div class="outline-text-3" id="text-org8f76424">
+<div id="outline-container-orgc443c69" class="outline-3">
+<h3 id="orgc443c69">read-sexp</h3>
+<div class="outline-text-3" id="text-orgc443c69">
 <div class="org-src-container">
 
 <pre class="src src-jojo"><span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">+jojo</span> read-sexp <span style="color: #696969;">(</span><span style="color: #66d9ef; font-weight: bold;">-&gt;</span> <span style="color: #66d9ef; font-weight: bold;">--</span> sexp<span style="color: #696969;">)</span>
@@ -691,9 +751,9 @@ repl-flag-off
 </div>
 </div>
 
-<div id="outline-container-org804d72" class="outline-3">
-<h3 id="org804d72">sexp-write</h3>
-<div class="outline-text-3" id="text-org804d72">
+<div id="outline-container-org44b7af7" class="outline-3">
+<h3 id="org44b7af7">sexp-write</h3>
+<div class="outline-text-3" id="text-org44b7af7">
 <div class="org-src-container">
 
 <pre class="src src-jojo"><span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">+jojo</span> sexp-write <span style="color: #696969;">(</span><span style="color: #66d9ef; font-weight: bold;">-&gt;</span> <span style="color: #a6e22e;">:sexp</span> <span style="color: #66d9ef; font-weight: bold;">--</span><span style="color: #696969;">)</span>
@@ -717,36 +777,88 @@ repl-flag-off
 </div>
 </div>
 
-<div id="outline-container-org5d2d1c1" class="outline-2">
-<h2 id="org5d2d1c1">repl</h2>
-<div class="outline-text-2" id="text-org5d2d1c1">
+<div id="outline-container-org3a5fd9c" class="outline-2">
+<h2 id="org3a5fd9c">repl</h2>
+<div class="outline-text-2" id="text-org3a5fd9c">
+</div><div id="outline-container-org343d655" class="outline-3">
+<h3 id="org343d655">repl</h3>
+<div class="outline-text-3" id="text-org343d655">
 <div class="org-src-container">
 
-<pre class="src src-jojo"><span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">+jojo</span> repl <span style="color: #696969;">(</span><span style="color: #66d9ef; font-weight: bold;">-&gt;</span> <span style="color: #a6e22e;">:input-stack</span> <span style="color: #66d9ef; font-weight: bold;">--</span><span style="color: #696969;">)</span>
-  <span style="color: #a6e22e;">:input-stack</span> reading-stack-push
+<pre class="src src-jojo"><span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">+jojo</span> repl <span style="color: #696969;">(</span><span style="color: #66d9ef; font-weight: bold;">-&gt;</span> <span style="color: #66d9ef; font-weight: bold;">&lt;input-stack&gt;</span> <span style="color: #66d9ef; font-weight: bold;">--</span><span style="color: #696969;">)</span>
+  reading-stack-push
   repl/loop
-  reading-stack-drop<span style="color: #696969;">)</span>
+  reading-stack-pop input-stack-free<span style="color: #696969;">)</span>
 
 <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">+jojo</span> repl/loop
   <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">if</span> has-jo? not <span style="color: #66d9ef; font-weight: bold;">then</span> <span style="color: #66d9ef; font-weight: bold;">end</span><span style="color: #696969;">)</span>
-  read-sexp null cons
-  compile-jojo apply
+  read-sexp sexp-eval
   <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">if</span> repl-flag <span style="color: #66d9ef; font-weight: bold;">then</span> print-data-stack<span style="color: #696969;">)</span>
   <span style="color: #66d9ef; font-weight: bold;">recur</span><span style="color: #696969;">)</span>
+
+<span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">+jojo</span> repl-over-the-repl-in-c
+  repl/loop<span style="color: #696969;">)</span>
 </pre>
 </div>
 </div>
 </div>
 
-<div id="outline-container-orgf73b55c" class="outline-2">
-<h2 id="orgf73b55c">compiler</h2>
-<div class="outline-text-2" id="text-orgf73b55c">
-</div><div id="outline-container-org6eab9f0" class="outline-3">
-<h3 id="org6eab9f0">compile-jojo</h3>
-<div class="outline-text-3" id="text-org6eab9f0">
+<div id="outline-container-org5edbc11" class="outline-3">
+<h3 id="org5edbc11">sexp-eval</h3>
+<div class="outline-text-3" id="text-org5edbc11">
 <div class="org-src-container">
 
-<pre class="src src-jojo"><span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">+jojo</span> compile-jojo <span style="color: #696969;">(</span><span style="color: #66d9ef; font-weight: bold;">-&gt;</span> <span style="color: #a6e22e;">:body</span> <span style="color: #66d9ef; font-weight: bold;">--</span> <span style="color: #66d9ef; font-weight: bold;">&lt;jojo&gt;</span><span style="color: #696969;">)</span>
+<pre class="src src-jojo"><span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">+jojo</span> sexp-eval <span style="color: #696969;">(</span><span style="color: #66d9ef; font-weight: bold;">-&gt;</span> <span style="color: #a6e22e;">:sexp</span> <span style="color: #66d9ef; font-weight: bold;">--</span><span style="color: #696969;">)</span>
+  <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">case</span> <span style="color: #a6e22e;">:sexp</span>
+    <span style="color: #66d9ef; font-weight: bold;">&lt;null&gt;</span>   <span style="color: #797979;">[</span><span style="color: #a6e22e;">:sexp</span> sexp-compile-jojo apply<span style="color: #797979;">]</span>
+    <span style="color: #66d9ef; font-weight: bold;">&lt;cons&gt;</span>   <span style="color: #797979;">[</span><span style="color: #a6e22e;">:sexp</span> sexp-compile-jojo apply<span style="color: #797979;">]</span>
+    <span style="color: #66d9ef; font-weight: bold;">&lt;string&gt;</span> <span style="color: #797979;">[</span><span style="color: #a6e22e;">:sexp</span> sexp-compile-jojo apply<span style="color: #797979;">]</span>
+    <span style="color: #66d9ef; font-weight: bold;">&lt;jo&gt;</span>     <span style="color: #797979;">[</span><span style="color: #a6e22e;">:sexp</span> jo-eval<span style="color: #797979;">]</span><span style="color: #696969;">))</span>
+</pre>
+</div>
+</div>
+</div>
+
+<div id="outline-container-orga509781" class="outline-3">
+<h3 id="orga509781">jo-eval</h3>
+<div class="outline-text-3" id="text-orga509781">
+<div class="org-src-container">
+
+<pre class="src src-jojo"><span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">+jojo</span> jo-eval <span style="color: #696969;">(</span><span style="color: #66d9ef; font-weight: bold;">-&gt;</span> <span style="color: #a6e22e;">:jo</span> <span style="color: #66d9ef; font-weight: bold;">--</span><span style="color: #696969;">)</span>
+  <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">cond</span>
+    <span style="color: #797979;">[</span><span style="color: #a6e22e;">:jo</span> int-jo?<span style="color: #797979;">]</span> <span style="color: #797979;">[</span><span style="color: #a6e22e;">:jo</span> sexp-compile-jojo apply<span style="color: #797979;">]</span>
+
+    <span style="color: #797979;">[</span><span style="color: #a6e22e;">:jo</span> local-jo?
+     <span style="color: #a6e22e;">:jo</span> set-local-jo? or
+     <span style="color: #a6e22e;">:jo</span> dynamic-local-jo? or
+     <span style="color: #a6e22e;">:jo</span> set-dynamic-local-jo? or
+     <span style="color: #a6e22e;">:jo</span> field-jo? or
+     <span style="color: #a6e22e;">:jo</span> set-field-jo? or<span style="color: #797979;">]</span>
+    <span style="color: #797979;">[</span><span style="color: #e6db74;">"- jo-eval can not handle : "</span> string-write
+     <span style="color: #a6e22e;">:jo</span> jo-write newline<span style="color: #797979;">]</span>
+
+    <span style="color: #797979;">[</span><span style="color: #a6e22e;">:jo</span> comma eq?<span style="color: #797979;">]</span> <span style="color: #797979;">[]</span>
+
+    <span style="color: #797979;">[</span><span style="color: #a6e22e;">:jo</span> jo-bound? not<span style="color: #797979;">]</span>
+    <span style="color: #797979;">[</span><span style="color: #e6db74;">"- jo is not bound : "</span> string-write
+     <span style="color: #a6e22e;">:jo</span> jo-write newline<span style="color: #797979;">]</span>
+
+    <span style="color: #66d9ef; font-weight: bold;">else</span> <span style="color: #797979;">[</span><span style="color: #a6e22e;">:jo</span> sexp-compile-jojo apply<span style="color: #797979;">]</span><span style="color: #696969;">))</span>
+</pre>
+</div>
+</div>
+</div>
+</div>
+
+<div id="outline-container-orgf95e6c9" class="outline-2">
+<h2 id="orgf95e6c9">compiler</h2>
+<div class="outline-text-2" id="text-orgf95e6c9">
+</div><div id="outline-container-orgbdca701" class="outline-3">
+<h3 id="orgbdca701">sexp-list-compile-jojo</h3>
+<div class="outline-text-3" id="text-orgbdca701">
+<div class="org-src-container">
+
+<pre class="src src-jojo"><span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">+jojo</span> sexp-list-compile-jojo <span style="color: #696969;">(</span><span style="color: #66d9ef; font-weight: bold;">-&gt;</span> <span style="color: #a6e22e;">:body</span> <span style="color: #66d9ef; font-weight: bold;">--</span> <span style="color: #66d9ef; font-weight: bold;">&lt;jojo&gt;</span><span style="color: #696969;">)</span>
   compiling-stack-tos <span style="color: #fd971f;">:address!</span>
   <span style="color: #a6e22e;">:body</span> sexp-list-compile
    emit-jojo-end
@@ -757,9 +869,20 @@ repl-flag-off
 </div>
 </div>
 
-<div id="outline-container-org5d9474c" class="outline-3">
-<h3 id="org5d9474c">sexp-list-compile</h3>
-<div class="outline-text-3" id="text-org5d9474c">
+<div id="outline-container-orgd206643" class="outline-3">
+<h3 id="orgd206643">sexp-compile-jojo</h3>
+<div class="outline-text-3" id="text-orgd206643">
+<div class="org-src-container">
+
+<pre class="src src-jojo"><span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">+jojo</span> sexp-compile-jojo null cons sexp-list-compile-jojo<span style="color: #696969;">)</span>
+</pre>
+</div>
+</div>
+</div>
+
+<div id="outline-container-org33f3d51" class="outline-3">
+<h3 id="org33f3d51">sexp-list-compile</h3>
+<div class="outline-text-3" id="text-org33f3d51">
 <div class="org-src-container">
 
 <pre class="src src-jojo"><span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">+jojo</span> sexp-list-compile <span style="color: #696969;">(</span><span style="color: #66d9ef; font-weight: bold;">-&gt;</span> <span style="color: #a6e22e;">:list</span> sexp list <span style="color: #66d9ef; font-weight: bold;">--</span><span style="color: #696969;">)</span>
@@ -772,9 +895,9 @@ repl-flag-off
 </div>
 </div>
 
-<div id="outline-container-orge84b29f" class="outline-3">
-<h3 id="orge84b29f">sexp-compile</h3>
-<div class="outline-text-3" id="text-orge84b29f">
+<div id="outline-container-org587bb23" class="outline-3">
+<h3 id="org587bb23">sexp-compile</h3>
+<div class="outline-text-3" id="text-org587bb23">
 <div class="org-src-container">
 
 <pre class="src src-jojo"><span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">+jojo</span> sexp-compile <span style="color: #696969;">(</span><span style="color: #66d9ef; font-weight: bold;">-&gt;</span> <span style="color: #a6e22e;">:sexp</span> <span style="color: #66d9ef; font-weight: bold;">--</span><span style="color: #696969;">)</span>
@@ -788,9 +911,9 @@ repl-flag-off
 </div>
 </div>
 
-<div id="outline-container-orgf361fa3" class="outline-3">
-<h3 id="orgf361fa3">jo-compile</h3>
-<div class="outline-text-3" id="text-orgf361fa3">
+<div id="outline-container-orgdc3ca59" class="outline-3">
+<h3 id="orgdc3ca59">jo-compile</h3>
+<div class="outline-text-3" id="text-orgdc3ca59">
 <div class="org-src-container">
 
 <pre class="src src-jojo"><span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">+jojo</span> jo-compile <span style="color: #696969;">(</span><span style="color: #66d9ef; font-weight: bold;">-&gt;</span> <span style="color: #a6e22e;">:jo</span> <span style="color: #66d9ef; font-weight: bold;">--</span><span style="color: #696969;">)</span>
@@ -813,14 +936,36 @@ repl-flag-off
 </div>
 </div>
 </div>
+
+<div id="outline-container-org3db3fb1" class="outline-3">
+<h3 id="org3db3fb1">sexp-list-run</h3>
+<div class="outline-text-3" id="text-org3db3fb1">
+<div class="org-src-container">
+
+<pre class="src src-jojo"><span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">+jojo</span> sexp-list-run sexp-list-compile-jojo apply<span style="color: #696969;">)</span>
+</pre>
+</div>
+</div>
 </div>
 
-<div id="outline-container-org15233a5" class="outline-2">
-<h2 id="org15233a5">basic syntax</h2>
-<div class="outline-text-2" id="text-org15233a5">
-</div><div id="outline-container-orgf92922e" class="outline-3">
-<h3 id="orgf92922e">(quote)</h3>
-<div class="outline-text-3" id="text-orgf92922e">
+<div id="outline-container-org26d2e48" class="outline-3">
+<h3 id="org26d2e48">sexp-run</h3>
+<div class="outline-text-3" id="text-org26d2e48">
+<div class="org-src-container">
+
+<pre class="src src-jojo"><span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">+jojo</span> sexp-run sexp-compile-jojo apply<span style="color: #696969;">)</span>
+</pre>
+</div>
+</div>
+</div>
+</div>
+
+<div id="outline-container-orgfc5fd22" class="outline-2">
+<h2 id="orgfc5fd22">basic syntax</h2>
+<div class="outline-text-2" id="text-orgfc5fd22">
+</div><div id="outline-container-org17e6309" class="outline-3">
+<h3 id="org17e6309">(quote)</h3>
+<div class="outline-text-3" id="text-org17e6309">
 <div class="org-src-container">
 
 <pre class="src src-jojo"><span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">+jojo</span> <span style="color: #66d9ef; font-weight: bold;">quote</span> <span style="color: #B380A8;">{</span>emit-lit<span style="color: #B380A8;">}</span> list-for-each<span style="color: #696969;">)</span>
@@ -854,9 +999,9 @@ repl-flag-off
 </div>
 </div>
 
-<div id="outline-container-org9252fa0" class="outline-3">
-<h3 id="org9252fa0">(partquote)</h3>
-<div class="outline-text-3" id="text-org9252fa0">
+<div id="outline-container-orgd01af03" class="outline-3">
+<h3 id="orgd01af03">(partquote)</h3>
+<div class="outline-text-3" id="text-orgd01af03">
 <div class="org-src-container">
 
 <pre class="src src-jojo"><span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">+jojo</span> partquote <span style="color: #B380A8;">{</span>sexp-partquote-compile<span style="color: #B380A8;">}</span> list-for-each<span style="color: #696969;">)</span>
@@ -895,9 +1040,9 @@ repl-flag-off
 </div>
 </div>
 
-<div id="outline-container-org3b6ad33" class="outline-3">
-<h3 id="org3b6ad33">(if)</h3>
-<div class="outline-text-3" id="text-org3b6ad33">
+<div id="outline-container-org14b8c7e" class="outline-3">
+<h3 id="org14b8c7e">(if)</h3>
+<div class="outline-text-3" id="text-org14b8c7e">
 <div class="org-src-container">
 
 <pre class="src src-jojo"><span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">+jojo</span> if-else-then <span style="color: #696969;">(</span><span style="color: #66d9ef; font-weight: bold;">-&gt;</span> <span style="color: #a6e22e;">:body</span> <span style="color: #66d9ef; font-weight: bold;">--</span><span style="color: #696969;">)</span>
@@ -927,7 +1072,7 @@ repl-flag-off
     <span style="color: #797979;">[</span><span style="color: #a6e22e;">:body</span> <span style="color: #B380A8;">{</span>'<span style="color: #66d9ef; font-weight: bold;">then</span> eq?<span style="color: #B380A8;">}</span> list-any?<span style="color: #797979;">]</span>
     <span style="color: #797979;">[</span><span style="color: #a6e22e;">:body</span> if-then<span style="color: #797979;">]</span>
 
-    <span style="color: #66d9ef; font-weight: bold;">else</span> <span style="color: #797979;">[</span><span style="color: #e6db74;">"- if fail"</span> string-write newline
+    <span style="color: #66d9ef; font-weight: bold;">else</span> <span style="color: #797979;">[</span><span style="color: #e6db74;">"- (if) fail"</span> string-write newline
           <span style="color: #e6db74;">"  the body dose not has 'then"</span> string-write newline
           <span style="color: #e6db74;">"  body : "</span> string-write <span style="color: #a6e22e;">:body</span> sexp-list-write newline
           <span style="color: #66d9ef; font-weight: bold;">debug</span><span style="color: #797979;">]</span><span style="color: #696969;">))</span>
@@ -936,13 +1081,13 @@ repl-flag-off
 </div>
 </div>
 
-<div id="outline-container-org8797e9a" class="outline-3">
-<h3 id="org8797e9a">(clo)</h3>
-<div class="outline-text-3" id="text-org8797e9a">
+<div id="outline-container-org7bed707" class="outline-3">
+<h3 id="org7bed707">(clo)</h3>
+<div class="outline-text-3" id="text-org7bed707">
 <div class="org-src-container">
 
 <pre class="src src-jojo"><span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">+jojo</span> core-clo
-  compile-jojo emit-lit
+  sexp-list-compile-jojo emit-lit
   'current-local-env jo-emit
   'closure jo-emit<span style="color: #696969;">)</span>
 </pre>
@@ -950,9 +1095,9 @@ repl-flag-off
 </div>
 </div>
 
-<div id="outline-container-orgc49cd79" class="outline-3">
-<h3 id="orgc49cd79">(cond)</h3>
-<div class="outline-text-3" id="text-orgc49cd79">
+<div id="outline-container-orgc7ca753" class="outline-3">
+<h3 id="orgc7ca753">(cond)</h3>
+<div class="outline-text-3" id="text-orgc7ca753">
 <div class="org-src-container">
 
 <pre class="src src-jojo"><span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">+jojo</span> cond/expend <span style="color: #696969;">(</span><span style="color: #66d9ef; font-weight: bold;">-&gt;</span> <span style="color: #a6e22e;">:body</span> <span style="color: #66d9ef; font-weight: bold;">--</span> sexp<span style="color: #696969;">)</span>
@@ -969,7 +1114,7 @@ repl-flag-off
      <span style="color: #a6e22e;">:body</span> <span style="color: #ae81ff;">.cdr</span> <span style="color: #ae81ff;">.cdr</span> <span style="color: #66d9ef; font-weight: bold;">recur</span> tail-cons<span style="color: #797979;">]</span><span style="color: #696969;">))</span>
 
 <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">+jojo</span> cond/miss-match-report
-  <span style="color: #e6db74;">"- (cond) miss match"</span> string-write newline<span style="color: #696969;">)</span>
+  <span style="color: #e6db74;">"- runtime (cond) miss match"</span> string-write newline<span style="color: #696969;">)</span>
 
 <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">note</span>
   <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">+jojo</span> cond/expend-if-then <span style="color: #696969;">(</span><span style="color: #66d9ef; font-weight: bold;">-&gt;</span> <span style="color: #a6e22e;">:question</span> <span style="color: #a6e22e;">:answer</span> <span style="color: #66d9ef; font-weight: bold;">--</span> sexp<span style="color: #696969;">)</span>
@@ -991,9 +1136,9 @@ repl-flag-off
 </div>
 </div>
 
-<div id="outline-container-org7e23c63" class="outline-3">
-<h3 id="org7e23c63">(-&gt;)</h3>
-<div class="outline-text-3" id="text-org7e23c63">
+<div id="outline-container-org9fd277a" class="outline-3">
+<h3 id="org9fd277a">(-&gt;)</h3>
+<div class="outline-text-3" id="text-org9fd277a">
 <div class="org-src-container">
 
 <pre class="src src-jojo"><span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">+jojo</span> arrow/expend <span style="color: #696969;">(</span><span style="color: #66d9ef; font-weight: bold;">-&gt;</span> <span style="color: #a6e22e;">:body</span> <span style="color: #66d9ef; font-weight: bold;">--</span> sexp<span style="color: #696969;">)</span>
@@ -1007,9 +1152,9 @@ repl-flag-off
 </div>
 </div>
 
-<div id="outline-container-org15ff9a" class="outline-3">
-<h3 id="org15ff9a">jo-list-compile-cells</h3>
-<div class="outline-text-3" id="text-org15ff9a">
+<div id="outline-container-orgf46163a" class="outline-3">
+<h3 id="orgf46163a">jo-list-compile-cells</h3>
+<div class="outline-text-3" id="text-orgf46163a">
 <div class="org-src-container">
 
 <pre class="src src-jojo"><span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">+jojo</span> jo-list-compile-cells <span style="color: #696969;">(</span><span style="color: #66d9ef; font-weight: bold;">-&gt;</span> <span style="color: #a6e22e;">:list</span> <span style="color: #66d9ef; font-weight: bold;">--</span> <span style="color: #66d9ef; font-weight: bold;">&lt;address&gt;</span><span style="color: #696969;">)</span>
@@ -1024,14 +1169,14 @@ repl-flag-off
 </div>
 </div>
 
-<div id="outline-container-org7acef8e" class="outline-3">
-<h3 id="org7acef8e">(+data)</h3>
-<div class="outline-text-3" id="text-org7acef8e">
+<div id="outline-container-org1cd2874" class="outline-3">
+<h3 id="org1cd2874">(+data)</h3>
+<div class="outline-text-3" id="text-org1cd2874">
 <div class="org-src-container">
 
 <pre class="src src-jojo"><span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">+jojo</span> plus-data <span style="color: #696969;">(</span><span style="color: #66d9ef; font-weight: bold;">-&gt;</span> <span style="color: #a6e22e;">:body</span> <span style="color: #66d9ef; font-weight: bold;">--</span><span style="color: #696969;">)</span>
   <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">if</span> <span style="color: #a6e22e;">:body</span> <span style="color: #ae81ff;">.car</span> tag-jo? not <span style="color: #66d9ef; font-weight: bold;">then</span>
-      <span style="color: #e6db74;">"- plus-data fail"</span> string-write newline
+      <span style="color: #e6db74;">"- (+data) fail"</span> string-write newline
       <span style="color: #e6db74;">"  name must be of form &lt;...&gt;"</span> string-write newline
       <span style="color: #e6db74;">"  body : "</span> string-write <span style="color: #a6e22e;">:body</span> sexp-list-write newline
       <span style="color: #66d9ef; font-weight: bold;">end</span><span style="color: #696969;">)</span>
@@ -1046,9 +1191,9 @@ repl-flag-off
 </div>
 </div>
 
-<div id="outline-container-orgc22a64" class="outline-3">
-<h3 id="orgc22a64">(+gene)</h3>
-<div class="outline-text-3" id="text-orgc22a64">
+<div id="outline-container-org595d49d" class="outline-3">
+<h3 id="org595d49d">(+gene)</h3>
+<div class="outline-text-3" id="text-org595d49d">
 <div class="org-src-container">
 
 <pre class="src src-jojo"><span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">+jojo</span> plus-gene <span style="color: #696969;">(</span><span style="color: #66d9ef; font-weight: bold;">-&gt;</span> <span style="color: #a6e22e;">:body</span> <span style="color: #66d9ef; font-weight: bold;">--</span><span style="color: #696969;">)</span>
@@ -1062,16 +1207,16 @@ repl-flag-off
   list-length
   <span style="color: #a6e22e;">:name</span> name-bind-gene
 
-  <span style="color: #a6e22e;">:rest-body</span> compile-jojo
+  <span style="color: #a6e22e;">:rest-body</span> sexp-list-compile-jojo
   <span style="color: #a6e22e;">:name</span> name-bind-disp-default-to-jojo<span style="color: #696969;">)</span>
 </pre>
 </div>
 </div>
 </div>
 
-<div id="outline-container-org9657892" class="outline-3">
-<h3 id="org9657892">(+disp)</h3>
-<div class="outline-text-3" id="text-org9657892">
+<div id="outline-container-org1e13c7b" class="outline-3">
+<h3 id="org1e13c7b">(+disp)</h3>
+<div class="outline-text-3" id="text-org1e13c7b">
 <ul class="org-ul">
 <li><p>this syntax always use &lt;jojo&gt; as disp</p></li></ul>
 
@@ -1087,7 +1232,7 @@ repl-flag-off
   <span style="color: #B380A8;">{</span>tag-jo?<span style="color: #B380A8;">}</span> list-filter
   jo-list-compile-cells <span style="color: #fd971f;">:address-of-tags!</span>
 
-  <span style="color: #a6e22e;">:rest-body</span> compile-jojo
+  <span style="color: #a6e22e;">:rest-body</span> sexp-list-compile-jojo
   <span style="color: #a6e22e;">:address-of-tags</span>
   <span style="color: #a6e22e;">:name</span> name-bind-disp-to-jojo<span style="color: #696969;">)</span>
 </pre>
@@ -1096,36 +1241,36 @@ repl-flag-off
 </div>
 </div>
 
-<div id="outline-container-orgbf642e5" class="outline-2">
-<h2 id="orgbf642e5">reboot basic syntax &#x2013; the order matters</h2>
-<div class="outline-text-2" id="text-orgbf642e5">
-</div><div id="outline-container-org3fa1154" class="outline-3">
-<h3 id="org3fa1154">re-define (+jojo)</h3>
-<div class="outline-text-3" id="text-org3fa1154">
+<div id="outline-container-orgebe41be" class="outline-2">
+<h2 id="orgebe41be">reboot basic syntax &#x2013; the order matters</h2>
+<div class="outline-text-2" id="text-orgebe41be">
+</div><div id="outline-container-org16be717" class="outline-3">
+<h3 id="org16be717">re-define (+jojo)</h3>
+<div class="outline-text-3" id="text-org16be717">
 <div class="org-src-container">
 
 <pre class="src src-jojo"><span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">+jojo</span> +jojo <span style="color: #696969;">(</span><span style="color: #66d9ef; font-weight: bold;">-&gt;</span> <span style="color: #a6e22e;">:body</span> sexp list <span style="color: #66d9ef; font-weight: bold;">--</span><span style="color: #696969;">)</span>
-  <span style="color: #a6e22e;">:body</span> <span style="color: #ae81ff;">.cdr</span> compile-jojo
+  <span style="color: #a6e22e;">:body</span> <span style="color: #ae81ff;">.cdr</span> sexp-list-compile-jojo
   <span style="color: #a6e22e;">:body</span> <span style="color: #ae81ff;">.car</span> name-bind<span style="color: #696969;">)</span>
 </pre>
 </div>
 </div>
 </div>
 
-<div id="outline-container-org921e78b" class="outline-3">
-<h3 id="org921e78b">run new repl</h3>
-<div class="outline-text-3" id="text-org921e78b">
+<div id="outline-container-orgc238b51" class="outline-3">
+<h3 id="orgc238b51">run repl-over-the-repl-in-c</h3>
+<div class="outline-text-3" id="text-orgc238b51">
 <div class="org-src-container">
 
-<pre class="src src-jojo">reading-stack-tos repl
+<pre class="src src-jojo">repl-over-the-repl-in-c
 </pre>
 </div>
 </div>
 </div>
 
-<div id="outline-container-org1392cc3" class="outline-3">
-<h3 id="org1392cc3">re-define new keywords</h3>
-<div class="outline-text-3" id="text-org1392cc3">
+<div id="outline-container-orgbc8d3c4" class="outline-3">
+<h3 id="orgbc8d3c4">re-define new keywords</h3>
+<div class="outline-text-3" id="text-orgbc8d3c4">
 <div class="org-src-container">
 
 <pre class="src src-jojo"><span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">+jojo</span> note drop<span style="color: #696969;">)</span>
@@ -1147,12 +1292,12 @@ repl-flag-off
 </div>
 </div>
 
-<div id="outline-container-orgb5e0ba9" class="outline-2">
-<h2 id="orgb5e0ba9">more syntax</h2>
-<div class="outline-text-2" id="text-orgb5e0ba9">
-</div><div id="outline-container-org22c92be" class="outline-3">
-<h3 id="org22c92be">(array)</h3>
-<div class="outline-text-3" id="text-org22c92be">
+<div id="outline-container-orgaf2f794" class="outline-2">
+<h2 id="orgaf2f794">more syntax</h2>
+<div class="outline-text-2" id="text-orgaf2f794">
+</div><div id="outline-container-orga39ebc8" class="outline-3">
+<h3 id="orga39ebc8">(array)</h3>
+<div class="outline-text-3" id="text-orga39ebc8">
 <div class="org-src-container">
 
 <pre class="src src-jojo"><span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">+jojo</span> array array/expend sexp-compile<span style="color: #696969;">)</span>
@@ -1167,9 +1312,9 @@ repl-flag-off
 </div>
 </div>
 
-<div id="outline-container-orge689123" class="outline-3">
-<h3 id="orge689123">(list)</h3>
-<div class="outline-text-3" id="text-orge689123">
+<div id="outline-container-org8641159" class="outline-3">
+<h3 id="org8641159">(list)</h3>
+<div class="outline-text-3" id="text-org8641159">
 <div class="org-src-container">
 
 <pre class="src src-jojo"><span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">+jojo</span> list list/expend sexp-compile<span style="color: #696969;">)</span>
@@ -1185,9 +1330,9 @@ repl-flag-off
 </div>
 </div>
 
-<div id="outline-container-org76ac198" class="outline-3">
-<h3 id="org76ac198">(assert) &amp; (assert!)</h3>
-<div class="outline-text-3" id="text-org76ac198">
+<div id="outline-container-org89f808" class="outline-3">
+<h3 id="org89f808">(assert) &amp; (assert!)</h3>
+<div class="outline-text-3" id="text-org89f808">
 <div class="org-src-container">
 
 <pre class="src src-jojo"><span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">+jojo</span> assert assert/expend sexp-compile<span style="color: #696969;">)</span>
@@ -1196,7 +1341,7 @@ repl-flag-off
   `<span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">if</span> <span style="color: #696969;">(</span><span style="color: #ae81ff;">@</span> <span style="color: #a6e22e;">:body</span> list-spread<span style="color: #696969;">)</span>
        <span style="color: #66d9ef; font-weight: bold;">then</span>
        <span style="color: #66d9ef; font-weight: bold;">else</span>
-       <span style="color: #e6db74;">"- assert fail"</span> string-write newline
+       <span style="color: #e6db74;">"- (assert) fail"</span> string-write newline
        <span style="color: #e6db74;">"  assertion : "</span> string-write
        <span style="color: #696969;">(</span><span style="color: #66d9ef; font-weight: bold;">quote</span> <span style="color: #696969;">(</span><span style="color: #ae81ff;">@</span> <span style="color: #a6e22e;">:body</span><span style="color: #696969;">))</span> sexp-list-write newline<span style="color: #696969;">))</span>
 
@@ -1206,7 +1351,7 @@ repl-flag-off
   `<span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">if</span> <span style="color: #696969;">(</span><span style="color: #ae81ff;">@</span> <span style="color: #a6e22e;">:body</span> list-spread<span style="color: #696969;">)</span>
        <span style="color: #66d9ef; font-weight: bold;">then</span>
        <span style="color: #66d9ef; font-weight: bold;">else</span>
-       <span style="color: #e6db74;">"- assert! fail"</span> string-write newline
+       <span style="color: #e6db74;">"- (assert!) fail"</span> string-write newline
        <span style="color: #e6db74;">"  assertion : "</span> string-write
        <span style="color: #696969;">(</span><span style="color: #66d9ef; font-weight: bold;">quote</span> <span style="color: #696969;">(</span><span style="color: #ae81ff;">@</span> <span style="color: #a6e22e;">:body</span><span style="color: #696969;">))</span> sexp-list-write newline
        <span style="color: #66d9ef; font-weight: bold;">debug</span><span style="color: #696969;">))</span>
@@ -1215,9 +1360,9 @@ repl-flag-off
 </div>
 </div>
 
-<div id="outline-container-org9d8dc01" class="outline-3">
-<h3 id="org9d8dc01">(test)</h3>
-<div class="outline-text-3" id="text-org9d8dc01">
+<div id="outline-container-orgdbd39a8" class="outline-3">
+<h3 id="orgdbd39a8">(test)</h3>
+<div class="outline-text-3" id="text-orgdbd39a8">
 <div class="org-src-container">
 
 <pre class="src src-jojo"><span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">+jojo</span> test <span style="color: #696969;">(</span><span style="color: #66d9ef; font-weight: bold;">-&gt;</span> <span style="color: #a6e22e;">:body</span> <span style="color: #66d9ef; font-weight: bold;">--</span><span style="color: #696969;">)</span>
@@ -1227,9 +1372,9 @@ repl-flag-off
 </div>
 </div>
 
-<div id="outline-container-org7660f8a" class="outline-3">
-<h3 id="org7660f8a">(let-bind) &#x2013; moand interface</h3>
-<div class="outline-text-3" id="text-org7660f8a">
+<div id="outline-container-orgd11f9ed" class="outline-3">
+<h3 id="orgd11f9ed">(let-bind) &#x2013; moand interface</h3>
+<div class="outline-text-3" id="text-orgd11f9ed">
 <div class="org-src-container">
 
 <pre class="src src-jojo"><span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">note</span> example
@@ -1274,9 +1419,9 @@ repl-flag-off
 </div>
 </div>
 
-<div id="outline-container-orga76af3b" class="outline-3">
-<h3 id="orga76af3b">(case)</h3>
-<div class="outline-text-3" id="text-orga76af3b">
+<div id="outline-container-orgdc56a02" class="outline-3">
+<h3 id="orgdc56a02">(case)</h3>
+<div class="outline-text-3" id="text-orgdc56a02">
 <div class="org-src-container">
 
 <pre class="src src-jojo"><span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">+jojo</span> case case/expend sexp-compile<span style="color: #696969;">)</span>
@@ -1289,7 +1434,7 @@ repl-flag-off
   <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">cond</span>
     <span style="color: #797979;">[</span><span style="color: #a6e22e;">:body</span> list-length <span style="color: #ae81ff;">2</span> eq?<span style="color: #797979;">]</span>
     <span style="color: #797979;">[</span><span style="color: #a6e22e;">:body</span> <span style="color: #ae81ff;">.car</span> <span style="color: #a6e22e;">:body</span> <span style="color: #ae81ff;">.cdr</span> <span style="color: #ae81ff;">.car</span> case/expend-if-then
-     `<span style="color: #696969;">(</span><span style="color: #66d9ef; font-weight: bold;">else</span> <span style="color: #e6db74;">"- (case) miss match"</span> string-write newline
+     `<span style="color: #696969;">(</span><span style="color: #66d9ef; font-weight: bold;">else</span> <span style="color: #e6db74;">"- runtime (case) miss match"</span> string-write newline
             <span style="color: #66d9ef; font-weight: bold;">debug</span><span style="color: #696969;">)</span>
      list-append<span style="color: #797979;">]</span>
 
@@ -1319,12 +1464,12 @@ repl-flag-off
 </div>
 </div>
 
-<div id="outline-container-org8bdfd6d" class="outline-2">
-<h2 id="org8bdfd6d"><span class="done _test_">[test]</span> syntax</h2>
-<div class="outline-text-2" id="text-org8bdfd6d">
-</div><div id="outline-container-orgb38c8a1" class="outline-3">
-<h3 id="orgb38c8a1">(list)</h3>
-<div class="outline-text-3" id="text-orgb38c8a1">
+<div id="outline-container-org8de9f07" class="outline-2">
+<h2 id="org8de9f07"><span class="done _test_">[test]</span> syntax</h2>
+<div class="outline-text-2" id="text-org8de9f07">
+</div><div id="outline-container-orgd2ba725" class="outline-3">
+<h3 id="orgd2ba725">(list)</h3>
+<div class="outline-text-3" id="text-orgd2ba725">
 <div class="org-src-container">
 
 <pre class="src src-jojo"><span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">test</span>
@@ -1377,9 +1522,9 @@ repl-flag-off
 </div>
 </div>
 
-<div id="outline-container-orgac8f36b" class="outline-3">
-<h3 id="orgac8f36b">(+jojo)</h3>
-<div class="outline-text-3" id="text-orgac8f36b">
+<div id="outline-container-org895e512" class="outline-3">
+<h3 id="org895e512">(+jojo)</h3>
+<div class="outline-text-3" id="text-org895e512">
 <div class="org-src-container">
 
 <pre class="src src-jojo"><span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">test</span>
@@ -1390,9 +1535,9 @@ repl-flag-off
 </div>
 </div>
 
-<div id="outline-container-orgd8d958e" class="outline-3">
-<h3 id="orgd8d958e">(cond)</h3>
-<div class="outline-text-3" id="text-orgd8d958e">
+<div id="outline-container-orgd2de96f" class="outline-3">
+<h3 id="orgd2de96f">(cond)</h3>
+<div class="outline-text-3" id="text-orgd2de96f">
 <div class="org-src-container">
 
 <pre class="src src-jojo"><span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">test</span>
@@ -1407,9 +1552,9 @@ repl-flag-off
 </div>
 </div>
 
-<div id="outline-container-org8c25a69" class="outline-3">
-<h3 id="org8c25a69">(clo)</h3>
-<div class="outline-text-3" id="text-org8c25a69">
+<div id="outline-container-org1171b3a" class="outline-3">
+<h3 id="org1171b3a">(clo)</h3>
+<div class="outline-text-3" id="text-org1171b3a">
 <div class="org-src-container">
 
 <pre class="src src-jojo"><span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">test</span>
@@ -1423,9 +1568,9 @@ repl-flag-off
 </div>
 </div>
 
-<div id="outline-container-orgeeb2b7e" class="outline-3">
-<h3 id="orgeeb2b7e">(+gene) &amp; (+disp)</h3>
-<div class="outline-text-3" id="text-orgeeb2b7e">
+<div id="outline-container-org95580a7" class="outline-3">
+<h3 id="org95580a7">(+gene) &amp; (+disp)</h3>
+<div class="outline-text-3" id="text-org95580a7">
 <div class="org-src-container">
 
 <pre class="src src-jojo"><span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">test</span>
@@ -1446,9 +1591,9 @@ repl-flag-off
 </div>
 </div>
 
-<div id="outline-container-org923ea04" class="outline-3">
-<h3 id="org923ea04">(partquote)</h3>
-<div class="outline-text-3" id="text-org923ea04">
+<div id="outline-container-org4e1af71" class="outline-3">
+<h3 id="org4e1af71">(partquote)</h3>
+<div class="outline-text-3" id="text-org4e1af71">
 <div class="org-src-container">
 
 <pre class="src src-jojo"><span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">test</span>
@@ -1477,9 +1622,9 @@ repl-flag-off
 </div>
 </div>
 
-<div id="outline-container-org61e2fdf" class="outline-3">
-<h3 id="org61e2fdf">(case)</h3>
-<div class="outline-text-3" id="text-org61e2fdf">
+<div id="outline-container-org798b3b1" class="outline-3">
+<h3 id="org798b3b1">(case)</h3>
+<div class="outline-text-3" id="text-org798b3b1">
 <div class="org-src-container">
 
 <pre class="src src-jojo"><span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">test</span>
@@ -1494,9 +1639,9 @@ repl-flag-off
 </div>
 </div>
 
-<div id="outline-container-org49f6324" class="outline-3">
-<h3 id="org49f6324">dynamic-local</h3>
-<div class="outline-text-3" id="text-org49f6324">
+<div id="outline-container-org2488844" class="outline-3">
+<h3 id="org2488844">dynamic-local</h3>
+<div class="outline-text-3" id="text-org2488844">
 <div class="org-src-container">
 
 <pre class="src src-jojo"><span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">test</span>
@@ -1521,12 +1666,12 @@ repl-flag-off
 </div>
 </div>
 
-<div id="outline-container-org4596f29" class="outline-2">
-<h2 id="org4596f29">monad</h2>
-<div class="outline-text-2" id="text-org4596f29">
-</div><div id="outline-container-org25114e1" class="outline-3">
-<h3 id="org25114e1"><span class="todo _note_">[note]</span> bind and compose can implement each ohter</h3>
-<div class="outline-text-3" id="text-org25114e1">
+<div id="outline-container-org9f3976a" class="outline-2">
+<h2 id="org9f3976a">monad</h2>
+<div class="outline-text-2" id="text-org9f3976a">
+</div><div id="outline-container-org8df13f3" class="outline-3">
+<h3 id="org8df13f3"><span class="todo _note_">[note]</span> bind and compose can implement each ohter</h3>
+<div class="outline-text-3" id="text-org8df13f3">
 <div class="org-src-container">
 
 <pre class="src src-jojo"><span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">note</span>
@@ -1547,9 +1692,9 @@ repl-flag-off
 </div>
 </div>
 
-<div id="outline-container-org9f6cf0" class="outline-3">
-<h3 id="org9f6cf0">maybe monad</h3>
-<div class="outline-text-3" id="text-org9f6cf0">
+<div id="outline-container-org7e6b6b6" class="outline-3">
+<h3 id="org7e6b6b6">maybe monad</h3>
+<div class="outline-text-3" id="text-org7e6b6b6">
 <div class="org-src-container">
 
 <pre class="src src-jojo"><span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">+data</span> <span style="color: #66d9ef; font-weight: bold;">&lt;nothing&gt;</span><span style="color: #696969;">)</span>
@@ -1566,9 +1711,9 @@ repl-flag-off
 </div>
 </div>
 
-<div id="outline-container-org7a2d275" class="outline-3">
-<h3 id="org7a2d275"><span class="todo _gt__lt_">&gt;&lt;</span> list monad</h3>
-<div class="outline-text-3" id="text-org7a2d275">
+<div id="outline-container-orgad84d9d" class="outline-3">
+<h3 id="orgad84d9d"><span class="todo _gt__lt_">&gt;&lt;</span> list monad</h3>
+<div class="outline-text-3" id="text-orgad84d9d">
 <div class="org-src-container">
 
 <pre class="src src-jojo"><span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">note</span>
@@ -1580,12 +1725,12 @@ repl-flag-off
 </div>
 </div>
 
-<div id="outline-container-orge4875e9" class="outline-2">
-<h2 id="orge4875e9">pair</h2>
-<div class="outline-text-2" id="text-orge4875e9">
-</div><div id="outline-container-orgc98db2b" class="outline-3">
-<h3 id="orgc98db2b">&lt;pair&gt;</h3>
-<div class="outline-text-3" id="text-orgc98db2b">
+<div id="outline-container-org9b3b539" class="outline-2">
+<h2 id="org9b3b539">pair</h2>
+<div class="outline-text-2" id="text-org9b3b539">
+</div><div id="outline-container-orge14697d" class="outline-3">
+<h3 id="orge14697d">&lt;pair&gt;</h3>
+<div class="outline-text-3" id="text-orge14697d">
 <div class="org-src-container">
 
 <pre class="src src-jojo"><span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">+data</span> <span style="color: #66d9ef; font-weight: bold;">&lt;pair&gt;</span> <span style="color: #ae81ff;">.l</span> <span style="color: #ae81ff;">.r</span><span style="color: #696969;">)</span>
@@ -1595,12 +1740,12 @@ repl-flag-off
 </div>
 </div>
 
-<div id="outline-container-org7ebda0e" class="outline-2">
-<h2 id="org7ebda0e"><span class="done _test_">[test]</span> monad</h2>
-<div class="outline-text-2" id="text-org7ebda0e">
-</div><div id="outline-container-org950cc46" class="outline-3">
-<h3 id="org950cc46">tree</h3>
-<div class="outline-text-3" id="text-org950cc46">
+<div id="outline-container-orgc4d1c4a" class="outline-2">
+<h2 id="orgc4d1c4a"><span class="done _test_">[test]</span> monad</h2>
+<div class="outline-text-2" id="text-orgc4d1c4a">
+</div><div id="outline-container-org11118e3" class="outline-3">
+<h3 id="org11118e3">tree</h3>
+<div class="outline-text-3" id="text-org11118e3">
 <div class="org-src-container">
 
 <pre class="src src-jojo"><span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">test</span>
@@ -1618,9 +1763,9 @@ repl-flag-off
 </div>
 </div>
 
-<div id="outline-container-orgd81e4ae" class="outline-3">
-<h3 id="orgd81e4ae">tree-map</h3>
-<div class="outline-text-3" id="text-orgd81e4ae">
+<div id="outline-container-org12773d1" class="outline-3">
+<h3 id="org12773d1">tree-map</h3>
+<div class="outline-text-3" id="text-org12773d1">
 <div class="org-src-container">
 
 <pre class="src src-jojo"><span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">test</span>
@@ -1653,9 +1798,9 @@ repl-flag-off
 </div>
 </div>
 
-<div id="outline-container-org73dda33" class="outline-3">
-<h3 id="org73dda33">tree-zip &#x2013; maybe monad</h3>
-<div class="outline-text-3" id="text-org73dda33">
+<div id="outline-container-orgeed520f" class="outline-3">
+<h3 id="orgeed520f">tree-zip &#x2013; maybe monad</h3>
+<div class="outline-text-3" id="text-orgeed520f">
 <div class="org-src-container">
 
 <pre class="src src-jojo"><span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">test</span>
@@ -1698,9 +1843,9 @@ repl-flag-off
 </div>
 </div>
 
-<div id="outline-container-org1247fa1" class="outline-3">
-<h3 id="org1247fa1">number-tree &#x2013; intrinsic state monad</h3>
-<div class="outline-text-3" id="text-org1247fa1">
+<div id="outline-container-org340f258" class="outline-3">
+<h3 id="org340f258">number-tree &#x2013; intrinsic state monad</h3>
+<div class="outline-text-3" id="text-org340f258">
 <div class="org-src-container">
 
 <pre class="src src-jojo"><span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">test</span>
@@ -1728,12 +1873,12 @@ repl-flag-off
 </div>
 </div>
 
-<div id="outline-container-orgd10c097" class="outline-2">
-<h2 id="orgd10c097">combinator</h2>
-<div class="outline-text-2" id="text-orgd10c097">
-</div><div id="outline-container-org922e634" class="outline-3">
-<h3 id="org922e634">times</h3>
-<div class="outline-text-3" id="text-org922e634">
+<div id="outline-container-org2a0f727" class="outline-2">
+<h2 id="org2a0f727">combinator</h2>
+<div class="outline-text-2" id="text-org2a0f727">
+</div><div id="outline-container-org4c67128" class="outline-3">
+<h3 id="org4c67128">times</h3>
+<div class="outline-text-3" id="text-org4c67128">
 <div class="org-src-container">
 
 <pre class="src src-jojo"><span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">+jojo</span> <span style="color: #66d9ef; font-weight: bold;">times</span> <span style="color: #696969;">(</span><span style="color: #66d9ef; font-weight: bold;">-&gt;</span> <span style="color: #a6e22e;">:fun</span> <span style="color: #a6e22e;">:n</span> <span style="color: #66d9ef; font-weight: bold;">--</span><span style="color: #696969;">)</span>
@@ -1746,12 +1891,12 @@ repl-flag-off
 </div>
 </div>
 
-<div id="outline-container-org4b0a02b" class="outline-2">
-<h2 id="org4b0a02b">w &#x2013; write &#x2013; gene</h2>
-<div class="outline-text-2" id="text-org4b0a02b">
-</div><div id="outline-container-org33d1e4d" class="outline-3">
-<h3 id="org33d1e4d">w</h3>
-<div class="outline-text-3" id="text-org33d1e4d">
+<div id="outline-container-org8f33667" class="outline-2">
+<h2 id="org8f33667">w &#x2013; write &#x2013; gene</h2>
+<div class="outline-text-2" id="text-org8f33667">
+</div><div id="outline-container-org1f3905a" class="outline-3">
+<h3 id="org1f3905a">w</h3>
+<div class="outline-text-3" id="text-org1f3905a">
 <div class="org-src-container">
 
 <pre class="src src-jojo"><span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">+jojo</span> write w<span style="color: #696969;">)</span>
@@ -1762,19 +1907,19 @@ repl-flag-off
 <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">+disp</span> w <span style="color: #696969;">(</span><span style="color: #66d9ef; font-weight: bold;">-&gt;</span> <span style="color: #66d9ef; font-weight: bold;">&lt;string&gt;</span> <span style="color: #66d9ef; font-weight: bold;">--</span><span style="color: #696969;">)</span> string-write<span style="color: #696969;">)</span>
 <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">+disp</span> w <span style="color: #696969;">(</span><span style="color: #66d9ef; font-weight: bold;">-&gt;</span> <span style="color: #66d9ef; font-weight: bold;">&lt;jo&gt;</span> <span style="color: #66d9ef; font-weight: bold;">--</span><span style="color: #696969;">)</span> jo-write<span style="color: #696969;">)</span>
 <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">+disp</span> w <span style="color: #696969;">(</span><span style="color: #66d9ef; font-weight: bold;">-&gt;</span> <span style="color: #66d9ef; font-weight: bold;">&lt;byte&gt;</span> <span style="color: #66d9ef; font-weight: bold;">--</span><span style="color: #696969;">)</span> <span style="color: #e6db74;">"(byte "</span> w byte-write <span style="color: #e6db74;">")"</span> w<span style="color: #696969;">)</span>
-
-<span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">+disp</span> w <span style="color: #696969;">(</span><span style="color: #66d9ef; font-weight: bold;">-&gt;</span> <span style="color: #66d9ef; font-weight: bold;">&lt;null&gt;</span> <span style="color: #66d9ef; font-weight: bold;">--</span><span style="color: #696969;">)</span> drop <span style="color: #e6db74;">"()"</span> w<span style="color: #696969;">)</span>
 </pre>
 </div>
 </div>
 </div>
 
-<div id="outline-container-org1a4f6cf" class="outline-3">
-<h3 id="org1a4f6cf">list-write</h3>
-<div class="outline-text-3" id="text-org1a4f6cf">
+<div id="outline-container-orgc115449" class="outline-3">
+<h3 id="orgc115449">list-write</h3>
+<div class="outline-text-3" id="text-orgc115449">
 <div class="org-src-container">
 
-<pre class="src src-jojo"><span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">+disp</span> w <span style="color: #696969;">(</span><span style="color: #66d9ef; font-weight: bold;">-&gt;</span> <span style="color: #66d9ef; font-weight: bold;">&lt;cons&gt;</span> <span style="color: #66d9ef; font-weight: bold;">--</span><span style="color: #696969;">)</span> list-write<span style="color: #696969;">)</span>
+<pre class="src src-jojo"><span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">+disp</span> w <span style="color: #696969;">(</span><span style="color: #66d9ef; font-weight: bold;">-&gt;</span> <span style="color: #66d9ef; font-weight: bold;">&lt;null&gt;</span> <span style="color: #66d9ef; font-weight: bold;">--</span><span style="color: #696969;">)</span> drop <span style="color: #e6db74;">"()"</span> w<span style="color: #696969;">)</span>
+
+<span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">+disp</span> w <span style="color: #696969;">(</span><span style="color: #66d9ef; font-weight: bold;">-&gt;</span> <span style="color: #66d9ef; font-weight: bold;">&lt;cons&gt;</span> <span style="color: #66d9ef; font-weight: bold;">--</span><span style="color: #696969;">)</span> list-write<span style="color: #696969;">)</span>
 
 <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">+jojo</span> list-write <span style="color: #696969;">(</span><span style="color: #66d9ef; font-weight: bold;">-&gt;</span> <span style="color: #a6e22e;">:list</span> <span style="color: #66d9ef; font-weight: bold;">--</span><span style="color: #696969;">)</span>
   <span style="color: #e6db74;">"("</span> w <span style="color: #a6e22e;">:list</span> list-write/loop <span style="color: #e6db74;">")"</span> w<span style="color: #696969;">)</span>
@@ -1790,9 +1935,9 @@ repl-flag-off
 </div>
 </div>
 
-<div id="outline-container-org41ef599" class="outline-3">
-<h3 id="org41ef599">array-write</h3>
-<div class="outline-text-3" id="text-org41ef599">
+<div id="outline-container-orgc0ac377" class="outline-3">
+<h3 id="orgc0ac377">array-write</h3>
+<div class="outline-text-3" id="text-orgc0ac377">
 <div class="org-src-container">
 
 <pre class="src src-jojo"><span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">+disp</span> w <span style="color: #696969;">(</span><span style="color: #66d9ef; font-weight: bold;">-&gt;</span> <span style="color: #66d9ef; font-weight: bold;">&lt;array&gt;</span> <span style="color: #66d9ef; font-weight: bold;">--</span><span style="color: #696969;">)</span> array-write<span style="color: #696969;">)</span>
@@ -1811,9 +1956,9 @@ repl-flag-off
 </div>
 </div>
 
-<div id="outline-container-orgaa9f831" class="outline-3">
-<h3 id="orgaa9f831">pair-write</h3>
-<div class="outline-text-3" id="text-orgaa9f831">
+<div id="outline-container-org235f43b" class="outline-3">
+<h3 id="org235f43b">pair-write</h3>
+<div class="outline-text-3" id="text-org235f43b">
 <div class="org-src-container">
 
 <pre class="src src-jojo"><span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">+disp</span> w <span style="color: #696969;">(</span><span style="color: #66d9ef; font-weight: bold;">-&gt;</span> <span style="color: #66d9ef; font-weight: bold;">&lt;pair&gt;</span><span style="color: #696969;">)</span> pair-write<span style="color: #696969;">)</span>
@@ -1827,9 +1972,9 @@ repl-flag-off
 </div>
 </div>
 
-<div id="outline-container-org6b55da5" class="outline-3">
-<h3 id="org6b55da5">nl</h3>
-<div class="outline-text-3" id="text-org6b55da5">
+<div id="outline-container-orgbaecb9a" class="outline-3">
+<h3 id="orgbaecb9a">nl</h3>
+<div class="outline-text-3" id="text-orgbaecb9a">
 <div class="org-src-container">
 
 <pre class="src src-jojo"><span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">+jojo</span> nl newline<span style="color: #696969;">)</span>
@@ -1839,12 +1984,12 @@ repl-flag-off
 </div>
 </div>
 
-<div id="outline-container-orgc6f23a7" class="outline-2">
-<h2 id="orgc6f23a7">equal? &#x2013; gene</h2>
-<div class="outline-text-2" id="text-orgc6f23a7">
-</div><div id="outline-container-orgc143030" class="outline-3">
-<h3 id="orgc143030">equal?</h3>
-<div class="outline-text-3" id="text-orgc143030">
+<div id="outline-container-org37e3cc5" class="outline-2">
+<h2 id="org37e3cc5">equal? &#x2013; gene</h2>
+<div class="outline-text-2" id="text-org37e3cc5">
+</div><div id="outline-container-org348f2dd" class="outline-3">
+<h3 id="org348f2dd">equal?</h3>
+<div class="outline-text-3" id="text-org348f2dd">
 <div class="org-src-container">
 
 <pre class="src src-jojo"><span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">+gene</span> equal? <span style="color: #696969;">(</span><span style="color: #66d9ef; font-weight: bold;">-&gt;</span> <span style="color: #a6e22e;">:x</span> <span style="color: #a6e22e;">:y</span> <span style="color: #66d9ef; font-weight: bold;">--</span> <span style="color: #66d9ef; font-weight: bold;">&lt;bool&gt;</span><span style="color: #696969;">)</span> <span style="color: #a6e22e;">:x</span> <span style="color: #a6e22e;">:y</span> eq?<span style="color: #696969;">)</span>
@@ -1868,12 +2013,12 @@ repl-flag-off
 </div>
 </div>
 
-<div id="outline-container-org8d68e07" class="outline-2">
-<h2 id="org8d68e07">more list</h2>
-<div class="outline-text-2" id="text-org8d68e07">
-</div><div id="outline-container-org652eed3" class="outline-3">
-<h3 id="org652eed3">list-foldr</h3>
-<div class="outline-text-3" id="text-org652eed3">
+<div id="outline-container-org5cf0a56" class="outline-2">
+<h2 id="org5cf0a56">more list</h2>
+<div class="outline-text-2" id="text-org5cf0a56">
+</div><div id="outline-container-org66eb002" class="outline-3">
+<h3 id="org66eb002">list-foldr</h3>
+<div class="outline-text-3" id="text-org66eb002">
 <div class="org-src-container">
 
 <pre class="src src-jojo"><span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">+jojo</span> list-foldr <span style="color: #696969;">(</span><span style="color: #66d9ef; font-weight: bold;">-&gt;</span> a <span style="color: #a6e22e;">:list</span><span style="color: #f92672; font-weight: bold;">,</span> <span style="color: #a6e22e;">:b</span><span style="color: #f92672; font-weight: bold;">,</span> <span style="color: #a6e22e;">:a-b-&gt;b</span> <span style="color: #66d9ef; font-weight: bold;">--</span> b<span style="color: #696969;">)</span>
@@ -1887,9 +2032,9 @@ repl-flag-off
 </div>
 </div>
 
-<div id="outline-container-org2b5f645" class="outline-3">
-<h3 id="org2b5f645">list-foldl</h3>
-<div class="outline-text-3" id="text-org2b5f645">
+<div id="outline-container-org69cbdd5" class="outline-3">
+<h3 id="org69cbdd5">list-foldl</h3>
+<div class="outline-text-3" id="text-org69cbdd5">
 <div class="org-src-container">
 
 <pre class="src src-jojo"><span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">+jojo</span> list-foldl <span style="color: #696969;">(</span><span style="color: #66d9ef; font-weight: bold;">-&gt;</span> a <span style="color: #a6e22e;">:list</span><span style="color: #f92672; font-weight: bold;">,</span> <span style="color: #a6e22e;">:b</span><span style="color: #f92672; font-weight: bold;">,</span> <span style="color: #a6e22e;">:b-a-&gt;b</span> <span style="color: #66d9ef; font-weight: bold;">--</span> b<span style="color: #696969;">)</span>
@@ -1903,9 +2048,21 @@ repl-flag-off
 </div>
 </div>
 
-<div id="outline-container-org5719ad2" class="outline-3">
-<h3 id="org5719ad2"><span class="done _test_">[test]</span> </h3>
-<div class="outline-text-3" id="text-org5719ad2">
+<div id="outline-container-org4df696f" class="outline-3">
+<h3 id="org4df696f">list-member?</h3>
+<div class="outline-text-3" id="text-org4df696f">
+<div class="org-src-container">
+
+<pre class="src src-jojo"><span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">+jojo</span> list-member? <span style="color: #696969;">(</span><span style="color: #66d9ef; font-weight: bold;">-&gt;</span> <span style="color: #a6e22e;">:list</span> <span style="color: #a6e22e;">:x</span> <span style="color: #66d9ef; font-weight: bold;">--</span> <span style="color: #66d9ef; font-weight: bold;">&lt;bool&gt;</span><span style="color: #696969;">)</span>
+  <span style="color: #a6e22e;">:list</span> <span style="color: #B380A8;">{</span><span style="color: #a6e22e;">:x</span> equal?<span style="color: #B380A8;">}</span> list-any?<span style="color: #696969;">)</span>
+</pre>
+</div>
+</div>
+</div>
+
+<div id="outline-container-orgabd7858" class="outline-3">
+<h3 id="orgabd7858"><span class="done _test_">[test]</span> </h3>
+<div class="outline-text-3" id="text-orgabd7858">
 <div class="org-src-container">
 
 <pre class="src src-jojo"><span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">test</span>
@@ -1944,23 +2101,39 @@ repl-flag-off
 </div>
 </div>
 
-<div id="outline-container-org705d447" class="outline-2">
-<h2 id="org705d447">table</h2>
-<div class="outline-text-2" id="text-org705d447">
-</div><div id="outline-container-org54348ba" class="outline-3">
-<h3 id="org54348ba">&lt;tab&gt;</h3>
-<div class="outline-text-3" id="text-org54348ba">
+<div id="outline-container-orgfcc1855" class="outline-2">
+<h2 id="orgfcc1855">table</h2>
+<div class="outline-text-2" id="text-orgfcc1855">
+</div><div id="outline-container-org4a13537" class="outline-3">
+<h3 id="org4a13537">&lt;null-table&gt; &amp; &lt;cons-table&gt;</h3>
+<div class="outline-text-3" id="text-org4a13537">
 <div class="org-src-container">
 
-<pre class="src src-jojo"><span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">+data</span> <span style="color: #66d9ef; font-weight: bold;">&lt;tab&gt;</span> <span style="color: #ae81ff;">.rest</span> <span style="color: #ae81ff;">.key</span> <span style="color: #ae81ff;">.value</span><span style="color: #696969;">)</span>
+<pre class="src src-jojo"><span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">+data</span> <span style="color: #66d9ef; font-weight: bold;">&lt;null-table&gt;</span><span style="color: #696969;">)</span>
+<span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">+data</span> <span style="color: #66d9ef; font-weight: bold;">&lt;cons-table&gt;</span> <span style="color: #ae81ff;">.rest</span> <span style="color: #ae81ff;">.key</span> <span style="color: #ae81ff;">.value</span><span style="color: #696969;">)</span>
 </pre>
 </div>
 </div>
 </div>
 
-<div id="outline-container-org52591c6" class="outline-3">
-<h3 id="org52591c6">list-&gt;tab</h3>
-<div class="outline-text-3" id="text-org52591c6">
+<div id="outline-container-orga30d2ca" class="outline-3">
+<h3 id="orga30d2ca">table?</h3>
+<div class="outline-text-3" id="text-orga30d2ca">
+<div class="org-src-container">
+
+<pre class="src src-jojo"><span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">+jojo</span> table? <span style="color: #696969;">(</span><span style="color: #66d9ef; font-weight: bold;">-&gt;</span> <span style="color: #a6e22e;">:x</span> <span style="color: #66d9ef; font-weight: bold;">--</span> <span style="color: #66d9ef; font-weight: bold;">&lt;bool&gt;</span><span style="color: #696969;">)</span>
+  <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">case</span> <span style="color: #a6e22e;">:x</span>
+    <span style="color: #66d9ef; font-weight: bold;">&lt;null-table&gt;</span> <span style="color: #66d9ef; font-weight: bold;">true</span>
+    <span style="color: #66d9ef; font-weight: bold;">&lt;cons-table&gt;</span> <span style="color: #66d9ef; font-weight: bold;">true</span>
+    <span style="color: #66d9ef; font-weight: bold;">else</span> <span style="color: #66d9ef; font-weight: bold;">false</span><span style="color: #696969;">))</span>
+</pre>
+</div>
+</div>
+</div>
+
+<div id="outline-container-org8a9083b" class="outline-3">
+<h3 id="org8a9083b">list-&gt;table</h3>
+<div class="outline-text-3" id="text-org8a9083b">
 <div class="org-src-container">
 
 <pre class="src src-jojo"><span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">+jojo</span> list-&gt;table <span style="color: #696969;">(</span><span style="color: #66d9ef; font-weight: bold;">-&gt;</span> <span style="color: #a6e22e;">:list</span> <span style="color: #66d9ef; font-weight: bold;">--</span> table<span style="color: #696969;">)</span>
@@ -1974,18 +2147,18 @@ repl-flag-off
 
 <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">+jojo</span> list-&gt;table/recur <span style="color: #696969;">(</span><span style="color: #66d9ef; font-weight: bold;">-&gt;</span> <span style="color: #a6e22e;">:list</span> <span style="color: #66d9ef; font-weight: bold;">--</span> table<span style="color: #696969;">)</span>
   <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">case</span> <span style="color: #a6e22e;">:list</span>
-    <span style="color: #66d9ef; font-weight: bold;">&lt;null&gt;</span> null
+    <span style="color: #66d9ef; font-weight: bold;">&lt;null&gt;</span> null-table
     <span style="color: #66d9ef; font-weight: bold;">&lt;cons&gt;</span> <span style="color: #797979;">[</span><span style="color: #a6e22e;">:list</span> <span style="color: #ae81ff;">.cdr</span> <span style="color: #ae81ff;">.cdr</span> <span style="color: #66d9ef; font-weight: bold;">recur</span>
             <span style="color: #a6e22e;">:list</span> <span style="color: #ae81ff;">.car</span> <span style="color: #a6e22e;">:list</span> <span style="color: #ae81ff;">.cdr</span> <span style="color: #ae81ff;">.car</span>
-            tab<span style="color: #797979;">]</span><span style="color: #696969;">))</span>
+            cons-table<span style="color: #797979;">]</span><span style="color: #696969;">))</span>
 </pre>
 </div>
 </div>
 </div>
 
-<div id="outline-container-org37d081d" class="outline-3">
-<h3 id="org37d081d">table</h3>
-<div class="outline-text-3" id="text-org37d081d">
+<div id="outline-container-orgc797d3" class="outline-3">
+<h3 id="orgc797d3">table</h3>
+<div class="outline-text-3" id="text-orgc797d3">
 <div class="org-src-container">
 
 <pre class="src src-jojo"><span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">+jojo</span> table list 'list-&gt;table jo-emit<span style="color: #696969;">)</span>
@@ -1994,20 +2167,23 @@ repl-flag-off
 </div>
 </div>
 
-<div id="outline-container-orgd1f2bac" class="outline-3">
-<h3 id="orgd1f2bac">table-write</h3>
-<div class="outline-text-3" id="text-orgd1f2bac">
+<div id="outline-container-org50164f8" class="outline-3">
+<h3 id="org50164f8">table-write</h3>
+<div class="outline-text-3" id="text-org50164f8">
 <div class="org-src-container">
 
-<pre class="src src-jojo"><span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">+disp</span> w <span style="color: #696969;">(</span><span style="color: #66d9ef; font-weight: bold;">-&gt;</span> <span style="color: #66d9ef; font-weight: bold;">&lt;tab&gt;</span><span style="color: #696969;">)</span> table-write<span style="color: #696969;">)</span>
+<pre class="src src-jojo"><span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">+disp</span> w <span style="color: #696969;">(</span><span style="color: #66d9ef; font-weight: bold;">-&gt;</span> <span style="color: #66d9ef; font-weight: bold;">&lt;null-table&gt;</span><span style="color: #696969;">)</span> drop <span style="color: #e6db74;">"(table)"</span> w<span style="color: #696969;">)</span>
+
+<span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">+disp</span> w <span style="color: #696969;">(</span><span style="color: #66d9ef; font-weight: bold;">-&gt;</span> <span style="color: #66d9ef; font-weight: bold;">&lt;cons-table&gt;</span><span style="color: #696969;">)</span> table-write<span style="color: #696969;">)</span>
 
 <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">+jojo</span> table-write <span style="color: #696969;">(</span><span style="color: #66d9ef; font-weight: bold;">-&gt;</span> <span style="color: #a6e22e;">:table</span> <span style="color: #66d9ef; font-weight: bold;">--</span><span style="color: #696969;">)</span>
+  <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">if</span> <span style="color: #a6e22e;">:table</span> null-table? <span style="color: #66d9ef; font-weight: bold;">then</span> <span style="color: #e6db74;">"(table)"</span> w <span style="color: #66d9ef; font-weight: bold;">end</span><span style="color: #696969;">)</span>
   <span style="color: #e6db74;">"(table "</span> w <span style="color: #a6e22e;">:table</span> table-write/loop <span style="color: #e6db74;">")"</span> w<span style="color: #696969;">)</span>
 
 <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">+jojo</span> table-write/loop <span style="color: #696969;">(</span><span style="color: #66d9ef; font-weight: bold;">-&gt;</span> <span style="color: #a6e22e;">:table</span> <span style="color: #66d9ef; font-weight: bold;">--</span><span style="color: #696969;">)</span>
   <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">cond</span>
-    <span style="color: #797979;">[</span><span style="color: #a6e22e;">:table</span> null?<span style="color: #797979;">]</span> <span style="color: #797979;">[]</span>
-    <span style="color: #797979;">[</span><span style="color: #a6e22e;">:table</span> <span style="color: #ae81ff;">.rest</span> null?<span style="color: #797979;">]</span> <span style="color: #797979;">[</span><span style="color: #a6e22e;">:table</span> <span style="color: #ae81ff;">.key</span> w space <span style="color: #a6e22e;">:table</span> <span style="color: #ae81ff;">.value</span> w<span style="color: #797979;">]</span>
+    <span style="color: #797979;">[</span><span style="color: #a6e22e;">:table</span> null-table?<span style="color: #797979;">]</span> <span style="color: #797979;">[]</span>
+    <span style="color: #797979;">[</span><span style="color: #a6e22e;">:table</span> <span style="color: #ae81ff;">.rest</span> null-table?<span style="color: #797979;">]</span> <span style="color: #797979;">[</span><span style="color: #a6e22e;">:table</span> <span style="color: #ae81ff;">.key</span> w space <span style="color: #a6e22e;">:table</span> <span style="color: #ae81ff;">.value</span> w<span style="color: #797979;">]</span>
     <span style="color: #66d9ef; font-weight: bold;">else</span> <span style="color: #797979;">[</span><span style="color: #a6e22e;">:table</span> <span style="color: #ae81ff;">.key</span> w space <span style="color: #a6e22e;">:table</span> <span style="color: #ae81ff;">.value</span> w comma w space
           <span style="color: #a6e22e;">:table</span> <span style="color: #ae81ff;">.rest</span> <span style="color: #66d9ef; font-weight: bold;">recur</span><span style="color: #797979;">]</span><span style="color: #696969;">))</span>
 </pre>
@@ -2015,13 +2191,13 @@ repl-flag-off
 </div>
 </div>
 
-<div id="outline-container-org9d4d084" class="outline-3">
-<h3 id="org9d4d084">table-find</h3>
-<div class="outline-text-3" id="text-org9d4d084">
+<div id="outline-container-org920fb6a" class="outline-3">
+<h3 id="org920fb6a">table-find</h3>
+<div class="outline-text-3" id="text-org920fb6a">
 <div class="org-src-container">
 
 <pre class="src src-jojo"><span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">+jojo</span> table-find <span style="color: #696969;">(</span><span style="color: #66d9ef; font-weight: bold;">-&gt;</span> <span style="color: #a6e22e;">:table</span> <span style="color: #a6e22e;">:key</span> <span style="color: #66d9ef; font-weight: bold;">--</span> value <span style="color: #66d9ef; font-weight: bold;">true</span> or <span style="color: #66d9ef; font-weight: bold;">false</span><span style="color: #696969;">)</span>
-  <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">cond</span> <span style="color: #797979;">[</span><span style="color: #a6e22e;">:table</span> null?<span style="color: #797979;">]</span> <span style="color: #66d9ef; font-weight: bold;">false</span>
+  <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">cond</span> <span style="color: #797979;">[</span><span style="color: #a6e22e;">:table</span> null-table?<span style="color: #797979;">]</span> <span style="color: #66d9ef; font-weight: bold;">false</span>
         <span style="color: #797979;">[</span><span style="color: #a6e22e;">:table</span> <span style="color: #ae81ff;">.key</span> <span style="color: #a6e22e;">:key</span> equal?<span style="color: #797979;">]</span> <span style="color: #797979;">[</span><span style="color: #a6e22e;">:table</span> <span style="color: #ae81ff;">.value</span> <span style="color: #66d9ef; font-weight: bold;">true</span><span style="color: #797979;">]</span>
         <span style="color: #66d9ef; font-weight: bold;">else</span> <span style="color: #797979;">[</span><span style="color: #a6e22e;">:table</span> <span style="color: #ae81ff;">.rest</span> <span style="color: #a6e22e;">:key</span> <span style="color: #66d9ef; font-weight: bold;">recur</span><span style="color: #797979;">]</span><span style="color: #696969;">))</span>
 </pre>
@@ -2029,13 +2205,13 @@ repl-flag-off
 </div>
 </div>
 
-<div id="outline-container-orgf3e28eb" class="outline-3">
-<h3 id="orgf3e28eb">table-contain?</h3>
-<div class="outline-text-3" id="text-orgf3e28eb">
+<div id="outline-container-orgf0d114e" class="outline-3">
+<h3 id="orgf0d114e">table-contain?</h3>
+<div class="outline-text-3" id="text-orgf0d114e">
 <div class="org-src-container">
 
 <pre class="src src-jojo"><span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">+jojo</span> table-contain? <span style="color: #696969;">(</span><span style="color: #66d9ef; font-weight: bold;">-&gt;</span> <span style="color: #a6e22e;">:large</span> <span style="color: #a6e22e;">:small</span> <span style="color: #66d9ef; font-weight: bold;">--</span> <span style="color: #66d9ef; font-weight: bold;">&lt;bool&gt;</span><span style="color: #696969;">)</span>
-  <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">cond</span> <span style="color: #797979;">[</span><span style="color: #a6e22e;">:small</span> null?<span style="color: #797979;">]</span> <span style="color: #66d9ef; font-weight: bold;">true</span>
+  <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">cond</span> <span style="color: #797979;">[</span><span style="color: #a6e22e;">:small</span> null-table?<span style="color: #797979;">]</span> <span style="color: #66d9ef; font-weight: bold;">true</span>
         <span style="color: #797979;">[</span><span style="color: #a6e22e;">:large</span> <span style="color: #a6e22e;">:small</span> <span style="color: #ae81ff;">.key</span> table-find<span style="color: #797979;">]</span>
         <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">if</span> <span style="color: #a6e22e;">:small</span> <span style="color: #ae81ff;">.value</span> equal?
             <span style="color: #66d9ef; font-weight: bold;">then</span> <span style="color: #a6e22e;">:large</span> <span style="color: #a6e22e;">:small</span> <span style="color: #ae81ff;">.rest</span> <span style="color: #66d9ef; font-weight: bold;">recur</span>
@@ -2046,27 +2222,106 @@ repl-flag-off
 </div>
 </div>
 
-<div id="outline-container-org67e490e" class="outline-3">
-<h3 id="org67e490e">table-merge</h3>
-<div class="outline-text-3" id="text-org67e490e">
+<div id="outline-container-org77c4069" class="outline-3">
+<h3 id="org77c4069">table-merge</h3>
+<div class="outline-text-3" id="text-org77c4069">
 <div class="org-src-container">
 
-<pre class="src src-jojo"><span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">+jojo</span> table-merge <span style="color: #696969;">(</span><span style="color: #66d9ef; font-weight: bold;">-&gt;</span> <span style="color: #a6e22e;">:1</span> <span style="color: #a6e22e;">:2</span> <span style="color: #66d9ef; font-weight: bold;">--</span> table <span style="color: #66d9ef; font-weight: bold;">true</span> or <span style="color: #66d9ef; font-weight: bold;">false</span><span style="color: #696969;">)</span>
-  <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">cond</span> <span style="color: #797979;">[]</span> <span style="color: #797979;">[]</span>
-        <span style="color: #797979;">[]</span> <span style="color: #797979;">[]</span>
-        <span style="color: #66d9ef; font-weight: bold;">else</span> <span style="color: #797979;">[]</span><span style="color: #696969;">))</span>
+<pre class="src src-jojo"><span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">+jojo</span> table-merge <span style="color: #696969;">(</span><span style="color: #66d9ef; font-weight: bold;">-&gt;</span> <span style="color: #a6e22e;">:base</span> <span style="color: #a6e22e;">:src</span> <span style="color: #66d9ef; font-weight: bold;">--</span> table <span style="color: #66d9ef; font-weight: bold;">true</span> or key <span style="color: #66d9ef; font-weight: bold;">false</span><span style="color: #696969;">)</span>
+  <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">cond</span> <span style="color: #797979;">[</span><span style="color: #a6e22e;">:src</span> null-table?<span style="color: #797979;">]</span> <span style="color: #797979;">[</span><span style="color: #a6e22e;">:base</span> <span style="color: #66d9ef; font-weight: bold;">true</span><span style="color: #797979;">]</span>
+        <span style="color: #797979;">[</span><span style="color: #a6e22e;">:base</span> <span style="color: #a6e22e;">:src</span> <span style="color: #ae81ff;">.key</span> table-find<span style="color: #797979;">]</span>
+        <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">if</span> <span style="color: #a6e22e;">:src</span> <span style="color: #ae81ff;">.value</span> equal?
+            <span style="color: #66d9ef; font-weight: bold;">then</span> <span style="color: #a6e22e;">:base</span> <span style="color: #a6e22e;">:src</span> <span style="color: #ae81ff;">.rest</span> <span style="color: #66d9ef; font-weight: bold;">recur</span>
+            <span style="color: #66d9ef; font-weight: bold;">else</span> <span style="color: #a6e22e;">:src</span> <span style="color: #ae81ff;">.key</span> <span style="color: #66d9ef; font-weight: bold;">false</span> <span style="color: #66d9ef; font-weight: bold;">end</span><span style="color: #696969;">)</span>
+        <span style="color: #66d9ef; font-weight: bold;">else</span> <span style="color: #797979;">[</span><span style="color: #a6e22e;">:base</span> <span style="color: #a6e22e;">:src</span> <span style="color: #ae81ff;">.key</span> <span style="color: #a6e22e;">:src</span> <span style="color: #ae81ff;">.value</span> cons-table
+              <span style="color: #a6e22e;">:src</span> <span style="color: #ae81ff;">.rest</span> <span style="color: #66d9ef; font-weight: bold;">recur</span><span style="color: #797979;">]</span><span style="color: #696969;">))</span>
+</pre>
+</div>
+</div>
+</div>
+
+<div id="outline-container-org4cf3a5" class="outline-3">
+<h3 id="org4cf3a5">table-equal?</h3>
+<div class="outline-text-3" id="text-org4cf3a5">
+<div class="org-src-container">
+
+<pre class="src src-jojo"><span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">+jojo</span> table-equal? <span style="color: #696969;">(</span><span style="color: #66d9ef; font-weight: bold;">-&gt;</span> <span style="color: #a6e22e;">:t1</span> <span style="color: #a6e22e;">:t2</span> <span style="color: #66d9ef; font-weight: bold;">--</span> <span style="color: #66d9ef; font-weight: bold;">&lt;bool&gt;</span><span style="color: #696969;">)</span>
+  <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">if</span> <span style="color: #a6e22e;">:t1</span> <span style="color: #a6e22e;">:t2</span> table-contain? not
+      <span style="color: #66d9ef; font-weight: bold;">then</span> <span style="color: #66d9ef; font-weight: bold;">false</span> <span style="color: #66d9ef; font-weight: bold;">end</span>
+      <span style="color: #66d9ef; font-weight: bold;">else</span> <span style="color: #a6e22e;">:t2</span> <span style="color: #a6e22e;">:t1</span> table-contain?<span style="color: #696969;">))</span>
+</pre>
+</div>
+</div>
+</div>
+
+<div id="outline-container-org1cd1bf9" class="outline-3">
+<h3 id="org1cd1bf9">table-key-filter</h3>
+<div class="outline-text-3" id="text-org1cd1bf9">
+<div class="org-src-container">
+
+<pre class="src src-jojo"><span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">+jojo</span> table-key-filter <span style="color: #696969;">(</span><span style="color: #66d9ef; font-weight: bold;">-&gt;</span> <span style="color: #a6e22e;">:table</span> <span style="color: #a6e22e;">:pred</span> <span style="color: #66d9ef; font-weight: bold;">--</span> <span style="color: #a6e22e;">:table</span><span style="color: #696969;">)</span>
+  <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">cond</span> <span style="color: #797979;">[</span><span style="color: #a6e22e;">:table</span> null-table?<span style="color: #797979;">]</span> null-table
+        <span style="color: #797979;">[</span><span style="color: #a6e22e;">:table</span> <span style="color: #ae81ff;">.key</span> <span style="color: #a6e22e;">:pred</span> apply<span style="color: #797979;">]</span>
+        <span style="color: #797979;">[</span><span style="color: #a6e22e;">:table</span> <span style="color: #ae81ff;">.rest</span> <span style="color: #a6e22e;">:pred</span> <span style="color: #66d9ef; font-weight: bold;">recur</span>
+         <span style="color: #a6e22e;">:table</span> <span style="color: #ae81ff;">.key</span> <span style="color: #a6e22e;">:table</span> <span style="color: #ae81ff;">.value</span> cons-table<span style="color: #797979;">]</span>
+        <span style="color: #66d9ef; font-weight: bold;">else</span> <span style="color: #797979;">[</span><span style="color: #a6e22e;">:table</span> <span style="color: #ae81ff;">.rest</span> <span style="color: #a6e22e;">:pred</span> <span style="color: #66d9ef; font-weight: bold;">recur</span><span style="color: #797979;">]</span><span style="color: #696969;">))</span>
+</pre>
+</div>
+</div>
+</div>
+
+<div id="outline-container-org33078a3" class="outline-3">
+<h3 id="org33078a3">table-key-map</h3>
+<div class="outline-text-3" id="text-org33078a3">
+<div class="org-src-container">
+
+<pre class="src src-jojo"><span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">+jojo</span> table-key-map <span style="color: #696969;">(</span><span style="color: #66d9ef; font-weight: bold;">-&gt;</span> <span style="color: #a6e22e;">:table</span> <span style="color: #a6e22e;">:fun</span> <span style="color: #66d9ef; font-weight: bold;">--</span> <span style="color: #a6e22e;">:table</span><span style="color: #696969;">)</span>
+  <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">cond</span> <span style="color: #797979;">[</span><span style="color: #a6e22e;">:table</span> null-table?<span style="color: #797979;">]</span> null-table
+        <span style="color: #66d9ef; font-weight: bold;">else</span> <span style="color: #797979;">[</span><span style="color: #a6e22e;">:table</span> <span style="color: #ae81ff;">.rest</span> <span style="color: #a6e22e;">:fun</span> <span style="color: #66d9ef; font-weight: bold;">recur</span>
+              <span style="color: #a6e22e;">:table</span> <span style="color: #ae81ff;">.key</span> <span style="color: #a6e22e;">:fun</span> apply
+              <span style="color: #a6e22e;">:table</span> <span style="color: #ae81ff;">.value</span> cons-table<span style="color: #797979;">]</span><span style="color: #696969;">))</span>
+</pre>
+</div>
+</div>
+</div>
+
+<div id="outline-container-org831907d" class="outline-3">
+<h3 id="org831907d"><span class="done _test_">[test]</span> </h3>
+<div class="outline-text-3" id="text-org831907d">
+<div class="org-src-container">
+
+<pre class="src src-jojo"><span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">test</span>
+
+  <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">assert</span>
+    <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">table</span> <span style="color: #ae81ff;">1</span> <span style="color: #e6db74;">"1"</span><span style="color: #f92672; font-weight: bold;">,</span> <span style="color: #ae81ff;">2</span> <span style="color: #e6db74;">"2"</span><span style="color: #f92672; font-weight: bold;">,</span> <span style="color: #ae81ff;">3</span> <span style="color: #e6db74;">"3"</span><span style="color: #696969;">)</span>
+    <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">table</span> <span style="color: #ae81ff;">2</span> <span style="color: #e6db74;">"2"</span><span style="color: #f92672; font-weight: bold;">,</span> <span style="color: #ae81ff;">3</span> <span style="color: #e6db74;">"3"</span><span style="color: #f92672; font-weight: bold;">,</span> <span style="color: #ae81ff;">4</span> <span style="color: #e6db74;">"4"</span><span style="color: #696969;">)</span>
+    <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">assert</span> table-merge<span style="color: #696969;">)</span>
+    <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">table</span> <span style="color: #ae81ff;">1</span> <span style="color: #e6db74;">"1"</span><span style="color: #f92672; font-weight: bold;">,</span> <span style="color: #ae81ff;">2</span> <span style="color: #e6db74;">"2"</span><span style="color: #f92672; font-weight: bold;">,</span> <span style="color: #ae81ff;">3</span> <span style="color: #e6db74;">"3"</span><span style="color: #f92672; font-weight: bold;">,</span> <span style="color: #ae81ff;">4</span> <span style="color: #e6db74;">"4"</span><span style="color: #696969;">)</span>
+    table-equal?<span style="color: #696969;">)</span>
+
+  <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">assert</span>
+    <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">table</span> <span style="color: #ae81ff;">1</span> <span style="color: #e6db74;">"1"</span><span style="color: #f92672; font-weight: bold;">,</span> <span style="color: #ae81ff;">2</span> <span style="color: #e6db74;">"2"</span><span style="color: #f92672; font-weight: bold;">,</span> <span style="color: #ae81ff;">3</span> <span style="color: #e6db74;">"3"</span><span style="color: #f92672; font-weight: bold;">,</span> <span style="color: #ae81ff;">4</span> <span style="color: #e6db74;">"4"</span><span style="color: #696969;">)</span>
+    <span style="color: #B380A8;">{</span>even?<span style="color: #B380A8;">}</span> table-key-filter
+    <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">table</span> <span style="color: #ae81ff;">2</span> <span style="color: #e6db74;">"2"</span><span style="color: #f92672; font-weight: bold;">,</span> <span style="color: #ae81ff;">4</span> <span style="color: #e6db74;">"4"</span><span style="color: #696969;">)</span>
+    table-equal?<span style="color: #696969;">)</span>
+
+  <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">assert</span>
+    <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">table</span> <span style="color: #ae81ff;">1</span> <span style="color: #e6db74;">"1"</span><span style="color: #f92672; font-weight: bold;">,</span> <span style="color: #ae81ff;">2</span> <span style="color: #e6db74;">"2"</span><span style="color: #f92672; font-weight: bold;">,</span> <span style="color: #ae81ff;">3</span> <span style="color: #e6db74;">"3"</span><span style="color: #f92672; font-weight: bold;">,</span> <span style="color: #ae81ff;">4</span> <span style="color: #e6db74;">"4"</span><span style="color: #696969;">)</span>
+    <span style="color: #B380A8;">{</span>dec<span style="color: #B380A8;">}</span> table-key-map
+    <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">table</span> <span style="color: #ae81ff;">0</span> <span style="color: #e6db74;">"1"</span><span style="color: #f92672; font-weight: bold;">,</span> <span style="color: #ae81ff;">1</span> <span style="color: #e6db74;">"2"</span><span style="color: #f92672; font-weight: bold;">,</span> <span style="color: #ae81ff;">2</span> <span style="color: #e6db74;">"3"</span><span style="color: #f92672; font-weight: bold;">,</span> <span style="color: #ae81ff;">3</span> <span style="color: #e6db74;">"4"</span><span style="color: #696969;">)</span>
+    table-equal?<span style="color: #696969;">))</span>
 </pre>
 </div>
 </div>
 </div>
 </div>
 
-<div id="outline-container-orgd8bf95a" class="outline-2">
-<h2 id="orgd8bf95a">byte</h2>
-<div class="outline-text-2" id="text-orgd8bf95a">
-</div><div id="outline-container-orgb0f66f9" class="outline-3">
-<h3 id="orgb0f66f9">(byte)</h3>
-<div class="outline-text-3" id="text-orgb0f66f9">
+<div id="outline-container-org3a7dcc8" class="outline-2">
+<h2 id="org3a7dcc8">byte</h2>
+<div class="outline-text-2" id="text-org3a7dcc8">
+</div><div id="outline-container-orga4ea10f" class="outline-3">
+<h3 id="orga4ea10f">(byte)</h3>
+<div class="outline-text-3" id="text-orga4ea10f">
 <div class="org-src-container">
 
 <pre class="src src-jojo"><span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">+jojo</span> byte <span style="color: #B380A8;">{</span>jo-&gt;byte emit-lit<span style="color: #B380A8;">}</span> list-for-each<span style="color: #696969;">)</span>
@@ -2076,12 +2331,12 @@ repl-flag-off
 </div>
 </div>
 
-<div id="outline-container-orgf0f5ee2" class="outline-2">
-<h2 id="orgf0f5ee2">system</h2>
-<div class="outline-text-2" id="text-orgf0f5ee2">
-</div><div id="outline-container-org56d4596" class="outline-3">
-<h3 id="org56d4596">cmd-list</h3>
-<div class="outline-text-3" id="text-org56d4596">
+<div id="outline-container-org16d20a9" class="outline-2">
+<h2 id="org16d20a9">system</h2>
+<div class="outline-text-2" id="text-org16d20a9">
+</div><div id="outline-container-org4208c06" class="outline-3">
+<h3 id="org4208c06">cmd-list</h3>
+<div class="outline-text-3" id="text-org4208c06">
 <div class="org-src-container">
 
 <pre class="src src-jojo"><span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">+jojo</span> cmd-list <span style="color: #ae81ff;">0</span> cmd-list/loop<span style="color: #696969;">)</span>
@@ -2096,9 +2351,9 @@ repl-flag-off
 </div>
 </div>
 
-<div id="outline-container-org1afabae" class="outline-3">
-<h3 id="org1afabae">dash-prefixed-string?</h3>
-<div class="outline-text-3" id="text-org1afabae">
+<div id="outline-container-orgc060d80" class="outline-3">
+<h3 id="orgc060d80">dash-prefixed-string?</h3>
+<div class="outline-text-3" id="text-orgc060d80">
 <div class="org-src-container">
 
 <pre class="src src-jojo"><span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">+jojo</span> dash-prefixed-string? <span style="color: #696969;">(</span><span style="color: #66d9ef; font-weight: bold;">-&gt;</span> <span style="color: #a6e22e;">:str</span> <span style="color: #66d9ef; font-weight: bold;">--</span> <span style="color: #66d9ef; font-weight: bold;">&lt;bool&gt;</span><span style="color: #696969;">)</span>
@@ -2109,18 +2364,50 @@ repl-flag-off
 </div>
 </div>
 </div>
-</div>
 
-<div id="outline-container-org3cac127" class="outline-2">
-<h2 id="org3cac127">&lt;file&gt;</h2>
-<div class="outline-text-2" id="text-org3cac127">
-</div><div id="outline-container-org45817be" class="outline-3">
-<h3 id="org45817be">maybe-drop-shabang</h3>
-<div class="outline-text-3" id="text-org45817be">
+<div id="outline-container-orgac07d41" class="outline-3">
+<h3 id="orgac07d41">usr-jojo-dir</h3>
+<div class="outline-text-3" id="text-orgac07d41">
 <div class="org-src-container">
 
-<pre class="src src-jojo"><span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">+jojo</span> maybe-drop-shabang <span style="color: #696969;">(</span><span style="color: #66d9ef; font-weight: bold;">-&gt;</span> <span style="color: #a6e22e;">:input-stack</span> <span style="color: #66d9ef; font-weight: bold;">--</span> <span style="color: #66d9ef; font-weight: bold;">&lt;input-stack&gt;</span><span style="color: #696969;">)</span>
-  <span style="color: #a6e22e;">:input-stack</span> reading-stack-push
+<pre class="src src-jojo"><span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">+jojo</span> usr-jojo-dir
+  <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">cond</span> <span style="color: #797979;">[</span><span style="color: #e6db74;">"USR_JOJO_DIR"</span> find-env-string<span style="color: #797979;">]</span> <span style="color: #797979;">[]</span>
+        <span style="color: #797979;">[</span><span style="color: #e6db74;">"HOME"</span> find-env-string<span style="color: #797979;">]</span> <span style="color: #797979;">[</span><span style="color: #e6db74;">"/.jojo"</span> string-append<span style="color: #797979;">]</span>
+        <span style="color: #66d9ef; font-weight: bold;">else</span> <span style="color: #797979;">[</span><span style="color: #e6db74;">"- usr-jojo-dir fail"</span> w nl
+              <span style="color: #e6db74;">"  system env USR_JOJO_DIR is empty"</span> w nl
+              <span style="color: #e6db74;">"  system env HOME is empty"</span> w nl
+              <span style="color: #66d9ef; font-weight: bold;">debug</span><span style="color: #797979;">]</span><span style="color: #696969;">))</span>
+</pre>
+</div>
+</div>
+</div>
+
+<div id="outline-container-org52d85c" class="outline-3">
+<h3 id="org52d85c">sys-jojo-dir</h3>
+<div class="outline-text-3" id="text-org52d85c">
+<div class="org-src-container">
+
+<pre class="src src-jojo"><span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">+jojo</span> sys-jojo-dir
+  <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">cond</span> <span style="color: #797979;">[</span><span style="color: #e6db74;">"SYS_JOJO_DIR"</span> find-env-string<span style="color: #797979;">]</span> <span style="color: #797979;">[]</span>
+        <span style="color: #66d9ef; font-weight: bold;">else</span> <span style="color: #e6db74;">"/usr/lib/jojo"</span><span style="color: #696969;">))</span>
+</pre>
+</div>
+</div>
+</div>
+</div>
+
+<div id="outline-container-org52bedf8" class="outline-2">
+<h2 id="org52bedf8">&lt;file&gt;</h2>
+<div class="outline-text-2" id="text-org52bedf8">
+</div><div id="outline-container-orgaccc20d" class="outline-3">
+<h3 id="orgaccc20d">maybe-drop-shabang</h3>
+<div class="outline-text-3" id="text-orgaccc20d">
+<div class="org-src-container">
+
+<pre class="src src-jojo"><span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">+jojo</span> maybe-drop-shabang
+  <span style="color: #696969;">(</span><span style="color: #66d9ef; font-weight: bold;">-&gt;</span> <span style="color: #66d9ef; font-weight: bold;">&lt;input-stack&gt;</span> <span style="color: #66d9ef; font-weight: bold;">--</span> <span style="color: #66d9ef; font-weight: bold;">&lt;input-stack&gt;</span><span style="color: #696969;">)</span>
+  <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">if</span> dup input-stack-empty? <span style="color: #66d9ef; font-weight: bold;">then</span> <span style="color: #66d9ef; font-weight: bold;">end</span><span style="color: #696969;">)</span>
+  reading-stack-push
   read-line <span style="color: #fd971f;">:line!</span>
   <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">cond</span> <span style="color: #797979;">[</span><span style="color: #a6e22e;">:line</span> string-length <span style="color: #ae81ff;">3</span> lteq?<span style="color: #797979;">]</span> <span style="color: #797979;">[</span><span style="color: #a6e22e;">:line</span> string-unread<span style="color: #797979;">]</span>
         <span style="color: #797979;">[</span><span style="color: #a6e22e;">:line</span> <span style="color: #ae81ff;">0</span> <span style="color: #ae81ff;">2</span> string-slice <span style="color: #e6db74;">"#!"</span> string-eq?<span style="color: #797979;">]</span> <span style="color: #797979;">[]</span>
@@ -2131,33 +2418,106 @@ repl-flag-off
 </div>
 </div>
 
-<div id="outline-container-org885a118" class="outline-3">
-<h3 id="org885a118">path-load</h3>
-<div class="outline-text-3" id="text-org885a118">
+<div id="outline-container-org81c0519" class="outline-3">
+<h3 id="org81c0519">input-stack-read-sexp-list</h3>
+<div class="outline-text-3" id="text-org81c0519">
+<div class="org-src-container">
+
+<pre class="src src-jojo"><span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">+jojo</span> input-stack-read-sexp-list
+  <span style="color: #696969;">(</span><span style="color: #66d9ef; font-weight: bold;">-&gt;</span> <span style="color: #66d9ef; font-weight: bold;">&lt;input-stack&gt;</span> <span style="color: #66d9ef; font-weight: bold;">--</span> sexp list<span style="color: #696969;">)</span>
+  reading-stack-push
+  read-sexp-list-to-the-end
+  reading-stack-pop input-stack-free<span style="color: #696969;">)</span>
+</pre>
+</div>
+</div>
+</div>
+
+<div id="outline-container-org87805d0" class="outline-3">
+<h3 id="org87805d0">read-sexp-list-to-the-end</h3>
+<div class="outline-text-3" id="text-org87805d0">
+<div class="org-src-container">
+
+<pre class="src src-jojo"><span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">+jojo</span> read-sexp-list-to-the-end <span style="color: #696969;">(</span><span style="color: #66d9ef; font-weight: bold;">-&gt;</span> <span style="color: #66d9ef; font-weight: bold;">--</span> sexp list<span style="color: #696969;">)</span>
+  <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">if</span> has-jo? not <span style="color: #66d9ef; font-weight: bold;">then</span> null <span style="color: #66d9ef; font-weight: bold;">end</span><span style="color: #696969;">)</span>
+  read-sexp <span style="color: #66d9ef; font-weight: bold;">recur</span> cons<span style="color: #696969;">)</span>
+</pre>
+</div>
+</div>
+</div>
+
+<div id="outline-container-org8a57b77" class="outline-3">
+<h3 id="org8a57b77">absolute-path?</h3>
+<div class="outline-text-3" id="text-org8a57b77">
+<div class="org-src-container">
+
+<pre class="src src-jojo"><span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">+jojo</span> absolute-path? <span style="color: #696969;">(</span><span style="color: #66d9ef; font-weight: bold;">-&gt;</span> <span style="color: #a6e22e;">:path</span> <span style="color: #66d9ef; font-weight: bold;">--</span> <span style="color: #66d9ef; font-weight: bold;">&lt;bool&gt;</span><span style="color: #696969;">)</span>
+  <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">if</span> <span style="color: #a6e22e;">:path</span> string-length <span style="color: #ae81ff;">0</span> eq? <span style="color: #66d9ef; font-weight: bold;">then</span> <span style="color: #66d9ef; font-weight: bold;">false</span> <span style="color: #66d9ef; font-weight: bold;">end</span><span style="color: #696969;">)</span>
+  <span style="color: #a6e22e;">:path</span> <span style="color: #ae81ff;">0</span> string-ref <span style="color: #696969;">(</span>byte /<span style="color: #696969;">)</span> eq?<span style="color: #696969;">)</span>
+</pre>
+</div>
+</div>
+</div>
+
+<div id="outline-container-org495ccca" class="outline-3">
+<h3 id="org495ccca">path-&gt;reading-path</h3>
+<div class="outline-text-3" id="text-org495ccca">
+<div class="org-src-container">
+
+<pre class="src src-jojo"><span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">+jojo</span> path-&gt;reading-path <span style="color: #696969;">(</span><span style="color: #66d9ef; font-weight: bold;">-&gt;</span> <span style="color: #a6e22e;">:path</span> <span style="color: #66d9ef; font-weight: bold;">--</span> path<span style="color: #696969;">)</span>
+  <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">if</span> <span style="color: #a6e22e;">:path</span> absolute-path?
+      <span style="color: #66d9ef; font-weight: bold;">then</span> <span style="color: #a6e22e;">:path</span>
+      <span style="color: #66d9ef; font-weight: bold;">else</span> current-reading-dir <span style="color: #a6e22e;">:path</span> string-append<span style="color: #696969;">))</span>
+</pre>
+</div>
+</div>
+</div>
+
+<div id="outline-container-org8d6ae58" class="outline-3">
+<h3 id="org8d6ae58">path-readable?</h3>
+<div class="outline-text-3" id="text-org8d6ae58">
+<div class="org-src-container">
+
+<pre class="src src-jojo"><span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">+jojo</span> path-readable? <span style="color: #696969;">(</span><span style="color: #66d9ef; font-weight: bold;">-&gt;</span> <span style="color: #a6e22e;">:path</span> <span style="color: #66d9ef; font-weight: bold;">--</span> <span style="color: #66d9ef; font-weight: bold;">&lt;bool&gt;</span><span style="color: #696969;">)</span>
+  <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">if</span> <span style="color: #a6e22e;">:path</span> path-open-read
+      <span style="color: #66d9ef; font-weight: bold;">then</span> file-close <span style="color: #66d9ef; font-weight: bold;">true</span>
+      <span style="color: #66d9ef; font-weight: bold;">else</span> drop <span style="color: #66d9ef; font-weight: bold;">false</span><span style="color: #696969;">))</span>
+</pre>
+</div>
+</div>
+</div>
+
+<div id="outline-container-org26f7b7d" class="outline-3">
+<h3 id="org26f7b7d">path-load</h3>
+<div class="outline-text-3" id="text-org26f7b7d">
 <div class="org-src-container">
 
 <pre class="src src-jojo"><span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">+jojo</span> path-load <span style="color: #696969;">(</span><span style="color: #66d9ef; font-weight: bold;">-&gt;</span> <span style="color: #a6e22e;">:path</span> <span style="color: #66d9ef; font-weight: bold;">--</span><span style="color: #696969;">)</span>
-  <span style="color: #a6e22e;">:path</span> path-open-read
-  <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">if</span> not <span style="color: #66d9ef; font-weight: bold;">then</span>
-      <span style="color: #e6db74;">"- path-load fail"</span> w nl
-      <span style="color: #e6db74;">"  path : "</span> w <span style="color: #a6e22e;">:path</span> w nl
-      <span style="color: #e6db74;">"  "</span> w error-number-print nl
-      <span style="color: #66d9ef; font-weight: bold;">debug</span><span style="color: #696969;">)</span>
-  file-input-stack
-  maybe-drop-shabang
-  repl<span style="color: #696969;">)</span>
+  <span style="color: #a6e22e;">:path</span> path-&gt;reading-path <span style="color: #fd971f;">:real-path!</span>
+  <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">cond</span> <span style="color: #797979;">[</span><span style="color: #a6e22e;">:real-path</span> path-open-read<span style="color: #797979;">]</span>
+        <span style="color: #797979;">[</span><span style="color: #fd971f;">:file!</span>
+         <span style="color: #a6e22e;">:file</span> file-input-stack
+         maybe-drop-shabang
+         repl
+         <span style="color: #a6e22e;">:file</span> file-close<span style="color: #797979;">]</span>
+        <span style="color: #66d9ef; font-weight: bold;">else</span> <span style="color: #797979;">[</span><span style="color: #fd971f;">:error-number!</span>
+              <span style="color: #e6db74;">"- path-load fail"</span> w nl
+              <span style="color: #e6db74;">"  path : "</span> w <span style="color: #a6e22e;">:path</span> w nl
+              <span style="color: #e6db74;">"  real-path : "</span> w <span style="color: #a6e22e;">:real-path</span> w nl
+              <span style="color: #e6db74;">"  "</span> w <span style="color: #a6e22e;">:error-number</span> error-number-print nl
+              <span style="color: #66d9ef; font-weight: bold;">debug</span><span style="color: #797979;">]</span><span style="color: #696969;">))</span>
 </pre>
 </div>
 </div>
 </div>
 </div>
 
-<div id="outline-container-orgefb8d02" class="outline-2">
-<h2 id="orgefb8d02">module</h2>
-<div class="outline-text-2" id="text-orgefb8d02">
-</div><div id="outline-container-orga03a6ff" class="outline-3">
-<h3 id="orga03a6ff"><span class="todo _note_">[note]</span> module system</h3>
-<div class="outline-text-3" id="text-orga03a6ff">
+<div id="outline-container-orgbe1addc" class="outline-2">
+<h2 id="orgbe1addc">module</h2>
+<div class="outline-text-2" id="text-orgbe1addc">
+</div><div id="outline-container-org46520fa" class="outline-3">
+<h3 id="org46520fa"><span class="todo _note_">[note]</span> module system</h3>
+<div class="outline-text-3" id="text-org46520fa">
 <ul class="org-ul">
 <li><p>a module in jojo is a global name</p><p>stores a table of exported names,</p></li>
 
@@ -2165,26 +2525,27 @@ repl-flag-off
 
 <li><p>every module has a version,</p><p><ul class="org-ul"></p><p><li><p>in jojo, the global name</p><p>should be "&lt;module-name&gt;/&lt;version&gt;"</p></li></p><p><li><p>in file system, the dir of a module</p><p>should be "&lt;module-name&gt;/&lt;version&gt;/*"</p></li></ul></p></li>
 
-<li><p>a module will be installed to "~/.jojo"</p><p>as "~/.jojo/module/&lt;module-name&gt;/&lt;version&gt;/*"</p></li>
+<li><p>a module will be installed to "~/.jojo"</p><p>as "~/.jojo/modules/&lt;module-name&gt;/&lt;version&gt;/*"</p></li>
 
 <li><p>module system solves two problems :</p><p></p><p><ul class="org-ul"></p><p><li><p>re-load problem :</p><p>when used by multiple clients,</p><p>a module should only be loaded once.</p></li></p><p></p><p><li><p>unique-name problem :</p><p>a name must be resolved to an unique-name</p></li></ul></p></li></ul>
 </div>
 </div>
 
-<div id="outline-container-org7e05659" class="outline-3">
-<h3 id="org7e05659">(+module)</h3>
-<div class="outline-text-3" id="text-org7e05659">
+<div id="outline-container-org110b77a" class="outline-3">
+<h3 id="org110b77a">(+module)</h3>
+<div class="outline-text-3" id="text-org110b77a">
 <div class="org-src-container">
 
-<pre class="src src-jojo"><span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">+jojo</span> +module <span style="color: #696969;">(</span><span style="color: #66d9ef; font-weight: bold;">-&gt;</span> <span style="color: #a6e22e;">:body</span> <span style="color: #66d9ef; font-weight: bold;">--</span><span style="color: #696969;">)</span>
-  <span style="color: #a6e22e;">:body</span> <span style="color: #ae81ff;">.car</span> <span style="color: #fd971f;">:name!</span>
-  <span style="color: #a6e22e;">:body</span> <span style="color: #ae81ff;">.cdr</span> <span style="color: #fd971f;">:rest!</span>
+<pre class="src src-jojo"><span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">+jojo</span> +module
+  dup <span style="color: #ae81ff;">.car</span> <span style="color: #fd971f;">:name!</span> <span style="color: #ae81ff;">.cdr</span> <span style="color: #fd971f;">:body!</span>
 
-  <span style="color: #a6e22e;">:rest</span> <span style="color: #a6e22e;">:name</span>
+  <span style="color: #a6e22e;">:body</span> expend-include <span style="color: #fd971f;">:body!</span>
+
+  <span style="color: #a6e22e;">:body</span> <span style="color: #a6e22e;">:name</span>
   module/generate-define-table
   <span style="color: #fd971f;">:define-table!</span>
 
-  <span style="color: #a6e22e;">:rest</span> <span style="color: #a6e22e;">:name</span>
+  <span style="color: #a6e22e;">:body</span> <span style="color: #a6e22e;">:name</span>
   module/generate-export-table
   <span style="color: #fd971f;">:export-table!</span>
 
@@ -2192,86 +2553,151 @@ repl-flag-off
   <span style="color: #a6e22e;">:export-table</span>
   module/export-check
 
-  <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">note</span> <span style="color: #a6e22e;">:rest</span>
-    module/collect-import-table-list
-    <span style="color: #B380A8;">{</span>table-merge<span style="color: #B380A8;">}</span> list-foldr
-    <span style="color: #a6e22e;">:define-table</span> table-merge
-    <span style="color: #fd971f;">:rename-table!</span><span style="color: #696969;">)</span>
+  <span style="color: #a6e22e;">:body</span> module/collect-import-table-list
+  <span style="color: #fd971f;">:import-table-list!</span>
 
-  <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">note</span>
-    <span style="color: #a6e22e;">:rest</span>
-    <span style="color: #B380A8;">{</span>&gt;&lt;&gt;&lt;&gt;&lt; sexp not for module<span style="color: #B380A8;">}</span> list-filter
-    <span style="color: #B380A8;">{</span><span style="color: #a6e22e;">:rename-table</span> sexp-table-substitute<span style="color: #B380A8;">}</span> list-map
-    sexp-list-compile<span style="color: #696969;">)</span>
+  <span style="color: #a6e22e;">:import-table-list</span>
+  <span style="color: #B380A8;">{</span><span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">if</span> table-merge not <span style="color: #66d9ef; font-weight: bold;">then</span>
+       <span style="color: #e6db74;">"- (+module) fail to merge import-table-list"</span> w nl
+       <span style="color: #e6db74;">"  import-table-list : "</span> w <span style="color: #a6e22e;">:import-table-list</span> w nl
+       <span style="color: #e6db74;">"  key : "</span> w w nl
+       <span style="color: #e6db74;">"  module name : "</span> w <span style="color: #a6e22e;">:name</span> w nl
+       <span style="color: #66d9ef; font-weight: bold;">debug</span><span style="color: #696969;">)</span><span style="color: #B380A8;">}</span>
+  null-table swap list-foldr <span style="color: #fd971f;">:import-table!</span>
 
-  <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">note</span>
-    <span style="color: #a6e22e;">:export-table</span>
-    <span style="color: #a6e22e;">:name</span> name-bind<span style="color: #696969;">)</span>
+  <span style="color: #a6e22e;">:import-table</span> <span style="color: #a6e22e;">:define-table</span>
+  <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">if</span> table-merge not <span style="color: #66d9ef; font-weight: bold;">then</span>
+      <span style="color: #e6db74;">"- (+module) fail to merge import-table with define-table"</span> w nl
+      <span style="color: #e6db74;">"  import-table : "</span> w <span style="color: #a6e22e;">:import-table</span> w nl
+      <span style="color: #e6db74;">"  define-table : "</span> w <span style="color: #a6e22e;">:define-table</span> w nl
+      <span style="color: #e6db74;">"  key : "</span> w w nl
+      <span style="color: #e6db74;">"  module name : "</span> w <span style="color: #a6e22e;">:name</span> w nl
+      <span style="color: #66d9ef; font-weight: bold;">debug</span><span style="color: #696969;">)</span>
+  <span style="color: #fd971f;">:rename-table!</span>
 
-  <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">list</span>
-    <span style="color: #a6e22e;">:define-table</span>
-    <span style="color: #a6e22e;">:export-table</span><span style="color: #696969;">)</span>
+  <span style="color: #a6e22e;">:body</span>
+  <span style="color: #B380A8;">{</span>sexp-for-module? not<span style="color: #B380A8;">}</span> list-filter
+  <span style="color: #B380A8;">{</span><span style="color: #a6e22e;">:rename-table</span> sexp-table-substitute<span style="color: #B380A8;">}</span> list-map
+  sexp-list-compile
+
+  <span style="color: #a6e22e;">:export-table</span>
   <span style="color: #a6e22e;">:name</span> name-bind<span style="color: #696969;">)</span>
 </pre>
 </div>
 </div>
 </div>
 
-<div id="outline-container-orgd822e50" class="outline-3">
-<h3 id="orgd822e50">module/generate-define-table</h3>
-<div class="outline-text-3" id="text-orgd822e50">
+<div id="outline-container-org4d97901" class="outline-3">
+<h3 id="org4d97901">expend-include</h3>
+<div class="outline-text-3" id="text-org4d97901">
+<div class="org-src-container">
+
+<pre class="src src-jojo"><span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">+jojo</span> expend-include <span style="color: #696969;">(</span><span style="color: #66d9ef; font-weight: bold;">-&gt;</span> <span style="color: #a6e22e;">:body</span> <span style="color: #66d9ef; font-weight: bold;">--</span> body<span style="color: #696969;">)</span>
+  <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">cond</span> <span style="color: #797979;">[</span><span style="color: #a6e22e;">:body</span> null?<span style="color: #797979;">]</span> null
+        <span style="color: #797979;">[</span><span style="color: #a6e22e;">:body</span> <span style="color: #ae81ff;">.car</span> cons? not<span style="color: #797979;">]</span> <span style="color: #797979;">[</span><span style="color: #a6e22e;">:body</span> <span style="color: #ae81ff;">.car</span> <span style="color: #a6e22e;">:body</span> <span style="color: #ae81ff;">.cdr</span> <span style="color: #66d9ef; font-weight: bold;">recur</span> cons<span style="color: #797979;">]</span>
+        <span style="color: #797979;">[</span><span style="color: #a6e22e;">:body</span> <span style="color: #ae81ff;">.car</span> <span style="color: #ae81ff;">.car</span> 'include eq?<span style="color: #797979;">]</span>
+        <span style="color: #797979;">[</span><span style="color: #a6e22e;">:body</span> <span style="color: #ae81ff;">.car</span> <span style="color: #ae81ff;">.cdr</span> path-list-read-sexp-list
+         <span style="color: #a6e22e;">:body</span> <span style="color: #ae81ff;">.cdr</span> <span style="color: #66d9ef; font-weight: bold;">recur</span>
+         list-append<span style="color: #797979;">]</span>
+        <span style="color: #66d9ef; font-weight: bold;">else</span> <span style="color: #797979;">[</span><span style="color: #a6e22e;">:body</span> <span style="color: #ae81ff;">.car</span> <span style="color: #a6e22e;">:body</span> <span style="color: #ae81ff;">.cdr</span> <span style="color: #66d9ef; font-weight: bold;">recur</span> cons<span style="color: #797979;">]</span><span style="color: #696969;">))</span>
+</pre>
+</div>
+</div>
+</div>
+
+<div id="outline-container-org9476a29" class="outline-3">
+<h3 id="org9476a29">path-list-read-sexp-list</h3>
+<div class="outline-text-3" id="text-org9476a29">
+<div class="org-src-container">
+
+<pre class="src src-jojo"><span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">+jojo</span> path-list-read-sexp-list
+  <span style="color: #B380A8;">{</span>path-read-sexp-list<span style="color: #B380A8;">}</span> list-map
+  null <span style="color: #B380A8;">{</span>list-append<span style="color: #B380A8;">}</span> list-foldr<span style="color: #696969;">)</span>
+</pre>
+</div>
+</div>
+</div>
+
+<div id="outline-container-org3c3e980" class="outline-3">
+<h3 id="org3c3e980">path-read-sexp-list</h3>
+<div class="outline-text-3" id="text-org3c3e980">
+<div class="org-src-container">
+
+<pre class="src src-jojo"><span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">+jojo</span> path-read-sexp-list <span style="color: #696969;">(</span><span style="color: #66d9ef; font-weight: bold;">-&gt;</span> <span style="color: #a6e22e;">:path</span> <span style="color: #66d9ef; font-weight: bold;">--</span><span style="color: #696969;">)</span>
+  <span style="color: #a6e22e;">:path</span> path-&gt;reading-path <span style="color: #fd971f;">:real-path!</span>
+  <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">cond</span> <span style="color: #797979;">[</span><span style="color: #a6e22e;">:real-path</span> path-open-read<span style="color: #797979;">]</span>
+        <span style="color: #797979;">[</span><span style="color: #fd971f;">:file!</span> <span style="color: #a6e22e;">:file</span> file-input-stack
+         input-stack-read-sexp-list
+         <span style="color: #a6e22e;">:file</span> file-close<span style="color: #797979;">]</span>
+        <span style="color: #66d9ef; font-weight: bold;">else</span> <span style="color: #797979;">[</span><span style="color: #fd971f;">:error-number!</span>
+              <span style="color: #e6db74;">"- path-read-sexp-list fail"</span> w nl
+              <span style="color: #e6db74;">"  path : "</span> w <span style="color: #a6e22e;">:path</span> w nl
+              <span style="color: #e6db74;">"  real-path : "</span> w <span style="color: #a6e22e;">:real-path</span> w nl
+              <span style="color: #e6db74;">"  "</span> w <span style="color: #a6e22e;">:error-number</span> error-number-print nl
+              <span style="color: #66d9ef; font-weight: bold;">debug</span><span style="color: #797979;">]</span><span style="color: #696969;">))</span>
+</pre>
+</div>
+</div>
+</div>
+
+<div id="outline-container-org44a18eb" class="outline-3">
+<h3 id="org44a18eb">list-car-filter</h3>
+<div class="outline-text-3" id="text-org44a18eb">
+<div class="org-src-container">
+
+<pre class="src src-jojo"><span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">+jojo</span> list-car-filter <span style="color: #696969;">(</span><span style="color: #66d9ef; font-weight: bold;">-&gt;</span> list <span style="color: #a6e22e;">:pred</span> <span style="color: #66d9ef; font-weight: bold;">--</span> list<span style="color: #696969;">)</span>
+  <span style="color: #B380A8;">{</span><span style="color: #fd971f;">:x!</span> <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">if</span> <span style="color: #a6e22e;">:x</span> cons? not <span style="color: #66d9ef; font-weight: bold;">then</span> <span style="color: #66d9ef; font-weight: bold;">false</span>
+           <span style="color: #66d9ef; font-weight: bold;">else</span> <span style="color: #a6e22e;">:x</span> <span style="color: #ae81ff;">.car</span> <span style="color: #a6e22e;">:pred</span> apply<span style="color: #696969;">)</span><span style="color: #B380A8;">}</span>
+  list-filter<span style="color: #696969;">)</span>
+</pre>
+</div>
+</div>
+</div>
+
+<div id="outline-container-org70431d9" class="outline-3">
+<h3 id="org70431d9">module/generate-define-table</h3>
+<div class="outline-text-3" id="text-org70431d9">
 <div class="org-src-container">
 
 <pre class="src src-jojo"><span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">+jojo</span> module/generate-define-table
   <span style="color: #696969;">(</span><span style="color: #66d9ef; font-weight: bold;">-&gt;</span> <span style="color: #a6e22e;">:list</span> <span style="color: #a6e22e;">:name</span> <span style="color: #66d9ef; font-weight: bold;">--</span> table<span style="color: #696969;">)</span>
   <span style="color: #a6e22e;">:list</span>
-  <span style="color: #B380A8;">{</span><span style="color: #fd971f;">:sexp!</span>
-   <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">cond</span> <span style="color: #797979;">[</span><span style="color: #a6e22e;">:sexp</span> cons? not<span style="color: #797979;">]</span> <span style="color: #66d9ef; font-weight: bold;">false</span>
-         <span style="color: #797979;">[</span>'<span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">+jojo</span> +gene +disp<span style="color: #696969;">)</span> <span style="color: #B380A8;">{</span><span style="color: #a6e22e;">:sexp</span> <span style="color: #ae81ff;">.car</span> eq?<span style="color: #B380A8;">}</span> list-any?<span style="color: #797979;">]</span> <span style="color: #66d9ef; font-weight: bold;">true</span>
-         <span style="color: #66d9ef; font-weight: bold;">else</span> <span style="color: #66d9ef; font-weight: bold;">false</span><span style="color: #696969;">)</span><span style="color: #B380A8;">}</span>
-  list-filter
-  <span style="color: #B380A8;">{</span><span style="color: #ae81ff;">.cdr</span> <span style="color: #ae81ff;">.car</span><span style="color: #B380A8;">}</span>
-  list-map
-  null
+  <span style="color: #B380A8;">{</span>'<span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">+jojo</span> +gene +disp<span style="color: #696969;">)</span> swap list-member?<span style="color: #B380A8;">}</span>
+  list-car-filter <span style="color: #B380A8;">{</span><span style="color: #ae81ff;">.cdr</span> <span style="color: #ae81ff;">.car</span><span style="color: #B380A8;">}</span> list-map
   <span style="color: #B380A8;">{</span><span style="color: #696969;">(</span><span style="color: #66d9ef; font-weight: bold;">-&gt;</span> <span style="color: #a6e22e;">:s</span> <span style="color: #a6e22e;">:table</span> <span style="color: #66d9ef; font-weight: bold;">--</span> table<span style="color: #696969;">)</span>
    <span style="color: #a6e22e;">:table</span> <span style="color: #a6e22e;">:s</span>
    <span style="color: #a6e22e;">:name</span> ': jo-append <span style="color: #a6e22e;">:s</span> jo-append
-   tab<span style="color: #B380A8;">}</span>
-  list-foldr<span style="color: #696969;">)</span>
+   cons-table<span style="color: #B380A8;">}</span>
+  null-table swap list-foldr<span style="color: #696969;">)</span>
 </pre>
 </div>
 </div>
 </div>
 
-<div id="outline-container-org6b8a535" class="outline-3">
-<h3 id="org6b8a535">module/generate-export-table</h3>
-<div class="outline-text-3" id="text-org6b8a535">
+<div id="outline-container-orgc233da0" class="outline-3">
+<h3 id="orgc233da0">module/generate-export-table</h3>
+<div class="outline-text-3" id="text-orgc233da0">
 <div class="org-src-container">
 
 <pre class="src src-jojo"><span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">+jojo</span> module/generate-export-table
   <span style="color: #696969;">(</span><span style="color: #66d9ef; font-weight: bold;">-&gt;</span> <span style="color: #a6e22e;">:list</span> <span style="color: #a6e22e;">:name</span> <span style="color: #66d9ef; font-weight: bold;">--</span> table<span style="color: #696969;">)</span>
   <span style="color: #a6e22e;">:list</span>
-  <span style="color: #B380A8;">{</span><span style="color: #fd971f;">:sexp!</span>
-   <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">cond</span> <span style="color: #797979;">[</span><span style="color: #a6e22e;">:sexp</span> cons? not<span style="color: #797979;">]</span> <span style="color: #66d9ef; font-weight: bold;">false</span>
-         <span style="color: #797979;">[</span>'export <span style="color: #a6e22e;">:sexp</span> <span style="color: #ae81ff;">.car</span> eq?<span style="color: #797979;">]</span> <span style="color: #66d9ef; font-weight: bold;">true</span>
-         <span style="color: #66d9ef; font-weight: bold;">else</span> <span style="color: #66d9ef; font-weight: bold;">false</span><span style="color: #696969;">)</span><span style="color: #B380A8;">}</span>
-  list-filter
-  <span style="color: #B380A8;">{</span><span style="color: #ae81ff;">.cdr</span><span style="color: #B380A8;">}</span> list-map
+  <span style="color: #B380A8;">{</span>'export eq?<span style="color: #B380A8;">}</span>
+  list-car-filter <span style="color: #B380A8;">{</span><span style="color: #ae81ff;">.cdr</span><span style="color: #B380A8;">}</span> list-map
   null <span style="color: #B380A8;">{</span>list-append<span style="color: #B380A8;">}</span> list-foldr
-  null
   <span style="color: #B380A8;">{</span><span style="color: #696969;">(</span><span style="color: #66d9ef; font-weight: bold;">-&gt;</span> <span style="color: #a6e22e;">:s</span> <span style="color: #a6e22e;">:table</span> <span style="color: #66d9ef; font-weight: bold;">--</span> table<span style="color: #696969;">)</span>
    <span style="color: #a6e22e;">:table</span> <span style="color: #a6e22e;">:s</span>
    <span style="color: #a6e22e;">:name</span> ': jo-append <span style="color: #a6e22e;">:s</span> jo-append
-   tab<span style="color: #B380A8;">}</span>
-  list-foldr<span style="color: #696969;">)</span>
+   cons-table<span style="color: #B380A8;">}</span>
+  null-table swap list-foldr<span style="color: #696969;">)</span>
 </pre>
 </div>
 </div>
 </div>
 
-<div id="outline-container-org4a656b1" class="outline-3">
-<h3 id="org4a656b1">module/export-check</h3>
-<div class="outline-text-3" id="text-org4a656b1">
+<div id="outline-container-orgf903601" class="outline-3">
+<h3 id="orgf903601">module/export-check</h3>
+<div class="outline-text-3" id="text-orgf903601">
 <div class="org-src-container">
 
 <pre class="src src-jojo"><span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">+jojo</span> module/export-check
@@ -2287,57 +2713,278 @@ repl-flag-off
 </div>
 </div>
 
-<div id="outline-container-org63836a6" class="outline-3">
-<h3 id="org63836a6"><span class="todo _gt__lt_">&gt;&lt;</span> module/collect-import-table-list</h3>
-<div class="outline-text-3" id="text-org63836a6">
+<div id="outline-container-org4d83273" class="outline-3">
+<h3 id="org4d83273">module/collect-import-table-list</h3>
+<div class="outline-text-3" id="text-org4d83273">
 <div class="org-src-container">
 
-<pre class="src src-jojo"><span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">+jojo</span> module/collect-import-table-list <span style="color: #696969;">)</span>
+<pre class="src src-jojo"><span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">+jojo</span> module/collect-import-table-list
+  <span style="color: #B380A8;">{</span>'import eq?<span style="color: #B380A8;">}</span> list-car-filter
+  <span style="color: #B380A8;">{</span><span style="color: #ae81ff;">.cdr</span> module/import-one<span style="color: #B380A8;">}</span> list-map<span style="color: #696969;">)</span>
 </pre>
 </div>
 </div>
 </div>
 
-<div id="outline-container-orgfefbc6e" class="outline-3">
-<h3 id="orgfefbc6e"><span class="done _test_">[test]</span> </h3>
-<div class="outline-text-3" id="text-orgfefbc6e">
+<div id="outline-container-org53507c1" class="outline-3">
+<h3 id="org53507c1">module/import-one</h3>
+<div class="outline-text-3" id="text-org53507c1">
 <div class="org-src-container">
 
-<pre class="src src-jojo"><span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">note</span>
+<pre class="src src-jojo"><span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">+jojo</span> module/import-one <span style="color: #696969;">(</span><span style="color: #66d9ef; font-weight: bold;">-&gt;</span> <span style="color: #a6e22e;">:body</span> <span style="color: #66d9ef; font-weight: bold;">--</span> table<span style="color: #696969;">)</span>
+  <span style="color: #a6e22e;">:body</span> <span style="color: #ae81ff;">.car</span> <span style="color: #fd971f;">:name!</span>
+  <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">if</span> <span style="color: #a6e22e;">:name</span> module-loaded? not <span style="color: #66d9ef; font-weight: bold;">then</span>
+      <span style="color: #a6e22e;">:name</span> module-load<span style="color: #696969;">)</span>
+  <span style="color: #a6e22e;">:body</span> sexp-list-run <span style="color: #fd971f;">:result!</span>
+  <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">if</span> <span style="color: #a6e22e;">:result</span> table? <span style="color: #66d9ef; font-weight: bold;">then</span> <span style="color: #a6e22e;">:result</span> <span style="color: #66d9ef; font-weight: bold;">end</span><span style="color: #696969;">)</span>
+  <span style="color: #e6db74;">"- module/import-one fail"</span> w nl
+  <span style="color: #e6db74;">"  result of body is not table"</span> w nl
+  <span style="color: #e6db74;">"  body : "</span> w <span style="color: #a6e22e;">:body</span> w nl
+  <span style="color: #e6db74;">"  result : "</span> w <span style="color: #a6e22e;">:result</span> w nl
+  <span style="color: #66d9ef; font-weight: bold;">debug</span><span style="color: #696969;">)</span>
+</pre>
+</div>
+</div>
+</div>
 
-  <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">+module</span> hi/0.0.1
+<div id="outline-container-org5798ab1" class="outline-3">
+<h3 id="org5798ab1">sexp-for-module?</h3>
+<div class="outline-text-3" id="text-org5798ab1">
+<div class="org-src-container">
+
+<pre class="src src-jojo"><span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">+jojo</span> sexp-for-module? <span style="color: #696969;">(</span><span style="color: #66d9ef; font-weight: bold;">-&gt;</span> <span style="color: #a6e22e;">:sexp</span> <span style="color: #66d9ef; font-weight: bold;">--</span> <span style="color: #66d9ef; font-weight: bold;">&lt;bool&gt;</span><span style="color: #696969;">)</span>
+  '<span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">import</span> export<span style="color: #696969;">)</span>
+  <span style="color: #B380A8;">{</span><span style="color: #fd971f;">:jo!</span> <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">if</span> <span style="color: #a6e22e;">:sexp</span> cons? not <span style="color: #66d9ef; font-weight: bold;">then</span> <span style="color: #66d9ef; font-weight: bold;">false</span>
+            <span style="color: #66d9ef; font-weight: bold;">else</span> <span style="color: #a6e22e;">:jo</span> <span style="color: #a6e22e;">:sexp</span> <span style="color: #ae81ff;">.car</span> eq?<span style="color: #696969;">)</span><span style="color: #B380A8;">}</span>
+  list-any?<span style="color: #696969;">)</span>
+</pre>
+</div>
+</div>
+</div>
+
+<div id="outline-container-orgc1f6779" class="outline-3">
+<h3 id="orgc1f6779">sexp-table-substitute</h3>
+<div class="outline-text-3" id="text-orgc1f6779">
+<div class="org-src-container">
+
+<pre class="src src-jojo"><span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">+jojo</span> sexp-table-substitute <span style="color: #696969;">(</span><span style="color: #66d9ef; font-weight: bold;">-&gt;</span> <span style="color: #a6e22e;">:sexp</span> <span style="color: #a6e22e;">:table</span> <span style="color: #66d9ef; font-weight: bold;">--</span> sexp<span style="color: #696969;">)</span>
+  <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">cond</span> <span style="color: #797979;">[</span><span style="color: #a6e22e;">:sexp</span> cons?<span style="color: #797979;">]</span>
+        <span style="color: #797979;">[</span><span style="color: #a6e22e;">:sexp</span> <span style="color: #ae81ff;">.car</span> <span style="color: #a6e22e;">:table</span> <span style="color: #66d9ef; font-weight: bold;">recur</span>
+         <span style="color: #a6e22e;">:sexp</span> <span style="color: #ae81ff;">.cdr</span> <span style="color: #B380A8;">{</span><span style="color: #a6e22e;">:table</span> sexp-table-substitute<span style="color: #B380A8;">}</span> list-map
+         cons<span style="color: #797979;">]</span>
+        <span style="color: #66d9ef; font-weight: bold;">else</span> <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">if</span> <span style="color: #a6e22e;">:table</span> <span style="color: #a6e22e;">:sexp</span> table-find <span style="color: #66d9ef; font-weight: bold;">then</span> <span style="color: #66d9ef; font-weight: bold;">end</span>
+                 <span style="color: #66d9ef; font-weight: bold;">else</span> <span style="color: #a6e22e;">:sexp</span><span style="color: #696969;">)))</span>
+</pre>
+</div>
+</div>
+</div>
+
+<div id="outline-container-org91650c1" class="outline-3">
+<h3 id="org91650c1">module-loaded?</h3>
+<div class="outline-text-3" id="text-org91650c1">
+<div class="org-src-container">
+
+<pre class="src src-jojo"><span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">+jojo</span> module-loaded? <span style="color: #696969;">(</span><span style="color: #66d9ef; font-weight: bold;">-&gt;</span> <span style="color: #a6e22e;">:name</span> <span style="color: #66d9ef; font-weight: bold;">--</span> <span style="color: #66d9ef; font-weight: bold;">&lt;bool&gt;</span><span style="color: #696969;">)</span>
+  <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">if</span> <span style="color: #a6e22e;">:name</span> jo-bound?
+      <span style="color: #66d9ef; font-weight: bold;">then</span> <span style="color: #a6e22e;">:name</span> sexp-run table?
+      <span style="color: #66d9ef; font-weight: bold;">else</span> <span style="color: #66d9ef; font-weight: bold;">false</span><span style="color: #696969;">))</span>
+</pre>
+</div>
+</div>
+</div>
+
+<div id="outline-container-orgc01d2b3" class="outline-3">
+<h3 id="orgc01d2b3">module-find-path</h3>
+<div class="outline-text-3" id="text-orgc01d2b3">
+<div class="org-src-container">
+
+<pre class="src src-jojo"><span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">+jojo</span> module-find-path-from-dir
+  <span style="color: #696969;">(</span><span style="color: #66d9ef; font-weight: bold;">-&gt;</span> <span style="color: #a6e22e;">:dir</span> <span style="color: #a6e22e;">:name</span> <span style="color: #66d9ef; font-weight: bold;">--</span> path <span style="color: #66d9ef; font-weight: bold;">true</span> or <span style="color: #66d9ef; font-weight: bold;">false</span><span style="color: #696969;">)</span>
+  <span style="color: #a6e22e;">:dir</span> <span style="color: #e6db74;">"/modules/"</span> string-append
+  <span style="color: #a6e22e;">:name</span> jo-&gt;string string-append
+  <span style="color: #e6db74;">"/module.jo"</span> string-append <span style="color: #fd971f;">:path!</span>
+  <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">if</span> <span style="color: #a6e22e;">:path</span> path-readable?
+      <span style="color: #66d9ef; font-weight: bold;">then</span> <span style="color: #a6e22e;">:path</span> <span style="color: #66d9ef; font-weight: bold;">true</span>
+      <span style="color: #66d9ef; font-weight: bold;">else</span> <span style="color: #66d9ef; font-weight: bold;">false</span><span style="color: #696969;">))</span>
+
+<span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">+jojo</span> module-find-path
+  <span style="color: #696969;">(</span><span style="color: #66d9ef; font-weight: bold;">-&gt;</span> <span style="color: #a6e22e;">:name</span> <span style="color: #66d9ef; font-weight: bold;">--</span> path <span style="color: #66d9ef; font-weight: bold;">true</span> or <span style="color: #66d9ef; font-weight: bold;">false</span><span style="color: #696969;">)</span>
+  <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">cond</span> <span style="color: #797979;">[</span>current-running-dir <span style="color: #a6e22e;">:name</span> module-find-path-from-dir<span style="color: #797979;">]</span> <span style="color: #66d9ef; font-weight: bold;">true</span>
+        <span style="color: #797979;">[</span>usr-jojo-dir <span style="color: #a6e22e;">:name</span> module-find-path-from-dir<span style="color: #797979;">]</span> <span style="color: #66d9ef; font-weight: bold;">true</span>
+        <span style="color: #797979;">[</span>sys-jojo-dir <span style="color: #a6e22e;">:name</span> module-find-path-from-dir<span style="color: #797979;">]</span> <span style="color: #66d9ef; font-weight: bold;">true</span>
+        <span style="color: #66d9ef; font-weight: bold;">else</span> <span style="color: #66d9ef; font-weight: bold;">false</span><span style="color: #696969;">))</span>
+</pre>
+</div>
+</div>
+</div>
+
+<div id="outline-container-org824815e" class="outline-3">
+<h3 id="org824815e">module-load</h3>
+<div class="outline-text-3" id="text-org824815e">
+<div class="org-src-container">
+
+<pre class="src src-jojo"><span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">+jojo</span> module-load <span style="color: #696969;">(</span><span style="color: #66d9ef; font-weight: bold;">-&gt;</span> <span style="color: #a6e22e;">:name</span> <span style="color: #66d9ef; font-weight: bold;">--</span><span style="color: #696969;">)</span>
+  <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">if</span> <span style="color: #a6e22e;">:name</span> module-find-path
+      <span style="color: #66d9ef; font-weight: bold;">then</span> path-load
+      <span style="color: #66d9ef; font-weight: bold;">else</span>
+      <span style="color: #e6db74;">"- module-load fail"</span> w nl
+      <span style="color: #e6db74;">"  can not find module : "</span> w <span style="color: #a6e22e;">:name</span> w nl
+      <span style="color: #e6db74;">"  current-reading-dir : "</span> w current-reading-dir w nl
+      <span style="color: #e6db74;">"  usr-jojo-dir : "</span> w usr-jojo-dir w nl
+      <span style="color: #e6db74;">"  sys-jojo-dir : "</span> w sys-jojo-dir w nl
+      <span style="color: #66d9ef; font-weight: bold;">debug</span><span style="color: #696969;">))</span>
+</pre>
+</div>
+</div>
+</div>
+
+<div id="outline-container-orgc84ee69" class="outline-3">
+<h3 id="orgc84ee69">(run)</h3>
+<div class="outline-text-3" id="text-orgc84ee69">
+<div class="org-src-container">
+
+<pre class="src src-jojo"><span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">+jojo</span> run <span style="color: #696969;">(</span><span style="color: #66d9ef; font-weight: bold;">-&gt;</span> <span style="color: #a6e22e;">:body</span> <span style="color: #66d9ef; font-weight: bold;">--</span><span style="color: #696969;">)</span>
+  <span style="color: #a6e22e;">:body</span> expend-include <span style="color: #fd971f;">:body!</span>
+
+  <span style="color: #a6e22e;">:body</span> module/collect-import-table-list
+  <span style="color: #fd971f;">:import-table-list!</span>
+
+  <span style="color: #a6e22e;">:import-table-list</span>
+  <span style="color: #B380A8;">{</span><span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">if</span> table-merge not <span style="color: #66d9ef; font-weight: bold;">then</span>
+       <span style="color: #e6db74;">"- (run) fail to merge import-table-list"</span> w nl
+       <span style="color: #e6db74;">"  import-table-list : "</span> w <span style="color: #a6e22e;">:import-table-list</span> w nl
+       <span style="color: #e6db74;">"  key : "</span> w w nl
+       <span style="color: #66d9ef; font-weight: bold;">debug</span><span style="color: #696969;">)</span><span style="color: #B380A8;">}</span>
+  null-table swap list-foldr <span style="color: #fd971f;">:import-table!</span>
+
+  <span style="color: #a6e22e;">:import-table</span> <span style="color: #fd971f;">:rename-table!</span>
+
+  <span style="color: #a6e22e;">:body</span>
+  <span style="color: #B380A8;">{</span>sexp-for-module? not<span style="color: #B380A8;">}</span> list-filter
+  <span style="color: #B380A8;">{</span><span style="color: #a6e22e;">:rename-table</span> sexp-table-substitute<span style="color: #B380A8;">}</span> list-map
+  sexp-list-run<span style="color: #696969;">)</span>
+</pre>
+</div>
+</div>
+</div>
+
+<div id="outline-container-orga3441e0" class="outline-3">
+<h3 id="orga3441e0"><span class="todo _note_">[note]</span> table processing in module system</h3>
+<div class="outline-text-3" id="text-orga3441e0">
+<ul class="org-ul">
+<li><p><p></p><p>we can use table processing functions</p><p>to handle the name unique-name binding</p><p></p></p><p></p><p><div class="org-src-container"></p><p></p><p><pre class="src src-jojo"><span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">note</span> take r7rs import declaration for example</p><p>  <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">import</span> <span style="color: #66d9ef; font-weight: bold;">&lt;import-set&gt;</span><span style="color: #696969;">)</span></p><p>  where <span style="color: #66d9ef; font-weight: bold;">&lt;import-set&gt;</span></p><p>  = <span style="color: #66d9ef; font-weight: bold;">&lt;library-name&gt;</span></p><p>  | <span style="color: #696969;">(</span>only <span style="color: #66d9ef; font-weight: bold;">&lt;import-set&gt;</span> <span style="color: #66d9ef; font-weight: bold;">&lt;identifier&gt;</span> <span style="color: #ae81ff;">...</span><span style="color: #696969;">)</span></p><p>  | <span style="color: #696969;">(</span>except <span style="color: #66d9ef; font-weight: bold;">&lt;import-set&gt;</span> <span style="color: #66d9ef; font-weight: bold;">&lt;identifier&gt;</span> <span style="color: #ae81ff;">...</span><span style="color: #696969;">)</span></p><p>  | <span style="color: #696969;">(</span>prefix <span style="color: #66d9ef; font-weight: bold;">&lt;import-set&gt;</span> <span style="color: #66d9ef; font-weight: bold;">&lt;identifier&gt;</span><span style="color: #696969;">)</span></p><p>  | <span style="color: #696969;">(</span>rename <span style="color: #66d9ef; font-weight: bold;">&lt;import-set&gt;</span> <span style="color: #696969;">(</span><span style="color: #66d9ef; font-weight: bold;">&lt;old-identifier&gt;</span> <span style="color: #66d9ef; font-weight: bold;">&lt;new-identifier&gt;</span><span style="color: #696969;">)</span> <span style="color: #ae81ff;">...</span><span style="color: #696969;">)</span> <span style="color: #696969;">)</span></p><p></p><p><span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">note</span> in jojo we can use table processing functions like :</p><p>  '<span style="color: #696969;">(</span><span style="color: #66d9ef; font-weight: bold;">&lt;name&gt;</span> <span style="color: #ae81ff;">...</span><span style="color: #696969;">)</span> only</p><p>  '<span style="color: #696969;">(</span><span style="color: #66d9ef; font-weight: bold;">&lt;name&gt;</span> <span style="color: #ae81ff;">...</span><span style="color: #696969;">)</span> except</p><p>  <span style="color: #66d9ef; font-weight: bold;">&lt;prefix&gt;</span> prefix</p><p>  '<span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">table</span> <span style="color: #66d9ef; font-weight: bold;">&lt;old&gt;</span> <span style="color: #66d9ef; font-weight: bold;">&lt;new&gt;</span><span style="color: #f92672; font-weight: bold;">,</span> <span style="color: #ae81ff;">...</span><span style="color: #696969;">)</span> rename<span style="color: #696969;">)</span></p><p></p><p><span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">note</span> but these names are too general</p><p>  for table processing functions</p><p>  we use the following instead :</p><p>  only  <span style="color: #FFA23D;"> : </span><span style="color: #B380A8;">{</span><span style="color: #66d9ef; font-weight: bold;">&lt;name&gt;</span> eq?<span style="color: #B380A8;">}</span> table-key-filter</p><p>  except<span style="color: #FFA23D;"> : </span><span style="color: #B380A8;">{</span><span style="color: #66d9ef; font-weight: bold;">&lt;name&gt;</span> eq? not<span style="color: #B380A8;">}</span> table-key-filter</p><p>  prefix<span style="color: #FFA23D;"> : </span><span style="color: #B380A8;">{</span><span style="color: #66d9ef; font-weight: bold;">&lt;prefix&gt;</span> swap jo-append<span style="color: #B380A8;">}</span> table-key-map</p><p>  rename<span style="color: #FFA23D;"> : </span><span style="color: #B380A8;">{</span><span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">if</span> dup <span style="color: #66d9ef; font-weight: bold;">&lt;old&gt;</span> eq? <span style="color: #66d9ef; font-weight: bold;">then</span> drop <span style="color: #66d9ef; font-weight: bold;">&lt;new&gt;</span> <span style="color: #66d9ef; font-weight: bold;">else</span><span style="color: #696969;">)</span><span style="color: #B380A8;">}</span> table-key-map<span style="color: #696969;">)</span></p><p></p><p><span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">note</span> we can abstract those special use of</p><p>  table processing functions :</p><p>  '<span style="color: #696969;">(</span><span style="color: #66d9ef; font-weight: bold;">&lt;name&gt;</span> <span style="color: #ae81ff;">...</span><span style="color: #696969;">)</span> import-only</p><p>  '<span style="color: #696969;">(</span><span style="color: #66d9ef; font-weight: bold;">&lt;name&gt;</span> <span style="color: #ae81ff;">...</span><span style="color: #696969;">)</span> import-except</p><p>  <span style="color: #66d9ef; font-weight: bold;">&lt;prefix&gt;</span> import-prefix</p><p>  '<span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">table</span> <span style="color: #66d9ef; font-weight: bold;">&lt;old&gt;</span> <span style="color: #66d9ef; font-weight: bold;">&lt;new&gt;</span><span style="color: #f92672; font-weight: bold;">,</span> <span style="color: #ae81ff;">...</span><span style="color: #696969;">)</span> import-rename<span style="color: #696969;">)</span></p><p></pre></p><p></div></p></li></ul>
+</div>
+</div>
+
+<div id="outline-container-orgbb5fe23" class="outline-3">
+<h3 id="orgbb5fe23">import-only</h3>
+<div class="outline-text-3" id="text-orgbb5fe23">
+<div class="org-src-container">
+
+<pre class="src src-jojo"><span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">+jojo</span> import-only <span style="color: #696969;">(</span><span style="color: #66d9ef; font-weight: bold;">-&gt;</span> table <span style="color: #a6e22e;">:list</span> <span style="color: #66d9ef; font-weight: bold;">--</span> table<span style="color: #696969;">)</span>
+  <span style="color: #B380A8;">{</span><span style="color: #696969;">(</span><span style="color: #66d9ef; font-weight: bold;">-&gt;</span> <span style="color: #a6e22e;">:name</span> <span style="color: #66d9ef; font-weight: bold;">--</span> <span style="color: #66d9ef; font-weight: bold;">&lt;bool&gt;</span><span style="color: #696969;">)</span>
+   <span style="color: #a6e22e;">:list</span> <span style="color: #B380A8;">{</span><span style="color: #a6e22e;">:name</span> eq?<span style="color: #B380A8;">}</span> list-any?<span style="color: #B380A8;">}</span>
+  table-key-filter<span style="color: #696969;">)</span>
+</pre>
+</div>
+</div>
+</div>
+
+<div id="outline-container-org95e8960" class="outline-3">
+<h3 id="org95e8960">import-except</h3>
+<div class="outline-text-3" id="text-org95e8960">
+<div class="org-src-container">
+
+<pre class="src src-jojo"><span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">+jojo</span> import-except <span style="color: #696969;">(</span><span style="color: #66d9ef; font-weight: bold;">-&gt;</span> table <span style="color: #a6e22e;">:list</span> <span style="color: #66d9ef; font-weight: bold;">--</span> table<span style="color: #696969;">)</span>
+  <span style="color: #B380A8;">{</span><span style="color: #696969;">(</span><span style="color: #66d9ef; font-weight: bold;">-&gt;</span> <span style="color: #a6e22e;">:name</span> <span style="color: #66d9ef; font-weight: bold;">--</span> <span style="color: #66d9ef; font-weight: bold;">&lt;bool&gt;</span><span style="color: #696969;">)</span>
+   <span style="color: #a6e22e;">:list</span> <span style="color: #B380A8;">{</span><span style="color: #a6e22e;">:name</span> eq? not<span style="color: #B380A8;">}</span> list-any?<span style="color: #B380A8;">}</span>
+  table-key-filter<span style="color: #696969;">)</span>
+</pre>
+</div>
+</div>
+</div>
+
+<div id="outline-container-orgf5ced9d" class="outline-3">
+<h3 id="orgf5ced9d">import-prefix</h3>
+<div class="outline-text-3" id="text-orgf5ced9d">
+<div class="org-src-container">
+
+<pre class="src src-jojo"><span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">+jojo</span> import-prefix <span style="color: #696969;">(</span><span style="color: #66d9ef; font-weight: bold;">-&gt;</span> table <span style="color: #a6e22e;">:prefix-jo</span> <span style="color: #66d9ef; font-weight: bold;">--</span> table<span style="color: #696969;">)</span>
+  <span style="color: #B380A8;">{</span><span style="color: #a6e22e;">:prefix-jo</span> swap jo-append<span style="color: #B380A8;">}</span>
+  table-key-map<span style="color: #696969;">)</span>
+</pre>
+</div>
+</div>
+</div>
+
+<div id="outline-container-org98fc7c4" class="outline-3">
+<h3 id="org98fc7c4">import-rename</h3>
+<div class="outline-text-3" id="text-org98fc7c4">
+<div class="org-src-container">
+
+<pre class="src src-jojo"><span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">+jojo</span> import-rename <span style="color: #696969;">(</span><span style="color: #66d9ef; font-weight: bold;">-&gt;</span> table <span style="color: #a6e22e;">:renaming</span> <span style="color: #66d9ef; font-weight: bold;">--</span> table<span style="color: #696969;">)</span>
+  <span style="color: #B380A8;">{</span><span style="color: #a6e22e;">:renaming</span> sexp-table-substitute<span style="color: #B380A8;">}</span>
+  table-key-map<span style="color: #696969;">)</span>
+</pre>
+</div>
+</div>
+</div>
+
+<div id="outline-container-org4441e44" class="outline-3">
+<h3 id="org4441e44"><span class="done _test_">[test]</span> </h3>
+<div class="outline-text-3" id="text-org4441e44">
+<div class="org-src-container">
+
+<pre class="src src-jojo"><span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">test</span>
+
+  <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">+module</span> hi/0.0.0
     <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">export</span>
       hi1 hi3 hi5<span style="color: #696969;">)</span>
-    <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">+jojo</span> hi1 <span style="color: #e6db74;">"hi1"</span> w<span style="color: #696969;">)</span>
-    <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">+jojo</span> hi2 <span style="color: #e6db74;">"hi2"</span> w<span style="color: #696969;">)</span>
-    <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">+jojo</span> hi3 <span style="color: #e6db74;">"hi"</span> w<span style="color: #696969;">)</span>
-    <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">+jojo</span> hi4 <span style="color: #e6db74;">"hi4"</span> w<span style="color: #696969;">)</span>
-    <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">+jojo</span> hi5 <span style="color: #e6db74;">"hi5"</span> w<span style="color: #696969;">))</span>
+    <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">+jojo</span> hi1 <span style="color: #e6db74;">"hi1"</span><span style="color: #696969;">)</span>
+    <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">+jojo</span> hi2 <span style="color: #e6db74;">"hi2"</span><span style="color: #696969;">)</span>
+    <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">+jojo</span> hi3 <span style="color: #e6db74;">"hi"</span><span style="color: #696969;">)</span>
+    <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">+jojo</span> hi4 <span style="color: #e6db74;">"hi4"</span><span style="color: #696969;">)</span>
+    <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">+jojo</span> hi5 <span style="color: #e6db74;">"hi5"</span><span style="color: #696969;">))</span>
 
-  <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">+module</span> hiya/0.0.1
-    <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">import</span>
-      hi/0.0.1<span style="color: #696969;">)</span>
+  <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">+module</span> ya/0.0.0
+    <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">export</span>
+      ya1 ya3 ya5<span style="color: #696969;">)</span>
+    <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">+jojo</span> ya1 <span style="color: #e6db74;">"ya1"</span><span style="color: #696969;">)</span>
+    <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">+jojo</span> ya2 <span style="color: #e6db74;">"ya2"</span><span style="color: #696969;">)</span>
+    <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">+jojo</span> ya3 <span style="color: #e6db74;">"ya"</span><span style="color: #696969;">)</span>
+    <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">+jojo</span> ya4 <span style="color: #e6db74;">"ya4"</span><span style="color: #696969;">)</span>
+    <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">+jojo</span> ya5 <span style="color: #e6db74;">"ya5"</span><span style="color: #696969;">))</span>
+
+  <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">+module</span> hiya/0.0.0
+    <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">import</span> hi/0.0.0
+      '<span style="color: #696969;">(</span>hi3<span style="color: #696969;">)</span> import-only
+      'hi- import-prefix
+      <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">table</span> 'hi-hi3 'hi<span style="color: #696969;">)</span> import-rename<span style="color: #696969;">)</span>
+    <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">import</span> ya/0.0.0
+      '<span style="color: #696969;">(</span>ya3<span style="color: #696969;">)</span> import-only
+      <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">table</span> 'ya3 'ya<span style="color: #696969;">)</span> import-rename<span style="color: #696969;">)</span>
     <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">export</span>
       hiya<span style="color: #696969;">)</span>
-    <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">+jojo</span> ya <span style="color: #e6db74;">"ya"</span> w<span style="color: #696969;">)</span>
-    <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">+jojo</span> hiya hi ya<span style="color: #696969;">))</span>
+    <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">+jojo</span> hiya hi ya string-append<span style="color: #696969;">))</span>
 
-  <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">begin</span>
-    <span style="color: #66d9ef; font-weight: bold;">hi/0.0.1:</span>hi
-    <span style="color: #66d9ef; font-weight: bold;">hiya/0.0.1:</span>ya
-    <span style="color: #66d9ef; font-weight: bold;">hiya/0.0.1:</span>hiya<span style="color: #696969;">))</span>
+  <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">assert</span>
+    <span style="color: #66d9ef; font-weight: bold;">hiya/0.0.0:</span>hiya <span style="color: #e6db74;">"hiya"</span> equal?<span style="color: #696969;">)</span>
+
+  <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">assert</span>
+    <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">run</span> <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">import</span> hiya/0.0.0<span style="color: #696969;">)</span>
+      hiya <span style="color: #e6db74;">"hiya"</span> equal?<span style="color: #696969;">)))</span>
 </pre>
 </div>
 </div>
 </div>
 </div>
 
-<div id="outline-container-org5730ecc" class="outline-2">
-<h2 id="org5730ecc">the-story-begin</h2>
-<div class="outline-text-2" id="text-org5730ecc">
-</div><div id="outline-container-org432a59" class="outline-3">
-<h3 id="org432a59">welcome-to-jojo</h3>
-<div class="outline-text-3" id="text-org432a59">
+<div id="outline-container-orgead2737" class="outline-2">
+<h2 id="orgead2737">the-story-begin</h2>
+<div class="outline-text-2" id="text-orgead2737">
+</div><div id="outline-container-org4522278" class="outline-3">
+<h3 id="org4522278">welcome-to-jojo</h3>
+<div class="outline-text-3" id="text-org4522278">
 <div class="org-src-container">
 
 <pre class="src src-jojo"><span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">+jojo</span> welcome-to-jojo
@@ -2347,23 +2994,24 @@ repl-flag-off
 </div>
 </div>
 
-<div id="outline-container-org843c0dd" class="outline-3">
-<h3 id="org843c0dd">the-story-begin</h3>
-<div class="outline-text-3" id="text-org843c0dd">
+<div id="outline-container-org2623eae" class="outline-3">
+<h3 id="org2623eae">the-story-begin</h3>
+<div class="outline-text-3" id="text-org2623eae">
 <div class="org-src-container">
 
 <pre class="src src-jojo"><span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">+jojo</span> the-story-begin
-  core-flag-off
-  test-flag-off
-  repl-flag-off
   <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">cond</span>
     <span style="color: #797979;">[</span>cmd-number <span style="color: #ae81ff;">1</span> eq?<span style="color: #797979;">]</span>
     <span style="color: #797979;">[</span>repl-flag-on
      welcome-to-jojo
      print-data-stack
-     terminal-input-stack repl
-     <span style="color: #66d9ef; font-weight: bold;">end</span><span style="color: #797979;">]</span>
-    <span style="color: #66d9ef; font-weight: bold;">else</span> <span style="color: #797979;">[</span>cmd-list <span style="color: #ae81ff;">.cdr</span> <span style="color: #ae81ff;">.car</span> path-load<span style="color: #797979;">]</span><span style="color: #696969;">))</span>
+     terminal-input-stack repl<span style="color: #797979;">]</span>
+
+    <span style="color: #66d9ef; font-weight: bold;">else</span>
+    <span style="color: #797979;">[</span>core-flag-off
+     test-flag-off
+     repl-flag-off
+     cmd-list <span style="color: #ae81ff;">.cdr</span> <span style="color: #ae81ff;">.car</span> path-load<span style="color: #797979;">]</span><span style="color: #696969;">))</span>
 
 the-story-begin
 </pre>
