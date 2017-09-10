@@ -13,9 +13,6 @@
   #include <signal.h>
   #include <limits.h>
   #include <stdarg.h>
-  #include <sys/socket.h>
-  #include <netdb.h>
-  #include <arpa/inet.h>
   typedef enum { false, true } bool;
   typedef intptr_t cell;
   typedef void (* primitive_t)();
@@ -1214,11 +1211,6 @@
       push(rs, jojo + 1);
     }
     typedef enum {
-      GC_STATE_MARKING,
-      GC_STATE_SWEEPING,
-    } gc_state_t;
-    typedef void (* gc_actor_t)(gc_state_t, cell);
-    typedef enum {
       GC_MARK_FREE,
       GC_MARK_USING,
     } gc_mark_t;
@@ -1240,6 +1232,13 @@
     void init_gr() {
       bzero(gr, GR_SIZE * sizeof(struct gp));
     }
+    typedef enum {
+      GC_STATE_MARKING,
+      GC_STATE_SWEEPING,
+    } gc_state_t;
+
+    typedef void (* gc_actor_t)(gc_state_t, cell);
+
     struct class {
       jo_t class_name;
       gc_actor_t gc_actor;
@@ -4258,195 +4257,6 @@
       plus_prim("current-reading-dir", p_current_reading_dir);
       plus_prim("current-running-dir", p_current_running_dir);
     }
-    void p_tcp_socket_listen() {
-      // [:service <string> :backlog <int>] -> [<socket>]
-
-      struct addrinfo hints, *servinfo, *p;
-      int yes = 1;
-
-      struct dp a = ds_pop();
-      int backlog = a.d;
-
-      struct dp b = ds_pop();
-      struct gp* bp = b.d;
-      char* service = bp->p;
-
-      memset(&hints, 0, sizeof hints);
-      hints.ai_family = AF_UNSPEC;
-      hints.ai_socktype = SOCK_STREAM;
-      hints.ai_flags = AI_PASSIVE;
-
-      int rv = getaddrinfo(0, service, &hints, &servinfo);
-      if (rv != 0) {
-        report("- p_tcp_socket_listen fail to getaddrinfo\n");
-        report("  service : %s\n", service);
-        report("getaddrinfo: %s\n", gai_strerror(rv));
-        p_debug();
-        return;
-      }
-
-      int sockfd;
-      for(p = servinfo; p != 0; p = p->ai_next) {
-        sockfd = socket(p->ai_family,
-                        p->ai_socktype,
-                        p->ai_protocol);
-        if (sockfd == -1) { continue; }
-        // ><><>< why setsockopt ?
-        if (setsockopt(sockfd,
-                       SOL_SOCKET,
-                       SO_REUSEADDR, &yes, sizeof(int)) == -1) {
-          report("- p_tcp_socket_listen fail to listen\n");
-          report("  service : %s\n", service);
-          perror("  setsockopt error : ");
-          p_debug();
-        }
-        if (bind(sockfd, p->ai_addr, p->ai_addrlen) == -1) {
-          close(sockfd);
-          continue;
-        }
-        break;
-      }
-      freeaddrinfo(servinfo);
-
-      if (p == 0)  {
-        report("- p_tcp_socket_listen fail to bind\n");
-        report("  service : %s\n", service);
-        p_debug();
-      }
-
-      if (listen(sockfd, backlog) == -1) {
-        report("- p_tcp_socket_listen fail to listen\n");
-        report("  service : %s\n", service);
-        perror("  listen error : ");
-        p_debug();
-      }
-
-      ds_push(TAG_SOCKET, sockfd);
-    }
-    // get sockaddr, ipv4 or ipv6:
-    void *get_in_addr(struct sockaddr *sa) {
-      if (sa->sa_family == AF_INET) {
-        return &(((struct sockaddr_in*)sa)->sin_addr);
-      }
-      return &(((struct sockaddr_in6*)sa)->sin6_addr);
-    }
-    void p_socket_accept() {
-      // [:sockfd <socket>] ->
-      // [:newfd <socket> :connector-address <string>]
-
-      struct dp a = ds_pop();
-      int sockfd = a.d;
-
-      struct sockaddr_storage their_addr; // connector's address information
-      socklen_t sin_size;
-      char str[INET6_ADDRSTRLEN];
-
-      sin_size = sizeof their_addr;
-      int newfd = accept(sockfd, (struct sockaddr *)&their_addr, &sin_size);
-      if (newfd == -1) {
-        report("- p_socket_accept fail\n");
-        perror("  accept error : ");
-        return;
-      }
-
-      inet_ntop(their_addr.ss_family,
-                get_in_addr((struct sockaddr *)&their_addr),
-                str,
-                sizeof(str));
-
-      ds_push(TAG_SOCKET, newfd);
-      ds_push(TAG_STRING, new_string_gp(str));
-    }
-    void p_tcp_socket_connect() {
-      // [:host <string> :service <string>] -> [<socket>]
-
-      struct dp a = ds_pop();
-      struct gp* ap = a.d;
-      char* service = ap->p;
-
-      struct dp b = ds_pop();
-      struct gp* bp = b.d;
-      char* host = bp->p;
-
-      struct addrinfo hints, *servinfo, *p;
-
-      memset(&hints, 0, sizeof hints);
-      hints.ai_family = AF_UNSPEC;
-      hints.ai_socktype = SOCK_STREAM;
-
-      int rv = getaddrinfo(host, service, &hints, &servinfo);
-      if (rv != 0) {
-        report("- p_tcp_socket_connect fail to getaddrinfo\n");
-        report("  host : %s\n", host);
-        report("  service : %s\n", service);
-        report("  getaddrinfo error : %s\n", gai_strerror(rv));
-        p_debug();
-        return;
-      }
-
-      int sockfd;
-      for(p = servinfo; p != 0; p = p->ai_next) {
-        sockfd = socket(p->ai_family,
-                        p->ai_socktype,
-                        p->ai_protocol);
-        if (sockfd == -1) { continue; }
-        if (connect(sockfd, p->ai_addr, p->ai_addrlen) == -1) {
-          close(sockfd);
-          continue;
-        }
-        break;
-      }
-      freeaddrinfo(servinfo);
-
-      if (p == 0)  {
-        report("- p_tcp_socket_connect fail to connect\n");
-        report("  host : %s\n", host);
-        report("  service : %s\n", service);
-        p_debug();
-      }
-
-      ds_push(TAG_SOCKET, sockfd);
-    }
-    void p_socket_send() {
-      // [<socket> <string>] -> []
-
-      struct dp a = ds_pop();
-      struct gp* ap = a.d;
-      char* str = ap->p;
-
-      struct dp b = ds_pop();
-      int sockfd = b.d;
-
-      if (send(sockfd, str, strlen(str), 0) == -1) {
-        report("- p_socket_send fail\n");
-        perror("  send error : ");
-      }
-    }
-    void p_socket_recv() {
-      // [<socket>] -> [<string>]
-      struct dp a = ds_pop();
-      int sockfd = a.d;
-
-      char* buf[1024];
-
-      ssize_t real_bytes = recv(sockfd, buf, 1024-1, 0);
-      if (real_bytes == -1) {
-        report("- p_socket_recv fail\n");
-        perror("  recv error : ");
-      }
-
-      ds_push(TAG_STRING, new_string_gp(strdup(buf)));
-    }
-    void expose_socket() {
-      plus_atom("<socket>", gc_ignore);
-
-      plus_prim("tcp-socket-listen", p_tcp_socket_listen);
-      plus_prim("socket-accept", p_socket_accept);
-      plus_prim("tcp-socket-connect", p_tcp_socket_connect);
-      plus_prim("socket-send", p_socket_send);
-      plus_prim("socket-recv", p_socket_recv);
-      plus_prim("socket-close", p_file_close);
-    }
     cell cmd_number;
 
     void p_cmd_number() {
@@ -4490,52 +4300,22 @@
       };
       fun();
     }
-    void k_clib_one() {
-      // "..."
-      char* path = malloc(PATH_MAX);
-      cell cursor = 0;
-      while (true) {
-        char c = read_byte();
-        if (c == '"') {
-          path[cursor] = 0;
-          cursor++;
-          break;
-        }
-        else {
-          path[cursor] = c;
-          cursor++;
-        }
-      }
-      // ><><><
-      char* real_read_path = current_reading_dir();
-      free(path);
-      void* lib = dlopen(real_read_path, RTLD_LAZY);
+    void p_path_load_clib() {
+      struct dp a = ds_pop();
+      struct gp* ap = a.d;
+      char* path = ap->p;
+      void* lib = dlopen(path, RTLD_LAZY);
       if (lib == 0) {
-        report("- k_clib_one fail to open library\n");
-        report("  real_read_path : %s\n", real_read_path);
+        report("- p_path_load_clib fail to open library\n");
+        report("  path : %s\n", path);
         report("  dynamic link error : %s\n", dlerror());
         p_debug();
         return;
       };
-      free(real_read_path);
       ccall("expose", lib);
     }
-    void k_clib() {
-      while (true) {
-        jo_t s = read_jo();
-        if (s == ROUND_KET) {
-          return;
-        }
-        else if (s == DOUBLEQUOTE) {
-          k_clib_one();
-        }
-        else {
-          // do nothing
-        }
-      }
-    }
     void expose_cffi() {
-      plus_prim("+clib", k_clib);
+      plus_prim("path-load-clib", p_path_load_clib);
     }
     void p_core_flag() { ds_push(TAG_BOOL, core_flag); }
     void p_core_flag_on() { core_flag = true; }
@@ -4818,7 +4598,6 @@
       expose_array();
       expose_closure();
       expose_file();
-      expose_socket();
       expose_system();
       expose_core();
       expose_report();

@@ -1,18 +1,3 @@
-#include <sys/types.h>
-#include <sys/stat.h>
-#include <unistd.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <errno.h>
-#include <string.h>
-#include <fcntl.h>
-#include <ctype.h>
-#include <stdint.h>
-#include <dlfcn.h>
-#include <dirent.h>
-#include <signal.h>
-#include <limits.h>
-
 typedef intptr_t cell;
 typedef void (*primitive)();
 
