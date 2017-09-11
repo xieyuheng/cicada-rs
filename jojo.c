@@ -390,11 +390,9 @@
       name->tag = tag;
       name->data = data;
     }
-    void rebind_name(name, tag, data)
-      jo_t name;
-      jo_t tag;
-      cell data;
-    {
+    void rebind_name(jo_t name,
+                     jo_t tag,
+                     cell data) {
       name->tag = tag;
       name->data = data;
     }
@@ -1700,12 +1698,10 @@
         return ((key - jotable)
                 % (disp->size - 1)) + 1;
       }
-      void disp_insert_entry(disp_entry, key, tag, data)
-           struct disp_entry* disp_entry;
-           jo_t key;
-           jo_t tag;
-           cell data;
-      {
+      void disp_insert_entry(struct disp_entry* disp_entry,
+                             jo_t key,
+                             jo_t tag,
+                             cell data) {
         if (0 == disp_entry->key) {
           disp_entry->key = key;
           disp_entry->tag = tag;
@@ -1731,11 +1727,8 @@
         struct disp_entry* disp_entry = disp->table + index;
         disp_insert_entry(disp_entry, key, tag, data);
       }
-      struct disp_entry*
-      disp_find_entry(disp_entry, key)
-           struct disp_entry* disp_entry;
-           jo_t key;
-      {
+      struct disp_entry* disp_find_entry(struct disp_entry* disp_entry,
+                                         jo_t key) {
         if (key == disp_entry->key) {
           return disp_entry;
         }
@@ -1746,11 +1739,8 @@
           return 0;
         }
       }
-      struct disp_entry*
-      disp_find(disp, key)
-           struct disp* disp;
-           jo_t key;
-      {
+      struct disp_entry* disp_find(struct disp* disp,
+                                   jo_t key) {
         cell index = disp_hash(disp, key);
         struct disp_entry* disp_entry = disp->table + index;
         return disp_find_entry(disp_entry, key);
@@ -1810,11 +1800,11 @@
                 % (multi_disp->size - 1)) + 1;
       }
       // argument 'key' is shared
-      void multi_disp_insert_entry(multi_disp_entry, key, tag, data)
-           struct multi_disp_entry* multi_disp_entry;
-           jo_t* key;
-           jo_t tag;
-           cell data;
+      void multi_disp_insert_entry
+      (struct multi_disp_entry* multi_disp_entry,
+       jo_t* key,
+       jo_t tag,
+       cell data)
       {
         if (0 == multi_disp_entry->key) {
           multi_disp_entry->key = key;
@@ -1837,21 +1827,18 @@
         }
       }
       // argument 'key' is shared
-      void multi_disp_insert(multi_disp, key, tag, data)
-           struct multi_disp* multi_disp;
-           jo_t* key;
-           jo_t tag;
-           cell data;
+      void multi_disp_insert(struct multi_disp* multi_disp,
+                             jo_t* key,
+                             jo_t tag,
+                             cell data)
       {
         cell index = multi_disp_hash(multi_disp, key);
         struct multi_disp_entry* multi_disp_entry = multi_disp->table + index;
         multi_disp_insert_entry(multi_disp_entry, key, tag, data);
       }
       struct multi_disp_entry*
-      multi_disp_find_entry(multi_disp_entry, key)
-           struct multi_disp_entry* multi_disp_entry;
-           jo_t* key;
-      {
+      multi_disp_find_entry(struct multi_disp_entry* multi_disp_entry,
+                            jo_t* key) {
         if (multi_disp_entry->key == 0) {
           return 0;
         }
@@ -1866,10 +1853,8 @@
         }
       }
       struct multi_disp_entry*
-      multi_disp_find(multi_disp, key)
-           struct multi_disp* multi_disp;
-           jo_t* key;
-      {
+      multi_disp_find(struct multi_disp* multi_disp,
+                      jo_t* key) {
         cell i = 0;
         // {
         //   report("- multi_disp_find\n");
@@ -1920,10 +1905,8 @@
       };
       cell arity;
     };
-    void plus_gene(function_name, arity)
-         char* function_name;
-         cell arity;
-    {
+    void plus_gene(char* function_name,
+                   cell arity) {
       jo_t name = str2jo(function_name);
       struct gene* gene = (struct gene*)
         malloc(sizeof(struct gene));
@@ -1943,12 +1926,10 @@
       bind_name(name, TAG_GENE, gene);
     }
     // argument 'tags' is shared
-    void plus_disp(gene_name, tags, tag_name, data)
-      char* gene_name;
-      jo_t* tags;
-      char* tag_name;
-      cell data;
-    {
+    void plus_disp(char* gene_name,
+                   jo_t* tags,
+                   char* tag_name,
+                   cell data) {
       jo_t name = str2jo(gene_name);
       jo_t tag = str2jo(tag_name);
       struct gene* gene = name->data;
@@ -1959,11 +1940,9 @@
         multi_disp_insert(gene->multi_disp, tags, tag, data);
       }
     }
-    void plus_disp_default(gene_name, tag_name, data)
-      char* gene_name;
-      char* tag_name;
-      cell data;
-    {
+    void plus_disp_default(char* gene_name,
+                           char* tag_name,
+                           cell data) {
       jo_t name = str2jo(gene_name);
       jo_t tag = str2jo(tag_name);
       struct gene* gene = name->data;
@@ -3807,11 +3786,11 @@
       struct dp b = ds_pop();
       ds_push(a.d, b.d);
     }
-    void p_allocate () {
+    void p_allocate() {
       struct dp a = ds_pop();
       ds_push(TAG_ADDRESS, calloc(a.d, 1));
     }
-    void p_free () {
+    void p_free() {
       struct dp a = ds_pop();
       free(a.d);
     }
@@ -4082,7 +4061,6 @@
         ds_push(TAG_BOOL, true);
       }
     }
-
     void p_path_open_read() {
       path_open(O_RDONLY);
     }

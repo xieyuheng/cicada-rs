@@ -48,3 +48,4 @@ function line_array_to_string (line_array) {
 
 tangle("core.org", "core.jo");
 tangle("jojo.org", "jojo.c");
+tangle("jojo-h.org", "jojo.h");
