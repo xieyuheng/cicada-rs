@@ -524,124 +524,6 @@
       (cond [:tag1 underscore-jo?] [true]
             [:tag2 underscore-jo?] [true]
             else [:tag1 :tag2 eq?]))
-    (test
-
-      (assert
-        mark 0 1 2 3 4 collect
-        array->list
-        (list 0 1 2 3 4)
-        {eq?} list-eqv?)
-
-      (assert
-        (list 0 1 2 3 4)
-        (list 5 6 7 8 9)
-        list-append
-        (list 0 1 2 3 4 5 6 7 8 9)
-        {eq?} list-eqv?)
-
-      (assert
-        (list 0 1 2 3 4 5 6 7 8 9)
-        {5 gteq?} list-left
-        (list 0 1 2 3 4)
-        {eq?} list-eqv?)
-
-      (assert
-        (list 0 1 2 3 4 5 6 7 8 9)
-        {5 gteq?} list-split
-        swap (list 0 1 2 3 4) {eq?} list-eqv?
-        swap (list 5 6 7 8 9) {eq?} list-eqv?
-        and)
-
-      (assert
-        (list 0 1 2 3 4 5 6 7 8 9)
-        {inc} list-map
-        (list 1 2 3 4 5 6 7 8 9 10)
-        {eq?} list-eqv?)
-
-      (assert
-        (list 0 1 2 3 4 5 6 7 8 9)
-        {2 mod 0 eq?} list-filter
-        (list 0 2 4 6 8)
-        {eq?} list-eqv?)
-
-      (assert
-        (list 0 1 2 3 4 5 6 7 8 9)
-        list-reverse
-        (list 9 8 7 6 5 4 3 2 1 0)
-        {eq?} list-eqv?))
-    (test
-      (+jojo square dup mul)
-      (assert 2 square 4 eq?))
-    (test
-      (+jojo list-length/cond
-        :list!
-        (cond
-          [:list null?] [0]
-          else [:list .cdr recur inc]))
-      (assert (list 1 2 3 4 5) list-length/cond 5 eq?))
-    (test
-      (+jojo com (-> :m1 :m2 -- jojo)
-        {:m1 apply :m2 apply})
-      (assert {1} {2} com apply add 3 eq?)
-      (assert {1} {2} com {3} com apply add add 6 eq?)
-      (assert {1} {2} {3} com com apply add add 6 eq?))
-    (test
-      (+gene add-two (-> :x :y --) 0)
-      (+disp add-two (-> <string> <int> --) swap string-length add)
-      (+disp add-two (-> <int> <string> --) string-length add)
-      (+disp add-two (-> <int> <int> --) add)
-      (+disp add-two (-> <string> <string> --)
-        string-length swap string-length add)
-
-      (assert "123" 3 add-two 6 eq?)
-      (assert 3 "123" add-two 6 eq?)
-      (assert 3 3 add-two 6 eq?)
-      (assert "123" "123" add-two 6 eq?)
-      (assert '123 "123" add-two 0 eq?))
-    (test
-      (+jojo one-two-three 'one 'two 'three)
-      (+jojo one-two-three-list '(one two three))
-      (assert
-        '(1 2 3)
-        '(1 2 3)
-        {eq?} list-eqv?)
-      (assert
-        `(1 2 3 (@ one-two-three) 1 2 3)
-        '(1 2 3 one two three 1 2 3)
-        {eq?} list-eqv?)
-      (assert
-        `(1 2 3 (@ one-two-three-list list-spread) 1 2 3)
-        '(1 2 3 one two three 1 2 3)
-        {eq?} list-eqv?)
-      (assert
-        `(((@ 1))) .car .car
-        1 eq?)
-      (assert
-        `(((@ `(((@ 1)))))) .car .car .car .car
-        1 eq?))
-    (test
-      (+jojo list-length/case
-        :list!
-        (case :list
-          <null> 0
-          <cons> [:list .cdr recur inc]))
-      (assert (list 1 2 3 4 5) list-length/case 5 eq?))
-    (test
-      (+jojo fun-1
-        ::dynamic-local)
-      (+jojo fun-2
-        'dynamic-of-fun-2 ::dynamic-local!
-        fun-1
-        nop)
-      (assert
-        'dynamic-of-fun-2 fun-2 eq?)
-      (assert
-        'dynamic-of-top-begin ::dynamic-local!
-        fun-2
-        fun-1
-        swap 'dynamic-of-fun-2 eq?
-        swap 'dynamic-of-top-begin eq?
-        and))
     (note
 
       (+jojo bind
@@ -668,95 +550,6 @@
       (+jojo return-list)
       (+jojo bind-list))
     (+data <pair> .l .r)
-    (test
-
-      (+data <leaf> .v)
-      (+data <node> .l .r)
-
-      (+jojo tree-1
-        1 leaf 2 leaf node
-        3 leaf 4 leaf node
-        5 leaf node
-        node))
-    (test
-
-      (+jojo tree-map (-> :tree :fun -- tree)
-        (case :tree
-          <leaf> [:tree .v :fun apply leaf]
-          <node> [:tree .l :fun recur
-                  :tree .r :fun recur node]))
-
-      (+jojo tree-eqv? (-> :t1 :t2 :eqv --)
-        (case [:t1 :t2]
-          [<leaf> <leaf>] [:t1 .v :t2 .v :eqv apply]
-          [<node> <node>] (if :t1 .l :t2 .l :eqv recur not
-                              then false
-                              else :t1 .r :t2 .r :eqv recur)
-          else false))
-
-      (assert
-        tree-1 {100 add} tree-map
-
-        101 leaf 102 leaf node
-        103 leaf 104 leaf node
-        105 leaf node
-        node
-
-        {eq?} tree-eqv?))
-    (test
-
-      (+jojo tree-zip (-> :t1 :t2 -- tree maybe)
-        (case [:t1 :t2]
-          [<leaf> <leaf>] [:t1 .v :t2 .v pair leaf return-maybe]
-          [<node> <node>] (let-bind bind-maybe
-                            :l [:t1 .l :t2 .l tree-zip]
-                            :r [:t1 .r :t2 .r tree-zip]
-                            [:l :r node return-maybe])
-          else nothing))
-
-      (+jojo maybe-write (-> :m :f --)
-        (case :m
-          <nothing> ['nothing jo-write space]
-          <just> [:m .v :f apply 'just jo-write space]))
-
-      (assert
-        tree-1 dup tree-zip tag '<just> eq?)
-
-      (+jojo tree-2
-        1 1 pair leaf 2 2 pair leaf node
-        3 3 pair leaf 4 4 pair leaf node
-        5 5 pair leaf node
-        node)
-
-      (assert
-        tree-1 dup tree-zip .v
-        tree-2
-        {(-> :pair1 :pair2)
-         :pair1 .l :pair2 .l eq?
-         :pair1 .r :pair2 .r eq? and}
-        tree-eqv?)
-
-      (assert
-        tree-1 1 leaf tree-zip nothing?))
-    (test
-
-      (+jojo number-tree (-> number, :tree -- number, tree)
-        (case :tree
-          <leaf> [dup inc swap leaf]
-          <node> [:tree .l recur :l!
-                  :tree .r recur :r!
-                  :l :r node]))
-
-      (+jojo tree-3
-        "1" leaf "2" leaf node
-        "3" leaf "4" leaf node
-        "5" leaf node
-        node)
-
-      (assert
-        0 tree-3 number-tree swap drop
-        tree-1 {dec} tree-map
-        {eq?} tree-eqv?))
     (+jojo times (-> :fun :n --)
       (if :n 0 lteq? then end)
       :fun apply
@@ -829,36 +622,6 @@
                 :b-a->b apply]))
     (+jojo list-member? (-> :list :x -- <bool>)
       :list {:x equal?} list-any?)
-    (test
-
-      (assert
-        (list 0 1 2 3 4 5) () {pair} list-foldr
-        0 1 2 3 4 5 () pair pair pair pair pair pair
-        equal?)
-
-      (assert
-        (list 0 1 2 3 4 5) () {pair} list-foldl
-        () 5 pair 4 pair 3 pair 2 pair 1 pair 0 pair
-        equal?)
-
-      (assert
-        (list
-          (list 1 2 3)
-          (list 4 5 6)
-          (list 7 8 9))
-        () {list-append} list-foldr
-
-        (list 1 2 3, 4 5 6, 7 8 9)
-        equal?)
-
-      (assert
-        (list
-          (list 1 2 3)
-          (list 4 5 6)
-          (list 7 8 9))
-        () {list-append} list-foldl
-        (list 7 8 9, 4 5 6, 1 2 3)
-        equal?))
     (+data <null-table>)
     (+data <cons-table> .rest .key .value)
     (+jojo table? (-> :x -- <bool>)
@@ -930,26 +693,6 @@
             else [:table .rest :fun recur
                   :table .key :fun apply
                   :table .value cons-table]))
-    (test
-
-      (assert
-        (table 1 "1", 2 "2", 3 "3")
-        (table 2 "2", 3 "3", 4 "4")
-        (assert table-merge)
-        (table 1 "1", 2 "2", 3 "3", 4 "4")
-        table-equal?)
-
-      (assert
-        (table 1 "1", 2 "2", 3 "3", 4 "4")
-        {even?} table-key-filter
-        (table 2 "2", 4 "4")
-        table-equal?)
-
-      (assert
-        (table 1 "1", 2 "2", 3 "3", 4 "4")
-        {dec} table-key-map
-        (table 0 "1", 1 "2", 2 "3", 3 "4")
-        table-equal?))
     (+jojo byte {jo->byte emit-lit} list-for-each)
     (+jojo cmd-list 0 cmd-list/loop)
 
@@ -1234,44 +977,6 @@
     (+jojo import-rename (-> table :renaming -- table)
       {:renaming sexp-table-substitute}
       table-key-map)
-    (test
-
-      (+module hi/0.0.0
-        (export
-          hi1 hi3 hi5)
-        (+jojo hi1 "hi1")
-        (+jojo hi2 "hi2")
-        (+jojo hi3 "hi")
-        (+jojo hi4 "hi4")
-        (+jojo hi5 "hi5"))
-
-      (+module ya/0.0.0
-        (export
-          ya1 ya3 ya5)
-        (+jojo ya1 "ya1")
-        (+jojo ya2 "ya2")
-        (+jojo ya3 "ya")
-        (+jojo ya4 "ya4")
-        (+jojo ya5 "ya5"))
-
-      (+module hiya/0.0.0
-        (import hi/0.0.0
-          '(hi3) import-only
-          'hi- import-prefix
-          (table 'hi-hi3 'hi) import-rename)
-        (import ya/0.0.0
-          '(ya3) import-only
-          (table 'ya3 'ya) import-rename)
-        (export
-          hiya)
-        (+jojo hiya hi ya string-append))
-
-      (assert
-        hiya/0.0.0:hiya "hiya" equal?)
-
-      (assert
-        (run (import hiya/0.0.0)
-          hiya "hiya" equal?)))
     (+jojo welcome-to-jojo
       "welcome to jojo's programming adventure ^-^/" w nl)
     (+jojo the-story-begin
