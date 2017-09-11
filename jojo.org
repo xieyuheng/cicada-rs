@@ -4,12 +4,20 @@
 
 * [todo-stack]
 
-*** fix cffi
+*** jojo.h
+
+*** socket module
+
+*** nanomsg module
 
 *** better file io
 
+    - something like
+      with-output-to-string
+      with-output-to-file
+
     - with the help of <input-stack>
-      and the gc of <string>
+      and the dynamic <string>
 
 *** time and sleep
 
@@ -2213,10 +2221,8 @@
 *** plus_atom
 
     #+begin_src c
-    void plus_atom(class_name, gc_actor)
-      char* class_name;
-      gc_actor_t gc_actor;
-    {
+    void plus_atom(char* class_name,
+                   gc_actor_t gc_actor) {
       struct class* class = (struct class*)
         malloc(sizeof(struct class));
       class->class_name = str2jo(class_name);
@@ -2287,10 +2293,8 @@
 *** plus_prim
 
     #+begin_src c
-    void plus_prim(function_name, fun)
-         char* function_name;
-         primitive_t fun;
-    {
+    void plus_prim(char* function_name,
+                   primitive_t fun) {
       jo_t name = str2jo(function_name);
       bind_name(name, TAG_PRIM, fun);
     }

@@ -1495,10 +1495,8 @@
         }
       }
     }
-    void plus_atom(class_name, gc_actor)
-      char* class_name;
-      gc_actor_t gc_actor;
-    {
+    void plus_atom(char* class_name,
+                   gc_actor_t gc_actor) {
       struct class* class = (struct class*)
         malloc(sizeof(struct class));
       class->class_name = str2jo(class_name);
@@ -1559,10 +1557,8 @@
 
       bind_name(data_predicate_name, TAG_DATA_PREDICATE, class);
     }
-    void plus_prim(function_name, fun)
-         char* function_name;
-         primitive_t fun;
-    {
+    void plus_prim(char* function_name,
+                   primitive_t fun) {
       jo_t name = str2jo(function_name);
       bind_name(name, TAG_PRIM, fun);
     }
