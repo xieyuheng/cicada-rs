@@ -4,6 +4,9 @@
 
 #include "jojo.h"
 
+jo_t TAG_SOCKET;
+jo_t TAG_STRING;
+
 void p_tcp_socket_listen() {
   // [:service <string> :backlog <int>] -> [<socket>]
 
@@ -190,12 +193,16 @@ void p_socket_recv() {
 }
 
 void expose() {
-  plus_atom("<socket>", gc_ignore);
+  TAG_SOCKET = str2jo("<socket>");
 
-  plus_prim("tcp-socket-listen", p_tcp_socket_listen);
-  plus_prim("socket-accept", p_socket_accept);
-  plus_prim("tcp-socket-connect", p_tcp_socket_connect);
-  plus_prim("socket-send", p_socket_send);
-  plus_prim("socket-recv", p_socket_recv);
-  plus_prim("socket-close", p_file_close);
+  report("<here>\n");
+
+  // plus_atom("<socket>", gc_ignore);
+
+  // plus_prim("tcp-socket-listen", p_tcp_socket_listen);
+  // plus_prim("socket-accept", p_socket_accept);
+  // plus_prim("tcp-socket-connect", p_tcp_socket_connect);
+  // plus_prim("socket-send", p_socket_send);
+  // plus_prim("socket-recv", p_socket_recv);
+  // plus_prim("socket-close", p_file_close);
 }

@@ -11,6 +11,13 @@
   #include "jojo.h"
   #+end_src
 
+* TAG_SOCKET
+
+  #+begin_src c
+  jo_t TAG_SOCKET;
+  jo_t TAG_STRING;
+  #+end_src
+
 * p_tcp_socket_listen
 
   #+begin_src c
@@ -224,13 +231,17 @@
 
   #+begin_src c
   void expose() {
-    plus_atom("<socket>", gc_ignore);
+    TAG_SOCKET = str2jo("<socket>");
 
-    plus_prim("tcp-socket-listen", p_tcp_socket_listen);
-    plus_prim("socket-accept", p_socket_accept);
-    plus_prim("tcp-socket-connect", p_tcp_socket_connect);
-    plus_prim("socket-send", p_socket_send);
-    plus_prim("socket-recv", p_socket_recv);
-    plus_prim("socket-close", p_file_close);
+    report("<here>\n");
+
+    // plus_atom("<socket>", gc_ignore);
+
+    // plus_prim("tcp-socket-listen", p_tcp_socket_listen);
+    // plus_prim("socket-accept", p_socket_accept);
+    // plus_prim("tcp-socket-connect", p_tcp_socket_connect);
+    // plus_prim("socket-send", p_socket_send);
+    // plus_prim("socket-recv", p_socket_recv);
+    // plus_prim("socket-close", p_file_close);
   }
   #+end_src

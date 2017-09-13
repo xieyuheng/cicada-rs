@@ -317,7 +317,6 @@
     jo_t TAG_UNINITIALISED_FIELD_PLACE_HOLDER;
 
     jo_t TAG_FILE;
-    jo_t TAG_SOCKET;
     jo_t TAG_INPUT_STACK;
 
     jo_t TAG_DATA_PREDICATE;
@@ -4265,31 +4264,42 @@
       plus_prim("index->cmd-string", p_index_to_cmd_string);
       plus_prim("find-env-string", p_find_env_string);
     }
-    void ccall (char* function_name, void* lib) {
+    jo_t TAG_LIB;
+    void p_lib_open() {
+      struct dp a = ds_pop();
+      struct gp* ap = a.d;
+      char* lib_name = ap->p;
+      void* lib = dlopen(lib_name, RTLD_NOW);
+      if (lib == 0) {
+        report("- p_lib_open fail to open library\n");
+        report("  lib_name : %s\n", lib_name);
+        report("  dynamic loader error : %s\n", dlerror());
+        p_debug();
+      }
+      ds_push(TAG_LIB, lib);
+    }
+    void p_lib_call() {
+      struct dp a = ds_pop();
+      struct gp* ap = a.d;
+      char* function_name = ap->p;
+      struct dp b = ds_pop();
+      void* lib = b.d;
+
       primitive_t fun = dlsym(lib, function_name);
       if (fun == 0) {
-        report("- ccall fail\n");
+        report("- p_lib_call fail\n");
         report("  function_name : %s\n", function_name);
-        report("  dynamic link error : %s\n", dlerror());
+        report("  dynamic loader error : %s\n", dlerror());
       };
       fun();
     }
-    void p_path_load_clib() {
-      struct dp a = ds_pop();
-      struct gp* ap = a.d;
-      char* path = ap->p;
-      void* lib = dlopen(path, RTLD_LAZY);
-      if (lib == 0) {
-        report("- p_path_load_clib fail to open library\n");
-        report("  path : %s\n", path);
-        report("  dynamic link error : %s\n", dlerror());
-        p_debug();
-        return;
-      };
-      ccall("expose", lib);
-    }
-    void expose_cffi() {
-      plus_prim("path-load-clib", p_path_load_clib);
+    void expose_lib() {
+      TAG_LIB = str2jo("<lib>");
+
+      plus_atom("<lib>", gc_ignore);
+
+      plus_prim("lib-open", p_lib_open);
+      plus_prim("lib-call", p_lib_call);
     }
     void p_core_flag() { ds_push(TAG_BOOL, core_flag); }
     void p_core_flag_on() { core_flag = true; }
@@ -4491,7 +4501,6 @@
         str2jo("<uninitialised-field-place-holder>");
 
       TAG_FILE         = str2jo("<file>");
-      TAG_SOCKET       = str2jo("<socket>");
       TAG_INPUT_STACK  = str2jo("<input-stack>");
 
       TAG_DATA_PREDICATE = str2jo("<data-predicate>");
@@ -4573,6 +4582,7 @@
       expose_closure();
       expose_file();
       expose_system();
+      expose_lib();
       expose_core();
       expose_report();
       expose_play();

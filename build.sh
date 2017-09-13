@@ -2,11 +2,13 @@
 
 #cc=gcc
 cc=clang
+
 w='-Wno-int-conversion -Wno-incompatible-pointer-types -Wno-return-type -Wunused-value'
 o='-O2'
-f='-rdynamic'
+f=''
+
 l='-ldl'
-d='-g'
+b='-Wl,--export-dynamic'
 
 copy() {
     rsync --recursive --links --perms --times --group --owner --devices --specials --verbose --human-readable $@
@@ -18,15 +20,13 @@ tangle() {
 }
 
 build() {
-    $cc $w $f $l $o jojo.c -o jojo
+    $cc $w $f $o -c jojo.c
+    $cc $l $b -o jojo jojo.o
 }
 
 fast_build() {
-    $cc $w $f $l jojo.c -o jojo
-}
-
-debug_build() {
-    $cc $w $f $l $d jojo.c -o jojo
+    $cc $w $f -c jojo.c
+    $cc $l $b -o jojo jojo.o
 }
 
 clean() {

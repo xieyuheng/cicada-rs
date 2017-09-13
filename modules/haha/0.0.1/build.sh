@@ -11,8 +11,8 @@ l=''
 b='-shared -Wl,-Bsymbolic'
 
 build() {
-    $cc $w $f $o -c socket.c
-    $cc $l $b -o socket.so socket.o
+    $cc $w $f $o -c haha.c
+    $cc $l $b -o haha.so haha.o
 }
 
 default() {
