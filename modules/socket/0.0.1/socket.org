@@ -15,7 +15,6 @@
 
   #+begin_src c
   jo_t TAG_SOCKET;
-  jo_t TAG_STRING;
   #+end_src
 
 * p_tcp_socket_listen
@@ -224,17 +223,5 @@
     }
 
     ds_push(TAG_STRING, new_string_gp(strdup(buf)));
-  }
-  #+end_src
-
-* expose
-
-  #+begin_src c
-  void expose() {
-    TAG_SOCKET = str2jo("<socket>");
-
-    report("<here:socket>\n");
-
-    // plus_atom("<socket>", gc_ignore);
   }
   #+end_src

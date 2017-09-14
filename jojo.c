@@ -1614,6 +1614,8 @@
       plus_atom("<data-constructor>", gc_ignore);
       plus_atom("<data-predicate>", gc_ignore);
 
+      plus_prim("gc-ignore", gc_ignore);
+
       plus_prim("tag", p_tag);
       plus_prim("eq?", p_eq_p);
 
@@ -4270,6 +4272,7 @@
       struct dp a = ds_pop();
       struct gp* ap = a.d;
       char* lib_name = ap->p;
+
       void* lib = dlopen(lib_name, RTLD_NOW);
       if (lib == 0) {
         report("- p_lib_open fail to open library\n");
@@ -4277,6 +4280,7 @@
         report("  dynamic loader error : %s\n", dlerror());
         p_debug();
       }
+
       ds_push(TAG_LIB, lib);
     }
     void p_lib_call() {
@@ -4284,6 +4288,7 @@
       struct dp a = ds_pop();
       struct gp* ap = a.d;
       char* function_name = ap->p;
+
       struct dp b = ds_pop();
       void* lib = b.d;
 
@@ -4293,7 +4298,27 @@
         report("  function_name : %s\n", function_name);
         report("  dynamic loader error : %s\n", dlerror());
       };
+
       fun();
+    }
+    void p_lib_set_cell() {
+      // [<lib> <string>] -> []
+      struct dp a = ds_pop();
+      struct gp* ap = a.d;
+      char* cell_name = ap->p;
+
+      struct dp b = ds_pop();
+      void* lib = b.d;
+
+      cell* cell = dlsym(lib, cell_name);
+      if (cell == 0) {
+        report("- p_lib_set_cell fail\n");
+        report("  cell_name : %s\n", cell_name);
+        report("  dynamic loader error : %s\n", dlerror());
+      };
+
+      struct dp c = ds_pop();
+      cell[0] = c.d;
     }
     void expose_lib() {
       TAG_LIB = str2jo("<lib>");
@@ -4302,6 +4327,7 @@
 
       plus_prim("lib-open", p_lib_open);
       plus_prim("lib-call", p_lib_call);
+      plus_prim("lib-set-cell", p_lib_set_cell);
     }
     void p_core_flag() { ds_push(TAG_BOOL, core_flag); }
     void p_core_flag_on() { core_flag = true; }
@@ -4408,6 +4434,25 @@
       jo_t* jojo = c.d;
       plus_disp_default(jo2str(name), "<jojo>", jojo);
     }
+    void p_name_bind_atom() {
+      struct dp a = ds_pop();
+      jo_t name = a.d;
+
+      struct dp b = ds_pop();
+      gc_actor_t gc_actor = b.d;
+
+      struct class* class = (struct class*)
+        malloc(sizeof(struct class));
+      class->class_name = name;
+      class->gc_actor = gc_actor;
+
+      bind_name(name, TAG_CLASS, class);
+    }
+    void p_name_get() {
+      struct dp a = ds_pop();
+      jo_t name = a.d;
+      ds_push(name->tag, name->data);
+    }
     void p_class_to_tag() {
       struct dp a = ds_pop();
       struct class* class = a.d;
@@ -4447,6 +4492,9 @@
       plus_prim("name-bind-gene", p_name_bind_gene);
       plus_prim("name-bind-disp-to-jojo", p_name_bind_disp_to_jojo);
       plus_prim("name-bind-disp-default-to-jojo", p_name_bind_disp_defalut_to_jojo);
+
+      plus_prim("name-bind-atom", p_name_bind_atom);
+      plus_prim("name-get", p_name_get);
 
       plus_prim("class->tag", p_class_to_tag);
 

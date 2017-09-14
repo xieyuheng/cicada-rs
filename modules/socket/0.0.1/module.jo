@@ -1,5 +1,6 @@
 (+module socket/0.0.1
   (export
+    <socket>
     tcp-socket-listen
     socket-accept
     tcp-socket-connect
@@ -7,20 +8,16 @@
     socket-recv
     socket-close)
 
-  (+var socket-lib
-    current-reading-dir "socket.so" string-append
-    lib-open)
+  (+var *socket-lib* "socket.so" lib-load)
+  (+jojo call *socket-lib* swap lib-call)
 
-  socket-lib "expose" lib-call
+  (+atom <socket> gc-ignore)
 
-  (+jojo tcp-socket-listen
-    socket-lib "p_tcp_socket_listen" lib-call)
-  (+jojo socket-accept
-    socket-lib "p_socket_accept" lib-call)
-  (+jojo tcp-socket-connect
-    socket-lib "p_tcp_socket_connect" lib-call)
-  (+jojo socket-send
-    socket-lib "p_socket_send" lib-call)
-  (+jojo socket-recv
-    socket-lib "p_socket_recv" lib-call)
+  '<socket> *socket-lib* "TAG_SOCKET" lib-set-cell
+
+  (+jojo tcp-socket-listen "p_tcp_socket_listen" call)
+  (+jojo socket-accept "p_socket_accept" call)
+  (+jojo tcp-socket-connect "p_tcp_socket_connect" call)
+  (+jojo socket-send "p_socket_send" call)
+  (+jojo socket-recv "p_socket_recv" call)
   (+jojo socket-close file-close))

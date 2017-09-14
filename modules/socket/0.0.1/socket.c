@@ -5,7 +5,6 @@
 #include "jojo.h"
 
 jo_t TAG_SOCKET;
-jo_t TAG_STRING;
 
 void p_tcp_socket_listen() {
   // [:service <string> :backlog <int>] -> [<socket>]
@@ -190,12 +189,4 @@ void p_socket_recv() {
   }
 
   ds_push(TAG_STRING, new_string_gp(strdup(buf)));
-}
-
-void expose() {
-  TAG_SOCKET = str2jo("<socket>");
-
-  report("<here:socket>\n");
-
-  // plus_atom("<socket>", gc_ignore);
 }

@@ -542,6 +542,16 @@
       :body .car :name!
       `((quote (@ :name)) name-bind)
       begin)
+    (+jojo get (-> :body --)
+      :body .car :name!
+      `((quote (@ :name)) name-get)
+      begin)
+    (+jojo +atom (-> :body --)
+      :body .car :name!
+      :body .cdr .car :gc-actor-name!
+      `((quote (@ :gc-actor-name)) name-get
+        (quote (@ :name)) name-bind-atom)
+      begin)
     (note
 
       (+jojo bind
@@ -733,6 +743,7 @@
     (+jojo sys-jojo-dir
       (cond ["SYS_JOJO_DIR" find-env-string] []
             else "/usr/lib/jojo"))
+    (+jojo lib-load current-reading-dir swap string-append lib-open)
     (+jojo maybe-drop-shabang
       (-> <input-stack> -- <input-stack>)
       (if dup input-stack-empty? then end)
@@ -851,7 +862,7 @@
     (+jojo module/generate-define-table
       (-> :list :name -- table)
       :list
-      {'(+jojo +gene +disp) swap list-member?}
+      {'(+jojo +gene +disp +atom) swap list-member?}
       list-car-filter {.cdr .car} list-map
       {(-> :s :table -- table)
        :table :s
