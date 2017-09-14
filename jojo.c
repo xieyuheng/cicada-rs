@@ -4266,6 +4266,7 @@
     }
     jo_t TAG_LIB;
     void p_lib_open() {
+      // [<string>] -> [<lib>]
       struct dp a = ds_pop();
       struct gp* ap = a.d;
       char* lib_name = ap->p;
@@ -4279,6 +4280,7 @@
       ds_push(TAG_LIB, lib);
     }
     void p_lib_call() {
+      // [<lib> <string>] -> [*]
       struct dp a = ds_pop();
       struct gp* ap = a.d;
       char* function_name = ap->p;

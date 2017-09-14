@@ -1,8 +1,14 @@
-(+jojo run-clinet
-  "cicada" "12345"
-  tcp-socket-connect
-  socket-recv
-  string-write
-  newline)
+#!/usr/bin/env jojo
 
-{run-clinet} 10000 times
+(run
+
+  (import socket/0.0.1)
+
+  (+jojo run-clinet
+    "cicada" "12345"
+    tcp-socket-connect
+    socket-recv
+    string-write
+    newline)
+
+  {run-clinet} 100 times)

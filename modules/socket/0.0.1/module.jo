@@ -1,14 +1,26 @@
 (+module socket/0.0.1
-  (note
-    (export
-      <socket>
-      tcp-socket-listen
-      socket-accept
-      tcp-socket-connect
-      socket-send
-      socket-recv
-      socket-close))
+  (export
+    tcp-socket-listen
+    socket-accept
+    tcp-socket-connect
+    socket-send
+    socket-recv
+    socket-close)
 
-  current-reading-dir "socket.so" string-append
-  lib-open :lib!
-  :lib "expose" lib-call)
+  (+var socket-lib
+    current-reading-dir "socket.so" string-append
+    lib-open)
+
+  socket-lib "expose" lib-call
+
+  (+jojo tcp-socket-listen
+    socket-lib "p_tcp_socket_listen" lib-call)
+  (+jojo socket-accept
+    socket-lib "p_socket_accept" lib-call)
+  (+jojo tcp-socket-connect
+    socket-lib "p_tcp_socket_connect" lib-call)
+  (+jojo socket-send
+    socket-lib "p_socket_send" lib-call)
+  (+jojo socket-recv
+    socket-lib "p_socket_recv" lib-call)
+  (+jojo socket-close file-close))
