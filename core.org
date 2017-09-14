@@ -4,10 +4,6 @@
 
 * [todo-stack]
 
-*** fix (+data)
-
-    - shoud not use 'name-bind-data'
-
 *** list monad
 
 *** minikanren module
@@ -45,6 +41,27 @@
       :jo2 jo->string
       string-append
       string->jo)
+    #+end_src
+
+*** tag-jo->jo
+
+    #+begin_src jojo
+    (+jojo tag-jo->jo (-> :tag-jo -- <jo>)
+      (if :tag-jo tag-jo? not then
+          "- tag-jo->jo fail" string-write newline
+          "  jo is not tag jo : " string-write :tag-jo jo-write newline
+          debug)
+      :tag-jo jo->string :tag-string!
+      :tag-string string-length :tag-string-length!
+      :tag-string 1 :tag-string-length dec string-slice
+      string->jo)
+    #+end_src
+
+*** jo->tag-jo
+
+    #+begin_src jojo
+    (+jojo jo->tag-jo (-> :jo -- tag jo)
+      '< :jo '> jo-append jo-append)
     #+end_src
 
 * array
@@ -1363,8 +1380,17 @@
       :body expend-include :body!
 
       :body :name
-      module/generate-define-table
-      :define-table!
+      module/generate-define-table-list
+      :define-table-list!
+
+      :define-table-list
+      {(if table-merge not then :key!
+           "- (+module) fail to merge define-table-list" w nl
+           "  define-table-list : " w :define-table-list w nl
+           "  key : " w :key w nl
+           "  module name : " w :name w nl
+           debug)}
+      null-table swap list-foldr :define-table!
 
       :body :name
       module/generate-export-table
@@ -1378,29 +1404,32 @@
       :import-table-list!
 
       :import-table-list
-      {(if table-merge not then
+      {(if table-merge not then :key!
            "- (+module) fail to merge import-table-list" w nl
            "  import-table-list : " w :import-table-list w nl
-           "  key : " w w nl
+           "  key : " w :key w nl
            "  module name : " w :name w nl
            debug)}
       null-table swap list-foldr :import-table!
 
       :import-table :define-table
-      (if table-merge not then
+      (if table-merge not then :key!
           "- (+module) fail to merge import-table with define-table" w nl
           "  import-table : " w :import-table w nl
           "  define-table : " w :define-table w nl
-          "  key : " w w nl
+          "  key : " w :key w nl
           "  module name : " w :name w nl
           debug)
       :rename-table!
 
       :body
       {sexp-for-module? not} list-filter
-      {:rename-table sexp-table-substitute} list-map
-      sexp-list-compile
 
+      {:rename-table sexp-table-substitute} list-map
+      nop
+      nop nop nop nop
+      nop nop
+      sexp-list-compile
       :export-table
       :name name-bind)
     #+end_src
@@ -1452,35 +1481,178 @@
       list-filter)
     #+end_src
 
-*** module/generate-define-table
+*** module/generate-define-table-list
 
-    #+begin_src jojo
-    (+jojo module/generate-define-table
-      (-> :list :name -- table)
-      :list
-      {'(+jojo +gene +disp +atom) swap list-member?}
-      list-car-filter {.cdr .car} list-map
-      {(-> :s :table -- table)
-       :table :s
-       :name ': jo-append :s jo-append
-       cons-table}
-      null-table swap list-foldr)
-    #+end_src
+***** module/generate-define-table-list
+
+      #+begin_src jojo
+      (+jojo module/generate-define-table-list
+        (-> :list :name -- table list)
+        (list
+          :list :name module/generate-jojo-table
+          :list :name module/generate-gene-table
+          :list :name module/generate-disp-table
+          :list :name module/generate-var-table
+          :list :name module/generate-atom-table
+          :list :name module/generate-data-table))
+      #+end_src
+
+***** module/plus-filter
+
+      #+begin_src jojo
+      (+jojo module/plus-filter
+        (-> :list :plus -- name list)
+        :list
+        {:plus eq?} list-car-filter
+        {.cdr .car} list-map)
+      #+end_src
+
+***** module/name-list->table
+
+      #+begin_src jojo
+      (+jojo module/name-list->table
+        (-> :name-list :module-name -- table)
+        :name-list
+        {(-> :jo :table -- table)
+         :table :jo
+         :module-name ': jo-append :jo jo-append
+         cons-table}
+        null-table swap list-foldr)
+      #+end_src
+
+***** module/generate-jojo-table
+
+      #+begin_src jojo
+      (+jojo module/generate-jojo-table
+        (-> :list :module-name -- table)
+        :list '+jojo module/plus-filter
+        :module-name module/name-list->table)
+      #+end_src
+
+***** module/generate-gene-table
+
+      #+begin_src jojo
+      (+jojo module/generate-gene-table
+        (-> :list :module-name -- table)
+        :list '+gene module/plus-filter
+        :module-name module/name-list->table)
+      #+end_src
+
+***** module/generate-disp-table
+
+      #+begin_src jojo
+      (+jojo module/generate-disp-table
+        (-> :list :module-name -- table)
+        :list '+disp module/plus-filter
+        :module-name module/name-list->table)
+      #+end_src
+
+***** module/generate-var-table
+
+      #+begin_src jojo
+      (+jojo module/generate-var-table
+        (-> :list :module-name -- table)
+        :list '+var module/plus-filter
+        :module-name module/name-list->table)
+      #+end_src
+
+***** module/tag-list->table
+
+      #+begin_src jojo
+      (+jojo module/tag-list->table
+        (-> :tag-list :module-name -- table)
+        :tag-list
+        {(-> :jo :table -- table)
+         :table :jo
+         :module-name ': jo-append
+         :jo tag-jo->jo jo-append
+         jo->tag-jo
+         cons-table}
+        null-table swap list-foldr)
+      #+end_src
+
+***** module/tag-list->predicate-table
+
+      #+begin_src jojo
+      (+jojo module/tag-list->predicate-table
+        (-> :tag-list :module-name -- table)
+        :tag-list
+        {(-> :jo :table -- table)
+         :table :jo tag-jo->jo '? jo-append
+         :module-name ': jo-append
+         :jo tag-jo->jo jo-append
+         '? jo-append
+         cons-table}
+        null-table swap list-foldr)
+      #+end_src
+
+***** module/tag-list->constructor-table
+
+      #+begin_src jojo
+      (+jojo module/tag-list->constructor-table
+        (-> :tag-list :module-name -- table)
+        :tag-list
+        {(-> :jo :table -- table)
+         :table :jo tag-jo->jo
+         :module-name ': jo-append
+         :jo tag-jo->jo jo-append
+         cons-table}
+        null-table swap list-foldr)
+      #+end_src
+
+***** module/generate-atom-table
+
+      #+begin_src jojo
+      (+jojo module/generate-atom-table
+        (-> :list :module-name -- table table)
+        :list '+atom module/plus-filter :tag-list!
+        :tag-list :module-name module/tag-list->table
+        :tag-list :module-name module/tag-list->predicate-table)
+      #+end_src
+
+***** module/generate-data-table
+
+      #+begin_src jojo
+      (+jojo module/generate-data-table
+        (-> :list :module-name -- table table table)
+        :list '+data module/plus-filter :tag-list!
+        :tag-list :module-name module/tag-list->table
+        :tag-list :module-name module/tag-list->predicate-table
+        :tag-list :module-name module/tag-list->constructor-table)
+      #+end_src
 
 *** module/generate-export-table
 
     #+begin_src jojo
     (+jojo module/generate-export-table
-      (-> :list :name -- table)
+      (-> :list :module-name -- table)
       :list
       {'export eq?}
       list-car-filter {.cdr} list-map
       null {list-append} list-foldr
-      {(-> :s :table -- table)
-       :table :s
-       :name ': jo-append :s jo-append
-       cons-table}
-      null-table swap list-foldr)
+      {tag-jo? not} list-filter :name-list!
+
+      :name-list :module-name module/name-list->table)
+
+    (note
+      (+jojo module/generate-export-table
+        (-> :list :module-name -- table)
+        :list
+        {'export eq?}
+        list-car-filter {.cdr} list-map
+        null {list-append} list-foldr
+
+        dup {tag-jo?} list-filter :tag-list!
+        {tag-jo? not} list-filter :name-list!
+
+        :name-list :module-name module/name-list->table
+        :tag-list  :module-name module/tag-list->table
+
+        (if table-merge not then :key!
+            "- (module/generate-export-table)" w nl
+            "  fail to merge export tables" w nl
+            "  key : " w :key w nl
+            debug)))
     #+end_src
 
 *** module/export-check
@@ -1596,10 +1768,10 @@
       :import-table-list!
 
       :import-table-list
-      {(if table-merge not then
+      {(if table-merge not then :key!
            "- (run) fail to merge import-table-list" w nl
            "  import-table-list : " w :import-table-list w nl
-           "  key : " w w nl
+           "  key : " w :key w nl
            debug)}
       null-table swap list-foldr :import-table!
 

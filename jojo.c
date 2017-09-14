@@ -2,7 +2,6 @@
   #include <sys/stat.h>
   #include <unistd.h>
   #include <stdio.h>
-  #include <stdlib.h>
   #include <errno.h>
   #include <string.h>
   #include <fcntl.h>
@@ -13,6 +12,8 @@
   #include <signal.h>
   #include <limits.h>
   #include <stdarg.h>
+  #include <assert.h>
+  #include <stdlib.h>
   typedef enum { false, true } bool;
   typedef intptr_t cell;
   typedef void (* primitive_t)();
@@ -401,7 +402,7 @@
         while (ss[len] != 0) {
           len++;
         }
-        jo_t* js = (jo_t*)malloc(len * sizeof(jo_t) + 1);
+        jo_t* js = malloc((len + 1) * sizeof(jo_t));
         cell i = 0;
         while (i < len) {
           js[i] = str2jo(ss[i]);
@@ -455,11 +456,10 @@
     #define STACK_BLOCK_SIZE 1024
     // #define STACK_BLOCK_SIZE 1 // for testing
     struct stack* new_stack(char* name) {
-      struct stack* stack = (struct stack*)
-        malloc(sizeof(struct stack));
+      struct stack* stack = malloc(sizeof(struct stack));
       stack->name = name;
       stack->pointer = 0;
-      stack->stack = (cell*)malloc(sizeof(cell) * STACK_BLOCK_SIZE);
+      stack->stack = malloc(sizeof(cell) * STACK_BLOCK_SIZE);
       stack->link = 0;
       return stack;
     }
@@ -509,12 +509,11 @@
         return;
       }
       else {
-        struct stack_link* new_link = (struct stack_link*)
-          malloc(sizeof(struct stack_link));
+        struct stack_link* new_link = malloc(sizeof(struct stack_link));
         new_link->stack = stack->stack;
         new_link->link = stack->link;
         stack->link = new_link;
-        stack->stack = (cell*)malloc(sizeof(cell) * STACK_BLOCK_SIZE);
+        stack->stack = malloc(sizeof(cell) * STACK_BLOCK_SIZE);
         stack->pointer = 0;
       }
     }
@@ -600,11 +599,10 @@
     #define INPUT_STACK_BLOCK_SIZE (4 * 1024)
     // #define INPUT_STACK_BLOCK_SIZE 1 // for testing
     struct input_stack* new_input_stack(input_stack_type input_stack_type) {
-      struct input_stack* input_stack = (struct input_stack*)
-        malloc(sizeof(struct input_stack));
+      struct input_stack* input_stack = malloc(sizeof(struct input_stack));
       input_stack->pointer = INPUT_STACK_BLOCK_SIZE;
       input_stack->end_pointer = INPUT_STACK_BLOCK_SIZE;
-      input_stack->stack = (char*)malloc(INPUT_STACK_BLOCK_SIZE);
+      input_stack->stack = malloc(INPUT_STACK_BLOCK_SIZE);
       input_stack->link = 0;
       input_stack->type = input_stack_type;
       return input_stack;
@@ -729,13 +727,12 @@
         return;
       }
       else {
-        struct input_stack_link* new_link = (struct input_stack_link*)
-          malloc(sizeof(struct input_stack_link));
+        struct input_stack_link* new_link = malloc(sizeof(struct input_stack_link));
         new_link->stack = input_stack->stack;
         new_link->link = input_stack->link;
         new_link->end_pointer = input_stack->end_pointer;
         input_stack->link = new_link;
-        input_stack->stack = (char*)malloc(INPUT_STACK_BLOCK_SIZE);
+        input_stack->stack = malloc(INPUT_STACK_BLOCK_SIZE);
         input_stack->pointer = INPUT_STACK_BLOCK_SIZE;
         input_stack->end_pointer = INPUT_STACK_BLOCK_SIZE;
       }
@@ -827,10 +824,9 @@
     #define OUTPUT_STACK_BLOCK_SIZE (4 * 1024)
     // #define OUTPUT_STACK_BLOCK_SIZE 1 // for testing
     struct output_stack* new_output_stack(output_stack_type output_stack_type) {
-      struct output_stack* output_stack = (struct output_stack*)
-        malloc(sizeof(struct output_stack));
+      struct output_stack* output_stack = malloc(sizeof(struct output_stack));
       output_stack->pointer = 0;
-      output_stack->stack = (char*)malloc(OUTPUT_STACK_BLOCK_SIZE);
+      output_stack->stack = malloc(OUTPUT_STACK_BLOCK_SIZE);
       output_stack->link = 0;
       output_stack->type = output_stack_type;
       return output_stack;
@@ -943,7 +939,7 @@
     }
 
     char* string_output_stack_collect(struct output_stack* output_stack) {
-      char* string = (char*)malloc(1 + string_output_stack_length(output_stack));
+      char* string = malloc(1 + string_output_stack_length(output_stack));
       char* buffer = string;
       buffer = string_output_stack_collect_link(buffer, output_stack->link);
       memcpy(buffer, output_stack->stack, output_stack->pointer);
@@ -1003,12 +999,12 @@
         return;
       }
       else {
-        struct output_stack_link* new_link = (struct output_stack_link*)
+        struct output_stack_link* new_link =
           malloc(sizeof(struct output_stack_link));
         new_link->stack = output_stack->stack;
         new_link->link = output_stack->link;
         output_stack->link = new_link;
-        output_stack->stack = (char*)malloc(OUTPUT_STACK_BLOCK_SIZE);
+        output_stack->stack = malloc(OUTPUT_STACK_BLOCK_SIZE);
         output_stack->pointer = 0;
       }
     }
@@ -1494,19 +1490,22 @@
     }
     void plus_atom(char* class_name,
                    gc_actor_t gc_actor) {
-      struct class* class = (struct class*)
-        malloc(sizeof(struct class));
+      struct class* class = malloc(sizeof(struct class));
       class->class_name = str2jo(class_name);
       class->gc_actor = gc_actor;
+
+      cell length_of_class_name = strlen(class_name);
+      cell length_of_constructor_name = length_of_class_name -2;
+      cell length_of_predicate_name = length_of_class_name -1;
 
       jo_t name = str2jo(class_name);
       bind_name(name, TAG_CLASS, class);
 
-      char* tmp = substring(class_name, 1, strlen(class_name) -1);
+      char* tmp = substring(class_name, 1, length_of_class_name -1);
       jo_t data_constructor_name = str2jo(tmp);
       free(tmp);
 
-      char* tmp2 = malloc(strlen(jo2str(data_constructor_name) + 1 + 1));
+      char* tmp2 = malloc(1 + length_of_predicate_name);
       tmp2[0] = '\0';
       strcat(tmp2, jo2str(data_constructor_name));
       strcat(tmp2, "?");
@@ -1518,8 +1517,7 @@
     // argument 'fields' is shared
     void plus_data(char* class_name,
                    jo_t* fields) {
-      struct class* class = (struct class*)
-        malloc(sizeof(struct class));
+      struct class* class = malloc(sizeof(struct class));
       jo_t name = str2jo(class_name);
 
       class->class_name = name;
@@ -1539,13 +1537,17 @@
 
       bind_name(name, TAG_CLASS, class);
 
-      char* tmp = substring(class_name, 1, strlen(class_name) -1);
+      cell length_of_class_name = strlen(class_name);
+      cell length_of_constructor_name = length_of_class_name -2;
+      cell length_of_predicate_name = length_of_class_name -1;
+
+      char* tmp = substring(class_name, 1, length_of_class_name -1);
       jo_t data_constructor_name = str2jo(tmp);
       free(tmp);
 
       bind_name(data_constructor_name, TAG_DATA_CONSTRUCTOR, class);
 
-      char* tmp2 = malloc(strlen(jo2str(data_constructor_name) + 1 + 1));
+      char* tmp2 = malloc(1 + length_of_predicate_name);
       tmp2[0] = '\0';
       strcat(tmp2, jo2str(data_constructor_name));
       strcat(tmp2, "?");
@@ -1580,8 +1582,7 @@
         struct gp* gp = new_record_gp();
         gp->class = class;
 
-        cell* fields = (cell*)
-          malloc(fields_number*2*sizeof(cell));
+        cell* fields = malloc(fields_number*2*sizeof(cell));
         cell i = 0;
         while (i < fields_number) {
           struct dp a = ds_pop();
@@ -1685,11 +1686,9 @@
         cell size;
       };
       struct disp* new_disp(cell size) {
-        struct disp* disp = (struct disp*)
-          malloc(sizeof(struct disp));
+        struct disp* disp = malloc(sizeof(struct disp));
         disp->size = size;
-        disp->table = (struct disp_entry*)
-          malloc(size * sizeof(struct disp_entry));
+        disp->table = malloc(size * sizeof(struct disp_entry));
         bzero(disp->table, size * sizeof(struct disp_entry));
         return disp;
       }
@@ -1713,8 +1712,7 @@
           disp_entry->data = data;
         }
         else if (disp_entry->rest == 0) {
-          struct disp_entry* disp_entry_new = (struct disp_entry*)
-            malloc(sizeof(struct disp_entry));
+          struct disp_entry* disp_entry_new = malloc(sizeof(struct disp_entry));
           bzero(disp_entry_new, sizeof(struct disp_entry));
           disp_entry->rest = disp_entry_new;
           disp_insert_entry(disp_entry_new, key, tag, data);
@@ -1782,11 +1780,9 @@
         cell size;
       };
       struct multi_disp* new_multi_disp(cell size) {
-        struct multi_disp* multi_disp = (struct multi_disp*)
-          malloc(sizeof(struct multi_disp));
+        struct multi_disp* multi_disp = malloc(sizeof(struct multi_disp));
         multi_disp->size = size;
-        multi_disp->table = (struct multi_disp_entry*)
-          malloc(size * sizeof(struct multi_disp_entry));
+        multi_disp->table = malloc(size * sizeof(struct multi_disp_entry));
         bzero(multi_disp->table, size * sizeof(struct multi_disp_entry));
         return multi_disp;
       }
@@ -1817,8 +1813,7 @@
           multi_disp_entry->data = data;
         }
         else if (multi_disp_entry->rest == 0) {
-          struct multi_disp_entry* multi_disp_entry_new = (struct multi_disp_entry*)
-            malloc(sizeof(struct multi_disp_entry));
+          struct multi_disp_entry* multi_disp_entry_new = malloc(sizeof(struct multi_disp_entry));
           bzero(multi_disp_entry_new, sizeof(struct multi_disp_entry));
           multi_disp_entry->rest = multi_disp_entry_new;
           multi_disp_insert_entry(multi_disp_entry_new, key, tag, data);
@@ -1909,8 +1904,7 @@
     void plus_gene(char* function_name,
                    cell arity) {
       jo_t name = str2jo(function_name);
-      struct gene* gene = (struct gene*)
-        malloc(sizeof(struct gene));
+      struct gene* gene = malloc(sizeof(struct gene));
       bzero(gene, sizeof(struct gene));
 
       gene->arity = arity;
@@ -2110,7 +2104,8 @@
       }
     }
     void p_end() {
-      // for 'p_step' which do not handle tail call
+      // for 'p_step'
+      // if 'p_step' does not handle tail call
       struct rp p = rs_pop();
       current_local_counter = p.l;
       current_dynamic_local_counter = p.y;
@@ -2779,7 +2774,7 @@
         emit(str2jo("dup"));
         emit(str2jo("tag"));
         {
-          char* tmp = malloc(strlen(jo2str(dc) + 1));
+          char* tmp = malloc(1 + strlen(jo2str(dc)));
           tmp[0] = '\0';
           strcat(tmp, jo2str(dc));
           emit(JO_INS_LIT);
@@ -2901,7 +2896,7 @@
         fields[i] = field;
         i++;
       }
-      jo_t* fresh_fields = (jo_t*)malloc(i*sizeof(jo_t));
+      jo_t* fresh_fields = malloc(i*sizeof(jo_t));
       while (i > 0) {
         i--;
         fresh_fields[i] = fields[i];
@@ -3271,7 +3266,12 @@
         }
       }
     }
-    // do not handle tail call
+    void eval_one_step_at_level(cell level) {
+      eval_one_step();
+      while (rs->pointer > level) {
+        eval_one_step();
+      }
+    }
     void p_step() {
       struct input_stack* input_stack = terminal_input_stack();
       push(reading_stack, input_stack);
@@ -3282,7 +3282,7 @@
 
       cell base = rs->pointer;
       while (rs->pointer >= base) {
-        eval_one_step();
+        eval_one_step_at_level(base);
         report_one_step();
       }
 
@@ -3389,7 +3389,7 @@
       char* str0 = bp->p;
       char* str1 = ap->p;
 
-      char* str2 = (char*)malloc(strlen(str0) + strlen(str1) + 1);
+      char* str2 = malloc(strlen(str0) + strlen(str1) + 1);
       str2[0] = '\0';
       strcat(str2, str0);
       strcat(str2, str1);
@@ -3667,7 +3667,7 @@
     void p_get_local_jo_to_set_local_jo() {
       struct dp a = ds_pop();
       char* str = jo2str(a.d);
-      char* tmp = (char*)malloc(strlen(str) +1);
+      char* tmp = malloc(2 + strlen(str));
       tmp[0] = '\0';
       strcat(tmp, str);
       strcat(tmp, "!");
@@ -3850,7 +3850,7 @@
     void p_new_array() {
       struct dp a = ds_pop();
       cell len = a.d;
-      cell* array = (cell*)malloc((len*2 + 1) * sizeof(cell));
+      cell* array = malloc((len*2 + 1) * sizeof(cell));
       bzero(array, (len*2 + 1) * sizeof(cell));
       array[0] = len;
 
@@ -3913,7 +3913,7 @@
     }
     void p_collect() {
       cell len = collect_find_length();
-      cell* array = (cell*)malloc((len*2 + 1) * sizeof(cell));
+      cell* array = malloc((len*2 + 1) * sizeof(cell));
       bzero(array, (len*2 + 1) * sizeof(cell));
       array[0] = len;
 
@@ -3963,9 +3963,9 @@
     struct local* current_local_record() {
       struct rp p = rs_tos();
       cell length = current_local_counter - p.l;
+      // assert((length + 1) > 0);
       cell i = 0;
-      struct local* lr = (struct local*)
-        malloc((length + 1) * sizeof(struct local));
+      struct local* lr = malloc((length + 1) * sizeof(struct local));
       while (i < length) {
         lr[i].name       = local_record[p.l + i].name;
         lr[i].local_tag  = local_record[p.l + i].local_tag;
@@ -4441,12 +4441,7 @@
       struct dp b = ds_pop();
       gc_actor_t gc_actor = b.d;
 
-      struct class* class = (struct class*)
-        malloc(sizeof(struct class));
-      class->class_name = name;
-      class->gc_actor = gc_actor;
-
-      bind_name(name, TAG_CLASS, class);
+      plus_atom(jo2str(name), gc_actor);
     }
     void p_name_get() {
       struct dp a = ds_pop();
