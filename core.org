@@ -4,8 +4,6 @@
 
 * [todo-stack]
 
-*** (+var)
-
 *** list monad
 
 *** minikanren module
@@ -827,6 +825,34 @@
       (cond [:tag1 underscore-jo?] [true]
             [:tag2 underscore-jo?] [true]
             else [:tag1 :tag2 eq?]))
+    #+end_src
+
+*** (+var)
+
+    #+begin_src jojo
+    (+jojo +var (-> :body --)
+      :body .car :name!
+      :body .cdr :body!
+      'mark :body cons
+      'collect tail-cons
+      sexp-list-run :array!
+      (if :array array-length 1 eq? then
+          :array 0 array-ref :name name-bind end)
+      "- (+var) fail" w nl
+      "  body eval to not one value" w nl
+      "  name : " w :name w nl
+      "  body : " w :body w nl
+      "  number of values : " w :array array-length w nl
+      debug)
+    #+end_src
+
+*** (set)
+
+    #+begin_src jojo
+    (+jojo set (-> :body --)
+      :body .car :name!
+      `((quote (@ :name)) name-bind)
+      begin)
     #+end_src
 
 * monad
