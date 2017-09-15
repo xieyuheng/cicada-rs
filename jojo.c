@@ -12,7 +12,7 @@
   #include <signal.h>
   #include <limits.h>
   #include <stdarg.h>
-  #include <assert.h>
+  // #include <assert.h>
   #include <stdlib.h>
   typedef enum { false, true } bool;
   typedef intptr_t cell;
@@ -3963,7 +3963,6 @@
     struct local* current_local_record() {
       struct rp p = rs_tos();
       cell length = current_local_counter - p.l;
-      // assert((length + 1) > 0);
       cell i = 0;
       struct local* lr = malloc((length + 1) * sizeof(struct local));
       while (i < length) {
@@ -4342,6 +4341,11 @@
       struct dp a = ds_pop();
       bind_name(b.d, a.t, a.d);
     }
+    void p_name_rebind() {
+      struct dp b = ds_pop();
+      struct dp a = ds_pop();
+      rebind_name(b.d, a.t, a.d);
+    }
     void p_jo_emit() {
       struct dp a = ds_pop();
       emit(a.d);
@@ -4463,6 +4467,7 @@
       plus_prim("core-flag-off", p_core_flag_off);
 
       plus_prim("name-bind", p_name_bind);
+      plus_prim("name-rebind", p_name_rebind);
 
       // note that, the notation of instruction is not exposed to jojo
       plus_prim("jo-emit", p_jo_emit);
