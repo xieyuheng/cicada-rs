@@ -564,17 +564,15 @@
         (quote (@ :name)) name-bind-atom)
       begin)
     (note
-
       (+jojo bind
-        (-> (: :1m [:<1> <monad>])
-            (: :1-2m (-> :<1> -- :<2> <monad>))
-         -- (: :2m [:<2> <monad>]))
+        (-> (: :1m [:<1> <<monad>>])
+            (: :1-2m (-> :<1> -- :<2> <<monad>>))
+         -- (: :2m [:<2> <<monad>>]))
         dummy {drop :1m} :1-2m compose apply)
-
       (+jojo compose
-        (-> (: :0-1m (-> :<0> -- :<1> <monad>))
-            (: :1-2m (-> :<1> -- :<2> <monad>))
-         -- (: :0-2m (-> :<0> -- :<2> <monad>)))
+        (-> (: :0-1m (-> :<0> -- :<1> <<monad>>))
+            (: :1-2m (-> :<1> -- :<2> <<monad>>))
+         -- (: :0-2m (-> :<0> -- :<2> <<monad>>)))
         {:0-1m apply :1-2m bind}))
     (+data <nothing>)
     (+data <just> .v)

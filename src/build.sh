@@ -15,7 +15,7 @@ copy() {
 }
 
 tangle() {
-    ./tools/tangle.js
+    ./tangle.js
     xxd -i core.jo > core.h
 }
 

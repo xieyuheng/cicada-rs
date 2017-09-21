@@ -1,11 +1,10 @@
 #+html_head: <link rel="stylesheet" href="https://xieyuheng.github.io/asset/css/page.css" type="text/css" media="screen" />
 #+title: essence
-
+* fix syntax of essence
+* fix semantic of (+type-alias <sexp> (type-sum <symbol> [<sexp> <list>]))
 * [todo-list]
 
   - group theory
-
-  - 嚴格的理論基礎可以使得對性狀的實驗變得簡單嗎 ?
 
   - first we need a version of EOPL
     for function-compose-language
@@ -67,6 +66,10 @@
     (+simple-type <bool>
       true
       false)
+
+    (+type <bool> (-> -- <<type>>)
+      true  (-> -- <bool>)
+      false (-> -- <bool>))
     #+end_src
 
 *** <nat>
@@ -76,102 +79,55 @@
       zero
       succ (: .pre <nat>))
 
-    (+fun add (-> (: :m :n <nat>) <nat>)
-      (case :n
+    (+type <nat> (-> -- <<type>>)
+      zero (-> -- <nat>)
+      succ (-> (: .pre <nat>) -- <nat>))
+
+    (+fun add (-> (: :m :n <nat>) -- <nat>)
+      (match :n
         zero :m
-        succ [:m :n.pre (recur) succ]))
+        succ [:m :n.pre recur succ]))
 
-    (+fun mul (-> (: :m :n <nat>) <nat>)
-      (case :n
+    (+fun mul (-> (: :m :n <nat>) -- <nat>)
+      (match :n
         zero :n
-        succ [:m :n.pre (recur) :n add]))
+        succ [:m :n.pre recur :n add]))
 
-    (+fun factorial (-> (: :n <nat>) <nat>)
-      (case :n
+    (+fun factorial (-> (: :n <nat>) -- <nat>)
+      (match :n
         zero [:n succ]
-        succ [:n.pre (recur) :n mul]))
+        succ [:n.pre recur :n mul]))
     #+end_src
 
 *** <even>
 
     #+begin_src jojo
-    (+type <even> (-> (: .num <nat>) <type>)
-      zero (-> [] [zero <even>])
+    (+type <even> (-> (: .num <nat>) -- <<type>>)
+      zero (-> -- zero <even>)
       plus-two (-> (: .pre [:m <even>])
-                   [:m succ succ <even>]))
+                -- :m succ succ <even>))
 
-    (proof (-> [] [zero succ succ <even>])
-      zero
-      plus-two)
-
-    ---------------------
-
-    (+type <even> (-> (: .num <nat>) <type>)
-      zero (-> [] [zero <even>])
-      plus-two (-> (: .pre [:m <even>])
-                   [:m succ succ <even>]))
-
-    (+type <even> (-> (: .num <nat>) <<type>>)
-      (type-sum
-        <zero-even>
-        <plus-two-eve>))
-
-
-    (+type <zero-even> (-> (: .num <nat>) <<type>>))
-    (+cons zero-even (-> [] [zero <>]))
-
-    (+type <plus-two-eve> (-> (: .num <nat>) <<type>>))
-    (+cons plus-two-eve (-> (: .pre [:m <>])
-                            [:m succ succ <>]))
-
-    (+type <list> (-> (: .ele-type <type>) <type>)
-      null (-> [] [:t <list>])
-      cons (-> [(: .cdr [:t <list>])
-                (: .car :t)]
-               [:t <list>]))
-
-
-    (+type <list> (-> (: .ele-type <type>) -- <type>)
-      null (-> -- :t <list>)
-      cons (-> (: .cdr [:t <list>])
-               (: .car :t)
-            -- :t <list>))
-
-
-    (+type <list> (-> (: .<ele-type> <<type>>) -- <<type>>)
-      (+ <null>
-         <cons>))
-
-    (+type <null> (-> (: .<ele-type> <<type>>) -- <<type>>)
-      (->
-       -- :<ele-type> <null>))
-
-    (+type <cons> (-> (: .<ele-type> <<type>>) -- <<type>>)
-      (-> (: .cdr [:<ele-type> <list>])
-          (: .car :<ele-type>)
-       -- :<ele-type> <cons>))
+    (proof (-> -- zero succ succ <even>)
+      zero plus-two)
     #+end_src
 
 *** <eq> -- an interface to the internal unification
 
     #+begin_src jojo
-    (+type <eq> (-> (: .lhs .rhs :t) <type>)
-      refl (-> [] [:z :z <eq>]))
+    (+type <eq> (-> (: .lhs .rhs :<t>) -- <<type>>)
+      refl (-> -- :z :z <eq>))
 
     (+proof eq-apply
-      (-> [(: :eq [:x :y <eq>])
-           (: :f (-> :t1 :t2))]
-          [:x @:f :y @:f <eq>])
+      (-> :x :y <eq> (: :f (-> :<t1> -- :<t2>))
+       -- :x :f apply, :y :f apply, <eq>)
       refl)
 
     (+proof eq-swap
-      (-> (: :eq [:x :y <eq>])
-          [:x :y <eq>])
+      (-> :x :y <eq> -- :y :x <eq>)
       refl)
 
     (+proof eq-merge
-      (-> [(: :eq1 [:x :y <eq>]) (: :eq2 [:y :z <eq>])]
-          [:x :z <eq>])
+      (-> :x :y <eq> :y :z <eq> -- :x :z <eq>)
       refl)
     #+end_src
 
@@ -180,11 +136,11 @@
     #+begin_src jojo
     (+proof add-associative
       (-> (: :x :y :z <nat>)
-          [:x :y add :z add
-           :x :y :z add add <eq>])
-      (case :z
+       -- :x :y add :z add
+          :x :y :z add add <eq>)
+      (match :z
         zero refl
-        succ [:x :y :z.pre (recur) #[succ] eq-apply]))
+        succ [:x :y :z.pre recur {succ} eq-apply]))
     #+end_src
 
 *** add-commutative
@@ -192,44 +148,41 @@
     #+begin_src jojo
     (+proof add-commutative
       (-> (: :m :n <nat>)
-          [:m :n add
-           :n :m add <eq>])
-      (case :n
+       -- :m :n add, :n :m add <eq>)
+      (match :n
         zero [:m add-zero-commutative]
-        succ [:m :n.pre (recur) #[succ] eq-apply
+        succ [:m :n.pre recur {succ} eq-apply
               :n.pre :m add-succ-commutative eq-merge]))
 
     (+proof add-zero-commutative
       (-> (: :m <nat>)
-          [:m zero add
-           zero :m add <eq>])
-      (case :m
+       -- :m zero add, zero :m add <eq>)
+      (match :m
         zero refl
-        succ [:m.pre (recur) #[succ] eq-apply]))
+        succ [:m.pre recur {succ} eq-apply]))
 
     (+proof add-succ-commutative
       (-> (: :m :n <nat>)
-          [:m succ :n add
-           :m :n add succ <eq>])
-      (case :n
+       -- :m succ :n add, :m :n add succ <eq>)
+      (match :n
         zero refl
-        succ [:m :n.pre (recur) #[succ] eq-apply]))
+        succ [:m :n.pre recur {succ} eq-apply]))
     #+end_src
 
 *** [note] type-check detail of 'add-zero-commutative'
 
     #+begin_src jojo
-    (case :m succ)
+    (match :m succ)
     (= :m :m.pre succ)
 
     (type-computed:
 
      [:m.pre]
-     [(recur) #[succ] eq-apply]
+     [recur {succ} eq-apply]
 
      [:m.pre zero add
       zero :m.pre add <eq>]
-     [#[succ] eq-apply]
+     [{succ} eq-apply]
 
      [:m.pre zero add succ
       zero :m.pre add succ <eq>]
@@ -258,18 +211,18 @@
 *** [note] type-check detail of 'add-commutative'
 
     #+begin_src jojo
-    (case :n succ)
+    (match :n succ)
     (= :n :n.pre succ)
 
     (type-computed:
 
      [:m :n.pre]
-     [(recur) #[succ] eq-apply
+     [recur {succ} eq-apply
       :n.pre :m add-succ-commutative eq-swap eq-merge]
 
      [:m :n.pre add
       :n.pre :m add <eq>]
-     [#[succ] eq-apply
+     [{succ} eq-apply
       :n.pre :m add-succ-commutative eq-swap eq-merge]
 
      [:m :n.pre add succ
@@ -303,17 +256,7 @@
       :n.pre succ :m add <eq>])
     #+end_src
 
-* stack
-
-  #+begin_src jojo
-  (+fun drop (-> (: :d :t) []))
-  (+fun dup  (-> (: :d :t) [:t :t]) :d :d)
-  (+fun over (-> [(: :d1 :t1) (: :d2 :t2)] [:t1 :t2 :t1]) :d1 :d2 :d1)
-  (+fun tuck (-> [(: :d1 :t1) (: :d2 :t2)] [:t2 :t1 :t2]) :d2 :d1 :d2)
-  (+fun swap (-> [(: :d1 :t1) (: :d2 :t2)] [:t2 :t1]) :d2 :d1)
-  #+end_src
-
-* list
+* >< list
 
 *** <list> & <sexp>
 
@@ -321,68 +264,69 @@
       <sexp> := <symbol> | <list>
 
     #+begin_src jojo
-    (+type <list> (-> (: .ele-type <type>) <type>)
-      null (-> [] [:t <list>])
-      cons (-> [(: .cdr [:t <list>])
-                (: .car :t)]
-               [:t <list>]))
+    (+type <list> (-> (: .<ele-type> <<type>>) -- <<type>>)
+      null (-> -- :<t> <list>)
+      cons (-> (: .cdr [:<t> <list>])
+               (: .car :<t>)
+            -- :<t> <list>))
 
+    ><><><
     (+type-alias <sexp> (type-sum <symbol> [<sexp> <list>]))
 
-    (+fun length (-> (: :l [:t <list>]) <nat>)
-      (case :l
+    (+fun length (-> (: :l [:<t> <list>]) -- <nat>)
+      (match :l
         null zero
-        cons [:l.cdr (recur) succ]))
+        cons [:l.cdr recur succ]))
 
-    (+fun map (-> [(: :l [:t1 <list>])
-                   (: :f (-> :t1 :t2))]
-                  [:t2 <list>])
-      (case :l
+    (+fun map (-> (: :l [:<t1> <list>])
+                  (: :f (-> :<t1> -- :<t2>))
+               -- :<t2> <list>)
+      (match :l
         null null
-        cons [:l.cdr :f (recur), :l.car @:f, cons]))
+        cons [:l.cdr :f recur, :l.car :f apply, cons]))
 
-    (+fun ref (-> [(: :l [:t <list>]) (: :index <nat>)] :t)
-      (case :index
+    (+fun ref (-> (: :l [:<t> <list>]) (: :index <nat>) -- :<t>)
+      (match :index
         zero [:l.car]
         succ [:l.cdr :index.pre (loop)]))
 
     (+fun remove-first
-      (-> [(: :x :t) (: :l [:t <list>])]
-          [:t <list>])
-      (case :l
+      (-> (: :x :<t>) (: :l [:<t> <list>])
+       -- :<t> <list>)
+      (match :l
         null null
-        cons (case [:l.car :x equal?]
+        cons (match [:l.car :x equal?]
                true  :l.cdr
-               false [:l.cdr :x (recur) :l.car cons])))
+               false [:l.cdr :x recur :l.car cons])))
 
-    (+fun subst (-> [(: :new <symbol>)
-                     (: :old <symbol>)
-                     (: :sexp <sexp>)]
-                    <sexp>)
-      (type-case :sexp
-        <symbol> (case [:sexp :old equal?]
+    (+fun subst (-> (: :new <symbol>)
+                    (: :old <symbol>)
+                    (: :sexp <sexp>)
+                 -- <sexp>)
+      (case :sexp
+        <symbol> (match [:sexp :old equal?]
                    true  :new
                    false :sexp)
         <list>   [:new :old :sexp subst-list]))
 
-    (+fun subst-list (-> [(: :new <symbol>)
-                          (: :old <symbol>)
-                          (: :list [<sexp> <list>])]
-                         [<sexp> <list>])
-      (case :list
+    (+fun subst-list (-> (: :new <symbol>)
+                         (: :old <symbol>)
+                         (: :list [<sexp> <list>])
+                      -- <sexp> <list>)
+      (match :list
         null null
-        cons [:new :old :list.cdr (recur)
+        cons [:new :old :list.cdr recur
               :new :old :list.car subst
               cons]))
 
-    (+fun number-elements (-> [:t <list>] [(* <nat> :t) <list>])
-      zero number-elements-from )
+    (+fun number-elements (-> :<t> <list> -- (* <nat> :<t>) <list>)
+      zero number-elements-from)
 
     (+fun number-elements-from
-      (-> [(: :l [:t <list>]) (: :n <nat>)] [(* <nat> :t) <list>])
-      (case :l
+      (-> (: :l [:<t> <list>]) (: :n <nat>) -- (* <nat> :<t>) <list>)
+      (match :l
         null null
-        cons [:l.cdr :n succ (recur) (* :n :l.car) cons]))
+        cons [:l.cdr :n succ recur (* :n :l.car) cons]))
     #+end_src
 
 *** <has-length>
@@ -396,9 +340,9 @@
     (+fun map-has-length
       (-> [(: :has-length [:l :n <has-length>])]
           [:l :f map :n <has-length>])
-      (case :has-length
+      (match :has-length
         null-has-length null-has-length
-        cons-has-length [:has-length.cdr (recur) cons-has-length]))
+        cons-has-length [:has-length.cdr recur cons-has-length]))
     #+end_src
 
 *** [note] type-check detail of 'map-has-length'
@@ -406,7 +350,7 @@
     #+begin_src jojo
     (: :has-length [:l :n <has-length>])
 
-    (case :has-length cons-has-length)
+    (match :has-length cons-has-length)
       (= :has-length :has-length.cdr cons-has-length)
         (: :has-length.cdr [:l#0 :n#0 <has-length>])
       (: :has-length [:l#0 :a#0 cons :n#0 succ <has-length>])
@@ -415,10 +359,10 @@
 
     (type-computed:
 
-     [:has-length.cdr (recur) cons-has-length]
+     [:has-length.cdr recur cons-has-length]
 
      [:l#0 :n#0 <has-length>]
-     [(recur) cons-has-length]
+     [recur cons-has-length]
 
      [:l#0 :f#0 map :n#0 <has-length>]
      [cons-has-length]
@@ -431,7 +375,7 @@
 
      [:l#0 :a#0 cons :f map :n#0 succ <has-length>]
 
-     [:l#0 :f map :a#0 @:f cons :n#0 succ <has-length>])
+     [:l#0 :f map :a#0 :f apply cons :n#0 succ <has-length>])
     #+end_src
 
 *** <lexp> -- lambda expression
@@ -447,12 +391,12 @@
     (+fun occurs-free?
       (-> [(: :search-var <var>) (: :lexp <lexp>)]
           <bool>)
-      (case :lexp
+      (match :lexp
         var-lexp [:search-var :lexp.var equal?]
         lam-lexp [:search-var :lexp.var equal? not
-                  :search-var :lexp.body (recur) and]
-        app-lexp [:search-var :lexp.rator (recur)
-                  :search-var :lexp.rand (recur) or]))
+                  :search-var :lexp.body recur and]
+        app-lexp [:search-var :lexp.rator recur
+                  :search-var :lexp.rand recur or]))
     #+end_src
 
 *** <vector>
@@ -467,16 +411,16 @@
     (+fun append (-> [(: :l0 [:m :t <vector>])
                       (: :l1 [:n :t <vector>])]
                      [:m :n add :t <vector>])
-      (case :l1
+      (match :l1
         null :l0
-        cons [:l0 :l1.cdr (recur) :l1.car cons]))
+        cons [:l0 :l1.cdr recur :l1.car cons]))
 
     (+fun map (-> [(: :l [:n :t1 <vector>])
                    (: :f (-> :t1 :t2))]
                   [:n :t2 <vector>])
-      (case :l
+      (match :l
         null null
-        cons [:l.cdr :f (recur) :l.car @:f cons]))
+        cons [:l.cdr :f recur :l.car :f apply cons]))
     #+end_src
 
 *** [note] type-check detail of 'append'
@@ -485,7 +429,7 @@
     (: :l0 [:m :t <vector>])
     (: :l1 [:n :t <vector>])
 
-    (case :l1 cons)
+    (match :l1 cons)
       (= :l1 :l1.cdr :l1.car cons)
         (: :l1.cdr [:n#0 :t#0 <vector>])
         (: :l1.car :t#0)
@@ -495,13 +439,13 @@
 
     (type-computed:
 
-     [:l0 :l1.cdr (recur) :l1.car cons]
+     [:l0 :l1.cdr recur :l1.car cons]
 
      [:m :t <vector> :n :t <vector>]
-     [(recur) :l1.car cons]
+     [recur :l1.car cons]
 
      [:m :t <vector> :n#0 :t#0 <vector>]
-     [(recur) :l1.car cons]
+     [recur :l1.car cons]
 
      [:m :n#0 add :t#0 <vector>]
      [:l1.car cons]
@@ -526,7 +470,7 @@
     (: :l [:n :t1 <vector>])
     (: :f (-> :t1 :t2))
 
-    (case :l cons)
+    (match :l cons)
       (= :l :l.car :l.cdr cons)
         (: :l.cdr [:n#0 :t#0 <vector>])
         (: :l.car :t#0)
@@ -536,16 +480,16 @@
 
     (type-computed:
 
-     [:l.cdr :f (recur) :l.car @:f cons]
+     [:l.cdr :f recur :l.car :f apply cons]
 
      [:n#0 :t#0 <vector> (-> :t1 :t2)]
-     [(recur) :l.car @:f cons]
+     [recur :l.car :f apply cons]
 
      [:n#0 :t2 <vector>]
-     [:l.car @:f cons]
+     [:l.car :f apply cons]
 
      [:n#0 :t2 <vector> :t#0]
-     [@:f cons]
+     [:f apply cons]
 
      [:n#0 :t2 <vector> :t2]
      [cons]
@@ -576,19 +520,19 @@
       (+fun append (-> [(: :l0 [:t <list>])
                         (: :l1 [:t <list>])]
                        [:t <vector>])
-        (case :l1
+        (match :l1
           null :l0
-          cons [:l0 :l1.cdr (recur) :l1.car cons]))
+          cons [:l0 :l1.cdr recur :l1.car cons]))
 
       (+fun map (-> [(: :l [:t1 <list>])
                      (: :f (-> :t1 :t2))]
                     [:t2 <list>])
-        (case :l
+        (match :l
           null null
-          cons [:l.cdr :f (recur) :l.car @:f cons])))
+          cons [:l.cdr :f recur :l.car :f apply cons])))
     #+end_src
 
-* tree
+* >< tree
 
 *** <binary-tree>
 
@@ -624,9 +568,9 @@
     (+fun search (-> [(: :tree [<binary-search-tree>])
                       (: :key <symbol>)]
                      [<binary-search-tree>])
-      (case :tree
+      (match :tree
         null null
-        node (case [:key :tree.key compare]
+        node (match [:key :tree.key compare]
                lt [:tree.left :key (loop)]
                eq [:tree]
                gt [:tree.right :key (loop)])))
@@ -635,27 +579,27 @@
                       (: :key <symbol>)
                       (: :vlaue <int>)]
                      [<binary-search-tree>])
-      (case :tree
+      (match :tree
         null [:key :value null null node]
-        node (case [:key :tree.key compare]
+        node (match [:key :tree.key compare]
                lt [:tree.key :tree.value
-                   :tree.left :key :value (recur) :tree.right node]
+                   :tree.left :key :value recur :tree.right node]
                eq [:key :value
                    :tree.left :tree.right node]
                gt [:tree.key :tree.value
-                   :tree.left :tree.right :key :value (recur) node])))
+                   :tree.left :tree.right :key :value recur node])))
 
     (+fun delete (-> [(: :tree [<binary-search-tree>])
                       (: :key <symbol>)]
                      [<binary-search-tree>])
-      (case :tree
+      (match :tree
         null null
-        node (case [:key :tree.key compare]
+        node (match [:key :tree.key compare]
                lt [:tree.key :tree.value
-                   :tree.left :key (recur) :tree.right node]
+                   :tree.left :key recur :tree.right node]
                eq [:tree delete-node]
                gt [:tree.key :tree.value
-                   :tree.left :tree.right :key (recur) node])))
+                   :tree.left :tree.right :key recur node])))
 
 
     (+fun delete-node (-> (: :tree [<binary-search-tree>])
@@ -721,7 +665,7 @@
 
     #+end_src
 
-* type-class as subtype
+* >< type-class as subtype
 
 *** <<functor>>
 
@@ -736,9 +680,9 @@
       (+fun map (-> (: :x1 (<list> :t1))
                     (: :f (-> :t1 :t2))
                  -- (<list> :t2))
-        (case :x1
+        (match :x1
           null null
-          cons [:x1.cdr :f (recur), :x1.car @:f, cons])))
+          cons [:x1.cdr :f recur, :x1.car :f apply, cons])))
     #+end_src
 
 *** <<monad>>
@@ -766,7 +710,7 @@
       (+imp bind (-> (: :m (<maybe> :<t1>))
                      (: :f (-> :<t1> (<maybe> :<t2>)))
                   -- (<maybe> :<t2>))
-        (case :m
+        (match :m
           nothing nothing
           just (:f :m.value))))
     #+end_src
@@ -785,7 +729,7 @@
         (# :m apply :f apply apply)))
     #+end_src
 
-* quotype -- quotient type
+* >< quotype -- quotient type
 
 *** [note]
 
@@ -808,7 +752,7 @@
 
     - 以 <fraction> 爲例
 
-* interp
+* >< interp
 
 *** [note]
 
@@ -833,9 +777,9 @@
                        [:t <env>]))
 
       (+fun env-apply (-> [(: :var <var>) (: :env [:t <env>])] :t)
-        (case :env
+        (match :env
           empty-env error
-          extend-env (case [:env.var :var equal?]
+          extend-env (match [:env.var :var equal?]
                        true  :val
                        false [:var :env.old (loop)])))
 
@@ -863,16 +807,16 @@
         :program init-env eval)
 
       (+fun eval (-> [(: :exp <exp>) (: :env [<expval> <env>])] <expval>)
-        (case :exp
+        (match :exp
           const-exp [:exp.num]
-          zero?-exp [:exp.exp1 :env (recur) zero equal?]
-          if-exp    (case [:exp.exp1 :env (recur)]
+          zero?-exp [:exp.exp1 :env recur zero equal?]
+          if-exp    (match [:exp.exp1 :env recur]
                       true  [:exp.exp2 :env (loop)]
                       false [:exp.exp3 :env (loop)])
-          diff-exp  [:exp.exp1 :env (recur)
-                     :exp.exp2 :env (recur) sub]
+          diff-exp  [:exp.exp1 :env recur
+                     :exp.exp2 :env recur sub]
           var-exp   [:exp.var :env env-apply]
-          let-exp   [:exp.exp1 :env (recur) :val!
+          let-exp   [:exp.exp1 :env recur :val!
                      :exp.body :env :exp.var :val extend-env (loop)]))
       #+end_src
 
@@ -911,9 +855,9 @@
                        [:t <env>]))
 
       (+fun env-apply (-> [(: :var <var>) (: :env [:t <env>])] :t)
-        (case :env
+        (match :env
           empty-env error
-          extend-env (case [:env.var :var equal?]
+          extend-env (match [:env.var :var equal?]
                        true  :val
                        false [:var :env.old (loop)])))
 
@@ -943,19 +887,19 @@
         :program init-env eval)
 
       (+fun eval (-> [(: :exp <exp>) (: :env [<expval> <env>])] <expval>)
-        (case :exp
+        (match :exp
           const-exp [:exp.num]
-          zero?-exp [:exp.exp1 :env (recur) .num zero equal?]
-          if-exp    (case [:exp.exp1 :env (recur)]
+          zero?-exp [:exp.exp1 :env recur .num zero equal?]
+          if-exp    (match [:exp.exp1 :env recur]
                       true  [:exp.exp2 :env (loop)]
                       false [:exp.exp3 :env (loop)])
-          diff-exp  [:exp.exp1 :env (recur)
-                     :exp.exp2 :env (recur) sub]
+          diff-exp  [:exp.exp1 :env recur
+                     :exp.exp2 :env recur sub]
           var-exp   [:exp.var :env env-apply]
-          let-exp   [:exp.exp1 :env (recur) :val!
+          let-exp   [:exp.exp1 :env recur :val!
                      :exp.body :env :exp.var :val extend-env (loop)]
           proc-exp  [:exp.var :exp.body :env proc]
-          call-exp  [:exp.rator :env (recur) :exp.rand :env (recur) proc-apply]))
+          call-exp  [:exp.rator :env recur :exp.rand :env recur proc-apply]))
       #+end_src
 
 *** LETREC -- a language with recursive procedures
@@ -990,7 +934,7 @@
         letrec (: .var .bind <var>) (: .body .letrec-body <exp>))
 
       (+fun eval (-> [(: :exp <exp>) (: :env [<expval> <env>])] <expval>)
-        (case :exp
+        (match :exp
           ++
           letrec [:exp.letrec-body
                   :env :exp.var :exp.bind :exp.body extend-rec
@@ -1008,9 +952,9 @@
       (+fun env-apply (-> [(: :var <var>)
                            (: :env [:t <env>])]
                           :t)
-        (case :env
+        (match :env
           ++
-          extend-rec (case [:env.var :var equal?]
+          extend-rec (match [:env.var :var equal?]
                        true  [:env.bind :env.body :env proc]
                        false [:var :env.old (loop)])))
       #+end_src
