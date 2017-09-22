@@ -3,47 +3,79 @@
 
 * [todo-list]
 
-  - group theory
+*** esse as sequent1 and sequent0 in jojo
 
-  - first we need a version of EOPL
-    for function-compose-language
+    - can I re-design sequent0
+      by firstly design a small core ?
 
-    we can do this by implement EOPL and re-factor it.
+      or can I design an over-simplified version first ?
 
-    with concurrency in mind
+    - local var can be non-determined
 
-    and with the question about lazy-ness in mind
-
-  - LETREC
-
-  - EXPLICIT-REFS
-    - do not control side-effect in esse
-
-  - recall sequent1 and sequent0
     - trunk as value which can be unified
+
+      1. there are non-determined var
+
+      2. when applying a function to non-determined var
+         it can not really return determined value
+         this is where we need to form a trunk
+
+      3. if we can not determine a non-determined trunk now
+         after some binding
+         we might be able to determine it
+         thus every time we see a trunk
+         we try to determine it
+
+      4. two non-determined trunk might be unified with each other
+         if the function body to be applied are
+         [structurally] the same
+         and their arguments can be unified
+
+      5. equivalence between function body
+         is not limited to 'structurally the same'
+
+         'add-commutative' is just saying (= {add} {swap add})
+         'add-associative' is just saying (= {add :z add} {:z add add})
+
+         we just need to supply the arguments of the function
+         to get back (+proof add-commutative)
+         and (+proof add-commutative)
+
     - when type-apply
-      function cut
-      data and variable do not cut
+
+      - function cut
+        - such as 'recur' and 'eq-apply'
+        the information needed to apply the function body
+        is not there
+        so we use its type
+        to do a cut
+
+      - data and variable
+        - such as ':m.pre' and '{succ}'
+        do not cut
+        they already contain more information
+        than their type
+
     - can cut not happen in trunk ?
       - check the examples we have now
 
-  - esse in esse
-    - forgetful functor
-    - unification
-    - equivalence
-    - module
-    - error handling
+*** esse in esse
 
-* [todo-stack]
+    - forgetful functor -- code generation
 
-  - recall the old <red-black-tree> proof
+    - equivalence -- quotype
 
-  - use number theory to test esse as prover
+    - unification -- uses 'equal?'
 
-  - module system
+    - module -- name space
 
-  - type-class as subtype of <<type>> ?
-    use category theory to test type-class
+*** recall the old <red-black-tree> proof
+
+*** use number theory to test esse as prover
+
+*** use category theory to test type-class
+
+    - group theory
 
 * [note]
 
@@ -62,6 +94,11 @@
     - (:) collects its body
       and treat the last value of the body
       as the type to be unified
+
+*** function name overload
+
+    - a function name dispatches over its input type
+    - a constructor name dispatches over its output type
 
 * number
 
@@ -109,7 +146,7 @@
     #+begin_src jojo
     (+type <even> (-> (: .num <nat>) -- <<type>>)
       zero (-> -- zero <even>)
-      plus-two (-> (: .pre [:m <even>])
+      plus-two (-> (: .pre :m <even>)
                 -- :m succ succ <even>))
 
     (proof (-> -- zero succ succ <even>)
@@ -131,7 +168,7 @@
       (-> :x :y <eq> -- :y :x <eq>)
       refl)
 
-    (+proof eq-merge
+    (+proof eq-compose
       (-> :x :y <eq> :y :z <eq> -- :x :z <eq>)
       refl)
     #+end_src
@@ -157,7 +194,7 @@
       (match :n
         zero [:m add-zero-commutative]
         succ [:m :n.pre recur {succ} eq-apply
-              :n.pre :m add-succ-commutative eq-merge]))
+              :n.pre :m add-succ-commutative eq-compose]))
 
     (+proof add-zero-commutative
       (-> (: :m <nat>)
@@ -223,28 +260,28 @@
 
      [:m :n.pre]
      [recur {succ} eq-apply
-      :n.pre :m add-succ-commutative eq-swap eq-merge]
+      :n.pre :m add-succ-commutative eq-swap eq-compose]
 
      [:m :n.pre add
       :n.pre :m add <eq>]
      [{succ} eq-apply
-      :n.pre :m add-succ-commutative eq-swap eq-merge]
+      :n.pre :m add-succ-commutative eq-swap eq-compose]
 
      [:m :n.pre add succ
       :n.pre :m add succ <eq>]
-     [:n.pre :m add-succ-commutative eq-swap eq-merge]
+     [:n.pre :m add-succ-commutative eq-swap eq-compose]
 
      [:m :n.pre add succ
       :n.pre :m add succ <eq>
       :n.pre succ :m add
       :n.pre :m add succ <eq>]
-     [eq-swap eq-merge]
+     [eq-swap eq-compose]
 
      [:m :n.pre add succ
       :n.pre :m add succ <eq>
       :n.pre :m add succ
       :n.pre succ :m add <eq>]
-     [eq-merge]
+     [eq-compose]
 
      [:m :n.pre add succ
       :n.pre succ :m add <eq>])
@@ -287,7 +324,7 @@
 *** map
 
     #+begin_src jojo
-    (+fun map (-> (: :l [:<t1> <list>])
+    (+fun map (-> (: :l :<t1> <list>)
                   (: :f (-> :<t1> -- :<t2>))
                -- :<t2> <list>)
       (match :l
@@ -322,16 +359,15 @@
 *** <has-length>
 
     #+begin_src jojo
-    (+type <has-length>
-      (-> (: .list [:<t> <list>])
-          (: .length <nat>)
-       -- <<type>>)
-      null-has-length (-> [] [null zero <has-length>])
-      cons-has-length (-> (: .cdr [:l :n <has-length>])
-                          [:l :a cons :n succ <has-length>]))
+    (+type <has-length> (-> (: .list :<t> <list>)
+                            (: .length <nat>)
+                         -- <<type>>)
+      null-has-length (-> -- null zero <has-length>)
+      cons-has-length (-> (: .cdr :l :n <has-length>)
+                       -- :l :a cons :n succ <has-length>))
 
     (+fun map-has-length
-      (-> (: :has-length [:l :n <has-length>])
+      (-> (: :has-length :l :n <has-length>)
        -- :l :f map :n <has-length>)
       (match :has-length
         null-has-length null-has-length
@@ -341,7 +377,7 @@
 *** [note] type-check detail of 'map-has-length'
 
     #+begin_src jojo
-    (: :has-length [:l :n <has-length>])
+    (: :has-length :l :n <has-length>)
 
     (match :has-length cons-has-length)
       (= :has-length :has-length.cdr cons-has-length)
@@ -566,6 +602,8 @@
 
 *** <list> as forgetful functor -- to reuse <vector>
 
+    - forgetful functor of type [not type-class]
+
     #+begin_src jojo
     (+var <list> (forget .length <vector>))
 
@@ -737,8 +775,8 @@
               (: :f (-> :<t1> -- :<t2>))
            -- :<t2> <functor>))
 
-    (+imp <list> <<functor>>
-      (+fun map (-> (: :x1 :<t1> <list>)
+    (+member <list> <<functor>>
+      (+imp map (-> (: :x1 :<t1> <list>)
                     (: :f (-> :<t1> -- :<t2>))
                  -- :<t2> <list>)
         (match :x1
@@ -750,8 +788,7 @@
 
     #+begin_src jojo
     (+subtype <<monad>> (-> <<type>> -- <<type>>)
-      return (-> (: :val :<t>)
-              -- :<t> <monad>)
+      return (-> (: :val :<t>) -- :<t> <monad>)
       bind (-> (: :value :<t1> <monad>)
                (: :f (-> :<t1> -- :<t2> <monad>))
             -- :<t2> <monad>))
@@ -772,7 +809,7 @@
                   -- :<t2> <maybe>)
         (match :m
           nothing nothing
-          just (:f :m.value))))
+          just [:m.value :f apply])))
     #+end_src
 
 *** <state>
@@ -790,25 +827,46 @@
         {:m apply :f apply apply}))
     #+end_src
 
-* >< quotype -- quotient type
+* quotype -- quotient type
 
 *** [note]
 
-    - quotient-type or simply quotype
-      是重新實現 equal?
+    - basic 'equal?'
 
-    - 或者一般地 重新實現接口函數的行爲
+    - to use quotype is to to re-implement 'equal?'.
 
-    - 以 <int> 爲例
+      or, generally,
+      to re-implement interface functions
+      of type and type-class
 
-      #+begin_src jojo
-      (+simple-quotype <int>
-        (: .left .right <nat>))
+*** <int>
 
-      (+fun equal? (-> (: :x :y <int>) -- <bool>)
-        :x.left :x.right sub
-        :y.left :y.right sub
-        equal?)
-      #+end_src
+    #+begin_src jojo
+    (+simple-quotype <int>
+      (: .left .right <nat>))
+    #+end_src
 
-    - 以 <fraction> 爲例
+*** equal?
+
+    #+begin_src jojo
+    (+fun equal? (-> (: :x :y <int>) -- <bool>)
+      :x.left :x.right sub
+      :y.left :y.right sub
+      equal?)
+    #+end_src
+
+*** <fraction>
+
+    #+begin_src jojo
+    (+simple-quotype <fraction>
+      (: .up .down <int>))
+    #+end_src
+
+*** equal?
+
+    #+begin_src jojo
+    (+fun equal? (-> (: :x :y <fraction>) -- <bool>)
+      :x.up :y.down mul
+      :y.up :x.down mul
+      equal?)
+    #+end_src
