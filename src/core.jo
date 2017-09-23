@@ -200,24 +200,61 @@
          :jo jo-write newline]
 
         else [:jo sexp-compile-jojo apply]))
-    (+jojo sexp-list-compile-jojo (-> :body -- <jojo>)
+    (+data <macro> .expend)
+    (+jojo +macro (-> :body sexp list --)
+      :body .cdr body-compile-jojo macro
+      :body .car name-bind)
+    (+jojo body-compile-jojo (-> :body -- <jojo>)
       compiling-stack-tos :address!
-      :body sexp-list-compile
-       emit-jojo-end
+      :body body-compile
+      emit-jojo-end
       :address new-jojo
       compiling-stack-drop :address compiling-stack-push)
-    (+jojo sexp-compile-jojo null cons sexp-list-compile-jojo)
+    (+jojo sexp-compile-jojo null cons body-compile-jojo)
     (+jojo sexp-list-compile (-> :list sexp list --)
-      (case :list
-        <null> []
-        <cons> [:list .car sexp-compile
-                :list .cdr recur]))
+      (cond
+        [:list null?] []
+        else
+        [:list .car sexp-compile
+         :list .cdr recur]))
+    (+jojo macro-expend (-> :sexp --)
+      (if :sexp cons? not then :sexp end)
+      :sexp .car jo-ref :head!
+      (if :head tag '<macro> eq?
+          then :sexp .cdr :head .expend apply recur
+          else :sexp))
+    (+jojo macro-compile .expend apply sexp-compile)
     (+jojo sexp-compile (-> :sexp --)
       (case :sexp
         <null>   [:sexp emit-lit]
-        <cons>   [:sexp .cdr :sexp .car jo-apply]
+        <cons>   [:sexp sexp-compile/cons]
         <string> [:sexp emit-lit]
         <jo>     [:sexp jo-compile]))
+
+    (+jojo sexp-compile/cons (-> :sexp --)
+      :sexp macro-expend :primitive-sexp!
+      :primitive-sexp .cdr
+      :primitive-sexp .car
+      jo-ref apply)
+    (+jojo sexp->tail-sexp (-> :sexp -> tail-sexp)
+      (cond [:sexp cons? not] :sexp
+            [:sexp .car 'if eq?] ['tail-if :sexp .cdr cons]
+            [:sexp .car 'begin eq?] ['tail-begin :sexp .cdr cons]
+            else :sexp))
+
+    (+jojo body-compile (-> :list sexp list --)
+      (cond
+        [:list null?] []
+
+        [:list .cdr null?]
+        [:list .car
+         macro-expend
+         sexp->tail-sexp
+         sexp-compile]
+
+        else
+        [:list .car sexp-compile
+         :list .cdr recur]))
     (+jojo jo-compile (-> :jo --)
       (cond
         [:jo int-jo?] [:jo jo->int emit-lit]
@@ -234,7 +271,7 @@
         [:jo comma eq?] []
 
         else [:jo jo-emit]))
-    (+jojo sexp-list-run sexp-list-compile-jojo apply)
+    (+jojo body-run body-compile-jojo apply)
     (+jojo sexp-run sexp-compile-jojo apply)
     (+jojo quote {emit-lit} list-for-each)
 
@@ -284,7 +321,7 @@
 
         [:list .car .car '@ eq?]
         [:list .cdr recur
-         :list .car .cdr list
+         :list .car .cdr list macro-compile
          'swap jo-emit
          'list-append jo-emit]
 
@@ -324,8 +361,72 @@
               "  the body dose not has 'then" string-write newline
               "  body : " string-write :body sexp-list-write newline
               debug]))
+    (+jojo tail-if-else-then (-> :body --)
+      :body {'then eq?} list-split (-> :question :then-else)
+      :then-else {'else eq?} list-split (-> :then :else)
+      :question sexp-list-compile
+      emit-jz :address-for-jz!
+      :then .cdr body-compile 'end jo-emit
+      :address-for-jz set-offset-to-here
+      :else .cdr body-compile 'end jo-emit)
+
+    (+jojo tail-if-then (-> :body --)
+      :body {'then eq?} list-split (-> :question :then)
+      :question sexp-list-compile
+      emit-jz :address-for-jz!
+      :then .cdr body-compile 'end jo-emit
+      :address-for-jz set-offset-to-here)
+
+    (+jojo tail-if (-> :body --)
+      (cond
+        [:body {'else eq?} list-any?
+         :body {'then eq?} list-any? and]
+        [:body tail-if-else-then]
+
+        [:body {'then eq?} list-any?]
+        [:body tail-if-then]
+
+        else ["- (tail-if) fail" string-write newline
+              "  the body dose not has 'then" string-write newline
+              "  body : " string-write :body sexp-list-write newline
+              debug]))
+
+
+    (note
+
+      (+jojo tail-if-else-then (-> :body --)
+        :body {'then eq?} list-split (-> :question :then-else)
+        :then-else {'else eq?} list-split (-> :then :else)
+        :question sexp-list-compile
+        emit-jz :address-for-jz!
+        :then .cdr body-compile 'end jo-emit
+        emit-jmp :address-for-jmp!
+        :address-for-jz set-offset-to-here
+        :else .cdr body-compile 'end jo-emit
+        :address-for-jmp set-offset-to-here)
+
+      (+jojo tail-if-then (-> :body --)
+        :body {'then eq?} list-split (-> :question :then)
+        :question sexp-list-compile
+        emit-jz :address-for-jz!
+        :then .cdr body-compile 'end jo-emit
+        :address-for-jz set-offset-to-here)
+
+      (+jojo tail-if (-> :body --)
+        (cond
+          [:body {'else eq?} list-any?
+           :body {'then eq?} list-any? and]
+          [:body tail-if-else-then]
+
+          [:body {'then eq?} list-any?]
+          [:body tail-if-then]
+
+          else ["- (tail-if) fail" string-write newline
+                "  the body dose not has 'then" string-write newline
+                "  body : " string-write :body sexp-list-write newline
+                debug])))
     (+jojo core-clo
-      sexp-list-compile-jojo emit-lit
+      body-compile-jojo emit-lit
       'current-local-env jo-emit
       'closure jo-emit)
     (+jojo cond/expend (-> :body -- sexp)
@@ -352,13 +453,16 @@
              then (@ :answer))))
 
     (+jojo cond/expend-if-then (-> :question :answer -- sexp)
-      'if null cons
-      (if :question 'else eq?
-          then 'true
-          else :question)
-      tail-cons
-      'then tail-cons
-      :answer tail-cons)
+      (cond [:question 'else eq?]
+            ['if null cons
+             'true tail-cons
+             'then tail-cons
+             :answer tail-cons]
+            else
+            ['if null cons
+             :question tail-cons
+             'then tail-cons
+             :answer tail-cons]))
     (+jojo arrow/expend (-> :body -- sexp)
       :body {'-- eq?} list-left
       {local-jo?} list-filter
@@ -395,7 +499,7 @@
       list-length
       :name name-bind-gene
 
-      :rest-body sexp-list-compile-jojo
+      :rest-body body-compile-jojo
       :name name-bind-disp-default-to-jojo)
     (+jojo plus-disp (-> :body --)
       :body .car :name!
@@ -407,34 +511,35 @@
       {tag-jo?} list-filter
       jo-list-compile-cells :address-of-tags!
 
-      :rest-body sexp-list-compile-jojo
+      :rest-body body-compile-jojo
       :address-of-tags
       :name name-bind-disp-to-jojo)
     (+jojo +jojo (-> :body sexp list --)
-      :body .cdr sexp-list-compile-jojo
+      :body .cdr body-compile-jojo
       :body .car name-bind)
     repl-over-the-repl-in-c
     (+jojo note drop)
 
     (+jojo begin sexp-list-compile)
+    (+jojo tail-begin body-compile)
 
     (+jojo if core-if)
     (+jojo clo core-clo)
 
-    (+jojo cond cond/expend sexp-compile)
-    (+jojo -> arrow/expend sexp-compile)
+    (+macro cond cond/expend)
+    (+macro -> arrow/expend)
 
     (+jojo +data plus-data)
     (+jojo +gene plus-gene)
     (+jojo +disp plus-disp)
-    (+jojo array array/expend sexp-compile)
+    (+macro array array/expend)
 
     (+jojo array/expend (-> :body -- sexp)
       'begin null cons
       'mark tail-cons
       :body list-append
       'collect tail-cons)
-    (+jojo list list/expend sexp-compile)
+    (+macro list list/expend)
 
     (+jojo list/expend (-> :body -- sexp)
       'begin null cons
@@ -442,7 +547,7 @@
       :body list-append
       'collect tail-cons
       'array->list tail-cons)
-    (+jojo assert assert/expend sexp-compile)
+    (+macro assert assert/expend)
 
     (+jojo assert/expend (-> :body -- sexp)
       `(if (@ :body list-spread)
@@ -452,7 +557,7 @@
            "  assertion : " string-write
            (quote (@ :body)) sexp-list-write newline))
 
-    (+jojo assert! assert!/expend sexp-compile)
+    (+macro assert! assert!/expend)
 
     (+jojo assert!/expend (-> :body -- sexp)
       `(if (@ :body list-spread)
@@ -480,7 +585,7 @@
         [:t1 .r :t2 .r zip-tree] {:r!
         [:l :r node return-maybe]} bind-maybe} bind-maybe))
 
-    (+jojo let-bind let-bind/expend sexp-compile)
+    (+macro let-bind let-bind/expend)
 
     (+jojo let-bind/expend (-> :body -- sexp)
       :body .car :body .cdr let-bind/expend-recur)
@@ -501,7 +606,7 @@
           {drop
            (@ :binder :rest .cdr recur)}
           (@ :binder)]))
-    (+jojo case case/expend sexp-compile)
+    (+macro case case/expend)
 
     (+jojo case/expend (-> :body -- sexp)
       `(begin (list (@ :body .car)) {tag} list-map
@@ -540,7 +645,7 @@
       :body .cdr :body!
       'mark :body cons
       'collect tail-cons
-      sexp-list-run :array!
+      body-run :array!
       (if :array array-length 1 eq? then
           :array 0 array-ref :name name-bind end)
       "- (+var) fail" w nl
@@ -681,7 +786,7 @@
         <cons> [:list .cdr .cdr recur
                 :list .car :list .cdr .car
                 cons-table]))
-    (+jojo table list 'list->table jo-emit)
+    (+jojo table list macro-compile 'list->table jo-emit)
     (+disp w (-> <null-table>) drop "(table)" w)
 
     (+disp w (-> <cons-table>) table-write)
@@ -847,10 +952,9 @@
       {sexp-for-module? not} list-filter
 
       {:rename-table sexp-table-substitute} list-map
-      nop
-      nop nop nop nop
-      nop nop
+
       sexp-list-compile
+
       :export-table
       :name name-bind)
     (+jojo expend-include (-> :body -- body)
@@ -1002,7 +1106,7 @@
       :body .car :name!
       (if :name module-loaded? not then
           :name module-load)
-      :body sexp-list-run :result!
+      :body body-run :result!
       (if :result table? then :result end)
       "- module/import-one fail" w nl
       "  result of body is not table" w nl
@@ -1019,8 +1123,8 @@
             [:sexp .car :table recur
              :sexp .cdr {:table sexp-table-substitute} list-map
              cons]
-            else (if :table :sexp table-find then end
-                     else :sexp)))
+            [:table :sexp table-find] []
+            else :sexp))
     (+jojo module-loaded? (-> :name -- <bool>)
       (if :name jo-bound?
           then :name sexp-run table?
@@ -1069,7 +1173,7 @@
       :body
       {sexp-for-module? not} list-filter
       {:rename-table sexp-table-substitute} list-map
-      sexp-list-run)
+      body-run)
       (note take r7rs import declaration for example
         (import <import-set>)
         where <import-set>

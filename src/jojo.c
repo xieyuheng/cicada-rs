@@ -3282,7 +3282,7 @@
 
       cell base = rs->pointer;
       while (rs->pointer >= base) {
-        // eval_one_step_at_level(base);
+        eval_one_step_at_level(base);
         eval_one_step();
         report_one_step();
       }
@@ -3731,6 +3731,27 @@
         ds_push(TAG_BOOL, jo_bound_p(jo));
       }
     }
+    void p_jo_ref() {
+      struct dp a = ds_pop();
+      if (a.t != TAG_JO) {
+        report("- p_jo_ref fail\n");
+        report("  argument is not a jo : ");
+        data_print(a.t, a.d);
+        report("\n");
+        p_debug();
+      }
+      jo_t jo = a.d;
+      if (!jo_bound_p(jo)) {
+        report("- p_jo_ref fail\n");
+        report("  jo is unbound : ");
+        data_print(a.t, a.d);
+        report("\n");
+        p_debug();
+      }
+      else {
+        ds_push(jo->tag, jo->data);
+      }
+    }
     void expose_jo() {
       plus_prim("round-bar",    p_round_bar);
       plus_prim("round-ket",    p_round_ket);
@@ -3767,6 +3788,7 @@
       plus_prim("jo->string", p_jo_to_string);
 
       plus_prim("jo-bound?", p_jo_bound_p);
+      plus_prim("jo-ref", p_jo_ref);
     }
     void p_compiling_stack_tos() {
       ds_push(TAG_ADDRESS, tos(compiling_stack));

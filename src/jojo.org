@@ -4,6 +4,27 @@
 
 * [todo-stack]
 
+*** [fix bug] gc_mark does not handle bindings of gene hash table
+
+    - implement dispatching as jojo macro instead of implement it in c
+
+*** refactor the design of jojo
+
+    - can we design a vm as the core ?
+      the vm would need :
+      1. jotable
+      2. gc -- and its interface
+
+    - the aim is still :
+      1. a dynamic-type-language
+      2. with simple interface to the underlying operating system
+
+    - before design a new version of jojo
+      we must first learn :
+      1. concurrency
+      2. parallelism
+      3. distributed computation
+
 *** fix socket module
 
 *** fix name_record
@@ -4787,7 +4808,7 @@
 
       cell base = rs->pointer;
       while (rs->pointer >= base) {
-        // eval_one_step_at_level(base);
+        eval_one_step_at_level(base);
         eval_one_step();
         report_one_step();
       }
@@ -5526,6 +5547,32 @@
     }
     #+end_src
 
+*** p_jo_ref
+
+    #+begin_src c
+    void p_jo_ref() {
+      struct dp a = ds_pop();
+      if (a.t != TAG_JO) {
+        report("- p_jo_ref fail\n");
+        report("  argument is not a jo : ");
+        data_print(a.t, a.d);
+        report("\n");
+        p_debug();
+      }
+      jo_t jo = a.d;
+      if (!jo_bound_p(jo)) {
+        report("- p_jo_ref fail\n");
+        report("  jo is unbound : ");
+        data_print(a.t, a.d);
+        report("\n");
+        p_debug();
+      }
+      else {
+        ds_push(jo->tag, jo->data);
+      }
+    }
+    #+end_src
+
 *** expose_jo
 
     #+begin_src c
@@ -5565,6 +5612,7 @@
       plus_prim("jo->string", p_jo_to_string);
 
       plus_prim("jo-bound?", p_jo_bound_p);
+      plus_prim("jo-ref", p_jo_ref);
     }
     #+end_src
 
