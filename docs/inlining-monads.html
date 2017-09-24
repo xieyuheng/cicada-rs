@@ -3,13 +3,18 @@
 "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en">
 <head>
-<!-- 2017-08-31 Thu 02:38 -->
+<!-- 2017-09-24 Sun 09:12 -->
 <meta http-equiv="Content-Type" content="text/html;charset=utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>inlining monads</title>
 <meta name="generator" content="Org-mode" />
-<meta name="author" content="XIE Yuheng" />
-<link rel="stylesheet" href="https://xieyuheng.github.io/asset/css/page.css" type="text/css" media="screen" />
+<meta name="author" content="xieyuheng" />
+<link rel="stylesheet" type="text/css" href="styles/readtheorg/css/htmlize.css"/>
+<link rel="stylesheet" type="text/css" href="styles/readtheorg/css/readtheorg.css"/>
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/2.1.3/jquery.min.js"></script>
+<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.4/js/bootstrap.min.js"></script>
+<script type="text/javascript" src="styles/lib/js/jquery.stickytableheaders.min.js"></script>
+<script type="text/javascript" src="styles/readtheorg/js/readtheorg.js"></script>
 <script type="text/javascript">
 /*
 @licstart  The following is the entire license notice for the
@@ -58,43 +63,40 @@ for the JavaScript code in this tag.
 </script>
 </head>
 <body>
-<div id="preamble" class="status">
-.
-</div>
 <div id="content">
 <h1 class="title">inlining monads</h1>
 <div id="table-of-contents">
 <h2>overview</h2>
 <div id="text-table-of-contents">
 <ul>
-<li><a href="#org5980677">intro</a></li>
-<li><a href="#org9d895f8">number-tree</a>
+<li><a href="#org2a6ecde">intro</a></li>
+<li><a href="#org2257942">number-tree</a>
 <ul>
-<li><a href="#org542b2f6">tree</a></li>
-<li><a href="#orgb849dd2">number-tree &#x2013; state monad</a></li>
-<li><a href="#org16cb805">number-tree &#x2013; inline</a></li>
-<li><a href="#org232a30c">number-tree &#x2013; inline and uncurry</a></li>
-<li><a href="#orgf534ab8"><span class="done _test_">[test]</span> number-tree</a></li>
+<li><a href="#org47064db">tree</a></li>
+<li><a href="#orga63dee0">number-tree &#x2013; state monad</a></li>
+<li><a href="#org12c35e5">number-tree &#x2013; inline</a></li>
+<li><a href="#org179da2c">number-tree &#x2013; inline and uncurry</a></li>
+<li><a href="#org8066a2b"><span class="done _test_">[test]</span> number-tree</a></li>
 </ul>
 </li>
-<li><a href="#org38cd702">tree-zip</a>
+<li><a href="#org4c238d5">tree-zip</a>
 <ul>
-<li><a href="#orgfa2a573"><span class="todo _note_">[note]</span> </a></li>
-<li><a href="#orgeeee342">tree-zip &#x2013; do not handle error</a></li>
-<li><a href="#orga7716f8">tree-zip &#x2013; maybe</a></li>
-<li><a href="#org78420a5">tree-zip &#x2013; maybe monad</a></li>
-<li><a href="#orge019726"><span class="done _test_">[test]</span> tree-zip &#x2013; maybe</a></li>
-<li><a href="#orge6159b4">tree-zip &#x2013; inline and uncurry</a></li>
-<li><a href="#orgbfc9cf3"><span class="done _test_">[test]</span> tree-zip</a></li>
+<li><a href="#org7708110"><span class="todo _note_">[note]</span> </a></li>
+<li><a href="#orgdb3d702">tree-zip &#x2013; do not handle error</a></li>
+<li><a href="#orgfa61a46">tree-zip &#x2013; maybe</a></li>
+<li><a href="#org15f43f0">tree-zip &#x2013; maybe monad</a></li>
+<li><a href="#orgd6262ac"><span class="done _test_">[test]</span> tree-zip &#x2013; maybe</a></li>
+<li><a href="#orgf02c613">tree-zip &#x2013; inline and uncurry</a></li>
+<li><a href="#org47275f6"><span class="done _test_">[test]</span> tree-zip</a></li>
 </ul>
 </li>
 </ul>
 </div>
 </div>
 
-<div id="outline-container-org5980677" class="outline-2">
-<h2 id="org5980677">intro</h2>
-<div class="outline-text-2" id="text-org5980677">
+<div id="outline-container-org2a6ecde" class="outline-2">
+<h2 id="org2a6ecde">intro</h2>
+<div class="outline-text-2" id="text-org2a6ecde">
 <ul class="org-ul">
 <li><p>state monad is exactly what I need when writing interpreters.</p><p>I need to pass environment as extra argument through an interpreter,</p><p>this extra argument can be captured by state monad.</p></li>
 
@@ -104,12 +106,12 @@ for the JavaScript code in this tag.
 </div>
 </div>
 
-<div id="outline-container-org9d895f8" class="outline-2">
-<h2 id="org9d895f8">number-tree</h2>
-<div class="outline-text-2" id="text-org9d895f8">
-</div><div id="outline-container-org542b2f6" class="outline-3">
-<h3 id="org542b2f6">tree</h3>
-<div class="outline-text-3" id="text-org542b2f6">
+<div id="outline-container-org2257942" class="outline-2">
+<h2 id="org2257942">number-tree</h2>
+<div class="outline-text-2" id="text-org2257942">
+</div><div id="outline-container-org47064db" class="outline-3">
+<h3 id="org47064db">tree</h3>
+<div class="outline-text-3" id="text-org47064db">
 <div class="org-src-container">
 
 <pre class="src src-jojo"><span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">+data</span> <span style="color: #66d9ef; font-weight: bold;">&lt;leaf&gt;</span> .v<span style="color: #696969;">)</span>
@@ -131,9 +133,9 @@ for the JavaScript code in this tag.
 </div>
 </div>
 
-<div id="outline-container-orgb849dd2" class="outline-3">
-<h3 id="orgb849dd2">number-tree &#x2013; state monad</h3>
-<div class="outline-text-3" id="text-orgb849dd2">
+<div id="outline-container-orga63dee0" class="outline-3">
+<h3 id="orga63dee0">number-tree &#x2013; state monad</h3>
+<div class="outline-text-3" id="text-orga63dee0">
 <div class="org-src-container">
 
 <pre class="src src-jojo"><span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">+jojo</span> return-state
@@ -170,9 +172,9 @@ for the JavaScript code in this tag.
 </div>
 </div>
 
-<div id="outline-container-org16cb805" class="outline-3">
-<h3 id="org16cb805">number-tree &#x2013; inline</h3>
-<div class="outline-text-3" id="text-org16cb805">
+<div id="outline-container-org12c35e5" class="outline-3">
+<h3 id="org12c35e5">number-tree &#x2013; inline</h3>
+<div class="outline-text-3" id="text-org12c35e5">
 <div class="org-src-container">
 
 <pre class="src src-jojo"><span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">+jojo</span> tick
@@ -192,9 +194,9 @@ for the JavaScript code in this tag.
 </div>
 </div>
 
-<div id="outline-container-org232a30c" class="outline-3">
-<h3 id="org232a30c">number-tree &#x2013; inline and uncurry</h3>
-<div class="outline-text-3" id="text-org232a30c">
+<div id="outline-container-org179da2c" class="outline-3">
+<h3 id="org179da2c">number-tree &#x2013; inline and uncurry</h3>
+<div class="outline-text-3" id="text-org179da2c">
 <div class="org-src-container">
 
 <pre class="src src-jojo"><span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">+jojo</span> number-tree
@@ -210,9 +212,9 @@ for the JavaScript code in this tag.
 </div>
 </div>
 
-<div id="outline-container-orgf534ab8" class="outline-3">
-<h3 id="orgf534ab8"><span class="done _test_">[test]</span> number-tree</h3>
-<div class="outline-text-3" id="text-orgf534ab8">
+<div id="outline-container-org8066a2b" class="outline-3">
+<h3 id="org8066a2b"><span class="done _test_">[test]</span> number-tree</h3>
+<div class="outline-text-3" id="text-org8066a2b">
 <div class="org-src-container">
 
 <pre class="src src-jojo"><span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">+jojo</span> test-number-tree
@@ -233,12 +235,12 @@ for the JavaScript code in this tag.
 </div>
 </div>
 
-<div id="outline-container-org38cd702" class="outline-2">
-<h2 id="org38cd702">tree-zip</h2>
-<div class="outline-text-2" id="text-org38cd702">
-</div><div id="outline-container-orgfa2a573" class="outline-3">
-<h3 id="orgfa2a573"><span class="todo _note_">[note]</span> </h3>
-<div class="outline-text-3" id="text-orgfa2a573">
+<div id="outline-container-org4c238d5" class="outline-2">
+<h2 id="org4c238d5">tree-zip</h2>
+<div class="outline-text-2" id="text-org4c238d5">
+</div><div id="outline-container-org7708110" class="outline-3">
+<h3 id="org7708110"><span class="todo _note_">[note]</span> </h3>
+<div class="outline-text-3" id="text-org7708110">
 <ul class="org-ul">
 <li><p>the experiment gose in three steps</p><p><ol class="org-ol"></p><p><li>implement the moand</li></p><p><li>inline and simplify</li></p><p><li>uncurry and simplify</li></ol></p></li>
 
@@ -246,9 +248,9 @@ for the JavaScript code in this tag.
 </div>
 </div>
 
-<div id="outline-container-orgeeee342" class="outline-3">
-<h3 id="orgeeee342">tree-zip &#x2013; do not handle error</h3>
-<div class="outline-text-3" id="text-orgeeee342">
+<div id="outline-container-orgdb3d702" class="outline-3">
+<h3 id="orgdb3d702">tree-zip &#x2013; do not handle error</h3>
+<div class="outline-text-3" id="text-orgdb3d702">
 <div class="org-src-container">
 
 <pre class="src src-jojo"><span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">+jojo</span> tree-zip <span style="color: #fd971f;">:t1!</span> <span style="color: #fd971f;">:t2!</span>
@@ -261,9 +263,9 @@ for the JavaScript code in this tag.
 </div>
 </div>
 
-<div id="outline-container-orga7716f8" class="outline-3">
-<h3 id="orga7716f8">tree-zip &#x2013; maybe</h3>
-<div class="outline-text-3" id="text-orga7716f8">
+<div id="outline-container-orgfa61a46" class="outline-3">
+<h3 id="orgfa61a46">tree-zip &#x2013; maybe</h3>
+<div class="outline-text-3" id="text-orgfa61a46">
 <div class="org-src-container">
 
 <pre class="src src-jojo"><span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">+jojo</span> tree-zip <span style="color: #fd971f;">:t1!</span> <span style="color: #fd971f;">:t2!</span>
@@ -282,9 +284,9 @@ for the JavaScript code in this tag.
 </div>
 </div>
 
-<div id="outline-container-org78420a5" class="outline-3">
-<h3 id="org78420a5">tree-zip &#x2013; maybe monad</h3>
-<div class="outline-text-3" id="text-org78420a5">
+<div id="outline-container-org15f43f0" class="outline-3">
+<h3 id="org15f43f0">tree-zip &#x2013; maybe monad</h3>
+<div class="outline-text-3" id="text-org15f43f0">
 <div class="org-src-container">
 
 <pre class="src src-jojo"><span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">+jojo</span> return-maybe just<span style="color: #696969;">)</span>
@@ -310,9 +312,9 @@ for the JavaScript code in this tag.
 </div>
 </div>
 
-<div id="outline-container-orge019726" class="outline-3">
-<h3 id="orge019726"><span class="done _test_">[test]</span> tree-zip &#x2013; maybe</h3>
-<div class="outline-text-3" id="text-orge019726">
+<div id="outline-container-orgd6262ac" class="outline-3">
+<h3 id="orgd6262ac"><span class="done _test_">[test]</span> tree-zip &#x2013; maybe</h3>
+<div class="outline-text-3" id="text-orgd6262ac">
 <div class="org-src-container">
 
 <pre class="src src-jojo"><span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">+jojo</span> maybe-write <span style="color: #fd971f;">:f!</span> <span style="color: #fd971f;">:m!</span>
@@ -344,9 +346,9 @@ for the JavaScript code in this tag.
 </div>
 </div>
 
-<div id="outline-container-orge6159b4" class="outline-3">
-<h3 id="orge6159b4">tree-zip &#x2013; inline and uncurry</h3>
-<div class="outline-text-3" id="text-orge6159b4">
+<div id="outline-container-orgf02c613" class="outline-3">
+<h3 id="orgf02c613">tree-zip &#x2013; inline and uncurry</h3>
+<div class="outline-text-3" id="text-orgf02c613">
 <div class="org-src-container">
 
 <pre class="src src-jojo"><span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">+jojo</span> tree-zip <span style="color: #fd971f;">:t1!</span> <span style="color: #fd971f;">:t2!</span>
@@ -363,9 +365,9 @@ for the JavaScript code in this tag.
 </div>
 </div>
 
-<div id="outline-container-orgbfc9cf3" class="outline-3">
-<h3 id="orgbfc9cf3"><span class="done _test_">[test]</span> tree-zip</h3>
-<div class="outline-text-3" id="text-orgbfc9cf3">
+<div id="outline-container-org47275f6" class="outline-3">
+<h3 id="org47275f6"><span class="done _test_">[test]</span> tree-zip</h3>
+<div class="outline-text-3" id="text-org47275f6">
 <div class="org-src-container">
 
 <pre class="src src-jojo"><span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">+jojo</span> tree-2
@@ -407,7 +409,9 @@ for the JavaScript code in this tag.
 </div>
 </div>
 <div id="postamble" class="status">
-.
+<p class="author">Author: xieyuheng</p>
+<p class="date">Created: 2017-09-24 Sun 09:12</p>
+<p class="validation"><a href="http://validator.w3.org/check?uri=referer">Validate</a></p>
 </div>
 </body>
 </html>
