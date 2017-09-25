@@ -3,7 +3,7 @@
 "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en">
 <head>
-<!-- 2017-09-25 Mon 14:26 -->
+<!-- 2017-09-25 Mon 19:24 -->
 <meta http-equiv="Content-Type" content="text/html;charset=utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>LET</title>
@@ -64,23 +64,48 @@ for the JavaScript code in this tag.
 <h2>overview</h2>
 <div id="text-table-of-contents">
 <ul>
-<li><a href="#org31540f2"><span class="todo _note_">[note]</span> </a></li>
-<li><a href="#orgf60829f">env</a></li>
-<li><a href="#org4e16888">exp</a></li>
-<li><a href="#org2fa4479">parse</a></li>
-<li><a href="#org654361a">LET</a></li>
+<li><a href="#org4b541d0">intro</a></li>
+<li><a href="#org53a5300">specifying the syntax</a>
+<ul>
+<li><a href="#org867c5f4">formally</a></li>
+</ul>
+</li>
+<li><a href="#org3e7ad69">specification of values</a>
+<ul>
+<li><a href="#org41adbfa">formally</a></li>
+</ul>
+</li>
+<li><a href="#orgca209de">env</a></li>
+<li><a href="#org9ab3923">exp</a></li>
+<li><a href="#org4ee329f">parse</a></li>
+<li><a href="#orgc911b0b">LET</a></li>
 </ul>
 </div>
 </div>
 
-<div id="outline-container-org31540f2" class="outline-2">
-<h2 id="org31540f2"><span class="todo _note_">[note]</span> </h2>
-<div class="outline-text-2" id="text-org31540f2">
+<div id="outline-container-org4b541d0" class="outline-2">
+<h2 id="org4b541d0">intro</h2>
+<div class="outline-text-2" id="text-org4b541d0">
+<ul class="org-ul">
+<li><p>We begin by specifying a very simple language,</p><p>which we call LET, after its most interesting feature.</p></li></ul>
+</div>
+</div>
+
+<div id="outline-container-org53a5300" class="outline-2">
+<h2 id="org53a5300">specifying the syntax</h2>
+<div class="outline-text-2" id="text-org53a5300">
+<ul class="org-ul">
+<li><p>In this language,</p><p>a program is just an expression.</p><p>An expression is either</p><p></p><p><ol class="org-ol"></p><p><li>an integer constant,</li></p><p><li>a difference expression,</li></p><p><li>a zero-test expression,</li></p><p><li>a conditional expression,</li></p><p><li>a variable, or a let expression.</li></ol></p></li>
+
+<li><p>example expression :</p><p>(diff 55 (diff x 11))</p></li></ul>
+</div>
+
+<div id="outline-container-org867c5f4" class="outline-3">
+<h3 id="org867c5f4">formally</h3>
+<div class="outline-text-3" id="text-org867c5f4">
 <div class="org-src-container">
 
-<pre class="src src-jojo"><span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">note</span> val = <span style="color: #66d9ef; font-weight: bold;">&lt;int&gt;</span> | <span style="color: #66d9ef; font-weight: bold;">&lt;bool&gt;</span><span style="color: #696969;">)</span>
-<span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">note</span> env = <span style="color: #66d9ef; font-weight: bold;">&lt;null-env&gt;</span> | <span style="color: #66d9ef; font-weight: bold;">&lt;cons-env&gt;</span><span style="color: #696969;">)</span>
-<span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">note</span> program = exp<span style="color: #696969;">)</span>
+<pre class="src src-jojo"><span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">note</span> program = exp<span style="color: #696969;">)</span>
 <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">note</span> exp
   = <span style="color: #66d9ef; font-weight: bold;">&lt;const-exp&gt;</span>
   | <span style="color: #66d9ef; font-weight: bold;">&lt;zero?-exp&gt;</span>
@@ -92,10 +117,33 @@ for the JavaScript code in this tag.
 </div>
 </div>
 </div>
+</div>
 
-<div id="outline-container-orgf60829f" class="outline-2">
-<h2 id="orgf60829f">env</h2>
-<div class="outline-text-2" id="text-orgf60829f">
+<div id="outline-container-org3e7ad69" class="outline-2">
+<h2 id="org3e7ad69">specification of values</h2>
+<div class="outline-text-2" id="text-org3e7ad69">
+<ul class="org-ul">
+<li><p>An important part of the specification</p><p>of any programming language</p><p>is the set of values that the language manipulates.</p></li>
+
+<li><p>Each language has at least two such sets :</p><p><ol class="org-ol"></p><p><li>the expressed values</p><p>which are the possible values of expressions,</li></p><p><li>the denoted values</p><p>which are the values bound to variables.</li></ol></p></li></ul>
+</div>
+
+<div id="outline-container-org41adbfa" class="outline-3">
+<h3 id="org41adbfa">formally</h3>
+<div class="outline-text-3" id="text-org41adbfa">
+<div class="org-src-container">
+
+<pre class="src src-jojo"><span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">note</span> val = <span style="color: #66d9ef; font-weight: bold;">&lt;int&gt;</span> | <span style="color: #66d9ef; font-weight: bold;">&lt;bool&gt;</span><span style="color: #696969;">)</span>
+<span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">note</span> env = <span style="color: #66d9ef; font-weight: bold;">&lt;null-env&gt;</span> | <span style="color: #66d9ef; font-weight: bold;">&lt;cons-env&gt;</span><span style="color: #696969;">)</span>
+</pre>
+</div>
+</div>
+</div>
+</div>
+
+<div id="outline-container-orgca209de" class="outline-2">
+<h2 id="orgca209de">env</h2>
+<div class="outline-text-2" id="text-orgca209de">
 <div class="org-src-container">
 
 <pre class="src src-jojo"><span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">+data</span> <span style="color: #66d9ef; font-weight: bold;">&lt;null-env&gt;</span><span style="color: #696969;">)</span>
@@ -120,9 +168,9 @@ for the JavaScript code in this tag.
 </div>
 </div>
 
-<div id="outline-container-org4e16888" class="outline-2">
-<h2 id="org4e16888">exp</h2>
-<div class="outline-text-2" id="text-org4e16888">
+<div id="outline-container-org9ab3923" class="outline-2">
+<h2 id="org9ab3923">exp</h2>
+<div class="outline-text-2" id="text-org9ab3923">
 <div class="org-src-container">
 
 <pre class="src src-jojo"><span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">+data</span> <span style="color: #66d9ef; font-weight: bold;">&lt;const-exp&gt;</span> .num<span style="color: #696969;">)</span>
@@ -155,9 +203,9 @@ for the JavaScript code in this tag.
 </div>
 </div>
 
-<div id="outline-container-org2fa4479" class="outline-2">
-<h2 id="org2fa4479">parse</h2>
-<div class="outline-text-2" id="text-org2fa4479">
+<div id="outline-container-org4ee329f" class="outline-2">
+<h2 id="org4ee329f">parse</h2>
+<div class="outline-text-2" id="text-org4ee329f">
 <div class="org-src-container">
 
 <pre class="src src-jojo"><span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">note</span>
@@ -193,9 +241,9 @@ for the JavaScript code in this tag.
 </div>
 </div>
 
-<div id="outline-container-org654361a" class="outline-2">
-<h2 id="org654361a">LET</h2>
-<div class="outline-text-2" id="text-org654361a">
+<div id="outline-container-orgc911b0b" class="outline-2">
+<h2 id="orgc911b0b">LET</h2>
+<div class="outline-text-2" id="text-orgc911b0b">
 <div class="org-src-container">
 
 <pre class="src src-jojo"><span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">+jojo</span> LET <span style="color: #696969;">(</span><span style="color: #66d9ef; font-weight: bold;">-&gt;</span> <span style="color: #a6e22e;">:body</span> <span style="color: #66d9ef; font-weight: bold;">--</span><span style="color: #696969;">)</span>
@@ -207,7 +255,7 @@ for the JavaScript code in this tag.
 </div>
 <div id="postamble" class="status">
 <p class="author">Author: xieyuheng</p>
-<p class="date">Created: 2017-09-25 Mon 14:26</p>
+<p class="date">Created: 2017-09-25 Mon 19:24</p>
 <p class="validation"><a href="http://validator.w3.org/check?uri=referer">Validate</a></p>
 </div>
 </body>

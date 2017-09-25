@@ -2,20 +2,57 @@
 #+property: tangle LET.jo
 #+title: LET
 
-* [note]
+* intro
 
-  #+begin_src jojo
-  (note val = <int> | <bool>)
-  (note env = <null-env> | <cons-env>)
-  (note program = exp)
-  (note exp
-    = <const-exp>
-    | <zero?-exp>
-    | <if-exp>
-    | <diff-exp>
-    | <var-exp>
-    | <let-exp>)
-  #+end_src
+  - We begin by specifying a very simple language,
+    which we call LET, after its most interesting feature.
+
+* specifying the syntax
+
+  - In this language,
+    a program is just an expression.
+    An expression is either
+
+    1. an integer constant,
+    2. a difference expression,
+    3. a zero-test expression,
+    4. a conditional expression,
+    5. a variable, or a let expression.
+
+  - example expression :
+    (diff 55 (diff x 11))
+
+*** formally
+
+    #+begin_src jojo
+    (note program = exp)
+    (note exp
+      = <const-exp>
+      | <zero?-exp>
+      | <if-exp>
+      | <diff-exp>
+      | <var-exp>
+      | <let-exp>)
+    #+end_src
+
+* specification of values
+
+  - An important part of the specification
+    of any programming language
+    is the set of values that the language manipulates.
+
+  - Each language has at least two such sets :
+    1. the expressed values
+       which are the possible values of expressions,
+    2. the denoted values
+       which are the values bound to variables.
+
+*** formally
+
+    #+begin_src jojo
+    (note val = <int> | <bool>)
+    (note env = <null-env> | <cons-env>)
+    #+end_src
 
 * env
 
