@@ -922,10 +922,6 @@
       module/generate-export-table
       :export-table!
 
-      :define-table
-      :export-table
-      module/export-check
-
       :body module/collect-import-table-list
       :import-table-list!
 
@@ -947,6 +943,10 @@
           "  module name : " w :name w nl
           debug)
       :rename-table!
+
+      :rename-table
+      :export-table
+      module/export-check
 
       :body
       {sexp-for-module? not} list-filter
@@ -1092,11 +1092,11 @@
             "  key : " w :key w nl
             debug)))
     (+jojo module/export-check
-      (-> :define-table :export-table --)
-      (if :define-table :export-table table-contain? then end)
+      (-> :rename-table :export-table --)
+      (if :rename-table :export-table table-contain? then end)
       "- module/export-check fail" w nl
-      "  define-table does not contain export-table" w nl
-      "  define-table : " w :define-table w nl
+      "  rename-table does not contain export-table" w nl
+      "  rename-table : " w :rename-table w nl
       "  export-table : " w :export-table w nl
       debug)
     (+jojo module/collect-import-table-list
@@ -1150,7 +1150,7 @@
           else
           "- module-load fail" w nl
           "  can not find module : " w :name w nl
-          "  current-reading-dir : " w current-reading-dir w nl
+          "  current-running-dir : " w current-running-dir w nl
           "  usr-jojo-dir : " w usr-jojo-dir w nl
           "  sys-jojo-dir : " w sys-jojo-dir w nl
           debug))
