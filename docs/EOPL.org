@@ -1,0 +1,214 @@
+#+include: use-org-page.org
+#+title: EOPL
+
+* 1 Inductive Sets of Data
+
+*** 1.1 Recursively Specified Data
+
+    - proof by structural induction -
+
+      To prove that a proposition IH(s)
+      is true for all structures s,
+      prove the following:
+
+      1. IH is true on simple structures
+         (those without substructures).
+      2. If IH is true on the substructures of s,
+         then it is true on s itself.
+
+*** 1.2 Deriving Recursive Programs
+
+    - the smaller-subproblem principle -
+
+      If we can reduce a problem to a smaller subproblem,
+      we can call the procedure that solves the problem
+      to solve the subproblem.
+
+    - follow the grammar! -
+
+      When defining a procedure
+      that operates on inductively defined data,
+      the structure of the program
+      should be patterned after the structure of the data.
+
+*** 1.3 Auxiliary Procedures and Context Arguments
+
+    - no mysterious auxiliaries! -
+
+      When defining an auxiliary procedure,
+      always specify what it does on all arguments,
+      not just the initial values.
+
+*** 1.4 Exercises
+
+* 2 Data Abstraction
+
+*** 2.1 Specifying Data via Interfaces
+
+    - All the knowledge about how the data is represented
+      must therefore reside in the code of the implementation.
+
+      The most important part of an implementation
+      is the specification of how the data is represented.
+
+      We use the notation [^ v ^] for
+      "the representation of data v."
+
+      - x -
+        - in concrete implementation,
+          if v is language A,
+          B is the language we want to implement in A,
+
+        - then,
+          [^ v ^] can be viewed as,
+          "build a value [^ v ^] on top of v"
+
+        - if x is a value in B,
+          [_ x _] can be viewed as,
+          "push a value x down to A"
+
+        - and we have,
+          1. [_ [^ v ^] _] == v
+          2. [^ [_ x _] ^] == x
+
+    - x -
+      we do not need type class to be abstract about data type.
+
+    - Most interfaces will contain
+
+      1. some *constructors*
+         that build elements of the data type,
+
+      2. and some *observers*
+         that extract information from values of the data type.
+
+*** 2.2 Representation Strategies for Data Types
+
+    - the interpreter recipe -
+
+      1. look at a piece of data.
+      2. decide what kind of data it represents.
+      3. extract the components of the datum
+         and do the right thing with them.
+
+    - x -
+      interpreter of a programming language.
+      interprets data which encode program.
+
+      such data is called expression.
+
+*** 2.3 Interfaces for Recursive Data Types
+
+    - designing an interface for a recursive data type -
+
+      1. Include one constructor
+         for each kind of data in the data type.
+      2. Include one predicate
+         for each kind of data in the data type.
+      3. Include one extractor
+         for each piece of data
+         passed to a constructor of the data type.
+
+*** 2.4 A Tool for Defining Recursive Data Types
+
+*** 2.5 Abstract Syntax and Its Representation
+
+* 3 Expressions
+
+*** 3.1 Specification and Implementation Strategy
+
+    - specification will consist of assertions of the form :
+
+      (value-of exp ρ) = val
+
+      meaning that
+      the value of expression exp
+      in environment ρ
+      should be val.
+
+    - We write down rules of inference and equations,
+      like those in chapter 1,
+      that will enable us to derive such assertions.
+
+      We use the rules and equations by hand
+      to find the intended value of some expressions.
+
+*** 3.2 LET: A Simple Language
+
+    - [[./LET.html][LET]]
+
+*** 3.3 PROC: A Language with Procedures
+
+*** 3.4 LETREC: A Language with Recursive Procedures
+
+*** 3.5 Scoping and Binding of Variables
+
+*** 3.6 Eliminating Variable Names
+
+*** 3.7 Implementing Lexical Addressing
+
+* 4 State
+
+*** 4.1 Computational Effects
+
+*** 4.2 EXPLICIT-REFS: A Language with Explicit References
+
+*** 4.3 IMPLICIT-REFS: A Language with Implicit References
+
+*** 4.4 MUTABLE-PAIRS: A Language with Mutable Pairs
+
+*** 4.5 Parameter-Passing Variations
+
+* 5 Continuation-Passing Interpreters
+
+*** 5.1 A Continuation-Passing Interpreter
+
+*** 5.2 A Trampolined Interpreter
+
+*** 5.3 An Imperative Interpreter
+
+*** 5.4 Exceptions
+
+*** 5.5 Threads
+
+* 6 Continuation-Passing Style
+
+*** 6.1 Writing Programs in Continuation-Passing Style
+
+*** 6.2 Tail Form
+
+*** 6.3 Converting to Continuation-Passing Style
+
+*** 6.4 Modeling Computational Effects
+
+* 7 Types
+
+*** 7.1 Values and Their Types
+
+*** 7.2 Assigning a Type to an Expression
+
+*** 7.3 CHECKED: A Type-Checked Language
+
+*** 7.4 INFERRED: A Language with Type Inference
+
+* 8 Modules
+
+*** 8.1 The Simple Module System
+
+*** 8.2 Modules That Declare Types
+
+*** 8.3 Module Procedures
+
+* 9 Objects and Classes
+
+*** 9.1 Object-Oriented Programming
+
+*** 9.2 Inheritance
+
+*** 9.3 The Language
+
+*** 9.4 The Interpreter
+
+*** 9.5 A Typed Language
+
+*** 9.6 The Type Checker

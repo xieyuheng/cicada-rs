@@ -11,8 +11,8 @@
 
   - In this language,
     a program is just an expression.
-    An expression is either
 
+  - An expression is either
     1. an integer constant,
     2. a difference expression,
     3. a zero-test expression,
@@ -22,18 +22,16 @@
   - example expression :
     (diff 55 (diff x 11))
 
-*** formally
-
-    #+begin_src jojo
-    (note program = exp)
-    (note exp
-      = <const-exp>
-      | <zero?-exp>
-      | <if-exp>
-      | <diff-exp>
-      | <var-exp>
-      | <let-exp>)
-    #+end_src
+  #+begin_src jojo
+  (note program = exp)
+  (note exp
+    = <const-exp>
+    | <zero?-exp>
+    | <if-exp>
+    | <diff-exp>
+    | <var-exp>
+    | <let-exp>)
+  #+end_src
 
 * specification of values
 
@@ -47,20 +45,39 @@
     2. the denoted values
        which are the values bound to variables.
 
-*** formally
-
-    #+begin_src jojo
-    (note val = <int> | <bool>)
-    (note env = <null-env> | <cons-env>)
-    #+end_src
-
-* env
+  - In the languages of this chapter,
+    the expressed and denoted values will always be the same.
+    They will start out as :
+    - ExpVal = Int + Bool
+    - DenVal = Int + Bool
 
   #+begin_src jojo
+  (note expval
+    = <num-val>
+    | <bool-val>)
+
+  (+data <num-val> .num)
+  (+data <bool-val> .bool)
+  #+end_src
+
+* environments
+
+  - If we are going to evaluate expressions containing variables,
+    we will need to know the value associated with each variable.
+
+    We do this by keeping those values in an environment.
+
+  - An environment is a function
+    whose domain is a finite set of variables
+    and whose range is the denoted values.
+
+  #+begin_src jojo
+  (note env = <null-env> | <cons-env>)
+
   (+data <null-env>)
   (+data <cons-env> .rest .var .val)
 
-  (+jojo env-apply (-> :var :env -- val)
+  (+jojo env-apply (-> :var :env -- expval)
     (case :env
       <null-env> ["- env-apply fail" w nl
                   "  can not find var : " w :var w nl
@@ -68,15 +85,9 @@
       <cons-env> (if :env .var :var equal?
                      then :env .val
                      else :var :env .rest recur)))
-
-  (+jojo init-env
-    null-env
-    ':x 10 cons-env
-    ':v 5  cons-env
-    ':i 1  cons-env)
   #+end_src
 
-* exp
+* specifying the behavior of expressions
 
   #+begin_src jojo
   (+data <const-exp> .num)
@@ -86,18 +97,155 @@
   (+data <var-exp>   .var)
   (+data <let-exp>   .var .exp1 .body)
 
-  (+jojo program-eval (-> :program -- val)
-    :program init-env eval)
+  (note
+    (= :n const-exp :env eval, :n num-val)
+    (= :var var-exp :env eval, :var :env env-apply)
+    (= :exp1 :exp2 diff-exp :env eval,
+       :exp1 :env eval .num
+       :exp2 :env eval .num sub num-val))
+  #+end_src
 
-  (+jojo eval (-> :exp :env -- val)
+* specifying the behavior of programs
+
+  - In our language,
+    a whole program is just an expression.
+    In order to find the value of such an expression,
+    we need to specify the values
+    of the free variables in the program.
+
+  - So the value of a program
+    is just the value of that expression
+    in a suitable initial environment.
+
+  - We choose our initial environment to be [i=1,v=5,x=10].
+
+  #+begin_src jojo
+  (+jojo init-env
+    null-env
+    ':x 10 num-val cons-env
+    ':v 5  num-val cons-env
+    ':i 1  num-val cons-env)
+
+  (+jojo program-eval (-> :program -- expval)
+    :program init-env eval)
+  #+end_src
+
+* specifying conditionals
+
+  - The next portion of the language
+    introduces an interface for booleans in our language.
+
+  - The language has one constructor of booleans -- 'zero?',
+    and one observer of booleans -- the if expression.
+
+  #+begin_src jojo
+  (note
+    (= :exp1 :env eval, :val1)
+    ------------------------------------
+    (= :exp1 zero?-exp :env eval
+       (if :val1 .num 0 eq?
+         then true  bool-val
+         else false bool-val)))
+  #+end_src
+
+  - An if expression is an observer of boolean values.
+
+  #+begin_src jojo
+  (note
+    (= :exp1 :env eval, :val1)
+    ------------------------------------
+    (= :exp1 :exp2 :exp3 if-exp :env eval
+       (if :val1 .bool
+         then :exp2 :env eval
+         else :exp3 :env eval)))
+  #+end_src
+
+  - Rules of inference like this
+    make the intended behavior
+    of any individual expression easy to specify,
+    but they are not very good
+    for displaying a deduction.
+    Because deduction by inference rules
+    will generate a tree.
+
+  - we can rewrite the rules as equations.
+    We can then use substitution of equals for equals
+    to display a calculation.
+
+  #+begin_src jojo
+  (note
+    (= :exp1 :exp2 :exp3 if-exp :env eval
+       (if :exp1 :env eval .bool
+         then :exp2 :env eval
+         else :exp3 :env eval)))
+  #+end_src
+
+  - for example :
+
+  #+begin_src jojo
+  (note
+
+    null-env ':x 33 cons-env ':y 22 cons-env :env!
+
+    (=
+     '(if (zero? (diff :x 11))
+        (diff :y 2)
+        (diff :y 4))
+     parse :env eval
+
+     (if '(zero? (diff :x 11)) parse :env eval .bool
+       then '(diff :y 2) parse :env eval
+       else '(diff :y 4) parse :env eval)
+
+     (if false bool-val .bool
+       then '(diff :y 2) parse :env eval
+       else '(diff :y 4) parse :env eval)
+
+     (if false
+       then '(diff :y 2) parse :env eval
+       else '(diff :y 4) parse :env eval)
+
+     '(diff :y 4) parse :env eval
+
+     18 num-val))
+  #+end_src
+
+* specifying let
+
+  - Next we address the problem of
+    creating new variable bindings with a let expression.
+
+  - reference rule :
+
+  #+begin_src jojo
+  (note
+    (= :exp1 :env eval, :val1)
+    ------------------------------------
+    (= :var :exp1 :body :env eval,
+       :body :env :var :val1 cons-env eval))
+  #+end_src
+
+  - equation :
+
+  #+begin_src jojo
+  (note
+    (= :var :exp1 :body :env eval,
+     :env, :var, :exp1 :env eval, cons-env
+     :body swap eval))
+  #+end_src
+
+* implementing the specification of LET
+
+  #+begin_src jojo
+  (+jojo eval (-> :exp :env -- expval)
     (case :exp
-      <const-exp> [:exp .num]
-      <zero?-exp> [:exp .exp1 :env recur 0 equal?]
-      <if-exp>    (if :exp .exp1 :env recur
+      <const-exp> [:exp .num  num-val]
+      <zero?-exp> [:exp .exp1 :env recur .num 0 equal? bool-val]
+      <if-exp>    (if :exp .exp1 :env recur .bool
                       then :exp .exp2 :env recur
                       else :exp .exp3 :env recur)
-      <diff-exp>  [:exp .exp1 :env recur
-                   :exp .exp2 :env recur sub]
+      <diff-exp>  [:exp .exp1 :env recur .num
+                   :exp .exp2 :env recur .num sub num-val]
       <var-exp>   [:exp .var :env env-apply]
       <let-exp>   [:env
                    :exp .var
@@ -143,5 +291,10 @@
 
   #+begin_src jojo
   (+jojo LET (-> :body --)
-    :body {parse program-eval} list-map)
+    :body {parse program-eval expval-write nl} list-for-each)
+
+  (+jojo expval-write (-> :expval)
+    (case :expval
+      <num-val>  [:expval .num w]
+      <bool-val> [:expval .bool w]))
   #+end_src

@@ -7,13 +7,19 @@
   | <var-exp>
   | <let-exp>)
 
-(note val = <int> | <bool>)
+(note expval
+  = <num-val>
+  | <bool-val>)
+
+(+data <num-val> .num)
+(+data <bool-val> .bool)
+
 (note env = <null-env> | <cons-env>)
 
 (+data <null-env>)
 (+data <cons-env> .rest .var .val)
 
-(+jojo env-apply (-> :var :env -- val)
+(+jojo env-apply (-> :var :env -- expval)
   (case :env
     <null-env> ["- env-apply fail" w nl
                 "  can not find var : " w :var w nl
@@ -22,12 +28,6 @@
                    then :env .val
                    else :var :env .rest recur)))
 
-(+jojo init-env
-  null-env
-  ':x 10 cons-env
-  ':v 5  cons-env
-  ':i 1  cons-env)
-
 (+data <const-exp> .num)
 (+data <zero?-exp> .exp1)
 (+data <if-exp>    .exp1 .exp2 .exp3)
@@ -35,24 +35,93 @@
 (+data <var-exp>   .var)
 (+data <let-exp>   .var .exp1 .body)
 
-(+jojo program-eval (-> :program -- val)
+(note
+  (= :n const-exp :env eval, :n num-val)
+  (= :var var-exp :env eval, :var :env env-apply)
+  (= :exp1 :exp2 diff-exp :env eval,
+     :exp1 :env eval .num
+     :exp2 :env eval .num sub num-val))
+
+(+jojo init-env
+  null-env
+  ':x 10 num-val cons-env
+  ':v 5  num-val cons-env
+  ':i 1  num-val cons-env)
+
+(+jojo program-eval (-> :program -- expval)
   :program init-env eval)
 
-(+jojo eval (-> :exp :env -- val)
+(note
+  (= :exp1 :env eval, :val1)
+  ------------------------------------
+  (= :exp1 zero?-exp :env eval
+     (if :val1 .num 0 eq?
+       then true  bool-val
+       else false bool-val)))
+
+(note
+  (= :exp1 :env eval, :val1)
+  ------------------------------------
+  (= :exp1 :exp2 :exp3 if-exp :env eval
+     (if :val1 .bool
+       then :exp2 :env eval
+       else :exp3 :env eval)))
+
+(note
+  (= :exp1 :exp2 :exp3 if-exp :env eval
+     (if :exp1 :env eval .bool
+       then :exp2 :env eval
+       else :exp3 :env eval)))
+
+(note
+
+  null-env ':x 33 cons-env ':y 22 cons-env :env!
+
+  (=
+   '(if (zero? (diff :x 11))
+      (diff :y 2)
+      (diff :y 4))
+   parse :env eval
+
+   (if '(zero? (diff :x 11)) parse :env eval .bool
+     then '(diff :y 2) parse :env eval
+     else '(diff :y 4) parse :env eval)
+
+   (if false bool-val .bool
+     then '(diff :y 2) parse :env eval
+     else '(diff :y 4) parse :env eval)
+
+   (if false
+     then '(diff :y 2) parse :env eval
+     else '(diff :y 4) parse :env eval)
+
+   '(diff :y 4) parse :env eval
+
+   18 num-val))
+
+(note
+  (= :exp1 :env eval, :val1)
+  ------------------------------------
+  (= :var :exp1 :body :env eval,
+     :body :env :var :val1 cons-env eval))
+
+(note
+  (= :var :exp1 :body :env eval,
+   :env, :var, :exp1 :env eval, cons-env
+   :body swap eval))
+
+(+jojo eval (-> :exp :env -- expval)
   (case :exp
-    <const-exp> [:exp .num]
-    <zero?-exp> [:exp .exp1 :env recur 0 equal?]
-    <if-exp>    (if :exp .exp1 :env recur
+    <const-exp> [:exp .num  num-val]
+    <zero?-exp> [:exp .exp1 :env recur .num 0 equal? bool-val]
+    <if-exp>    (if :exp .exp1 :env recur .bool
                     then :exp .exp2 :env recur
                     else :exp .exp3 :env recur)
-    <diff-exp>  [:exp .exp1 :env recur
-                 :exp .exp2 :env recur sub]
+    <diff-exp>  [:exp .exp1 :env recur .num
+                 :exp .exp2 :env recur .num sub num-val]
     <var-exp>   [:exp .var :env env-apply]
-    <let-exp>   [:env
-                 :exp .var
-                 :exp .exp1 :env recur
-                 cons-env :new-env!
-                 :exp .body :new-env recur]))
+    <let-exp>   [:env, :exp .var, :exp .exp1 :env recur, cons-env
+                 :exp .body swap recur]))
 
 (note
   123 -- <const-exp>
@@ -84,4 +153,9 @@
 (+jojo parse/spread {parse} list-map list-spread)
 
 (+jojo LET (-> :body --)
-  :body {parse program-eval} list-map)
+  :body {parse program-eval expval-write nl} list-for-each)
+
+(+jojo expval-write (-> :expval)
+  (case :expval
+    <num-val>  [:expval .num w]
+    <bool-val> [:expval .bool w]))

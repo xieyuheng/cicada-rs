@@ -3,13 +3,13 @@
 "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en">
 <head>
-<!-- 2017-09-10 Sun 20:59 -->
+<!-- 2017-09-26 Tue 01:38 -->
 <meta http-equiv="Content-Type" content="text/html;charset=utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>LET</title>
 <meta name="generator" content="Org-mode" />
-<meta name="author" content="XIE Yuheng" />
-<link rel="stylesheet" href="https://xieyuheng.github.io/asset/css/page.css" type="text/css" media="screen" />
+<meta name="author" content="xieyuheng" />
+<link rel="stylesheet" type="text/css" href="css/org-page.css"/>
 <script type="text/javascript">
 /*
 @licstart  The following is the entire license notice for the
@@ -58,32 +58,48 @@ for the JavaScript code in this tag.
 </script>
 </head>
 <body>
-<div id="preamble" class="status">
-.
-</div>
 <div id="content">
 <h1 class="title">LET</h1>
 <div id="table-of-contents">
 <h2>overview</h2>
 <div id="text-table-of-contents">
 <ul>
-<li><a href="#org67f87ec"><span class="todo _note_">[note]</span> </a></li>
-<li><a href="#org4345737">env</a></li>
-<li><a href="#org91c6ee3">exp</a></li>
-<li><a href="#org2543ea1">parse</a></li>
-<li><a href="#org61e8150">LET</a></li>
+<li><a href="#org4b426d3">intro</a></li>
+<li><a href="#org90aa42f">specifying the syntax</a></li>
+<li><a href="#orge56f337">specification of values</a></li>
+<li><a href="#org71be868">environments</a></li>
+<li><a href="#orge4b96d2">specifying the behavior of expressions</a></li>
+<li><a href="#orgfd3b222">specifying the behavior of programs</a></li>
+<li><a href="#orgaf83cfd">specifying conditionals</a></li>
+<li><a href="#org4a6a9e3">specifying let</a></li>
+<li><a href="#org22702fb">implementing the specification of LET</a></li>
+<li><a href="#org7b4b9f0">parse</a></li>
+<li><a href="#orgf81cfee">LET</a></li>
 </ul>
 </div>
 </div>
 
-<div id="outline-container-org67f87ec" class="outline-2">
-<h2 id="org67f87ec"><span class="todo _note_">[note]</span> </h2>
-<div class="outline-text-2" id="text-org67f87ec">
+<div id="outline-container-org4b426d3" class="outline-2">
+<h2 id="org4b426d3">intro</h2>
+<div class="outline-text-2" id="text-org4b426d3">
+<ul class="org-ul">
+<li><p>We begin by specifying a very simple language,</p><p>which we call LET, after its most interesting feature.</p></li></ul>
+</div>
+</div>
+
+<div id="outline-container-org90aa42f" class="outline-2">
+<h2 id="org90aa42f">specifying the syntax</h2>
+<div class="outline-text-2" id="text-org90aa42f">
+<ul class="org-ul">
+<li><p>In this language,</p><p>a program is just an expression.</p></li>
+
+<li><p>An expression is either</p><p><ol class="org-ol"></p><p><li>an integer constant,</li></p><p><li>a difference expression,</li></p><p><li>a zero-test expression,</li></p><p><li>a conditional expression,</li></p><p><li>a variable, or a let expression.</li></ol></p></li>
+
+<li><p>example expression :</p><p>(diff 55 (diff x 11))</p></li></ul>
+
 <div class="org-src-container">
 
-<pre class="src src-jojo"><span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">note</span> val = <span style="color: #66d9ef; font-weight: bold;">&lt;int&gt;</span> | <span style="color: #66d9ef; font-weight: bold;">&lt;bool&gt;</span><span style="color: #696969;">)</span>
-<span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">note</span> env = <span style="color: #66d9ef; font-weight: bold;">&lt;null-env&gt;</span> | <span style="color: #66d9ef; font-weight: bold;">&lt;cons-env&gt;</span><span style="color: #696969;">)</span>
-<span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">note</span> program = exp<span style="color: #696969;">)</span>
+<pre class="src src-jojo"><span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">note</span> program = exp<span style="color: #696969;">)</span>
 <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">note</span> exp
   = <span style="color: #66d9ef; font-weight: bold;">&lt;const-exp&gt;</span>
   | <span style="color: #66d9ef; font-weight: bold;">&lt;zero?-exp&gt;</span>
@@ -96,15 +112,45 @@ for the JavaScript code in this tag.
 </div>
 </div>
 
-<div id="outline-container-org4345737" class="outline-2">
-<h2 id="org4345737">env</h2>
-<div class="outline-text-2" id="text-org4345737">
+<div id="outline-container-orge56f337" class="outline-2">
+<h2 id="orge56f337">specification of values</h2>
+<div class="outline-text-2" id="text-orge56f337">
+<ul class="org-ul">
+<li><p>An important part of the specification</p><p>of any programming language</p><p>is the set of values that the language manipulates.</p></li>
+
+<li><p>Each language has at least two such sets :</p><p><ol class="org-ol"></p><p><li>the expressed values</p><p>which are the possible values of expressions,</li></p><p><li>the denoted values</p><p>which are the values bound to variables.</li></ol></p></li>
+
+<li><p>In the languages of this chapter,</p><p>the expressed and denoted values will always be the same.</p><p>They will start out as :</p><p><ul class="org-ul"></p><p><li><p>ExpVal = Int + Bool</p></li></p><p><li><p>DenVal = Int + Bool</p></li></ul></p></li></ul>
+
 <div class="org-src-container">
 
-<pre class="src src-jojo"><span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">+data</span> <span style="color: #66d9ef; font-weight: bold;">&lt;null-env&gt;</span><span style="color: #696969;">)</span>
+<pre class="src src-jojo"><span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">note</span> expval
+  = <span style="color: #66d9ef; font-weight: bold;">&lt;num-val&gt;</span>
+  | <span style="color: #66d9ef; font-weight: bold;">&lt;bool-val&gt;</span><span style="color: #696969;">)</span>
+
+<span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">+data</span> <span style="color: #66d9ef; font-weight: bold;">&lt;num-val&gt;</span> .num<span style="color: #696969;">)</span>
+<span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">+data</span> <span style="color: #66d9ef; font-weight: bold;">&lt;bool-val&gt;</span> <span style="color: #ae81ff;">.bool</span><span style="color: #696969;">)</span>
+</pre>
+</div>
+</div>
+</div>
+
+<div id="outline-container-org71be868" class="outline-2">
+<h2 id="org71be868">environments</h2>
+<div class="outline-text-2" id="text-org71be868">
+<ul class="org-ul">
+<li><p><p></p><p>If we are going to evaluate expressions containing variables,</p><p>we will need to know the value associated with each variable.</p><p></p></p><p></p><p><p></p><p>We do this by keeping those values in an environment.</p><p></p></p></li>
+
+<li><p>An environment is a function</p><p>whose domain is a finite set of variables</p><p>and whose range is the denoted values.</p></li></ul>
+
+<div class="org-src-container">
+
+<pre class="src src-jojo"><span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">note</span> env = <span style="color: #66d9ef; font-weight: bold;">&lt;null-env&gt;</span> | <span style="color: #66d9ef; font-weight: bold;">&lt;cons-env&gt;</span><span style="color: #696969;">)</span>
+
+<span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">+data</span> <span style="color: #66d9ef; font-weight: bold;">&lt;null-env&gt;</span><span style="color: #696969;">)</span>
 <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">+data</span> <span style="color: #66d9ef; font-weight: bold;">&lt;cons-env&gt;</span> <span style="color: #ae81ff;">.rest</span> <span style="color: #ae81ff;">.var</span> .val<span style="color: #696969;">)</span>
 
-<span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">+jojo</span> env-apply <span style="color: #696969;">(</span><span style="color: #66d9ef; font-weight: bold;">-&gt;</span> <span style="color: #a6e22e;">:var</span> <span style="color: #a6e22e;">:env</span> <span style="color: #66d9ef; font-weight: bold;">--</span> val<span style="color: #696969;">)</span>
+<span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">+jojo</span> env-apply <span style="color: #696969;">(</span><span style="color: #66d9ef; font-weight: bold;">-&gt;</span> <span style="color: #a6e22e;">:var</span> <span style="color: #a6e22e;">:env</span> <span style="color: #66d9ef; font-weight: bold;">--</span> expval<span style="color: #696969;">)</span>
   <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">case</span> <span style="color: #a6e22e;">:env</span>
     <span style="color: #66d9ef; font-weight: bold;">&lt;null-env&gt;</span> <span style="color: #797979;">[</span><span style="color: #e6db74;">"- env-apply fail"</span> w nl
                 <span style="color: #e6db74;">"  can not find var : "</span> w <span style="color: #a6e22e;">:var</span> w nl
@@ -112,20 +158,14 @@ for the JavaScript code in this tag.
     <span style="color: #66d9ef; font-weight: bold;">&lt;cons-env&gt;</span> <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">if</span> <span style="color: #a6e22e;">:env</span> <span style="color: #ae81ff;">.var</span> <span style="color: #a6e22e;">:var</span> equal?
                    <span style="color: #66d9ef; font-weight: bold;">then</span> <span style="color: #a6e22e;">:env</span> <span style="color: #ae81ff;">.val</span>
                    <span style="color: #66d9ef; font-weight: bold;">else</span> <span style="color: #a6e22e;">:var</span> <span style="color: #a6e22e;">:env</span> <span style="color: #ae81ff;">.rest</span> <span style="color: #66d9ef; font-weight: bold;">recur</span><span style="color: #696969;">)))</span>
-
-<span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">+jojo</span> init-env
-  null-env
-  '<span style="color: #a6e22e;">:x</span> <span style="color: #ae81ff;">10</span> cons-env
-  '<span style="color: #a6e22e;">:v</span> <span style="color: #ae81ff;">5</span>  cons-env
-  '<span style="color: #a6e22e;">:i</span> <span style="color: #ae81ff;">1</span>  cons-env<span style="color: #696969;">)</span>
 </pre>
 </div>
 </div>
 </div>
 
-<div id="outline-container-org91c6ee3" class="outline-2">
-<h2 id="org91c6ee3">exp</h2>
-<div class="outline-text-2" id="text-org91c6ee3">
+<div id="outline-container-orge4b96d2" class="outline-2">
+<h2 id="orge4b96d2">specifying the behavior of expressions</h2>
+<div class="outline-text-2" id="text-orge4b96d2">
 <div class="org-src-container">
 
 <pre class="src src-jojo"><span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">+data</span> <span style="color: #66d9ef; font-weight: bold;">&lt;const-exp&gt;</span> .num<span style="color: #696969;">)</span>
@@ -135,18 +175,173 @@ for the JavaScript code in this tag.
 <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">+data</span> <span style="color: #66d9ef; font-weight: bold;">&lt;var-exp&gt;</span>   .var<span style="color: #696969;">)</span>
 <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">+data</span> <span style="color: #66d9ef; font-weight: bold;">&lt;let-exp&gt;</span>   <span style="color: #ae81ff;">.var</span> <span style="color: #ae81ff;">.exp1</span> .body<span style="color: #696969;">)</span>
 
-<span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">+jojo</span> program-eval <span style="color: #696969;">(</span><span style="color: #66d9ef; font-weight: bold;">-&gt;</span> <span style="color: #a6e22e;">:program</span> <span style="color: #66d9ef; font-weight: bold;">--</span> val<span style="color: #696969;">)</span>
-  <span style="color: #a6e22e;">:program</span> init-env eval<span style="color: #696969;">)</span>
+<span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">note</span>
+  <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">=</span> <span style="color: #a6e22e;">:n</span> const-exp <span style="color: #a6e22e;">:env</span> eval<span style="color: #f92672; font-weight: bold;">,</span> <span style="color: #a6e22e;">:n</span> num-val<span style="color: #696969;">)</span>
+  <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">=</span> <span style="color: #a6e22e;">:var</span> var-exp <span style="color: #a6e22e;">:env</span> eval<span style="color: #f92672; font-weight: bold;">,</span> <span style="color: #a6e22e;">:var</span> <span style="color: #a6e22e;">:env</span> env-apply<span style="color: #696969;">)</span>
+  <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">=</span> <span style="color: #a6e22e;">:exp1</span> <span style="color: #a6e22e;">:exp2</span> diff-exp <span style="color: #a6e22e;">:env</span> eval<span style="color: #f92672; font-weight: bold;">,</span>
+     <span style="color: #a6e22e;">:exp1</span> <span style="color: #a6e22e;">:env</span> eval <span style="color: #ae81ff;">.num</span>
+     <span style="color: #a6e22e;">:exp2</span> <span style="color: #a6e22e;">:env</span> eval <span style="color: #ae81ff;">.num</span> sub num-val<span style="color: #696969;">))</span>
+</pre>
+</div>
+</div>
+</div>
 
-<span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">+jojo</span> eval <span style="color: #696969;">(</span><span style="color: #66d9ef; font-weight: bold;">-&gt;</span> <span style="color: #a6e22e;">:exp</span> <span style="color: #a6e22e;">:env</span> <span style="color: #66d9ef; font-weight: bold;">--</span> val<span style="color: #696969;">)</span>
+<div id="outline-container-orgfd3b222" class="outline-2">
+<h2 id="orgfd3b222">specifying the behavior of programs</h2>
+<div class="outline-text-2" id="text-orgfd3b222">
+<ul class="org-ul">
+<li><p>In our language,</p><p>a whole program is just an expression.</p><p>In order to find the value of such an expression,</p><p>we need to specify the values</p><p>of the free variables in the program.</p></li>
+
+<li><p>So the value of a program</p><p>is just the value of that expression</p><p>in a suitable initial environment.</p></li>
+
+<li><p>We choose our initial environment to be [i=1,v=5,x=10].</p></li></ul>
+
+<div class="org-src-container">
+
+<pre class="src src-jojo"><span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">+jojo</span> init-env
+  null-env
+  '<span style="color: #a6e22e;">:x</span> <span style="color: #ae81ff;">10</span> num-val cons-env
+  '<span style="color: #a6e22e;">:v</span> <span style="color: #ae81ff;">5</span>  num-val cons-env
+  '<span style="color: #a6e22e;">:i</span> <span style="color: #ae81ff;">1</span>  num-val cons-env<span style="color: #696969;">)</span>
+
+<span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">+jojo</span> program-eval <span style="color: #696969;">(</span><span style="color: #66d9ef; font-weight: bold;">-&gt;</span> <span style="color: #a6e22e;">:program</span> <span style="color: #66d9ef; font-weight: bold;">--</span> expval<span style="color: #696969;">)</span>
+  <span style="color: #a6e22e;">:program</span> init-env eval<span style="color: #696969;">)</span>
+</pre>
+</div>
+</div>
+</div>
+
+<div id="outline-container-orgaf83cfd" class="outline-2">
+<h2 id="orgaf83cfd">specifying conditionals</h2>
+<div class="outline-text-2" id="text-orgaf83cfd">
+<ul class="org-ul">
+<li><p>The next portion of the language</p><p>introduces an interface for booleans in our language.</p></li>
+
+<li><p>The language has one constructor of booleans &#x2013; 'zero?',</p><p>and one observer of booleans &#x2013; the if expression.</p></li></ul>
+
+<div class="org-src-container">
+
+<pre class="src src-jojo"><span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">note</span>
+  <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">=</span> <span style="color: #a6e22e;">:exp1</span> <span style="color: #a6e22e;">:env</span> eval<span style="color: #f92672; font-weight: bold;">,</span> <span style="color: #a6e22e;">:val1</span><span style="color: #696969;">)</span>
+  ------------------------------------
+  <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">=</span> <span style="color: #a6e22e;">:exp1</span> zero?-exp <span style="color: #a6e22e;">:env</span> eval
+     <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">if</span> <span style="color: #a6e22e;">:val1</span> <span style="color: #ae81ff;">.num</span> <span style="color: #ae81ff;">0</span> eq?
+       <span style="color: #66d9ef; font-weight: bold;">then</span> <span style="color: #66d9ef; font-weight: bold;">true</span>  bool-val
+       <span style="color: #66d9ef; font-weight: bold;">else</span> <span style="color: #66d9ef; font-weight: bold;">false</span> bool-val<span style="color: #696969;">)))</span>
+</pre>
+</div>
+
+<ul class="org-ul">
+<li><p>An if expression is an observer of boolean values.</p></li></ul>
+
+<div class="org-src-container">
+
+<pre class="src src-jojo"><span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">note</span>
+  <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">=</span> <span style="color: #a6e22e;">:exp1</span> <span style="color: #a6e22e;">:env</span> eval<span style="color: #f92672; font-weight: bold;">,</span> <span style="color: #a6e22e;">:val1</span><span style="color: #696969;">)</span>
+  ------------------------------------
+  <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">=</span> <span style="color: #a6e22e;">:exp1</span> <span style="color: #a6e22e;">:exp2</span> <span style="color: #a6e22e;">:exp3</span> if-exp <span style="color: #a6e22e;">:env</span> eval
+     <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">if</span> <span style="color: #a6e22e;">:val1</span> <span style="color: #ae81ff;">.bool</span>
+       <span style="color: #66d9ef; font-weight: bold;">then</span> <span style="color: #a6e22e;">:exp2</span> <span style="color: #a6e22e;">:env</span> eval
+       <span style="color: #66d9ef; font-weight: bold;">else</span> <span style="color: #a6e22e;">:exp3</span> <span style="color: #a6e22e;">:env</span> eval<span style="color: #696969;">)))</span>
+</pre>
+</div>
+
+<ul class="org-ul">
+<li><p>Rules of inference like this</p><p>make the intended behavior</p><p>of any individual expression easy to specify,</p><p>but they are not very good</p><p>for displaying a deduction.</p><p>Because deduction by inference rules</p><p>will generate a tree.</p></li>
+
+<li><p>we can rewrite the rules as equations.</p><p>We can then use substitution of equals for equals</p><p>to display a calculation.</p></li></ul>
+
+<div class="org-src-container">
+
+<pre class="src src-jojo"><span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">note</span>
+  <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">=</span> <span style="color: #a6e22e;">:exp1</span> <span style="color: #a6e22e;">:exp2</span> <span style="color: #a6e22e;">:exp3</span> if-exp <span style="color: #a6e22e;">:env</span> eval
+     <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">if</span> <span style="color: #a6e22e;">:exp1</span> <span style="color: #a6e22e;">:env</span> eval <span style="color: #ae81ff;">.bool</span>
+       <span style="color: #66d9ef; font-weight: bold;">then</span> <span style="color: #a6e22e;">:exp2</span> <span style="color: #a6e22e;">:env</span> eval
+       <span style="color: #66d9ef; font-weight: bold;">else</span> <span style="color: #a6e22e;">:exp3</span> <span style="color: #a6e22e;">:env</span> eval<span style="color: #696969;">)))</span>
+</pre>
+</div>
+
+<ul class="org-ul">
+<li><p>for example :</p></li></ul>
+
+<div class="org-src-container">
+
+<pre class="src src-jojo"><span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">note</span>
+
+  null-env '<span style="color: #a6e22e;">:x</span> <span style="color: #ae81ff;">33</span> cons-env '<span style="color: #a6e22e;">:y</span> <span style="color: #ae81ff;">22</span> cons-env <span style="color: #fd971f;">:env!</span>
+
+  <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">=</span>
+   '<span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">if</span> <span style="color: #696969;">(</span>zero? <span style="color: #696969;">(</span>diff <span style="color: #a6e22e;">:x</span> <span style="color: #ae81ff;">11</span><span style="color: #696969;">))</span>
+      <span style="color: #696969;">(</span>diff <span style="color: #a6e22e;">:y</span> <span style="color: #ae81ff;">2</span><span style="color: #696969;">)</span>
+      <span style="color: #696969;">(</span>diff <span style="color: #a6e22e;">:y</span> <span style="color: #ae81ff;">4</span><span style="color: #696969;">))</span>
+   parse <span style="color: #a6e22e;">:env</span> eval
+
+   <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">if</span> '<span style="color: #696969;">(</span>zero? <span style="color: #696969;">(</span>diff <span style="color: #a6e22e;">:x</span> <span style="color: #ae81ff;">11</span><span style="color: #696969;">))</span> parse <span style="color: #a6e22e;">:env</span> eval <span style="color: #ae81ff;">.bool</span>
+     <span style="color: #66d9ef; font-weight: bold;">then</span> '<span style="color: #696969;">(</span>diff <span style="color: #a6e22e;">:y</span> <span style="color: #ae81ff;">2</span><span style="color: #696969;">)</span> parse <span style="color: #a6e22e;">:env</span> eval
+     <span style="color: #66d9ef; font-weight: bold;">else</span> '<span style="color: #696969;">(</span>diff <span style="color: #a6e22e;">:y</span> <span style="color: #ae81ff;">4</span><span style="color: #696969;">)</span> parse <span style="color: #a6e22e;">:env</span> eval<span style="color: #696969;">)</span>
+
+   <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">if</span> <span style="color: #66d9ef; font-weight: bold;">false</span> bool-val <span style="color: #ae81ff;">.bool</span>
+     <span style="color: #66d9ef; font-weight: bold;">then</span> '<span style="color: #696969;">(</span>diff <span style="color: #a6e22e;">:y</span> <span style="color: #ae81ff;">2</span><span style="color: #696969;">)</span> parse <span style="color: #a6e22e;">:env</span> eval
+     <span style="color: #66d9ef; font-weight: bold;">else</span> '<span style="color: #696969;">(</span>diff <span style="color: #a6e22e;">:y</span> <span style="color: #ae81ff;">4</span><span style="color: #696969;">)</span> parse <span style="color: #a6e22e;">:env</span> eval<span style="color: #696969;">)</span>
+
+   <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">if</span> <span style="color: #66d9ef; font-weight: bold;">false</span>
+     <span style="color: #66d9ef; font-weight: bold;">then</span> '<span style="color: #696969;">(</span>diff <span style="color: #a6e22e;">:y</span> <span style="color: #ae81ff;">2</span><span style="color: #696969;">)</span> parse <span style="color: #a6e22e;">:env</span> eval
+     <span style="color: #66d9ef; font-weight: bold;">else</span> '<span style="color: #696969;">(</span>diff <span style="color: #a6e22e;">:y</span> <span style="color: #ae81ff;">4</span><span style="color: #696969;">)</span> parse <span style="color: #a6e22e;">:env</span> eval<span style="color: #696969;">)</span>
+
+   '<span style="color: #696969;">(</span>diff <span style="color: #a6e22e;">:y</span> <span style="color: #ae81ff;">4</span><span style="color: #696969;">)</span> parse <span style="color: #a6e22e;">:env</span> eval
+
+   <span style="color: #ae81ff;">18</span> num-val<span style="color: #696969;">))</span>
+</pre>
+</div>
+</div>
+</div>
+
+<div id="outline-container-org4a6a9e3" class="outline-2">
+<h2 id="org4a6a9e3">specifying let</h2>
+<div class="outline-text-2" id="text-org4a6a9e3">
+<ul class="org-ul">
+<li><p>Next we address the problem of</p><p>creating new variable bindings with a let expression.</p></li>
+
+<li><p>reference rule :</p></li></ul>
+
+<div class="org-src-container">
+
+<pre class="src src-jojo"><span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">note</span>
+  <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">=</span> <span style="color: #a6e22e;">:exp1</span> <span style="color: #a6e22e;">:env</span> eval<span style="color: #f92672; font-weight: bold;">,</span> <span style="color: #a6e22e;">:val1</span><span style="color: #696969;">)</span>
+  ------------------------------------
+  <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">=</span> <span style="color: #a6e22e;">:var</span> <span style="color: #a6e22e;">:exp1</span> <span style="color: #a6e22e;">:body</span> <span style="color: #a6e22e;">:env</span> eval<span style="color: #f92672; font-weight: bold;">,</span>
+     <span style="color: #a6e22e;">:body</span> <span style="color: #a6e22e;">:env</span> <span style="color: #a6e22e;">:var</span> <span style="color: #a6e22e;">:val1</span> cons-env eval<span style="color: #696969;">))</span>
+</pre>
+</div>
+
+<ul class="org-ul">
+<li><p>equation :</p></li></ul>
+
+<div class="org-src-container">
+
+<pre class="src src-jojo"><span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">note</span>
+  <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">=</span> <span style="color: #a6e22e;">:var</span> <span style="color: #a6e22e;">:exp1</span> <span style="color: #a6e22e;">:body</span> <span style="color: #a6e22e;">:env</span> eval<span style="color: #f92672; font-weight: bold;">,</span>
+   <span style="color: #a6e22e;">:env</span><span style="color: #f92672; font-weight: bold;">,</span> <span style="color: #a6e22e;">:var</span><span style="color: #f92672; font-weight: bold;">,</span> <span style="color: #a6e22e;">:exp1</span> <span style="color: #a6e22e;">:env</span> eval<span style="color: #f92672; font-weight: bold;">,</span> cons-env
+   <span style="color: #a6e22e;">:body</span> swap eval<span style="color: #696969;">))</span>
+</pre>
+</div>
+</div>
+</div>
+
+<div id="outline-container-org22702fb" class="outline-2">
+<h2 id="org22702fb">implementing the specification of LET</h2>
+<div class="outline-text-2" id="text-org22702fb">
+<div class="org-src-container">
+
+<pre class="src src-jojo"><span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">+jojo</span> eval <span style="color: #696969;">(</span><span style="color: #66d9ef; font-weight: bold;">-&gt;</span> <span style="color: #a6e22e;">:exp</span> <span style="color: #a6e22e;">:env</span> <span style="color: #66d9ef; font-weight: bold;">--</span> expval<span style="color: #696969;">)</span>
   <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">case</span> <span style="color: #a6e22e;">:exp</span>
-    <span style="color: #66d9ef; font-weight: bold;">&lt;const-exp&gt;</span> <span style="color: #797979;">[</span><span style="color: #a6e22e;">:exp</span> <span style="color: #ae81ff;">.num</span><span style="color: #797979;">]</span>
-    <span style="color: #66d9ef; font-weight: bold;">&lt;zero?-exp&gt;</span> <span style="color: #797979;">[</span><span style="color: #a6e22e;">:exp</span> <span style="color: #ae81ff;">.exp1</span> <span style="color: #a6e22e;">:env</span> <span style="color: #66d9ef; font-weight: bold;">recur</span> <span style="color: #ae81ff;">0</span> equal?<span style="color: #797979;">]</span>
-    <span style="color: #66d9ef; font-weight: bold;">&lt;if-exp&gt;</span>    <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">if</span> <span style="color: #a6e22e;">:exp</span> <span style="color: #ae81ff;">.exp1</span> <span style="color: #a6e22e;">:env</span> <span style="color: #66d9ef; font-weight: bold;">recur</span>
+    <span style="color: #66d9ef; font-weight: bold;">&lt;const-exp&gt;</span> <span style="color: #797979;">[</span><span style="color: #a6e22e;">:exp</span> <span style="color: #ae81ff;">.num</span>  num-val<span style="color: #797979;">]</span>
+    <span style="color: #66d9ef; font-weight: bold;">&lt;zero?-exp&gt;</span> <span style="color: #797979;">[</span><span style="color: #a6e22e;">:exp</span> <span style="color: #ae81ff;">.exp1</span> <span style="color: #a6e22e;">:env</span> <span style="color: #66d9ef; font-weight: bold;">recur</span> <span style="color: #ae81ff;">.num</span> <span style="color: #ae81ff;">0</span> equal? bool-val<span style="color: #797979;">]</span>
+    <span style="color: #66d9ef; font-weight: bold;">&lt;if-exp&gt;</span>    <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">if</span> <span style="color: #a6e22e;">:exp</span> <span style="color: #ae81ff;">.exp1</span> <span style="color: #a6e22e;">:env</span> <span style="color: #66d9ef; font-weight: bold;">recur</span> <span style="color: #ae81ff;">.bool</span>
                     <span style="color: #66d9ef; font-weight: bold;">then</span> <span style="color: #a6e22e;">:exp</span> <span style="color: #ae81ff;">.exp2</span> <span style="color: #a6e22e;">:env</span> <span style="color: #66d9ef; font-weight: bold;">recur</span>
                     <span style="color: #66d9ef; font-weight: bold;">else</span> <span style="color: #a6e22e;">:exp</span> <span style="color: #ae81ff;">.exp3</span> <span style="color: #a6e22e;">:env</span> <span style="color: #66d9ef; font-weight: bold;">recur</span><span style="color: #696969;">)</span>
-    <span style="color: #66d9ef; font-weight: bold;">&lt;diff-exp&gt;</span>  <span style="color: #797979;">[</span><span style="color: #a6e22e;">:exp</span> <span style="color: #ae81ff;">.exp1</span> <span style="color: #a6e22e;">:env</span> <span style="color: #66d9ef; font-weight: bold;">recur</span>
-                 <span style="color: #a6e22e;">:exp</span> <span style="color: #ae81ff;">.exp2</span> <span style="color: #a6e22e;">:env</span> <span style="color: #66d9ef; font-weight: bold;">recur</span> sub<span style="color: #797979;">]</span>
+    <span style="color: #66d9ef; font-weight: bold;">&lt;diff-exp&gt;</span>  <span style="color: #797979;">[</span><span style="color: #a6e22e;">:exp</span> <span style="color: #ae81ff;">.exp1</span> <span style="color: #a6e22e;">:env</span> <span style="color: #66d9ef; font-weight: bold;">recur</span> <span style="color: #ae81ff;">.num</span>
+                 <span style="color: #a6e22e;">:exp</span> <span style="color: #ae81ff;">.exp2</span> <span style="color: #a6e22e;">:env</span> <span style="color: #66d9ef; font-weight: bold;">recur</span> <span style="color: #ae81ff;">.num</span> sub num-val<span style="color: #797979;">]</span>
     <span style="color: #66d9ef; font-weight: bold;">&lt;var-exp&gt;</span>   <span style="color: #797979;">[</span><span style="color: #a6e22e;">:exp</span> <span style="color: #ae81ff;">.var</span> <span style="color: #a6e22e;">:env</span> env-apply<span style="color: #797979;">]</span>
     <span style="color: #66d9ef; font-weight: bold;">&lt;let-exp&gt;</span>   <span style="color: #797979;">[</span><span style="color: #a6e22e;">:env</span>
                  <span style="color: #a6e22e;">:exp</span> <span style="color: #ae81ff;">.var</span>
@@ -158,9 +353,9 @@ for the JavaScript code in this tag.
 </div>
 </div>
 
-<div id="outline-container-org2543ea1" class="outline-2">
-<h2 id="org2543ea1">parse</h2>
-<div class="outline-text-2" id="text-org2543ea1">
+<div id="outline-container-org7b4b9f0" class="outline-2">
+<h2 id="org7b4b9f0">parse</h2>
+<div class="outline-text-2" id="text-org7b4b9f0">
 <div class="org-src-container">
 
 <pre class="src src-jojo"><span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">note</span>
@@ -196,20 +391,27 @@ for the JavaScript code in this tag.
 </div>
 </div>
 
-<div id="outline-container-org61e8150" class="outline-2">
-<h2 id="org61e8150">LET</h2>
-<div class="outline-text-2" id="text-org61e8150">
+<div id="outline-container-orgf81cfee" class="outline-2">
+<h2 id="orgf81cfee">LET</h2>
+<div class="outline-text-2" id="text-orgf81cfee">
 <div class="org-src-container">
 
 <pre class="src src-jojo"><span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">+jojo</span> LET <span style="color: #696969;">(</span><span style="color: #66d9ef; font-weight: bold;">-&gt;</span> <span style="color: #a6e22e;">:body</span> <span style="color: #66d9ef; font-weight: bold;">--</span><span style="color: #696969;">)</span>
-  <span style="color: #a6e22e;">:body</span> <span style="color: #B380A8;">{</span>parse program-eval<span style="color: #B380A8;">}</span> list-map<span style="color: #696969;">)</span>
+  <span style="color: #a6e22e;">:body</span> <span style="color: #B380A8;">{</span>parse program-eval expval-write nl<span style="color: #B380A8;">}</span> list-for-each<span style="color: #696969;">)</span>
+
+<span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">+jojo</span> expval-write <span style="color: #696969;">(</span><span style="color: #66d9ef; font-weight: bold;">-&gt;</span> <span style="color: #a6e22e;">:expval</span><span style="color: #696969;">)</span>
+  <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">case</span> <span style="color: #a6e22e;">:expval</span>
+    <span style="color: #66d9ef; font-weight: bold;">&lt;num-val&gt;</span>  <span style="color: #797979;">[</span><span style="color: #a6e22e;">:expval</span> <span style="color: #ae81ff;">.num</span> w<span style="color: #797979;">]</span>
+    <span style="color: #66d9ef; font-weight: bold;">&lt;bool-val&gt;</span> <span style="color: #797979;">[</span><span style="color: #a6e22e;">:expval</span> <span style="color: #ae81ff;">.bool</span> w<span style="color: #797979;">]</span><span style="color: #696969;">))</span>
 </pre>
 </div>
 </div>
 </div>
 </div>
 <div id="postamble" class="status">
-.
+<p class="author">Author: xieyuheng</p>
+<p class="date">Created: 2017-09-26 Tue 01:38</p>
+<p class="validation"><a href="http://validator.w3.org/check?uri=referer">Validate</a></p>
 </div>
 </body>
 </html>
