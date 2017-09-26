@@ -1,8 +1,7 @@
 (note
   (letrec :double :x
     (if (zero? :x) 0
-      (diff (call :double (diff :x 1))
-        -2))
+      (diff (call :double (diff :x 1)) -2))
     (call :double 6)))
 
 (note program = exp)
@@ -55,9 +54,11 @@
 (note
   (case :env <cons-rec-env>)
   (= :var :env env-apply,
-     (if :var :env .proc-name equal?
-       then :var :env .proc-body :env proc proc-val
-       else :var :env .rest env-apply)))
+     (cond [:var :env .proc-name equal?]
+           [:env .bound-var
+            :env .proc-body
+            :env proc proc-val]
+           else [:var :env .rest env-apply])))
 
 (note env = <null-env> | <cons-env>)
 
@@ -105,9 +106,7 @@
                  :exp .body :new-env recur]
 
     <proc-exp>  [:exp .var :exp .body :env proc proc-val]
-    <call-exp>  [:exp .rator :env recur
-                 (if dup num-val? then dup .num w nl)
-                 .proc :proc!
+    <call-exp>  [:exp .rator :env recur .proc :proc!
                  :exp .rand  :env recur :arg!
                  :arg :proc proc-apply]
 
@@ -171,7 +170,7 @@
     <num-val>  [:expval .num w]
     <bool-val> [:expval .bool w]))
 
-(run
+(test
   (LETREC
    1 2 3
    (diff 2 1)
@@ -191,6 +190,5 @@
 
    (letrec :double :x
      (if (zero? :x) 0
-       (diff (call :double (diff :x 1))
-         -2))
+       (diff (call :double (diff :x 1)) -2))
      (call :double 6))))
