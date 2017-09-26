@@ -4,11 +4,18 @@
 
 * intro
 
-  - So far our language has only the operations
-    that were included in the original language.
-    For our interpreted language to be at all useful,
-    we must allow new procedures to be created.
-    We call the new language LETREC.
+  - We now define a new language LETREC,
+    which adds recursion to our language.
+
+  - example :
+
+  #+begin_src jojo
+  (note
+    (letrec :double :x
+      (if (zero? :x) 0
+        (diff (call :double (diff :x 1)) -2))
+      (call :double 6)))
+  #+end_src
 
 * exp
 
@@ -22,7 +29,8 @@
     | <var-exp>
     | <let-exp>
     | <proc-exp>
-    | <call-exp>)
+    | <call-exp>
+    | <letrec-exp>)
 
   (+data <const-exp> .num)
   (+data <zero?-exp> .exp1)
@@ -33,6 +41,9 @@
 
   (+data <proc-exp>  .var .body)
   (+data <call-exp>  .rator .rand)
+
+  (+data <letrec-exp>
+    .proc-name .bound-var .proc-body .letrec-body)
   #+end_src
 
 * expval
@@ -59,22 +70,32 @@
     :proc .body swap eval)
   #+end_src
 
-* specifying proc-exp
+* specifying letrec-exp
 
   #+begin_src jojo
   (note
-    (= :var :body proc-exp :env eval,
-       :var :body :env proc proc-val))
+    (= :proc-name :bound-var :proc-body :letrec-body lerrec-exp
+       :env eval,
+       :env :proc-name :bound-var :proc-body cons-rec-env
+       :letrec-body swap eval))
   #+end_src
 
-* specifying call-exp
+* specifying cons-rec-env
+
+  - We specify the behavior
+    of this new env constructor as follows :
+    - Let :env1 be the environment produced by this constructor
+    - Then what should [:var :env1 env-apply] return ?
 
   #+begin_src jojo
   (note
-    (= :rator :rand call-exp :env eval,
-       :rator :env recur .proc :proc!
-       :rand  :env recur :arg!
-       :arg :proc proc-apply))
+    (case :env <cons-rec-env>)
+    (= :var :env env-apply,
+       (cond [:var :env .proc-name equal?]
+             [:env .bound-var
+              :env .proc-body
+              :env proc proc-val]
+             else [:var :env .rest env-apply])))
   #+end_src
 
 * env
@@ -84,15 +105,21 @@
 
   (+data <null-env>)
   (+data <cons-env> .rest .var .val)
+  (+data <cons-rec-env> .rest .proc-name .bound-var .proc-body)
 
   (+jojo env-apply (-> :var :env -- expval)
     (case :env
       <null-env> ["- env-apply fail" w nl
                   "  can not find var : " w :var w nl
                   debug]
-      <cons-env> (if :env .var :var equal?
-                     then :env .val
-                     else :var :env .rest recur)))
+      <cons-env> (if :var :env .var equal?
+                   then :env .val
+                   else :var :env .rest recur)
+      <cons-rec-env> (cond [:var :env .proc-name equal?]
+                           [:env .bound-var
+                            :env .proc-body
+                            :env proc proc-val]
+                           else [:var :env .rest recur])))
   #+end_src
 
 * program
@@ -130,7 +157,14 @@
       <proc-exp>  [:exp .var :exp .body :env proc proc-val]
       <call-exp>  [:exp .rator :env recur .proc :proc!
                    :exp .rand  :env recur :arg!
-                   :arg :proc proc-apply]))
+                   :arg :proc proc-apply]
+
+      <letrec-exp> [:env
+                    :exp .proc-name
+                    :exp .bound-var
+                    :exp .proc-body
+                    cons-rec-env :new-env!
+                    :exp .letrec-body :new-env recur]))
   #+end_src
 
 * parse
@@ -145,7 +179,11 @@
     (let :var ... ...) -- <let-exp>
 
     (proc :var ...) -- <proc-exp>
-    (call :rator :rand) -- <call-exp>)
+    (call :rator :rand) -- <call-exp>
+
+    (letrec :proc-name :bound-var
+      :proc-body
+      :letrec-body) -- <letrec-exp>)
 
   (+jojo parse (-> :sexp -- exp)
     (cond
@@ -163,12 +201,17 @@
     (cond [:key 'zero? eq?] [:body parse/spread zero?-exp]
           [:key 'if eq?]    [:body parse/spread if-exp]
           [:key 'diff eq?]  [:body parse/spread diff-exp]
-          [:key 'let eq?]   [:body .car :body
-                             .cdr parse/spread let-exp]
+          [:key 'let eq?]   [:body .car
+                             :body .cdr parse/spread let-exp]
 
-          [:key 'proc eq?]  [:body .car :body
-                             .cdr parse/spread proc-exp]
-          [:key 'call eq?]  [:body parse/spread call-exp]))
+          [:key 'proc eq?]  [:body .car
+                             :body .cdr parse/spread proc-exp]
+          [:key 'call eq?]  [:body parse/spread call-exp]
+
+          [:key 'letrec eq?]
+          [:body .car
+           :body .cdr .car
+           :body .cdr .cdr parse/spread letrec-exp]))
 
   (+jojo parse/spread {parse} list-map list-spread)
   #+end_src
@@ -188,7 +231,7 @@
 * [test]
 
   #+begin_src jojo
-  (note
+  (run
     (LETREC
      1 2 3
      (diff 2 1)
@@ -204,5 +247,10 @@
          (let :x 100
            (let :g (proc :z (diff :z :x))
              (diff (call :f 1)
-                   (call :g 1))))))))
+               (call :g 1))))))
+
+     (letrec :double :x
+       (if (zero? :x) 0
+         (diff (call :double (diff :x 1)) -2))
+       (call :double 6))))
   #+end_src
