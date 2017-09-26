@@ -7,7 +7,7 @@
   - We begin by specifying a very simple language,
     which we call LET, after its most interesting feature.
 
-* specifying the syntax
+* specifying the expression
 
   - In this language,
     a program is just an expression.
@@ -87,7 +87,7 @@
                      else :var :env .rest recur)))
   #+end_src
 
-* specifying the behavior of expressions
+* specifying expressions
 
   #+begin_src jojo
   (+data <const-exp> .num)
@@ -105,7 +105,7 @@
        :exp2 :env eval .num sub num-val))
   #+end_src
 
-* specifying the behavior of programs
+* specifying programs
 
   - In our language,
     a whole program is just an expression.
@@ -234,7 +234,7 @@
      :body swap eval))
   #+end_src
 
-* implementing the specification of LET
+* eval
 
   #+begin_src jojo
   (+jojo eval (-> :exp :env -- expval)
@@ -254,7 +254,7 @@
                    :exp .body :new-env recur]))
   #+end_src
 
-* parsing
+* parse
 
   #+begin_src jojo
   (note
@@ -287,7 +287,7 @@
   (+jojo parse/spread {parse} list-map list-spread)
   #+end_src
 
-* LET
+* interface
 
   #+begin_src jojo
   (+jojo LET (-> :body --)

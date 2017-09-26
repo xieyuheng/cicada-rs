@@ -3,7 +3,7 @@
 "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en">
 <head>
-<!-- 2017-09-26 Tue 18:04 -->
+<!-- 2017-09-26 Tue 18:13 -->
 <meta http-equiv="Content-Type" content="text/html;charset=utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>PROC</title>
@@ -64,34 +64,34 @@ for the JavaScript code in this tag.
 <h2>overview</h2>
 <div id="text-table-of-contents">
 <ul>
-<li><a href="#org9fdfde">intro</a></li>
-<li><a href="#org9db760">exp</a></li>
-<li><a href="#orgb9eeb60">expval</a></li>
-<li><a href="#org2bca7ed">proc</a></li>
-<li><a href="#org7cdd35">specifying proc-exp</a></li>
-<li><a href="#org244463d">specifying call-exp</a></li>
-<li><a href="#org88a5618">environments</a></li>
-<li><a href="#orgefd2e6f">program</a></li>
-<li><a href="#org7b5691a">implementing</a></li>
-<li><a href="#org11c2aad">parsing</a></li>
-<li><a href="#orga7b3994">LET</a></li>
-<li><a href="#orgd42de86"><span class="done _test_">[test]</span> </a></li>
-<li><a href="#org33608c5">exercise</a></li>
+<li><a href="#orgeb431c6">intro</a></li>
+<li><a href="#org8903517">exp</a></li>
+<li><a href="#orga5ddb0e">expval</a></li>
+<li><a href="#orgb1e8879">proc</a></li>
+<li><a href="#org736790f">specifying proc-exp</a></li>
+<li><a href="#orgf2f7ec3">specifying call-exp</a></li>
+<li><a href="#org32ee5f5">environments</a></li>
+<li><a href="#org1e3aad2">program</a></li>
+<li><a href="#orgff5cb54">eval</a></li>
+<li><a href="#org39c8208">parse</a></li>
+<li><a href="#orgbabc9db">interface</a></li>
+<li><a href="#org63f43be"><span class="done _test_">[test]</span> </a></li>
+<li><a href="#orgdfaee2">exercise</a></li>
 </ul>
 </div>
 </div>
 
-<div id="outline-container-org9fdfde" class="outline-2">
-<h2 id="org9fdfde">intro</h2>
-<div class="outline-text-2" id="text-org9fdfde">
+<div id="outline-container-orgeb431c6" class="outline-2">
+<h2 id="orgeb431c6">intro</h2>
+<div class="outline-text-2" id="text-orgeb431c6">
 <ul class="org-ul">
 <li><p>So far our language has only the operations</p><p>that were included in the original language.</p><p>For our interpreted language to be at all useful,</p><p>we must allow new procedures to be created.</p><p>We call the new language PROC.</p></li></ul>
 </div>
 </div>
 
-<div id="outline-container-org9db760" class="outline-2">
-<h2 id="org9db760">exp</h2>
-<div class="outline-text-2" id="text-org9db760">
+<div id="outline-container-org8903517" class="outline-2">
+<h2 id="org8903517">exp</h2>
+<div class="outline-text-2" id="text-org8903517">
 <div class="org-src-container">
 
 <pre class="src src-jojo"><span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">note</span> program = exp<span style="color: #696969;">)</span>
@@ -119,9 +119,9 @@ for the JavaScript code in this tag.
 </div>
 </div>
 
-<div id="outline-container-orgb9eeb60" class="outline-2">
-<h2 id="orgb9eeb60">expval</h2>
-<div class="outline-text-2" id="text-orgb9eeb60">
+<div id="outline-container-orga5ddb0e" class="outline-2">
+<h2 id="orga5ddb0e">expval</h2>
+<div class="outline-text-2" id="text-orga5ddb0e">
 <div class="org-src-container">
 
 <pre class="src src-jojo"><span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">note</span> expval
@@ -138,9 +138,9 @@ for the JavaScript code in this tag.
 </div>
 </div>
 
-<div id="outline-container-org2bca7ed" class="outline-2">
-<h2 id="org2bca7ed">proc</h2>
-<div class="outline-text-2" id="text-org2bca7ed">
+<div id="outline-container-orgb1e8879" class="outline-2">
+<h2 id="orgb1e8879">proc</h2>
+<div class="outline-text-2" id="text-orgb1e8879">
 <div class="org-src-container">
 
 <pre class="src src-jojo"><span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">+data</span> <span style="color: #66d9ef; font-weight: bold;">&lt;proc&gt;</span> <span style="color: #ae81ff;">.var</span> <span style="color: #ae81ff;">.body</span> .saved-env<span style="color: #696969;">)</span>
@@ -153,9 +153,9 @@ for the JavaScript code in this tag.
 </div>
 </div>
 
-<div id="outline-container-org7cdd35" class="outline-2">
-<h2 id="org7cdd35">specifying proc-exp</h2>
-<div class="outline-text-2" id="text-org7cdd35">
+<div id="outline-container-org736790f" class="outline-2">
+<h2 id="org736790f">specifying proc-exp</h2>
+<div class="outline-text-2" id="text-org736790f">
 <div class="org-src-container">
 
 <pre class="src src-jojo"><span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">note</span>
@@ -166,9 +166,9 @@ for the JavaScript code in this tag.
 </div>
 </div>
 
-<div id="outline-container-org244463d" class="outline-2">
-<h2 id="org244463d">specifying call-exp</h2>
-<div class="outline-text-2" id="text-org244463d">
+<div id="outline-container-orgf2f7ec3" class="outline-2">
+<h2 id="orgf2f7ec3">specifying call-exp</h2>
+<div class="outline-text-2" id="text-orgf2f7ec3">
 <div class="org-src-container">
 
 <pre class="src src-jojo"><span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">note</span>
@@ -181,9 +181,9 @@ for the JavaScript code in this tag.
 </div>
 </div>
 
-<div id="outline-container-org88a5618" class="outline-2">
-<h2 id="org88a5618">environments</h2>
-<div class="outline-text-2" id="text-org88a5618">
+<div id="outline-container-org32ee5f5" class="outline-2">
+<h2 id="org32ee5f5">environments</h2>
+<div class="outline-text-2" id="text-org32ee5f5">
 <div class="org-src-container">
 
 <pre class="src src-jojo"><span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">note</span> env = <span style="color: #66d9ef; font-weight: bold;">&lt;null-env&gt;</span> | <span style="color: #66d9ef; font-weight: bold;">&lt;cons-env&gt;</span><span style="color: #696969;">)</span>
@@ -204,9 +204,9 @@ for the JavaScript code in this tag.
 </div>
 </div>
 
-<div id="outline-container-orgefd2e6f" class="outline-2">
-<h2 id="orgefd2e6f">program</h2>
-<div class="outline-text-2" id="text-orgefd2e6f">
+<div id="outline-container-org1e3aad2" class="outline-2">
+<h2 id="org1e3aad2">program</h2>
+<div class="outline-text-2" id="text-org1e3aad2">
 <div class="org-src-container">
 
 <pre class="src src-jojo"><span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">+jojo</span> init-env
@@ -222,9 +222,9 @@ for the JavaScript code in this tag.
 </div>
 </div>
 
-<div id="outline-container-org7b5691a" class="outline-2">
-<h2 id="org7b5691a">implementing</h2>
-<div class="outline-text-2" id="text-org7b5691a">
+<div id="outline-container-orgff5cb54" class="outline-2">
+<h2 id="orgff5cb54">eval</h2>
+<div class="outline-text-2" id="text-orgff5cb54">
 <div class="org-src-container">
 
 <pre class="src src-jojo"><span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">+jojo</span> eval <span style="color: #696969;">(</span><span style="color: #66d9ef; font-weight: bold;">-&gt;</span> <span style="color: #a6e22e;">:exp</span> <span style="color: #a6e22e;">:env</span> <span style="color: #66d9ef; font-weight: bold;">--</span> expval<span style="color: #696969;">)</span>
@@ -252,9 +252,9 @@ for the JavaScript code in this tag.
 </div>
 </div>
 
-<div id="outline-container-org11c2aad" class="outline-2">
-<h2 id="org11c2aad">parsing</h2>
-<div class="outline-text-2" id="text-org11c2aad">
+<div id="outline-container-org39c8208" class="outline-2">
+<h2 id="org39c8208">parse</h2>
+<div class="outline-text-2" id="text-org39c8208">
 <div class="org-src-container">
 
 <pre class="src src-jojo"><span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">note</span>
@@ -297,9 +297,9 @@ for the JavaScript code in this tag.
 </div>
 </div>
 
-<div id="outline-container-orga7b3994" class="outline-2">
-<h2 id="orga7b3994">LET</h2>
-<div class="outline-text-2" id="text-orga7b3994">
+<div id="outline-container-orgbabc9db" class="outline-2">
+<h2 id="orgbabc9db">interface</h2>
+<div class="outline-text-2" id="text-orgbabc9db">
 <div class="org-src-container">
 
 <pre class="src src-jojo"><span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">+jojo</span> PROC <span style="color: #696969;">(</span><span style="color: #66d9ef; font-weight: bold;">-&gt;</span> <span style="color: #a6e22e;">:body</span> <span style="color: #66d9ef; font-weight: bold;">--</span><span style="color: #696969;">)</span>
@@ -314,9 +314,9 @@ for the JavaScript code in this tag.
 </div>
 </div>
 
-<div id="outline-container-orgd42de86" class="outline-2">
-<h2 id="orgd42de86"><span class="done _test_">[test]</span> </h2>
-<div class="outline-text-2" id="text-orgd42de86">
+<div id="outline-container-org63f43be" class="outline-2">
+<h2 id="org63f43be"><span class="done _test_">[test]</span> </h2>
+<div class="outline-text-2" id="text-org63f43be">
 <div class="org-src-container">
 
 <pre class="src src-jojo"><span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">note</span>
@@ -341,9 +341,9 @@ for the JavaScript code in this tag.
 </div>
 </div>
 
-<div id="outline-container-org33608c5" class="outline-2">
-<h2 id="org33608c5">exercise</h2>
-<div class="outline-text-2" id="text-org33608c5">
+<div id="outline-container-orgdfaee2" class="outline-2">
+<h2 id="orgdfaee2">exercise</h2>
+<div class="outline-text-2" id="text-orgdfaee2">
 <div class="org-src-container">
 
 <pre class="src src-jojo"><span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">note</span> What is the value of the following PROC program?
@@ -366,7 +366,7 @@ for the JavaScript code in this tag.
 </div>
 <div id="postamble" class="status">
 <p class="author">Author: xieyuheng</p>
-<p class="date">Created: 2017-09-26 Tue 18:04</p>
+<p class="date">Created: 2017-09-26 Tue 18:13</p>
 <p class="validation"><a href="http://validator.w3.org/check?uri=referer">Validate</a></p>
 </div>
 </body>
