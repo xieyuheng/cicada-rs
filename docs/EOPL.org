@@ -147,11 +147,68 @@
 
 *** 3.5 Scoping and Binding of Variables
 
-*** 3.6 Eliminating Variable Names
+    - In most programming languages,
+      variables may appear in two different ways :
+      1. as references or as declarations.
+      2. A variable reference is a use of the variable.
 
-*** 3.7 Implementing Lexical Addressing
+    - Declarations in most programming languages have a limited scope,
+      so that the same variable name
+      may be used for different purposes
+      in different parts of a program.
+
+    - Every programming language must have some rules
+      to determine the declaration to which each variable reference refers.
+      These rules are typically called scoping rules.
+
+    - The portion of the program in which a declaration is valid
+      is called the scope of the declaration.
+
+    - We can determine which declaration is associated with
+      each variable use without executing the program.
+
+    - Properties like this,
+      which can be computed without executing the program,
+      are called static properties.
+
+    - The extent of a binding is the time interval
+      during which the binding is maintained.
+
+    - In our little language, all bindings have semiinfinite extent,
+      meaning that once a variable gets bound,
+      that binding must be maintained indefinitely (at least potentially).
+
+    - This is because the binding might be
+      hidden inside a closure that is returned.
+
+    - In languages with semi-infinite extent,
+      the garbage collector collects bindings
+      when they are no longer reachable.
+
+    - This is only determinable at run-time,
+      so we say that this is a dynamic property.
+
+    - "dynamic" might mean
+      1. during the evaluation of an expression.
+      2. not calculable in advance.
 
 *** NAMELESS -- optimize searching to indexing
+
+***** 3.6 Eliminating Variable Names
+
+      - de Bruijn indices [or Lexical Address]
+
+      - This way of recording the information is useful
+        because the lexical address predicts
+        just where in the environment
+        any particular variable will be found.
+
+      - x -
+        thus, no runtime searching overhead.
+
+***** 3.7 Implementing Lexical Addressing
+
+      - [[./NAMELESS.html][NAMELESS]]
 
 * 4 State
 

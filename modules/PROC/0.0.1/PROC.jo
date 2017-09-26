@@ -35,6 +35,16 @@
   :proc .saved-env :proc .var :val cons-env
   :proc .body swap eval)
 
+(note
+  (= :var :body proc-exp :env eval,
+     :var :body :env proc proc-val))
+
+(note
+  (= :rator :rand call-exp :env eval,
+     :rator :env recur .proc :proc!
+     :rand  :env recur :arg!
+     :arg :proc proc-apply))
+
 (note env = <null-env> | <cons-env>)
 
 (+data <null-env>)
@@ -78,7 +88,6 @@
     <call-exp>  [:exp .rator :env recur .proc :proc!
                  :exp .rand  :env recur :arg!
                  :arg :proc proc-apply]))
-
 
 (note
   123 -- <const-exp>
@@ -124,7 +133,7 @@
     <num-val>  [:expval .num w]
     <bool-val> [:expval .bool w]))
 
-(test
+(note
   (PROC
    1 2 3
    (diff 2 1)
@@ -140,15 +149,18 @@
        (let :x 100
          (let :g (proc :z (diff :z :x))
            (diff (call :f 1)
-                 (call :g 1))))))))
-(PROC
- (let :makemult
-   (proc :maker
-     (proc :x (if (zero? :x) 0
-                (diff (call (call :maker :maker)
-                            (diff :x 1))
-                      -4))))
-   (let :times4
-     (proc :x
-       (call (call :makemult :makemult) :x))
-     (call :times4 3))))
+             (call :g 1))))))))
+
+(note What is the value of the following PROC program?
+
+  (PROC
+   (let :makemult
+     (proc :maker
+       (proc :x (if (zero? :x) 0
+                  (diff (call (call :maker :maker)
+                          (diff :x 1))
+                    -4))))
+     (let :times4
+       (proc :x
+         (call (call :makemult :makemult) :x))
+       (call :times4 3)))))

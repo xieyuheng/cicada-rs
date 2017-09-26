@@ -191,6 +191,20 @@
         <cons> [:list .cdr recur inc]))
     #+end_src
 
+*** list-ref
+
+    #+begin_src jojo
+    (+jojo list-ref (-> :list :index -- value)
+      (cond [:list null?]
+            ["- list-ref fail"
+             string-write newline
+             "  index greater then length of list"
+             string-write newline
+             debug]
+            [:index 0 eq?] [:list .car]
+            else [:list .cdr :index dec recur]))
+    #+end_src
+
 *** list-any?
 
     #+begin_src jojo

@@ -60,6 +60,15 @@
       (case :list
         <null> 0
         <cons> [:list .cdr recur inc]))
+    (+jojo list-ref (-> :list :index -- value)
+      (cond [:list null?]
+            ["- list-ref fail"
+             string-write newline
+             "  index greater then length of list"
+             string-write newline
+             debug]
+            [:index 0 eq?] [:list .car]
+            else [:list .cdr :index dec recur]))
     (+jojo list-any? (-> :list :pred -> <bool>)
       (cond [:list null?] [false]
             [:list .car :pred apply] [true]
