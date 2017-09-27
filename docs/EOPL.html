@@ -3,10 +3,10 @@
 "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en">
 <head>
-<!-- 2017-09-27 Wed 04:59 -->
+<!-- 2017-09-27 Wed 19:46 -->
 <meta http-equiv="Content-Type" content="text/html;charset=utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>EOPL</title>
+<title>Essentials of Programming Languages</title>
 <meta name="generator" content="Org-mode" />
 <meta name="author" content="xieyuheng" />
 <link rel="stylesheet" type="text/css" href="css/org-page.css"/>
@@ -59,112 +59,119 @@ for the JavaScript code in this tag.
 </head>
 <body>
 <div id="content">
-<h1 class="title">EOPL</h1>
+<h1 class="title">Essentials of Programming Languages</h1>
 <div id="table-of-contents">
 <h2>overview</h2>
 <div id="text-table-of-contents">
 <ul>
-<li><a href="#org228aa43">1 Inductive Sets of Data</a>
+<li><a href="#org824013e">1 Inductive Sets of Data</a>
 <ul>
-<li><a href="#org3aa31d">1.1 Recursively Specified Data</a></li>
-<li><a href="#orgaa03fe9">1.2 Deriving Recursive Programs</a></li>
-<li><a href="#orgf375da9">1.3 Auxiliary Procedures and Context Arguments</a></li>
-<li><a href="#org8c453fb">1.4 Exercises</a></li>
+<li><a href="#orge768a8">1.1 Recursively Specified Data</a></li>
+<li><a href="#orgd4cdc8d">1.2 Deriving Recursive Programs</a></li>
+<li><a href="#org3be228f">1.3 Auxiliary Procedures and Context Arguments</a></li>
+<li><a href="#org1cb0647">1.4 Exercises</a></li>
 </ul>
 </li>
-<li><a href="#org1e98816">2 Data Abstraction</a>
+<li><a href="#orgb0ec616">2 Data Abstraction</a>
 <ul>
-<li><a href="#org37c7bfa">2.1 Specifying Data via Interfaces</a></li>
-<li><a href="#org82e1728">2.2 Representation Strategies for Data Types</a></li>
-<li><a href="#orga955625">2.3 Interfaces for Recursive Data Types</a></li>
-<li><a href="#org4f11f51">2.4 A Tool for Defining Recursive Data Types</a></li>
-<li><a href="#org56a1e54">2.5 Abstract Syntax and Its Representation</a></li>
+<li><a href="#org9798176">2.1 Specifying Data via Interfaces</a></li>
+<li><a href="#orgcc52028">2.2 Representation Strategies for Data Types</a></li>
+<li><a href="#orgca26638">2.3 Interfaces for Recursive Data Types</a></li>
+<li><a href="#org5eb490d">2.4 A Tool for Defining Recursive Data Types</a></li>
+<li><a href="#org1df167b">2.5 Abstract Syntax and Its Representation</a></li>
 </ul>
 </li>
-<li><a href="#org2bc2229">3 Expressions</a>
+<li><a href="#org644cf5e">3 Expressions</a>
 <ul>
-<li><a href="#org21a86a7">3.1 Specification and Implementation Strategy</a></li>
-<li><a href="#org457e7ec">3.2 LET: A Simple Language</a></li>
-<li><a href="#org60beb08">3.3 PROC: A Language with Procedures</a></li>
-<li><a href="#org55d3eea">3.4 LETREC: A Language with Recursive Procedures</a></li>
-<li><a href="#org3c1969a">3.5 Scoping and Binding of Variables</a></li>
-<li><a href="#orgbc18966">NAMELESS &#x2013; optimize searching to indexing</a>
+<li><a href="#org31d7862">3.1 Specification and Implementation Strategy</a></li>
+<li><a href="#org1ce432c">3.2 LET: A Simple Language</a></li>
+<li><a href="#org984b7ba">3.3 PROC: A Language with Procedures</a></li>
+<li><a href="#org5f5bfb0">3.4 LETREC: A Language with Recursive Procedures</a></li>
+<li><a href="#orgaa4d5da">3.5 Scoping and Binding of Variables</a></li>
+<li><a href="#orgfc43a76">NAMELESS &#x2013; optimize searching to indexing</a>
 <ul>
-<li><a href="#org6bddd06">3.6 Eliminating Variable Names</a></li>
-<li><a href="#orgb864892">3.7 Implementing Lexical Addressing</a></li>
+<li><a href="#org75996f4">3.6 Eliminating Variable Names</a></li>
+<li><a href="#org3372657">3.7 Implementing Lexical Addressing</a></li>
 </ul>
 </li>
 </ul>
 </li>
-<li><a href="#orga4628f5">4 State</a>
+<li><a href="#org374e57b">4 State</a>
 <ul>
-<li><a href="#org920a9c6">4.1 Computational Effects</a></li>
-<li><a href="#org5402f81">4.2 EXPLICIT-REFS: A Language with Explicit References</a></li>
-<li><a href="#orgd9d168b">4.3 IMPLICIT-REFS: A Language with Implicit References</a></li>
-<li><a href="#orgfc52392">4.4 MUTABLE-PAIRS: A Language with Mutable Pairs</a></li>
-<li><a href="#org856eafc">4.5 Parameter-Passing Variations</a></li>
+<li><a href="#org95b3d15">4.1 Computational Effects</a></li>
+<li><a href="#orgc2062c9">4.2 EXPLICIT-REFS: A Language with Explicit References</a></li>
+<li><a href="#org457b7c5">4.3 IMPLICIT-REFS: A Language with Implicit References</a></li>
+<li><a href="#orga1b01b4">4.4 MUTABLE-PAIRS: A Language with Mutable Pairs</a></li>
+<li><a href="#orgfab8917">4.5 Parameter-Passing Variations</a>
+<ul>
+<li><a href="#org23db84c">CALL-BY-REFERENCE</a></li>
+<li><a href="#orgc9faca2">Lazy Evaluation: CALL-BY-NAME and CALL-BY-NEED</a></li>
 </ul>
 </li>
-<li><a href="#org54f564d">5 Continuation-Passing Interpreters</a>
-<ul>
-<li><a href="#orgd53f457">5.1 A Continuation-Passing Interpreter</a></li>
-<li><a href="#org724bb31">5.2 A Trampolined Interpreter</a></li>
-<li><a href="#orgf917ab6">5.3 An Imperative Interpreter</a></li>
-<li><a href="#orgfe5e119">5.4 Exceptions</a></li>
-<li><a href="#org74731bd">5.5 Threads</a></li>
 </ul>
 </li>
-<li><a href="#orgb00b577">6 Continuation-Passing Style</a>
+<li><a href="#org5b39b2f">5 Continuation-Passing Interpreters</a>
 <ul>
-<li><a href="#org24ee8d2">6.1 Writing Programs in Continuation-Passing Style</a></li>
-<li><a href="#org504e9d9">6.2 Tail Form</a></li>
-<li><a href="#org9059493">6.3 Converting to Continuation-Passing Style</a></li>
-<li><a href="#org8e821e3">6.4 Modeling Computational Effects</a></li>
+<li><a href="#org447893">5.1 A Continuation-Passing Interpreter</a></li>
+<li><a href="#org98672cd">5.2 A Trampolined Interpreter</a></li>
+<li><a href="#org6bfd754">5.3 An Imperative Interpreter</a></li>
+<li><a href="#orgb4c121b">5.4 Exceptions</a></li>
+<li><a href="#org189b1eb">5.5 Threads</a></li>
 </ul>
 </li>
-<li><a href="#orgfb21379">7 Types</a>
+<li><a href="#org49fc4ae">6 Continuation-Passing Style</a>
 <ul>
-<li><a href="#org5ec7c09">7.1 Values and Their Types</a></li>
-<li><a href="#org87d2a42">7.2 Assigning a Type to an Expression</a></li>
-<li><a href="#orgb4bbb31">7.3 CHECKED: A Type-Checked Language</a></li>
-<li><a href="#orgf3b95ba">7.4 INFERRED: A Language with Type Inference</a></li>
+<li><a href="#org6ecd8db">6.1 Writing Programs in Continuation-Passing Style</a></li>
+<li><a href="#org7d65e4">6.2 Tail Form</a></li>
+<li><a href="#org2c38eca">6.3 Converting to Continuation-Passing Style</a></li>
+<li><a href="#org89ea36f">6.4 Modeling Computational Effects</a></li>
 </ul>
 </li>
-<li><a href="#orgc2889c1">8 Modules</a>
+<li><a href="#org6745e40">7 Types</a>
 <ul>
-<li><a href="#org457439a">8.1 The Simple Module System</a></li>
-<li><a href="#orgc43c17d">8.2 Modules That Declare Types</a></li>
-<li><a href="#org6a4a4c7">8.3 Module Procedures</a></li>
+<li><a href="#orgf0fae57">7.1 Values and Their Types</a></li>
+<li><a href="#org7c99f9b">7.2 Assigning a Type to an Expression</a></li>
+<li><a href="#org44ad5ef">7.3 CHECKED: A Type-Checked Language</a></li>
+<li><a href="#orgd0d2773">7.4 INFERRED: A Language with Type Inference</a></li>
 </ul>
 </li>
-<li><a href="#org1997fb5">9 Objects and Classes</a>
+<li><a href="#org8784496">8 Modules</a>
 <ul>
-<li><a href="#orgd4d8831">9.1 Object-Oriented Programming</a></li>
-<li><a href="#orgd7ec13">9.2 Inheritance</a></li>
-<li><a href="#org8606dc6">9.3 The Language</a></li>
-<li><a href="#org689e32a">9.4 The Interpreter</a></li>
-<li><a href="#org86597d4">9.5 A Typed Language</a></li>
-<li><a href="#org34db219">9.6 The Type Checker</a></li>
+<li><a href="#org29da83b">8.1 The Simple Module System</a></li>
+<li><a href="#orgba16e61">8.2 Modules That Declare Types</a></li>
+<li><a href="#orgcbd2fe0">8.3 Module Procedures</a></li>
+</ul>
+</li>
+<li><a href="#org91a1eb7">9 Objects and Classes</a>
+<ul>
+<li><a href="#org10b9ce4">9.1 Object-Oriented Programming</a></li>
+<li><a href="#orga38fc04">9.2 Inheritance</a></li>
+<li><a href="#org9709416">9.3 The Language</a></li>
+<li><a href="#org678498b">9.4 The Interpreter</a></li>
+<li><a href="#orge12a485">9.5 A Typed Language</a></li>
+<li><a href="#org9e539bb">9.6 The Type Checker</a></li>
 </ul>
 </li>
 </ul>
 </div>
 </div>
+<ul class="org-ul">
+<li><p>by Daniel P. Friedman and Mitchell Wand</p></li></ul>
 
-<div id="outline-container-org228aa43" class="outline-2">
-<h2 id="org228aa43">1 Inductive Sets of Data</h2>
-<div class="outline-text-2" id="text-org228aa43">
-</div><div id="outline-container-org3aa31d" class="outline-3">
-<h3 id="org3aa31d">1.1 Recursively Specified Data</h3>
-<div class="outline-text-3" id="text-org3aa31d">
+<div id="outline-container-org824013e" class="outline-2">
+<h2 id="org824013e">1 Inductive Sets of Data</h2>
+<div class="outline-text-2" id="text-org824013e">
+</div><div id="outline-container-orge768a8" class="outline-3">
+<h3 id="orge768a8">1.1 Recursively Specified Data</h3>
+<div class="outline-text-3" id="text-orge768a8">
 <ul class="org-ul">
 <li><p><p></p><p>proof by structural induction -</p><p></p></p><p></p><p><p></p><p>To prove that a proposition IH(s)</p><p>is true for all structures s,</p><p>prove the following:</p><p></p></p><p></p><p><ol class="org-ol"></p><p><li>IH is true on simple structures</p><p>(those without substructures).</li></p><p><li>If IH is true on the substructures of s,</p><p>then it is true on s itself.</li></ol></p></li></ul>
 </div>
 </div>
 
-<div id="outline-container-orgaa03fe9" class="outline-3">
-<h3 id="orgaa03fe9">1.2 Deriving Recursive Programs</h3>
-<div class="outline-text-3" id="text-orgaa03fe9">
+<div id="outline-container-orgd4cdc8d" class="outline-3">
+<h3 id="orgd4cdc8d">1.2 Deriving Recursive Programs</h3>
+<div class="outline-text-3" id="text-orgd4cdc8d">
 <ul class="org-ul">
 <li><p><p></p><p>the smaller-subproblem principle -</p><p></p></p><p></p><p><p></p><p>If we can reduce a problem to a smaller subproblem,</p><p>we can call the procedure that solves the problem</p><p>to solve the subproblem.</p><p></p></p></li>
 
@@ -172,25 +179,25 @@ for the JavaScript code in this tag.
 </div>
 </div>
 
-<div id="outline-container-orgf375da9" class="outline-3">
-<h3 id="orgf375da9">1.3 Auxiliary Procedures and Context Arguments</h3>
-<div class="outline-text-3" id="text-orgf375da9">
+<div id="outline-container-org3be228f" class="outline-3">
+<h3 id="org3be228f">1.3 Auxiliary Procedures and Context Arguments</h3>
+<div class="outline-text-3" id="text-org3be228f">
 <ul class="org-ul">
 <li><p><p></p><p>no mysterious auxiliaries! -</p><p></p></p><p></p><p><p></p><p>When defining an auxiliary procedure,</p><p>always specify what it does on all arguments,</p><p>not just the initial values.</p><p></p></p></li></ul>
 </div>
 </div>
 
-<div id="outline-container-org8c453fb" class="outline-3">
-<h3 id="org8c453fb">1.4 Exercises</h3>
+<div id="outline-container-org1cb0647" class="outline-3">
+<h3 id="org1cb0647">1.4 Exercises</h3>
 </div>
 </div>
 
-<div id="outline-container-org1e98816" class="outline-2">
-<h2 id="org1e98816">2 Data Abstraction</h2>
-<div class="outline-text-2" id="text-org1e98816">
-</div><div id="outline-container-org37c7bfa" class="outline-3">
-<h3 id="org37c7bfa">2.1 Specifying Data via Interfaces</h3>
-<div class="outline-text-3" id="text-org37c7bfa">
+<div id="outline-container-orgb0ec616" class="outline-2">
+<h2 id="orgb0ec616">2 Data Abstraction</h2>
+<div class="outline-text-2" id="text-orgb0ec616">
+</div><div id="outline-container-org9798176" class="outline-3">
+<h3 id="org9798176">2.1 Specifying Data via Interfaces</h3>
+<div class="outline-text-3" id="text-org9798176">
 <ul class="org-ul">
 <li><p><p></p><p>All the knowledge about how the data is represented</p><p>must therefore reside in the code of the implementation.</p><p></p></p><p></p><p><p></p><p>The most important part of an implementation</p><p>is the specification of how the data is represented.</p><p></p></p><p></p><p><p></p><p>We use the notation [^ v ^] for</p><p>"the representation of data v."</p><p></p></p><p></p><p><ul class="org-ul"></p><p><li><p>x -</p><p><ul class="org-ul"></p><p><li><p>in concrete implementation,</p><p>if v is language A,</p><p>B is the language we want to implement in A,</p></li></p><p></p><p><li><p>then,</p><p>[^ v ^] can be viewed as,</p><p>"build a value [^ v ^] on top of v"</p></li></p><p></p><p><li><p>if x is a value in B,</p><p>[_ x _] can be viewed as,</p><p>"push a value x down to A"</p></li></p><p></p><p><li><p>and we have,</p><p><ol class="org-ol"></p><p><li>[_ [^ v ^] _] == v</li></p><p><li>[^ [_ x _] ^] == x</li></ol></p></li></ul></p></li></ul></p></li>
 
@@ -200,9 +207,9 @@ for the JavaScript code in this tag.
 </div>
 </div>
 
-<div id="outline-container-org82e1728" class="outline-3">
-<h3 id="org82e1728">2.2 Representation Strategies for Data Types</h3>
-<div class="outline-text-3" id="text-org82e1728">
+<div id="outline-container-orgcc52028" class="outline-3">
+<h3 id="orgcc52028">2.2 Representation Strategies for Data Types</h3>
+<div class="outline-text-3" id="text-orgcc52028">
 <ul class="org-ul">
 <li><p>the interpreter recipe -</p><p></p><p><ol class="org-ol"></p><p><li>look at a piece of data.</li></p><p><li>decide what kind of data it represents.</li></p><p><li>extract the components of the datum</p><p>and do the right thing with them.</li></ol></p></li>
 
@@ -210,29 +217,29 @@ for the JavaScript code in this tag.
 </div>
 </div>
 
-<div id="outline-container-orga955625" class="outline-3">
-<h3 id="orga955625">2.3 Interfaces for Recursive Data Types</h3>
-<div class="outline-text-3" id="text-orga955625">
+<div id="outline-container-orgca26638" class="outline-3">
+<h3 id="orgca26638">2.3 Interfaces for Recursive Data Types</h3>
+<div class="outline-text-3" id="text-orgca26638">
 <ul class="org-ul">
 <li><p>designing an interface for a recursive data type -</p><p></p><p><ol class="org-ol"></p><p><li>Include one constructor</p><p>for each kind of data in the data type.</li></p><p><li>Include one predicate</p><p>for each kind of data in the data type.</li></p><p><li>Include one extractor</p><p>for each piece of data</p><p>passed to a constructor of the data type.</li></ol></p></li></ul>
 </div>
 </div>
 
-<div id="outline-container-org4f11f51" class="outline-3">
-<h3 id="org4f11f51">2.4 A Tool for Defining Recursive Data Types</h3>
+<div id="outline-container-org5eb490d" class="outline-3">
+<h3 id="org5eb490d">2.4 A Tool for Defining Recursive Data Types</h3>
 </div>
 
-<div id="outline-container-org56a1e54" class="outline-3">
-<h3 id="org56a1e54">2.5 Abstract Syntax and Its Representation</h3>
+<div id="outline-container-org1df167b" class="outline-3">
+<h3 id="org1df167b">2.5 Abstract Syntax and Its Representation</h3>
 </div>
 </div>
 
-<div id="outline-container-org2bc2229" class="outline-2">
-<h2 id="org2bc2229">3 Expressions</h2>
-<div class="outline-text-2" id="text-org2bc2229">
-</div><div id="outline-container-org21a86a7" class="outline-3">
-<h3 id="org21a86a7">3.1 Specification and Implementation Strategy</h3>
-<div class="outline-text-3" id="text-org21a86a7">
+<div id="outline-container-org644cf5e" class="outline-2">
+<h2 id="org644cf5e">3 Expressions</h2>
+<div class="outline-text-2" id="text-org644cf5e">
+</div><div id="outline-container-org31d7862" class="outline-3">
+<h3 id="org31d7862">3.1 Specification and Implementation Strategy</h3>
+<div class="outline-text-3" id="text-org31d7862">
 <ul class="org-ul">
 <li><p><p></p><p>specification will consist of assertions of the form :</p><p></p></p><p></p><p><p></p><p>(value-of exp ρ) = val</p><p></p></p><p></p><p><p></p><p>meaning that</p><p>the value of expression exp</p><p>in environment ρ</p><p>should be val.</p><p></p></p></li>
 
@@ -240,33 +247,33 @@ for the JavaScript code in this tag.
 </div>
 </div>
 
-<div id="outline-container-org457e7ec" class="outline-3">
-<h3 id="org457e7ec">3.2 LET: A Simple Language</h3>
-<div class="outline-text-3" id="text-org457e7ec">
+<div id="outline-container-org1ce432c" class="outline-3">
+<h3 id="org1ce432c">3.2 LET: A Simple Language</h3>
+<div class="outline-text-3" id="text-org1ce432c">
 <ul class="org-ul">
 <li><p><a href="./LET.html">LET</a></p></li></ul>
 </div>
 </div>
 
-<div id="outline-container-org60beb08" class="outline-3">
-<h3 id="org60beb08">3.3 PROC: A Language with Procedures</h3>
-<div class="outline-text-3" id="text-org60beb08">
+<div id="outline-container-org984b7ba" class="outline-3">
+<h3 id="org984b7ba">3.3 PROC: A Language with Procedures</h3>
+<div class="outline-text-3" id="text-org984b7ba">
 <ul class="org-ul">
 <li><p><a href="./PROC.html">PROC</a></p></li></ul>
 </div>
 </div>
 
-<div id="outline-container-org55d3eea" class="outline-3">
-<h3 id="org55d3eea">3.4 LETREC: A Language with Recursive Procedures</h3>
-<div class="outline-text-3" id="text-org55d3eea">
+<div id="outline-container-org5f5bfb0" class="outline-3">
+<h3 id="org5f5bfb0">3.4 LETREC: A Language with Recursive Procedures</h3>
+<div class="outline-text-3" id="text-org5f5bfb0">
 <ul class="org-ul">
 <li><p><a href="./LETREC.html">LETREC</a></p></li></ul>
 </div>
 </div>
 
-<div id="outline-container-org3c1969a" class="outline-3">
-<h3 id="org3c1969a">3.5 Scoping and Binding of Variables</h3>
-<div class="outline-text-3" id="text-org3c1969a">
+<div id="outline-container-orgaa4d5da" class="outline-3">
+<h3 id="orgaa4d5da">3.5 Scoping and Binding of Variables</h3>
+<div class="outline-text-3" id="text-orgaa4d5da">
 <ul class="org-ul">
 <li><p>In most programming languages,</p><p>variables may appear in two different ways :</p><p><ol class="org-ol"></p><p><li>as references or as declarations.</li></p><p><li>A variable reference is a use of the variable.</li></ol></p></li>
 
@@ -294,12 +301,12 @@ for the JavaScript code in this tag.
 </div>
 </div>
 
-<div id="outline-container-orgbc18966" class="outline-3">
-<h3 id="orgbc18966">NAMELESS &#x2013; optimize searching to indexing</h3>
-<div class="outline-text-3" id="text-orgbc18966">
-</div><div id="outline-container-org6bddd06" class="outline-4">
-<h4 id="org6bddd06">3.6 Eliminating Variable Names</h4>
-<div class="outline-text-4" id="text-org6bddd06">
+<div id="outline-container-orgfc43a76" class="outline-3">
+<h3 id="orgfc43a76">NAMELESS &#x2013; optimize searching to indexing</h3>
+<div class="outline-text-3" id="text-orgfc43a76">
+</div><div id="outline-container-org75996f4" class="outline-4">
+<h4 id="org75996f4">3.6 Eliminating Variable Names</h4>
+<div class="outline-text-4" id="text-org75996f4">
 <ul class="org-ul">
 <li><p>de Bruijn indices [or Lexical Address]</p></li>
 
@@ -309,9 +316,9 @@ for the JavaScript code in this tag.
 </div>
 </div>
 
-<div id="outline-container-orgb864892" class="outline-4">
-<h4 id="orgb864892">3.7 Implementing Lexical Addressing</h4>
-<div class="outline-text-4" id="text-orgb864892">
+<div id="outline-container-org3372657" class="outline-4">
+<h4 id="org3372657">3.7 Implementing Lexical Addressing</h4>
+<div class="outline-text-4" id="text-org3372657">
 <ul class="org-ul">
 <li><p><a href="./NAMELESS.html">NAMELESS</a></p></li></ul>
 </div>
@@ -319,141 +326,173 @@ for the JavaScript code in this tag.
 </div>
 </div>
 
-<div id="outline-container-orga4628f5" class="outline-2">
-<h2 id="orga4628f5">4 State</h2>
-<div class="outline-text-2" id="text-orga4628f5">
-</div><div id="outline-container-org920a9c6" class="outline-3">
-<h3 id="org920a9c6">4.1 Computational Effects</h3>
-</div>
+<div id="outline-container-org374e57b" class="outline-2">
+<h2 id="org374e57b">4 State</h2>
+<div class="outline-text-2" id="text-org374e57b">
+</div><div id="outline-container-org95b3d15" class="outline-3">
+<h3 id="org95b3d15">4.1 Computational Effects</h3>
+<div class="outline-text-3" id="text-org95b3d15">
+<ul class="org-ul">
+<li><p>So far, we have only considered the <b>value</b></p><p>produced by a computation.</p><p>But a computation may have <b>effects</b> as well.</p><p></p><p><ul class="org-ul"></p><p><li><p>Different from producing a value</p><p>an effect is global, it is seen by the <b>entire</b> computation.</p></li></ul></p></li>
 
-<div id="outline-container-org5402f81" class="outline-3">
-<h3 id="org5402f81">4.2 EXPLICIT-REFS: A Language with Explicit References</h3>
-</div>
+<li><p>We will be concerned primarily with a single effect :</p><p>assignment to a location in memory.</p><p></p><p><ul class="org-ul"></p><p><li><p>Assignment is different from binding.</p><p>binding is local, but variable assignment</p><p>is potentially global.</p></li></ul></p></li>
 
-<div id="outline-container-orgd9d168b" class="outline-3">
-<h3 id="orgd9d168b">4.3 IMPLICIT-REFS: A Language with Implicit References</h3>
-</div>
+<li><p>It is about the sharing of values between</p><p>otherwise unrelated portions of the computation.</p><p></p><p><ol class="org-ol"></p><p><li>Two procedures can share information</p><p>if they both know about the same location in memory.</li></p><p></p><p><li>A single procedure can share information</p><p>with a future invocation of itself</p><p>by leaving the information in a known location.</li></ol></p></li>
 
-<div id="outline-container-orgfc52392" class="outline-3">
-<h3 id="orgfc52392">4.4 MUTABLE-PAIRS: A Language with Mutable Pairs</h3>
-</div>
+<li><p>We model memory as a finite map from <b>locations</b></p><p>to a set of values called the <b>storable values</b>.</p><p></p><p><ul class="org-ul"></p><p><li><p>The storable values in a language</p><p>are typically, but not always,</p><p>the same as the expressed values of the language.</p><p>This choice is part of the design of a language.</p></li></ul></p></li>
 
-<div id="outline-container-org856eafc" class="outline-3">
-<h3 id="org856eafc">4.5 Parameter-Passing Variations</h3>
+<li><p>A data structure that represents a location</p><p>is called a <b>reference</b>.</p><p></p><p><ul class="org-ul"></p><p><li><p>A location is a place in memory</p><p>where a value can be stored,</p><p>and a reference is a data structure</p><p>that refers to that place.</p></li></p><p></p><p><li><p>References are sometimes called L-values.</p><p>This name reflects the association</p><p>of such data structures with variables</p><p>appearing on the left-hand side of assignment statements.</p></li></p><p></p><p><li><p>Analogously, expressed values,</p><p>such as the values of the right-hand side expressions</p><p>of assignment statements,</p><p>are known as R-values.</p></li></ul></p></li></ul>
 </div>
 </div>
 
-<div id="outline-container-org54f564d" class="outline-2">
-<h2 id="org54f564d">5 Continuation-Passing Interpreters</h2>
-<div class="outline-text-2" id="text-org54f564d">
-</div><div id="outline-container-orgd53f457" class="outline-3">
-<h3 id="orgd53f457">5.1 A Continuation-Passing Interpreter</h3>
-</div>
-
-<div id="outline-container-org724bb31" class="outline-3">
-<h3 id="org724bb31">5.2 A Trampolined Interpreter</h3>
-</div>
-
-<div id="outline-container-orgf917ab6" class="outline-3">
-<h3 id="orgf917ab6">5.3 An Imperative Interpreter</h3>
-</div>
-
-<div id="outline-container-orgfe5e119" class="outline-3">
-<h3 id="orgfe5e119">5.4 Exceptions</h3>
-</div>
-
-<div id="outline-container-org74731bd" class="outline-3">
-<h3 id="org74731bd">5.5 Threads</h3>
+<div id="outline-container-orgc2062c9" class="outline-3">
+<h3 id="orgc2062c9">4.2 EXPLICIT-REFS: A Language with Explicit References</h3>
+<div class="outline-text-3" id="text-orgc2062c9">
+<ul class="org-ul">
+<li><p>EXPLICIT-REFS</p></li></ul>
 </div>
 </div>
 
-<div id="outline-container-orgb00b577" class="outline-2">
-<h2 id="orgb00b577">6 Continuation-Passing Style</h2>
-<div class="outline-text-2" id="text-orgb00b577">
-</div><div id="outline-container-org24ee8d2" class="outline-3">
-<h3 id="org24ee8d2">6.1 Writing Programs in Continuation-Passing Style</h3>
-</div>
-
-<div id="outline-container-org504e9d9" class="outline-3">
-<h3 id="org504e9d9">6.2 Tail Form</h3>
-</div>
-
-<div id="outline-container-org9059493" class="outline-3">
-<h3 id="org9059493">6.3 Converting to Continuation-Passing Style</h3>
-</div>
-
-<div id="outline-container-org8e821e3" class="outline-3">
-<h3 id="org8e821e3">6.4 Modeling Computational Effects</h3>
+<div id="outline-container-org457b7c5" class="outline-3">
+<h3 id="org457b7c5">4.3 IMPLICIT-REFS: A Language with Implicit References</h3>
+<div class="outline-text-3" id="text-org457b7c5">
+<ul class="org-ul">
+<li><p>IMPLICIT-REFS</p></li></ul>
 </div>
 </div>
 
-<div id="outline-container-orgfb21379" class="outline-2">
-<h2 id="orgfb21379">7 Types</h2>
-<div class="outline-text-2" id="text-orgfb21379">
-</div><div id="outline-container-org5ec7c09" class="outline-3">
-<h3 id="org5ec7c09">7.1 Values and Their Types</h3>
-</div>
-
-<div id="outline-container-org87d2a42" class="outline-3">
-<h3 id="org87d2a42">7.2 Assigning a Type to an Expression</h3>
-</div>
-
-<div id="outline-container-orgb4bbb31" class="outline-3">
-<h3 id="orgb4bbb31">7.3 CHECKED: A Type-Checked Language</h3>
-</div>
-
-<div id="outline-container-orgf3b95ba" class="outline-3">
-<h3 id="orgf3b95ba">7.4 INFERRED: A Language with Type Inference</h3>
+<div id="outline-container-orga1b01b4" class="outline-3">
+<h3 id="orga1b01b4">4.4 MUTABLE-PAIRS: A Language with Mutable Pairs</h3>
+<div class="outline-text-3" id="text-orga1b01b4">
+<ul class="org-ul">
+<li><p>MUTABLE-PAIRS</p></li></ul>
 </div>
 </div>
 
-<div id="outline-container-orgc2889c1" class="outline-2">
-<h2 id="orgc2889c1">8 Modules</h2>
-<div class="outline-text-2" id="text-orgc2889c1">
-</div><div id="outline-container-org457439a" class="outline-3">
-<h3 id="org457439a">8.1 The Simple Module System</h3>
+<div id="outline-container-orgfab8917" class="outline-3">
+<h3 id="orgfab8917">4.5 Parameter-Passing Variations</h3>
+<div class="outline-text-3" id="text-orgfab8917">
+</div><div id="outline-container-org23db84c" class="outline-4">
+<h4 id="org23db84c">CALL-BY-REFERENCE</h4>
 </div>
 
-<div id="outline-container-orgc43c17d" class="outline-3">
-<h3 id="orgc43c17d">8.2 Modules That Declare Types</h3>
+<div id="outline-container-orgc9faca2" class="outline-4">
+<h4 id="orgc9faca2">Lazy Evaluation: CALL-BY-NAME and CALL-BY-NEED</h4>
 </div>
-
-<div id="outline-container-org6a4a4c7" class="outline-3">
-<h3 id="org6a4a4c7">8.3 Module Procedures</h3>
 </div>
 </div>
 
-<div id="outline-container-org1997fb5" class="outline-2">
-<h2 id="org1997fb5">9 Objects and Classes</h2>
-<div class="outline-text-2" id="text-org1997fb5">
-</div><div id="outline-container-orgd4d8831" class="outline-3">
-<h3 id="orgd4d8831">9.1 Object-Oriented Programming</h3>
+<div id="outline-container-org5b39b2f" class="outline-2">
+<h2 id="org5b39b2f">5 Continuation-Passing Interpreters</h2>
+<div class="outline-text-2" id="text-org5b39b2f">
+</div><div id="outline-container-org447893" class="outline-3">
+<h3 id="org447893">5.1 A Continuation-Passing Interpreter</h3>
 </div>
 
-<div id="outline-container-orgd7ec13" class="outline-3">
-<h3 id="orgd7ec13">9.2 Inheritance</h3>
+<div id="outline-container-org98672cd" class="outline-3">
+<h3 id="org98672cd">5.2 A Trampolined Interpreter</h3>
 </div>
 
-<div id="outline-container-org8606dc6" class="outline-3">
-<h3 id="org8606dc6">9.3 The Language</h3>
+<div id="outline-container-org6bfd754" class="outline-3">
+<h3 id="org6bfd754">5.3 An Imperative Interpreter</h3>
 </div>
 
-<div id="outline-container-org689e32a" class="outline-3">
-<h3 id="org689e32a">9.4 The Interpreter</h3>
+<div id="outline-container-orgb4c121b" class="outline-3">
+<h3 id="orgb4c121b">5.4 Exceptions</h3>
 </div>
 
-<div id="outline-container-org86597d4" class="outline-3">
-<h3 id="org86597d4">9.5 A Typed Language</h3>
+<div id="outline-container-org189b1eb" class="outline-3">
+<h3 id="org189b1eb">5.5 Threads</h3>
+</div>
 </div>
 
-<div id="outline-container-org34db219" class="outline-3">
-<h3 id="org34db219">9.6 The Type Checker</h3>
+<div id="outline-container-org49fc4ae" class="outline-2">
+<h2 id="org49fc4ae">6 Continuation-Passing Style</h2>
+<div class="outline-text-2" id="text-org49fc4ae">
+</div><div id="outline-container-org6ecd8db" class="outline-3">
+<h3 id="org6ecd8db">6.1 Writing Programs in Continuation-Passing Style</h3>
+</div>
+
+<div id="outline-container-org7d65e4" class="outline-3">
+<h3 id="org7d65e4">6.2 Tail Form</h3>
+</div>
+
+<div id="outline-container-org2c38eca" class="outline-3">
+<h3 id="org2c38eca">6.3 Converting to Continuation-Passing Style</h3>
+</div>
+
+<div id="outline-container-org89ea36f" class="outline-3">
+<h3 id="org89ea36f">6.4 Modeling Computational Effects</h3>
+</div>
+</div>
+
+<div id="outline-container-org6745e40" class="outline-2">
+<h2 id="org6745e40">7 Types</h2>
+<div class="outline-text-2" id="text-org6745e40">
+</div><div id="outline-container-orgf0fae57" class="outline-3">
+<h3 id="orgf0fae57">7.1 Values and Their Types</h3>
+</div>
+
+<div id="outline-container-org7c99f9b" class="outline-3">
+<h3 id="org7c99f9b">7.2 Assigning a Type to an Expression</h3>
+</div>
+
+<div id="outline-container-org44ad5ef" class="outline-3">
+<h3 id="org44ad5ef">7.3 CHECKED: A Type-Checked Language</h3>
+</div>
+
+<div id="outline-container-orgd0d2773" class="outline-3">
+<h3 id="orgd0d2773">7.4 INFERRED: A Language with Type Inference</h3>
+</div>
+</div>
+
+<div id="outline-container-org8784496" class="outline-2">
+<h2 id="org8784496">8 Modules</h2>
+<div class="outline-text-2" id="text-org8784496">
+</div><div id="outline-container-org29da83b" class="outline-3">
+<h3 id="org29da83b">8.1 The Simple Module System</h3>
+</div>
+
+<div id="outline-container-orgba16e61" class="outline-3">
+<h3 id="orgba16e61">8.2 Modules That Declare Types</h3>
+</div>
+
+<div id="outline-container-orgcbd2fe0" class="outline-3">
+<h3 id="orgcbd2fe0">8.3 Module Procedures</h3>
+</div>
+</div>
+
+<div id="outline-container-org91a1eb7" class="outline-2">
+<h2 id="org91a1eb7">9 Objects and Classes</h2>
+<div class="outline-text-2" id="text-org91a1eb7">
+</div><div id="outline-container-org10b9ce4" class="outline-3">
+<h3 id="org10b9ce4">9.1 Object-Oriented Programming</h3>
+</div>
+
+<div id="outline-container-orga38fc04" class="outline-3">
+<h3 id="orga38fc04">9.2 Inheritance</h3>
+</div>
+
+<div id="outline-container-org9709416" class="outline-3">
+<h3 id="org9709416">9.3 The Language</h3>
+</div>
+
+<div id="outline-container-org678498b" class="outline-3">
+<h3 id="org678498b">9.4 The Interpreter</h3>
+</div>
+
+<div id="outline-container-orge12a485" class="outline-3">
+<h3 id="orge12a485">9.5 A Typed Language</h3>
+</div>
+
+<div id="outline-container-org9e539bb" class="outline-3">
+<h3 id="org9e539bb">9.6 The Type Checker</h3>
 </div>
 </div>
 </div>
 <div id="postamble" class="status">
 <p class="author">Author: xieyuheng</p>
-<p class="date">Created: 2017-09-27 Wed 04:59</p>
+<p class="date">Created: 2017-09-27 Wed 19:46</p>
 <p class="validation"><a href="http://validator.w3.org/check?uri=referer">Validate</a></p>
 </div>
 </body>

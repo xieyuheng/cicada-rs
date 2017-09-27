@@ -1,5 +1,7 @@
 #+include: use-org-page.org
-#+title: EOPL
+#+title: Essentials of Programming Languages
+
+- by Daniel P. Friedman and Mitchell Wand
 
 * 1 Inductive Sets of Data
 
@@ -214,13 +216,73 @@
 
 *** 4.1 Computational Effects
 
+    - So far, we have only considered the *value*
+      produced by a computation.
+      But a computation may have *effects* as well.
+
+      - Different from producing a value
+        an effect is global, it is seen by the *entire* computation.
+
+    - We will be concerned primarily with a single effect :
+      assignment to a location in memory.
+
+      - Assignment is different from binding.
+        binding is local, but variable assignment
+        is potentially global.
+
+    - It is about the sharing of values between
+      otherwise unrelated portions of the computation.
+
+      1. Two procedures can share information
+         if they both know about the same location in memory.
+
+      2. A single procedure can share information
+         with a future invocation of itself
+         by leaving the information in a known location.
+
+    - We model memory as a finite map from *locations*
+      to a set of values called the *storable values*.
+
+      - The storable values in a language
+        are typically, but not always,
+        the same as the expressed values of the language.
+        This choice is part of the design of a language.
+
+    - A data structure that represents a location
+      is called a *reference*.
+
+      - A location is a place in memory
+        where a value can be stored,
+        and a reference is a data structure
+        that refers to that place.
+
+      - References are sometimes called L-values.
+        This name reflects the association
+        of such data structures with variables
+        appearing on the left-hand side of assignment statements.
+
+      - Analogously, expressed values,
+        such as the values of the right-hand side expressions
+        of assignment statements,
+        are known as R-values.
+
 *** 4.2 EXPLICIT-REFS: A Language with Explicit References
+
+    - EXPLICIT-REFS
 
 *** 4.3 IMPLICIT-REFS: A Language with Implicit References
 
+    - IMPLICIT-REFS
+
 *** 4.4 MUTABLE-PAIRS: A Language with Mutable Pairs
 
+    - MUTABLE-PAIRS
+
 *** 4.5 Parameter-Passing Variations
+
+***** CALL-BY-REFERENCE
+
+***** Lazy Evaluation: CALL-BY-NAME and CALL-BY-NEED
 
 * 5 Continuation-Passing Interpreters
 
