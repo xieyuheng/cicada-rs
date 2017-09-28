@@ -1,0 +1,871 @@
+#+title: type system
+
+* [todo-list]
+
+*** sequent1 and sequent0 in jojo
+
+    - can I re-design sequent0
+      by firstly design a small core ?
+
+      or can I design an over-simplified version first ?
+
+    - local var can be non-determined
+
+    - trunk as value which can be unified
+
+      1. there are non-determined var
+
+      2. when applying a function to non-determined var
+         it can not really return determined value
+         this is where we need to form a trunk
+
+      3. if we can not determine a non-determined trunk now
+         after some binding
+         we might be able to determine it
+         thus every time we see a trunk
+         we try to determine it
+
+      4. two non-determined trunk might be unified with each other
+         if the function body to be applied are
+         [structurally] the same
+         and their arguments can be unified
+
+      5. equivalence between function body
+         is not limited to 'structurally the same'
+
+         'add-commutative' is just saying (= {add} {swap add})
+         'add-associative' is just saying (= {add :z add} {:z add add})
+
+         we just need to supply the arguments of the function
+         to get back (+proof add-commutative)
+         and (+proof add-commutative)
+
+    - when type-apply
+
+      - function cut
+        - such as 'recur' and 'eq-apply'
+        the information needed to apply the function body
+        is not there
+        so we use its type
+        to do a cut
+
+      - data and variable
+        - such as ':m.pre' and '{succ}'
+        do not cut
+        they already contain more information
+        than their type
+
+    - can cut not happen in trunk ?
+      - check the examples we have now
+
+*** self-interpreting
+
+    - forgetful functor -- code generation
+
+    - equivalence -- quotype
+
+    - unification -- uses 'equal?'
+
+    - module -- name space
+
+*** recall the old <red-black-tree> proof
+
+*** use number theory -- to test type-checker as prover
+
+*** use category theory to test type-class
+
+    - group theory
+
+* [note]
+
+*** many languages
+
+    1. type-name as data-constructor-name
+       - can not use forgetful functor
+       - can not overload data-constructor-name
+       - simple sumtype and product-type
+
+    2. type-name different from data-constructor-name
+       - can use forgetful functor
+
+*** (:)
+
+    - (:) collects its body
+      and treat the last value of the body
+      as the type to be unified
+
+*** function name overload
+
+    - a function name dispatches over its input type
+    - a constructor name dispatches over its output type
+
+* number
+
+*** <bool>
+
+    #+begin_src jojo
+    (+simple-type <bool>
+      true
+      false)
+
+    (+type <bool> (-> -- <<type>>)
+      true  (-> -- <bool>)
+      false (-> -- <bool>))
+    #+end_src
+
+*** <nat>
+
+    #+begin_src jojo
+    (+simple-type <nat>
+      zero
+      succ (: .pre <nat>))
+
+    (+type <nat> (-> -- <<type>>)
+      zero (-> -- <nat>)
+      succ (-> (: .pre <nat>) -- <nat>))
+
+    (+fun add (-> (: :m :n <nat>) -- <nat>)
+      (match :n
+        zero :m
+        succ [:m :n.pre recur succ]))
+
+    (+fun mul (-> (: :m :n <nat>) -- <nat>)
+      (match :n
+        zero :n
+        succ [:m :n.pre recur :n add]))
+
+    (+fun factorial (-> (: :n <nat>) -- <nat>)
+      (match :n
+        zero [:n succ]
+        succ [:n.pre recur :n mul]))
+    #+end_src
+
+*** <even>
+
+    #+begin_src jojo
+    (+type <even> (-> (: .num <nat>) -- <<type>>)
+      zero (-> -- zero <even>)
+      plus-two (-> (: .pre :m <even>)
+                -- :m succ succ <even>))
+
+    (proof (-> -- zero succ succ <even>)
+      zero plus-two)
+    #+end_src
+
+*** <eq> -- an interface to the internal unification
+
+    #+begin_src jojo
+    (+type <eq> (-> (: .lhs .rhs :<t>) -- <<type>>)
+      refl (-> -- :z :z <eq>))
+
+    (+proof eq-apply
+      (-> :x :y <eq> (: :f (-> :<t1> -- :<t2>))
+       -- :x :f apply, :y :f apply, <eq>)
+      refl)
+
+    (+proof eq-swap
+      (-> :x :y <eq> -- :y :x <eq>)
+      refl)
+
+    (+proof eq-compose
+      (-> :x :y <eq> :y :z <eq> -- :x :z <eq>)
+      refl)
+    #+end_src
+
+*** add-associative -- structural induction proof
+
+    #+begin_src jojo
+    (+proof add-associative
+      (-> (: :x :y :z <nat>)
+       -- :x :y add :z add
+          :x :y :z add add <eq>)
+      (match :z
+        zero refl
+        succ [:x :y :z.pre recur {succ} eq-apply]))
+    #+end_src
+
+*** add-commutative
+
+    #+begin_src jojo
+    (+proof add-commutative
+      (-> (: :m :n <nat>)
+       -- :m :n add, :n :m add <eq>)
+      (match :n
+        zero [:m add-zero-commutative]
+        succ [:m :n.pre recur {succ} eq-apply
+              :n.pre :m add-succ-commutative eq-compose]))
+
+    (+proof add-zero-commutative
+      (-> (: :m <nat>)
+       -- :m zero add, zero :m add <eq>)
+      (match :m
+        zero refl
+        succ [:m.pre recur {succ} eq-apply]))
+
+    (+proof add-succ-commutative
+      (-> (: :m :n <nat>)
+       -- :m succ :n add, :m :n add succ <eq>)
+      (match :n
+        zero refl
+        succ [:m :n.pre recur {succ} eq-apply]))
+    #+end_src
+
+*** [note] type-check detail of 'add-zero-commutative'
+
+    #+begin_src jojo
+    (match :m succ)
+    (= :m :m.pre succ)
+
+    (type-computed:
+
+     [:m.pre]
+     [recur {succ} eq-apply]
+
+     [:m.pre zero add
+      zero :m.pre add <eq>]
+     [{succ} eq-apply]
+
+     [:m.pre zero add succ
+      zero :m.pre add succ <eq>]
+
+     [:m.pre add succ
+      zero :m.pre add succ <eq>])
+
+    (type-asserted:
+
+     [:m zero add
+      zero :m add <eq>]
+
+     [:m.pre succ zero add
+      zero :m.pre succ add <eq>]
+
+     [:m.pre succ add
+      zero :m.pre succ add <eq>]
+
+     [:m.pre add succ
+      zero :m.pre succ add <eq>]
+
+     [:m.pre add succ
+      zero :m.pre add succ <eq>])
+    #+end_src
+
+*** [note] type-check detail of 'add-commutative'
+
+    #+begin_src jojo
+    (match :n succ)
+    (= :n :n.pre succ)
+
+    (type-computed:
+
+     [:m :n.pre]
+     [recur {succ} eq-apply
+      :n.pre :m add-succ-commutative eq-swap eq-compose]
+
+     [:m :n.pre add
+      :n.pre :m add <eq>]
+     [{succ} eq-apply
+      :n.pre :m add-succ-commutative eq-swap eq-compose]
+
+     [:m :n.pre add succ
+      :n.pre :m add succ <eq>]
+     [:n.pre :m add-succ-commutative eq-swap eq-compose]
+
+     [:m :n.pre add succ
+      :n.pre :m add succ <eq>
+      :n.pre succ :m add
+      :n.pre :m add succ <eq>]
+     [eq-swap eq-compose]
+
+     [:m :n.pre add succ
+      :n.pre :m add succ <eq>
+      :n.pre :m add succ
+      :n.pre succ :m add <eq>]
+     [eq-compose]
+
+     [:m :n.pre add succ
+      :n.pre succ :m add <eq>])
+
+    (type-asserted:
+
+     [:m :n add
+      :n :m add <eq>]
+
+     [:m :n.pre succ add
+      :n.pre succ :m add <eq>]
+
+     [:m :n.pre add succ
+      :n.pre succ :m add <eq>])
+    #+end_src
+
+* <list>
+
+*** <list>
+
+    - <list> := <null> | (<sexp> . <list>)
+
+    #+begin_src jojo
+    (+type <list> (-> (: .<t> <<type>>) -- <<type>>)
+      null (-> -- :<t> <list>)
+      cons (-> (: .cdr [:<t> <list>])
+               (: .car :<t>)
+            -- :<t> <list>))
+    #+end_src
+
+*** length
+
+    #+begin_src jojo
+    (+fun length (-> (: :l [:<t> <list>]) -- <nat>)
+      (match :l
+        null zero
+        cons [:l.cdr recur succ]))
+    #+end_src
+
+*** map
+
+    #+begin_src jojo
+    (+fun map (-> (: :l :<t1> <list>)
+                  (: :f (-> :<t1> -- :<t2>))
+               -- :<t2> <list>)
+      (match :l
+        null null
+        cons [:l.cdr :f recur, :l.car :f apply, cons]))
+    #+end_src
+
+*** ref
+
+    #+begin_src jojo
+    (+fun ref (-> (: :l :<t> <list>) (: :index <nat>) -- :<t>)
+      (match :index
+        zero [:l.car]
+        succ [:l.cdr :index.pre recur]))
+    #+end_src
+
+*** remove-first
+
+    #+begin_src jojo
+    (+fun remove-first
+      (-> (: :x :<t>) (: :l :<t> <list>)
+       -- :<t> <list>)
+      (match :l
+        null null
+        cons (match [:l.car :x equal?]
+               true  :l.cdr
+               false [:l.cdr :x recur :l.car cons])))
+    #+end_src
+
+* <has-length>
+
+*** <has-length>
+
+    #+begin_src jojo
+    (+type <has-length> (-> (: .list :<t> <list>)
+                            (: .length <nat>)
+                         -- <<type>>)
+      null-has-length (-> -- null zero <has-length>)
+      cons-has-length (-> (: .cdr :l :n <has-length>)
+                       -- :l :a cons :n succ <has-length>))
+
+    (+fun map-has-length
+      (-> (: :has-length :l :n <has-length>)
+       -- :l :f map :n <has-length>)
+      (match :has-length
+        null-has-length null-has-length
+        cons-has-length [:has-length.cdr recur cons-has-length]))
+    #+end_src
+
+*** [note] type-check detail of 'map-has-length'
+
+    #+begin_src jojo
+    (: :has-length :l :n <has-length>)
+
+    (match :has-length cons-has-length)
+      (= :has-length :has-length.cdr cons-has-length)
+        (: :has-length.cdr [:l#0 :n#0 <has-length>])
+      (: :has-length [:l#0 :a#0 cons :n#0 succ <has-length>])
+        (= :l :l#0 :a#0 cons)
+        (= :n :n#0 succ)
+
+    (type-computed:
+
+     [:has-length.cdr recur cons-has-length]
+
+     [:l#0 :n#0 <has-length>]
+     [recur cons-has-length]
+
+     [:l#0 :f#0 map :n#0 <has-length>]
+     [cons-has-length]
+
+     [:l#0 :f#0 map :a#1 cons :n#0 succ <has-length>])
+
+    (type-asserted:
+
+     [:l :f map :n <has-length>]
+
+     [:l#0 :a#0 cons :f map :n#0 succ <has-length>]
+
+     [:l#0 :f map :a#0 :f apply cons :n#0 succ <has-length>])
+    #+end_src
+
+* <sexp> -- symbol expression
+
+*** <sexp>
+
+    - <sexp> := <symbol> | <list>
+
+    #+begin_src jojo
+    (+var <sexp>
+      (+ <symbol>, <sexp> <list>))
+
+    (note
+
+      (+fun <exp> (-> (: .<t> <<type>>) -- <<type>>)
+        (+ :<t>, :<t> <exp> <list>))
+
+      (+var <sexp>
+        (+ <symbol>, <exp>)))
+    #+end_src
+
+*** subst
+
+    #+begin_src jojo
+    (+fun subst (-> (: :new <symbol>)
+                    (: :old <symbol>)
+                    (: :sexp <sexp>)
+                 -- <sexp>)
+      (case :sexp
+        <symbol> (match [:sexp :old equal?]
+                   true  :new
+                   false :sexp)
+        <list>   [:new :old :sexp subst-list]))
+
+    (+fun subst-list (-> (: :new <symbol>)
+                         (: :old <symbol>)
+                         (: :list <sexp> <list>)
+                      -- <sexp> <list>)
+      (match :list
+        null null
+        cons [:new :old :list.cdr recur
+              :new :old :list.car subst
+              cons]))
+    #+end_src
+
+* <lexp> -- lambda expression
+
+*** <lexp>
+
+    - <lexp> := <var> | (lambda (<var>) <lexp>) | (<lexp> <lexp>)
+
+    #+begin_src jojo
+    (+simple-type <lexp>
+      var-lexp (: .var <var>)
+      lam-lexp (: .var <var>) (: .body <lexp>)
+      app-lexp (: .rator .rand <lexp>))
+
+    (+type <lexp> (-> -- <<type>>)
+      var-lexp (-> (: .var <var>) -- <lexp>)
+      lam-lexp (-> (: .var <var>) (: .body <lexp>) -- <lexp>)
+      app-lexp (-> (: .rator .rand <lexp>) -- <lexp>))
+    #+end_src
+
+*** occurs-free?
+
+    #+begin_src jojo
+    (+fun occurs-free?
+      (-> (: :search-var <var>) (: :lexp <lexp>)
+       -- <bool>)
+      (match :lexp
+        var-lexp [:search-var :lexp.var equal?]
+        lam-lexp [:search-var :lexp.var equal? not
+                  :search-var :lexp.body recur and]
+        app-lexp [:search-var :lexp.rator recur
+                  :search-var :lexp.rand recur or]))
+    #+end_src
+
+* <vector>
+
+*** <vector>
+
+    #+begin_src jojo
+    (+type <vector>
+      (-> (: .length <nat>)
+          (: .<t> <<type>>)
+       -- <<type>>)
+      null (-> -- zero :<t> <vector>)
+      cons (-> (: .cdr :n :<t> <vector>)
+               (: .car :<t>)
+            -- :n succ :<t> <vector>))
+    #+end_src
+
+*** append
+
+    #+begin_src jojo
+    (+fun append (-> (: :l0 :m :<t> <vector>)
+                     (: :l1 :n :<t> <vector>)
+                  -- :m :n add :<t> <vector>)
+      (match :l1
+        null :l0
+        cons [:l0 :l1.cdr recur :l1.car cons]))
+    #+end_src
+
+*** map
+
+    #+begin_src jojo
+    (+fun map (-> (: :l :n :<t1> <vector>)
+                  (: :f (-> :<t1> -- :<t2>))
+               -- :n :<t2> <vector>)
+      (match :l
+        null null
+        cons [:l.cdr :f recur :l.car :f apply cons]))
+    #+end_src
+
+*** [note] type-check detail of 'append'
+
+    #+begin_src jojo
+    (: :l0 [:m :t <vector>])
+    (: :l1 [:n :t <vector>])
+
+    (match :l1 cons)
+      (= :l1 :l1.cdr :l1.car cons)
+        (: :l1.cdr [:n#0 :t#0 <vector>])
+        (: :l1.car :t#0)
+      (: :l1 [:n#0 succ :t#0 <vector>])
+        (= :n :n#0 succ)
+        (= :t :t#0)
+
+    (type-computed:
+
+     [:l0 :l1.cdr recur :l1.car cons]
+
+     [:m :t <vector> :n :t <vector>]
+     [recur :l1.car cons]
+
+     [:m :t <vector> :n#0 :t#0 <vector>]
+     [recur :l1.car cons]
+
+     [:m :n#0 add :t#0 <vector>]
+     [:l1.car cons]
+
+     [:m :n#0 add :t#0 <vector> :t#0]
+     [cons]
+
+     [:m :n#0 add succ :t#0 <vector>])
+
+    (type-asserted:
+
+     [:m :n add :t <vector>]
+
+     [:m :n#0 succ add :t#0 <vector>]
+
+     [:m :n#0 add succ :t#0 <vector>])
+    #+end_src
+
+*** [note] type-check detail of 'map'
+
+    #+begin_src jojo
+    (: :l [:n :t1 <vector>])
+    (: :f (-> :t1 :t2))
+
+    (match :l cons)
+      (= :l :l.car :l.cdr cons)
+        (: :l.cdr [:n#0 :t#0 <vector>])
+        (: :l.car :t#0)
+      (: :l [:n#0 succ :t#0 <vector>])
+        (= :n :n#0 succ)
+        (= :t1 :t#0)
+
+    (type-computed:
+
+     [:l.cdr :f recur :l.car :f apply cons]
+
+     [:n#0 :t#0 <vector> (-> :t1 :t2)]
+     [recur :l.car :f apply cons]
+
+     [:n#0 :t2 <vector>]
+     [:l.car :f apply cons]
+
+     [:n#0 :t2 <vector> :t#0]
+     [:f apply cons]
+
+     [:n#0 :t2 <vector> :t2]
+     [cons]
+
+     [:n#0 succ :t2 <vector>])
+
+    (type-asserted:
+
+     [:n :t2 <vector>]
+
+     [:n#0 succ :t2 <vector>])
+
+    #+end_src
+
+*** <list> as forgetful functor -- to reuse <vector>
+
+    - forgetful functor of type [not type-class]
+
+    #+begin_src jojo
+    (+var <list> (forget .length <vector>))
+
+    (note
+      (+fun append (-> (: :l0 :<t> <list>)
+                       (: :l1 :<t> <list>)
+                    -- :<t> <list>)
+        (match :l1
+          null :l0
+          cons [:l0 :l1.cdr recur :l1.car cons])))
+    #+end_src
+
+* <binary-tree>
+
+*** <binary-tree>
+
+    - <binary-tree> := () | (<int> <binary-tree> <binary-tree>)
+
+    #+begin_src jojo
+    (+simple-type <binary-tree>
+      null
+      node (: .value <int>) (: .left .right <binary-tree>))
+
+    (+type <binary-tree> (-> -- <<type>>)
+      null (-> -- <binary-tree>)
+      node (-> (: .value <int>)
+               (: .left .right <binary-tree>)
+            -- <binary-tree>))
+    #+end_src
+
+* <binary-search-tree>
+
+*** <binary-search-tree>
+
+    - <binary-search-tree> := () | (<int> <binary-search-tree> <binary-search-tree>)
+
+    - not all semantic are expressed in the above grammar.
+      1. key in the left subtree <= key in the current node
+      2. keys in the right subtree > key in the current node
+
+    #+begin_src jojo
+    (+simple-type <order>
+      lt eq gt)
+
+    (+simple-type <binary-search-tree>
+      null
+      node (: .key <symbol>) (: .value <int>)
+           (: .left .right <binary-search-tree>))
+    #+end_src
+
+*** search
+
+    #+begin_src jojo
+    (+fun search (-> (: :tree <binary-search-tree>)
+                     (: :key <symbol>)
+                  -- <binary-search-tree>)
+      (match :tree
+        null null
+        node (match [:key :tree.key compare]
+               lt [:tree.left :key recur]
+               eq [:tree]
+               gt [:tree.right :key recur])))
+    #+end_src
+
+*** insert
+
+    #+begin_src jojo
+    (+fun insert (-> (: :tree <binary-search-tree>)
+                     (: :key <symbol>)
+                     (: :vlaue <int>)
+                  -- <binary-search-tree>)
+      (match :tree
+        null [:key :value null null node]
+        node (match [:key :tree.key compare]
+               lt [:tree.key :tree.value
+                   :tree.left :key :value recur :tree.right node]
+               eq [:key :value
+                   :tree.left :tree.right node]
+               gt [:tree.key :tree.value
+                   :tree.left :tree.right :key :value recur node])))
+    #+end_src
+
+*** delete
+
+    #+begin_src jojo
+    (+fun delete (-> (: :tree <binary-search-tree>)
+                     (: :key <symbol>)
+                  -- <binary-search-tree>)
+      (match :tree
+        null null
+        node (match [:key :tree.key compare]
+               lt [:tree.key :tree.value
+                   :tree.left :key recur :tree.right node]
+               eq [:tree delete-node]
+               gt [:tree.key :tree.value
+                   :tree.left :tree.right :key recur node])))
+
+
+    (+fun delete-node (-> (: :tree <binary-search-tree>)
+                       -- <binary-search-tree>)
+      (cond [:tree.left null?] [:tree.right]
+            [:tree.right null?] [:tree.left]
+            else [:tree.right left-most-key-and-value :value! :key!
+                  :key :value
+                  :tree.left
+                  :tree.right :key delete
+                  node]))
+
+    (+fun left-most-key-and-value (-> (: :tree <binary-search-tree>)
+                                   -- <symbol> <int>)
+      (cond [:tree.left null?] [:tree.key :tree.value]
+            else [:tree.left recur]))
+    #+end_src
+
+* >< <red-black-tree>
+
+*** [note]
+
+    - in addition to the requirements imposed on a binary search tree
+      the following must be satisfied by a red–black tree :
+      1. each node is either red or black.
+      2. the root is black. [this rule is sometimes omitted.]
+      3. all leaves are black.
+      4. if a node is red, then both its children are black.
+      5. every path from a given node to any of its descendant nil nodes
+         contains the same number of black nodes.
+
+         - the number of black nodes from the root to a node
+           is the node's black depth
+
+         - the uniform number of black nodes in all paths
+           from root to the leaves
+           is called the black-height of the red–black tree.
+
+    - property of red–black trees :
+      the path from the root to the farthest leaf
+      is no more than twice as long as the path
+      from the root to the nearest leaf.
+      thus, the tree is roughly height-balanced.
+
+*** <red-black-tree> -- extrinsic
+
+    #+begin_src jojo
+    (+simple-type <color>
+      red
+      black)
+
+    (+simple-type <red-black-tree>
+      null
+      node (: .color <color>)
+           (: .key <symbol>)
+           (: .value <int>)
+           (: .left .right <red-black-tree>))
+    #+end_src
+
+*** <red-black-tree> -- intrinsic
+
+    #+begin_src jojo
+
+    #+end_src
+
+* type-class as subtype of <<type>>
+
+*** <<functor>>
+
+    #+begin_src jojo
+    (+subtype <<functor>> (-> <<type>> -- <<type>>)
+      map (-> (: :x1 :<t1> <functor>)
+              (: :f (-> :<t1> -- :<t2>))
+           -- :<t2> <functor>))
+
+    (+member <list> <<functor>>
+      (+imp map (-> (: :x1 :<t1> <list>)
+                    (: :f (-> :<t1> -- :<t2>))
+                 -- :<t2> <list>)
+        (match :x1
+          null null
+          cons [:x1.cdr :f recur, :x1.car :f apply, cons])))
+    #+end_src
+
+*** <<monad>>
+
+    #+begin_src jojo
+    (+subtype <<monad>> (-> <<type>> -- <<type>>)
+      return (-> (: :val :<t>) -- :<t> <monad>)
+      bind (-> (: :value :<t1> <monad>)
+               (: :f (-> :<t1> -- :<t2> <monad>))
+            -- :<t2> <monad>))
+    #+end_src
+
+*** <maybe>
+
+    #+begin_src jojo
+    (+type <maybe> (-> (: .<t> <<type>>) -- <<type>>)
+      nothing (-> -- :<t> <maybe>)
+      just (-> (: .value :<t>) -- :<t> <maybe>))
+
+    (+member <maybe> <<monad>>
+      (+imp return (-> (: :v :<t>) -- :<t> <maybe>)
+        :v just)
+      (+imp bind (-> (: :m :<t1> <maybe>)
+                     (: :f (-> :<t1> -- :<t2> <maybe>))
+                  -- :<t2> <maybe>)
+        (match :m
+          nothing nothing
+          just [:m.value :f apply])))
+    #+end_src
+
+*** <state>
+
+    #+begin_src jojo
+    (+var <state> (-> :<s> :<v> -- <<type>>)
+      (-> :<s> -- :<s> :<v>))
+
+    (+member {:<s> <state>} <<monad>>
+      (+imp return (-> (: :v :<v>) -- :<s> :<v> <state>)
+        {:v})
+      (+imp bind (-> (: :m :<s> :<v1> <state>)
+                     (: :f (-> :<v1> -- :<s> :<v2> <state>))
+                  -- :<s> :<v2> <state>)
+        {:m apply :f apply apply}))
+    #+end_src
+
+* quotype -- quotient type
+
+*** [note]
+
+    - basic 'equal?'
+
+    - to use quotype is to to re-implement 'equal?'.
+
+      or, generally,
+      to re-implement interface functions
+      of type and type-class
+
+*** <int>
+
+    #+begin_src jojo
+    (+simple-quotype <int>
+      (: .left .right <nat>))
+    #+end_src
+
+*** equal?
+
+    #+begin_src jojo
+    (+fun equal? (-> (: :x :y <int>) -- <bool>)
+      :x.left :x.right sub
+      :y.left :y.right sub
+      equal?)
+    #+end_src
+
+*** <fraction>
+
+    #+begin_src jojo
+    (+simple-quotype <fraction>
+      (: .up .down <int>))
+    #+end_src
+
+*** equal?
+
+    #+begin_src jojo
+    (+fun equal? (-> (: :x :y <fraction>) -- <bool>)
+      :x.up :y.down mul
+      :y.up :x.down mul
+      equal?)
+    #+end_src
