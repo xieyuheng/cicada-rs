@@ -3,10 +3,10 @@
 "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en">
 <head>
-<!-- 2017-09-28 Thu 21:09 -->
+<!-- 2017-09-28 Thu 21:08 -->
 <meta http-equiv="Content-Type" content="text/html;charset=utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>LETREC</title>
+<title>CPI</title>
 <meta name="generator" content="Org-mode" />
 <meta name="author" content="xieyuheng" />
 <link rel="stylesheet" href="../../../css/org-page.css"/>
@@ -59,50 +59,33 @@ for the JavaScript code in this tag.
 </head>
 <body>
 <div id="content">
-<h1 class="title">LETREC</h1>
+<h1 class="title">CPI</h1>
 <div id="table-of-contents">
 <h2>overview</h2>
 <div id="text-table-of-contents">
 <ul>
-<li><a href="#orgf4d2dbb">intro</a></li>
-<li><a href="#orgc74a63f">exp</a></li>
-<li><a href="#orgbc54d9a">expval</a></li>
-<li><a href="#org578645a">proc</a></li>
-<li><a href="#org9a003e2">specifying letrec-exp</a></li>
-<li><a href="#org5c852a0">specifying cons-rec-env</a></li>
-<li><a href="#orgd3e107b">env</a></li>
-<li><a href="#org390eccc">program</a></li>
-<li><a href="#org213ddf5">eval</a></li>
-<li><a href="#org2576f7d">parse</a></li>
-<li><a href="#org5cecf64">interface</a></li>
-<li><a href="#orgff31ec5"><span class="done _test_">[test]</span> </a></li>
+<li><a href="#orgfa2746d">exp</a></li>
+<li><a href="#orgcdfdb1">expval</a></li>
+<li><a href="#org1a1277">proc</a></li>
+<li><a href="#orgdf74781">env</a></li>
+<li><a href="#org4a120a6">program</a></li>
+<li><a href="#org4117804">eval</a></li>
+<li><a href="#org93564d1">cont &#x2013; continuation</a>
+<ul>
+<li><a href="#org9e03cec">cont</a></li>
+<li><a href="#org8acceef">cont-apply</a></li>
+</ul>
+</li>
+<li><a href="#org950f8b9">parse</a></li>
+<li><a href="#orga26b360">interface</a></li>
+<li><a href="#org4a3906a"><span class="done _test_">[test]</span> </a></li>
 </ul>
 </div>
 </div>
 
-<div id="outline-container-orgf4d2dbb" class="outline-2">
-<h2 id="orgf4d2dbb">intro</h2>
-<div class="outline-text-2" id="text-orgf4d2dbb">
-<ul class="org-ul">
-<li><p>We now define a new language LETREC,</p><p>which adds recursion to our language.</p></li>
-
-<li><p>example :</p></li></ul>
-
-<div class="org-src-container">
-
-<pre class="src src-jojo"><span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">note</span>
-  <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">letrec</span> <span style="color: #a6e22e;">:double</span> <span style="color: #a6e22e;">:x</span>
-    <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">if</span> <span style="color: #696969;">(</span>zero? <span style="color: #a6e22e;">:x</span><span style="color: #696969;">)</span> <span style="color: #ae81ff;">0</span>
-      <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">diff</span> <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">call</span> <span style="color: #a6e22e;">:double</span> <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">diff</span> <span style="color: #a6e22e;">:x</span> <span style="color: #ae81ff;">1</span><span style="color: #696969;">))</span> -2<span style="color: #696969;">))</span>
-    <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">call</span> <span style="color: #a6e22e;">:double</span> <span style="color: #ae81ff;">6</span><span style="color: #696969;">)))</span>
-</pre>
-</div>
-</div>
-</div>
-
-<div id="outline-container-orgc74a63f" class="outline-2">
-<h2 id="orgc74a63f">exp</h2>
-<div class="outline-text-2" id="text-orgc74a63f">
+<div id="outline-container-orgfa2746d" class="outline-2">
+<h2 id="orgfa2746d">exp</h2>
+<div class="outline-text-2" id="text-orgfa2746d">
 <div class="org-src-container">
 
 <pre class="src src-jojo"><span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">note</span> program = exp<span style="color: #696969;">)</span>
@@ -134,9 +117,9 @@ for the JavaScript code in this tag.
 </div>
 </div>
 
-<div id="outline-container-orgbc54d9a" class="outline-2">
-<h2 id="orgbc54d9a">expval</h2>
-<div class="outline-text-2" id="text-orgbc54d9a">
+<div id="outline-container-orgcdfdb1" class="outline-2">
+<h2 id="orgcdfdb1">expval</h2>
+<div class="outline-text-2" id="text-orgcdfdb1">
 <div class="org-src-container">
 
 <pre class="src src-jojo"><span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">note</span> expval
@@ -153,60 +136,25 @@ for the JavaScript code in this tag.
 </div>
 </div>
 
-<div id="outline-container-org578645a" class="outline-2">
-<h2 id="org578645a">proc</h2>
-<div class="outline-text-2" id="text-org578645a">
+<div id="outline-container-org1a1277" class="outline-2">
+<h2 id="org1a1277">proc</h2>
+<div class="outline-text-2" id="text-org1a1277">
 <div class="org-src-container">
 
 <pre class="src src-jojo"><span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">+data</span> <span style="color: #66d9ef; font-weight: bold;">&lt;proc&gt;</span> <span style="color: #ae81ff;">.var</span> <span style="color: #ae81ff;">.body</span> .saved-env<span style="color: #696969;">)</span>
 
-<span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">+jojo</span> proc-apply <span style="color: #696969;">(</span><span style="color: #66d9ef; font-weight: bold;">-&gt;</span> <span style="color: #a6e22e;">:val</span> <span style="color: #a6e22e;">:proc</span> <span style="color: #66d9ef; font-weight: bold;">--</span> expval<span style="color: #696969;">)</span>
+<span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">+jojo</span> proc-apply <span style="color: #696969;">(</span><span style="color: #66d9ef; font-weight: bold;">-&gt;</span> <span style="color: #a6e22e;">:val</span> <span style="color: #a6e22e;">:proc</span> <span style="color: #a6e22e;">:cont</span> <span style="color: #66d9ef; font-weight: bold;">--</span> expval<span style="color: #696969;">)</span>
+  <span style="color: #a6e22e;">:proc</span> <span style="color: #ae81ff;">.body</span>
   <span style="color: #a6e22e;">:proc</span> <span style="color: #ae81ff;">.saved-env</span> <span style="color: #a6e22e;">:proc</span> <span style="color: #ae81ff;">.var</span> <span style="color: #a6e22e;">:val</span> cons-env
-  <span style="color: #a6e22e;">:proc</span> <span style="color: #ae81ff;">.body</span> swap eval<span style="color: #696969;">)</span>
+  <span style="color: #a6e22e;">:cont</span> eval<span style="color: #696969;">)</span>
 </pre>
 </div>
 </div>
 </div>
 
-<div id="outline-container-org9a003e2" class="outline-2">
-<h2 id="org9a003e2">specifying letrec-exp</h2>
-<div class="outline-text-2" id="text-org9a003e2">
-<div class="org-src-container">
-
-<pre class="src src-jojo"><span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">note</span>
-  <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">=</span> <span style="color: #a6e22e;">:proc-name</span> <span style="color: #a6e22e;">:bound-var</span> <span style="color: #a6e22e;">:proc-body</span> <span style="color: #a6e22e;">:letrec-body</span> lerrec-exp
-     <span style="color: #a6e22e;">:env</span> eval<span style="color: #f92672; font-weight: bold;">,</span>
-     <span style="color: #a6e22e;">:env</span> <span style="color: #a6e22e;">:proc-name</span> <span style="color: #a6e22e;">:bound-var</span> <span style="color: #a6e22e;">:proc-body</span> cons-rec-env
-     <span style="color: #a6e22e;">:letrec-body</span> swap eval<span style="color: #696969;">))</span>
-</pre>
-</div>
-</div>
-</div>
-
-<div id="outline-container-org5c852a0" class="outline-2">
-<h2 id="org5c852a0">specifying cons-rec-env</h2>
-<div class="outline-text-2" id="text-org5c852a0">
-<ul class="org-ul">
-<li><p>We specify the behavior</p><p>of this new env constructor as follows :</p><p><ul class="org-ul"></p><p><li><p>Let :env1 be the environment produced by this constructor</p></li></p><p><li><p>Then what should [:var :env1 env-apply] return ?</p></li></ul></p></li></ul>
-
-<div class="org-src-container">
-
-<pre class="src src-jojo"><span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">note</span>
-  <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">case</span> <span style="color: #a6e22e;">:env</span> <span style="color: #66d9ef; font-weight: bold;">&lt;cons-rec-env&gt;</span><span style="color: #696969;">)</span>
-  <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">=</span> <span style="color: #a6e22e;">:var</span> <span style="color: #a6e22e;">:env</span> env-apply<span style="color: #f92672; font-weight: bold;">,</span>
-     <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">cond</span> <span style="color: #797979;">[</span><span style="color: #a6e22e;">:var</span> <span style="color: #a6e22e;">:env</span> <span style="color: #ae81ff;">.proc-name</span> equal?<span style="color: #797979;">]</span>
-           <span style="color: #797979;">[</span><span style="color: #a6e22e;">:env</span> <span style="color: #ae81ff;">.bound-var</span>
-            <span style="color: #a6e22e;">:env</span> <span style="color: #ae81ff;">.proc-body</span>
-            <span style="color: #a6e22e;">:env</span> proc proc-val<span style="color: #797979;">]</span>
-           <span style="color: #66d9ef; font-weight: bold;">else</span> <span style="color: #797979;">[</span><span style="color: #a6e22e;">:var</span> <span style="color: #a6e22e;">:env</span> <span style="color: #ae81ff;">.rest</span> env-apply<span style="color: #797979;">]</span><span style="color: #696969;">)))</span>
-</pre>
-</div>
-</div>
-</div>
-
-<div id="outline-container-orgd3e107b" class="outline-2">
-<h2 id="orgd3e107b">env</h2>
-<div class="outline-text-2" id="text-orgd3e107b">
+<div id="outline-container-orgdf74781" class="outline-2">
+<h2 id="orgdf74781">env</h2>
+<div class="outline-text-2" id="text-orgdf74781">
 <div class="org-src-container">
 
 <pre class="src src-jojo"><span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">note</span> env = <span style="color: #66d9ef; font-weight: bold;">&lt;null-env&gt;</span> | <span style="color: #66d9ef; font-weight: bold;">&lt;cons-env&gt;</span><span style="color: #696969;">)</span>
@@ -233,9 +181,9 @@ for the JavaScript code in this tag.
 </div>
 </div>
 
-<div id="outline-container-org390eccc" class="outline-2">
-<h2 id="org390eccc">program</h2>
-<div class="outline-text-2" id="text-org390eccc">
+<div id="outline-container-org4a120a6" class="outline-2">
+<h2 id="org4a120a6">program</h2>
+<div class="outline-text-2" id="text-org4a120a6">
 <div class="org-src-container">
 
 <pre class="src src-jojo"><span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">+jojo</span> init-env
@@ -245,52 +193,133 @@ for the JavaScript code in this tag.
   '<span style="color: #a6e22e;">:i</span> <span style="color: #ae81ff;">1</span>  num-val cons-env<span style="color: #696969;">)</span>
 
 <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">+jojo</span> program-eval <span style="color: #696969;">(</span><span style="color: #66d9ef; font-weight: bold;">-&gt;</span> <span style="color: #a6e22e;">:program</span> <span style="color: #66d9ef; font-weight: bold;">--</span> expval<span style="color: #696969;">)</span>
-  <span style="color: #a6e22e;">:program</span> init-env eval<span style="color: #696969;">)</span>
+  <span style="color: #a6e22e;">:program</span> init-env end-cont eval<span style="color: #696969;">)</span>
 </pre>
 </div>
 </div>
 </div>
 
-<div id="outline-container-org213ddf5" class="outline-2">
-<h2 id="org213ddf5">eval</h2>
-<div class="outline-text-2" id="text-org213ddf5">
+<div id="outline-container-org4117804" class="outline-2">
+<h2 id="org4117804">eval</h2>
+<div class="outline-text-2" id="text-org4117804">
 <div class="org-src-container">
 
-<pre class="src src-jojo"><span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">+jojo</span> eval <span style="color: #696969;">(</span><span style="color: #66d9ef; font-weight: bold;">-&gt;</span> <span style="color: #a6e22e;">:exp</span> <span style="color: #a6e22e;">:env</span> <span style="color: #66d9ef; font-weight: bold;">--</span> expval<span style="color: #696969;">)</span>
+<pre class="src src-jojo"><span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">+jojo</span> eval <span style="color: #696969;">(</span><span style="color: #66d9ef; font-weight: bold;">-&gt;</span> <span style="color: #a6e22e;">:exp</span> <span style="color: #a6e22e;">:env</span> <span style="color: #a6e22e;">:cont</span> <span style="color: #66d9ef; font-weight: bold;">--</span> expval<span style="color: #696969;">)</span>
   <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">case</span> <span style="color: #a6e22e;">:exp</span>
-    <span style="color: #66d9ef; font-weight: bold;">&lt;const-exp&gt;</span> <span style="color: #797979;">[</span><span style="color: #a6e22e;">:exp</span> <span style="color: #ae81ff;">.num</span>  num-val<span style="color: #797979;">]</span>
-    <span style="color: #66d9ef; font-weight: bold;">&lt;zero?-exp&gt;</span> <span style="color: #797979;">[</span><span style="color: #a6e22e;">:exp</span> <span style="color: #ae81ff;">.exp1</span> <span style="color: #a6e22e;">:env</span> <span style="color: #66d9ef; font-weight: bold;">recur</span> <span style="color: #ae81ff;">.num</span> <span style="color: #ae81ff;">0</span> equal? bool-val<span style="color: #797979;">]</span>
-    <span style="color: #66d9ef; font-weight: bold;">&lt;if-exp&gt;</span>    <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">if</span> <span style="color: #a6e22e;">:exp</span> <span style="color: #ae81ff;">.exp1</span> <span style="color: #a6e22e;">:env</span> <span style="color: #66d9ef; font-weight: bold;">recur</span> <span style="color: #ae81ff;">.bool</span>
-                    <span style="color: #66d9ef; font-weight: bold;">then</span> <span style="color: #a6e22e;">:exp</span> <span style="color: #ae81ff;">.exp2</span> <span style="color: #a6e22e;">:env</span> <span style="color: #66d9ef; font-weight: bold;">recur</span>
-                    <span style="color: #66d9ef; font-weight: bold;">else</span> <span style="color: #a6e22e;">:exp</span> <span style="color: #ae81ff;">.exp3</span> <span style="color: #a6e22e;">:env</span> <span style="color: #66d9ef; font-weight: bold;">recur</span><span style="color: #696969;">)</span>
-    <span style="color: #66d9ef; font-weight: bold;">&lt;diff-exp&gt;</span>  <span style="color: #797979;">[</span><span style="color: #a6e22e;">:exp</span> <span style="color: #ae81ff;">.exp1</span> <span style="color: #a6e22e;">:env</span> <span style="color: #66d9ef; font-weight: bold;">recur</span> <span style="color: #ae81ff;">.num</span>
-                 <span style="color: #a6e22e;">:exp</span> <span style="color: #ae81ff;">.exp2</span> <span style="color: #a6e22e;">:env</span> <span style="color: #66d9ef; font-weight: bold;">recur</span> <span style="color: #ae81ff;">.num</span> sub num-val<span style="color: #797979;">]</span>
-    <span style="color: #66d9ef; font-weight: bold;">&lt;var-exp&gt;</span>   <span style="color: #797979;">[</span><span style="color: #a6e22e;">:exp</span> <span style="color: #ae81ff;">.var</span> <span style="color: #a6e22e;">:env</span> env-apply<span style="color: #797979;">]</span>
-    <span style="color: #66d9ef; font-weight: bold;">&lt;let-exp&gt;</span>   <span style="color: #797979;">[</span><span style="color: #a6e22e;">:env</span>
-                 <span style="color: #a6e22e;">:exp</span> <span style="color: #ae81ff;">.var</span>
-                 <span style="color: #a6e22e;">:exp</span> <span style="color: #ae81ff;">.exp1</span> <span style="color: #a6e22e;">:env</span> <span style="color: #66d9ef; font-weight: bold;">recur</span>
-                 cons-env <span style="color: #fd971f;">:new-env!</span>
-                 <span style="color: #a6e22e;">:exp</span> <span style="color: #ae81ff;">.body</span> <span style="color: #a6e22e;">:new-env</span> <span style="color: #66d9ef; font-weight: bold;">recur</span><span style="color: #797979;">]</span>
-
-    <span style="color: #66d9ef; font-weight: bold;">&lt;proc-exp&gt;</span>  <span style="color: #797979;">[</span><span style="color: #a6e22e;">:exp</span> <span style="color: #ae81ff;">.var</span> <span style="color: #a6e22e;">:exp</span> <span style="color: #ae81ff;">.body</span> <span style="color: #a6e22e;">:env</span> proc proc-val<span style="color: #797979;">]</span>
-    <span style="color: #66d9ef; font-weight: bold;">&lt;call-exp&gt;</span>  <span style="color: #797979;">[</span><span style="color: #a6e22e;">:exp</span> <span style="color: #ae81ff;">.rator</span> <span style="color: #a6e22e;">:env</span> <span style="color: #66d9ef; font-weight: bold;">recur</span> <span style="color: #ae81ff;">.proc</span> <span style="color: #fd971f;">:proc!</span>
-                 <span style="color: #a6e22e;">:exp</span> <span style="color: #ae81ff;">.rand</span>  <span style="color: #a6e22e;">:env</span> <span style="color: #66d9ef; font-weight: bold;">recur</span> <span style="color: #fd971f;">:arg!</span>
-                 <span style="color: #a6e22e;">:arg</span> <span style="color: #a6e22e;">:proc</span> proc-apply<span style="color: #797979;">]</span>
+    <span style="color: #66d9ef; font-weight: bold;">&lt;const-exp&gt;</span> <span style="color: #797979;">[</span><span style="color: #a6e22e;">:exp</span> <span style="color: #ae81ff;">.num</span> num-val
+                 <span style="color: #a6e22e;">:cont</span> cont-apply<span style="color: #797979;">]</span>
+    <span style="color: #66d9ef; font-weight: bold;">&lt;var-exp&gt;</span>   <span style="color: #797979;">[</span><span style="color: #a6e22e;">:exp</span> <span style="color: #ae81ff;">.var</span> <span style="color: #a6e22e;">:env</span> env-apply
+                 <span style="color: #a6e22e;">:cont</span> cont-apply<span style="color: #797979;">]</span>
+    <span style="color: #66d9ef; font-weight: bold;">&lt;proc-exp&gt;</span>  <span style="color: #797979;">[</span><span style="color: #a6e22e;">:exp</span> <span style="color: #ae81ff;">.var</span> <span style="color: #a6e22e;">:exp</span> <span style="color: #ae81ff;">.body</span> <span style="color: #a6e22e;">:env</span> proc proc-val
+                 <span style="color: #a6e22e;">:cont</span> cont-apply<span style="color: #797979;">]</span>
 
     <span style="color: #66d9ef; font-weight: bold;">&lt;letrec-exp&gt;</span> <span style="color: #797979;">[</span><span style="color: #a6e22e;">:env</span>
                   <span style="color: #a6e22e;">:exp</span> <span style="color: #ae81ff;">.proc-name</span>
                   <span style="color: #a6e22e;">:exp</span> <span style="color: #ae81ff;">.bound-var</span>
                   <span style="color: #a6e22e;">:exp</span> <span style="color: #ae81ff;">.proc-body</span>
                   cons-rec-env <span style="color: #fd971f;">:new-env!</span>
-                  <span style="color: #a6e22e;">:exp</span> <span style="color: #ae81ff;">.letrec-body</span> <span style="color: #a6e22e;">:new-env</span> <span style="color: #66d9ef; font-weight: bold;">recur</span><span style="color: #797979;">]</span><span style="color: #696969;">))</span>
+                  <span style="color: #a6e22e;">:exp</span> <span style="color: #ae81ff;">.letrec-body</span> <span style="color: #a6e22e;">:new-env</span> <span style="color: #a6e22e;">:cont</span> <span style="color: #66d9ef; font-weight: bold;">recur</span><span style="color: #797979;">]</span>
+
+    <span style="color: #66d9ef; font-weight: bold;">&lt;zero?-exp&gt;</span> <span style="color: #797979;">[</span><span style="color: #a6e22e;">:exp</span> <span style="color: #ae81ff;">.exp1</span> <span style="color: #a6e22e;">:env</span>
+                 <span style="color: #a6e22e;">:cont</span> zero1-cont
+                 <span style="color: #66d9ef; font-weight: bold;">recur</span><span style="color: #797979;">]</span>
+
+    <span style="color: #66d9ef; font-weight: bold;">&lt;let-exp&gt;</span>   <span style="color: #797979;">[</span><span style="color: #a6e22e;">:exp</span> <span style="color: #ae81ff;">.exp1</span> <span style="color: #a6e22e;">:env</span>
+                 <span style="color: #a6e22e;">:exp</span> <span style="color: #ae81ff;">.var</span><span style="color: #f92672; font-weight: bold;">,</span> <span style="color: #a6e22e;">:exp</span> <span style="color: #ae81ff;">.body</span><span style="color: #f92672; font-weight: bold;">,</span> <span style="color: #a6e22e;">:env</span><span style="color: #f92672; font-weight: bold;">,</span> <span style="color: #a6e22e;">:cont</span><span style="color: #f92672; font-weight: bold;">,</span> let-exp-cont
+                 <span style="color: #66d9ef; font-weight: bold;">recur</span><span style="color: #797979;">]</span>
+
+    <span style="color: #66d9ef; font-weight: bold;">&lt;if-exp&gt;</span>    <span style="color: #797979;">[</span><span style="color: #a6e22e;">:exp</span> <span style="color: #ae81ff;">.exp1</span> <span style="color: #a6e22e;">:env</span>
+                 <span style="color: #a6e22e;">:exp</span> <span style="color: #ae81ff;">.exp2</span><span style="color: #f92672; font-weight: bold;">,</span> <span style="color: #a6e22e;">:exp</span> <span style="color: #ae81ff;">.exp3</span><span style="color: #f92672; font-weight: bold;">,</span> <span style="color: #a6e22e;">:env</span><span style="color: #f92672; font-weight: bold;">,</span> <span style="color: #a6e22e;">:cont</span><span style="color: #f92672; font-weight: bold;">,</span> if-test-cont
+                 <span style="color: #66d9ef; font-weight: bold;">recur</span><span style="color: #797979;">]</span>
+
+    <span style="color: #66d9ef; font-weight: bold;">&lt;diff-exp&gt;</span>  <span style="color: #797979;">[</span><span style="color: #a6e22e;">:exp</span> <span style="color: #ae81ff;">.exp1</span> <span style="color: #a6e22e;">:env</span>
+                 <span style="color: #a6e22e;">:exp</span> <span style="color: #ae81ff;">.exp2</span><span style="color: #f92672; font-weight: bold;">,</span> <span style="color: #a6e22e;">:env</span><span style="color: #f92672; font-weight: bold;">,</span> <span style="color: #a6e22e;">:cont</span><span style="color: #f92672; font-weight: bold;">,</span> diff1-cont
+                 <span style="color: #66d9ef; font-weight: bold;">recur</span><span style="color: #797979;">]</span>
+
+    <span style="color: #66d9ef; font-weight: bold;">&lt;call-exp&gt;</span>  <span style="color: #797979;">[</span><span style="color: #a6e22e;">:exp</span> <span style="color: #ae81ff;">.rator</span> <span style="color: #a6e22e;">:env</span>
+                 <span style="color: #a6e22e;">:exp</span> <span style="color: #ae81ff;">.rand</span><span style="color: #f92672; font-weight: bold;">,</span> <span style="color: #a6e22e;">:env</span><span style="color: #f92672; font-weight: bold;">,</span> <span style="color: #a6e22e;">:cont</span><span style="color: #f92672; font-weight: bold;">,</span> rator-cont
+                 <span style="color: #66d9ef; font-weight: bold;">recur</span><span style="color: #797979;">]</span><span style="color: #696969;">))</span>
 </pre>
 </div>
 </div>
 </div>
 
-<div id="outline-container-org2576f7d" class="outline-2">
-<h2 id="org2576f7d">parse</h2>
-<div class="outline-text-2" id="text-org2576f7d">
+<div id="outline-container-org93564d1" class="outline-2">
+<h2 id="org93564d1">cont &#x2013; continuation</h2>
+<div class="outline-text-2" id="text-org93564d1">
+</div><div id="outline-container-org9e03cec" class="outline-3">
+<h3 id="org9e03cec">cont</h3>
+<div class="outline-text-3" id="text-org9e03cec">
+<div class="org-src-container">
+
+<pre class="src src-jojo"><span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">+data</span> <span style="color: #66d9ef; font-weight: bold;">&lt;end-cont&gt;</span><span style="color: #696969;">)</span>
+<span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">+data</span> <span style="color: #66d9ef; font-weight: bold;">&lt;zero1-cont&gt;</span> .rest<span style="color: #696969;">)</span>
+
+<span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">+data</span> <span style="color: #66d9ef; font-weight: bold;">&lt;let-exp-cont&gt;</span> <span style="color: #ae81ff;">.var</span> <span style="color: #ae81ff;">.body</span> <span style="color: #ae81ff;">.env</span> .rest<span style="color: #696969;">)</span>
+<span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">+data</span> <span style="color: #66d9ef; font-weight: bold;">&lt;if-test-cont&gt;</span> <span style="color: #ae81ff;">.exp2</span> <span style="color: #ae81ff;">.exp3</span> <span style="color: #ae81ff;">.env</span> .rest<span style="color: #696969;">)</span>
+
+<span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">+data</span> <span style="color: #66d9ef; font-weight: bold;">&lt;diff1-cont&gt;</span> <span style="color: #ae81ff;">.exp2</span> <span style="color: #ae81ff;">.env</span> .rest<span style="color: #696969;">)</span>
+<span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">+data</span> <span style="color: #66d9ef; font-weight: bold;">&lt;diff2-cont&gt;</span> <span style="color: #ae81ff;">.val</span> .rest<span style="color: #696969;">)</span>
+
+<span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">+data</span> <span style="color: #66d9ef; font-weight: bold;">&lt;rator-cont&gt;</span> <span style="color: #ae81ff;">.rand</span> <span style="color: #ae81ff;">.env</span> .rest<span style="color: #696969;">)</span>
+<span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">+data</span> <span style="color: #66d9ef; font-weight: bold;">&lt;rand-cont&gt;</span> <span style="color: #ae81ff;">.val</span> <span style="color: #ae81ff;">.rest</span><span style="color: #696969;">)</span>
+</pre>
+</div>
+</div>
+</div>
+
+<div id="outline-container-org8acceef" class="outline-3">
+<h3 id="org8acceef">cont-apply</h3>
+<div class="outline-text-3" id="text-org8acceef">
+<div class="org-src-container">
+
+<pre class="src src-jojo"><span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">+jojo</span> cont-apply <span style="color: #696969;">(</span><span style="color: #66d9ef; font-weight: bold;">-&gt;</span> <span style="color: #a6e22e;">:val</span> <span style="color: #a6e22e;">:cont</span> <span style="color: #66d9ef; font-weight: bold;">--</span> expval<span style="color: #696969;">)</span>
+  <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">case</span> <span style="color: #a6e22e;">:cont</span>
+
+    <span style="color: #66d9ef; font-weight: bold;">&lt;end-cont&gt;</span>
+    <span style="color: #797979;">[</span><span style="color: #e6db74;">"end of computation."</span> w nl <span style="color: #a6e22e;">:val</span><span style="color: #797979;">]</span>
+
+    <span style="color: #66d9ef; font-weight: bold;">&lt;zero1-cont&gt;</span>
+    <span style="color: #797979;">[</span><span style="color: #a6e22e;">:val</span> <span style="color: #ae81ff;">.num</span> <span style="color: #ae81ff;">0</span> eq? bool-val <span style="color: #a6e22e;">:cont</span> <span style="color: #ae81ff;">.rest</span> <span style="color: #66d9ef; font-weight: bold;">recur</span><span style="color: #797979;">]</span>
+
+    <span style="color: #66d9ef; font-weight: bold;">&lt;let-exp-cont&gt;</span>
+    <span style="color: #797979;">[</span><span style="color: #a6e22e;">:cont</span> <span style="color: #ae81ff;">.body</span>
+     <span style="color: #a6e22e;">:cont</span> <span style="color: #ae81ff;">.env</span><span style="color: #f92672; font-weight: bold;">,</span> <span style="color: #a6e22e;">:cont</span> <span style="color: #ae81ff;">.var</span><span style="color: #f92672; font-weight: bold;">,</span> <span style="color: #a6e22e;">:val</span><span style="color: #f92672; font-weight: bold;">,</span> cons-env
+     <span style="color: #a6e22e;">:cont</span> <span style="color: #ae81ff;">.rest</span> eval<span style="color: #797979;">]</span>
+
+    <span style="color: #66d9ef; font-weight: bold;">&lt;if-test-cont&gt;</span>
+    <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">if</span> <span style="color: #a6e22e;">:val</span> <span style="color: #ae81ff;">.bool</span>
+      <span style="color: #66d9ef; font-weight: bold;">then</span> <span style="color: #a6e22e;">:cont</span> <span style="color: #ae81ff;">.exp2</span> <span style="color: #a6e22e;">:cont</span> <span style="color: #ae81ff;">.env</span> <span style="color: #a6e22e;">:cont</span> <span style="color: #ae81ff;">.rest</span> eval
+      <span style="color: #66d9ef; font-weight: bold;">else</span> <span style="color: #a6e22e;">:cont</span> <span style="color: #ae81ff;">.exp3</span> <span style="color: #a6e22e;">:cont</span> <span style="color: #ae81ff;">.env</span> <span style="color: #a6e22e;">:cont</span> <span style="color: #ae81ff;">.rest</span> eval<span style="color: #696969;">)</span>
+
+    <span style="color: #66d9ef; font-weight: bold;">&lt;diff1-cont&gt;</span>
+    <span style="color: #797979;">[</span><span style="color: #a6e22e;">:cont</span> <span style="color: #ae81ff;">.exp2</span> <span style="color: #a6e22e;">:cont</span> <span style="color: #ae81ff;">.env</span>
+     <span style="color: #a6e22e;">:val</span><span style="color: #f92672; font-weight: bold;">,</span> <span style="color: #a6e22e;">:cont</span> <span style="color: #ae81ff;">.rest</span><span style="color: #f92672; font-weight: bold;">,</span> diff2-cont
+     eval<span style="color: #797979;">]</span>
+
+    <span style="color: #66d9ef; font-weight: bold;">&lt;diff2-cont&gt;</span>
+    <span style="color: #797979;">[</span><span style="color: #a6e22e;">:cont</span> <span style="color: #ae81ff;">.val</span> <span style="color: #ae81ff;">.num</span><span style="color: #f92672; font-weight: bold;">,</span> <span style="color: #a6e22e;">:val</span> <span style="color: #ae81ff;">.num</span><span style="color: #f92672; font-weight: bold;">,</span> sub<span style="color: #f92672; font-weight: bold;">,</span> num-val
+     <span style="color: #a6e22e;">:cont</span> <span style="color: #ae81ff;">.rest</span>
+     <span style="color: #66d9ef; font-weight: bold;">recur</span><span style="color: #797979;">]</span>
+
+    <span style="color: #66d9ef; font-weight: bold;">&lt;rator-cont&gt;</span>
+    <span style="color: #797979;">[</span><span style="color: #a6e22e;">:cont</span> <span style="color: #ae81ff;">.rand</span> <span style="color: #a6e22e;">:cont</span> <span style="color: #ae81ff;">.env</span>
+     <span style="color: #a6e22e;">:val</span><span style="color: #f92672; font-weight: bold;">,</span> <span style="color: #a6e22e;">:cont</span> <span style="color: #ae81ff;">.rest</span><span style="color: #f92672; font-weight: bold;">,</span> rand-cont
+     eval<span style="color: #797979;">]</span>
+
+    <span style="color: #66d9ef; font-weight: bold;">&lt;rand-cont&gt;</span>
+    <span style="color: #797979;">[</span><span style="color: #a6e22e;">:val</span>
+     <span style="color: #a6e22e;">:cont</span> <span style="color: #ae81ff;">.val</span> <span style="color: #ae81ff;">.proc</span>
+     <span style="color: #a6e22e;">:cont</span> <span style="color: #ae81ff;">.rest</span> proc-apply<span style="color: #797979;">]</span><span style="color: #696969;">))</span>
+</pre>
+</div>
+</div>
+</div>
+</div>
+
+<div id="outline-container-org950f8b9" class="outline-2">
+<h2 id="org950f8b9">parse</h2>
+<div class="outline-text-2" id="text-org950f8b9">
 <div class="org-src-container">
 
 <pre class="src src-jojo"><span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">note</span>
@@ -342,12 +371,12 @@ for the JavaScript code in this tag.
 </div>
 </div>
 
-<div id="outline-container-org5cecf64" class="outline-2">
-<h2 id="org5cecf64">interface</h2>
-<div class="outline-text-2" id="text-org5cecf64">
+<div id="outline-container-orga26b360" class="outline-2">
+<h2 id="orga26b360">interface</h2>
+<div class="outline-text-2" id="text-orga26b360">
 <div class="org-src-container">
 
-<pre class="src src-jojo"><span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">+jojo</span> LETREC <span style="color: #696969;">(</span><span style="color: #66d9ef; font-weight: bold;">-&gt;</span> <span style="color: #a6e22e;">:body</span> <span style="color: #66d9ef; font-weight: bold;">--</span><span style="color: #696969;">)</span>
+<pre class="src src-jojo"><span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">+jojo</span> CPI <span style="color: #696969;">(</span><span style="color: #66d9ef; font-weight: bold;">-&gt;</span> <span style="color: #a6e22e;">:body</span> <span style="color: #66d9ef; font-weight: bold;">--</span><span style="color: #696969;">)</span>
   <span style="color: #a6e22e;">:body</span> <span style="color: #B380A8;">{</span>parse program-eval expval-write nl<span style="color: #B380A8;">}</span> list-for-each<span style="color: #696969;">)</span>
 
 <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">+jojo</span> expval-write <span style="color: #696969;">(</span><span style="color: #66d9ef; font-weight: bold;">-&gt;</span> <span style="color: #a6e22e;">:expval</span><span style="color: #696969;">)</span>
@@ -359,12 +388,12 @@ for the JavaScript code in this tag.
 </div>
 </div>
 
-<div id="outline-container-orgff31ec5" class="outline-2">
-<h2 id="orgff31ec5"><span class="done _test_">[test]</span> </h2>
-<div class="outline-text-2" id="text-orgff31ec5">
+<div id="outline-container-org4a3906a" class="outline-2">
+<h2 id="org4a3906a"><span class="done _test_">[test]</span> </h2>
+<div class="outline-text-2" id="text-org4a3906a">
 <div class="org-src-container">
 
-<pre class="src src-jojo"><span style="color: #696969;">(</span>LETREC
+<pre class="src src-jojo"><span style="color: #696969;">(</span>CPI
  <span style="color: #ae81ff;">1</span> <span style="color: #ae81ff;">2</span> <span style="color: #ae81ff;">3</span>
  <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">diff</span> <span style="color: #ae81ff;">2</span> <span style="color: #ae81ff;">1</span><span style="color: #696969;">)</span>
  <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">diff</span> <span style="color: #ae81ff;">3</span> <span style="color: #ae81ff;">1</span><span style="color: #696969;">)</span>
@@ -392,7 +421,7 @@ for the JavaScript code in this tag.
 </div>
 <div id="postamble" class="status">
 <p class="author">Author: xieyuheng</p>
-<p class="date">Created: 2017-09-28 Thu 21:09</p>
+<p class="date">Created: 2017-09-28 Thu 21:08</p>
 <p class="validation"><a href="http://validator.w3.org/check?uri=referer">Validate</a></p>
 </div>
 </body>

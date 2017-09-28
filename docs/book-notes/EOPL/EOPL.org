@@ -304,7 +304,43 @@
 
 * 5 Continuation-Passing Interpreters
 
+*** intro
+
+    - In chapter 3,
+      we used the concept of environments
+      to explore the behavior of bindings,
+      which establish the data context
+      in which each portion of a program is executed.
+
+    - Here we will do the same for the control context
+      in which each portion of a program is executed.
+
+    - We will introduce the concept of a continuation
+      as an abstraction of the control context,
+      and we will write interpreters
+      that take a continuation as an argument,
+      thus making the control context explicit.
+
+    - a principle -
+      It is evaluation of operands,
+      not the calling of procedures,
+      that makes the control context grow.
+
 *** 5.1 A Continuation-Passing Interpreter
+
+    - [[./CPI/CPI.html][CPI]]
+
+    - an environment is a representation of a function
+      from symbols to denoted values.
+
+    - The continuation of an expression
+      represents a procedure
+      that takes the result of the expression
+      and completes the computation.
+
+    - Tail Calls Don’t Grow the Continuation -
+      If the value of exp1 is returned as the value of exp2 ,
+      then exp1 and exp2 should run in the same continuation.
 
 *** 5.2 A Trampolined Interpreter
 

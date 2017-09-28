@@ -1,9 +1,3 @@
-(note
-  (letrec :double :x
-    (if (zero? :x) 0
-      (diff (call :double (diff :x 1)) -2))
-    (call :double 6)))
-
 (note program = exp)
 (note exp
   = <const-exp>
@@ -41,24 +35,10 @@
 
 (+data <proc> .var .body .saved-env)
 
-(+jojo proc-apply (-> :val :proc -- expval)
+(+jojo proc-apply (-> :val :proc :cont -- expval)
+  :proc .body
   :proc .saved-env :proc .var :val cons-env
-  :proc .body swap eval)
-
-(note
-  (= :proc-name :bound-var :proc-body :letrec-body lerrec-exp
-     :env eval,
-     :env :proc-name :bound-var :proc-body cons-rec-env
-     :letrec-body swap eval))
-
-(note
-  (case :env <cons-rec-env>)
-  (= :var :env env-apply,
-     (cond [:var :env .proc-name equal?]
-           [:env .bound-var
-            :env .proc-body
-            :env proc proc-val]
-           else [:var :env .rest env-apply])))
+  :cont eval)
 
 (note env = <null-env> | <cons-env>)
 
@@ -87,35 +67,94 @@
   ':i 1  num-val cons-env)
 
 (+jojo program-eval (-> :program -- expval)
-  :program init-env eval)
+  :program init-env end-cont eval)
 
-(+jojo eval (-> :exp :env -- expval)
+(+jojo eval (-> :exp :env :cont -- expval)
   (case :exp
-    <const-exp> [:exp .num  num-val]
-    <zero?-exp> [:exp .exp1 :env recur .num 0 equal? bool-val]
-    <if-exp>    (if :exp .exp1 :env recur .bool
-                    then :exp .exp2 :env recur
-                    else :exp .exp3 :env recur)
-    <diff-exp>  [:exp .exp1 :env recur .num
-                 :exp .exp2 :env recur .num sub num-val]
-    <var-exp>   [:exp .var :env env-apply]
-    <let-exp>   [:env
-                 :exp .var
-                 :exp .exp1 :env recur
-                 cons-env :new-env!
-                 :exp .body :new-env recur]
-
-    <proc-exp>  [:exp .var :exp .body :env proc proc-val]
-    <call-exp>  [:exp .rator :env recur .proc :proc!
-                 :exp .rand  :env recur :arg!
-                 :arg :proc proc-apply]
+    <const-exp> [:exp .num num-val
+                 :cont cont-apply]
+    <var-exp>   [:exp .var :env env-apply
+                 :cont cont-apply]
+    <proc-exp>  [:exp .var :exp .body :env proc proc-val
+                 :cont cont-apply]
 
     <letrec-exp> [:env
                   :exp .proc-name
                   :exp .bound-var
                   :exp .proc-body
                   cons-rec-env :new-env!
-                  :exp .letrec-body :new-env recur]))
+                  :exp .letrec-body :new-env :cont recur]
+
+    <zero?-exp> [:exp .exp1 :env
+                 :cont zero1-cont
+                 recur]
+
+    <let-exp>   [:exp .exp1 :env
+                 :exp .var, :exp .body, :env, :cont, let-exp-cont
+                 recur]
+
+    <if-exp>    [:exp .exp1 :env
+                 :exp .exp2, :exp .exp3, :env, :cont, if-test-cont
+                 recur]
+
+    <diff-exp>  [:exp .exp1 :env
+                 :exp .exp2, :env, :cont, diff1-cont
+                 recur]
+
+    <call-exp>  [:exp .rator :env
+                 :exp .rand, :env, :cont, rator-cont
+                 recur]))
+
+(+data <end-cont>)
+(+data <zero1-cont> .rest)
+
+(+data <let-exp-cont> .var .body .env .rest)
+(+data <if-test-cont> .exp2 .exp3 .env .rest)
+
+(+data <diff1-cont> .exp2 .env .rest)
+(+data <diff2-cont> .val .rest)
+
+(+data <rator-cont> .rand .env .rest)
+(+data <rand-cont> .val .rest)
+
+(+jojo cont-apply (-> :val :cont -- expval)
+  (case :cont
+
+    <end-cont>
+    ["end of computation." w nl :val]
+
+    <zero1-cont>
+    [:val .num 0 eq? bool-val :cont .rest recur]
+
+    <let-exp-cont>
+    [:cont .body
+     :cont .env, :cont .var, :val, cons-env
+     :cont .rest eval]
+
+    <if-test-cont>
+    (if :val .bool
+      then :cont .exp2 :cont .env :cont .rest eval
+      else :cont .exp3 :cont .env :cont .rest eval)
+
+    <diff1-cont>
+    [:cont .exp2 :cont .env
+     :val, :cont .rest, diff2-cont
+     eval]
+
+    <diff2-cont>
+    [:cont .val .num, :val .num, sub, num-val
+     :cont .rest
+     recur]
+
+    <rator-cont>
+    [:cont .rand :cont .env
+     :val, :cont .rest, rand-cont
+     eval]
+
+    <rand-cont>
+    [:val
+     :cont .val .proc
+     :cont .rest proc-apply]))
 
 (note
   123 -- <const-exp>
@@ -162,7 +201,7 @@
 
 (+jojo parse/spread {parse} list-map list-spread)
 
-(+jojo LETREC (-> :body --)
+(+jojo CPI (-> :body --)
   :body {parse program-eval expval-write nl} list-for-each)
 
 (+jojo expval-write (-> :expval)
@@ -170,7 +209,7 @@
     <num-val>  [:expval .num w]
     <bool-val> [:expval .bool w]))
 
-(LETREC
+(CPI
  1 2 3
  (diff 2 1)
  (diff 3 1)
