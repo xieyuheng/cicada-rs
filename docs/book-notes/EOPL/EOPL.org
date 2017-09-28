@@ -350,6 +350,8 @@
 
 *** 5.5 Threads
 
+    - THREADS
+
 * 6 Continuation-Passing Style
 
 *** 6.1 Writing Programs in Continuation-Passing Style
@@ -361,6 +363,39 @@
 *** 6.4 Modeling Computational Effects
 
 * 7 Types
+
+*** intro
+
+    - Our goal is to analyze a program
+      to predict whether evaluation of a program is *safe*,
+      that is, whether the evaluation will proceed
+      without certain kinds of errors.
+
+    - Exactly what is meant by safety, however,
+      may vary from language to language.
+
+    - we will consider languages that are similar to LETREC.
+      For these languages we say that an evaluation is safe
+      if and only if :
+
+      1. For every evaluation of a variable var,
+         the variable is bound.
+
+      2. For every evaluation of a difference expression
+         (diff-exp exp1 exp2),
+         the values of exp1 and exp2 are both num-vals.
+
+      3. For every evaluation of an expression of the form
+         (zero?-exp exp1),
+         the value of exp1 is a num-val.
+
+      4. For every evaluation of a conditional expression
+         (if-exp exp1 exp2 exp3),
+         the value of exp1 is a bool-val.
+
+      5. For every evaluation of a procedure call
+         (call-exp rator rand),
+         the value of rator is a proc-val.
 
 *** 7.1 Values and Their Types
 

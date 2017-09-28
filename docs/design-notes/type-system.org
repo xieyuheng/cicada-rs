@@ -208,6 +208,14 @@
       (match :n
         zero refl
         succ [:m :n.pre recur {succ} eq-apply]))
+
+    (note prefix notation
+      (+proof add-succ-commutative
+        (-> (: :m :n (<nat>))
+            -- (<eq> (add (succ :m) :n) (succ (add :m :n))))
+        (match :n
+          zero (refl)
+          succ (eq-apply (recur :m :n.pre) {succ}))))
     #+end_src
 
 *** [note] type-check detail of 'add-zero-commutative'
