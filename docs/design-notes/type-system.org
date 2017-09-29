@@ -1,13 +1,44 @@
 #+title: type system
 
+- follow EOPL
+
 * [todo-list]
 
-*** sequent1 and sequent0 in jojo
+*** implementation
+
+    1. simple
+       - unification
+         uses 'equal?'
+
+    2. type-class
+       - forgetful functor
+         code generation
+
+    3. quotype
+       - quotype
+         the concept of equivalence
+
+    4. module
+       - name space
+
+*** recall the old <red-black-tree> proof
+
+*** use number theory -- to test type-checker as prover
+
+*** use category theory to test type-class
+
+    - group theory
+
+* [note]
+
+*** core
 
     - can I re-design sequent0
       by firstly design a small core ?
 
       or can I design an over-simplified version first ?
+
+*** trunk
 
     - local var can be non-determined
 
@@ -40,6 +71,8 @@
          to get back (+proof add-commutative)
          and (+proof add-commutative)
 
+*** cut
+
     - when type-apply
 
       - function cut
@@ -58,27 +91,15 @@
     - can cut not happen in trunk ?
       - check the examples we have now
 
-*** self-interpreting
+*** syntax
 
-    - forgetful functor -- code generation
+***** (:)
 
-    - equivalence -- quotype
+      - (:) collects its body
+        and treat the last value of the body
+        as the type to be unified
 
-    - unification -- uses 'equal?'
-
-    - module -- name space
-
-*** recall the old <red-black-tree> proof
-
-*** use number theory -- to test type-checker as prover
-
-*** use category theory to test type-class
-
-    - group theory
-
-* [note]
-
-*** many languages
+*** we need many languages
 
     1. type-name as data-constructor-name
        - can not use forgetful functor
@@ -87,17 +108,6 @@
 
     2. type-name different from data-constructor-name
        - can use forgetful functor
-
-*** (:)
-
-    - (:) collects its body
-      and treat the last value of the body
-      as the type to be unified
-
-*** function name overload
-
-    - a function name dispatches over its input type
-    - a constructor name dispatches over its output type
 
 * number
 
@@ -118,11 +128,11 @@
     #+begin_src jojo
     (+simple-type <nat>
       zero
-      succ (: .pre <nat>))
+      succ (. .pre <nat>))
 
     (+type <nat> (-> -- <<type>>)
       zero (-> -- <nat>)
-      succ (-> (: .pre <nat>) -- <nat>))
+      succ (-> (. .pre <nat>) -- <nat>))
 
     (+fun add (-> (: :m :n <nat>) -- <nat>)
       (match :n
@@ -143,9 +153,9 @@
 *** <even>
 
     #+begin_src jojo
-    (+type <even> (-> (: .num <nat>) -- <<type>>)
+    (+type <even> (-> (. .num <nat>) -- <<type>>)
       zero (-> -- zero <even>)
-      plus-two (-> (: .pre :m <even>)
+      plus-two (-> (. .pre :m <even>)
                 -- :m succ succ <even>))
 
     (proof (-> -- zero succ succ <even>)
@@ -155,7 +165,7 @@
 *** <eq> -- an interface to the internal unification
 
     #+begin_src jojo
-    (+type <eq> (-> (: .lhs .rhs :<t>) -- <<type>>)
+    (+type <eq> (-> (. .lhs .rhs :<t>) -- <<type>>)
       refl (-> -- :z :z <eq>))
 
     (+proof eq-apply
@@ -208,14 +218,6 @@
       (match :n
         zero refl
         succ [:m :n.pre recur {succ} eq-apply]))
-
-    (note prefix notation
-      (+proof add-succ-commutative
-        (-> (: :m :n (<nat>))
-            -- (<eq> (add (succ :m) :n) (succ (add :m :n))))
-        (match :n
-          zero (refl)
-          succ (eq-apply (recur :m :n.pre) {succ}))))
     #+end_src
 
 *** [note] type-check detail of 'add-zero-commutative'
@@ -312,17 +314,17 @@
     - <list> := <null> | (<sexp> . <list>)
 
     #+begin_src jojo
-    (+type <list> (-> (: .<t> <<type>>) -- <<type>>)
+    (+type <list> (-> (. .<t> <<type>>) -- <<type>>)
       null (-> -- :<t> <list>)
-      cons (-> (: .cdr [:<t> <list>])
-               (: .car :<t>)
+      cons (-> (. .cdr :<t> <list>)
+               (. .car :<t>)
             -- :<t> <list>))
     #+end_src
 
 *** length
 
     #+begin_src jojo
-    (+fun length (-> (: :l [:<t> <list>]) -- <nat>)
+    (+fun length (-> (: :l :<t> <list>) -- <nat>)
       (match :l
         null zero
         cons [:l.cdr recur succ]))
@@ -366,11 +368,11 @@
 *** <has-length>
 
     #+begin_src jojo
-    (+type <has-length> (-> (: .list :<t> <list>)
-                            (: .length <nat>)
+    (+type <has-length> (-> (. .list :<t> <list>)
+                            (. .length <nat>)
                          -- <<type>>)
       null-has-length (-> -- null zero <has-length>)
-      cons-has-length (-> (: .cdr :l :n <has-length>)
+      cons-has-length (-> (. .cdr :l :n <has-length>)
                        -- :l :a cons :n succ <has-length>))
 
     (+fun map-has-length
@@ -426,7 +428,7 @@
 
     (note
 
-      (+fun <exp> (-> (: .<t> <<type>>) -- <<type>>)
+      (+fun <exp> (-> (. .<t> <<type>>) -- <<type>>)
         (+ :<t>, :<t> <exp> <list>))
 
       (+var <sexp>
@@ -465,14 +467,14 @@
 
     #+begin_src jojo
     (+simple-type <lexp>
-      var-lexp (: .var <var>)
-      lam-lexp (: .var <var>) (: .body <lexp>)
-      app-lexp (: .rator .rand <lexp>))
+      var-lexp (. .var <var>)
+      lam-lexp (. .var <var>) (. .body <lexp>)
+      app-lexp (. .rator .rand <lexp>))
 
     (+type <lexp> (-> -- <<type>>)
-      var-lexp (-> (: .var <var>) -- <lexp>)
-      lam-lexp (-> (: .var <var>) (: .body <lexp>) -- <lexp>)
-      app-lexp (-> (: .rator .rand <lexp>) -- <lexp>))
+      var-lexp (-> (. .var <var>) -- <lexp>)
+      lam-lexp (-> (. .var <var>) (. .body <lexp>) -- <lexp>)
+      app-lexp (-> (. .rator .rand <lexp>) -- <lexp>))
     #+end_src
 
 *** occurs-free?
@@ -495,12 +497,12 @@
 
     #+begin_src jojo
     (+type <vector>
-      (-> (: .length <nat>)
-          (: .<t> <<type>>)
+      (-> (. .length <nat>)
+          (. .<t> <<type>>)
        -- <<type>>)
       null (-> -- zero :<t> <vector>)
-      cons (-> (: .cdr :n :<t> <vector>)
-               (: .car :<t>)
+      cons (-> (. .cdr :n :<t> <vector>)
+               (. .car :<t>)
             -- :n succ :<t> <vector>))
     #+end_src
 
@@ -632,12 +634,12 @@
     #+begin_src jojo
     (+simple-type <binary-tree>
       null
-      node (: .value <int>) (: .left .right <binary-tree>))
+      node (. .value <int>) (. .left .right <binary-tree>))
 
     (+type <binary-tree> (-> -- <<type>>)
       null (-> -- <binary-tree>)
-      node (-> (: .value <int>)
-               (: .left .right <binary-tree>)
+      node (-> (. .value <int>)
+               (. .left .right <binary-tree>)
             -- <binary-tree>))
     #+end_src
 
@@ -657,8 +659,8 @@
 
     (+simple-type <binary-search-tree>
       null
-      node (: .key <symbol>) (: .value <int>)
-           (: .left .right <binary-search-tree>))
+      node (. .key <symbol>) (. .value <int>)
+           (. .left .right <binary-search-tree>))
     #+end_src
 
 *** search
@@ -760,10 +762,10 @@
 
     (+simple-type <red-black-tree>
       null
-      node (: .color <color>)
-           (: .key <symbol>)
-           (: .value <int>)
-           (: .left .right <red-black-tree>))
+      node (. .color <color>)
+           (. .key <symbol>)
+           (. .value <int>)
+           (. .left .right <red-black-tree>))
     #+end_src
 
 *** <red-black-tree> -- intrinsic
@@ -804,9 +806,9 @@
 *** <maybe>
 
     #+begin_src jojo
-    (+type <maybe> (-> (: .<t> <<type>>) -- <<type>>)
+    (+type <maybe> (-> (. .<t> <<type>>) -- <<type>>)
       nothing (-> -- :<t> <maybe>)
-      just (-> (: .value :<t>) -- :<t> <maybe>))
+      just (-> (. .value :<t>) -- :<t> <maybe>))
 
     (+member <maybe> <<monad>>
       (+imp return (-> (: :v :<t>) -- :<t> <maybe>)
@@ -850,7 +852,7 @@
 
     #+begin_src jojo
     (+simple-quotype <int>
-      (: .left .right <nat>))
+      (. .left .right <nat>))
     #+end_src
 
 *** equal?
@@ -866,7 +868,7 @@
 
     #+begin_src jojo
     (+simple-quotype <fraction>
-      (: .up .down <int>))
+      (. .up .down <int>))
     #+end_src
 
 *** equal?
