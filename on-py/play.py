@@ -37,7 +37,7 @@ p1 = JOJO(
 #     {1: "k1", 2: "k2", 3: "k3"},
 #     k,
 
-    "kkk", Human, new, LSET("h"),
+    "kkk", Human, NEW, LSET("h"),
 
     "kkk took my baby away", LGET("h"), MSG("say"),
 
@@ -51,8 +51,8 @@ p2 = JOJO(
     5, LSET("1"),
     100,
     [LSET("2"), LGET("2"), LGET("2"), add, LGET("1"), add],
-    clo,
-    apply
+    CLO,
+    APPLY
 )
 
 exe(VM([], [RP(JOJO(p2))]))
@@ -60,15 +60,16 @@ exe(VM([], [RP(JOJO(p2))]))
 
 p3 = JOJO(
     False,
-    ["true", write], clo,
-    ["false", write], clo,
-    ifte
+    ["true", write], CLO,
+    ["false", write], CLO,
+    IFTE
 )
 
 exe(VM([], [RP(JOJO(p3))]))
 
 
 inspect.signature(Human.say).parameters
+h = Human("h1")
 inspect.signature(h.say).parameters
 
 isinstance(Human.say, types.FunctionType)

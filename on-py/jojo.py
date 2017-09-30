@@ -85,22 +85,21 @@ class CLOSURE:
         self.lr = lr
 
 class CLO:
-    def jo_exe(self, rp, vm):
+    @classmethod
+    def jo_exe(cls, rp, vm):
         body = vm.ds.pop()
         lr = rp.lr
         clo = CLOSURE(body, lr)
         vm.ds.append(clo)
 
-clo = CLO()
-
 class APPLY:
-    def jo_exe(self, rp, vm):
+    @classmethod
+    def jo_exe(cls, rp, vm):
         clo = vm.ds.pop()
         vm.rs.append(RP(clo))
 
-apply = APPLY()
-
 class IFTE:
+    @classmethod
     def jo_exe(self, rp, vm):
         clo2 = vm.ds.pop()
         clo1 = vm.ds.pop()
@@ -110,17 +109,14 @@ class IFTE:
         else:
             vm.rs.append(RP(clo2))
 
-ifte = IFTE()
-
 class NEW:
+    @classmethod
     def jo_exe(self, rp, vm):
         c = vm.ds.pop()
         if not class_p(c):
             print ("- NEW.jo_exe fail")
             print ("  argument is not a class : {}".format(c))
         exe_fun(c, vm)
-
-new = NEW()
 
 def exe(vm):
     while vm.rs != []:
