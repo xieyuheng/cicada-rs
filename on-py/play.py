@@ -7,65 +7,11 @@ class Human:
     def __init__(self, name):
         self.name = name
     def say(self, msg):
-        print ("{name}: {message}".format(name=self.name, message=msg))
+        print ("{name}: {message}"
+               .format(name=self.name,
+                       message=msg))
     def sing(self):
-        return 'yo... yo... microphone check... one two... one two...'
-
-def add(x, y):
-    return x + y
-
-vm = VM(
-    [1, 2],
-    [RP(JOJO(add, 3, add, 1, 2, swap, dup, dup, drop, drop))]
-)
-
-exe(vm)
-
-def k(a, *b, **c):
-    print (a)
-    print (b)
-    print (c)
-
-def write(string):
-    print(string)
-
-p1 = JOJO(
-    1, 2, 3, add, add, write,
-
-#     "k",
-#     ["k1", "k2", "k3"],
-#     {1: "k1", 2: "k2", 3: "k3"},
-#     k,
-
-    "kkk", Human, NEW, LSET("h"),
-
-    "kkk took my baby away", LGET("h"), MSG("say"),
-
-    LGET("h"), MSG("name"), write,
-)
-
-exe(VM([], [RP(JOJO(p1))]))
-
-
-p2 = JOJO(
-    5, LSET("1"),
-    100,
-    [LSET("2"), LGET("2"), LGET("2"), add, LGET("1"), add],
-    CLO,
-    APPLY
-)
-
-exe(VM([], [RP(JOJO(p2))]))
-
-
-p3 = JOJO(
-    False,
-    ["true", write], CLO,
-    ["false", write], CLO,
-    IFTE
-)
-
-exe(VM([], [RP(JOJO(p3))]))
+        return 'singing'
 
 
 inspect.signature(Human.say).parameters

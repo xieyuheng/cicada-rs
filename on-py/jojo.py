@@ -75,7 +75,6 @@ class MSG:
     def jo_exe(self, rp, vm):
         o = vm.ds.pop()
         fun = getattr(o, self.message)
-
         exe_jo(fun, rp, vm)
 
 class CLOSURE:
@@ -123,6 +122,7 @@ def exe(vm):
         exe_one_step(vm)
         print (vm.ds)
     print ("- exe end")
+    return vm
 
 def exe_one_step(vm):
     rp = vm.rs.pop()
@@ -179,3 +179,6 @@ def tuck(a, b):
 
 def swap(a, b):
     return (b, a)
+
+def add(a, b):
+    return a + b
