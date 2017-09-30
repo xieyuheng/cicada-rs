@@ -1,6 +1,16 @@
 import inspect
 import types
 
+def get_signature(fun):
+    try:
+        return inspect.signature(fun)
+    except ValueError:
+        return False
+
+def fun_p(x):
+    return isinstance(x, types.LambdaType) \
+      or isinstance(x, types.MethodType)
+
 class RP:
     def __init__(self, fun):
         self.cursor = 0
@@ -12,6 +22,14 @@ class VM:
     def __init__(self, ds, rs):
         self.ds = ds
         self.rs = rs
+
+def push_result_to_vm(result, vm):
+    if isinstance(result, tuple):
+        vm.ds.extend(result)
+    elif result == None:
+        pass
+    else:
+        vm.ds.append(result)
 
 class LGET:
     def __init__(self, name):
@@ -44,24 +62,9 @@ class MSG:
 
     def jo_exe(self, rp, vm):
         o = vm.ds.pop()
-        c = type(o)
-        fun = getattr(c, self.message)
+        fun = getattr(o, self.message)
 
-        parameters = inspect.signature(fun).parameters
-        length = len(parameters) - 1
-        arguments = []
-        i = 0
-        while i < length:
-            arguments.append(vm.ds.pop())
-            i = i + 1
-        arguments.reverse()
-        result = fun(o, *arguments)
-        if isinstance(result, tuple):
-            vm.ds.extend(result)
-        elif result == None:
-            pass
-        else:
-            vm.ds.append(result)
+        exe_jo(fun, rp, vm)
 
 class CLOSURE:
     def __init__(self, body, lr):
@@ -97,22 +100,11 @@ class IFTE:
 
 ifte = IFTE()
 
-def exe_fun(fun, rp, vm):
-    parameters = inspect.signature(fun).parameters
-    length = len(parameters)
-    arguments = []
-    i = 0
-    while i < length:
-        arguments.append(vm.ds.pop())
-        i = i + 1
-    arguments.reverse()
-    result = fun(*arguments)
-    if isinstance(result, tuple):
-        vm.ds.extend(result)
-    elif result == None:
-        pass
-    else:
-        vm.ds.append(result)
+def exe(vm):
+    while vm.rs != []:
+        exe_one_step(vm)
+        print (vm.ds)
+    print ("- exe end")
 
 def exe_one_step(vm):
     rp = vm.rs.pop()
@@ -126,25 +118,28 @@ def exe_one_step(vm):
        vm.rs.append(rp)
 
     # dispatching
-    if isinstance(jo, types.BuiltinFunctionType):
-        print ("- exe_one_step fail")
-        print ("  meet built in function")
+    exe_jo(jo, rp, vm)
 
-    elif isinstance(jo, types.LambdaType) \
-    or isinstance(jo, types.MethodType):
-        exe_fun(jo, rp, vm)
-
+def exe_jo(jo, rp, vm):
+    if fun_p(jo):
+        exe_fun(jo, vm)
     elif hasattr(jo, "jo_exe"):
         jo.jo_exe(rp, vm)
-
     else:
         vm.ds.append(jo)
 
-def exe(vm):
-    while vm.rs != []:
-        exe_one_step(vm)
-        print (vm.ds)
-    print ("- exe end")
+def exe_fun(fun, vm):
+    parameters = get_signature(fun).parameters
+    length = len(parameters)
+    arguments = []
+    i = 0
+    while i < length:
+        arguments.append(vm.ds.pop())
+        i = i + 1
+    arguments.reverse()
+    result = fun(*arguments)
+
+    push_result_to_vm(result, vm)
 
 def drop(a):
     return ()

@@ -3,9 +3,15 @@
 
 * [todo-stack]
 
+  - class
+
+  - object creation
+
+  - better CLO
+
   - refactor and fix arguments of function call
 
-  - fix message dispatch
+  - re-expose all built in functions
 
   - specify which semantic subset of python is captured by jojo
 
@@ -13,12 +19,32 @@
 
   - rewrite the compiler, in jojo on python
 
-* import inspect
+* import
 
   #+begin_src python
   import inspect
   import types
   #+end_src
+
+* utility
+
+*** get_signature
+
+    #+begin_src python
+    def get_signature(fun):
+        try:
+            return inspect.signature(fun)
+        except ValueError:
+            return False
+    #+end_src
+
+*** fun_p
+
+    #+begin_src python
+    def fun_p(x):
+        return isinstance(x, types.LambdaType) \
+          or isinstance(x, types.MethodType)
+    #+end_src
 
 * VM
 
@@ -42,7 +68,19 @@
             self.rs = rs
     #+end_src
 
-* jo_exe
+*** push_result_to_vm
+
+    #+begin_src python
+    def push_result_to_vm(result, vm):
+        if isinstance(result, tuple):
+            vm.ds.extend(result)
+        elif result == None:
+            pass
+        else:
+            vm.ds.append(result)
+    #+end_src
+
+* jo
 
 *** LGET
 
@@ -90,24 +128,9 @@
 
         def jo_exe(self, rp, vm):
             o = vm.ds.pop()
-            c = type(o)
-            fun = getattr(c, self.message)
+            fun = getattr(o, self.message)
 
-            parameters = inspect.signature(fun).parameters
-            length = len(parameters) - 1
-            arguments = []
-            i = 0
-            while i < length:
-                arguments.append(vm.ds.pop())
-                i = i + 1
-            arguments.reverse()
-            result = fun(o, *arguments)
-            if isinstance(result, tuple):
-                vm.ds.extend(result)
-            elif result == None:
-                pass
-            else:
-                vm.ds.append(result)
+            exe_jo(fun, rp, vm)
     #+end_src
 
 *** CLO
@@ -164,59 +187,6 @@
 
 * exe
 
-*** exe_one_step
-
-***** exe_fun
-
-      #+begin_src python
-      def exe_fun(fun, rp, vm):
-          parameters = inspect.signature(fun).parameters
-          length = len(parameters)
-          arguments = []
-          i = 0
-          while i < length:
-              arguments.append(vm.ds.pop())
-              i = i + 1
-          arguments.reverse()
-          result = fun(*arguments)
-          if isinstance(result, tuple):
-              vm.ds.extend(result)
-          elif result == None:
-              pass
-          else:
-              vm.ds.append(result)
-      #+end_src
-
-***** exe_one_step
-
-      #+begin_src python
-      def exe_one_step(vm):
-          rp = vm.rs.pop()
-          jo = rp.body[rp.cursor]
-
-          # handle tail call
-          if rp.cursor >= rp.length - 1:
-             pass
-          else:
-             rp.cursor = rp.cursor + 1
-             vm.rs.append(rp)
-
-          # dispatching
-          if isinstance(jo, types.BuiltinFunctionType):
-              print ("- exe_one_step fail")
-              print ("  meet built in function")
-
-          elif isinstance(jo, types.LambdaType) \
-          or isinstance(jo, types.MethodType):
-              exe_fun(jo, rp, vm)
-
-          elif hasattr(jo, "jo_exe"):
-              jo.jo_exe(rp, vm)
-
-          else:
-              vm.ds.append(jo)
-      #+end_src
-
 *** exe
 
     #+begin_src python
@@ -225,6 +195,53 @@
             exe_one_step(vm)
             print (vm.ds)
         print ("- exe end")
+    #+end_src
+
+*** exe_one_step
+
+    #+begin_src python
+    def exe_one_step(vm):
+        rp = vm.rs.pop()
+        jo = rp.body[rp.cursor]
+
+        # handle tail call
+        if rp.cursor >= rp.length - 1:
+           pass
+        else:
+           rp.cursor = rp.cursor + 1
+           vm.rs.append(rp)
+
+        # dispatching
+        exe_jo(jo, rp, vm)
+    #+end_src
+
+*** exe_jo
+
+    #+begin_src python
+    def exe_jo(jo, rp, vm):
+        if fun_p(jo):
+            exe_fun(jo, vm)
+        elif hasattr(jo, "jo_exe"):
+            jo.jo_exe(rp, vm)
+        else:
+            vm.ds.append(jo)
+    #+end_src
+
+*** exe_fun
+
+    #+begin_src python
+    def exe_fun(fun, vm):
+        parameters = get_signature(fun).parameters
+        length = len(parameters)
+        arguments = []
+        i = 0
+        while i < length:
+            arguments.append(vm.ds.pop())
+            i = i + 1
+        arguments.reverse()
+        result = fun(*arguments)
+
+        push_result_to_vm(result, vm)
     #+end_src
 
 * stack operation

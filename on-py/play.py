@@ -48,6 +48,12 @@ p1 = JOJO(
     "kkk took my baby away", h.say,
 
     "kkk took my baby away", LGET("h"), MSG("say"),
+
+    LGET("h"), MSG("name"), write,
+    LGET("h"), MSG("name"), write,
+    LGET("h"), MSG("name"), write,
+    LGET("h"), MSG("name"), write,
+    LGET("h"), MSG("name"), write,
 )
 
 exe(VM([], [RP(JOJO(p1))]))
@@ -83,3 +89,26 @@ isinstance(Human.say, types.LambdaType)
 isinstance(h.say, types.MethodType)
 isinstance(h.say, types.MethodType)
 isinstance(h.say, types.LambdaType)
+
+# isinstance(h.say, types.LambdaType)
+
+
+print (type(len))
+
+import sys
+import os
+
+print (type(sys.exit))
+print (type(sys))
+
+isinstance(Human.say, types.MethodType)
+
+isinstance(sys.exit, types.BuiltinFunctionType)
+isinstance(sys.exit, types.BuiltinMethodType)
+
+
+isinstance(len, types.BuiltinFunctionType)
+isinstance(len, types.BuiltinMethodType)
+
+get_signature(exe)
+# get_signature(print)
