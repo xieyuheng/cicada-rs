@@ -1,0 +1,247 @@
+#+property: tangle jojo.py
+#+title: jojo on python
+
+* [todo-stack]
+
+  - refactor and fix arguments of function call
+
+  - fix message dispatch
+
+  - specify which semantic subset of python is captured by jojo
+
+  - a compiler, in jojo on c, to compile jojo to python
+
+  - rewrite the compiler, in jojo on python
+
+* import inspect
+
+  #+begin_src python
+  import inspect
+  import types
+  #+end_src
+
+* VM
+
+*** RP
+
+    #+begin_src python
+    class RP:
+        def __init__(self, fun):
+            self.cursor = 0
+            self.length = fun.length
+            self.body = fun.body
+            self.lr = fun.lr.copy()
+    #+end_src
+
+*** VM
+
+    #+begin_src python
+    class VM:
+        def __init__(self, ds, rs):
+            self.ds = ds
+            self.rs = rs
+    #+end_src
+
+* jo_exe
+
+*** LGET
+
+    #+begin_src python
+    class LGET:
+        def __init__(self, name):
+            self.name = name
+
+        def jo_exe(self, rp, vm):
+            value = rp.lr[self.name]
+            vm.ds.append(value)
+    #+end_src
+
+*** LSET
+
+    #+begin_src python
+    class LSET:
+        def __init__(self, name):
+            self.name = name
+
+        def jo_exe(self, rp, vm):
+            value = vm.ds.pop()
+            rp.lr[self.name] = value
+    #+end_src
+
+*** JOJO
+
+    #+begin_src python
+    class JOJO:
+        def __init__(self, *body):
+            self.length = len(body)
+            self.body = list(body)
+            self.lr = {}
+
+        def jo_exe(self, rp, vm):
+            vm.rs.append(RP(self))
+    #+end_src
+
+*** MSG
+
+    #+begin_src python
+    class MSG:
+        def __init__(self, message):
+            self.message = message
+
+        def jo_exe(self, rp, vm):
+            o = vm.ds.pop()
+            c = type(o)
+            fun = getattr(c, self.message)
+
+            parameters = inspect.signature(fun).parameters
+            length = len(parameters) - 1
+            arguments = []
+            i = 0
+            while i < length:
+                arguments.append(vm.ds.pop())
+                i = i + 1
+            arguments.reverse()
+            result = fun(o, *arguments)
+            if isinstance(result, tuple):
+                vm.ds.extend(result)
+            elif result == None:
+                pass
+            else:
+                vm.ds.append(result)
+    #+end_src
+
+*** CLO
+
+***** CLOSURE
+
+      #+begin_src python
+      class CLOSURE:
+          def __init__(self, body, lr):
+              self.length = len(body)
+              self.body = body
+              self.lr = lr
+      #+end_src
+
+***** CLO
+
+      #+begin_src python
+      class CLO:
+          def jo_exe(self, rp, vm):
+              body = vm.ds.pop()
+              lr = rp.lr
+              clo = CLOSURE(body, lr)
+              vm.ds.append(clo)
+
+      clo = CLO()
+      #+end_src
+
+*** APPLY
+
+    #+begin_src python
+    class APPLY:
+        def jo_exe(self, rp, vm):
+            clo = vm.ds.pop()
+            vm.rs.append(RP(clo))
+
+    apply = APPLY()
+    #+end_src
+
+*** IFTE
+
+    #+begin_src python
+    class IFTE:
+        def jo_exe(self, rp, vm):
+            clo2 = vm.ds.pop()
+            clo1 = vm.ds.pop()
+            test = vm.ds.pop()
+            if test:
+                vm.rs.append(RP(clo1))
+            else:
+                vm.rs.append(RP(clo2))
+
+    ifte = IFTE()
+    #+end_src
+
+* exe
+
+*** exe_one_step
+
+***** exe_fun
+
+      #+begin_src python
+      def exe_fun(fun, rp, vm):
+          parameters = inspect.signature(fun).parameters
+          length = len(parameters)
+          arguments = []
+          i = 0
+          while i < length:
+              arguments.append(vm.ds.pop())
+              i = i + 1
+          arguments.reverse()
+          result = fun(*arguments)
+          if isinstance(result, tuple):
+              vm.ds.extend(result)
+          elif result == None:
+              pass
+          else:
+              vm.ds.append(result)
+      #+end_src
+
+***** exe_one_step
+
+      #+begin_src python
+      def exe_one_step(vm):
+          rp = vm.rs.pop()
+          jo = rp.body[rp.cursor]
+
+          # handle tail call
+          if rp.cursor >= rp.length - 1:
+             pass
+          else:
+             rp.cursor = rp.cursor + 1
+             vm.rs.append(rp)
+
+          # dispatching
+          if isinstance(jo, types.BuiltinFunctionType):
+              print ("- exe_one_step fail")
+              print ("  meet built in function")
+
+          elif isinstance(jo, types.LambdaType) \
+          or isinstance(jo, types.MethodType):
+              exe_fun(jo, rp, vm)
+
+          elif hasattr(jo, "jo_exe"):
+              jo.jo_exe(rp, vm)
+
+          else:
+              vm.ds.append(jo)
+      #+end_src
+
+*** exe
+
+    #+begin_src python
+    def exe(vm):
+        while vm.rs != []:
+            exe_one_step(vm)
+            print (vm.ds)
+        print ("- exe end")
+    #+end_src
+
+* stack operation
+
+  #+begin_src python
+  def drop(a):
+      return ()
+
+  def dup(a):
+      return (a, a)
+
+  def over(a, b):
+      return (a, b, a)
+
+  def tuck(a, b):
+      return (b, a, b)
+
+  def swap(a, b):
+      return (b, a)
+  #+end_src

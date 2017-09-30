@@ -56,8 +56,9 @@ exe(VM([], [RP(JOJO(p1))]))
 p2 = JOJO(
     5, LSET("1"),
     100,
-    [LSET("2"), LGET("2"), LGET("2"), add, LGET("1"), add], INS_CLO,
-    INS_APPLY
+    [LSET("2"), LGET("2"), LGET("2"), add, LGET("1"), add],
+    clo,
+    apply
 )
 
 exe(VM([], [RP(JOJO(p2))]))
@@ -65,9 +66,9 @@ exe(VM([], [RP(JOJO(p2))]))
 
 p3 = JOJO(
     False,
-    ["true", write], INS_CLO,
-    ["false", write], INS_CLO,
-    INS_IF
+    ["true", write], clo,
+    ["false", write], clo,
+    ifte
 )
 
 exe(VM([], [RP(JOJO(p3))]))
