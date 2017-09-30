@@ -60,6 +60,7 @@ p1 = JOJO(
 exe(VM([], [RP(JOJO(p1))]))
 
 
+
 p2 = JOJO(
     5, LSET("1"),
     100,
@@ -68,6 +69,17 @@ p2 = JOJO(
 )
 
 exe(VM([], [RP(JOJO(p2))]))
+
+
+p3 = JOJO(
+    False,
+    ["true", write], INS_CLO,
+    ["false", write], INS_CLO,
+    INS_IF
+)
+
+exe(VM([], [RP(JOJO(p3))]))
+
 
 inspect.signature(Human.say).parameters
 inspect.signature(h.say).parameters

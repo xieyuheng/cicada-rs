@@ -43,6 +43,9 @@ class INS_CLO:
 class INS_APPLY:
     pass
 
+class INS_IF:
+    pass
+
 def exe_one_step(vm):
     rp = vm.rs.pop()
     jo = rp.body[rp.cursor]
@@ -73,14 +76,18 @@ def exe_one_step(vm):
             pass
         else:
             vm.ds.append(result)
+
     elif isinstance(jo, JOJO):
         vm.rs.append(RP(jo))
+
     elif isinstance(jo, LGET):
         value = rp.lr[jo.name]
         vm.ds.append(value)
+
     elif isinstance(jo, LSET):
         value = vm.ds.pop()
         rp.lr[jo.name] = value
+
     elif isinstance(jo, MSG):
         o = vm.ds.pop()
         c = type(o)
@@ -112,6 +119,14 @@ def exe_one_step(vm):
         clo = vm.ds.pop()
         vm.rs.append(RP(clo))
 
+    elif jo == INS_IF:
+        clo2 = vm.ds.pop()
+        clo1 = vm.ds.pop()
+        test = vm.ds.pop()
+        if test:
+            vm.rs.append(RP(clo1))
+        else:
+            vm.rs.append(RP(clo2))
     else:
         vm.ds.append(jo)
 
@@ -120,8 +135,6 @@ def exe(vm):
         exe_one_step(vm)
         print (vm.ds)
     print ("- exe end")
-
-ifte = JOJO()
 
 def drop(a):
     return ()
