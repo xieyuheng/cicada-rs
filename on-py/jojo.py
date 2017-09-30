@@ -8,8 +8,20 @@ def get_signature(fun):
         return False
 
 def fun_p(x):
-    return isinstance(x, types.LambdaType) \
-      or isinstance(x, types.MethodType)
+    if isinstance(x, types.LambdaType):
+        return True
+    elif isinstance(x, types.MethodType):
+        return True
+    else:
+        return False
+
+def class_p(x):
+    if not inspect.isclass(x):
+        return False
+    elif x == type:
+        return False
+    else:
+        return True
 
 class RP:
     def __init__(self, fun):
@@ -100,6 +112,16 @@ class IFTE:
 
 ifte = IFTE()
 
+class NEW:
+    def jo_exe(self, rp, vm):
+        c = vm.ds.pop()
+        if not class_p(c):
+            print ("- NEW.jo_exe fail")
+            print ("  argument is not a class : {}".format(c))
+        exe_fun(c, vm)
+
+new = NEW()
+
 def exe(vm):
     while vm.rs != []:
         exe_one_step(vm)
@@ -129,7 +151,12 @@ def exe_jo(jo, rp, vm):
         vm.ds.append(jo)
 
 def exe_fun(fun, vm):
-    parameters = get_signature(fun).parameters
+    signature = get_signature(fun)
+    if not signature:
+        print ("- exe_fun fail to get signature")
+        print ("  fun : {}".format(fun))
+
+    parameters = signature.parameters
     length = len(parameters)
     arguments = []
     i = 0
@@ -137,6 +164,7 @@ def exe_fun(fun, vm):
         arguments.append(vm.ds.pop())
         i = i + 1
     arguments.reverse()
+
     result = fun(*arguments)
 
     push_result_to_vm(result, vm)

@@ -29,8 +29,6 @@ def k(a, *b, **c):
 def write(string):
     print(string)
 
-h = Human("hhh")
-
 p1 = JOJO(
     1, 2, 3, add, add, write,
 
@@ -39,20 +37,10 @@ p1 = JOJO(
 #     {1: "k1", 2: "k2", 3: "k3"},
 #     k,
 
-    Human("kkk"), LSET("h"),
-
-    LGET("h"), "kkk took my baby away", Human.say,
-
-    h, "kkk took my baby away", Human.say,
-
-    "kkk took my baby away", h.say,
+    "kkk", Human, new, LSET("h"),
 
     "kkk took my baby away", LGET("h"), MSG("say"),
 
-    LGET("h"), MSG("name"), write,
-    LGET("h"), MSG("name"), write,
-    LGET("h"), MSG("name"), write,
-    LGET("h"), MSG("name"), write,
     LGET("h"), MSG("name"), write,
 )
 
@@ -78,6 +66,7 @@ p3 = JOJO(
 )
 
 exe(VM([], [RP(JOJO(p3))]))
+
 
 inspect.signature(Human.say).parameters
 inspect.signature(h.say).parameters

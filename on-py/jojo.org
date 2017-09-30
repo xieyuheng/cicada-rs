@@ -3,13 +3,9 @@
 
 * [todo-stack]
 
-  - class
-
-  - object creation
-
   - better CLO
 
-  - refactor and fix arguments of function call
+  - fix arguments of function call
 
   - re-expose all built in functions
 
@@ -42,8 +38,24 @@
 
     #+begin_src python
     def fun_p(x):
-        return isinstance(x, types.LambdaType) \
-          or isinstance(x, types.MethodType)
+        if isinstance(x, types.LambdaType):
+            return True
+        elif isinstance(x, types.MethodType):
+            return True
+        else:
+            return False
+    #+end_src
+
+*** class_p
+
+    #+begin_src python
+    def class_p(x):
+        if not inspect.isclass(x):
+            return False
+        elif x == type:
+            return False
+        else:
+            return True
     #+end_src
 
 * VM
@@ -185,6 +197,20 @@
     ifte = IFTE()
     #+end_src
 
+*** NEW
+
+    #+begin_src python
+    class NEW:
+        def jo_exe(self, rp, vm):
+            c = vm.ds.pop()
+            if not class_p(c):
+                print ("- NEW.jo_exe fail")
+                print ("  argument is not a class : {}".format(c))
+            exe_fun(c, vm)
+
+    new = NEW()
+    #+end_src
+
 * exe
 
 *** exe
@@ -231,7 +257,12 @@
 
     #+begin_src python
     def exe_fun(fun, vm):
-        parameters = get_signature(fun).parameters
+        signature = get_signature(fun)
+        if not signature:
+            print ("- exe_fun fail to get signature")
+            print ("  fun : {}".format(fun))
+
+        parameters = signature.parameters
         length = len(parameters)
         arguments = []
         i = 0
@@ -239,6 +270,7 @@
             arguments.append(vm.ds.pop())
             i = i + 1
         arguments.reverse()
+
         result = fun(*arguments)
 
         push_result_to_vm(result, vm)
