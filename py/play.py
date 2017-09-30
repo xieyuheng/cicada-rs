@@ -28,7 +28,6 @@ vm = VM(
 
 exe(vm)
 
-
 def k(a, *b, **c):
     print (a)
     print (b)
@@ -36,7 +35,6 @@ def k(a, *b, **c):
 
 def write(string):
     print(string)
-
 
 h = Human("hhh")
 
@@ -61,13 +59,22 @@ p1 = JOJO(
 
 exe(VM([], [RP(JOJO(p1))]))
 
+
+p2 = JOJO(
+    5, LSET("1"),
+    100,
+    [LSET("2"), LGET("2"), LGET("2"), add, LGET("1"), add], INS_CLO,
+    INS_APPLY
+)
+
+exe(VM([], [RP(JOJO(p2))]))
+
 inspect.signature(Human.say).parameters
 inspect.signature(h.say).parameters
 
 isinstance(Human.say, types.FunctionType)
 isinstance(Human.say, types.MethodType)
 isinstance(Human.say, types.LambdaType)
-
 
 isinstance(h.say, types.MethodType)
 isinstance(h.say, types.MethodType)

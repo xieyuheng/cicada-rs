@@ -2,11 +2,11 @@ import inspect
 import types
 
 class RP:
-    def __init__(self, jojo):
+    def __init__(self, fun):
         self.cursor = 0
-        self.length = jojo.length
-        self.body = jojo.body
-        self.lr = jojo.lr.copy()
+        self.length = fun.length
+        self.body = fun.body
+        self.lr = fun.lr.copy()
 
 class VM:
     def __init__(self, ds, rs):
@@ -32,10 +32,16 @@ class MSG:
         self.message = message
 
 class CLO:
-    def __init__(self, *body):
+    def __init__(self, body, lr):
         self.length = len(body)
-        self.body = list(body)
-        self.lr = {}
+        self.body = body
+        self.lr = lr
+
+class INS_CLO:
+    pass
+
+class INS_APPLY:
+    pass
 
 def exe_one_step(vm):
     rp = vm.rs.pop()
@@ -95,6 +101,16 @@ def exe_one_step(vm):
             pass
         else:
             vm.ds.append(result)
+
+    elif jo == INS_CLO:
+        body = vm.ds.pop()
+        lr = rp.lr
+        clo = CLO(body, lr)
+        vm.ds.append(clo)
+
+    elif jo == INS_APPLY:
+        clo = vm.ds.pop()
+        vm.rs.append(RP(clo))
 
     else:
         vm.ds.append(jo)
