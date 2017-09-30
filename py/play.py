@@ -4,19 +4,12 @@ import types
 from jojo import *
 
 class Human:
-    species = "H. sapiens"
     def __init__(self, name):
         self.name = name
     def say(self, msg):
         print ("{name}: {message}".format(name=self.name, message=msg))
     def sing(self):
         return 'yo... yo... microphone check... one two... one two...'
-    @classmethod
-    def get_species(cls):
-        return cls.species
-    @staticmethod
-    def grunt():
-        return "*grunt*"
 
 def add(x, y):
     return x + y
@@ -60,7 +53,6 @@ p1 = JOJO(
 exe(VM([], [RP(JOJO(p1))]))
 
 
-
 p2 = JOJO(
     5, LSET("1"),
     100,
@@ -79,7 +71,6 @@ p3 = JOJO(
 )
 
 exe(VM([], [RP(JOJO(p3))]))
-
 
 inspect.signature(Human.say).parameters
 inspect.signature(h.say).parameters

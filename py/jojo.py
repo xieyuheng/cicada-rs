@@ -127,6 +127,7 @@ def exe_one_step(vm):
             vm.rs.append(RP(clo1))
         else:
             vm.rs.append(RP(clo2))
+
     else:
         vm.ds.append(jo)
 
