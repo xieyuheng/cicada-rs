@@ -61,12 +61,30 @@ def test_3():
     assert vm.ds == ["false"]
 
 
-def k(a, *b, **c):
-    print (a)
-    print (b)
-    print (c)
-
-    # "k",
-    # ["k1", "k2", "k3"],
-    # {1: "k1", 2: "k2", 3: "k3"},
-    # k,
+def test_4():
+    def k(a, b = "b0", *arg_list, k0 = "default k0", **arg_dict):
+        return [
+            a,
+            b,
+            arg_list,
+            k0,
+            arg_dict,
+        ]
+    jojo = JOJO(
+        "aaa",
+        "bbb",
+        ["k1", "k2", "k3"],
+        {"1": "k1", "2": "k2", "3": "k3"},
+        k,
+    )
+    vm = exe(VM([],
+                [RP(JOJO(jojo))]
+    ))
+    ds1 = [[
+        'aaa',
+        'bbb',
+        ('k1', 'k2', 'k3'),
+        'default k0',
+        {'1': 'k1', '2': 'k2', '3': 'k3'}
+    ]]
+    assert vm.ds == ds1

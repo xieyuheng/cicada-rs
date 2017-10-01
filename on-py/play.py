@@ -26,25 +26,49 @@ isinstance(h.say, types.MethodType)
 isinstance(h.say, types.MethodType)
 isinstance(h.say, types.LambdaType)
 
-# isinstance(h.say, types.LambdaType)
-
-
-print (type(len))
-
 import sys
 import os
-
-print (type(sys.exit))
-print (type(sys))
 
 isinstance(Human.say, types.MethodType)
 
 isinstance(sys.exit, types.BuiltinFunctionType)
 isinstance(sys.exit, types.BuiltinMethodType)
 
-
 isinstance(len, types.BuiltinFunctionType)
 isinstance(len, types.BuiltinMethodType)
 
 get_signature(exe)
-# get_signature(print)
+get_signature(print)
+
+def k0(a, b0 = "b0", *b, c0 = "c0", **c):
+    print (a)
+    print (b0)
+    print (b)
+    print (c0)
+    print (c)
+
+def k1(a, b0 = "b0", *, c0 = "c0", **c):
+    print (a)
+    print (b0)
+    print (c0)
+    print (c)
+
+def k2(a, b0 = "b0", *, c0, **c):
+    print (a)
+    print (b0)
+    print (c0)
+    print (c)
+
+def report_parameters(parameters):
+    for k, v in parameters.items():
+        print("- name : {}".format(k))
+        print("  kind : {}".format(v.kind))
+        print("  default : {}".format(v.default))
+
+p0 = get_signature(k0).parameters
+p1 = get_signature(k1).parameters
+p2 = get_signature(k2).parameters
+
+report_parameters(p0)
+report_parameters(p1)
+report_parameters(p2)

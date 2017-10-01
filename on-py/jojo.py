@@ -153,17 +153,76 @@ def exe_fun(fun, vm):
         print ("  fun : {}".format(fun))
 
     parameters = signature.parameters
-    length = len(parameters)
-    arguments = []
-    i = 0
-    while i < length:
-        arguments.append(vm.ds.pop())
-        i = i + 1
-    arguments.reverse()
 
-    result = fun(*arguments)
+    if has_para_dict(parameters):
+        arg_dict = get_default_arg_dict(parameters)
+        top_of_ds = vm.ds.pop()
+        if not isinstance(top_of_ds, dict):
+            print ("- exe_fun fail")
+            print ("  when fun require a arg_dict")
+            print ("  the top of data stack is not a dict")
+            print ("  fun : {}".format(fun))
+            print ("  top of data stack : {}".format(top_of_ds))
+        arg_dict.update(top_of_ds)
+    else:
+        arg_dict = None
+
+    if has_para_list(parameters):
+        top_of_ds = vm.ds.pop()
+        if not isinstance(top_of_ds, list):
+            print ("- exe_fun fail")
+            print ("  when fun require a arg_list")
+            print ("  the top of data stack is not a list")
+            print ("  fun : {}".format(fun))
+            print ("  top of data stack : {}".format(top_of_ds))
+        arg_list = top_of_ds
+    else:
+        arg_list = []
+
+    positional_para_length = get_positional_para_length(parameters)
+    args = []
+    i = 0
+    while i < positional_para_length:
+        args.append(vm.ds.pop())
+        i = i + 1
+    args.reverse()
+    args.extend(arg_list)
+
+    if arg_dict == None:
+        result = fun(*args)
+    else:
+        result = fun(*args, **arg_dict)
 
     push_result_to_vm(result, vm)
+
+def get_positional_para_length(parameters):
+    n = 0
+    for v in parameters.values():
+        if (v.kind == inspect.Parameter.POSITIONAL_ONLY or
+            v.kind == inspect.Parameter.POSITIONAL_OR_KEYWORD):
+            n = n + 1
+    return n
+
+def has_para_list(parameters):
+    for v in parameters.values():
+        if (v.kind == inspect.Parameter.VAR_POSITIONAL):
+            return True
+    return False
+
+def has_para_dict(parameters):
+    for v in parameters.values():
+        if (v.kind == inspect.Parameter.KEYWORD_ONLY or
+            v.kind == inspect.Parameter.VAR_KEYWORD):
+            return True
+    return False
+
+def get_default_arg_dict(parameters):
+    default_dict = {}
+    for v in parameters.values():
+        if (v.kind == inspect.Parameter.KEYWORD_ONLY and
+            v.default != inspect.Parameter.empty):
+            default_dict[v.name] = v.default
+    return default_dict
 
 def drop(a):
     return ()
