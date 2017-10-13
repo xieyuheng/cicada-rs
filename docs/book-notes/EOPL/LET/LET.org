@@ -79,12 +79,12 @@
 
   (+jojo env-apply (-> :var :env -- expval)
     (case :env
-      <null-env> ["- env-apply fail" w nl
-                  "  can not find var : " w :var w nl
+      <null-env> ["- env-apply fail" p nl
+                  "  can not find var : " p :var p nl
                   debug]
       <cons-env> (if :env .var :var equal?
                      then :env .val
-                     else :var :env .rest recur)))
+                     else :var :env .rest env-apply)))
   #+end_src
 
 * specifying expressions
@@ -269,9 +269,9 @@
     (cond
       [:sexp int-jo?]   [:sexp jo->int const-exp]
       [:sexp local-jo?] [:sexp var-exp]
-      [:sexp cons? not] ["- parse fail" w nl
-                         "  can not parse sexp : " w
-                         :sexp sexp-write nl
+      [:sexp cons? not] ["- parse fail" p nl
+                         "  can not parse sexp : " p
+                         :sexp sexp-print nl
                          debug]
       else [:sexp parse/cons]))
 
@@ -291,12 +291,12 @@
 
   #+begin_src jojo
   (+jojo LET (-> :body --)
-    :body {parse program-eval expval-write nl} list-for-each)
+    :body {parse program-eval expval-print nl} list-for-each)
 
-  (+jojo expval-write (-> :expval)
+  (+jojo expval-print (-> :expval)
     (case :expval
-      <num-val>  [:expval .num w]
-      <bool-val> [:expval .bool w]))
+      <num-val>  [:expval .num p]
+      <bool-val> [:expval .bool p]))
   #+end_src
 
 * [test]

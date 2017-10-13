@@ -56,7 +56,7 @@
         -webkit-text-size-adjust:100%;
         font-size:100%;
         height:100%;
-        overflow-x:hidden;
+        overflow-x: hidden;
     }
     #+end_src
 
@@ -79,11 +79,13 @@
     #+begin_src css
     #content {
         height: 100%;
-        margin-left: 300px;
+        margin-left: 23%;
         min-height: 100%;
         padding: 1.618em 3.236em;
-        overflow-x:auto;
-        overflow-y:auto;
+        overflow-x: auto;
+        overflow-y: auto;
+        overflow-wrap: break-word;
+        word-wrap: break-word;
     }
 
     #content::-webkit-scrollbar {
@@ -103,9 +105,9 @@
           position:fixed;
           top:0;
           left:0;
-          width: 300px;
-          overflow-x:auto;
-          overflow-y:auto;
+          width: 23%;
+          overflow-x: auto;
+          overflow-y: auto;
           height:100%;
           background:#343131;
           z-index:200;
@@ -125,7 +127,7 @@
           text-transform:uppercase;
           font-size:80%;
           color:#2980B9;
-          white-space:nowrap
+          /* white-space: nowrap; */
       }
       #+end_src
 
@@ -218,8 +220,8 @@
 
     #+begin_src css
     p {
-        line-height: 0.6em;
-        white-space: pre;
+        /* line-height: 0.6em; */
+        /* white-space: pre; */
     }
     #+end_src
 
@@ -257,160 +259,37 @@
     }
     #+end_src
 
-* media queries
-
-  #+begin_src css
-  @media print{
-      html,body,section{
-          background:none !important}
-
-      *{
-          box-shadow:none !important;
-          text-shadow:none !important;
-          filter:none !important;
-          -ms-filter:none !important}
-
-      a,a:visited{
-            text-decoration:underline}
-
-      pre.src, blockquote{
-          page-break-inside:avoid
-      }
-
-      thead{
-          display:table-header-group}
-
-      tr,img{
-          page-break-inside:avoid}
-
-      img{
-          max-width:100% !important}
-
-      @page{
-          margin:0.5cm}
-
-      p,h2,h3{
-          orphans:3;
-          widows:3}
-
-      h2,h3{
-          page-break-after:avoid}
-  }
-
-  @media print{
-      #postamble{
-          display:none}
-
-      #content{
-          margin-left:0}
-  }
-
-  @media print{
-      #table-of-contents{
-          display:none}
-
-      @page{
-          size: auto;
-          margin: 25mm 25mm 25mm 25mm;}
-
-      body {
-          margin: 0px;}
-  }
-  #+end_src
-
-  #+begin_src css
-  @media screen and (max-width: 768px){
-  }
-  #+end_src
-
-  #+begin_src css
-  @media only screen and (max-width: 480px){
-  }
-
-  @media screen and (max-width: 768px){
-      .tablet-hide{
-          display:none}
-  }
-
-  @media screen and (max-width: 480px){
-      .mobile-hide{
-          display:none}
-  }
-  #+end_src
-
-  #+begin_src css
-  @media screen and (max-width: 480px){
-  }
-  #+end_src
-
-  #+begin_src css
-  @media screen and (max-width: 768px){
-      #content{
-          margin-left:0}
-
-      #content #content{
-          padding:1.618em}
-
-      #content.shift{
-          position:fixed;
-          min-width:100%;
-          left:85%;
-          top:0;
-          height:100%;
-          overflow:hidden}
-  }
-  #+end_src
-
-  #+begin_src css
-  @media screen and (max-width: 768px){
-      #copyright{
-          width:85%;
-          display:none}
-
-      #copyright.shift{
-          display:block}
-
-      img{
-          width:100%;
-          height:auto}
-  }
-  #+end_src
-
-  #+begin_src css
-  @media screen and (max-width: 480px){
-      #content .sidebar{
-          width:100%}
-  }
-  #+end_src
-
 * Tables
 
 *** Basic example
 
     #+begin_src css
-    table{
-        border-collapse:collapse;
-        border-spacing:0;
-        empty-cells:show;
-        margin-bottom:24px;
-        border-bottom:1px solid #e1e4e5;
+    table {
+        border: 1px solid #585850;
+        margin: none;
+        margin-top: 10px;
+        margin-bottom: 10px;
     }
 
-    td{
-        vertical-align:top}
-
-    table td,table th{
-        font-size:90%;
-        margin:0;
-        overflow:visible;
-        padding:8px 16px;
-        border:1px solid #e1e4e5;
+    tbody {
+        border: 1px solid #585850;
     }
 
-    table thead th{
-        font-weight:bold;
-        border-top:3px solid #e1e4e5;
-        border-bottom:1px solid #e1e4e5;
+    td {
+        border: 1px solid #585850;
+    }
+
+    th {
+        border: 1px solid #585850;
+    }
+
+    table.full {
+        border: 1px solid #585850;
+    }
+
+    table.full td {
+        border: 1px solid #585850;
+        padding: 5px;
     }
     #+end_src
 
@@ -435,6 +314,16 @@
         /* background-color:white; */
     }
     #+end_src
+
+* section line
+
+  #+begin_src css
+  hr {
+      border: 0;
+      height: 1px;
+      background-image: linear-gradient(to right, rgba(0, 0, 0, 0), rgba(233, 233, 233, 0.75), rgba(0, 0, 0, 0));
+  }
+  #+end_src
 
 * images
 
@@ -475,7 +364,7 @@
       position:fixed;
       bottom:0;
       left:0;
-      width: 300px;
+      width: 23%;
       color:#fcfcfc;
       background: #666;
       border-top:solid 10px #343131;
@@ -540,53 +429,35 @@
   }
   #+end_src
 
-* responsive utilities -- for sidebar
+* @media screen
 
-  #+begin_src css
-  #toggle-sidebar,
-  #table-of-contents .close-sidebar {
-      display: none;
-  }
+*** ><
 
-  @media screen and (max-width: 768px) {
-      #table-of-contents {
-          display: none;
-          width: 60%;
-      }
+    #+begin_src css
+    @media screen and (max-width: 768px){
+        #content {
+            margin-left: 0;
+        }
+    }
 
-      #table-of-contents h2 a {
-          display: block;
-      }
+    @media screen and (max-width: 768px){
+        #copyright {
+            display: none;
+        }
 
-      #table-of-contents:target {
-          display: block;
-      }
+        img {
+            width: 100%;
+            height: auto;
+        }
+    }
+    #+end_src
 
-      #copyright, #postamble {
-          display: none;
-      }
+*** hide sidebar
 
-      #toggle-sidebar {
-          background-color: #2980B9;
-          display: block;
-          margin-bottom: 1.6em;
-          padding: 0.6em;
-          text-align: center;
-      }
-
-      #toggle-sidebar h2 {
-          color: white;
-          font-size: 100%;
-          line-height: 50px;
-          margin: 0;
-          padding: 0;
-      }
-
-      #table-of-contents .close-sidebar {
-         color: rgba(255, 255, 255, 0.3);
-         display: inline-block;
-         margin: 0px 10px 0px 45px;
-         padding: 10px;
-      }
-  }
-  #+end_src
+    #+begin_src css
+    @media screen and (max-width: 768px) {
+        #table-of-contents {
+            display: none;
+        }
+    }
+    #+end_src
