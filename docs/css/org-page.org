@@ -1,5 +1,5 @@
 ﻿#+property: tangle org-page.css
-#+title: read the org
+#+title: org page
 
 * typography
 
@@ -127,21 +127,6 @@
           text-transform:uppercase;
           font-size:80%;
           color:#2980B9;
-          /* white-space: nowrap; */
-      }
-      #+end_src
-
-***** scrollbar
-
-      #+begin_src css
-      /* hide scrollbar but still be able to scroll
-       * do not know how to do this in firefox
-      */
-      #table-of-contents::-webkit-scrollbar {
-          display: none;
-      }
-      #table-of-contents {
-          -ms-overflow-style: none;
       }
       #+end_src
 
@@ -256,7 +241,7 @@
         font-size: 0.8em;
         white-space: pre;
         border-left: 1px solid #585850;
-        overflow-x: scroll;
+        overflow-x: auto;
     }
     #+end_src
 
@@ -432,33 +417,23 @@
 
 * @media screen
 
-*** ><
+  #+begin_src css
+  @media screen and (max-width: 768px){
+      #content {
+          margin-left: 0;
+      }
 
-    #+begin_src css
-    @media screen and (max-width: 768px){
-        #content {
-            margin-left: 0;
-        }
-    }
+      #copyright {
+          display: none;
+      }
 
-    @media screen and (max-width: 768px){
-        #copyright {
-            display: none;
-        }
+      img {
+          width: 100%;
+          height: auto;
+      }
 
-        img {
-            width: 100%;
-            height: auto;
-        }
-    }
-    #+end_src
-
-*** hide sidebar
-
-    #+begin_src css
-    @media screen and (max-width: 768px) {
-        #table-of-contents {
-            display: none;
-        }
-    }
-    #+end_src
+      #table-of-contents {
+          display: none;
+      }
+  }
+  #+end_src
