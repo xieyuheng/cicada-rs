@@ -136,18 +136,20 @@
 
 (+jojo parse (-> :sexp -- exp)
   (cond
-    [:sexp string?]
-    (cond
-      [:sexp int-string?]   [:sexp string->int const-exp]
-      [:sexp local-string?] [:sexp var-exp]
-      else ["- parse fail" p nl
-            "  can not parse string : " p :sexp p nl
-            error])
+    [:sexp string?] [:sexp parse/string]
     [:sexp cons?] [:sexp parse/cons]
     else  ["- parse fail" p nl
            "  can not parse sexp : " p
            :sexp sexp-print nl
            error]))
+
+(+jojo parse/string (-> :string -- exp)
+  (cond
+    [:string int-string?]   [:string string->int const-exp]
+    [:string local-string?] [:string var-exp]
+    else ["- parse/string fail" p nl
+          "  can not parse string : " p :string p nl
+          error]))
 
 (+jojo parse/cons (-> :sexp -- exp)
   :sexp .car :key!
