@@ -64,38 +64,38 @@
   (case :static-env
 
     <null-static-env>
-    ["- static-env-apply fail" w nl
-     "  can not find var : " w :var w nl
-     debug]
+    ["- static-env-apply fail" p nl
+     "  can not find var : " p :var p nl
+     error]
 
     <cons-static-env>
-    (if :static-env .var :var equal?
-      then 0
-      else :var :static-env .rest recur inc)))
+    (if [:static-env .var :var equal?]
+      0
+      [:var :static-env .rest static-env-apply inc])))
 
 (+jojo tran (-> :exp :static-env -- nameless-exp)
   (case :exp
     <const-exp> :exp
-    <zero?-exp> [:exp .exp1 :static-env recur zero?-exp]
-    <if-exp>    [:exp .exp1 :static-env recur
-                 :exp .exp2 :static-env recur
-                 :exp .exp3 :static-env recur if-exp]
-    <diff-exp>  [:exp .exp1 :static-env recur
-                 :exp .exp2 :static-env recur diff-exp]
-    <call-exp>  [:exp .rator :static-env recur
-                 :exp .rand  :static-env recur call-exp]
+    <zero?-exp> [:exp .exp1 :static-env tran zero?-exp]
+    <if-exp>    [:exp .exp1 :static-env tran
+                 :exp .exp2 :static-env tran
+                 :exp .exp3 :static-env tran if-exp]
+    <diff-exp>  [:exp .exp1 :static-env tran
+                 :exp .exp2 :static-env tran diff-exp]
+    <call-exp>  [:exp .rator :static-env tran
+                 :exp .rand  :static-env tran call-exp]
 
     <var-exp>   [:exp .var
                  :static-env static-env-apply
                  var-nameless-exp]
     <let-exp>   [:static-env, :exp .var, cons-static-env
                  :new-static-env!
-                 :exp .exp1 :static-env recur
-                 :exp .body :new-static-env recur
+                 :exp .exp1 :static-env tran
+                 :exp .body :new-static-env tran
                  let-nameless-exp]
     <proc-exp>  [:static-env, :exp .var, cons-static-env
                  :new-static-env!
-                 :exp .body :new-static-env recur
+                 :exp .body :new-static-env tran
                  proc-nameless-exp]))
 
 (+data <null-nameless-env>)
@@ -104,13 +104,13 @@
 (+jojo nameless-env-apply
   (-> :lexical-address :nameless-env -- denval)
   (cond [:nameless-env null-nameless-env?]
-        ["- nameless-env-apply fail" w nl
-         "  lexical-address greater then" w nl
-         "  length of nameless-env" w nl
-         debug]
+        ["- nameless-env-apply fail" p nl
+         "  lexical-address greater then" p nl
+         "  length of nameless-env" p nl
+         error]
         [:lexical-address 0 eq?] [:nameless-env .val]
         else [:lexical-address dec
-              :nameless-env .rest recur]))
+              :nameless-env .rest nameless-env-apply]))
 
 (note denval = expval)
 
@@ -133,21 +133,21 @@
 (+jojo eval (-> :exp :env -- expval)
   (case :exp
     <const-exp> [:exp .num num-val]
-    <zero?-exp> [:exp .exp1 :env recur .num 0 equal? bool-val]
-    <if-exp>    (if :exp .exp1 :env recur .bool
-                    then :exp .exp2 :env recur
-                    else :exp .exp3 :env recur)
-    <diff-exp>  [:exp .exp1 :env recur .num
-                 :exp .exp2 :env recur .num sub num-val]
-    <call-exp>  [:exp .rator :env recur .proc :proc!
-                 :exp .rand  :env recur :arg!
+    <zero?-exp> [:exp .exp1 :env eval .num 0 equal? bool-val]
+    <if-exp>    (if [:exp .exp1 :env eval .bool]
+                    [:exp .exp2 :env eval]
+                    [:exp .exp3 :env eval])
+    <diff-exp>  [:exp .exp1 :env eval .num
+                 :exp .exp2 :env eval .num sub num-val]
+    <call-exp>  [:exp .rator :env eval .proc :proc!
+                 :exp .rand  :env eval :arg!
                  :arg :proc proc-apply]
 
     <var-nameless-exp> [:exp .num :env nameless-env-apply]
     <let-nameless-exp> [:env
-                        :exp .exp1 :env recur
+                        :exp .exp1 :env eval
                         cons-nameless-env :new-env!
-                        :exp .body :new-env recur]
+                        :exp .body :new-env eval]
     <proc-nameless-exp> [:exp .body :env proc proc-val]))
 
 (+jojo init-static-env
@@ -167,13 +167,20 @@
 
 (+jojo parse (-> :sexp -- exp)
   (cond
-    [:sexp int-jo?]   [:sexp jo->int const-exp]
-    [:sexp local-jo?] [:sexp var-exp]
-    [:sexp cons? not] ["- parse fail" w nl
-                       "  can not parse sexp : " w
-                       :sexp sexp-write nl
-                       debug]
-    else [:sexp parse/cons]))
+    [:sexp string?] [:sexp parse/string]
+    [:sexp cons?] [:sexp parse/cons]
+    else  ["- parse fail" p nl
+           "  can not parse sexp : " p
+           :sexp sexp-print nl
+           error]))
+
+(+jojo parse/string (-> :string -- exp)
+  (cond
+    [:string int-string?]   [:string string->int const-exp]
+    [:string local-string?] [:string var-exp]
+    else ["- parse/string fail" p nl
+          "  can not parse string : " p :string p nl
+          error]))
 
 (+jojo parse/cons (-> :sexp -- exp)
   :sexp .car :key!
@@ -194,13 +201,14 @@
   :body {parse
          init-static-env tran
          program-eval
-         expval-write nl}
-  list-for-each)
+         expval-print nl}
+  list-for-each
+  '(begin))
 
-(+jojo expval-write (-> :expval)
+(+jojo expval-print (-> :expval)
   (case :expval
-    <num-val>  [:expval .num w]
-    <bool-val> [:expval .bool w]))
+    <num-val>  [:expval .num p]
+    <bool-val> [:expval .bool p]))
 
 (NAMELESS
  1 2 3

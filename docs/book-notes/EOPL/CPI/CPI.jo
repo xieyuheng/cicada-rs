@@ -48,17 +48,17 @@
 
 (+jojo env-apply (-> :var :env -- expval)
   (case :env
-    <null-env> ["- env-apply fail" w nl
-                "  can not find var : " w :var w nl
-                debug]
-    <cons-env> (if :var :env .var equal?
-                 then :env .val
-                 else :var :env .rest recur)
+    <null-env> ["- env-apply fail" p nl
+                "  can not find var : " p :var p nl
+                error]
+    <cons-env> (if [:var :env .var equal?]
+                 [:env .val]
+                 [:var :env .rest env-apply])
     <cons-rec-env> (cond [:var :env .proc-name equal?]
                          [:env .bound-var
                           :env .proc-body
                           :env proc proc-val]
-                         else [:var :env .rest recur])))
+                         else [:var :env .rest env-apply])))
 
 (+jojo init-env
   null-env
@@ -84,27 +84,27 @@
                   :exp .proc-body
                   cons-rec-env :new-env!
                   :exp .letrec-body :new-env
-                  :cont recur]
+                  :cont eval]
 
     <zero?-exp> [:exp .exp1 :env
                  :cont zero1-cont
-                 recur]
+                 eval]
 
     <let-exp>   [:exp .exp1 :env
                  :exp .var, :exp .body, :env, :cont, let-exp-cont
-                 recur]
+                 eval]
 
     <if-exp>    [:exp .exp1 :env
                  :exp .exp2, :exp .exp3, :env, :cont, if-test-cont
-                 recur]
+                 eval]
 
     <diff-exp>  [:exp .exp1 :env
                  :exp .exp2, :env, :cont, diff1-cont
-                 recur]
+                 eval]
 
     <call-exp>  [:exp .rator :env
                  :exp .rand, :env, :cont, rator-cont
-                 recur]))
+                 eval]))
 
 (+data <end-cont>)
 (+data <zero1-cont> .rest)
@@ -122,10 +122,10 @@
   (case :cont
 
     <end-cont>
-    ["end of computation." w nl :val]
+    ["end of computation." p nl :val]
 
     <zero1-cont>
-    [:val .num 0 eq? bool-val :cont .rest recur]
+    [:val .num 0 eq? bool-val :cont .rest cont-apply]
 
     <let-exp-cont>
     [:cont .body
@@ -133,9 +133,9 @@
      :cont .rest eval]
 
     <if-test-cont>
-    (if :val .bool
-      then :cont .exp2 :cont .env :cont .rest eval
-      else :cont .exp3 :cont .env :cont .rest eval)
+    (if [:val .bool]
+      [:cont .exp2 :cont .env :cont .rest eval]
+      [:cont .exp3 :cont .env :cont .rest eval])
 
     <diff1-cont>
     [:cont .exp2 :cont .env
@@ -145,7 +145,7 @@
     <diff2-cont>
     [:cont .val .num, :val .num, sub, num-val
      :cont .rest
-     recur]
+     cont-apply]
 
     <rator-cont>
     [:cont .rand :cont .env
@@ -174,13 +174,20 @@
 
 (+jojo parse (-> :sexp -- exp)
   (cond
-    [:sexp int-jo?]   [:sexp jo->int const-exp]
-    [:sexp local-jo?] [:sexp var-exp]
-    [:sexp cons? not] ["- parse fail" w nl
-                       "  can not parse sexp : " w
-                       :sexp sexp-write nl
-                       debug]
-    else [:sexp parse/cons]))
+    [:sexp string?] [:sexp parse/string]
+    [:sexp cons?] [:sexp parse/cons]
+    else  ["- parse fail" p nl
+           "  can not parse sexp : " p
+           :sexp sexp-print nl
+           error]))
+
+(+jojo parse/string (-> :string -- exp)
+  (cond
+    [:string int-string?]   [:string string->int const-exp]
+    [:string local-string?] [:string var-exp]
+    else ["- parse/string fail" p nl
+          "  can not parse string : " p :string p nl
+          error]))
 
 (+jojo parse/cons (-> :sexp -- exp)
   :sexp .car :key!
@@ -203,12 +210,13 @@
 (+jojo parse/spread {parse} list-map list-spread)
 
 (+jojo CPI (-> :body --)
-  :body {parse program-eval expval-write nl} list-for-each)
+  :body {parse program-eval expval-print nl} list-for-each
+  '(begin))
 
-(+jojo expval-write (-> :expval)
+(+jojo expval-print (-> :expval)
   (case :expval
-    <num-val>  [:expval .num w]
-    <bool-val> [:expval .bool w]))
+    <num-val>  [:expval .num p]
+    <bool-val> [:expval .bool p]))
 
 (CPI
  1 2 3

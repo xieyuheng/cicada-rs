@@ -72,8 +72,8 @@
   #+begin_src jojo
   (note
     (= :rator :rand call-exp :env eval,
-       :rator :env recur .proc :proc!
-       :rand  :env recur :arg!
+       :rator :env eval .proc :proc!
+       :rand  :env eval :arg!
        :arg :proc proc-apply))
   #+end_src
 
@@ -87,12 +87,12 @@
 
   (+jojo env-apply (-> :var :env -- expval)
     (case :env
-      <null-env> ["- env-apply fail" w nl
-                  "  can not find var : " w :var w nl
-                  debug]
-      <cons-env> (if :env .var :var equal?
-                     then :env .val
-                     else :var :env .rest recur)))
+      <null-env> ["- env-apply fail" p nl
+                  "  can not find var : " p :var p nl
+                  error]
+      <cons-env> (if [:env .var :var equal?]
+                     [:env .val]
+                     [:var :env .rest env-apply])))
   #+end_src
 
 * program
@@ -114,22 +114,22 @@
   (+jojo eval (-> :exp :env -- expval)
     (case :exp
       <const-exp> [:exp .num  num-val]
-      <zero?-exp> [:exp .exp1 :env recur .num 0 equal? bool-val]
-      <if-exp>    (if :exp .exp1 :env recur .bool
-                      then :exp .exp2 :env recur
-                      else :exp .exp3 :env recur)
-      <diff-exp>  [:exp .exp1 :env recur .num
-                   :exp .exp2 :env recur .num sub num-val]
+      <zero?-exp> [:exp .exp1 :env eval .num 0 equal? bool-val]
+      <if-exp>    (if [:exp .exp1 :env eval .bool]
+                      [:exp .exp2 :env eval]
+                      [:exp .exp3 :env eval])
+      <diff-exp>  [:exp .exp1 :env eval .num
+                   :exp .exp2 :env eval .num sub num-val]
       <var-exp>   [:exp .var :env env-apply]
       <let-exp>   [:env
                    :exp .var
-                   :exp .exp1 :env recur
+                   :exp .exp1 :env eval
                    cons-env :new-env!
-                   :exp .body :new-env recur]
+                   :exp .body :new-env eval]
 
       <proc-exp>  [:exp .var :exp .body :env proc proc-val]
-      <call-exp>  [:exp .rator :env recur .proc :proc!
-                   :exp .rand  :env recur :arg!
+      <call-exp>  [:exp .rator :env eval .proc :proc!
+                   :exp .rand  :env eval :arg!
                    :arg :proc proc-apply]))
   #+end_src
 
@@ -149,13 +149,20 @@
 
   (+jojo parse (-> :sexp -- exp)
     (cond
-      [:sexp int-jo?]   [:sexp jo->int const-exp]
-      [:sexp local-jo?] [:sexp var-exp]
-      [:sexp cons? not] ["- parse fail" w nl
-                         "  can not parse sexp : " w
-                         :sexp sexp-write nl
-                         debug]
-      else [:sexp parse/cons]))
+      [:sexp string?] [:sexp parse/string]
+      [:sexp cons?] [:sexp parse/cons]
+      else  ["- parse fail" p nl
+             "  can not parse sexp : " p
+             :sexp sexp-print nl
+             error]))
+
+  (+jojo parse/string (-> :string -- exp)
+    (cond
+      [:string int-string?]   [:string string->int const-exp]
+      [:string local-string?] [:string var-exp]
+      else ["- parse/string fail" p nl
+            "  can not parse string : " p :string p nl
+            error]))
 
   (+jojo parse/cons (-> :sexp -- exp)
     :sexp .car :key!
@@ -177,12 +184,13 @@
 
   #+begin_src jojo
   (+jojo PROC (-> :body --)
-    :body {parse program-eval expval-write nl} list-for-each)
+    :body {parse program-eval expval-print nl} list-for-each
+    '(begin))
 
-  (+jojo expval-write (-> :expval)
+  (+jojo expval-print (-> :expval)
     (case :expval
-      <num-val>  [:expval .num w]
-      <bool-val> [:expval .bool w]))
+      <num-val>  [:expval .num p]
+      <bool-val> [:expval .bool p]))
   #+end_src
 
 * [test]
