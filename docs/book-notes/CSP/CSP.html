@@ -3,7 +3,7 @@
 "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en">
 <head>
-<!-- 2017-10-16 Mon 01:17 -->
+<!-- 2017-10-17 Tue 22:02 -->
 <meta http-equiv="Content-Type" content="text/html;charset=utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>Communicating Sequential Processes</title>
@@ -64,79 +64,101 @@ for the JavaScript code in this tag.
 <h2>overview</h2>
 <div id="text-table-of-contents">
 <ul>
-<li><a href="#org74db88c">1 Processes</a>
+<li><a href="#orgffb1647"><span class="done _todo_stack_">[todo-stack]</span> </a></li>
+<li><a href="#org97d3ab8">1 Processes</a>
 <ul>
-<li><a href="#org4e3dc79">1.1  Introduction</a></li>
-<li><a href="#org5aa7176">1.2  Pictures</a></li>
-<li><a href="#org61a6b6a">1.3  Laws</a></li>
-<li><a href="#orgf400230">1.4  Implementation of processes</a></li>
-<li><a href="#orgde55c49">1.5  Traces</a></li>
-<li><a href="#org31c82e0">1.6  Operations on traces</a></li>
-<li><a href="#org2c41c4f">1.7  Implementation of traces</a></li>
-<li><a href="#orgf3b985b">1.8  Traces of a process</a></li>
-<li><a href="#orga49c566">1.9  More operations on traces</a></li>
-<li><a href="#orgfa9b4b2">1.10 Specifications</a></li>
+<li><a href="#orgd914975">1.1  Introduction</a>
+<ul>
+<li><a href="#org5a90486">1.1.1 prefix</a></li>
+<li><a href="#orgdf22e63">1.1.2 recursion</a></li>
+<li><a href="#orgc3d3b3">1.1.3 choice</a></li>
+<li><a href="#orgfbbf44b">1.1.4 mutual recursion</a></li>
 </ul>
 </li>
-<li><a href="#org736de9">2 concurrency</a>
+<li><a href="#orgdfb44c3">1.2  Pictures</a></li>
+<li><a href="#orgadb431">1.3  Laws</a></li>
+<li><a href="#org33901d2">1.4  Implementation of processes</a>
 <ul>
-<li><a href="#orgd0e2c51">2.1  introduction</a></li>
-<li><a href="#org3e7ee5c">2.2  intersection</a></li>
-<li><a href="#orgb31d294">2.3  Concurrency</a></li>
-<li><a href="#orgdfc4ad2">2.4  Pictures</a></li>
-<li><a href="#org1419d1a">2.5  Example: The Dining Philosophers</a></li>
-<li><a href="#org71a3178">2.6  Change of symbol</a></li>
-<li><a href="#org4169b4b">2.7  Specifications</a></li>
-<li><a href="#org105b088">2.8  Mathematical theory of deterministic processes</a></li>
+<li><a href="#orgcd1069f">type</a></li>
+<li><a href="#org8034c82">STOP</a></li>
+<li><a href="#orgf136b1">prefix</a></li>
+<li><a href="#org389e23c">dict-choice</a></li>
+<li><a href="#org9281cf4">menu</a></li>
+<li><a href="#org7295744">interact</a></li>
+<li><a href="#org7cb35df">(-)</a></li>
+<li><a href="#orgd7f65ad">(|)</a></li>
+<li><a href="#org739c724"><span class="todo _gt__lt_">&gt;&lt;</span> (proc) &#x2013; marking language</a></li>
+<li><a href="#org36dfeb7"><span class="todo _gt__lt_">&gt;&lt;</span> (choice) &#x2013; general choice</a></li>
+<li><a href="#org6072f7a"><span class="done _test_">[test]</span> </a></li>
 </ul>
 </li>
-<li><a href="#org35b20d7">3 Nondeterminism</a>
-<ul>
-<li><a href="#org2048e90">3.1  Introduction</a></li>
-<li><a href="#orgde37794">3.2  Nondeterministic or</a></li>
-<li><a href="#org829adb6">3.3  General choice</a></li>
-<li><a href="#orgbb7d2bf">3.4  Refusals</a></li>
-<li><a href="#org464c490">3.5  Concealment</a></li>
-<li><a href="#orgbb0dc5b">3.6  Interleaving</a></li>
-<li><a href="#orgfb54d4a">3.7  Specifications</a></li>
-<li><a href="#orgab98379">3.8  Divergence</a></li>
-<li><a href="#org707810b">3.9  Mathematical theory of non-deterministic processes</a></li>
+<li><a href="#org77f3bd9">1.5  Traces</a></li>
+<li><a href="#org971c4a5">1.6  Operations on traces</a></li>
+<li><a href="#orgf7e322">1.7  Implementation of traces</a></li>
+<li><a href="#orgdbe8756">1.8  Traces of a process</a></li>
+<li><a href="#orgcd4a51e">1.9  More operations on traces</a></li>
+<li><a href="#org9f4defa">1.10 Specifications</a></li>
 </ul>
 </li>
-<li><a href="#org80fc5ea">4 Communication</a>
+<li><a href="#org6c8eb20">2 Concurrency</a>
 <ul>
-<li><a href="#orgc3bcbb7">4.1  Introduction</a></li>
-<li><a href="#orge9b5ad5">4.2  Input and output</a></li>
-<li><a href="#org17daaf0">4.3  Communications</a></li>
-<li><a href="#org3db39">4.4  Pipes</a></li>
-<li><a href="#orgb406e77">4.5  Subordination</a></li>
+<li><a href="#org6da26f">2.1  Introduction</a></li>
+<li><a href="#orgaa032d3">2.2  Intersection</a></li>
+<li><a href="#org423a187">2.3  Concurrency</a></li>
+<li><a href="#org6e5e502">2.4  Pictures</a></li>
+<li><a href="#orgad942a2">2.5  Example: The Dining Philosophers</a></li>
+<li><a href="#org936a604">2.6  Change of symbol</a></li>
+<li><a href="#org8e411c7">2.7  Specifications</a></li>
+<li><a href="#org9fc86a4">2.8  Mathematical theory of deterministic processes</a></li>
 </ul>
 </li>
-<li><a href="#org36b010">5 Sequential Processes</a>
+<li><a href="#org52b6ff5">3 Nondeterminism</a>
 <ul>
-<li><a href="#org573bb39">5.1  Introduction</a></li>
-<li><a href="#orgb87626b">5.2  Laws</a></li>
-<li><a href="#orga1ad28e">5.3  Mathematical treatment</a></li>
-<li><a href="#orgb1a659b">5.4  Interrupts</a></li>
-<li><a href="#orgbadf3a7">5.5  Assignment</a></li>
+<li><a href="#org35f7d2d">3.1  Introduction</a></li>
+<li><a href="#org8f335f3">3.2  Nondeterministic or</a></li>
+<li><a href="#org90c2c39">3.3  General choice</a></li>
+<li><a href="#org781bec5">3.4  Refusals</a></li>
+<li><a href="#orgf72e8c3">3.5  Concealment</a></li>
+<li><a href="#org17278d0">3.6  Interleaving</a></li>
+<li><a href="#org821dfdd">3.7  Specifications</a></li>
+<li><a href="#org30f3bc2">3.8  Divergence</a></li>
+<li><a href="#orga87baaa">3.9  Mathematical theory of non-deterministic processes</a></li>
 </ul>
 </li>
-<li><a href="#org43d9d7b">6 Shared Resources</a>
+<li><a href="#orgbf6c00f">4 Communication</a>
 <ul>
-<li><a href="#org5752905">6.1  Introduction</a></li>
-<li><a href="#org73e2868">6.2  Sharing by interleaving</a></li>
-<li><a href="#org8740453">6.3  Shared storage</a></li>
-<li><a href="#orgd1de3c4">6.4  Multiple resources</a></li>
-<li><a href="#org9892ce3">6.5  Operating systems</a></li>
-<li><a href="#org4adce6f">6.6  Scheduling</a></li>
+<li><a href="#org276fcd1">4.1  Introduction</a></li>
+<li><a href="#org13581d9">4.2  Input and output</a></li>
+<li><a href="#orgf76941d">4.3  Communications</a></li>
+<li><a href="#orga0e9215">4.4  Pipes</a></li>
+<li><a href="#orgc55a39c">4.5  Subordination</a></li>
 </ul>
 </li>
-<li><a href="#org5d72524">7 Discussion</a>
+<li><a href="#orgcb5374e">5 Sequential Processes</a>
 <ul>
-<li><a href="#org6435789">7.1  Introduction</a></li>
-<li><a href="#orgd99e5c9">7.2  Shared storage</a></li>
-<li><a href="#org9f0412b">7.3  Communication</a></li>
-<li><a href="#org1bf6361">7.4  Mathematical models</a></li>
+<li><a href="#org9da3c90">5.1  Introduction</a></li>
+<li><a href="#orga614b54">5.2  Laws</a></li>
+<li><a href="#orgb8dab4d">5.3  Mathematical treatment</a></li>
+<li><a href="#org475dfe5">5.4  Interrupts</a></li>
+<li><a href="#org853e810">5.5  Assignment</a></li>
+</ul>
+</li>
+<li><a href="#org4743082">6 Shared Resources</a>
+<ul>
+<li><a href="#org78c2c2a">6.1  Introduction</a></li>
+<li><a href="#org273102d">6.2  Sharing by interleaving</a></li>
+<li><a href="#orgb8de25e">6.3  Shared storage</a></li>
+<li><a href="#orgae544d1">6.4  Multiple resources</a></li>
+<li><a href="#org536382e">6.5  Operating systems</a></li>
+<li><a href="#orgf43f6c">6.6  Scheduling</a></li>
+</ul>
+</li>
+<li><a href="#orge984edf">7 Discussion</a>
+<ul>
+<li><a href="#orgc26ea44">7.1  Introduction</a></li>
+<li><a href="#org3f8e83a">7.2  Shared storage</a></li>
+<li><a href="#orgec011a4">7.3  Communication</a></li>
+<li><a href="#orgbc15980">7.4  Mathematical models</a></li>
 </ul>
 </li>
 </ul>
@@ -145,241 +167,620 @@ for the JavaScript code in this tag.
 <ul class="org-ul">
 <li><p>by C. A. R. Hoare</p></li></ul>
 
-<div id="outline-container-org74db88c" class="outline-2">
-<h2 id="org74db88c">1 Processes</h2>
-<div class="outline-text-2" id="text-org74db88c">
-</div><div id="outline-container-org4e3dc79" class="outline-3">
-<h3 id="org4e3dc79">1.1  Introduction</h3>
-<div class="outline-text-3" id="text-org4e3dc79">
+<div id="outline-container-orgffb1647" class="outline-2">
+<h2 id="orgffb1647"><span class="done _todo_stack_">[todo-stack]</span> </h2>
+<div class="outline-text-2" id="text-orgffb1647">
 <ul class="org-ul">
-<li><p>the word 'process' stand for</p><p>the behaviour pattern of an object,</p><p>insofar as it can be described</p><p>in terms of the limited set of events</p><p>selected as its alphabet.</p></li>
-
-<li><p>prefix -</p><p>(x : event) (P : process)</p><p>(x -&gt; P) &#x2013; pronounced "x then P"</p><p></p><p><ul class="org-ul"></p><p><li><p><p></p><p>x -</p><p></p></p><p><div class="org-src-container"></p><p></p><p><pre class="src src-jojo"><span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">+process</span> <span style="color: #66d9ef; font-weight: bold;">CLOCK</span> <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">-</span> tick CLOCK<span style="color: #696969;">))</span></p><p><span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">+process</span> <span style="color: #66d9ef; font-weight: bold;">VMS</span> <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">-</span> coin choc <span style="color: #66d9ef; font-weight: bold;">VMS</span><span style="color: #696969;">))</span></p><p></pre></p><p></div></p></li></ul></p></li>
-
-<li><p>choice -</p><p>(x -&gt; P | y -&gt; Q)</p><p>The bar | should be pronounced "choice"</p><p>"x then P choice y then Q"</p><p></p><p><ul class="org-ul"></p><p><li><p><p></p><p>x -</p><p></p></p><p><div class="org-src-container"></p><p></p><p><pre class="src src-jojo"><span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">+process</span> <span style="color: #66d9ef; font-weight: bold;">CH5C</span></p><p>  <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">-</span> in5p</p><p>     <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">|</span> out1p <span style="color: #797979;">[</span>out1p out1p out2p <span style="color: #66d9ef; font-weight: bold;">CH5C</span><span style="color: #797979;">]</span></p><p>        out2p <span style="color: #797979;">[</span>out1p out2p CH5C<span style="color: #797979;">]</span><span style="color: #696969;">)))</span></p><p></p><p><span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">+process</span> <span style="color: #66d9ef; font-weight: bold;">VMCT</span></p><p>  <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">-</span> coin</p><p>     <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">|</span> choc <span style="color: #66d9ef; font-weight: bold;">VMCT</span></p><p>        toffee VMCT<span style="color: #696969;">)))</span></p><p></p><p><span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">+process</span> <span style="color: #66d9ef; font-weight: bold;">VMC</span></p><p>  <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">note</span> <span style="color: #66d9ef; font-weight: bold;">WARNING:</span> do not insert three pennies in a row.<span style="color: #696969;">)</span></p><p>  <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">|</span> in2p <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">|</span> large <span style="color: #66d9ef; font-weight: bold;">VMC</span></p><p>             small <span style="color: #797979;">[</span>out1p <span style="color: #66d9ef; font-weight: bold;">VMC</span><span style="color: #797979;">]</span><span style="color: #696969;">)</span></p><p>     in1p <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">|</span> small <span style="color: #66d9ef; font-weight: bold;">VMC</span></p><p>             in1p <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">|</span> large <span style="color: #66d9ef; font-weight: bold;">VMC</span></p><p>                     in1p STOP<span style="color: #696969;">))))</span></p><p></p><p><span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">+process</span> <span style="color: #66d9ef; font-weight: bold;">COPYBIT</span></p><p>  <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">|</span> in.0 <span style="color: #797979;">[</span>out.0 <span style="color: #66d9ef; font-weight: bold;">COPYBIT</span><span style="color: #797979;">]</span></p><p>     in.1 <span style="color: #797979;">[</span>out.1 COPYBIT<span style="color: #797979;">]</span><span style="color: #696969;">))</span></p><p></p><p><span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">note</span> <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">process</span> <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">|</span><span style="color: #696969;">))</span> == STOP<span style="color: #696969;">)</span></p><p></p><p><span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">+jojo</span> <span style="color: #66d9ef; font-weight: bold;">CT</span> <span style="color: #696969;">(</span><span style="color: #66d9ef; font-weight: bold;">-&gt;</span> <span style="color: #a6e22e;">:n</span> <span style="color: #66d9ef; font-weight: bold;">&lt;nat&gt;</span> <span style="color: #66d9ef; font-weight: bold;">--</span> <span style="color: #66d9ef; font-weight: bold;">&lt;process&gt;</span><span style="color: #696969;">)</span></p><p>  <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">cond</span> <span style="color: #797979;">[</span><span style="color: #a6e22e;">:n</span> <span style="color: #ae81ff;">0</span> eq?<span style="color: #797979;">]</span></p><p>        <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">|</span> up <span style="color: #797979;">[</span><span style="color: #ae81ff;">1</span> <span style="color: #66d9ef; font-weight: bold;">CT</span><span style="color: #797979;">]</span></p><p>           around <span style="color: #797979;">[</span><span style="color: #ae81ff;">0</span> <span style="color: #66d9ef; font-weight: bold;">CT</span><span style="color: #797979;">]</span><span style="color: #696969;">)</span></p><p>        <span style="color: #66d9ef; font-weight: bold;">else</span></p><p>        <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">|</span> up <span style="color: #797979;">[</span><span style="color: #a6e22e;">:n</span> inc <span style="color: #66d9ef; font-weight: bold;">CT</span><span style="color: #797979;">]</span></p><p>           down <span style="color: #797979;">[</span><span style="color: #a6e22e;">:n</span> dec <span style="color: #66d9ef; font-weight: bold;">CT</span><span style="color: #797979;">]</span><span style="color: #696969;">)))</span></p><p></pre></p><p></div></p></li></ul></p></li></ul>
+<li><p>(proc)</p></li>
+<li><p>(choice)</p></li></ul>
 </div>
 </div>
 
-<div id="outline-container-org5aa7176" class="outline-3">
-<h3 id="org5aa7176">1.2  Pictures</h3>
+<div id="outline-container-org97d3ab8" class="outline-2">
+<h2 id="org97d3ab8">1 Processes</h2>
+<div class="outline-text-2" id="text-org97d3ab8">
+</div><div id="outline-container-orgd914975" class="outline-3">
+<h3 id="orgd914975">1.1  Introduction</h3>
+<div class="outline-text-3" id="text-orgd914975">
+<ul class="org-ul">
+<li><p>the word 'process' stand for</p><p>the behaviour pattern of an object,</p><p>insofar as it can be described</p><p>in terms of the limited set of events</p><p>selected as its alphabet.</p></li></ul>
 </div>
 
-<div id="outline-container-org61a6b6a" class="outline-3">
-<h3 id="org61a6b6a">1.3  Laws</h3>
-</div>
+<div id="outline-container-org5a90486" class="outline-4">
+<h4 id="org5a90486">1.1.1 prefix</h4>
+<div class="outline-text-4" id="text-org5a90486">
+<div class="org-src-container">
 
-<div id="outline-container-orgf400230" class="outline-3">
-<h3 id="orgf400230">1.4  Implementation of processes</h3>
-</div>
+<pre class="src src-jojo"><span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">note</span>
+  a simple vending machine
+  that successfully serves two customers before breaking<span style="color: #696969;">)</span>
 
-<div id="outline-container-orgde55c49" class="outline-3">
-<h3 id="orgde55c49">1.5  Traces</h3>
-</div>
+<span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">-</span> coin choc coin choc STOP<span style="color: #696969;">)</span>
 
-<div id="outline-container-org31c82e0" class="outline-3">
-<h3 id="org31c82e0">1.6  Operations on traces</h3>
+<span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">note</span> syntax
+  <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">-</span> <span style="color: #66d9ef; font-weight: bold;">Event</span> <span style="color: #ae81ff;">...</span> <span style="color: #66d9ef; font-weight: bold;">Process</span><span style="color: #696969;">))</span>
+</pre>
 </div>
-
-<div id="outline-container-org2c41c4f" class="outline-3">
-<h3 id="org2c41c4f">1.7  Implementation of traces</h3>
-</div>
-
-<div id="outline-container-orgf3b985b" class="outline-3">
-<h3 id="orgf3b985b">1.8  Traces of a process</h3>
-</div>
-
-<div id="outline-container-orga49c566" class="outline-3">
-<h3 id="orga49c566">1.9  More operations on traces</h3>
-</div>
-
-<div id="outline-container-orgfa9b4b2" class="outline-3">
-<h3 id="orgfa9b4b2">1.10 Specifications</h3>
 </div>
 </div>
 
-<div id="outline-container-org736de9" class="outline-2">
-<h2 id="org736de9">2 concurrency</h2>
-<div class="outline-text-2" id="text-org736de9">
-</div><div id="outline-container-orgd0e2c51" class="outline-3">
-<h3 id="orgd0e2c51">2.1  introduction</h3>
-<div class="outline-text-3" id="text-orgd0e2c51">
+<div id="outline-container-orgdf22e63" class="outline-4">
+<h4 id="orgdf22e63">1.1.2 recursion</h4>
+<div class="outline-text-4" id="text-orgdf22e63">
+<ul class="org-ul">
+<li><p>This method of self-referential recursive definition of processes</p><p>will work only if the right-hand side of the equation</p><p>starts with at least one event prefixed</p><p>to all recursive occurrences of the process name.</p></li></ul>
+
+<div class="org-src-container">
+
+<pre class="src src-jojo"><span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">+jojo</span> <span style="color: #66d9ef; font-weight: bold;">CLOCK</span> <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">-</span> tick CLOCK<span style="color: #696969;">))</span>
+
+<span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">note</span> the simple vending machine<span style="color: #696969;">)</span>
+<span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">+jojo</span> <span style="color: #66d9ef; font-weight: bold;">VMS</span> <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">-</span> coin choc VMS<span style="color: #696969;">))</span>
+
+<span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">note</span> syntax
+  <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">proc</span> <span style="color: #ae81ff;">...</span><span style="color: #696969;">)</span> <span style="color: #f92672; font-weight: bold;">as</span> a marking language<span style="color: #696969;">)</span>
+<span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">+jojo</span> <span style="color: #66d9ef; font-weight: bold;">VMS</span> <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">proc</span> <span style="color: #66d9ef; font-weight: bold;">P</span> <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">-</span> coin choc P<span style="color: #696969;">)))</span>
+
+<span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">note</span> gives change for 5p<span style="color: #696969;">)</span>
+<span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">+jojo</span> <span style="color: #66d9ef; font-weight: bold;">CH5A</span> <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">-</span> in5p out2p out1p out2p CH5A<span style="color: #696969;">))</span>
+<span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">+jojo</span> <span style="color: #66d9ef; font-weight: bold;">CH5B</span> <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">-</span> in5p out1p out1p out1p out2p <span style="color: #66d9ef; font-weight: bold;">CH5B</span><span style="color: #696969;">))</span>
+</pre>
+</div>
+</div>
+</div>
+
+<div id="outline-container-orgc3d3b3" class="outline-4">
+<h4 id="orgc3d3b3">1.1.3 choice</h4>
+<div class="outline-text-4" id="text-orgc3d3b3">
+<div class="org-src-container">
+
+<pre class="src src-jojo"><span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">note</span>
+  a machine which offers a choice
+  of two combinations of change for 5p<span style="color: #696969;">)</span>
+<span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">+jojo</span> <span style="color: #66d9ef; font-weight: bold;">CH5C</span>
+  <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">-</span> in5p <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">|</span> out1p <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">-</span> out1p out1p out2p <span style="color: #66d9ef; font-weight: bold;">CH5C</span><span style="color: #696969;">)</span>
+             out2p <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">-</span> out1p out2p CH5C<span style="color: #696969;">))))</span>
+<span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">note</span>
+  a machine that serves either chocolate or toffee
+  on each transaction<span style="color: #696969;">)</span>
+<span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">+jojo</span> <span style="color: #66d9ef; font-weight: bold;">VMCT</span>
+  <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">-</span> coin <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">|</span> choc <span style="color: #66d9ef; font-weight: bold;">VMCT</span>
+             toffee VMCT<span style="color: #696969;">)))</span>
+
+<span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">note</span>
+  a more complicated vending machine<span style="color: #f92672; font-weight: bold;">,</span>
+  which offers a choice of coins
+  and a choice of goods and change<span style="color: #696969;">)</span>
+<span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">note</span>
+  like many complicated machines<span style="color: #f92672; font-weight: bold;">,</span>
+  this has a design flaw.
+  it is often easier to change the user manual
+  than correct the design<span style="color: #f92672; font-weight: bold;">,</span>
+  so we write a notice on the machine<span style="color: #696969;">)</span>
+<span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">+jojo</span> <span style="color: #66d9ef; font-weight: bold;">VMC</span>
+  <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">note</span> <span style="color: #66d9ef; font-weight: bold;">WARNING</span>
+    do not insert three pennies in a row<span style="color: #696969;">)</span>
+  <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">|</span> in2p <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">|</span> large <span style="color: #66d9ef; font-weight: bold;">VMC</span>
+             small <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">-</span> out1p <span style="color: #66d9ef; font-weight: bold;">VMC</span><span style="color: #696969;">))</span>
+     in1p <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">|</span> small <span style="color: #66d9ef; font-weight: bold;">VMC</span>
+             in1p <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">|</span> large <span style="color: #66d9ef; font-weight: bold;">VMC</span>
+                     in1p STOP<span style="color: #696969;">))))</span>
+
+<span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">note</span>
+  a copying process engages in the following events
+  in.0  <span style="color: #66d9ef; font-weight: bold;">--</span> input of zero on its input channel
+  in.1  <span style="color: #66d9ef; font-weight: bold;">--</span> input of one on its input channel
+  out.0 <span style="color: #66d9ef; font-weight: bold;">--</span> output of zero on its output channel
+  out.1 <span style="color: #66d9ef; font-weight: bold;">--</span> output of one on its output channel<span style="color: #696969;">)</span>
+<span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">+jojo</span> <span style="color: #66d9ef; font-weight: bold;">COPYBIT</span>
+  <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">|</span> in.0 <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">-</span> out.0 <span style="color: #66d9ef; font-weight: bold;">COPYBIT</span><span style="color: #696969;">)</span>
+     in.1 <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">-</span> out.1 COPYBIT<span style="color: #696969;">)))</span>
+
+<span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">note</span> syntax
+  <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">|</span> <span style="color: #66d9ef; font-weight: bold;">Event</span> <span style="color: #66d9ef; font-weight: bold;">Process</span>
+     <span style="color: #ae81ff;">...</span> ...<span style="color: #696969;">))</span>
+
+<span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">note</span>
+  <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">|</span><span style="color: #696969;">)</span> == STOP<span style="color: #696969;">)</span>
+
+<span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">note</span> a more general syntax
+  <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">choice</span> <span style="color: #a6e22e;">:x</span> from <span style="color: #66d9ef; font-weight: bold;">Event</span> <span style="color: #66d9ef; font-weight: bold;">List</span>
+    <span style="color: #66d9ef; font-weight: bold;">Process</span><span style="color: #696969;">))</span>
+</pre>
+</div>
+</div>
+</div>
+
+<div id="outline-container-orgfbbf44b" class="outline-4">
+<h4 id="orgfbbf44b">1.1.4 mutual recursion</h4>
+<div class="outline-text-4" id="text-orgfbbf44b">
+<div class="org-src-container">
+
+<pre class="src src-jojo"><span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">+jojo</span> <span style="color: #66d9ef; font-weight: bold;">CT</span> <span style="color: #696969;">(</span><span style="color: #66d9ef; font-weight: bold;">-&gt;</span> <span style="color: #a6e22e;">:n</span> <span style="color: #66d9ef; font-weight: bold;">--</span> <span style="color: #66d9ef; font-weight: bold;">Process</span><span style="color: #696969;">)</span>
+  <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">cond</span> <span style="color: #797979;">[</span><span style="color: #a6e22e;">:n</span> <span style="color: #ae81ff;">0</span> eq?<span style="color: #797979;">]</span>
+        <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">|</span> up <span style="color: #797979;">[</span><span style="color: #ae81ff;">1</span> <span style="color: #66d9ef; font-weight: bold;">CT</span><span style="color: #797979;">]</span>
+           around <span style="color: #797979;">[</span><span style="color: #ae81ff;">0</span> <span style="color: #66d9ef; font-weight: bold;">CT</span><span style="color: #797979;">]</span><span style="color: #696969;">)</span>
+        <span style="color: #66d9ef; font-weight: bold;">else</span>
+        <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">|</span> up <span style="color: #797979;">[</span><span style="color: #a6e22e;">:n</span> inc <span style="color: #66d9ef; font-weight: bold;">CT</span><span style="color: #797979;">]</span>
+           down <span style="color: #797979;">[</span><span style="color: #a6e22e;">:n</span> dec <span style="color: #66d9ef; font-weight: bold;">CT</span><span style="color: #797979;">]</span><span style="color: #696969;">)))</span>
+</pre>
+</div>
+</div>
+</div>
+</div>
+
+<div id="outline-container-orgdfb44c3" class="outline-3">
+<h3 id="orgdfb44c3">1.2  Pictures</h3>
+</div>
+
+<div id="outline-container-orgadb431" class="outline-3">
+<h3 id="orgadb431">1.3  Laws</h3>
+</div>
+
+<div id="outline-container-org33901d2" class="outline-3">
+<h3 id="org33901d2">1.4  Implementation of processes</h3>
+<div class="outline-text-3" id="text-org33901d2">
+</div><div id="outline-container-orgcd1069f" class="outline-4">
+<h4 id="orgcd1069f">type</h4>
+<div class="outline-text-4" id="text-orgcd1069f">
+<div class="org-src-container">
+
+<pre class="src src-jojo"><span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">note</span>
+  <span style="color: #66d9ef; font-weight: bold;">Event</span> == <span style="color: #66d9ef; font-weight: bold;">String</span>
+  <span style="color: #66d9ef; font-weight: bold;">Process</span> == <span style="color: #696969;">(</span><span style="color: #66d9ef; font-weight: bold;">-&gt;</span> <span style="color: #66d9ef; font-weight: bold;">Event</span> <span style="color: #66d9ef; font-weight: bold;">--</span> Process<span style="color: #696969;">))</span>
+
+<span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">note</span>
+  thus a process is a closure in jojo
+  while the special process <span style="color: #66d9ef; font-weight: bold;">STOP</span> simply returns a 'bleep<span style="color: #696969;">)</span>
+</pre>
+</div>
+</div>
+</div>
+
+<div id="outline-container-org8034c82" class="outline-4">
+<h4 id="org8034c82">STOP</h4>
+<div class="outline-text-4" id="text-org8034c82">
+<div class="org-src-container">
+
+<pre class="src src-jojo"><span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">+jojo</span> <span style="color: #66d9ef; font-weight: bold;">STOP</span> <span style="color: #B380A8;">{</span>drop 'bleep<span style="color: #B380A8;">}</span><span style="color: #696969;">)</span>
+</pre>
+</div>
+</div>
+</div>
+
+<div id="outline-container-orgf136b1" class="outline-4">
+<h4 id="orgf136b1">prefix</h4>
+<div class="outline-text-4" id="text-orgf136b1">
+<div class="org-src-container">
+
+<pre class="src src-jojo"><span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">+jojo</span> prefix <span style="color: #696969;">(</span><span style="color: #66d9ef; font-weight: bold;">-&gt;</span> <span style="color: #a6e22e;">:event</span> <span style="color: #a6e22e;">:process</span> <span style="color: #66d9ef; font-weight: bold;">--</span> <span style="color: #66d9ef; font-weight: bold;">Process</span><span style="color: #696969;">)</span>
+  <span style="color: #B380A8;">{</span><span style="color: #696969;">(</span><span style="color: #66d9ef; font-weight: bold;">-&gt;</span> <span style="color: #a6e22e;">:x</span> <span style="color: #66d9ef; font-weight: bold;">--</span> <span style="color: #66d9ef; font-weight: bold;">Process</span><span style="color: #696969;">)</span>
+   <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">if</span> <span style="color: #797979;">[</span><span style="color: #a6e22e;">:x</span> <span style="color: #a6e22e;">:event</span> eq?<span style="color: #797979;">]</span>
+       <span style="color: #a6e22e;">:process</span>
+       'bleep<span style="color: #696969;">)</span><span style="color: #B380A8;">}</span><span style="color: #696969;">)</span>
+</pre>
+</div>
+</div>
+</div>
+
+<div id="outline-container-org389e23c" class="outline-4">
+<h4 id="org389e23c">dict-choice</h4>
+<div class="outline-text-4" id="text-org389e23c">
+<div class="org-src-container">
+
+<pre class="src src-jojo"><span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">+jojo</span> dict-choice <span style="color: #696969;">(</span><span style="color: #66d9ef; font-weight: bold;">-&gt;</span> <span style="color: #a6e22e;">:dict</span> <span style="color: #66d9ef; font-weight: bold;">--</span> <span style="color: #66d9ef; font-weight: bold;">Process</span><span style="color: #696969;">)</span>
+  <span style="color: #B380A8;">{</span><span style="color: #696969;">(</span><span style="color: #66d9ef; font-weight: bold;">-&gt;</span> <span style="color: #a6e22e;">:event</span> <span style="color: #66d9ef; font-weight: bold;">--</span> <span style="color: #66d9ef; font-weight: bold;">Process</span><span style="color: #696969;">)</span>
+   <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">if</span> <span style="color: #797979;">[</span><span style="color: #a6e22e;">:dict</span> <span style="color: #a6e22e;">:event</span> dict-find<span style="color: #797979;">]</span>
+     <span style="color: #797979;">[]</span>
+     'bleep<span style="color: #696969;">)</span><span style="color: #B380A8;">}</span><span style="color: #696969;">)</span>
+</pre>
+</div>
+</div>
+</div>
+
+<div id="outline-container-org9281cf4" class="outline-4">
+<h4 id="org9281cf4">menu</h4>
+<div class="outline-text-4" id="text-org9281cf4">
+<ul class="org-ul">
+<li><p>gives a list of all those symbols</p><p>of a which can occur as the first event</p><p>in the life of a process</p></li></ul>
+
+<div class="org-src-container">
+
+<pre class="src src-jojo"><span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">+jojo</span> menu <span style="color: #696969;">(</span><span style="color: #66d9ef; font-weight: bold;">-&gt;</span> <span style="color: #a6e22e;">:event-list</span> <span style="color: #a6e22e;">:process</span> <span style="color: #66d9ef; font-weight: bold;">--</span> <span style="color: #66d9ef; font-weight: bold;">Event</span> <span style="color: #66d9ef; font-weight: bold;">List</span><span style="color: #696969;">)</span>
+  <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">cond</span> <span style="color: #797979;">[</span><span style="color: #a6e22e;">:event-list</span> null?<span style="color: #797979;">]</span> null
+
+        <span style="color: #797979;">[</span><span style="color: #a6e22e;">:event-list</span> <span style="color: #ae81ff;">.car</span> <span style="color: #a6e22e;">:process</span> apply 'bleep eq?<span style="color: #797979;">]</span>
+        <span style="color: #797979;">[</span><span style="color: #a6e22e;">:event-list</span> <span style="color: #ae81ff;">.cdr</span> <span style="color: #a6e22e;">:process</span> menu<span style="color: #797979;">]</span>
+
+        <span style="color: #66d9ef; font-weight: bold;">else</span> <span style="color: #797979;">[</span><span style="color: #a6e22e;">:event-list</span> <span style="color: #ae81ff;">.car</span>
+              <span style="color: #a6e22e;">:event-list</span> <span style="color: #ae81ff;">.cdr</span> <span style="color: #a6e22e;">:process</span> menu
+              cons<span style="color: #797979;">]</span><span style="color: #696969;">))</span>
+</pre>
+</div>
+</div>
+</div>
+
+<div id="outline-container-org7295744" class="outline-4">
+<h4 id="org7295744">interact</h4>
+<div class="outline-text-4" id="text-org7295744">
+<div class="org-src-container">
+
+<pre class="src src-jojo"><span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">import</span> sys<span style="color: #696969;">)</span>
+
+<span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">+jojo</span> readline sys <span style="color: #ae81ff;">.stdin</span> -1 swap .readline<span style="color: #696969;">)</span>
+
+<span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">+jojo</span> read-event
+  readline code-scan <span style="color: #fd971f;">:string-vect!</span>
+  <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">if</span> <span style="color: #797979;">[</span><span style="color: #a6e22e;">:string-vect</span> vect-length <span style="color: #ae81ff;">0</span> eq?<span style="color: #797979;">]</span>
+    read-event
+    <span style="color: #797979;">[</span><span style="color: #a6e22e;">:string-vect</span> <span style="color: #ae81ff;">0</span> vect-ref<span style="color: #797979;">]</span><span style="color: #696969;">))</span>
+
+<span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">+jojo</span> interact <span style="color: #696969;">(</span><span style="color: #66d9ef; font-weight: bold;">-&gt;</span> <span style="color: #a6e22e;">:event-list</span> <span style="color: #a6e22e;">:process</span> <span style="color: #66d9ef; font-weight: bold;">--</span><span style="color: #696969;">)</span>
+  <span style="color: #a6e22e;">:event-list</span> <span style="color: #a6e22e;">:process</span> menu p nl
+  read-event <span style="color: #fd971f;">:event!</span>
+  <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">when</span> <span style="color: #797979;">[</span><span style="color: #a6e22e;">:event</span> '<span style="color: #66d9ef; font-weight: bold;">end</span> eq? not<span style="color: #797979;">]</span>
+    <span style="color: #a6e22e;">:event</span> <span style="color: #a6e22e;">:process</span> apply <span style="color: #fd971f;">:next!</span>
+    <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">cond</span> <span style="color: #797979;">[</span><span style="color: #a6e22e;">:next</span> 'bleep eq?<span style="color: #797979;">]</span>
+          <span style="color: #797979;">[</span>'bleep p nl <span style="color: #a6e22e;">:event-list</span> <span style="color: #a6e22e;">:process</span> interact<span style="color: #797979;">]</span>
+          <span style="color: #66d9ef; font-weight: bold;">else</span> <span style="color: #797979;">[</span><span style="color: #a6e22e;">:event-list</span> <span style="color: #a6e22e;">:next</span> interact<span style="color: #797979;">]</span><span style="color: #696969;">)))</span>
+</pre>
+</div>
+</div>
+</div>
+
+<div id="outline-container-org7cb35df" class="outline-4">
+<h4 id="org7cb35df">(-)</h4>
+<div class="outline-text-4" id="text-org7cb35df">
+<div class="org-src-container">
+
+<pre class="src src-jojo"><span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">+jojo</span> - <span style="color: #696969;">(</span><span style="color: #66d9ef; font-weight: bold;">-&gt;</span> <span style="color: #a6e22e;">:body</span> <span style="color: #66d9ef; font-weight: bold;">--</span> <span style="color: #66d9ef; font-weight: bold;">Sexp</span><span style="color: #696969;">)</span>
+  <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">cond</span> <span style="color: #797979;">[</span><span style="color: #a6e22e;">:body</span> null?<span style="color: #797979;">]</span>
+        <span style="color: #797979;">[</span><span style="color: #e6db74;">"- (-) syntax error"</span> p nl
+         <span style="color: #e6db74;">"  body of (-) can not be null"</span> p nl
+         <span style="color: #f92672; font-weight: bold;">error</span><span style="color: #797979;">]</span>
+        <span style="color: #797979;">[</span><span style="color: #a6e22e;">:body</span><span style="color: #ae81ff;">.cdr</span> null?<span style="color: #797979;">]</span>
+        `<span style="color: #B380A8;">{</span><span style="color: #696969;">(</span><span style="color: #ae81ff;">@</span> <span style="color: #a6e22e;">:body</span><span style="color: #ae81ff;">.car</span><span style="color: #696969;">)</span> apply<span style="color: #B380A8;">}</span>
+        <span style="color: #66d9ef; font-weight: bold;">else</span>
+        `<span style="color: #797979;">[</span><span style="color: #696969;">(</span><span style="color: #66d9ef; font-weight: bold;">quote</span> <span style="color: #696969;">(</span><span style="color: #ae81ff;">@</span> <span style="color: #a6e22e;">:body</span><span style="color: #ae81ff;">.car</span><span style="color: #696969;">))</span>
+          <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">-</span> <span style="color: #696969;">(</span><span style="color: #ae81ff;">@</span> <span style="color: #a6e22e;">:body</span><span style="color: #ae81ff;">.cdr</span> list-spread<span style="color: #696969;">))</span>
+          prefix<span style="color: #797979;">]</span><span style="color: #696969;">))</span>
+
+<span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">note</span>
+  <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">+jojo</span> <span style="color: #66d9ef; font-weight: bold;">VMS</span>
+    <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">-</span> coin choc <span style="color: #66d9ef; font-weight: bold;">VMS</span><span style="color: #696969;">))</span>
+  ==&gt;
+  <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">+jojo</span> <span style="color: #66d9ef; font-weight: bold;">VMS</span>
+    'coin 'choc <span style="color: #B380A8;">{</span><span style="color: #66d9ef; font-weight: bold;">VMS</span> apply<span style="color: #B380A8;">}</span>
+    prefix prefix<span style="color: #696969;">))</span>
+</pre>
+</div>
+</div>
+</div>
+
+<div id="outline-container-orgd7f65ad" class="outline-4">
+<h4 id="orgd7f65ad">(|)</h4>
+<div class="outline-text-4" id="text-orgd7f65ad">
+<div class="org-src-container">
+
+<pre class="src src-jojo"><span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">+jojo</span> | <span style="color: #696969;">(</span><span style="color: #66d9ef; font-weight: bold;">-&gt;</span> <span style="color: #a6e22e;">:body</span> <span style="color: #66d9ef; font-weight: bold;">--</span> <span style="color: #66d9ef; font-weight: bold;">Sexp</span><span style="color: #696969;">)</span>
+  `<span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">begin</span>
+     <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">dict</span> <span style="color: #696969;">(</span><span style="color: #ae81ff;">@</span> <span style="color: #a6e22e;">:body</span> choice-recur<span style="color: #696969;">))</span>
+     dict-choice<span style="color: #696969;">))</span>
+
+<span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">+jojo</span> choice-recur <span style="color: #696969;">(</span><span style="color: #66d9ef; font-weight: bold;">-&gt;</span> <span style="color: #a6e22e;">:body</span> <span style="color: #66d9ef; font-weight: bold;">--</span> <span style="color: #66d9ef; font-weight: bold;">Sexp</span><span style="color: #696969;">)</span>
+  <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">cond</span> <span style="color: #797979;">[</span><span style="color: #a6e22e;">:body</span> null?<span style="color: #797979;">]</span> `<span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">begin</span><span style="color: #696969;">)</span>
+        <span style="color: #66d9ef; font-weight: bold;">else</span> `<span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">begin</span>
+                <span style="color: #696969;">(</span><span style="color: #66d9ef; font-weight: bold;">quote</span> <span style="color: #696969;">(</span><span style="color: #ae81ff;">@</span> <span style="color: #a6e22e;">:body</span><span style="color: #ae81ff;">.car</span><span style="color: #696969;">))</span>
+                <span style="color: #B380A8;">{</span><span style="color: #696969;">(</span><span style="color: #ae81ff;">@</span> <span style="color: #a6e22e;">:body</span><span style="color: #ae81ff;">.cdr.car</span><span style="color: #696969;">)</span> apply<span style="color: #B380A8;">}</span>
+                <span style="color: #696969;">(</span><span style="color: #ae81ff;">@</span> <span style="color: #a6e22e;">:body</span><span style="color: #ae81ff;">.cdr.cdr</span> choice-recur<span style="color: #696969;">))))</span>
+
+<span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">note</span>
+  <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">+jojo</span> <span style="color: #66d9ef; font-weight: bold;">CT</span> <span style="color: #696969;">(</span><span style="color: #66d9ef; font-weight: bold;">-&gt;</span> <span style="color: #a6e22e;">:n</span> <span style="color: #66d9ef; font-weight: bold;">--</span> <span style="color: #66d9ef; font-weight: bold;">Process</span><span style="color: #696969;">)</span>
+    <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">cond</span> <span style="color: #797979;">[</span><span style="color: #a6e22e;">:n</span> <span style="color: #ae81ff;">0</span> eq?<span style="color: #797979;">]</span>
+          <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">|</span> up <span style="color: #797979;">[</span><span style="color: #ae81ff;">1</span> <span style="color: #66d9ef; font-weight: bold;">CT</span><span style="color: #797979;">]</span>
+             around <span style="color: #797979;">[</span><span style="color: #ae81ff;">0</span> <span style="color: #66d9ef; font-weight: bold;">CT</span><span style="color: #797979;">]</span><span style="color: #696969;">)</span>
+          <span style="color: #66d9ef; font-weight: bold;">else</span>
+          <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">|</span> up <span style="color: #797979;">[</span><span style="color: #a6e22e;">:n</span> inc <span style="color: #66d9ef; font-weight: bold;">CT</span><span style="color: #797979;">]</span>
+             down <span style="color: #797979;">[</span><span style="color: #a6e22e;">:n</span> dec <span style="color: #66d9ef; font-weight: bold;">CT</span><span style="color: #797979;">]</span><span style="color: #696969;">)))</span>
+  ==&gt;
+  <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">+jojo</span> <span style="color: #66d9ef; font-weight: bold;">CT</span> <span style="color: #696969;">(</span><span style="color: #66d9ef; font-weight: bold;">-&gt;</span> <span style="color: #a6e22e;">:n</span> <span style="color: #66d9ef; font-weight: bold;">--</span> <span style="color: #66d9ef; font-weight: bold;">Process</span><span style="color: #696969;">)</span>
+    <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">cond</span> <span style="color: #797979;">[</span><span style="color: #a6e22e;">:n</span> <span style="color: #ae81ff;">0</span> eq?<span style="color: #797979;">]</span>
+          <span style="color: #797979;">[</span><span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">dict</span>
+             'up <span style="color: #B380A8;">{</span><span style="color: #ae81ff;">1</span> <span style="color: #66d9ef; font-weight: bold;">CT</span> apply<span style="color: #B380A8;">}</span>
+             'around <span style="color: #B380A8;">{</span><span style="color: #ae81ff;">0</span> <span style="color: #66d9ef; font-weight: bold;">CT</span> apply<span style="color: #B380A8;">}</span><span style="color: #696969;">)</span>
+           dict-choice<span style="color: #797979;">]</span>
+          <span style="color: #66d9ef; font-weight: bold;">else</span>
+          <span style="color: #797979;">[</span><span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">dict</span>
+             'up <span style="color: #B380A8;">{</span><span style="color: #a6e22e;">:n</span> inc <span style="color: #66d9ef; font-weight: bold;">CT</span> apply<span style="color: #B380A8;">}</span>
+             'down <span style="color: #B380A8;">{</span><span style="color: #a6e22e;">:n</span> dec <span style="color: #66d9ef; font-weight: bold;">CT</span> apply<span style="color: #B380A8;">}</span><span style="color: #696969;">)</span>
+           dict-choice<span style="color: #797979;">]</span><span style="color: #696969;">)))</span>
+</pre>
+</div>
+</div>
+</div>
+
+<div id="outline-container-org739c724" class="outline-4">
+<h4 id="org739c724"><span class="todo _gt__lt_">&gt;&lt;</span> (proc) &#x2013; marking language</h4>
+</div>
+
+<div id="outline-container-org36dfeb7" class="outline-4">
+<h4 id="org36dfeb7"><span class="todo _gt__lt_">&gt;&lt;</span> (choice) &#x2013; general choice</h4>
+</div>
+
+<div id="outline-container-org6072f7a" class="outline-4">
+<h4 id="org6072f7a"><span class="done _test_">[test]</span> </h4>
+<div class="outline-text-4" id="text-org6072f7a">
+<div class="org-src-container">
+
+<pre class="src src-jojo"><span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">+jojo</span> <span style="color: #66d9ef; font-weight: bold;">CLOCK</span> <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">-</span> tick CLOCK<span style="color: #696969;">))</span>
+
+<span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">+jojo</span> <span style="color: #66d9ef; font-weight: bold;">VMS-alphabet</span>
+  '<span style="color: #696969;">(</span>coin choc<span style="color: #696969;">))</span>
+<span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">+jojo</span> <span style="color: #66d9ef; font-weight: bold;">VMS</span> <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">-</span> coin choc VMS<span style="color: #696969;">))</span>
+
+<span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">+jojo</span> <span style="color: #66d9ef; font-weight: bold;">CH5A</span> <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">-</span> in5p out2p out1p out2p CH5A<span style="color: #696969;">))</span>
+
+<span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">+jojo</span> <span style="color: #66d9ef; font-weight: bold;">CH5B</span> <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">-</span> in5p out1p out1p out1p out2p CH5B<span style="color: #696969;">))</span>
+
+<span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">+jojo</span> <span style="color: #66d9ef; font-weight: bold;">CH5C-alphabet</span>
+  '<span style="color: #696969;">(</span>in5p out1p out2p<span style="color: #696969;">))</span>
+<span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">+jojo</span> <span style="color: #66d9ef; font-weight: bold;">CH5C</span>
+  <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">-</span> in5p <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">|</span> out1p <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">-</span> out1p out1p out2p <span style="color: #66d9ef; font-weight: bold;">CH5C</span><span style="color: #696969;">)</span>
+             out2p <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">-</span> out1p out2p CH5C<span style="color: #696969;">))))</span>
+
+<span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">+jojo</span> <span style="color: #66d9ef; font-weight: bold;">VMCT-alphabet</span>
+  '<span style="color: #696969;">(</span>coin choc toffee<span style="color: #696969;">))</span>
+<span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">+jojo</span> <span style="color: #66d9ef; font-weight: bold;">VMCT</span>
+  <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">-</span> coin <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">|</span> choc <span style="color: #66d9ef; font-weight: bold;">VMCT</span>
+             toffee VMCT<span style="color: #696969;">)))</span>
+
+<span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">+jojo</span> <span style="color: #66d9ef; font-weight: bold;">VMC-alphabet</span>
+  '<span style="color: #696969;">(</span>in1p in2p large small out1p<span style="color: #696969;">))</span>
+<span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">+jojo</span> <span style="color: #66d9ef; font-weight: bold;">VMC</span>
+  <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">note</span> <span style="color: #66d9ef; font-weight: bold;">WARNING</span>
+    do not insert three pennies in a row<span style="color: #696969;">)</span>
+  <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">|</span> in2p <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">|</span> large <span style="color: #66d9ef; font-weight: bold;">VMC</span>
+             small <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">-</span> out1p <span style="color: #66d9ef; font-weight: bold;">VMC</span><span style="color: #696969;">))</span>
+     in1p <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">|</span> small <span style="color: #66d9ef; font-weight: bold;">VMC</span>
+             in1p <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">|</span> large <span style="color: #66d9ef; font-weight: bold;">VMC</span>
+                     in1p STOP<span style="color: #696969;">))))</span>
+
+<span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">+jojo</span> <span style="color: #66d9ef; font-weight: bold;">COPYBIT-alphabet</span>
+  '<span style="color: #696969;">(</span>in.0 out.0 in.1 out.1<span style="color: #696969;">))</span>
+<span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">+jojo</span> <span style="color: #66d9ef; font-weight: bold;">COPYBIT</span>
+  <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">|</span> in.0 <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">-</span> out.0 <span style="color: #66d9ef; font-weight: bold;">COPYBIT</span><span style="color: #696969;">)</span>
+     in.1 <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">-</span> out.1 COPYBIT<span style="color: #696969;">)))</span>
+
+<span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">+jojo</span> <span style="color: #66d9ef; font-weight: bold;">CT-alphabet</span>
+  '<span style="color: #696969;">(</span>up down around<span style="color: #696969;">))</span>
+<span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">+jojo</span> <span style="color: #66d9ef; font-weight: bold;">CT</span> <span style="color: #696969;">(</span><span style="color: #66d9ef; font-weight: bold;">-&gt;</span> <span style="color: #a6e22e;">:n</span> <span style="color: #66d9ef; font-weight: bold;">--</span> <span style="color: #66d9ef; font-weight: bold;">Process</span><span style="color: #696969;">)</span>
+  <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">cond</span> <span style="color: #797979;">[</span><span style="color: #a6e22e;">:n</span> <span style="color: #ae81ff;">0</span> eq?<span style="color: #797979;">]</span>
+        <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">|</span> up <span style="color: #797979;">[</span><span style="color: #ae81ff;">1</span> <span style="color: #66d9ef; font-weight: bold;">CT</span><span style="color: #797979;">]</span>
+           around <span style="color: #797979;">[</span><span style="color: #ae81ff;">0</span> <span style="color: #66d9ef; font-weight: bold;">CT</span><span style="color: #797979;">]</span><span style="color: #696969;">)</span>
+        <span style="color: #66d9ef; font-weight: bold;">else</span>
+        <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">|</span> up <span style="color: #797979;">[</span><span style="color: #a6e22e;">:n</span> inc <span style="color: #66d9ef; font-weight: bold;">CT</span><span style="color: #797979;">]</span>
+           down <span style="color: #797979;">[</span><span style="color: #a6e22e;">:n</span> dec CT<span style="color: #797979;">]</span><span style="color: #696969;">)))</span>
+
+<span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">note</span>
+  <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">begin</span> <span style="color: #66d9ef; font-weight: bold;">VMS-alphabet</span> <span style="color: #66d9ef; font-weight: bold;">VMS</span> interact<span style="color: #696969;">)</span>
+  <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">begin</span> <span style="color: #66d9ef; font-weight: bold;">CH5C-alphabet</span> <span style="color: #66d9ef; font-weight: bold;">CH5C</span> interact<span style="color: #696969;">)</span>
+  <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">begin</span> <span style="color: #66d9ef; font-weight: bold;">VMCT-alphabet</span> <span style="color: #66d9ef; font-weight: bold;">VMCT</span> interact<span style="color: #696969;">)</span>
+  <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">begin</span> <span style="color: #66d9ef; font-weight: bold;">VMC-alphabet</span> <span style="color: #66d9ef; font-weight: bold;">VMC</span> interact<span style="color: #696969;">)</span>
+  <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">begin</span> <span style="color: #66d9ef; font-weight: bold;">CT-alphabet</span> <span style="color: #ae81ff;">0</span> <span style="color: #66d9ef; font-weight: bold;">CT</span> interact<span style="color: #696969;">))</span>
+</pre>
+</div>
+</div>
+</div>
+</div>
+
+<div id="outline-container-org77f3bd9" class="outline-3">
+<h3 id="org77f3bd9">1.5  Traces</h3>
+</div>
+
+<div id="outline-container-org971c4a5" class="outline-3">
+<h3 id="org971c4a5">1.6  Operations on traces</h3>
+</div>
+
+<div id="outline-container-orgf7e322" class="outline-3">
+<h3 id="orgf7e322">1.7  Implementation of traces</h3>
+</div>
+
+<div id="outline-container-orgdbe8756" class="outline-3">
+<h3 id="orgdbe8756">1.8  Traces of a process</h3>
+</div>
+
+<div id="outline-container-orgcd4a51e" class="outline-3">
+<h3 id="orgcd4a51e">1.9  More operations on traces</h3>
+</div>
+
+<div id="outline-container-org9f4defa" class="outline-3">
+<h3 id="org9f4defa">1.10 Specifications</h3>
+</div>
+</div>
+
+<div id="outline-container-org6c8eb20" class="outline-2">
+<h2 id="org6c8eb20">2 Concurrency</h2>
+<div class="outline-text-2" id="text-org6c8eb20">
+</div><div id="outline-container-org6da26f" class="outline-3">
+<h3 id="org6da26f">2.1  Introduction</h3>
+<div class="outline-text-3" id="text-org6da26f">
 <ul class="org-ul">
 <li><p>composition of processes.</p></li></ul>
 </div>
 </div>
 
-<div id="outline-container-org3e7ee5c" class="outline-3">
-<h3 id="org3e7ee5c">2.2  intersection</h3>
-<div class="outline-text-3" id="text-org3e7ee5c">
+<div id="outline-container-orgaa032d3" class="outline-3">
+<h3 id="orgaa032d3">2.2  Intersection</h3>
+<div class="outline-text-3" id="text-orgaa032d3">
 <ul class="org-ul">
 <li><p>&gt;&lt;</p></li></ul>
 </div>
 </div>
 
-<div id="outline-container-orgb31d294" class="outline-3">
-<h3 id="orgb31d294">2.3  Concurrency</h3>
+<div id="outline-container-org423a187" class="outline-3">
+<h3 id="org423a187">2.3  Concurrency</h3>
 </div>
 
-<div id="outline-container-orgdfc4ad2" class="outline-3">
-<h3 id="orgdfc4ad2">2.4  Pictures</h3>
+<div id="outline-container-org6e5e502" class="outline-3">
+<h3 id="org6e5e502">2.4  Pictures</h3>
 </div>
 
-<div id="outline-container-org1419d1a" class="outline-3">
-<h3 id="org1419d1a">2.5  Example: The Dining Philosophers</h3>
+<div id="outline-container-orgad942a2" class="outline-3">
+<h3 id="orgad942a2">2.5  Example: The Dining Philosophers</h3>
 </div>
 
-<div id="outline-container-org71a3178" class="outline-3">
-<h3 id="org71a3178">2.6  Change of symbol</h3>
+<div id="outline-container-org936a604" class="outline-3">
+<h3 id="org936a604">2.6  Change of symbol</h3>
 </div>
 
-<div id="outline-container-org4169b4b" class="outline-3">
-<h3 id="org4169b4b">2.7  Specifications</h3>
+<div id="outline-container-org8e411c7" class="outline-3">
+<h3 id="org8e411c7">2.7  Specifications</h3>
 </div>
 
-<div id="outline-container-org105b088" class="outline-3">
-<h3 id="org105b088">2.8  Mathematical theory of deterministic processes</h3>
-</div>
-</div>
-
-<div id="outline-container-org35b20d7" class="outline-2">
-<h2 id="org35b20d7">3 Nondeterminism</h2>
-<div class="outline-text-2" id="text-org35b20d7">
-</div><div id="outline-container-org2048e90" class="outline-3">
-<h3 id="org2048e90">3.1  Introduction</h3>
-</div>
-
-<div id="outline-container-orgde37794" class="outline-3">
-<h3 id="orgde37794">3.2  Nondeterministic or</h3>
-</div>
-
-<div id="outline-container-org829adb6" class="outline-3">
-<h3 id="org829adb6">3.3  General choice</h3>
-</div>
-
-<div id="outline-container-orgbb7d2bf" class="outline-3">
-<h3 id="orgbb7d2bf">3.4  Refusals</h3>
-</div>
-
-<div id="outline-container-org464c490" class="outline-3">
-<h3 id="org464c490">3.5  Concealment</h3>
-</div>
-
-<div id="outline-container-orgbb0dc5b" class="outline-3">
-<h3 id="orgbb0dc5b">3.6  Interleaving</h3>
-</div>
-
-<div id="outline-container-orgfb54d4a" class="outline-3">
-<h3 id="orgfb54d4a">3.7  Specifications</h3>
-</div>
-
-<div id="outline-container-orgab98379" class="outline-3">
-<h3 id="orgab98379">3.8  Divergence</h3>
-</div>
-
-<div id="outline-container-org707810b" class="outline-3">
-<h3 id="org707810b">3.9  Mathematical theory of non-deterministic processes</h3>
+<div id="outline-container-org9fc86a4" class="outline-3">
+<h3 id="org9fc86a4">2.8  Mathematical theory of deterministic processes</h3>
 </div>
 </div>
 
-<div id="outline-container-org80fc5ea" class="outline-2">
-<h2 id="org80fc5ea">4 Communication</h2>
-<div class="outline-text-2" id="text-org80fc5ea">
-</div><div id="outline-container-orgc3bcbb7" class="outline-3">
-<h3 id="orgc3bcbb7">4.1  Introduction</h3>
+<div id="outline-container-org52b6ff5" class="outline-2">
+<h2 id="org52b6ff5">3 Nondeterminism</h2>
+<div class="outline-text-2" id="text-org52b6ff5">
+</div><div id="outline-container-org35f7d2d" class="outline-3">
+<h3 id="org35f7d2d">3.1  Introduction</h3>
 </div>
 
-<div id="outline-container-orge9b5ad5" class="outline-3">
-<h3 id="orge9b5ad5">4.2  Input and output</h3>
+<div id="outline-container-org8f335f3" class="outline-3">
+<h3 id="org8f335f3">3.2  Nondeterministic or</h3>
 </div>
 
-<div id="outline-container-org17daaf0" class="outline-3">
-<h3 id="org17daaf0">4.3  Communications</h3>
+<div id="outline-container-org90c2c39" class="outline-3">
+<h3 id="org90c2c39">3.3  General choice</h3>
 </div>
 
-<div id="outline-container-org3db39" class="outline-3">
-<h3 id="org3db39">4.4  Pipes</h3>
+<div id="outline-container-org781bec5" class="outline-3">
+<h3 id="org781bec5">3.4  Refusals</h3>
 </div>
 
-<div id="outline-container-orgb406e77" class="outline-3">
-<h3 id="orgb406e77">4.5  Subordination</h3>
-</div>
-</div>
-
-<div id="outline-container-org36b010" class="outline-2">
-<h2 id="org36b010">5 Sequential Processes</h2>
-<div class="outline-text-2" id="text-org36b010">
-</div><div id="outline-container-org573bb39" class="outline-3">
-<h3 id="org573bb39">5.1  Introduction</h3>
+<div id="outline-container-orgf72e8c3" class="outline-3">
+<h3 id="orgf72e8c3">3.5  Concealment</h3>
 </div>
 
-<div id="outline-container-orgb87626b" class="outline-3">
-<h3 id="orgb87626b">5.2  Laws</h3>
+<div id="outline-container-org17278d0" class="outline-3">
+<h3 id="org17278d0">3.6  Interleaving</h3>
 </div>
 
-<div id="outline-container-orga1ad28e" class="outline-3">
-<h3 id="orga1ad28e">5.3  Mathematical treatment</h3>
+<div id="outline-container-org821dfdd" class="outline-3">
+<h3 id="org821dfdd">3.7  Specifications</h3>
 </div>
 
-<div id="outline-container-orgb1a659b" class="outline-3">
-<h3 id="orgb1a659b">5.4  Interrupts</h3>
+<div id="outline-container-org30f3bc2" class="outline-3">
+<h3 id="org30f3bc2">3.8  Divergence</h3>
 </div>
 
-<div id="outline-container-orgbadf3a7" class="outline-3">
-<h3 id="orgbadf3a7">5.5  Assignment</h3>
+<div id="outline-container-orga87baaa" class="outline-3">
+<h3 id="orga87baaa">3.9  Mathematical theory of non-deterministic processes</h3>
 </div>
 </div>
 
-<div id="outline-container-org43d9d7b" class="outline-2">
-<h2 id="org43d9d7b">6 Shared Resources</h2>
-<div class="outline-text-2" id="text-org43d9d7b">
-</div><div id="outline-container-org5752905" class="outline-3">
-<h3 id="org5752905">6.1  Introduction</h3>
+<div id="outline-container-orgbf6c00f" class="outline-2">
+<h2 id="orgbf6c00f">4 Communication</h2>
+<div class="outline-text-2" id="text-orgbf6c00f">
+</div><div id="outline-container-org276fcd1" class="outline-3">
+<h3 id="org276fcd1">4.1  Introduction</h3>
 </div>
 
-<div id="outline-container-org73e2868" class="outline-3">
-<h3 id="org73e2868">6.2  Sharing by interleaving</h3>
+<div id="outline-container-org13581d9" class="outline-3">
+<h3 id="org13581d9">4.2  Input and output</h3>
 </div>
 
-<div id="outline-container-org8740453" class="outline-3">
-<h3 id="org8740453">6.3  Shared storage</h3>
+<div id="outline-container-orgf76941d" class="outline-3">
+<h3 id="orgf76941d">4.3  Communications</h3>
 </div>
 
-<div id="outline-container-orgd1de3c4" class="outline-3">
-<h3 id="orgd1de3c4">6.4  Multiple resources</h3>
+<div id="outline-container-orga0e9215" class="outline-3">
+<h3 id="orga0e9215">4.4  Pipes</h3>
 </div>
 
-<div id="outline-container-org9892ce3" class="outline-3">
-<h3 id="org9892ce3">6.5  Operating systems</h3>
-</div>
-
-<div id="outline-container-org4adce6f" class="outline-3">
-<h3 id="org4adce6f">6.6  Scheduling</h3>
+<div id="outline-container-orgc55a39c" class="outline-3">
+<h3 id="orgc55a39c">4.5  Subordination</h3>
 </div>
 </div>
 
-<div id="outline-container-org5d72524" class="outline-2">
-<h2 id="org5d72524">7 Discussion</h2>
-<div class="outline-text-2" id="text-org5d72524">
-</div><div id="outline-container-org6435789" class="outline-3">
-<h3 id="org6435789">7.1  Introduction</h3>
+<div id="outline-container-orgcb5374e" class="outline-2">
+<h2 id="orgcb5374e">5 Sequential Processes</h2>
+<div class="outline-text-2" id="text-orgcb5374e">
+</div><div id="outline-container-org9da3c90" class="outline-3">
+<h3 id="org9da3c90">5.1  Introduction</h3>
 </div>
 
-<div id="outline-container-orgd99e5c9" class="outline-3">
-<h3 id="orgd99e5c9">7.2  Shared storage</h3>
+<div id="outline-container-orga614b54" class="outline-3">
+<h3 id="orga614b54">5.2  Laws</h3>
 </div>
 
-<div id="outline-container-org9f0412b" class="outline-3">
-<h3 id="org9f0412b">7.3  Communication</h3>
+<div id="outline-container-orgb8dab4d" class="outline-3">
+<h3 id="orgb8dab4d">5.3  Mathematical treatment</h3>
 </div>
 
-<div id="outline-container-org1bf6361" class="outline-3">
-<h3 id="org1bf6361">7.4  Mathematical models</h3>
+<div id="outline-container-org475dfe5" class="outline-3">
+<h3 id="org475dfe5">5.4  Interrupts</h3>
+</div>
+
+<div id="outline-container-org853e810" class="outline-3">
+<h3 id="org853e810">5.5  Assignment</h3>
+</div>
+</div>
+
+<div id="outline-container-org4743082" class="outline-2">
+<h2 id="org4743082">6 Shared Resources</h2>
+<div class="outline-text-2" id="text-org4743082">
+</div><div id="outline-container-org78c2c2a" class="outline-3">
+<h3 id="org78c2c2a">6.1  Introduction</h3>
+</div>
+
+<div id="outline-container-org273102d" class="outline-3">
+<h3 id="org273102d">6.2  Sharing by interleaving</h3>
+</div>
+
+<div id="outline-container-orgb8de25e" class="outline-3">
+<h3 id="orgb8de25e">6.3  Shared storage</h3>
+</div>
+
+<div id="outline-container-orgae544d1" class="outline-3">
+<h3 id="orgae544d1">6.4  Multiple resources</h3>
+</div>
+
+<div id="outline-container-org536382e" class="outline-3">
+<h3 id="org536382e">6.5  Operating systems</h3>
+</div>
+
+<div id="outline-container-orgf43f6c" class="outline-3">
+<h3 id="orgf43f6c">6.6  Scheduling</h3>
+</div>
+</div>
+
+<div id="outline-container-orge984edf" class="outline-2">
+<h2 id="orge984edf">7 Discussion</h2>
+<div class="outline-text-2" id="text-orge984edf">
+</div><div id="outline-container-orgc26ea44" class="outline-3">
+<h3 id="orgc26ea44">7.1  Introduction</h3>
+</div>
+
+<div id="outline-container-org3f8e83a" class="outline-3">
+<h3 id="org3f8e83a">7.2  Shared storage</h3>
+</div>
+
+<div id="outline-container-orgec011a4" class="outline-3">
+<h3 id="orgec011a4">7.3  Communication</h3>
+</div>
+
+<div id="outline-container-orgbc15980" class="outline-3">
+<h3 id="orgbc15980">7.4  Mathematical models</h3>
 </div>
 </div>
 </div>
 <div id="postamble" class="status">
 <p class="author">Author: xieyuheng</p>
-<p class="date">Created: 2017-10-16 Mon 01:17</p>
+<p class="date">Created: 2017-10-17 Tue 22:02</p>
 <p class="validation"><a href="http://validator.w3.org/check?uri=referer">Validate</a></p>
 </div>
 </body>

@@ -1,0 +1,159 @@
+(note
+  Event == String
+  Process == (-> Event -- Process))
+
+(note
+  thus a process is a closure in jojo
+  while the special process STOP simply returns a 'bleep)
+
+(+jojo STOP {drop 'bleep})
+
+(+jojo prefix (-> :event :process -- Process)
+  {(-> :x -- Process)
+   (if [:x :event eq?]
+       :process
+       'bleep)})
+
+(+jojo dict-choice (-> :dict -- Process)
+  {(-> :event -- Process)
+   (if [:dict :event dict-find]
+     []
+     'bleep)})
+
+(+jojo menu (-> :event-list :process -- Event List)
+  (cond [:event-list null?] null
+
+        [:event-list .car :process apply 'bleep eq?]
+        [:event-list .cdr :process menu]
+
+        else [:event-list .car
+              :event-list .cdr :process menu
+              cons]))
+
+(import sys)
+
+(+jojo readline sys .stdin -1 swap .readline)
+
+(+jojo read-event
+  readline code-scan :string-vect!
+  (if [:string-vect vect-length 0 eq?]
+    read-event
+    [:string-vect 0 vect-ref]))
+
+(+jojo interact (-> :event-list :process --)
+  :event-list :process menu p nl
+  read-event :event!
+  (when [:event 'end eq? not]
+    :event :process apply :next!
+    (cond [:next 'bleep eq?]
+          ['bleep p nl :event-list :process interact]
+          else [:event-list :next interact])))
+
+(+jojo - (-> :body -- Sexp)
+  (cond [:body null?]
+        ["- (-) syntax error" p nl
+         "  body of (-) can not be null" p nl
+         error]
+        [:body.cdr null?]
+        `{(@ :body.car) apply}
+        else
+        `[(quote (@ :body.car))
+          (- (@ :body.cdr list-spread))
+          prefix]))
+
+(note
+  (+jojo VMS
+    (- coin choc VMS))
+  ==>
+  (+jojo VMS
+    'coin 'choc {VMS apply}
+    prefix prefix))
+
+(+jojo | (-> :body -- Sexp)
+  `(begin
+     (dict (@ :body choice-recur))
+     dict-choice))
+
+(+jojo choice-recur (-> :body -- Sexp)
+  (cond [:body null?] `(begin)
+        else `(begin
+                (quote (@ :body.car))
+                {(@ :body.cdr.car) apply}
+                (@ :body.cdr.cdr choice-recur))))
+
+(note
+  (+jojo CT (-> :n -- Process)
+    (cond [:n 0 eq?]
+          (| up [1 CT]
+             around [0 CT])
+          else
+          (| up [:n inc CT]
+             down [:n dec CT])))
+  ==>
+  (+jojo CT (-> :n -- Process)
+    (cond [:n 0 eq?]
+          [(dict
+             'up {1 CT apply}
+             'around {0 CT apply})
+           dict-choice]
+          else
+          [(dict
+             'up {:n inc CT apply}
+             'down {:n dec CT apply})
+           dict-choice])))
+
+(+jojo CLOCK (- tick CLOCK))
+
+(+jojo VMS-alphabet
+  '(coin choc))
+(+jojo VMS (- coin choc VMS))
+
+(+jojo CH5A (- in5p out2p out1p out2p CH5A))
+
+(+jojo CH5B (- in5p out1p out1p out1p out2p CH5B))
+
+(+jojo CH5C-alphabet
+  '(in5p out1p out2p))
+(+jojo CH5C
+  (- in5p (| out1p (- out1p out1p out2p CH5C)
+             out2p (- out1p out2p CH5C))))
+
+(+jojo VMCT-alphabet
+  '(coin choc toffee))
+(+jojo VMCT
+  (- coin (| choc VMCT
+             toffee VMCT)))
+
+(+jojo VMC-alphabet
+  '(in1p in2p large small))
+(+jojo VMC
+  (note WARNING
+    do not insert three pennies in a row)
+  (| in2p (| large VMC
+             small (- out1p VMC))
+     in1p (| small VMC
+             in1p (| large VMC
+                     in1p STOP))))
+
+(+jojo COPYBIT-alphabet
+  '(in.0 out.0 in.1 out.1))
+(+jojo COPYBIT
+  (| in.0 (- out.0 COPYBIT)
+     in.1 (- out.1 COPYBIT)))
+
+(+jojo CT-alphabet
+  '(up down around))
+(+jojo CT (-> :n -- Process)
+  (cond [:n 0 eq?]
+        (| up [1 CT]
+           around [0 CT])
+        else
+        (| up [:n inc CT]
+           down [:n dec CT])))
+
+(note
+  (begin VMS-alphabet VMS interact)
+  (begin CH5C-alphabet CH5C interact)
+  (begin VMCT-alphabet VMCT interact)
+  (begin VMC-alphabet VMC interact)
+  (begin CT-alphabet 0 CT interact))
