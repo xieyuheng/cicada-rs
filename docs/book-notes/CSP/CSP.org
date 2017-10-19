@@ -3,11 +3,6 @@
 
 - by C. A. R. Hoare
 
-* [todo-stack]
-
-  - (proc)
-  - (choice)
-
 * 1 Processes
 
 *** 1.1  Introduction
@@ -104,9 +99,13 @@
 
       (note
         (|) == STOP)
+      #+end_src
 
+***** (choice) -- general choice
+
+      #+begin_src jojo :tangle no
       (note a more general syntax
-        (choice :x from Event List
+        (choice Event List
           Process))
       #+end_src
 
@@ -336,25 +335,159 @@
 
 *** 1.6  Operations on traces
 
+***** 1.6.1 Catenation
+
+***** 1.6.2 Restriction
+
+***** 1.6.3 Head and tail
+
+***** 1.6.4 Star
+
+***** 1.6.5 Ordering
+
+***** 1.6.6 Length
+
 *** 1.7  Implementation of traces
 
 *** 1.8  Traces of a process
 
+    - the complete set of all possible traces of a process P
+      can be known in advance,
+      and we define a function 'traces' to yield that set
+
+***** 1.8.1 Laws
+
+***** 1.8.2 Implementation
+
+      - (: trace-of? (-> Trace Process -- Bool))
+
+***** 1.8.3 After
+
 *** 1.9  More operations on traces
 
+***** 1.9.1 Change of symbol
+
+***** 1.9.2 Catenation
+
+***** 1.9.3 Interleaving
+
+***** 1.9.4 Subscription
+
+***** 1.9.5 Reversal
+
+***** 1.9.6 Selection
+
+***** 1.9.7 Composition
+
 *** 1.10 Specifications
+
+***** 1.10.1 Satisfaction
+
+***** 1.10.2 Proofs
+
+*** [note] predicate vs type-constructor
+
+***** predicate
+
+***** type-constructor
+
+***** difference
+
+***** similarity
+
+* [note] difference between process calculi and automata
+
+  - process as a special way of encoding states of automata.
+
+* [note] about implementation
+
+  - a process is a function of type (-> Event -- Process)
+
+  - a process is a function
+    that can be stepped
+    each step of the process is a state of the process
+    process is a automata whose states are encoded by steps
+    let's call them 'step-states'
+
+  - a process is a function
+    that can be composed
+    according to the natural of its step-states
 
 * 2 Concurrency
 
 *** 2.1  Introduction
 
+    - the environment of a process itself
+      may be described as a process.
+
+    - This permits investigation of the behaviour
+      of a complete system composed from the process
+      together with its environment,
+      acting and interacting with each other
+      as they evolve concurrently.
+
     - composition of processes.
 
 *** 2.2  Intersection
 
-    - ><
+***** example
+
+      #+begin_src jojo
+      (+jojo VMCT
+        (- coin (| choc VMCT
+                   toffee VMCT)))
+
+      (note greedy customer)
+      (+jojo GRCUST
+        (| choc GRCUST
+           toffee GRCUST
+           coin (- choc GRCUST)))
+
+      (note
+        (|| VMCT GRCUST)
+        ==
+        (proc X (- coin choc X)))
+
+
+      (+jojo VMC
+        (note WARNING
+          do not insert three pennies in a row)
+        (| in2p (| large VMC
+                   small (- out1p VMC))
+           in1p (| small VMC
+                   in1p (| large VMC
+                           in1p STOP))))
+      (note foolish customer)
+      (+jojo FOOLCUST
+        (| in2p (- large FOOLCUST)
+           in1p (- large FOOLCUST)))
+
+      (note
+        (|| VMC FOOLCUST)
+        ==
+        (proc X (| in2p (- large X)
+                   in1p STOP)))
+      #+end_src
+
+***** implementation
+
+      #+begin_src jojo
+      (+jojo intersect (-> :process1 :process2 -- Process)
+        {:z!
+         :z :process1 apply :next1!
+         :z :process2 apply :next2!
+         (cond [:next1 'bleep eq?] ['bleep]
+               [:next2 'bleep eq?] ['bleep]
+               else [:next1 :next2 intersect])})
+      #+end_src
 
 *** 2.3  Concurrency
+
+    - process should not simply be implemented as closure
+      since the alphabet of a process is part of it.
+
+    - and alphabet might be infinite
+      [such as the set of all integer]
 
 *** 2.4  Pictures
 
@@ -388,9 +521,107 @@
 
 * 4 Communication
 
+*** [note] primitivity prejudice
+
+    - suppose :
+      1. model-1 is more primitive then model-2
+      2. model-2 can be reduced to model-1
+      3. one can use model-1 to implement model-2
+      4. it is meaningless to use model-2 to model-1
+         because model-2 is already more powerful than model-1
+
+    - when ever such reduction as (2) can be done,
+      a theoretical author might choose to
+      use the more primitive model in his study,
+
+      regardless the fact that although (3) is possible,
+      but in practice, such implementation might be :
+      1. more complicate than direct implementation
+      2. has bad performance
+
+    - this kind of bad design decisions
+      is called *primitivity prejudice*,
+      which very often occurs in developments
+      of mathematical theories.
+
+*** [note] new syntax
+
+    - from this chapter,
+      the syntax need to be re-designed.
+
+    - all channel must be assigned with a type-list.
+      #ch for input
+      #ch! for output
+
+    - input and output of a channel are the same
+      if its type-list is empty.
+
+    #+begin_src jojo
+    (+ch #in Int)
+    (+ch #out Int)
+
+    (+jojo SQUARE
+      #in dup mul #out! SQUARE)
+    #+end_src
+
+***** prefix, recursion and choice
+
+      #+begin_src jojo
+      (+ch #coin)
+      (+ch #choc)
+
+      (+jojo VMS #coin #choc VMS)
+
+      (note
+        (+jojo CH5C
+          (- in5p (| out1p (- out1p out1p out2p CH5C)
+                     out2p (- out1p out2p CH5C)))))
+
+      (+jojo CH5C
+        #in5p (| #out1p [#out1p #out1p #out2p CH5C]
+                 #out2p [#out1p #out2p CH5C]))
+
+      (+jojo VMCT
+        #coin (| #choc VMCT
+                 #toffee VMCT))
+
+      (note
+        (+jojo COPYBIT
+          (| in.0 (- out.0 COPYBIT)
+             in.1 (- out.1 COPYBIT))))
+
+      (+jojo COPYBIT
+        #in  #out! COPYBIT)
+
+      (note
+        (+jojo CT (-> :n -- Process)
+          (cond [:n 0 eq?]
+                (| up [1 CT]
+                   around [0 CT])
+                else
+                (| up [:n inc CT]
+                   down [:n dec CT]))))
+
+      (+jojo CT (-> :n -- Process)
+        (cond [:n 0 eq?]
+              (| up [1 CT]
+                 around [0 CT])
+              else
+              (| up [:n inc CT]
+                 down [:n dec CT])))
+      #+end_src
+
 *** 4.1  Introduction
 
 *** 4.2  Input and output
+
+    #+begin_src jojo
+    (+ch #in Int)
+    (+ch #out Int)
+
+    (+jojo SQUARE
+      #in dup mul #out! SQUARE)
+    #+end_src
 
 *** 4.3  Communications
 

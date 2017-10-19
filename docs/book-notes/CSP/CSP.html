@@ -3,7 +3,7 @@
 "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en">
 <head>
-<!-- 2017-10-17 Tue 22:14 -->
+<!-- 2017-10-18 Wed 21:01 -->
 <meta http-equiv="Content-Type" content="text/html;charset=utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>Communicating Sequential Processes</title>
@@ -64,101 +64,148 @@ for the JavaScript code in this tag.
 <h2>overview</h2>
 <div id="text-table-of-contents">
 <ul>
-<li><a href="#orgf9c283d"><span class="done _todo_stack_">[todo-stack]</span> </a></li>
-<li><a href="#orgee21b41">1 Processes</a>
+<li><a href="#orgfa5d1ff"><span class="done _todo_stack_">[todo-stack]</span> </a></li>
+<li><a href="#org4972dd"><span class="todo _todo_list_">[todo-list]</span> </a></li>
+<li><a href="#org2933337">1 Processes</a>
 <ul>
-<li><a href="#org7ec7e45">1.1  Introduction</a>
+<li><a href="#orga276a3a">1.1  Introduction</a>
 <ul>
-<li><a href="#org830e421">1.1.1 prefix</a></li>
-<li><a href="#org1dc0000">1.1.2 recursion</a></li>
-<li><a href="#orgaf06888">1.1.3 choice</a></li>
-<li><a href="#org6626dd5">1.1.4 mutual recursion</a></li>
+<li><a href="#org43bae71">1.1.1 prefix</a></li>
+<li><a href="#org4447c2a">1.1.2 recursion</a></li>
+<li><a href="#org66de372">1.1.3 choice</a></li>
+<li><a href="#org7c16207">(choice) &#x2013; general choice</a></li>
+<li><a href="#orgf41bca3">1.1.4 mutual recursion</a></li>
 </ul>
 </li>
-<li><a href="#orgd1ffcb1">1.2  Pictures</a></li>
-<li><a href="#org28f64c5">1.3  Laws</a></li>
-<li><a href="#orgdeb2a31">1.4  Implementation of processes</a>
+<li><a href="#org6c12cd7">1.2  Pictures</a></li>
+<li><a href="#org2dc70c3">1.3  Laws</a></li>
+<li><a href="#org8a0e038">1.4  Implementation of processes</a>
 <ul>
-<li><a href="#orgdac90e7">type</a></li>
-<li><a href="#orgb0dc56b">STOP</a></li>
-<li><a href="#orgf75bfc">prefix</a></li>
-<li><a href="#orga47bc3d">dict-choice</a></li>
-<li><a href="#org8291e22">menu</a></li>
-<li><a href="#org55f8a3">interact</a></li>
-<li><a href="#org222f5e0">(-)</a></li>
-<li><a href="#org615a3ea">(|)</a></li>
-<li><a href="#org179a745"><span class="todo _gt__lt_">&gt;&lt;</span> (proc) &#x2013; marking language</a></li>
-<li><a href="#org97dc481"><span class="todo _gt__lt_">&gt;&lt;</span> (choice) &#x2013; general choice</a></li>
-<li><a href="#org5d56df8"><span class="done _test_">[test]</span> </a></li>
+<li><a href="#org4096f1c">type</a></li>
+<li><a href="#orgcbbe21b">STOP</a></li>
+<li><a href="#orgd713db8">prefix</a></li>
+<li><a href="#orgc26574c">dict-choice</a></li>
+<li><a href="#org3c01f35">menu</a></li>
+<li><a href="#org2e8aabc">interact</a></li>
+<li><a href="#org3a8a640">(-)</a></li>
+<li><a href="#org26515f9">(|)</a></li>
+<li><a href="#org9750f28"><span class="todo _gt__lt_">&gt;&lt;</span> (proc) &#x2013; marking language</a></li>
+<li><a href="#org1f410a7"><span class="todo _gt__lt_">&gt;&lt;</span> (choice) &#x2013; general choice</a></li>
+<li><a href="#org6600a50"><span class="done _test_">[test]</span> </a></li>
 </ul>
 </li>
-<li><a href="#org6a50055">1.5  Traces</a></li>
-<li><a href="#org3eea5cc">1.6  Operations on traces</a></li>
-<li><a href="#org94bd883">1.7  Implementation of traces</a></li>
-<li><a href="#org7d43b78">1.8  Traces of a process</a></li>
-<li><a href="#orgbb65436">1.9  More operations on traces</a></li>
-<li><a href="#org83603f4">1.10 Specifications</a></li>
+<li><a href="#org68fdede">1.5  Traces</a></li>
+<li><a href="#org1bb09b2">1.6  Operations on traces</a>
+<ul>
+<li><a href="#orgaf26479">1.6.1 Catenation</a></li>
+<li><a href="#org95f6fdb">1.6.2 Restriction</a></li>
+<li><a href="#org777bcae">1.6.3 Head and tail</a></li>
+<li><a href="#orgbd2d1c8">1.6.4 Star</a></li>
+<li><a href="#org1a6a12b">1.6.5 Ordering</a></li>
+<li><a href="#org67561fc">1.6.6 Length</a></li>
 </ul>
 </li>
-<li><a href="#orgf70da9a">2 Concurrency</a>
+<li><a href="#orgc7fe386">1.7  Implementation of traces</a></li>
+<li><a href="#orge4e2e6b">1.8  Traces of a process</a>
 <ul>
-<li><a href="#org52ad4a8">2.1  Introduction</a></li>
-<li><a href="#org6345537">2.2  Intersection</a></li>
-<li><a href="#org8525b36">2.3  Concurrency</a></li>
-<li><a href="#org7d827fc">2.4  Pictures</a></li>
-<li><a href="#orge5d6744">2.5  Example: The Dining Philosophers</a></li>
-<li><a href="#orgee8d462">2.6  Change of symbol</a></li>
-<li><a href="#orgdeb4297">2.7  Specifications</a></li>
-<li><a href="#org8786441">2.8  Mathematical theory of deterministic processes</a></li>
+<li><a href="#orgd309cc7">1.8.1 Laws</a></li>
+<li><a href="#org3f1f210">1.8.2 Implementation</a></li>
+<li><a href="#orgf5952c6">1.8.3 After</a></li>
 </ul>
 </li>
-<li><a href="#org62b1247">3 Nondeterminism</a>
+<li><a href="#orgbf0e28b">1.9  More operations on traces</a>
 <ul>
-<li><a href="#org4877203">3.1  Introduction</a></li>
-<li><a href="#org86881cf">3.2  Nondeterministic or</a></li>
-<li><a href="#org9f6ffc0">3.3  General choice</a></li>
-<li><a href="#orga8830a2">3.4  Refusals</a></li>
-<li><a href="#orgd8cd254">3.5  Concealment</a></li>
-<li><a href="#org8929107">3.6  Interleaving</a></li>
-<li><a href="#org639dca">3.7  Specifications</a></li>
-<li><a href="#org2f0f5f1">3.8  Divergence</a></li>
-<li><a href="#orgf5d4391">3.9  Mathematical theory of non-deterministic processes</a></li>
+<li><a href="#org3ff3b0a">1.9.1 Change of symbol</a></li>
+<li><a href="#org664de6f">1.9.2 Catenation</a></li>
+<li><a href="#org9481c24">1.9.3 Interleaving</a></li>
+<li><a href="#org9f9257a">1.9.4 Subscription</a></li>
+<li><a href="#org41315e6">1.9.5 Reversal</a></li>
+<li><a href="#org221f5ad">1.9.6 Selection</a></li>
+<li><a href="#org32e895b">1.9.7 Composition</a></li>
 </ul>
 </li>
-<li><a href="#orga7d417">4 Communication</a>
+<li><a href="#org4ba0f00">1.10 Specifications</a>
 <ul>
-<li><a href="#org4e36080">4.1  Introduction</a></li>
-<li><a href="#orged5ed1d">4.2  Input and output</a></li>
-<li><a href="#org31675c1">4.3  Communications</a></li>
-<li><a href="#org144a40c">4.4  Pipes</a></li>
-<li><a href="#org90d44c5">4.5  Subordination</a></li>
+<li><a href="#org8f21be4">1.10.1 Satisfaction</a></li>
+<li><a href="#orgc1302ee">1.10.2 Proofs</a></li>
 </ul>
 </li>
-<li><a href="#org1ecb992">5 Sequential Processes</a>
+<li><a href="#org4baebb2"><span class="todo _note_">[note]</span> predicate vs type-constructor</a>
 <ul>
-<li><a href="#org595aad5">5.1  Introduction</a></li>
-<li><a href="#orgbb581c0">5.2  Laws</a></li>
-<li><a href="#orgba8c67f">5.3  Mathematical treatment</a></li>
-<li><a href="#org441fdc4">5.4  Interrupts</a></li>
-<li><a href="#org5dbe0d0">5.5  Assignment</a></li>
+<li><a href="#org46c9add">predicate</a></li>
+<li><a href="#orgcc1bd17">type-constructor</a></li>
+<li><a href="#org1235183">difference</a></li>
+<li><a href="#org763ae25">similarity</a></li>
 </ul>
 </li>
-<li><a href="#orgd7fc83d">6 Shared Resources</a>
-<ul>
-<li><a href="#org6574e69">6.1  Introduction</a></li>
-<li><a href="#org32d98ec">6.2  Sharing by interleaving</a></li>
-<li><a href="#org73726bd">6.3  Shared storage</a></li>
-<li><a href="#orgd3f305c">6.4  Multiple resources</a></li>
-<li><a href="#orgd26db32">6.5  Operating systems</a></li>
-<li><a href="#org168ad06">6.6  Scheduling</a></li>
 </ul>
 </li>
-<li><a href="#org849656d">7 Discussion</a>
+<li><a href="#orgd10e44b"><span class="todo _note_">[note]</span> difference between process calculi and automata</a></li>
+<li><a href="#org4288358">2 Concurrency</a>
 <ul>
-<li><a href="#orged994d3">7.1  Introduction</a></li>
-<li><a href="#orga028483">7.2  Shared storage</a></li>
-<li><a href="#org672868b">7.3  Communication</a></li>
-<li><a href="#orgdfebd33">7.4  Mathematical models</a></li>
+<li><a href="#orga5f3009">2.1  Introduction</a></li>
+<li><a href="#org55dc4af">2.2  Intersection</a>
+<ul>
+<li><a href="#orge7492bd">example</a></li>
+<li><a href="#org578c0d6">implementation</a></li>
+</ul>
+</li>
+<li><a href="#orge9ddf8f">2.3  Concurrency</a></li>
+<li><a href="#org9833711">2.4  Pictures</a></li>
+<li><a href="#orga2e3ba1">2.5  Example: The Dining Philosophers</a></li>
+<li><a href="#org29e1da4">2.6  Change of symbol</a></li>
+<li><a href="#orgc81bc4f">2.7  Specifications</a></li>
+<li><a href="#org700f547">2.8  Mathematical theory of deterministic processes</a></li>
+</ul>
+</li>
+<li><a href="#org70cc6ff">3 Nondeterminism</a>
+<ul>
+<li><a href="#org333a8ce">3.1  Introduction</a></li>
+<li><a href="#orga1cec38">3.2  Nondeterministic or</a></li>
+<li><a href="#orgdf59e9b">3.3  General choice</a></li>
+<li><a href="#orga3cac96">3.4  Refusals</a></li>
+<li><a href="#org790391">3.5  Concealment</a></li>
+<li><a href="#org62b1047">3.6  Interleaving</a></li>
+<li><a href="#org6457829">3.7  Specifications</a></li>
+<li><a href="#org227b623">3.8  Divergence</a></li>
+<li><a href="#orgff57a67">3.9  Mathematical theory of non-deterministic processes</a></li>
+</ul>
+</li>
+<li><a href="#org4dc1add">4 Communication</a>
+<ul>
+<li><a href="#orgcee2b7c"><span class="todo _note_">[note]</span> primitivity prejudice</a></li>
+<li><a href="#orgac816ab">4.1  Introduction</a></li>
+<li><a href="#orgcad8e94">4.2  Input and output</a></li>
+<li><a href="#org25e8b31">4.3  Communications</a></li>
+<li><a href="#org999d375">4.4  Pipes</a></li>
+<li><a href="#orgcd41d86">4.5  Subordination</a></li>
+</ul>
+</li>
+<li><a href="#org6f97e08">5 Sequential Processes</a>
+<ul>
+<li><a href="#orgbb46920">5.1  Introduction</a></li>
+<li><a href="#org8cea3af">5.2  Laws</a></li>
+<li><a href="#orgf9cc749">5.3  Mathematical treatment</a></li>
+<li><a href="#orgd8c0673">5.4  Interrupts</a></li>
+<li><a href="#org304090d">5.5  Assignment</a></li>
+</ul>
+</li>
+<li><a href="#orgd9fe10a">6 Shared Resources</a>
+<ul>
+<li><a href="#org45a96df">6.1  Introduction</a></li>
+<li><a href="#org6cc5d45">6.2  Sharing by interleaving</a></li>
+<li><a href="#org4a64eb3">6.3  Shared storage</a></li>
+<li><a href="#org8d120d6">6.4  Multiple resources</a></li>
+<li><a href="#orge7216b0">6.5  Operating systems</a></li>
+<li><a href="#org5f1bfc1">6.6  Scheduling</a></li>
+</ul>
+</li>
+<li><a href="#orgabb86b1">7 Discussion</a>
+<ul>
+<li><a href="#org186b60b">7.1  Introduction</a></li>
+<li><a href="#org8ddac24">7.2  Shared storage</a></li>
+<li><a href="#org82a2605">7.3  Communication</a></li>
+<li><a href="#orge9ae02b">7.4  Mathematical models</a></li>
 </ul>
 </li>
 </ul>
@@ -167,28 +214,35 @@ for the JavaScript code in this tag.
 <ul class="org-ul">
 <li><p>by C. A. R. Hoare</p></li></ul>
 
-<div id="outline-container-orgf9c283d" class="outline-2">
-<h2 id="orgf9c283d"><span class="done _todo_stack_">[todo-stack]</span> </h2>
-<div class="outline-text-2" id="text-orgf9c283d">
+<div id="outline-container-orgfa5d1ff" class="outline-2">
+<h2 id="orgfa5d1ff"><span class="done _todo_stack_">[todo-stack]</span> </h2>
+<div class="outline-text-2" id="text-orgfa5d1ff">
 <ul class="org-ul">
-<li><p>(proc)</p></li>
-<li><p>(choice)</p></li></ul>
+<li><p>process should not simply be implemented as closure</p><p>since the alphabet of a process is part of it.</p></li></ul>
 </div>
 </div>
 
-<div id="outline-container-orgee21b41" class="outline-2">
-<h2 id="orgee21b41">1 Processes</h2>
-<div class="outline-text-2" id="text-orgee21b41">
-</div><div id="outline-container-org7ec7e45" class="outline-3">
-<h3 id="org7ec7e45">1.1  Introduction</h3>
-<div class="outline-text-3" id="text-org7ec7e45">
+<div id="outline-container-org4972dd" class="outline-2">
+<h2 id="org4972dd"><span class="todo _todo_list_">[todo-list]</span> </h2>
+<div class="outline-text-2" id="text-org4972dd">
+<ul class="org-ul">
+<li><p>incremental programming :</p><p></p><p><ol class="org-ol"></p><p><li>process as closure</li></p><p></p><p><li>process with alphabet</li></p><p></p><p><li>alphabet might be infinite</p><p>[such as the set of all integer]</li></p><p></p><p><li>(||) is problematic for programming</li></p><p></p><p><li>event as channel message pair</p><p><ul class="org-ul"></p><p><li><p>in some cases,</p><p>imposition of notational restrictions</p><p>permits the use of more powerful reasoning methods.</p></li></ul></li></ol></p></li></ul>
+</div>
+</div>
+
+<div id="outline-container-org2933337" class="outline-2">
+<h2 id="org2933337">1 Processes</h2>
+<div class="outline-text-2" id="text-org2933337">
+</div><div id="outline-container-orga276a3a" class="outline-3">
+<h3 id="orga276a3a">1.1  Introduction</h3>
+<div class="outline-text-3" id="text-orga276a3a">
 <ul class="org-ul">
 <li><p>the word 'process' stand for</p><p>the behaviour pattern of an object,</p><p>insofar as it can be described</p><p>in terms of the limited set of events</p><p>selected as its alphabet.</p></li></ul>
 </div>
 
-<div id="outline-container-org830e421" class="outline-4">
-<h4 id="org830e421">1.1.1 prefix</h4>
-<div class="outline-text-4" id="text-org830e421">
+<div id="outline-container-org43bae71" class="outline-4">
+<h4 id="org43bae71">1.1.1 prefix</h4>
+<div class="outline-text-4" id="text-org43bae71">
 <div class="org-src-container">
 
 <pre class="src src-jojo"><span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">note</span>
@@ -204,9 +258,9 @@ for the JavaScript code in this tag.
 </div>
 </div>
 
-<div id="outline-container-org1dc0000" class="outline-4">
-<h4 id="org1dc0000">1.1.2 recursion</h4>
-<div class="outline-text-4" id="text-org1dc0000">
+<div id="outline-container-org4447c2a" class="outline-4">
+<h4 id="org4447c2a">1.1.2 recursion</h4>
+<div class="outline-text-4" id="text-org4447c2a">
 <ul class="org-ul">
 <li><p>This method of self-referential recursive definition of processes</p><p>will work only if the right-hand side of the equation</p><p>starts with at least one event prefixed</p><p>to all recursive occurrences of the process name.</p></li></ul>
 
@@ -229,9 +283,9 @@ for the JavaScript code in this tag.
 </div>
 </div>
 
-<div id="outline-container-orgaf06888" class="outline-4">
-<h4 id="orgaf06888">1.1.3 choice</h4>
-<div class="outline-text-4" id="text-orgaf06888">
+<div id="outline-container-org66de372" class="outline-4">
+<h4 id="org66de372">1.1.3 choice</h4>
+<div class="outline-text-4" id="text-org66de372">
 <div class="org-src-container">
 
 <pre class="src src-jojo"><span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">note</span>
@@ -281,19 +335,28 @@ for the JavaScript code in this tag.
      <span style="color: #ae81ff;">...</span> ...<span style="color: #696969;">))</span>
 
 <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">note</span>
-  <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">|</span><span style="color: #696969;">)</span> == STOP<span style="color: #696969;">)</span>
+  <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">|</span><span style="color: #696969;">)</span> == <span style="color: #66d9ef; font-weight: bold;">STOP</span><span style="color: #696969;">)</span>
+</pre>
+</div>
+</div>
+</div>
 
-<span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">note</span> a more general syntax
-  <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">choice</span> <span style="color: #a6e22e;">:x</span> from <span style="color: #66d9ef; font-weight: bold;">Event</span> <span style="color: #66d9ef; font-weight: bold;">List</span>
+<div id="outline-container-org7c16207" class="outline-4">
+<h4 id="org7c16207">(choice) &#x2013; general choice</h4>
+<div class="outline-text-4" id="text-org7c16207">
+<div class="org-src-container">
+
+<pre class="src src-jojo"><span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">note</span> a more general syntax
+  <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">choice</span> <span style="color: #66d9ef; font-weight: bold;">Event</span> <span style="color: #66d9ef; font-weight: bold;">List</span>
     <span style="color: #66d9ef; font-weight: bold;">Process</span><span style="color: #696969;">))</span>
 </pre>
 </div>
 </div>
 </div>
 
-<div id="outline-container-org6626dd5" class="outline-4">
-<h4 id="org6626dd5">1.1.4 mutual recursion</h4>
-<div class="outline-text-4" id="text-org6626dd5">
+<div id="outline-container-orgf41bca3" class="outline-4">
+<h4 id="orgf41bca3">1.1.4 mutual recursion</h4>
+<div class="outline-text-4" id="text-orgf41bca3">
 <div class="org-src-container">
 
 <pre class="src src-jojo"><span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">+jojo</span> <span style="color: #66d9ef; font-weight: bold;">CT</span> <span style="color: #696969;">(</span><span style="color: #66d9ef; font-weight: bold;">-&gt;</span> <span style="color: #a6e22e;">:n</span> <span style="color: #66d9ef; font-weight: bold;">--</span> <span style="color: #66d9ef; font-weight: bold;">Process</span><span style="color: #696969;">)</span>
@@ -309,20 +372,20 @@ for the JavaScript code in this tag.
 </div>
 </div>
 
-<div id="outline-container-orgd1ffcb1" class="outline-3">
-<h3 id="orgd1ffcb1">1.2  Pictures</h3>
+<div id="outline-container-org6c12cd7" class="outline-3">
+<h3 id="org6c12cd7">1.2  Pictures</h3>
 </div>
 
-<div id="outline-container-org28f64c5" class="outline-3">
-<h3 id="org28f64c5">1.3  Laws</h3>
+<div id="outline-container-org2dc70c3" class="outline-3">
+<h3 id="org2dc70c3">1.3  Laws</h3>
 </div>
 
-<div id="outline-container-orgdeb2a31" class="outline-3">
-<h3 id="orgdeb2a31">1.4  Implementation of processes</h3>
-<div class="outline-text-3" id="text-orgdeb2a31">
-</div><div id="outline-container-orgdac90e7" class="outline-4">
-<h4 id="orgdac90e7">type</h4>
-<div class="outline-text-4" id="text-orgdac90e7">
+<div id="outline-container-org8a0e038" class="outline-3">
+<h3 id="org8a0e038">1.4  Implementation of processes</h3>
+<div class="outline-text-3" id="text-org8a0e038">
+</div><div id="outline-container-org4096f1c" class="outline-4">
+<h4 id="org4096f1c">type</h4>
+<div class="outline-text-4" id="text-org4096f1c">
 <div class="org-src-container">
 
 <pre class="src src-jojo"><span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">note</span>
@@ -337,9 +400,9 @@ for the JavaScript code in this tag.
 </div>
 </div>
 
-<div id="outline-container-orgb0dc56b" class="outline-4">
-<h4 id="orgb0dc56b">STOP</h4>
-<div class="outline-text-4" id="text-orgb0dc56b">
+<div id="outline-container-orgcbbe21b" class="outline-4">
+<h4 id="orgcbbe21b">STOP</h4>
+<div class="outline-text-4" id="text-orgcbbe21b">
 <div class="org-src-container">
 
 <pre class="src src-jojo"><span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">+jojo</span> <span style="color: #66d9ef; font-weight: bold;">STOP</span> <span style="color: #B380A8;">{</span>drop 'bleep<span style="color: #B380A8;">}</span><span style="color: #696969;">)</span>
@@ -348,9 +411,9 @@ for the JavaScript code in this tag.
 </div>
 </div>
 
-<div id="outline-container-orgf75bfc" class="outline-4">
-<h4 id="orgf75bfc">prefix</h4>
-<div class="outline-text-4" id="text-orgf75bfc">
+<div id="outline-container-orgd713db8" class="outline-4">
+<h4 id="orgd713db8">prefix</h4>
+<div class="outline-text-4" id="text-orgd713db8">
 <div class="org-src-container">
 
 <pre class="src src-jojo"><span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">+jojo</span> prefix <span style="color: #696969;">(</span><span style="color: #66d9ef; font-weight: bold;">-&gt;</span> <span style="color: #a6e22e;">:event</span> <span style="color: #a6e22e;">:process</span> <span style="color: #66d9ef; font-weight: bold;">--</span> <span style="color: #66d9ef; font-weight: bold;">Process</span><span style="color: #696969;">)</span>
@@ -363,9 +426,9 @@ for the JavaScript code in this tag.
 </div>
 </div>
 
-<div id="outline-container-orga47bc3d" class="outline-4">
-<h4 id="orga47bc3d">dict-choice</h4>
-<div class="outline-text-4" id="text-orga47bc3d">
+<div id="outline-container-orgc26574c" class="outline-4">
+<h4 id="orgc26574c">dict-choice</h4>
+<div class="outline-text-4" id="text-orgc26574c">
 <div class="org-src-container">
 
 <pre class="src src-jojo"><span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">+jojo</span> dict-choice <span style="color: #696969;">(</span><span style="color: #66d9ef; font-weight: bold;">-&gt;</span> <span style="color: #a6e22e;">:dict</span> <span style="color: #66d9ef; font-weight: bold;">--</span> <span style="color: #66d9ef; font-weight: bold;">Process</span><span style="color: #696969;">)</span>
@@ -378,9 +441,9 @@ for the JavaScript code in this tag.
 </div>
 </div>
 
-<div id="outline-container-org8291e22" class="outline-4">
-<h4 id="org8291e22">menu</h4>
-<div class="outline-text-4" id="text-org8291e22">
+<div id="outline-container-org3c01f35" class="outline-4">
+<h4 id="org3c01f35">menu</h4>
+<div class="outline-text-4" id="text-org3c01f35">
 <ul class="org-ul">
 <li><p>gives a list of all those symbols</p><p>of a which can occur as the first event</p><p>in the life of a process</p></li></ul>
 
@@ -400,9 +463,9 @@ for the JavaScript code in this tag.
 </div>
 </div>
 
-<div id="outline-container-org55f8a3" class="outline-4">
-<h4 id="org55f8a3">interact</h4>
-<div class="outline-text-4" id="text-org55f8a3">
+<div id="outline-container-org2e8aabc" class="outline-4">
+<h4 id="org2e8aabc">interact</h4>
+<div class="outline-text-4" id="text-org2e8aabc">
 <div class="org-src-container">
 
 <pre class="src src-jojo"><span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">import</span> sys<span style="color: #696969;">)</span>
@@ -428,9 +491,9 @@ for the JavaScript code in this tag.
 </div>
 </div>
 
-<div id="outline-container-org222f5e0" class="outline-4">
-<h4 id="org222f5e0">(-)</h4>
-<div class="outline-text-4" id="text-org222f5e0">
+<div id="outline-container-org3a8a640" class="outline-4">
+<h4 id="org3a8a640">(-)</h4>
+<div class="outline-text-4" id="text-org3a8a640">
 <div class="org-src-container">
 
 <pre class="src src-jojo"><span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">+jojo</span> - <span style="color: #696969;">(</span><span style="color: #66d9ef; font-weight: bold;">-&gt;</span> <span style="color: #a6e22e;">:body</span> <span style="color: #66d9ef; font-weight: bold;">--</span> <span style="color: #66d9ef; font-weight: bold;">Sexp</span><span style="color: #696969;">)</span>
@@ -457,9 +520,9 @@ for the JavaScript code in this tag.
 </div>
 </div>
 
-<div id="outline-container-org615a3ea" class="outline-4">
-<h4 id="org615a3ea">(|)</h4>
-<div class="outline-text-4" id="text-org615a3ea">
+<div id="outline-container-org26515f9" class="outline-4">
+<h4 id="org26515f9">(|)</h4>
+<div class="outline-text-4" id="text-org26515f9">
 <div class="org-src-container">
 
 <pre class="src src-jojo"><span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">+jojo</span> | <span style="color: #696969;">(</span><span style="color: #66d9ef; font-weight: bold;">-&gt;</span> <span style="color: #a6e22e;">:body</span> <span style="color: #66d9ef; font-weight: bold;">--</span> <span style="color: #66d9ef; font-weight: bold;">Sexp</span><span style="color: #696969;">)</span>
@@ -499,17 +562,17 @@ for the JavaScript code in this tag.
 </div>
 </div>
 
-<div id="outline-container-org179a745" class="outline-4">
-<h4 id="org179a745"><span class="todo _gt__lt_">&gt;&lt;</span> (proc) &#x2013; marking language</h4>
+<div id="outline-container-org9750f28" class="outline-4">
+<h4 id="org9750f28"><span class="todo _gt__lt_">&gt;&lt;</span> (proc) &#x2013; marking language</h4>
 </div>
 
-<div id="outline-container-org97dc481" class="outline-4">
-<h4 id="org97dc481"><span class="todo _gt__lt_">&gt;&lt;</span> (choice) &#x2013; general choice</h4>
+<div id="outline-container-org1f410a7" class="outline-4">
+<h4 id="org1f410a7"><span class="todo _gt__lt_">&gt;&lt;</span> (choice) &#x2013; general choice</h4>
 </div>
 
-<div id="outline-container-org5d56df8" class="outline-4">
-<h4 id="org5d56df8"><span class="done _test_">[test]</span> </h4>
-<div class="outline-text-4" id="text-org5d56df8">
+<div id="outline-container-org6600a50" class="outline-4">
+<h4 id="org6600a50"><span class="done _test_">[test]</span> </h4>
+<div class="outline-text-4" id="text-org6600a50">
 <div class="org-src-container">
 
 <pre class="src src-jojo"><span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">+jojo</span> <span style="color: #66d9ef; font-weight: bold;">CLOCK</span> <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">-</span> tick CLOCK<span style="color: #696969;">))</span>
@@ -573,214 +636,403 @@ for the JavaScript code in this tag.
 </div>
 </div>
 
-<div id="outline-container-org6a50055" class="outline-3">
-<h3 id="org6a50055">1.5  Traces</h3>
+<div id="outline-container-org68fdede" class="outline-3">
+<h3 id="org68fdede">1.5  Traces</h3>
 </div>
 
-<div id="outline-container-org3eea5cc" class="outline-3">
-<h3 id="org3eea5cc">1.6  Operations on traces</h3>
+<div id="outline-container-org1bb09b2" class="outline-3">
+<h3 id="org1bb09b2">1.6  Operations on traces</h3>
+<div class="outline-text-3" id="text-org1bb09b2">
+</div><div id="outline-container-orgaf26479" class="outline-4">
+<h4 id="orgaf26479">1.6.1 Catenation</h4>
 </div>
 
-<div id="outline-container-org94bd883" class="outline-3">
-<h3 id="org94bd883">1.7  Implementation of traces</h3>
+<div id="outline-container-org95f6fdb" class="outline-4">
+<h4 id="org95f6fdb">1.6.2 Restriction</h4>
 </div>
 
-<div id="outline-container-org7d43b78" class="outline-3">
-<h3 id="org7d43b78">1.8  Traces of a process</h3>
+<div id="outline-container-org777bcae" class="outline-4">
+<h4 id="org777bcae">1.6.3 Head and tail</h4>
 </div>
 
-<div id="outline-container-orgbb65436" class="outline-3">
-<h3 id="orgbb65436">1.9  More operations on traces</h3>
+<div id="outline-container-orgbd2d1c8" class="outline-4">
+<h4 id="orgbd2d1c8">1.6.4 Star</h4>
 </div>
 
-<div id="outline-container-org83603f4" class="outline-3">
-<h3 id="org83603f4">1.10 Specifications</h3>
+<div id="outline-container-org1a6a12b" class="outline-4">
+<h4 id="org1a6a12b">1.6.5 Ordering</h4>
+</div>
+
+<div id="outline-container-org67561fc" class="outline-4">
+<h4 id="org67561fc">1.6.6 Length</h4>
 </div>
 </div>
 
-<div id="outline-container-orgf70da9a" class="outline-2">
-<h2 id="orgf70da9a">2 Concurrency</h2>
-<div class="outline-text-2" id="text-orgf70da9a">
-</div><div id="outline-container-org52ad4a8" class="outline-3">
-<h3 id="org52ad4a8">2.1  Introduction</h3>
-<div class="outline-text-3" id="text-org52ad4a8">
+<div id="outline-container-orgc7fe386" class="outline-3">
+<h3 id="orgc7fe386">1.7  Implementation of traces</h3>
+</div>
+
+<div id="outline-container-orge4e2e6b" class="outline-3">
+<h3 id="orge4e2e6b">1.8  Traces of a process</h3>
+<div class="outline-text-3" id="text-orge4e2e6b">
 <ul class="org-ul">
+<li><p>the complete set of all possible traces of a process P</p><p>can be known in advance,</p><p>and we define a function 'traces' to yield that set</p></li></ul>
+</div>
+
+<div id="outline-container-orgd309cc7" class="outline-4">
+<h4 id="orgd309cc7">1.8.1 Laws</h4>
+</div>
+
+<div id="outline-container-org3f1f210" class="outline-4">
+<h4 id="org3f1f210">1.8.2 Implementation</h4>
+<div class="outline-text-4" id="text-org3f1f210">
+<ul class="org-ul">
+<li><p>(: trace-of? (-&gt; Trace Process &#x2013; Bool))</p></li></ul>
+</div>
+</div>
+
+<div id="outline-container-orgf5952c6" class="outline-4">
+<h4 id="orgf5952c6">1.8.3 After</h4>
+</div>
+</div>
+
+<div id="outline-container-orgbf0e28b" class="outline-3">
+<h3 id="orgbf0e28b">1.9  More operations on traces</h3>
+<div class="outline-text-3" id="text-orgbf0e28b">
+</div><div id="outline-container-org3ff3b0a" class="outline-4">
+<h4 id="org3ff3b0a">1.9.1 Change of symbol</h4>
+</div>
+
+<div id="outline-container-org664de6f" class="outline-4">
+<h4 id="org664de6f">1.9.2 Catenation</h4>
+</div>
+
+<div id="outline-container-org9481c24" class="outline-4">
+<h4 id="org9481c24">1.9.3 Interleaving</h4>
+</div>
+
+<div id="outline-container-org9f9257a" class="outline-4">
+<h4 id="org9f9257a">1.9.4 Subscription</h4>
+</div>
+
+<div id="outline-container-org41315e6" class="outline-4">
+<h4 id="org41315e6">1.9.5 Reversal</h4>
+</div>
+
+<div id="outline-container-org221f5ad" class="outline-4">
+<h4 id="org221f5ad">1.9.6 Selection</h4>
+</div>
+
+<div id="outline-container-org32e895b" class="outline-4">
+<h4 id="org32e895b">1.9.7 Composition</h4>
+</div>
+</div>
+
+<div id="outline-container-org4ba0f00" class="outline-3">
+<h3 id="org4ba0f00">1.10 Specifications</h3>
+<div class="outline-text-3" id="text-org4ba0f00">
+</div><div id="outline-container-org8f21be4" class="outline-4">
+<h4 id="org8f21be4">1.10.1 Satisfaction</h4>
+</div>
+
+<div id="outline-container-orgc1302ee" class="outline-4">
+<h4 id="orgc1302ee">1.10.2 Proofs</h4>
+</div>
+</div>
+
+<div id="outline-container-org4baebb2" class="outline-3">
+<h3 id="org4baebb2"><span class="todo _note_">[note]</span> predicate vs type-constructor</h3>
+<div class="outline-text-3" id="text-org4baebb2">
+</div><div id="outline-container-org46c9add" class="outline-4">
+<h4 id="org46c9add">predicate</h4>
+</div>
+
+<div id="outline-container-orgcc1bd17" class="outline-4">
+<h4 id="orgcc1bd17">type-constructor</h4>
+</div>
+
+<div id="outline-container-org1235183" class="outline-4">
+<h4 id="org1235183">difference</h4>
+</div>
+
+<div id="outline-container-org763ae25" class="outline-4">
+<h4 id="org763ae25">similarity</h4>
+</div>
+</div>
+</div>
+
+<div id="outline-container-orgd10e44b" class="outline-2">
+<h2 id="orgd10e44b"><span class="todo _note_">[note]</span> difference between process calculi and automata</h2>
+<div class="outline-text-2" id="text-orgd10e44b">
+<ul class="org-ul">
+<li><p>process as a special way of encoding states of automata.</p></li></ul>
+</div>
+</div>
+
+<div id="outline-container-org4288358" class="outline-2">
+<h2 id="org4288358">2 Concurrency</h2>
+<div class="outline-text-2" id="text-org4288358">
+</div><div id="outline-container-orga5f3009" class="outline-3">
+<h3 id="orga5f3009">2.1  Introduction</h3>
+<div class="outline-text-3" id="text-orga5f3009">
+<ul class="org-ul">
+<li><p>the environment of a process itself</p><p>may be described as a process.</p></li>
+
+<li><p>This permits investigation of the behaviour</p><p>of a complete system composed from the process</p><p>together with its environment,</p><p>acting and interacting with each other</p><p>as they evolve concurrently.</p></li>
+
 <li><p>composition of processes.</p></li></ul>
 </div>
 </div>
 
-<div id="outline-container-org6345537" class="outline-3">
-<h3 id="org6345537">2.2  Intersection</h3>
-<div class="outline-text-3" id="text-org6345537">
+<div id="outline-container-org55dc4af" class="outline-3">
+<h3 id="org55dc4af">2.2  Intersection</h3>
+<div class="outline-text-3" id="text-org55dc4af">
+</div><div id="outline-container-orge7492bd" class="outline-4">
+<h4 id="orge7492bd">example</h4>
+<div class="outline-text-4" id="text-orge7492bd">
+<div class="org-src-container">
+
+<pre class="src src-jojo"><span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">+jojo</span> <span style="color: #66d9ef; font-weight: bold;">VMCT</span>
+  <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">-</span> coin <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">|</span> choc <span style="color: #66d9ef; font-weight: bold;">VMCT</span>
+             toffee VMCT<span style="color: #696969;">)))</span>
+
+<span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">note</span> greedy customer<span style="color: #696969;">)</span>
+<span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">+jojo</span> <span style="color: #66d9ef; font-weight: bold;">GRCUST</span>
+  <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">|</span> choc <span style="color: #66d9ef; font-weight: bold;">GRCUST</span>
+     toffee <span style="color: #66d9ef; font-weight: bold;">GRCUST</span>
+     coin <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">-</span> choc GRCUST<span style="color: #696969;">)))</span>
+
+<span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">note</span>
+  <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">||</span> <span style="color: #66d9ef; font-weight: bold;">VMCT</span> <span style="color: #66d9ef; font-weight: bold;">GRCUST</span><span style="color: #696969;">)</span>
+  ==
+  <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">proc</span> <span style="color: #66d9ef; font-weight: bold;">X</span> <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">-</span> coin choc X<span style="color: #696969;">)))</span>
+
+
+<span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">+jojo</span> <span style="color: #66d9ef; font-weight: bold;">VMC</span>
+  <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">note</span> <span style="color: #66d9ef; font-weight: bold;">WARNING</span>
+    do not insert three pennies in a row<span style="color: #696969;">)</span>
+  <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">|</span> in2p <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">|</span> large <span style="color: #66d9ef; font-weight: bold;">VMC</span>
+             small <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">-</span> out1p <span style="color: #66d9ef; font-weight: bold;">VMC</span><span style="color: #696969;">))</span>
+     in1p <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">|</span> small <span style="color: #66d9ef; font-weight: bold;">VMC</span>
+             in1p <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">|</span> large <span style="color: #66d9ef; font-weight: bold;">VMC</span>
+                     in1p STOP<span style="color: #696969;">))))</span>
+<span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">note</span> foolish customer<span style="color: #696969;">)</span>
+<span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">+jojo</span> <span style="color: #66d9ef; font-weight: bold;">FOOLCUST</span>
+  <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">|</span> in2p <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">-</span> large <span style="color: #66d9ef; font-weight: bold;">FOOLCUST</span><span style="color: #696969;">)</span>
+     in1p <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">-</span> large FOOLCUST<span style="color: #696969;">)))</span>
+
+<span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">note</span>
+  <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">||</span> <span style="color: #66d9ef; font-weight: bold;">VMC</span> <span style="color: #66d9ef; font-weight: bold;">FOOLCUST</span><span style="color: #696969;">)</span>
+  ==
+  <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">proc</span> <span style="color: #66d9ef; font-weight: bold;">X</span> <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">|</span> in2p <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">-</span> large <span style="color: #66d9ef; font-weight: bold;">X</span><span style="color: #696969;">)</span>
+             in1p <span style="color: #66d9ef; font-weight: bold;">STOP</span><span style="color: #696969;">)))</span>
+</pre>
+</div>
+</div>
+</div>
+
+<div id="outline-container-org578c0d6" class="outline-4">
+<h4 id="org578c0d6">implementation</h4>
+<div class="outline-text-4" id="text-org578c0d6">
+<div class="org-src-container">
+
+<pre class="src src-jojo"><span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">+jojo</span> intersect <span style="color: #696969;">(</span><span style="color: #66d9ef; font-weight: bold;">-&gt;</span> <span style="color: #a6e22e;">:process1</span> <span style="color: #a6e22e;">:process2</span> <span style="color: #66d9ef; font-weight: bold;">--</span> <span style="color: #66d9ef; font-weight: bold;">Process</span><span style="color: #696969;">)</span>
+  <span style="color: #B380A8;">{</span><span style="color: #fd971f;">:z!</span>
+   <span style="color: #a6e22e;">:z</span> <span style="color: #a6e22e;">:process1</span> apply <span style="color: #fd971f;">:next1!</span>
+   <span style="color: #a6e22e;">:z</span> <span style="color: #a6e22e;">:process2</span> apply <span style="color: #fd971f;">:next2!</span>
+   <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">cond</span> <span style="color: #797979;">[</span><span style="color: #a6e22e;">:next1</span> 'bleep eq?<span style="color: #797979;">]</span> <span style="color: #797979;">[</span>'bleep<span style="color: #797979;">]</span>
+         <span style="color: #797979;">[</span><span style="color: #a6e22e;">:next2</span> 'bleep eq?<span style="color: #797979;">]</span> <span style="color: #797979;">[</span>'bleep<span style="color: #797979;">]</span>
+         <span style="color: #66d9ef; font-weight: bold;">else</span> <span style="color: #797979;">[</span><span style="color: #a6e22e;">:next1</span> <span style="color: #a6e22e;">:next2</span> intersect<span style="color: #797979;">]</span><span style="color: #696969;">)</span><span style="color: #B380A8;">}</span><span style="color: #696969;">)</span>
+</pre>
+</div>
+</div>
+</div>
+</div>
+
+<div id="outline-container-orge9ddf8f" class="outline-3">
+<h3 id="orge9ddf8f">2.3  Concurrency</h3>
+</div>
+
+<div id="outline-container-org9833711" class="outline-3">
+<h3 id="org9833711">2.4  Pictures</h3>
+</div>
+
+<div id="outline-container-orga2e3ba1" class="outline-3">
+<h3 id="orga2e3ba1">2.5  Example: The Dining Philosophers</h3>
+</div>
+
+<div id="outline-container-org29e1da4" class="outline-3">
+<h3 id="org29e1da4">2.6  Change of symbol</h3>
+</div>
+
+<div id="outline-container-orgc81bc4f" class="outline-3">
+<h3 id="orgc81bc4f">2.7  Specifications</h3>
+</div>
+
+<div id="outline-container-org700f547" class="outline-3">
+<h3 id="org700f547">2.8  Mathematical theory of deterministic processes</h3>
+</div>
+</div>
+
+<div id="outline-container-org70cc6ff" class="outline-2">
+<h2 id="org70cc6ff">3 Nondeterminism</h2>
+<div class="outline-text-2" id="text-org70cc6ff">
+</div><div id="outline-container-org333a8ce" class="outline-3">
+<h3 id="org333a8ce">3.1  Introduction</h3>
+</div>
+
+<div id="outline-container-orga1cec38" class="outline-3">
+<h3 id="orga1cec38">3.2  Nondeterministic or</h3>
+</div>
+
+<div id="outline-container-orgdf59e9b" class="outline-3">
+<h3 id="orgdf59e9b">3.3  General choice</h3>
+</div>
+
+<div id="outline-container-orga3cac96" class="outline-3">
+<h3 id="orga3cac96">3.4  Refusals</h3>
+</div>
+
+<div id="outline-container-org790391" class="outline-3">
+<h3 id="org790391">3.5  Concealment</h3>
+</div>
+
+<div id="outline-container-org62b1047" class="outline-3">
+<h3 id="org62b1047">3.6  Interleaving</h3>
+</div>
+
+<div id="outline-container-org6457829" class="outline-3">
+<h3 id="org6457829">3.7  Specifications</h3>
+</div>
+
+<div id="outline-container-org227b623" class="outline-3">
+<h3 id="org227b623">3.8  Divergence</h3>
+</div>
+
+<div id="outline-container-orgff57a67" class="outline-3">
+<h3 id="orgff57a67">3.9  Mathematical theory of non-deterministic processes</h3>
+</div>
+</div>
+
+<div id="outline-container-org4dc1add" class="outline-2">
+<h2 id="org4dc1add">4 Communication</h2>
+<div class="outline-text-2" id="text-org4dc1add">
+</div><div id="outline-container-orgcee2b7c" class="outline-3">
+<h3 id="orgcee2b7c"><span class="todo _note_">[note]</span> primitivity prejudice</h3>
+<div class="outline-text-3" id="text-orgcee2b7c">
 <ul class="org-ul">
-<li><p>&gt;&lt;</p></li></ul>
+<li><p>suppose :</p><p><ol class="org-ol"></p><p><li>model-1 is more primitive then model-2</li></p><p><li>model-2 can be reduced to model-1</li></p><p><li>one can use model-1 to implement model-2</li></p><p><li>it is meaningless to use model-2 to model-1</p><p>because model-2 is already more powerful than model-1</li></ol></p></li>
+
+<li><p><p></p><p>when ever such reduction as (2) can be done,</p><p>a theoretical author might choose to</p><p>use the more primitive model in his study,</p><p></p></p><p></p><p><p></p><p>regardless the fact that although (3) is possible,</p><p>but in practice, such implementation might be :</p><p></p></p><p><ol class="org-ol"></p><p><li>more complicate than direct implementation</li></p><p><li>has bad performance</li></ol></p></li>
+
+<li><p>this kind of bad design decisions</p><p>is called <b>primitivity prejudice</b>,</p><p>which very often occurs in developments</p><p>of mathematical theories.</p></li></ul>
 </div>
 </div>
 
-<div id="outline-container-org8525b36" class="outline-3">
-<h3 id="org8525b36">2.3  Concurrency</h3>
+<div id="outline-container-orgac816ab" class="outline-3">
+<h3 id="orgac816ab">4.1  Introduction</h3>
 </div>
 
-<div id="outline-container-org7d827fc" class="outline-3">
-<h3 id="org7d827fc">2.4  Pictures</h3>
-</div>
+<div id="outline-container-orgcad8e94" class="outline-3">
+<h3 id="orgcad8e94">4.2  Input and output</h3>
+<div class="outline-text-3" id="text-orgcad8e94">
+<div class="org-src-container">
 
-<div id="outline-container-orge5d6744" class="outline-3">
-<h3 id="orge5d6744">2.5  Example: The Dining Philosophers</h3>
+<pre class="src src-jojo"><span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">+jojo</span> <span style="color: #66d9ef; font-weight: bold;">COPYBIT</span>
+  <span style="color: #696969;">(</span><span style="color: #f92672; font-weight: bold;">-</span> in <span style="color: #fd971f;">out!</span> <span style="color: #66d9ef; font-weight: bold;">COPYBIT</span><span style="color: #696969;">))</span>
+</pre>
 </div>
-
-<div id="outline-container-orgee8d462" class="outline-3">
-<h3 id="orgee8d462">2.6  Change of symbol</h3>
-</div>
-
-<div id="outline-container-orgdeb4297" class="outline-3">
-<h3 id="orgdeb4297">2.7  Specifications</h3>
-</div>
-
-<div id="outline-container-org8786441" class="outline-3">
-<h3 id="org8786441">2.8  Mathematical theory of deterministic processes</h3>
 </div>
 </div>
 
-<div id="outline-container-org62b1247" class="outline-2">
-<h2 id="org62b1247">3 Nondeterminism</h2>
-<div class="outline-text-2" id="text-org62b1247">
-</div><div id="outline-container-org4877203" class="outline-3">
-<h3 id="org4877203">3.1  Introduction</h3>
+<div id="outline-container-org25e8b31" class="outline-3">
+<h3 id="org25e8b31">4.3  Communications</h3>
 </div>
 
-<div id="outline-container-org86881cf" class="outline-3">
-<h3 id="org86881cf">3.2  Nondeterministic or</h3>
+<div id="outline-container-org999d375" class="outline-3">
+<h3 id="org999d375">4.4  Pipes</h3>
 </div>
 
-<div id="outline-container-org9f6ffc0" class="outline-3">
-<h3 id="org9f6ffc0">3.3  General choice</h3>
-</div>
-
-<div id="outline-container-orga8830a2" class="outline-3">
-<h3 id="orga8830a2">3.4  Refusals</h3>
-</div>
-
-<div id="outline-container-orgd8cd254" class="outline-3">
-<h3 id="orgd8cd254">3.5  Concealment</h3>
-</div>
-
-<div id="outline-container-org8929107" class="outline-3">
-<h3 id="org8929107">3.6  Interleaving</h3>
-</div>
-
-<div id="outline-container-org639dca" class="outline-3">
-<h3 id="org639dca">3.7  Specifications</h3>
-</div>
-
-<div id="outline-container-org2f0f5f1" class="outline-3">
-<h3 id="org2f0f5f1">3.8  Divergence</h3>
-</div>
-
-<div id="outline-container-orgf5d4391" class="outline-3">
-<h3 id="orgf5d4391">3.9  Mathematical theory of non-deterministic processes</h3>
+<div id="outline-container-orgcd41d86" class="outline-3">
+<h3 id="orgcd41d86">4.5  Subordination</h3>
 </div>
 </div>
 
-<div id="outline-container-orga7d417" class="outline-2">
-<h2 id="orga7d417">4 Communication</h2>
-<div class="outline-text-2" id="text-orga7d417">
-</div><div id="outline-container-org4e36080" class="outline-3">
-<h3 id="org4e36080">4.1  Introduction</h3>
+<div id="outline-container-org6f97e08" class="outline-2">
+<h2 id="org6f97e08">5 Sequential Processes</h2>
+<div class="outline-text-2" id="text-org6f97e08">
+</div><div id="outline-container-orgbb46920" class="outline-3">
+<h3 id="orgbb46920">5.1  Introduction</h3>
 </div>
 
-<div id="outline-container-orged5ed1d" class="outline-3">
-<h3 id="orged5ed1d">4.2  Input and output</h3>
+<div id="outline-container-org8cea3af" class="outline-3">
+<h3 id="org8cea3af">5.2  Laws</h3>
 </div>
 
-<div id="outline-container-org31675c1" class="outline-3">
-<h3 id="org31675c1">4.3  Communications</h3>
+<div id="outline-container-orgf9cc749" class="outline-3">
+<h3 id="orgf9cc749">5.3  Mathematical treatment</h3>
 </div>
 
-<div id="outline-container-org144a40c" class="outline-3">
-<h3 id="org144a40c">4.4  Pipes</h3>
+<div id="outline-container-orgd8c0673" class="outline-3">
+<h3 id="orgd8c0673">5.4  Interrupts</h3>
 </div>
 
-<div id="outline-container-org90d44c5" class="outline-3">
-<h3 id="org90d44c5">4.5  Subordination</h3>
-</div>
-</div>
-
-<div id="outline-container-org1ecb992" class="outline-2">
-<h2 id="org1ecb992">5 Sequential Processes</h2>
-<div class="outline-text-2" id="text-org1ecb992">
-</div><div id="outline-container-org595aad5" class="outline-3">
-<h3 id="org595aad5">5.1  Introduction</h3>
-</div>
-
-<div id="outline-container-orgbb581c0" class="outline-3">
-<h3 id="orgbb581c0">5.2  Laws</h3>
-</div>
-
-<div id="outline-container-orgba8c67f" class="outline-3">
-<h3 id="orgba8c67f">5.3  Mathematical treatment</h3>
-</div>
-
-<div id="outline-container-org441fdc4" class="outline-3">
-<h3 id="org441fdc4">5.4  Interrupts</h3>
-</div>
-
-<div id="outline-container-org5dbe0d0" class="outline-3">
-<h3 id="org5dbe0d0">5.5  Assignment</h3>
+<div id="outline-container-org304090d" class="outline-3">
+<h3 id="org304090d">5.5  Assignment</h3>
 </div>
 </div>
 
-<div id="outline-container-orgd7fc83d" class="outline-2">
-<h2 id="orgd7fc83d">6 Shared Resources</h2>
-<div class="outline-text-2" id="text-orgd7fc83d">
-</div><div id="outline-container-org6574e69" class="outline-3">
-<h3 id="org6574e69">6.1  Introduction</h3>
+<div id="outline-container-orgd9fe10a" class="outline-2">
+<h2 id="orgd9fe10a">6 Shared Resources</h2>
+<div class="outline-text-2" id="text-orgd9fe10a">
+</div><div id="outline-container-org45a96df" class="outline-3">
+<h3 id="org45a96df">6.1  Introduction</h3>
 </div>
 
-<div id="outline-container-org32d98ec" class="outline-3">
-<h3 id="org32d98ec">6.2  Sharing by interleaving</h3>
+<div id="outline-container-org6cc5d45" class="outline-3">
+<h3 id="org6cc5d45">6.2  Sharing by interleaving</h3>
 </div>
 
-<div id="outline-container-org73726bd" class="outline-3">
-<h3 id="org73726bd">6.3  Shared storage</h3>
+<div id="outline-container-org4a64eb3" class="outline-3">
+<h3 id="org4a64eb3">6.3  Shared storage</h3>
 </div>
 
-<div id="outline-container-orgd3f305c" class="outline-3">
-<h3 id="orgd3f305c">6.4  Multiple resources</h3>
+<div id="outline-container-org8d120d6" class="outline-3">
+<h3 id="org8d120d6">6.4  Multiple resources</h3>
 </div>
 
-<div id="outline-container-orgd26db32" class="outline-3">
-<h3 id="orgd26db32">6.5  Operating systems</h3>
+<div id="outline-container-orge7216b0" class="outline-3">
+<h3 id="orge7216b0">6.5  Operating systems</h3>
 </div>
 
-<div id="outline-container-org168ad06" class="outline-3">
-<h3 id="org168ad06">6.6  Scheduling</h3>
+<div id="outline-container-org5f1bfc1" class="outline-3">
+<h3 id="org5f1bfc1">6.6  Scheduling</h3>
 </div>
 </div>
 
-<div id="outline-container-org849656d" class="outline-2">
-<h2 id="org849656d">7 Discussion</h2>
-<div class="outline-text-2" id="text-org849656d">
-</div><div id="outline-container-orged994d3" class="outline-3">
-<h3 id="orged994d3">7.1  Introduction</h3>
+<div id="outline-container-orgabb86b1" class="outline-2">
+<h2 id="orgabb86b1">7 Discussion</h2>
+<div class="outline-text-2" id="text-orgabb86b1">
+</div><div id="outline-container-org186b60b" class="outline-3">
+<h3 id="org186b60b">7.1  Introduction</h3>
 </div>
 
-<div id="outline-container-orga028483" class="outline-3">
-<h3 id="orga028483">7.2  Shared storage</h3>
+<div id="outline-container-org8ddac24" class="outline-3">
+<h3 id="org8ddac24">7.2  Shared storage</h3>
 </div>
 
-<div id="outline-container-org672868b" class="outline-3">
-<h3 id="org672868b">7.3  Communication</h3>
+<div id="outline-container-org82a2605" class="outline-3">
+<h3 id="org82a2605">7.3  Communication</h3>
 </div>
 
-<div id="outline-container-orgdfebd33" class="outline-3">
-<h3 id="orgdfebd33">7.4  Mathematical models</h3>
+<div id="outline-container-orge9ae02b" class="outline-3">
+<h3 id="orge9ae02b">7.4  Mathematical models</h3>
 </div>
 </div>
 </div>
 <div id="postamble" class="status">
 <p class="author">Author: xieyuheng</p>
-<p class="date">Created: 2017-10-17 Tue 22:14</p>
+<p class="date">Created: 2017-10-18 Wed 21:01</p>
 <p class="validation"><a href="http://validator.w3.org/check?uri=referer">Validate</a></p>
 </div>
 </body>
