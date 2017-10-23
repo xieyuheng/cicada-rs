@@ -1,0 +1,672 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+"http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en">
+<head>
+<!-- 2017-10-24 Tue 01:09 -->
+<meta http-equiv="Content-Type" content="text/html;charset=utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Structure and Interpretation of Computer Programs</title>
+<meta name="generator" content="Org-mode" />
+<meta name="author" content="xieyuheng" />
+<link rel="stylesheet" href="../../css/org-page.css"/>
+<script type="text/javascript">
+/*
+@licstart  The following is the entire license notice for the
+JavaScript code in this tag.
+
+Copyright (C) 2012-2013 Free Software Foundation, Inc.
+
+The JavaScript code in this tag is free software: you can
+redistribute it and/or modify it under the terms of the GNU
+General Public License (GNU GPL) as published by the Free Software
+Foundation, either version 3 of the License, or (at your option)
+any later version.  The code is distributed WITHOUT ANY WARRANTY;
+without even the implied warranty of MERCHANTABILITY or FITNESS
+FOR A PARTICULAR PURPOSE.  See the GNU GPL for more details.
+
+As additional permission under GNU GPL version 3 section 7, you
+may distribute non-source (e.g., minimized or compacted) forms of
+that code without the copy of the GNU GPL normally required by
+section 4, provided you include this license notice and a URL
+through which recipients can access the Corresponding Source.
+
+
+@licend  The above is the entire license notice
+for the JavaScript code in this tag.
+*/
+<!--/*--><![CDATA[/*><!--*/
+ function CodeHighlightOn(elem, id)
+ {
+   var target = document.getElementById(id);
+   if(null != target) {
+     elem.cacheClassElem = elem.className;
+     elem.cacheClassTarget = target.className;
+     target.className = "code-highlighted";
+     elem.className   = "code-highlighted";
+   }
+ }
+ function CodeHighlightOff(elem, id)
+ {
+   var target = document.getElementById(id);
+   if(elem.cacheClassElem)
+     elem.className = elem.cacheClassElem;
+   if(elem.cacheClassTarget)
+     target.className = elem.cacheClassTarget;
+ }
+/*]]>*///-->
+</script>
+</head>
+<body>
+<div id="content">
+<h1 class="title">Structure and Interpretation of Computer Programs</h1>
+<div id="table-of-contents">
+<h2>overview</h2>
+<div id="text-table-of-contents">
+<ul>
+<li><a href="#orgd509ebb">1 building abstractions with procedures</a>
+<ul>
+<li><a href="#org3017df3">1.1 the elements of programming</a>
+<ul>
+<li><a href="#org4587404">1.1.1 expressions</a></li>
+<li><a href="#org36b62c1">1.1.2 naming and the environment</a></li>
+<li><a href="#orgea36731">1.1.3 evaluating combinations</a></li>
+<li><a href="#orgb4aa654">1.1.4 compound procedures</a></li>
+<li><a href="#org13ffab0">1.1.5 the substitution model for procedure application</a></li>
+<li><a href="#orgba1f5e2">1.1.6 conditional expressions and predicates</a></li>
+<li><a href="#org1b2286c">1.1.7 example: square roots by newton's method</a></li>
+<li><a href="#orgedf207f">1.1.8 procedures as black-box abstractions</a></li>
+</ul>
+</li>
+<li><a href="#orgc4d9651">1.2 procedures and the processes they generate</a>
+<ul>
+<li><a href="#orgfc8a10d">1.2.1 linear recursion and iteration</a></li>
+<li><a href="#orga66e359">1.2.2 tree recursion</a></li>
+<li><a href="#org261b005">1.2.3 orders of growth</a></li>
+<li><a href="#org628df8d">1.2.4 exponentiation</a></li>
+<li><a href="#orgef51a81">1.2.5 greatest common divisors</a></li>
+<li><a href="#org43e5054">1.2.6 example: testing for primality</a></li>
+</ul>
+</li>
+<li><a href="#orgde1b8b3">1.3 formulating abstractions with higher-order procedures</a>
+<ul>
+<li><a href="#org4dc1e6a">1.3.1 procedures as arguments</a></li>
+<li><a href="#orgc1a06b4">1.3.2 constructing procedures using lambda</a></li>
+<li><a href="#orge7013c0">1.3.3 procedures as general methods</a></li>
+<li><a href="#org24fe304">1.3.4 procedures as returned values</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li><a href="#org4b07b8">2 building abstractions with data</a>
+<ul>
+<li><a href="#org11d9d9">2.1 introduction to data abstraction</a>
+<ul>
+<li><a href="#orgca192fd">2.1.1 example: arithmetic operations for rational numbers</a></li>
+<li><a href="#org949626c">2.1.2 abstraction barriers</a></li>
+<li><a href="#orgd439ba1">2.1.3 what is meant by data?</a></li>
+<li><a href="#org62fd6ec">2.1.4 extended exercise: interval arithmetic</a></li>
+</ul>
+</li>
+<li><a href="#org94cbd1c">2.2 hierarchical data and the closure property</a>
+<ul>
+<li><a href="#org7213169">2.2.1 representing sequences</a></li>
+<li><a href="#orgca96b90">2.2.2 hierarchical structures</a></li>
+<li><a href="#orga640797">2.2.3 sequences as conventional interfaces</a></li>
+<li><a href="#orgefd570a">2.2.4 example: a picture language</a></li>
+</ul>
+</li>
+<li><a href="#org832fc3">2.3 symbolic data</a>
+<ul>
+<li><a href="#org398056c">2.3.1 quotation</a></li>
+<li><a href="#org9ec5329">2.3.2 example: symbolic differentiation</a></li>
+<li><a href="#org7ae0839">2.3.3 example: representing sets</a></li>
+<li><a href="#orge87bd6c">2.3.4 example: huffman encoding trees</a></li>
+</ul>
+</li>
+<li><a href="#org4f97e42">2.4 multiple representations for abstract data</a>
+<ul>
+<li><a href="#org1d11130">2.4.1 representations for complex numbers</a></li>
+<li><a href="#org2af2e60">2.4.2 tagged data</a></li>
+<li><a href="#org9c14bb4">2.4.3 data-directed programming and additivity</a></li>
+</ul>
+</li>
+<li><a href="#orgeb6f147">2.5 systems with generic operations</a>
+<ul>
+<li><a href="#org2005b9b">2.5.1 generic arithmetic operations</a></li>
+<li><a href="#org528e025">2.5.2 combining data of different types</a></li>
+<li><a href="#orgfb4122e">2.5.3 example: symbolic algebra</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li><a href="#orgfcfc343">3 modularity, objects, and state</a>
+<ul>
+<li><a href="#org317bc42">3.1 assignment and local state</a>
+<ul>
+<li><a href="#org237653a">3.1.1 local state variables</a></li>
+<li><a href="#org7e85f36">3.1.2 the benefits of introducing assignment</a></li>
+<li><a href="#org5fbc624">3.1.3 the costs of introducing assignment</a></li>
+</ul>
+</li>
+<li><a href="#orgd0007ee">3.2 the environment model of evaluation</a>
+<ul>
+<li><a href="#org5b3021a">3.2.1 the rules for evaluation</a></li>
+<li><a href="#orga9c7e1">3.2.2 applying simple procedures</a></li>
+<li><a href="#org4cba810">3.2.3 frames as the repository of local state</a></li>
+<li><a href="#orgbd4a1eb">3.2.4 internal definitions</a></li>
+</ul>
+</li>
+<li><a href="#orgb129883">3.3 modeling with mutable data</a>
+<ul>
+<li><a href="#org2465372">3.3.1 mutable list structure</a></li>
+<li><a href="#org12b61b1">3.3.2 representing queues</a></li>
+<li><a href="#org4e376fe">3.3.3 representing tables</a></li>
+<li><a href="#org5a4d390">3.3.4 a simulator for digital circuits</a></li>
+<li><a href="#orgcd289a8">3.3.5 propagation of constraints</a></li>
+</ul>
+</li>
+<li><a href="#orga89dd83">3.4 concurrency: time is of the essence</a>
+<ul>
+<li><a href="#org329ac07">3.4.1 the nature of time in concurrent systems</a></li>
+<li><a href="#org5fc2775">3.4.2 mechanisms for controlling concurrency</a></li>
+</ul>
+</li>
+<li><a href="#org1b4f3a5">3.5 streams</a>
+<ul>
+<li><a href="#org813215c">3.5.1 streams are delayed lists</a></li>
+<li><a href="#org999bd2d">3.5.2 infinite streams</a></li>
+<li><a href="#org9e99b65">3.5.3 exploiting the stream paradigm</a></li>
+<li><a href="#orge2acd2b">3.5.4 streams and delayed evaluation</a></li>
+<li><a href="#orga1b1f7f">3.5.5 modularity of functional programs and modularity of objects</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li><a href="#orgde85fc0">4 metalinguistic abstraction</a>
+<ul>
+<li><a href="#org272d9a9">4.1 the metacircular evaluator</a>
+<ul>
+<li><a href="#orgf85eee1">4.1.1 the core of the evaluator</a></li>
+<li><a href="#orgf680ef2">4.1.2 representing expressions</a></li>
+<li><a href="#org225a583">4.1.3 evaluator data structures</a></li>
+<li><a href="#orgd651cb9">4.1.4 running the evaluator as a program</a></li>
+<li><a href="#org3942692">4.1.5 data as programs</a></li>
+<li><a href="#org9cb99f9">4.1.6 internal definitions</a></li>
+<li><a href="#org3d7beef">4.1.7 separating syntactic analysis from execution</a></li>
+</ul>
+</li>
+<li><a href="#org121385a">4.2 variations on a scheme &#x2013; lazy evaluation</a>
+<ul>
+<li><a href="#orgfd720cc">4.2.1 normal order and applicative order</a></li>
+<li><a href="#org153bfa2">4.2.2 an interpreter with lazy evaluation</a></li>
+<li><a href="#org71a750b">4.2.3 streams as lazy lists</a></li>
+</ul>
+</li>
+<li><a href="#orgdf552df">4.3 variations on a scheme &#x2013; nondeterministic computing</a>
+<ul>
+<li><a href="#orgffb0cb7">4.3.1 amb and search</a></li>
+<li><a href="#org4f604b9">4.3.2 examples of nondeterministic programs</a></li>
+<li><a href="#org639d407">4.3.3 implementing the amb evaluator</a></li>
+</ul>
+</li>
+<li><a href="#org54f084b">4.4 logic programming</a>
+<ul>
+<li><a href="#orgab2aaf7">4.4.1 deductive information retrieval</a></li>
+<li><a href="#orgd216b3d">4.4.2 how the query system works</a></li>
+<li><a href="#org5699ca7">4.4.3 is logic programming mathematical logic?</a></li>
+<li><a href="#org686e706">4.4.4 implementing the query system</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li><a href="#orgb6a9f93">5 computing with register machines</a>
+<ul>
+<li><a href="#orge7ccda1">5.1 designing register machines</a>
+<ul>
+<li><a href="#orgabb9428">5.1.1 a language for describing register machines</a></li>
+<li><a href="#org6690e09">5.1.2 abstraction in machine design</a></li>
+<li><a href="#orge5ee0b2">5.1.3 subroutines</a></li>
+<li><a href="#org48dd8ac">5.1.4 using a stack to implement recursion</a></li>
+<li><a href="#orgb33ce18">5.1.5 instruction summary</a></li>
+</ul>
+</li>
+<li><a href="#org1f6df11">5.2 a register-machine simulator</a>
+<ul>
+<li><a href="#orgcd84a68">5.2.1 the machine model</a></li>
+<li><a href="#org97b77ad">5.2.2 the assembler</a></li>
+<li><a href="#orgd838e71">5.2.3 generating execution procedures for instructions</a></li>
+<li><a href="#org329b0bd">5.2.4 monitoring machine performance</a></li>
+</ul>
+</li>
+<li><a href="#org8baf7cf">5.3 storage allocation and garbage collection</a>
+<ul>
+<li><a href="#orgac51eef">5.3.1 memory as vectors</a></li>
+<li><a href="#org2c99765">5.3.2 maintaining the illusion of infinite memory</a></li>
+</ul>
+</li>
+<li><a href="#orge8fdf70">5.4 the explicit-control evaluator</a>
+<ul>
+<li><a href="#org49e565b">5.4.1 the core of the explicit-control evaluator</a></li>
+<li><a href="#org9f73b8e">5.4.2 sequence evaluation and tail recursion</a></li>
+<li><a href="#org116a9db">5.4.3 conditionals, assignments, and definitions</a></li>
+<li><a href="#org5bcedde">5.4.4 running the evaluator</a></li>
+</ul>
+</li>
+<li><a href="#org1c36d63">5.5 compilation</a>
+<ul>
+<li><a href="#org673cb78">5.5.1 structure of the compiler</a></li>
+<li><a href="#orgceddcdd">5.5.2 compiling expressions</a></li>
+<li><a href="#org6ec33f7">5.5.3 compiling combinations</a></li>
+<li><a href="#orge6854b1">5.5.4 combining instruction sequences</a></li>
+<li><a href="#orgc749f99">5.5.5 an example of compiled code</a></li>
+<li><a href="#org9edff3c">5.5.6 lexical addressing</a></li>
+<li><a href="#org257f68b">5.5.7 interfacing compiled code to the evaluator</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</div>
+</div>
+<ul class="org-ul">
+<li><p>by Harold Abelson and Gerald Jay Sussman</p></li></ul>
+
+<div id="outline-container-orgd509ebb" class="outline-2">
+<h2 id="orgd509ebb">1 building abstractions with procedures</h2>
+<div class="outline-text-2" id="text-orgd509ebb">
+</div><div id="outline-container-org3017df3" class="outline-3">
+<h3 id="org3017df3">1.1 the elements of programming</h3>
+<div class="outline-text-3" id="text-org3017df3">
+</div><div id="outline-container-org4587404" class="outline-4">
+<h4 id="org4587404">1.1.1 expressions</h4>
+</div>
+<div id="outline-container-org36b62c1" class="outline-4">
+<h4 id="org36b62c1">1.1.2 naming and the environment</h4>
+</div>
+<div id="outline-container-orgea36731" class="outline-4">
+<h4 id="orgea36731">1.1.3 evaluating combinations</h4>
+</div>
+<div id="outline-container-orgb4aa654" class="outline-4">
+<h4 id="orgb4aa654">1.1.4 compound procedures</h4>
+</div>
+<div id="outline-container-org13ffab0" class="outline-4">
+<h4 id="org13ffab0">1.1.5 the substitution model for procedure application</h4>
+</div>
+<div id="outline-container-orgba1f5e2" class="outline-4">
+<h4 id="orgba1f5e2">1.1.6 conditional expressions and predicates</h4>
+</div>
+<div id="outline-container-org1b2286c" class="outline-4">
+<h4 id="org1b2286c">1.1.7 example: square roots by newton's method</h4>
+</div>
+<div id="outline-container-orgedf207f" class="outline-4">
+<h4 id="orgedf207f">1.1.8 procedures as black-box abstractions</h4>
+</div>
+</div>
+<div id="outline-container-orgc4d9651" class="outline-3">
+<h3 id="orgc4d9651">1.2 procedures and the processes they generate</h3>
+<div class="outline-text-3" id="text-orgc4d9651">
+</div><div id="outline-container-orgfc8a10d" class="outline-4">
+<h4 id="orgfc8a10d">1.2.1 linear recursion and iteration</h4>
+</div>
+<div id="outline-container-orga66e359" class="outline-4">
+<h4 id="orga66e359">1.2.2 tree recursion</h4>
+</div>
+<div id="outline-container-org261b005" class="outline-4">
+<h4 id="org261b005">1.2.3 orders of growth</h4>
+</div>
+<div id="outline-container-org628df8d" class="outline-4">
+<h4 id="org628df8d">1.2.4 exponentiation</h4>
+</div>
+<div id="outline-container-orgef51a81" class="outline-4">
+<h4 id="orgef51a81">1.2.5 greatest common divisors</h4>
+</div>
+<div id="outline-container-org43e5054" class="outline-4">
+<h4 id="org43e5054">1.2.6 example: testing for primality</h4>
+</div>
+</div>
+<div id="outline-container-orgde1b8b3" class="outline-3">
+<h3 id="orgde1b8b3">1.3 formulating abstractions with higher-order procedures</h3>
+<div class="outline-text-3" id="text-orgde1b8b3">
+</div><div id="outline-container-org4dc1e6a" class="outline-4">
+<h4 id="org4dc1e6a">1.3.1 procedures as arguments</h4>
+</div>
+<div id="outline-container-orgc1a06b4" class="outline-4">
+<h4 id="orgc1a06b4">1.3.2 constructing procedures using lambda</h4>
+</div>
+<div id="outline-container-orge7013c0" class="outline-4">
+<h4 id="orge7013c0">1.3.3 procedures as general methods</h4>
+</div>
+<div id="outline-container-org24fe304" class="outline-4">
+<h4 id="org24fe304">1.3.4 procedures as returned values</h4>
+</div>
+</div>
+</div>
+<div id="outline-container-org4b07b8" class="outline-2">
+<h2 id="org4b07b8">2 building abstractions with data</h2>
+<div class="outline-text-2" id="text-org4b07b8">
+</div><div id="outline-container-org11d9d9" class="outline-3">
+<h3 id="org11d9d9">2.1 introduction to data abstraction</h3>
+<div class="outline-text-3" id="text-org11d9d9">
+</div><div id="outline-container-orgca192fd" class="outline-4">
+<h4 id="orgca192fd">2.1.1 example: arithmetic operations for rational numbers</h4>
+</div>
+<div id="outline-container-org949626c" class="outline-4">
+<h4 id="org949626c">2.1.2 abstraction barriers</h4>
+</div>
+<div id="outline-container-orgd439ba1" class="outline-4">
+<h4 id="orgd439ba1">2.1.3 what is meant by data?</h4>
+</div>
+<div id="outline-container-org62fd6ec" class="outline-4">
+<h4 id="org62fd6ec">2.1.4 extended exercise: interval arithmetic</h4>
+</div>
+</div>
+<div id="outline-container-org94cbd1c" class="outline-3">
+<h3 id="org94cbd1c">2.2 hierarchical data and the closure property</h3>
+<div class="outline-text-3" id="text-org94cbd1c">
+</div><div id="outline-container-org7213169" class="outline-4">
+<h4 id="org7213169">2.2.1 representing sequences</h4>
+</div>
+<div id="outline-container-orgca96b90" class="outline-4">
+<h4 id="orgca96b90">2.2.2 hierarchical structures</h4>
+</div>
+<div id="outline-container-orga640797" class="outline-4">
+<h4 id="orga640797">2.2.3 sequences as conventional interfaces</h4>
+</div>
+<div id="outline-container-orgefd570a" class="outline-4">
+<h4 id="orgefd570a">2.2.4 example: a picture language</h4>
+</div>
+</div>
+<div id="outline-container-org832fc3" class="outline-3">
+<h3 id="org832fc3">2.3 symbolic data</h3>
+<div class="outline-text-3" id="text-org832fc3">
+</div><div id="outline-container-org398056c" class="outline-4">
+<h4 id="org398056c">2.3.1 quotation</h4>
+</div>
+<div id="outline-container-org9ec5329" class="outline-4">
+<h4 id="org9ec5329">2.3.2 example: symbolic differentiation</h4>
+</div>
+<div id="outline-container-org7ae0839" class="outline-4">
+<h4 id="org7ae0839">2.3.3 example: representing sets</h4>
+</div>
+<div id="outline-container-orge87bd6c" class="outline-4">
+<h4 id="orge87bd6c">2.3.4 example: huffman encoding trees</h4>
+</div>
+</div>
+<div id="outline-container-org4f97e42" class="outline-3">
+<h3 id="org4f97e42">2.4 multiple representations for abstract data</h3>
+<div class="outline-text-3" id="text-org4f97e42">
+</div><div id="outline-container-org1d11130" class="outline-4">
+<h4 id="org1d11130">2.4.1 representations for complex numbers</h4>
+</div>
+<div id="outline-container-org2af2e60" class="outline-4">
+<h4 id="org2af2e60">2.4.2 tagged data</h4>
+</div>
+<div id="outline-container-org9c14bb4" class="outline-4">
+<h4 id="org9c14bb4">2.4.3 data-directed programming and additivity</h4>
+</div>
+</div>
+<div id="outline-container-orgeb6f147" class="outline-3">
+<h3 id="orgeb6f147">2.5 systems with generic operations</h3>
+<div class="outline-text-3" id="text-orgeb6f147">
+</div><div id="outline-container-org2005b9b" class="outline-4">
+<h4 id="org2005b9b">2.5.1 generic arithmetic operations</h4>
+</div>
+<div id="outline-container-org528e025" class="outline-4">
+<h4 id="org528e025">2.5.2 combining data of different types</h4>
+</div>
+<div id="outline-container-orgfb4122e" class="outline-4">
+<h4 id="orgfb4122e">2.5.3 example: symbolic algebra</h4>
+</div>
+</div>
+</div>
+<div id="outline-container-orgfcfc343" class="outline-2">
+<h2 id="orgfcfc343">3 modularity, objects, and state</h2>
+<div class="outline-text-2" id="text-orgfcfc343">
+</div><div id="outline-container-org317bc42" class="outline-3">
+<h3 id="org317bc42">3.1 assignment and local state</h3>
+<div class="outline-text-3" id="text-org317bc42">
+</div><div id="outline-container-org237653a" class="outline-4">
+<h4 id="org237653a">3.1.1 local state variables</h4>
+</div>
+<div id="outline-container-org7e85f36" class="outline-4">
+<h4 id="org7e85f36">3.1.2 the benefits of introducing assignment</h4>
+</div>
+<div id="outline-container-org5fbc624" class="outline-4">
+<h4 id="org5fbc624">3.1.3 the costs of introducing assignment</h4>
+</div>
+</div>
+<div id="outline-container-orgd0007ee" class="outline-3">
+<h3 id="orgd0007ee">3.2 the environment model of evaluation</h3>
+<div class="outline-text-3" id="text-orgd0007ee">
+</div><div id="outline-container-org5b3021a" class="outline-4">
+<h4 id="org5b3021a">3.2.1 the rules for evaluation</h4>
+</div>
+<div id="outline-container-orga9c7e1" class="outline-4">
+<h4 id="orga9c7e1">3.2.2 applying simple procedures</h4>
+</div>
+<div id="outline-container-org4cba810" class="outline-4">
+<h4 id="org4cba810">3.2.3 frames as the repository of local state</h4>
+</div>
+<div id="outline-container-orgbd4a1eb" class="outline-4">
+<h4 id="orgbd4a1eb">3.2.4 internal definitions</h4>
+</div>
+</div>
+<div id="outline-container-orgb129883" class="outline-3">
+<h3 id="orgb129883">3.3 modeling with mutable data</h3>
+<div class="outline-text-3" id="text-orgb129883">
+</div><div id="outline-container-org2465372" class="outline-4">
+<h4 id="org2465372">3.3.1 mutable list structure</h4>
+</div>
+<div id="outline-container-org12b61b1" class="outline-4">
+<h4 id="org12b61b1">3.3.2 representing queues</h4>
+</div>
+<div id="outline-container-org4e376fe" class="outline-4">
+<h4 id="org4e376fe">3.3.3 representing tables</h4>
+</div>
+<div id="outline-container-org5a4d390" class="outline-4">
+<h4 id="org5a4d390">3.3.4 a simulator for digital circuits</h4>
+</div>
+<div id="outline-container-orgcd289a8" class="outline-4">
+<h4 id="orgcd289a8">3.3.5 propagation of constraints</h4>
+</div>
+</div>
+<div id="outline-container-orga89dd83" class="outline-3">
+<h3 id="orga89dd83">3.4 concurrency: time is of the essence</h3>
+<div class="outline-text-3" id="text-orga89dd83">
+</div><div id="outline-container-org329ac07" class="outline-4">
+<h4 id="org329ac07">3.4.1 the nature of time in concurrent systems</h4>
+</div>
+<div id="outline-container-org5fc2775" class="outline-4">
+<h4 id="org5fc2775">3.4.2 mechanisms for controlling concurrency</h4>
+</div>
+</div>
+<div id="outline-container-org1b4f3a5" class="outline-3">
+<h3 id="org1b4f3a5">3.5 streams</h3>
+<div class="outline-text-3" id="text-org1b4f3a5">
+</div><div id="outline-container-org813215c" class="outline-4">
+<h4 id="org813215c">3.5.1 streams are delayed lists</h4>
+</div>
+<div id="outline-container-org999bd2d" class="outline-4">
+<h4 id="org999bd2d">3.5.2 infinite streams</h4>
+</div>
+<div id="outline-container-org9e99b65" class="outline-4">
+<h4 id="org9e99b65">3.5.3 exploiting the stream paradigm</h4>
+</div>
+<div id="outline-container-orge2acd2b" class="outline-4">
+<h4 id="orge2acd2b">3.5.4 streams and delayed evaluation</h4>
+</div>
+<div id="outline-container-orga1b1f7f" class="outline-4">
+<h4 id="orga1b1f7f">3.5.5 modularity of functional programs and modularity of objects</h4>
+</div>
+</div>
+</div>
+<div id="outline-container-orgde85fc0" class="outline-2">
+<h2 id="orgde85fc0">4 metalinguistic abstraction</h2>
+<div class="outline-text-2" id="text-orgde85fc0">
+</div><div id="outline-container-org272d9a9" class="outline-3">
+<h3 id="org272d9a9">4.1 the metacircular evaluator</h3>
+<div class="outline-text-3" id="text-org272d9a9">
+</div><div id="outline-container-orgf85eee1" class="outline-4">
+<h4 id="orgf85eee1">4.1.1 the core of the evaluator</h4>
+</div>
+<div id="outline-container-orgf680ef2" class="outline-4">
+<h4 id="orgf680ef2">4.1.2 representing expressions</h4>
+</div>
+<div id="outline-container-org225a583" class="outline-4">
+<h4 id="org225a583">4.1.3 evaluator data structures</h4>
+</div>
+<div id="outline-container-orgd651cb9" class="outline-4">
+<h4 id="orgd651cb9">4.1.4 running the evaluator as a program</h4>
+</div>
+<div id="outline-container-org3942692" class="outline-4">
+<h4 id="org3942692">4.1.5 data as programs</h4>
+</div>
+<div id="outline-container-org9cb99f9" class="outline-4">
+<h4 id="org9cb99f9">4.1.6 internal definitions</h4>
+</div>
+<div id="outline-container-org3d7beef" class="outline-4">
+<h4 id="org3d7beef">4.1.7 separating syntactic analysis from execution</h4>
+</div>
+</div>
+<div id="outline-container-org121385a" class="outline-3">
+<h3 id="org121385a">4.2 variations on a scheme &#x2013; lazy evaluation</h3>
+<div class="outline-text-3" id="text-org121385a">
+</div><div id="outline-container-orgfd720cc" class="outline-4">
+<h4 id="orgfd720cc">4.2.1 normal order and applicative order</h4>
+</div>
+<div id="outline-container-org153bfa2" class="outline-4">
+<h4 id="org153bfa2">4.2.2 an interpreter with lazy evaluation</h4>
+</div>
+<div id="outline-container-org71a750b" class="outline-4">
+<h4 id="org71a750b">4.2.3 streams as lazy lists</h4>
+</div>
+</div>
+<div id="outline-container-orgdf552df" class="outline-3">
+<h3 id="orgdf552df">4.3 variations on a scheme &#x2013; nondeterministic computing</h3>
+<div class="outline-text-3" id="text-orgdf552df">
+</div><div id="outline-container-orgffb0cb7" class="outline-4">
+<h4 id="orgffb0cb7">4.3.1 amb and search</h4>
+</div>
+<div id="outline-container-org4f604b9" class="outline-4">
+<h4 id="org4f604b9">4.3.2 examples of nondeterministic programs</h4>
+</div>
+<div id="outline-container-org639d407" class="outline-4">
+<h4 id="org639d407">4.3.3 implementing the amb evaluator</h4>
+</div>
+</div>
+<div id="outline-container-org54f084b" class="outline-3">
+<h3 id="org54f084b">4.4 logic programming</h3>
+<div class="outline-text-3" id="text-org54f084b">
+</div><div id="outline-container-orgab2aaf7" class="outline-4">
+<h4 id="orgab2aaf7">4.4.1 deductive information retrieval</h4>
+</div>
+<div id="outline-container-orgd216b3d" class="outline-4">
+<h4 id="orgd216b3d">4.4.2 how the query system works</h4>
+</div>
+<div id="outline-container-org5699ca7" class="outline-4">
+<h4 id="org5699ca7">4.4.3 is logic programming mathematical logic?</h4>
+</div>
+<div id="outline-container-org686e706" class="outline-4">
+<h4 id="org686e706">4.4.4 implementing the query system</h4>
+</div>
+</div>
+</div>
+<div id="outline-container-orgb6a9f93" class="outline-2">
+<h2 id="orgb6a9f93">5 computing with register machines</h2>
+<div class="outline-text-2" id="text-orgb6a9f93">
+</div><div id="outline-container-orge7ccda1" class="outline-3">
+<h3 id="orge7ccda1">5.1 designing register machines</h3>
+<div class="outline-text-3" id="text-orge7ccda1">
+</div><div id="outline-container-orgabb9428" class="outline-4">
+<h4 id="orgabb9428">5.1.1 a language for describing register machines</h4>
+</div>
+<div id="outline-container-org6690e09" class="outline-4">
+<h4 id="org6690e09">5.1.2 abstraction in machine design</h4>
+</div>
+<div id="outline-container-orge5ee0b2" class="outline-4">
+<h4 id="orge5ee0b2">5.1.3 subroutines</h4>
+</div>
+<div id="outline-container-org48dd8ac" class="outline-4">
+<h4 id="org48dd8ac">5.1.4 using a stack to implement recursion</h4>
+</div>
+<div id="outline-container-orgb33ce18" class="outline-4">
+<h4 id="orgb33ce18">5.1.5 instruction summary</h4>
+</div>
+</div>
+<div id="outline-container-org1f6df11" class="outline-3">
+<h3 id="org1f6df11">5.2 a register-machine simulator</h3>
+<div class="outline-text-3" id="text-org1f6df11">
+</div><div id="outline-container-orgcd84a68" class="outline-4">
+<h4 id="orgcd84a68">5.2.1 the machine model</h4>
+</div>
+<div id="outline-container-org97b77ad" class="outline-4">
+<h4 id="org97b77ad">5.2.2 the assembler</h4>
+</div>
+<div id="outline-container-orgd838e71" class="outline-4">
+<h4 id="orgd838e71">5.2.3 generating execution procedures for instructions</h4>
+</div>
+<div id="outline-container-org329b0bd" class="outline-4">
+<h4 id="org329b0bd">5.2.4 monitoring machine performance</h4>
+</div>
+</div>
+<div id="outline-container-org8baf7cf" class="outline-3">
+<h3 id="org8baf7cf">5.3 storage allocation and garbage collection</h3>
+<div class="outline-text-3" id="text-org8baf7cf">
+</div><div id="outline-container-orgac51eef" class="outline-4">
+<h4 id="orgac51eef">5.3.1 memory as vectors</h4>
+</div>
+<div id="outline-container-org2c99765" class="outline-4">
+<h4 id="org2c99765">5.3.2 maintaining the illusion of infinite memory</h4>
+</div>
+</div>
+<div id="outline-container-orge8fdf70" class="outline-3">
+<h3 id="orge8fdf70">5.4 the explicit-control evaluator</h3>
+<div class="outline-text-3" id="text-orge8fdf70">
+</div><div id="outline-container-org49e565b" class="outline-4">
+<h4 id="org49e565b">5.4.1 the core of the explicit-control evaluator</h4>
+</div>
+<div id="outline-container-org9f73b8e" class="outline-4">
+<h4 id="org9f73b8e">5.4.2 sequence evaluation and tail recursion</h4>
+</div>
+<div id="outline-container-org116a9db" class="outline-4">
+<h4 id="org116a9db">5.4.3 conditionals, assignments, and definitions</h4>
+</div>
+<div id="outline-container-org5bcedde" class="outline-4">
+<h4 id="org5bcedde">5.4.4 running the evaluator</h4>
+</div>
+</div>
+<div id="outline-container-org1c36d63" class="outline-3">
+<h3 id="org1c36d63">5.5 compilation</h3>
+<div class="outline-text-3" id="text-org1c36d63">
+</div><div id="outline-container-org673cb78" class="outline-4">
+<h4 id="org673cb78">5.5.1 structure of the compiler</h4>
+</div>
+<div id="outline-container-orgceddcdd" class="outline-4">
+<h4 id="orgceddcdd">5.5.2 compiling expressions</h4>
+</div>
+<div id="outline-container-org6ec33f7" class="outline-4">
+<h4 id="org6ec33f7">5.5.3 compiling combinations</h4>
+</div>
+<div id="outline-container-orge6854b1" class="outline-4">
+<h4 id="orge6854b1">5.5.4 combining instruction sequences</h4>
+</div>
+<div id="outline-container-orgc749f99" class="outline-4">
+<h4 id="orgc749f99">5.5.5 an example of compiled code</h4>
+</div>
+<div id="outline-container-org9edff3c" class="outline-4">
+<h4 id="org9edff3c">5.5.6 lexical addressing</h4>
+</div>
+<div id="outline-container-org257f68b" class="outline-4">
+<h4 id="org257f68b">5.5.7 interfacing compiled code to the evaluator</h4>
+</div>
+</div>
+</div>
+</div>
+<div id="postamble" class="status">
+<p class="author">Author: xieyuheng</p>
+<p class="date">Created: 2017-10-24 Tue 01:09</p>
+<p class="validation"><a href="http://validator.w3.org/check?uri=referer">Validate</a></p>
+</div>
+</body>
+</html>
