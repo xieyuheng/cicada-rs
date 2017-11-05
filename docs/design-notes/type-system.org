@@ -1,8 +1,6 @@
 #+html_head: <link rel="stylesheet" href="../css/org-page.css"/>
 #+title: type system
 
-- follow EOPL
-
 * [todo-list]
 
 *** implementation
@@ -29,86 +27,6 @@
 *** use category theory to test type-class
 
     - group theory
-
-* [note]
-
-*** core
-
-    - can I re-design sequent0
-      by firstly design a small core ?
-
-      or can I design an over-simplified version first ?
-
-*** trunk
-
-    - local var can be non-determined
-
-    - trunk as value which can be unified
-
-      1. there are non-determined var
-
-      2. when applying a function to non-determined var
-         it can not really return determined value
-         this is where we need to form a trunk
-
-      3. if we can not determine a non-determined trunk now
-         after some binding
-         we might be able to determine it
-         thus every time we see a trunk
-         we try to determine it
-
-      4. two non-determined trunk might be unified with each other
-         if the function body to be applied are
-         [structurally] the same
-         and their arguments can be unified
-
-      5. equivalence between function body
-         is not limited to 'structurally the same'
-
-         'add-commutative' is just saying (= {add} {swap add})
-         'add-associative' is just saying (= {add :z add} {:z add add})
-
-         we just need to supply the arguments of the function
-         to get back (+proof add-commutative)
-         and (+proof add-commutative)
-
-*** cut
-
-    - when type-apply
-
-      - function cut
-        - such as 'recur' and 'eq-apply'
-        the information needed to apply the function body
-        is not there
-        so we use its type
-        to do a cut
-
-      - data and variable
-        - such as ':m.pre' and '{succ}'
-        do not cut
-        they already contain more information
-        than their type
-
-    - can cut not happen in trunk ?
-      - check the examples we have now
-
-*** syntax
-
-***** (:)
-
-      - (:) collects its body
-        and treat the last value of the body
-        as the type to be unified
-
-*** we need many languages
-
-    1. type-name as data-constructor-name
-       - can not use forgetful functor
-       - can not overload data-constructor-name
-       - simple sumtype and product-type
-
-    2. type-name different from data-constructor-name
-       - can use forgetful functor
 
 * number
 
