@@ -17,27 +17,27 @@
 *** Env
 
     #+begin_src rust
-    struct Env {
-        nd: HashMap<String, Obj>,
-        ds: Vec<Obj>,
-        rs: Frame,
+    struct Env<'a> {
+        nd: HashMap<String, Obj<'a>>,
+        ds: Vec<Obj<'a>>,
+        rs: Frame<'a>,
     }
     #+end_src
 
 *** Frame
 
     #+begin_src rust
-    struct Frame {
+    struct Frame<'a> {
         index: usize,
-        jojo: Vec<Exp>,
-        locals: HashMap<String, Obj>,
+        jojo: Vec<Exp<'a>>,
+        locals: HashMap<String, Obj<'a>>,
     }
     #+end_src
 
 *** Name
 
     #+begin_src rust
-    type Name<'a> = Entry<'a, &String, &Obj>;
+    type Name<'a> = Entry<'a, String, Obj<'a>>;
     #+end_src
 
 * Obj
@@ -50,7 +50,7 @@
         Clo,
         Bool,
         Int,
-        String,
+        Str,
         Dict,
         Vect,
         Data,
@@ -60,14 +60,88 @@
 *** Obj
 
     #+begin_src rust
-    struct ObjPrim   { tag: Tag, value: fn(&mut Env) }
-    struct ObjClo    { tag: Tag, value: Vec<Exp> }
-    struct ObjBool   { tag: Tag, value: bool }
-    struct ObjInt    { tag: Tag, value: isize }
-    struct ObjString { tag: Tag, value: String }
-    struct ObjDict   { tag: Tag, value: String }
-    struct ObjVect   { tag: Tag, value: String }
-    struct ObjData   { tag: Tag, value: String }
+    enum Obj<'a> {
+        Prim(ObjPrim),
+        Clo(ObjClo<'a>),
+        Bool(ObjBool),
+        Int(ObjInt),
+        Str(ObjStr),
+        Dict(ObjDict),
+        Vect(ObjVect),
+        Data(ObjData),
+    }
+    #+end_src
+
+*** ObjPrim
+
+    #+begin_src rust
+    struct ObjPrim {
+        tag: Tag,
+        value: fn(&mut Env),
+    }
+    #+end_src
+
+*** ObjClo
+
+    #+begin_src rust
+    struct ObjClo<'a> {
+        tag: Tag,
+        value: Vec<Exp<'a>>,
+    }
+    #+end_src
+
+*** ObjBool
+
+    #+begin_src rust
+    struct ObjBool {
+        tag: Tag,
+        value: bool,
+    }
+    #+end_src
+
+*** ObjInt
+
+    #+begin_src rust
+    struct ObjInt {
+        tag: Tag,
+        value: isize,
+    }
+    #+end_src
+
+*** ObjStr
+
+    #+begin_src rust
+    struct ObjStr {
+        tag: Tag,
+        value: String,
+    }
+    #+end_src
+
+*** ObjDict
+
+    #+begin_src rust
+    struct ObjDict {
+        tag: Tag,
+        value: String,
+    }
+    #+end_src
+
+*** ObjVect
+
+    #+begin_src rust
+    struct ObjVect {
+        tag: Tag,
+        value: String,
+    }
+    #+end_src
+
+*** ObjData
+
+    #+begin_src rust
+    struct ObjData {
+        tag: Tag,
+        value: String,
+    }
     #+end_src
 
 * Exp
@@ -75,11 +149,53 @@
 *** Exp
 
     #+begin_src rust
-    struct ExpCall  { name: Name<'a> }
-    struct ExpGet   { local_name: Name<'a> }
-    struct ExpSet   { local_name: Name<'a> }
-    struct ExpClo   { exp: Exp }
-    struct ExpBegin { body: Vec<Exp>}
+    enum Exp<'a> {
+       Call(ExpCall<'a>),
+       Get(ExpGet<'a>),
+       Set(ExpSet<'a>),
+       Clo(ExpClo<'a>),
+       Begin(ExpBegin<'a>),
+    }
+    #+end_src
+
+*** ExpCall
+
+    #+begin_src rust
+    struct ExpCall<'a> {
+        name: Name<'a>
+    }
+    #+end_src
+
+*** ExpGet
+
+    #+begin_src rust
+    struct ExpGet<'a> {
+        local_name: Name<'a>
+    }
+    #+end_src
+
+*** ExpSet
+
+    #+begin_src rust
+    struct ExpSet<'a> {
+        local_name: Name<'a>
+    }
+    #+end_src
+
+*** ExpClo
+
+    #+begin_src rust
+    struct ExpClo<'a> {
+        exp: &'a Exp<'a>
+    }
+    #+end_src
+
+*** ExpBegin
+
+    #+begin_src rust
+    struct ExpBegin<'a> {
+        body: Vec<Exp<'a>>
+    }
     #+end_src
 
 * epilog
@@ -88,18 +204,6 @@
 
     #+begin_src rust
     fn main() {
-        let mut a = 1;
-        if true { a += 1 }
-        else { a -= 1 };
-        a
+
     }
-
-
-
-    let a;
-    {
-        let b = ...;
-        a = f(&b);
-    }
-    println!("{}", a);
     #+end_src
