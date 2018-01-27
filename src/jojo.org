@@ -3,10 +3,103 @@
 
 * [todo-stack]
 
-*** symbol or not symbol ?
+* prolog
 
-***** good about symbol
+*** use
 
-***** bad about symbol
+    #+begin_src rust
+    use std::collections::hash_map::HashMap;
+    use std::collections::hash_map::Entry;
+    #+end_src
 
-      - bad for module system ?
+* Env
+
+*** Env
+
+    #+begin_src rust
+    struct Env {
+        nd: HashMap<String, Obj>,
+        ds: Vec<Obj>,
+        rs: Frame,
+    }
+    #+end_src
+
+*** Frame
+
+    #+begin_src rust
+    struct Frame {
+        index: usize,
+        jojo: Vec<Exp>,
+        locals: HashMap<String, Obj>,
+    }
+    #+end_src
+
+*** Name
+
+    #+begin_src rust
+    type Name<'a> = Entry<'a, &String, &Obj>;
+    #+end_src
+
+* Obj
+
+*** Tag
+
+    #+begin_src rust
+    enum Tag {
+        Prim,
+        Clo,
+        Bool,
+        Int,
+        String,
+        Dict,
+        Vect,
+        Data,
+    }
+    #+end_src
+
+*** Obj
+
+    #+begin_src rust
+    struct ObjPrim   { tag: Tag, value: fn(&mut Env) }
+    struct ObjClo    { tag: Tag, value: Vec<Exp> }
+    struct ObjBool   { tag: Tag, value: bool }
+    struct ObjInt    { tag: Tag, value: isize }
+    struct ObjString { tag: Tag, value: String }
+    struct ObjDict   { tag: Tag, value: String }
+    struct ObjVect   { tag: Tag, value: String }
+    struct ObjData   { tag: Tag, value: String }
+    #+end_src
+
+* Exp
+
+*** Exp
+
+    #+begin_src rust
+    struct ExpCall  { name: Name<'a> }
+    struct ExpGet   { local_name: Name<'a> }
+    struct ExpSet   { local_name: Name<'a> }
+    struct ExpClo   { exp: Exp }
+    struct ExpBegin { body: Vec<Exp>}
+    #+end_src
+
+* epilog
+
+*** main
+
+    #+begin_src rust
+    fn main() {
+        let mut a = 1;
+        if true { a += 1 }
+        else { a -= 1 };
+        a
+    }
+
+
+
+    let a;
+    {
+        let b = ...;
+        a = f(&b);
+    }
+    println!("{}", a);
+    #+end_src
