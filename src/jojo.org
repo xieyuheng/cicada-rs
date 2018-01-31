@@ -10,6 +10,7 @@
     #+begin_src rust
     use std::collections::hash_map::HashMap;
     use std::collections::hash_map::Entry;
+    use std::collections::vec_deque::VecDeque;
     #+end_src
 
 * Env
@@ -18,9 +19,9 @@
 
     #+begin_src rust
     struct Env<'a> {
-        nd: HashMap<String, Obj<'a>>,
+        nd: HashMap<String, Den<'a>>,
         ds: Vec<Obj<'a>>,
-        rs: Frame<'a>,
+        rs: VecDeque<Frame<'a>>,
     }
     #+end_src
 
@@ -29,7 +30,7 @@
     #+begin_src rust
     struct Frame<'a> {
         index: usize,
-        jojo: Vec<Exp<'a>>,
+        jojo: Vec<Ins<'a>>,
         locals: HashMap<String, Obj<'a>>,
     }
     #+end_src
@@ -40,6 +41,50 @@
     type Name<'a> = Entry<'a, String, Obj<'a>>;
     #+end_src
 
+*** eval_one_step
+
+    #+begin_src rust
+    fn eval_one_step(mut env: &mut Env) {
+        match env.rs.back_mut() {
+            Some(frame) => {
+                let ins = &frame.jojo[frame.index];
+                frame.index = frame.index + 1;
+                exe(ins, &mut env);
+            }
+            None => {
+                panic!("- eval_one_step: meet empty rs");
+            }
+        }
+    }
+    #+end_src
+
+*** eval
+
+    #+begin_src rust
+    fn eval(env: &mut Env) {
+
+    }
+    #+end_src
+
+* Den
+
+*** Den
+
+    #+begin_src rust
+    enum Den<'a> {
+       Fun(FunDen<'a>),
+    }
+    #+end_src
+
+*** FunDen
+
+    #+begin_src rust
+    struct FunDen<'a> {
+       name: String,
+       jojo: Vec<Ins<'a>>,
+    }
+    #+end_src
+
 * Obj
 
 *** Tag
@@ -48,12 +93,8 @@
     enum Tag {
         Prim,
         Clo,
-        Bool,
         Int,
         Str,
-        Dict,
-        Vect,
-        Data,
     }
     #+end_src
 
@@ -61,140 +102,118 @@
 
     #+begin_src rust
     enum Obj<'a> {
-        Prim(ObjPrim),
-        Clo(ObjClo<'a>),
-        Bool(ObjBool),
-        Int(ObjInt),
-        Str(ObjStr),
-        Dict(ObjDict),
-        Vect(ObjVect),
-        Data(ObjData),
+        Prim(PrimObj),
+        Clo(CloObj<'a>),
+        Int(IntObj),
+        Str(StrObj),
     }
     #+end_src
 
-*** ObjPrim
+*** PrimObj
 
     #+begin_src rust
-    struct ObjPrim {
+    struct PrimObj {
         tag: Tag,
         value: fn(&mut Env),
+        // ><><><
     }
     #+end_src
 
-*** ObjClo
+*** CloObj
 
     #+begin_src rust
-    struct ObjClo<'a> {
+    struct CloObj<'a> {
         tag: Tag,
-        value: Vec<Exp<'a>>,
+        value: Vec<Ins<'a>>,
+        // ><><><
     }
     #+end_src
 
-*** ObjBool
+*** IntObj
 
     #+begin_src rust
-    struct ObjBool {
-        tag: Tag,
-        value: bool,
-    }
-    #+end_src
-
-*** ObjInt
-
-    #+begin_src rust
-    struct ObjInt {
+    struct IntObj {
         tag: Tag,
         value: isize,
     }
     #+end_src
 
-*** ObjStr
+*** StrObj
 
     #+begin_src rust
-    struct ObjStr {
+    struct StrObj {
         tag: Tag,
         value: String,
     }
     #+end_src
 
-*** ObjDict
+* Ins
+
+*** Ins
 
     #+begin_src rust
-    struct ObjDict {
-        tag: Tag,
-        value: String,
+    enum Ins<'a> {
+        Call(CallIns<'a>),
+        TailCall(TailCallIns<'a>),
+        End(EndIns),
+        Get(GetIns<'a>),
+        Set(SetIns<'a>),
+        Clo(CloIns<'a>),
     }
     #+end_src
 
-*** ObjVect
+*** CallIns
 
     #+begin_src rust
-    struct ObjVect {
-        tag: Tag,
-        value: String,
-    }
-    #+end_src
-
-*** ObjData
-
-    #+begin_src rust
-    struct ObjData {
-        tag: Tag,
-        value: String,
-    }
-    #+end_src
-
-* Exp
-
-*** Exp
-
-    #+begin_src rust
-    enum Exp<'a> {
-       Call(ExpCall<'a>),
-       Get(ExpGet<'a>),
-       Set(ExpSet<'a>),
-       Clo(ExpClo<'a>),
-       Begin(ExpBegin<'a>),
-    }
-    #+end_src
-
-*** ExpCall
-
-    #+begin_src rust
-    struct ExpCall<'a> {
+    struct CallIns<'a> {
         name: Name<'a>
     }
     #+end_src
 
-*** ExpGet
+*** TailCallIns
 
     #+begin_src rust
-    struct ExpGet<'a> {
+    struct TailCallIns<'a> {
+        name: Name<'a>
+    }
+    #+end_src
+
+*** EndIns
+
+    #+begin_src rust
+    struct EndIns {
+    }
+    #+end_src
+
+*** GetIns
+
+    #+begin_src rust
+    struct GetIns<'a> {
         local_name: Name<'a>
     }
     #+end_src
 
-*** ExpSet
+*** SetIns
 
     #+begin_src rust
-    struct ExpSet<'a> {
+    struct SetIns<'a> {
         local_name: Name<'a>
     }
     #+end_src
 
-*** ExpClo
+*** CloIns
 
     #+begin_src rust
-    struct ExpClo<'a> {
-        exp: &'a Exp<'a>
+    struct CloIns<'a> {
+        exp: Vec<Ins<'a>>
     }
     #+end_src
 
-*** ExpBegin
+*** exe
 
     #+begin_src rust
-    struct ExpBegin<'a> {
-        body: Vec<Exp<'a>>
+    fn exe(ins: &Ins, env: &mut Env) {
+
     }
     #+end_src
 

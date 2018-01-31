@@ -1,108 +1,117 @@
 use std::collections::hash_map::HashMap;
 use std::collections::hash_map::Entry;
+use std::collections::vec_deque::VecDeque;
 
 struct Env<'a> {
-    nd: HashMap<String, Obj<'a>>,
+    nd: HashMap<String, Den<'a>>,
     ds: Vec<Obj<'a>>,
-    rs: Frame<'a>,
+    rs: VecDeque<Frame<'a>>,
 }
 
 struct Frame<'a> {
     index: usize,
-    jojo: Vec<Exp<'a>>,
+    jojo: Vec<Ins<'a>>,
     locals: HashMap<String, Obj<'a>>,
 }
 
 type Name<'a> = Entry<'a, String, Obj<'a>>;
 
+fn eval_one_step(mut env: &mut Env) {
+    match env.rs.back_mut() {
+        Some(frame) => {
+            let ins = &frame.jojo[frame.index];
+            frame.index = frame.index + 1;
+            exe(ins, &mut env);
+        }
+        None => {
+            panic!("- eval_one_step: meet empty rs");
+        }
+    }
+}
+
+fn eval(env: &mut Env) {
+
+}
+
+enum Den<'a> {
+   Fun(FunDen<'a>),
+}
+
+struct FunDen<'a> {
+   name: String,
+   jojo: Vec<Ins<'a>>,
+}
+
 enum Tag {
     Prim,
     Clo,
-    Bool,
     Int,
     Str,
-    Dict,
-    Vect,
-    Data,
 }
 
 enum Obj<'a> {
-    Prim(ObjPrim),
-    Clo(ObjClo<'a>),
-    Bool(ObjBool),
-    Int(ObjInt),
-    Str(ObjStr),
-    Dict(ObjDict),
-    Vect(ObjVect),
-    Data(ObjData),
+    Prim(PrimObj),
+    Clo(CloObj<'a>),
+    Int(IntObj),
+    Str(StrObj),
 }
 
-struct ObjPrim {
+struct PrimObj {
     tag: Tag,
     value: fn(&mut Env),
+    // ><><><
 }
 
-struct ObjClo<'a> {
+struct CloObj<'a> {
     tag: Tag,
-    value: Vec<Exp<'a>>,
+    value: Vec<Ins<'a>>,
+    // ><><><
 }
 
-struct ObjBool {
-    tag: Tag,
-    value: bool,
-}
-
-struct ObjInt {
+struct IntObj {
     tag: Tag,
     value: isize,
 }
 
-struct ObjStr {
+struct StrObj {
     tag: Tag,
     value: String,
 }
 
-struct ObjDict {
-    tag: Tag,
-    value: String,
+enum Ins<'a> {
+    Call(CallIns<'a>),
+    TailCall(TailCallIns<'a>),
+    End(EndIns),
+    Get(GetIns<'a>),
+    Set(SetIns<'a>),
+    Clo(CloIns<'a>),
 }
 
-struct ObjVect {
-    tag: Tag,
-    value: String,
-}
-
-struct ObjData {
-    tag: Tag,
-    value: String,
-}
-
-enum Exp<'a> {
-   Call(ExpCall<'a>),
-   Get(ExpGet<'a>),
-   Set(ExpSet<'a>),
-   Clo(ExpClo<'a>),
-   Begin(ExpBegin<'a>),
-}
-
-struct ExpCall<'a> {
+struct CallIns<'a> {
     name: Name<'a>
 }
 
-struct ExpGet<'a> {
+struct TailCallIns<'a> {
+    name: Name<'a>
+}
+
+struct EndIns {
+}
+
+struct GetIns<'a> {
     local_name: Name<'a>
 }
 
-struct ExpSet<'a> {
+struct SetIns<'a> {
     local_name: Name<'a>
 }
 
-struct ExpClo<'a> {
-    exp: &'a Exp<'a>
+struct CloIns<'a> {
+    exp: Vec<Ins<'a>>
 }
 
-struct ExpBegin<'a> {
-    body: Vec<Exp<'a>>
+fn exe(ins: &Ins, env: &mut Env) {
+
 }
 
 fn main() {
