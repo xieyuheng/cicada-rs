@@ -1,228 +1,143 @@
-#+property: tangle jojo.rs
+#+property: tangle jojo.c
 #+title: jojo
 
 * [todo-stack]
 
+*** use fixed instruction_array
+
 * prolog
 
-*** use
+*** header
 
-    #+begin_src rust
-    use std::collections::hash_map::HashMap;
-    use std::collections::hash_map::Entry;
-    use std::collections::vec_deque::VecDeque;
+    #+begin_src c
+    #include <sys/types.h>
+    #include <sys/stat.h>
+    #include <unistd.h>
+    #include <stdio.h>
+    #include <errno.h>
+    #include <string.h>
+    #include <fcntl.h>
+    #include <ctype.h>
+    #include <stdint.h>
+    #include <dlfcn.h>
+    #include <dirent.h>
+    #include <signal.h>
+    #include <limits.h>
+    #include <stdarg.h>
+    // #include <assert.h>
+    #include <stdlib.h>
     #+end_src
 
-* Env
+* env_t
 
-*** Env
+*** env_t
 
-    #+begin_src rust
-    struct Env<'a> {
-        nd: HashMap<String, Den<'a>>,
-        ds: Vec<Obj<'a>>,
-        rs: VecDeque<Frame<'a>>,
+    #+begin_src c
+    typedef struct {} name_dict_t;
+    typedef struct {} data_stack_t;
+    typedef struct {} return_stack_t;
+
+    typedef struct {
+        name_dict_t *name_dict;
+        data_stack_t *data_stack;
+        return_stack_t *return_stack;
+    } env_t;
+    #+end_src
+
+*** ins_t
+
+    #+begin_src c
+    typedef enum {
+        PRIM_INS,
+        CALL_INS,
+        GET_INS,
+        SET_INS,
+    } ins_tag_t;
+
+    typedef struct {} prim_ins_t;
+    typedef struct {} call_ins_t;
+    typedef struct {} get_ins_t;
+    typedef struct {} set_ins_t;
+
+    typedef struct {
+        ins_tag_t ins_tag;
+        union {
+            prim_ins_t prim_ins;
+            call_ins_t call_ins;
+            get_ins_t get_ins;
+            set_ins_t set_ins;
+        };
+    } ins_t;
+    #+end_src
+
+*** frame_t
+
+    #+begin_src c
+    typedef struct {
+        size_t index;
+        size_t length;
+        ins_t *body;
+    } frame_t;
+    #+end_src
+
+*** return_stack_tos
+
+    #+begin_src c
+    frame_t *
+    return_stack_tos (return_stack_t *return_stack) {
+
     }
     #+end_src
 
-*** Frame
+*** ins_exe
 
-    #+begin_src rust
-    struct Frame<'a> {
-        index: usize,
-        jojo: Vec<Ins<'a>>,
-        locals: HashMap<String, Obj<'a>>,
+    #+begin_src c
+    void
+    ins_exe (ins_t ins, env_t *env)
+    {
+        return;
     }
     #+end_src
 
-*** Name
+*** next
 
-    #+begin_src rust
-    type Name<'a> = Entry<'a, String, Obj<'a>>;
-    #+end_src
-
-*** eval_one_step
-
-    #+begin_src rust
-    fn eval_one_step(mut env: &mut Env) {
-        match env.rs.back_mut() {
-            Some(frame) => {
-                let ins = &frame.jojo[frame.index];
-                frame.index = frame.index + 1;
-                exe(ins, &mut env);
-            }
-            None => {
-                panic!("- eval_one_step: meet empty rs");
-            }
-        }
+    #+begin_src c
+    void
+    next (env_t *env)
+    {
+        frame_t *frame = return_stack_tos (env->return_stack);
+        ins_t ins = frame->body[frame->index];
+        frame->index = frame->index + 1;
+        ins_exe (ins, env);
     }
     #+end_src
 
-*** eval
+* obj_t
 
-    #+begin_src rust
-    fn eval(env: &mut Env) {
+*** obj_t
 
-    }
-    #+end_src
+    #+begin_src c
+    typedef enum {
+        STR_OBJ,
+    } obj_tag_t;
 
-* Den
+    typedef struct {} str_obj_t;
 
-*** Den
-
-    #+begin_src rust
-    enum Den<'a> {
-       Fun(FunDen<'a>),
-    }
-    #+end_src
-
-*** FunDen
-
-    #+begin_src rust
-    struct FunDen<'a> {
-       name: String,
-       jojo: Vec<Ins<'a>>,
-    }
-    #+end_src
-
-* Obj
-
-*** Tag
-
-    #+begin_src rust
-    enum Tag {
-        Prim,
-        Clo,
-        Int,
-        Str,
-    }
-    #+end_src
-
-*** Obj
-
-    #+begin_src rust
-    enum Obj<'a> {
-        Prim(PrimObj),
-        Clo(CloObj<'a>),
-        Int(IntObj),
-        Str(StrObj),
-    }
-    #+end_src
-
-*** PrimObj
-
-    #+begin_src rust
-    struct PrimObj {
-        tag: Tag,
-        value: fn(&mut Env),
-        // ><><><
-    }
-    #+end_src
-
-*** CloObj
-
-    #+begin_src rust
-    struct CloObj<'a> {
-        tag: Tag,
-        value: Vec<Ins<'a>>,
-        // ><><><
-    }
-    #+end_src
-
-*** IntObj
-
-    #+begin_src rust
-    struct IntObj {
-        tag: Tag,
-        value: isize,
-    }
-    #+end_src
-
-*** StrObj
-
-    #+begin_src rust
-    struct StrObj {
-        tag: Tag,
-        value: String,
-    }
-    #+end_src
-
-* Ins
-
-*** Ins
-
-    #+begin_src rust
-    enum Ins<'a> {
-        Call(CallIns<'a>),
-        TailCall(TailCallIns<'a>),
-        End(EndIns),
-        Get(GetIns<'a>),
-        Set(SetIns<'a>),
-        Clo(CloIns<'a>),
-    }
-    #+end_src
-
-*** CallIns
-
-    #+begin_src rust
-    struct CallIns<'a> {
-        name: Name<'a>
-    }
-    #+end_src
-
-*** TailCallIns
-
-    #+begin_src rust
-    struct TailCallIns<'a> {
-        name: Name<'a>
-    }
-    #+end_src
-
-*** EndIns
-
-    #+begin_src rust
-    struct EndIns {
-    }
-    #+end_src
-
-*** GetIns
-
-    #+begin_src rust
-    struct GetIns<'a> {
-        local_name: Name<'a>
-    }
-    #+end_src
-
-*** SetIns
-
-    #+begin_src rust
-    struct SetIns<'a> {
-        local_name: Name<'a>
-    }
-    #+end_src
-
-*** CloIns
-
-    #+begin_src rust
-    struct CloIns<'a> {
-        exp: Vec<Ins<'a>>
-    }
-    #+end_src
-
-*** exe
-
-    #+begin_src rust
-    fn exe(ins: &Ins, env: &mut Env) {
-
-    }
+    typedef struct {
+        obj_tag_t obj_tag;
+        union {
+            str_obj_t str_obj;
+        };
+    } obj_t;
     #+end_src
 
 * epilog
 
 *** main
 
-    #+begin_src rust
-    fn main() {
+    #+begin_src c
+    int
+    main (void) {
 
     }
     #+end_src
