@@ -15,53 +15,48 @@
 #include <assert.h>
 #include <stdlib.h>
 
+typedef enum { false, true } bool;
+
+typedef struct _env_t env_t;
+
+typedef
+void
+prim_fn (env_t *env);
+
 typedef enum {
     PRIM_INS,
     CALL_INS,
-    GET_INS,
-    SET_INS,
 } ins_tag_t;
 
-typedef struct _prim_ins_t prim_ins_t;
-typedef struct _call_ins_t call_ins_t;
-typedef struct _get_ins_t get_ins_t;
-typedef struct _set_ins_t set_ins_t;
-
 typedef struct {
-    ins_tag_t ins_tag;
+    ins_tag_t tag;
     union {
-        prim_ins_t *prim_ins;
-        call_ins_t *call_ins;
-        get_ins_t *get_ins;
-        set_ins_t *set_ins;
+        prim_fn *prim;
+        char *name;
     };
 } ins_u;
 
-typedef struct {} _prim_ins_t;
-typedef struct {} _call_ins_t;
-typedef struct {} _get_ins_t;
-typedef struct {} _set_ins_t;
-
 typedef enum {
+    BOOL_OBJ,
+    INT_OBJ,
     STR_OBJ,
 } obj_tag_t;
 
-typedef struct _str_obj_t str_obj_t;
-
 typedef struct {
-    obj_tag_t obj_tag;
+    obj_tag_t tag;
     union {
-        str_obj_t *str_obj;
+        bool bool_obj;
+        int int_obj;
+        char *str_obj;
     };
 } obj_u;
 
-typedef struct {} _str_obj_t;
+void
+ins_exe (ins_u ins, env_t *env);
 
-typedef struct {} name_dict_t;
-typedef struct {} data_stack_t;
-typedef struct {} return_stack_t;
-
-typedef struct _env_t env_t;
+typedef struct _name_dict_t name_dict_t;
+typedef struct _data_stack_t data_stack_t;
+typedef struct _return_stack_t return_stack_t;
 
 struct _env_t {
     name_dict_t *name_dict;
@@ -69,12 +64,45 @@ struct _env_t {
     return_stack_t *return_stack;
 };
 
-typedef struct {
+env_t *
+new_env ()
+{
+    env_t *self = malloc (sizeof (env_t));
+    self->name_dict = new_name_dict ();
+    self->data_stack = new_data_stack ();
+    self->return_stack = new_return_stack ();
+    return self;
+}
+
+void
+destroy_env (env_t **self_pt)
+{
+    assert (self_pt);
+    if (*self_pt) {
+        env_t *self = *self_pt;
+        destroy_name_dict (&self->name_dict);
+        destroy_data_stack (&self->data_stack);
+        destroy_return_stack (&self->return_stack);
+        free (self);
+        *self_pt = NULL;
+    }
+}
+
+struct _name_dict_t {
+
+};
+
+typedef struct _frame_t frame_t;
+
+struct _return_stack_t {
+
+};
+
+struct _frame_t {
     size_t index;
     size_t length;
     ins_u *body;
-} frame_t;
-
+};
 
 frame_t *
 return_stack_tos (return_stack_t *return_stack)
@@ -82,13 +110,45 @@ return_stack_tos (return_stack_t *return_stack)
 
 }
 
+struct _data_stack_t {
+
+};
+
+obj_u
+data_stack_pop (env_t *env)
+{
+
+}
+
+typedef
+void
+exe_fn (ins_u ins, env_t *env);
+
+void
+prim_exe (ins_u ins, env_t *env)
+{
+    prim_fn *prim = ins.prim;
+    prim (env);
+}
+
+void
+call_exe (ins_u ins, env_t *env)
+{
+
+}
+
+exe_fn *
+EXE_ARRAY[] = {
+   prim_exe,
+   call_exe,
+};
 
 void
 ins_exe (ins_u ins, env_t *env)
 {
-    return;
+    exe_fn *exe = EXE_ARRAY[ins.tag];
+    exe (ins, env);
 }
-
 
 void
 next (env_t *env)
@@ -99,9 +159,16 @@ next (env_t *env)
     ins_exe (ins, env);
 }
 
-
-
-
+void
+p_add (env_t *env)
+{
+    obj_u a = data_stack_pop (env);
+    obj_u b = data_stack_pop (env);
+    obj_u c;
+    c.tag = INT_OBJ;
+    c.int_obj = a.int_obj + b.int_obj;
+    data_stack_push (env, c);
+}
 
 int
 main (void) {
