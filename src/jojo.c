@@ -37,6 +37,21 @@ typedef struct {
 } ins_u;
 
 typedef enum {
+    JOJO_DEN,
+    GENE_DEN,
+    DATA_DEN,
+    UNION_DEN,
+    DEF_DEN,
+} den_tag_t;
+
+typedef struct {
+    den_tag_t tag;
+    union {
+
+    };
+} den_u;
+
+typedef enum {
     BOOL_OBJ,
     INT_OBJ,
     STR_OBJ,
