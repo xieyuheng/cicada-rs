@@ -3,8 +3,6 @@
 
 * [todo-stack]
 
-*** use fixed instruction_array
-
 * prolog
 
 *** header
@@ -24,11 +22,11 @@
     #include <signal.h>
     #include <limits.h>
     #include <stdarg.h>
-    // #include <assert.h>
+    #include <assert.h>
     #include <stdlib.h>
     #+end_src
 
-* env_t
+* env
 
 *** env_t
 
@@ -44,35 +42,12 @@
     } env_t;
     #+end_src
 
-*** ins_t
-
-    #+begin_src c
-    typedef enum {
-        PRIM_INS,
-        CALL_INS,
-        GET_INS,
-        SET_INS,
-    } ins_tag_t;
-
-    typedef struct {} prim_ins_t;
-    typedef struct {} call_ins_t;
-    typedef struct {} get_ins_t;
-    typedef struct {} set_ins_t;
-
-    typedef struct {
-        ins_tag_t ins_tag;
-        union {
-            prim_ins_t prim_ins;
-            call_ins_t call_ins;
-            get_ins_t get_ins;
-            set_ins_t set_ins;
-        };
-    } ins_t;
-    #+end_src
-
 *** frame_t
 
     #+begin_src c
+    // struct _ins_t;
+    typedef struct _ins_t ins_t;
+
     typedef struct {
         size_t index;
         size_t length;
@@ -112,7 +87,45 @@
     }
     #+end_src
 
-* obj_t
+* ins
+
+*** ins_t
+
+    #+begin_src c
+    typedef enum {
+        PRIM_INS,
+        CALL_INS,
+        GET_INS,
+        SET_INS,
+    } ins_tag_t;
+
+    typedef struct {} prim_ins_t;
+    typedef struct {} call_ins_t;
+    typedef struct {} get_ins_t;
+    typedef struct {} set_ins_t;
+
+    struct _ins_t {
+        ins_tag_t ins_tag;
+        union {
+            prim_ins_t prim_ins;
+            call_ins_t call_ins;
+            get_ins_t get_ins;
+            set_ins_t set_ins;
+        };
+    };
+
+    // typedef struct {
+    //     ins_tag_t ins_tag;
+    //     union {
+    //         prim_ins_t prim_ins;
+    //         call_ins_t call_ins;
+    //         get_ins_t get_ins;
+    //         set_ins_t set_ins;
+    //     };
+    // } ins_t;
+    #+end_src
+
+* obj
 
 *** obj_t
 

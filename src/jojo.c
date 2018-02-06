@@ -12,7 +12,7 @@
 #include <signal.h>
 #include <limits.h>
 #include <stdarg.h>
-// #include <assert.h>
+#include <assert.h>
 #include <stdlib.h>
 
 typedef struct {} name_dict_t;
@@ -25,27 +25,8 @@ typedef struct {
     return_stack_t *return_stack;
 } env_t;
 
-typedef enum {
-    PRIM_INS,
-    CALL_INS,
-    GET_INS,
-    SET_INS,
-} ins_tag_t;
-
-typedef struct {} prim_ins_t;
-typedef struct {} call_ins_t;
-typedef struct {} get_ins_t;
-typedef struct {} set_ins_t;
-
-typedef struct {
-    ins_tag_t ins_tag;
-    union {
-        prim_ins_t prim_ins;
-        call_ins_t call_ins;
-        get_ins_t get_ins;
-        set_ins_t set_ins;
-    };
-} ins_t;
+// struct _ins_t;
+typedef struct _ins_t ins_t;
 
 typedef struct {
     size_t index;
@@ -72,6 +53,38 @@ next (env_t *env)
     frame->index = frame->index + 1;
     ins_exe (ins, env);
 }
+
+typedef enum {
+    PRIM_INS,
+    CALL_INS,
+    GET_INS,
+    SET_INS,
+} ins_tag_t;
+
+typedef struct {} prim_ins_t;
+typedef struct {} call_ins_t;
+typedef struct {} get_ins_t;
+typedef struct {} set_ins_t;
+
+struct _ins_t {
+    ins_tag_t ins_tag;
+    union {
+        prim_ins_t prim_ins;
+        call_ins_t call_ins;
+        get_ins_t get_ins;
+        set_ins_t set_ins;
+    };
+};
+
+// typedef struct {
+//     ins_tag_t ins_tag;
+//     union {
+//         prim_ins_t prim_ins;
+//         call_ins_t call_ins;
+//         get_ins_t get_ins;
+//         set_ins_t set_ins;
+//     };
+// } ins_t;
 
 typedef enum {
     STR_OBJ,
