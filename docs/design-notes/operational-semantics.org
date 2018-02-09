@@ -1,0 +1,230 @@
+#+title: operational semantics
+
+* <bool>
+
+  #+begin_src jojo
+  (note
+    (+type <bool> (-> -- <<type>>)
+      true  (-> -- <bool>)
+      false (-> -- <bool>))
+    (begin
+
+      (call type-cons-den
+        .type '(-> -- <<type>>) parse
+        .fields (list)
+        .data-cons-name-list '(true false))
+      '<bool> global-get
+
+      (call data-cons-den
+        .type '(-> -- <bool>) parse
+        .fields (list))
+      'true global-set
+
+      (call data-cons-den
+        .type '(-> -- <bool>) parse
+        .fields (list))
+      'false global-set
+
+      (where
+        (= '(-> -- <bool>) parse
+           (call arrow-exp
+             (list)
+             (list '<bool> call-exp)))
+        (= '(-> -- <<type>>) parse
+           (call arrow-exp
+             (list)
+             (list '<<type>> call-exp))))))
+  #+end_src
+
+* <nat>
+
+  #+begin_src jojo
+  (note
+    (+type <nat> (-> -- <<type>>)
+      zero (-> -- <nat>)
+      succ (-> (. .pre <nat>) -- <nat>))
+    (begin
+
+      (call type-cons-den
+        .type '(-> -- <<type>>) parse
+        .fields (list)
+        .data-cons-name-list (list 'zero 'succ))
+      '<nat> global-set
+
+      (call data-cons-den
+        .type '(-> -- <nat>) parse
+        .fields (list))
+      'zero global-set
+
+      (call data-cons-den
+        .type '(-> (. .pre <nat>) -- <nat>) parse
+        .fields (list '.pre))
+      'succ global-set))
+  #+end_src
+
+* add
+
+  #+begin_src jojo
+  (note
+    (+fun add (-> (: :m :n <nat>) -- <nat>)
+      (match :n
+        zero :m
+        succ [:m :n.pre add succ]))
+    (+fun add (-> <nat> hypo :m! <nat> hypo :n! -- <nat>)
+      (match :n
+        zero :m
+        succ [:m :n.pre add succ]))
+
+    (begin
+      (call fun-den
+        .type
+        '(-> <nat> hypo :m! <nat> hypo :n! -- <nat>)
+        parse
+        .body
+        '(match :n
+           zero :m
+           succ [:m :n.pre add succ])
+        parse)
+      'add global-set
+
+      (where
+        (= '(-> <nat> hypo :m! <nat> hypo :n! -- <nat>)
+           parse
+           (call arrow-exp
+             .ante
+             (list
+               '<nat> call-exp
+               'hypo call-exp
+               ':m set-local-exp
+               '<nat> call-exp
+               'hypo call-exp
+               ':n set-local-exp)
+             .succ
+             (list '<nat> call-exp)))
+        (= '(match :n
+              zero :m
+              succ [:m :n.pre add succ])
+           parse
+           (call match-exp
+             .values ':n parse
+             .pattern-list '((zero) (succ))
+             .clause-list
+             (list
+               ':m parse
+               '[:m :n.pre add succ] parse))))))
+  #+end_src
+
+* <eq> -- an interface to the internal unification
+
+*** <eq>
+
+    #+begin_src jojo
+    (note
+      (+type <eq> (-> (. .lhs .rhs :<t>) -- <<type>>)
+        refl (-> -- :z :z <eq>))
+
+      (begin
+
+        (call type-cons-den
+          .type '(-> (. .lhs .rhs :<t>) -- <<type>>) parse
+          .fields '(.lhs .rhs)
+          .data-cons-name-list '(refl)
+          '<eq> global-set)
+
+        (call data-cons-den
+          .type '(-> -- :z :z <eq>) parse
+          .fields '()
+          'refl global-set)))
+    #+end_src
+
+*** >< eq-apply
+
+    #+begin_src jojo
+    (note
+      (+proof eq-apply
+        (-> :x :y <eq> (: :f (-> :<t1> -- :<t2>))
+         -- :x :f apply, :y :f apply, <eq>)
+        refl))
+    #+end_src
+
+*** >< eq-swap
+
+    #+begin_src jojo
+    (note
+      (+proof eq-swap
+        (-> :x :y <eq> -- :y :x <eq>)
+        refl))
+    #+end_src
+
+*** >< eq-compose
+
+    #+begin_src jojo
+    (note
+      (+proof eq-compose
+        (-> :x :y <eq> :y :z <eq> -- :x :z <eq>)
+        refl))
+    #+end_src
+
+* >< add-associative -- structural induction proof
+
+  #+begin_src jojo
+  (note
+    (+proof add-associative
+      (-> (: :x :y :z <nat>)
+          -- :x :y add :z add
+          :x :y :z add add <eq>)
+      (match :z
+        zero refl
+        succ [:x :y :z.pre add-associative {succ} eq-apply]))
+
+    (begin
+      ))
+  #+end_src
+
+* add-commutative
+
+*** >< add-commutative
+
+    #+begin_src jojo
+    (note
+      (+proof add-commutative
+        (-> (: :m :n <nat>)
+         -- :m :n add, :n :m add <eq>)
+        (match :n
+          zero [:m add-zero-commutative]
+          succ [:m :n.pre recur {succ} eq-apply
+                :n.pre :m add-succ-commutative eq-compose]))
+
+      (begin
+        ))
+    #+end_src
+
+*** >< add-zero-commutative
+
+    #+begin_src jojo
+    (note
+      (+proof add-zero-commutative
+        (-> (: :m <nat>)
+         -- :m zero add, zero :m add <eq>)
+        (match :m
+          zero refl
+          succ [:m.pre recur {succ} eq-apply]))
+
+      (begin
+        ))
+    #+end_src
+
+*** >< add-succ-commutative
+
+    #+begin_src jojo
+    (note
+      (+proof add-succ-commutative
+        (-> (: :m :n <nat>)
+         -- :m succ :n add, :m :n add succ <eq>)
+        (match :n
+          zero refl
+          succ [:m :n.pre recur {succ} eq-apply]))
+
+      (begin
+        ))
+    #+end_src

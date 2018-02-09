@@ -1,0 +1,125 @@
+#+title: vector
+
+* vector-u
+
+  #+begin_src jojo
+  (+union vector-u : (-> nat-u type-tt -- type-tt)
+    null [zero :t vector-u]
+    cons (-> .car : :t
+             .cdr : [:n :t vector-u]
+          -- :n succ :t vector-u))
+  #+end_src
+
+* append
+
+  #+begin_src jojo
+  (+fun append
+    : (-> :l0 : [:m :t vector-u]
+          :l1 : [:n :t vector-u]
+       -- :m :n add :t vector-u)
+    (case :l1
+      null-t :l0
+      cons-t [:l1.car :l0 :l1.cdr recur cons]))
+  #+end_src
+
+* map
+
+  #+begin_src jojo
+  (+fun map
+    : (-> :l : [:n :t1 vector-u]
+          :f : (-> :t1 -- :t2)
+       -- :n :t2 vector-u)
+    (case :l
+      null-t null
+      cons-t [:l.car :f apply :l.cdr :f recur cons]))
+  #+end_src
+
+* [note] type-check detail of 'append'
+
+  #+begin_src jojo
+  (: :l0 [:m :t vector-u])
+  (: :l1 [:n :t vector-u])
+
+  (match :l1 cons)
+    (= :l1 :l1.car :l1.cdr cons)
+      (: :l1.cdr [:n#0 :t#0 vector-u])
+      (: :l1.car :t#0)
+    (: :l1 [:n#0 succ :t#0 vector-u])
+      (= :n :n#0 succ)
+      (= :t :t#0)
+
+  (type-computed:
+
+   [:l1.car :l0 :l1.cdr recur cons]
+
+   [:m :t vector-u :n :t vector-u]
+   ><><>< the order of cons
+   [recur :l1.car cons]
+
+   [:m :t vector-u :n#0 :t#0 vector-u]
+   [recur :l1.car cons]
+
+   [:m :n#0 add :t#0 vector-u]
+   [:l1.car cons]
+
+   [:m :n#0 add :t#0 vector-u :t#0]
+   [cons]
+
+   [:m :n#0 add succ :t#0 vector-u])
+
+  (type-asserted:
+
+   [:m :n add :t vector-u]
+
+   [:m :n#0 succ add :t#0 vector-u]
+
+   [:m :n#0 add succ :t#0 vector-u])
+  #+end_src
+
+* [note] type-check detail of 'map'
+
+  #+begin_src jojo
+  (: :l [:n :t1 vector-u])
+  (: :f (-> :t1 :t2))
+
+  (match :l cons)
+    (= :l :l.car :l.cdr cons)
+      (: :l.cdr [:n#0 :t#0 vector-u])
+      (: :l.car :t#0)
+    (: :l [:n#0 succ :t#0 vector-u])
+      (= :n :n#0 succ)
+      (= :t1 :t#0)
+
+  (type-computed:
+
+   ><><>< the order of cons
+   [:l.cdr :f recur :l.car :f apply cons]
+
+   [:n#0 :t#0 vector-u (-> :t1 :t2)]
+   [recur :l.car :f apply cons]
+
+   [:n#0 :t2 vector-u]
+   [:l.car :f apply cons]
+
+   [:n#0 :t2 vector-u :t#0]
+   [:f apply cons]
+
+   [:n#0 :t2 vector-u :t2]
+   [cons]
+
+   [:n#0 succ :t2 vector-u])
+
+  (type-asserted:
+
+   [:n :t2 vector-u]
+
+   [:n#0 succ :t2 vector-u])
+  #+end_src
+
+* list-u as forgetful functor -- to reuse vector-u
+
+  - forgetful functor of type [not type-class]
+
+  #+begin_src jojo
+  (+var list-u (forget .length vector-u))
+  #+end_src

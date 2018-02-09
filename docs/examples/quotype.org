@@ -1,0 +1,56 @@
+#+title: quotype
+
+* [note]
+
+*** quotype -- quotient type
+
+    - to use define a quotype is to to re-implement 'equal-p'.
+
+      - or, generally,
+        to re-implement interface functions
+        of type or trait
+
+*** functions are all single value -- to be well defined
+
+    - when define a function from a quotype to a type
+      we must also prove same element of the quotype
+      are mapped to the same result
+
+* int-q
+
+  #+begin_src jojo
+  (+quotype int-q : type-tt
+    (-> .left : nat-u
+        .right : nat-u
+     -- int-q)
+    (+fun equal-p : (-> [:x :y] : int-q -- bool-u)
+      :x.left :x.right sub
+      :y.left :y.right sub
+      equal-p))
+
+  (note
+    ;; if we view type-tt as a trait,
+    ;; equal-p will be its only interface function.
+
+    (+trait type-tr < type-tt
+      equal-p : (-> [:x :y] : type-tr -- bool-u))
+
+    (+impl int-q : type-tr
+      (+fun equal-p : (-> [:x :y] : int-q -- bool-u)
+        :x.left :x.right sub
+        :y.left :y.right sub
+        equal-p)))
+  #+end_src
+
+* fraction-q
+
+  #+begin_src jojo
+  (+quotype fraction-q : type-tt
+    (-> .up : int-q
+        .down : int-q
+     -- fraction-q)
+    (+fun equal-p : (-> [:x :y] : fraction-q -- bool-u)
+      :x.up :y.down mul
+      :y.up :x.down mul
+      equal-p))
+  #+end_src

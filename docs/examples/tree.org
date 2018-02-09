@@ -1,0 +1,163 @@
+#+title: tree
+
+* [todo-list]
+
+*** recall the old red-black-tree-t proof
+
+* binary-tree-t
+
+*** binary-tree-t
+
+    - binary-tree-t := () | (int-t binary-tree-t binary-tree-t)
+
+    #+begin_src jojo
+    (+union binary-tree-t : type-tt
+      null : binary-tree-t
+      node : (-> .value : int-t
+                 .left  : binary-tree-t
+                 .right : binary-tree-t
+              -- binary-tree-t))
+    #+end_src
+
+* binary-search-tree-t
+
+*** binary-search-tree-t
+
+    - binary-search-tree-t := () | (int-t binary-search-tree-t binary-search-tree-t)
+
+    - not all semantic are expressed in the above grammar.
+      1. key in the left subtree <= key in the current node
+      2. keys in the right subtree > key in the current node
+
+    #+begin_src jojo
+    (+union order-t : type-tt
+      lt : order-t
+      eq : order-t
+      gt : order-t)
+
+    (+union binary-search-tree-t : type-tt
+      null : binary-search-tree-t
+      node : (-> .key   : symbol-t
+                 .value : int-t
+                 .left  : binary-search-tree-t
+                 .right : binary-search-tree-t
+              -- binary-search-tree-t))
+    #+end_src
+
+*** search
+
+    #+begin_src jojo
+    (+fun search
+      : (-> :tree : binary-search-tree-t
+            :key  : symbol-t
+         -- binary-search-tree-t)
+      (match :tree
+        null null
+        node (match [:key :tree.key compare]
+               lt [:tree.left :key recur]
+               eq [:tree]
+               gt [:tree.right :key recur])))
+    #+end_src
+
+*** insert
+
+    #+begin_src jojo
+    (+fun insert
+      : (-> :tree  : binary-search-tree-t
+            :key   : symbol-t
+            :vlaue : int-t
+         -- binary-search-tree-t)
+      (match :tree
+        null [:key :value null null node]
+        node (match [:key :tree.key compare]
+               lt [:tree.key :tree.value
+                   :tree.left :key :value recur :tree.right node]
+               eq [:key :value
+                   :tree.left :tree.right node]
+               gt [:tree.key :tree.value
+                   :tree.left :tree.right :key :value recur node])))
+    #+end_src
+
+*** delete
+
+    #+begin_src jojo
+    (+fun delete
+      : (-> :tree : binary-search-tree-t
+            :key : symbol-t
+         -- binary-search-tree-t)
+      (match :tree
+        null null
+        node (match [:key :tree.key compare]
+               lt [:tree.key :tree.value
+                   :tree.left :key recur :tree.right node]
+               eq [:tree delete-node]
+               gt [:tree.key :tree.value
+                   :tree.left :tree.right :key recur node])))
+
+
+    (+fun delete-node
+      : (-> :tree : binary-search-tree-t
+         -- binary-search-tree-t)
+      (cond [:tree.left null-p] [:tree.right]
+            [:tree.right null-p] [:tree.left]
+            else [:tree.right left-most-key-and-value :value! :key!
+                  :key :value
+                  :tree.left
+                  :tree.right :key delete
+                  node]))
+
+    (+fun left-most-key-and-value
+      : (-> :tree : binary-search-tree-t
+         -- symbol-t int-t)
+      (cond [:tree.left null-p] [:tree.key :tree.value]
+            else [:tree.left recur]))
+    #+end_src
+
+* >< red-black-tree-t
+
+*** [note]
+
+    - in addition to the requirements imposed on a binary search tree
+      the following must be satisfied by a red–black tree :
+      1. each node is either red or black.
+      2. the root is black. [this rule is sometimes omitted.]
+      3. all leaves are black.
+      4. if a node is red, then both its children are black.
+      5. every path from a given node to any of its descendant nil nodes
+         contains the same number of black nodes.
+
+         - the number of black nodes from the root to a node
+           is the node's black depth
+
+         - the uniform number of black nodes in all paths
+           from root to the leaves
+           is called the black-height of the red–black tree.
+
+    - property of red–black trees :
+      the path from the root to the farthest leaf
+      is no more than twice as long as the path
+      from the root to the nearest leaf.
+      thus, the tree is roughly height-balanced.
+
+*** red-black-tree-t -- extrinsic
+
+    #+begin_src jojo
+    (+union color-t : type-tt
+      red   : color-t
+      black : color-t)
+
+    (+union red-black-tree-t : type-tt
+      null : red-black-tree-t
+      node : (-> .color : color-t
+                 .key   : symbol-t
+                 .value : int-t
+                 .left  : red-black-tree-t
+                 .right : red-black-tree-t
+              -- red-black-tree-t))
+    #+end_src
+
+*** red-black-tree-t -- intrinsic
+
+    #+begin_src jojo
+
+    #+end_src
