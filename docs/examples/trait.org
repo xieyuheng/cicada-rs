@@ -1,5 +1,5 @@
 #+title: trait
-
+- fix double meaning of -tr
 * [todo-list]
 
 *** use category theory to test type-class
@@ -8,20 +8,13 @@
 
 * [note]
 
-*** trait as subtype of type-tt
-
-    - trait captures
-      the same concept of the type-class of haskell
-
-    - trait is implemented as subtype of type-tt
-
 * functor-tr
 
   #+begin_src jojo
   (+trait functor-tr < (-> type-tt -- type-tt)
-    map : (-> :t1 functor-tr
+    map : (-> :t1 functor-r
               (-> :t1 -- :t2)
-           -- :t2 functor-tr))
+           -- :t2 functor-r))
   #+end_src
 
 * list-u : functor-tr
@@ -41,10 +34,10 @@
 
   #+begin_src jojo
   (+trait monad-tr < (-> type-tt -- type-tt)
-    return : (-> :t -- :t monad-tr)
-    bind : (-> [:t1 monad-tr]
-               (-> :t1 -- :t2 monad-tr)
-            -- :t2 monad-tr))
+    return : (-> :t -- :t monad-r)
+    bind : (-> [:t1 monad-r]
+               (-> :t1 -- :t2 monad-r)
+            -- :t2 monad-r))
   #+end_src
 
 * maybe
