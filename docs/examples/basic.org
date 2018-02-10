@@ -1,7 +1,5 @@
 #+title: basic
 
-- change the syntax of (case)
-
 * [todo-list]
 
 *** a better language to write type-check detail
@@ -24,8 +22,8 @@
 
     #+begin_src jojo
     (+union bool-u : type-tt
-      true  : true-t
-      false : false-t)
+      true  : (-> -- true-t)
+      false : (-> -- false-t))
     #+end_src
 
 * nat
@@ -34,30 +32,30 @@
 
     #+begin_src jojo
     (+union nat-u : type-tt
-      zero : zero-t
+      zero : (-> -- zero-t)
       succ : (-> .prev : nat-u -- succ-t))
 
     (+fun add : (-> [:m :n] : nat-u -- nat-u)
       (case :n
-        zero-t :m
-        succ-t [:m :n.prev recur succ]))
+        (zero-t :m)
+        (succ-t :m :n.prev recur succ)))
 
     (+fun mul : (-> [:m :n] : nat-u -- nat-u)
       (case :n
-        zero-t :n
-        succ-t [:m :n.prev recur :n add]))
+        (zero-t :n)
+        (succ-t :m :n.prev recur :n add)))
 
     (+fun factorial : (-> :n : nat-u -- nat-u)
       (case :n
-        zero-t [:n succ]
-        succ-t [:n.prev recur :n mul]))
+        (zero-t :n succ)
+        (succ-t :n.prev recur :n mul)))
     #+end_src
 
 *** even-u
 
     #+begin_src jojo
     (+union is-even-u : (-> nat-u -- type-tt)
-      zero-is-even : [zero zero-is-even-t]
+      zero-is-even : (-> -- zero zero-is-even-t)
       even-plus-two-is-even
       : (-> .prev : [:m is-even-u]
          -- :m succ succ even-plus-two-is-even-t))
@@ -96,8 +94,8 @@
             -- :x :y add :z add
             :x :y :z add add eq-t)
       (case :z
-        zero-t refl
-        succ-t [:x :y :z.prev recur {succ} eq-apply]))
+        (zero-t refl)
+        (succ-t :x :y :z.prev recur {succ} eq-apply)))
     #+end_src
 
 *** add-commutative
@@ -107,23 +105,23 @@
       : (-> [:m :n] : nat-u
          -- :m :n add, :n :m add eq-t)
       (case :n
-        zero-t [:m add-zero-commutative]
-        succ-t [:m :n.prev recur {succ} eq-apply
-                :n.prev :m add-succ-commutative eq-compose]))
+        (zero-t :m add-zero-commutative)
+        (succ-t :m :n.prev recur {succ} eq-apply
+                :n.prev :m add-succ-commutative eq-compose)))
 
     (+proof add-zero-commutative
       : (-> :m : nat-u
          -- :m zero add, zero :m add eq-t)
       (case :m
-        zero-t refl
-        succ-t [:m.prev recur {succ} eq-apply]))
+        (zero-t refl)
+        (succ-t :m.prev recur {succ} eq-apply)))
 
     (+proof add-succ-commutative
       : (-> [:m :n] : nat-u
          -- :m succ :n add, :m :n add succ eq-t)
       (case :n
-        zero-t refl
-        succ-t [:m :n.prev recur {succ} eq-apply]))
+        (zero-t refl)
+        (succ-t :m :n.prev recur {succ} eq-apply)))
     #+end_src
 
 *** [note] type-check detail of 'add-zero-commutative'
@@ -219,10 +217,56 @@
 
     #+begin_src jojo
     (+union list-u : (-> type-tt -- type-tt)
-      null : [:t null-t]
+      null : (-> -- :t null-t)
       cons : (-> .car : :t
                  .cdr : [:t list-u]
               -- :t list-u))
+    #+end_src
+
+*** list-u -- not inline
+
+    #+begin_src jojo
+    (+union list-u : (-> type-tt -- type-tt)
+      null-t
+      cons-t)
+
+    (+type null-t : (-> type-tt -- type-tt)
+      (-> -- :t null-t))
+
+    (+type cons-t : (-> type-tt -- type-tt)
+      (-> .car : :t
+          .cdr : [:t cons-t]
+       -- [:t cons-t]))
+    #+end_src
+
+*** list-u -- inline subtypes
+
+    #+begin_src jojo
+    (+union list-u : (-> type-tt -- type-tt)
+      (-> -- :t null-t)
+      (-> .car : :t
+          .cdr : [:t cons-t]
+       -- [:t cons-t]))
+    #+end_src
+
+*** cons-t -- inline constructor
+
+    #+begin_src jojo
+    (+type cons-t : (-> type-tt -- type-tt)
+      cons : (-> .car : :t
+                 .cdr : [:t cons-t]
+              -- [:t cons-t]))
+    #+end_src
+
+*** cons -- (+fun)
+
+    #+begin_src jojo
+    (+fun cons
+      : (-> :car : :t
+         -- :cdr : [:t list-u])
+      (create cons-t
+        .car :car
+        .cdr :cdr))
     #+end_src
 
 *** length
@@ -230,8 +274,8 @@
     #+begin_src jojo
     (+fun length : (-> :l : [:t list-u] -- nat-u)
       (case :l
-        null-t zero
-        cons-t [:l.cdr recur succ]))
+        (null-t zero)
+        (cons-t :l.cdr recur succ)))
     #+end_src
 
 *** map
@@ -242,8 +286,8 @@
             :f : (-> :t1 -- :t2)
          -- :t2 list-u)
       (case :l
-        null-t null
-        cons-t [:l.car :f apply :l.cdr :f recur cons]))
+        (null-t null)
+        (cons-t :l.car :f apply :l.cdr :f recur cons)))
     #+end_src
 
 *** ref -- will not pass type check
@@ -255,8 +299,8 @@
     (+fun ref
       : (-> :l : [:t list-u], :index : nat-u -- :t)
       (case :index
-        zero-t [:l.car]
-        succ-t [:l.cdr :index.prev recur]))
+        (zero-t :l.car)
+        (succ-t :l.cdr :index.prev recur)))
     #+end_src
 
 *** remove-first
@@ -266,10 +310,10 @@
       : (-> :x : :t, :l : [:t list-u]
          -- :t list-u)
       (case :l
-        null-t null
-        cons-t (case [:l.car :x equal-p]
-                 true-t  :l.cdr
-                 false-t [:l.car :l.cdr :x recur cons])))
+        (null-t null)
+        (cons-t (case [:l.car :x equal-p]
+                   (true-t  :l.cdr)
+                   (false-t :l.car :l.cdr :x recur cons)))))
     #+end_src
 
 *** has-length-u
@@ -277,9 +321,8 @@
 ***** has-length-u
 
       #+begin_src jojo
-      (+union has-length-u
-        : (-> :t list-u nat-u -- type-tt)
-        null-has-length : [null zero null-has-length-t]
+      (+union has-length-u : (-> :t list-u nat-u -- type-tt)
+        null-has-length : (-> -- null zero null-has-length-t)
         cons-has-length : (-> .cdr : [:l :n has-length-u]
                            -- :a :l cons :n succ cons-has-length-t))
 
@@ -287,8 +330,8 @@
         : (-> :has-length : [:l :n has-length-u]
            -- :l :f map :n has-length-u)
         (case :has-length
-          null-has-length-t null-has-length
-          cons-has-length-t [:has-length.cdr recur cons-has-length]))
+          (null-has-length-t null-has-length)
+          (cons-has-length-t :has-length.cdr recur cons-has-length)))
       #+end_src
 
 ***** [note] type-check detail of 'map-has-length'
@@ -323,73 +366,3 @@
 
        [:a#0 :f apply :l#0 :f map cons :n#0 succ has-length-t])
       #+end_src
-
-* different styles
-
-*** list-u -- not inline
-
-    #+begin_src jojo
-    (+union list-u : (-> type-tt -- type-tt)
-      null-t
-      cons-t)
-
-    (+type null-t : (-> type-tt -- type-tt)
-      [:t null-t])
-
-    (+type cons-t : (-> type-tt -- type-tt)
-      (-> .car : :t
-          .cdr : [:t cons-t]
-       -- [:t cons-t]))
-    #+end_src
-
-*** list-u -- inline subtypes
-
-    #+begin_src jojo
-    (+union list-u : (-> type-tt -- type-tt)
-      [:t null-t]
-      (-> .car : :t
-          .cdr : [:t cons-t]
-       -- [:t cons-t]))
-    #+end_src
-
-*** cons-t -- inline constructor
-
-    #+begin_src jojo
-    (+type cons-t : (-> type-tt -- type-tt)
-      cons : (-> .car : :t
-                 .cdr : [:t cons-t]
-              -- [:t cons-t]))
-    #+end_src
-
-*** cons -- (+fun)
-
-    #+begin_src jojo
-    (+fun cons
-      : (-> :car : :t
-         -- :cdr : [:t list-u])
-      (create cons-t
-        .car :car
-        .cdr :cdr))
-    #+end_src
-
-*** list-u
-
-    #+begin_src jojo
-    (+union list-u : (-> type-tt -- type-tt)
-      null : [:t null-t]
-      cons : (-> .car : :t
-                 .cdr : [:t cons-t]
-              -- [:t cons-t]))
-    #+end_src
-
-*** append -- (+fun) with (case)
-
-    #+begin_src jojo
-    (+fun append
-      : (-> :r : [:t list-u]
-            :l : [:t list-u]
-         -- :t list-u)
-      (case :r
-        (null-t :l)
-        (cons-t :r.car :r.cdr :l recur cons)))
-    #+end_src
