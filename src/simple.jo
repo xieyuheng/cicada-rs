@@ -1,0 +1,585 @@
+(+data <env>
+  .name-dict : [String Den Dict]
+  .data-stack : [Obj List]
+  .mark-stack : [Nat List]
+  .return-stack : [Frame List]
+  .local-stack : [String Obj Dict List]
+  .goal-stack : [<goal> List]
+  .hypo-dict : [<hypo-id> Obj Dict]
+  .match-dict : [<match-id> Match Dict])
+
+(+jojo name-dict-getget
+  : (-> <env> (: :name String) -- <env> Den)
+  dup .name-dict :name dict-get)
+
+(+jojo data-stack-push
+  : (-> (: :env <env>) (: :obj Obj) -- <env>)
+  (clone :env
+    .data-stack [:obj :env.data-stack cons]))
+
+(+jojo data-stack-pop
+  : (-> (: :env <env>) -- <env> Obj)
+  (clone :env
+    .data-stack [:env.data-stack.cdr])
+  :env.data-stack.car)
+
+(+jojo data-stack-drop
+  : (-> <env> -- <env>)
+  data-stack-pop drop)
+
+(+jojo data-stack-tos
+  : (-> <env> -- <env> Obj)
+  dup .data-stack.car)
+
+(+jojo data-stack-n-pop
+  : (-> <env> Nat -- <env> Obj List)
+  )
+
+(+jojo data-stack-zip-by-list
+  : (-> <env> (: :list Any List) -- <env> Any Obj Dict)
+  )
+
+(+jojo mark-stack-push
+  : (-> (: :env <env>) (: :x Nat) -- <env>)
+  (clone :env
+    .mark-stack [:x :env.mark-stack cons]))
+
+(+jojo mark-stack-pop
+  : (-> (: :env <env>) -- <env> Nat)
+  (clone :env
+    .mark-stack [:env.mark-stack.cdr])
+  :env.mark-stack.car)
+
+(+jojo mark-stack-mark
+  : (-> <env> -- <env>)
+  dup .data-stack list-length
+  mark-stack-push)
+
+(+jojo mark-stack-collect
+  : (-> <env> -- <env> Obj List)
+  dup .data-stack list-length mark-stack-pop sub
+  data-stack-n-pop)
+
+(+union Frame
+  <scoping-frame>
+  <simple-frame>)
+
+(+data <scoping-frame>
+  .body : [Exp List]
+  .index : Nat)
+
+(+data <simple-frame>
+  .body : [Exp List]
+  .index : Nat)
+
+(+jojo return-stack-push
+  : (-> (: :env <env>) (: :frame Frame) -- <env>)
+  (clone :env
+    .return-stack [:frame :env.return-stack cons]))
+
+(+jojo return-stack-pop
+  : (-> (: :env <env>) -- <env> Frame)
+  (clone :env
+    .return-stack [:env.return-stack.cdr])
+  :env.return-stack.car)
+
+(+jojo return-stack-drop
+  : (-> <env> -- <env>)
+  return-stack-pop drop)
+
+(+jojo return-stack-tos
+  : (-> <env> -- <env> Frame)
+  dup .return-stack.car)
+
+(+jojo top-frame-finished?
+  : (-> <env> -- <env> Bool)
+  return-stack-tos :frame!
+  :frame.index :frame.body list-length eq?)
+
+(+jojo top-frame-next-exp
+  : (-> <env> -- <env> Exp)
+  return-stack-pop :frame!
+  (clone :frame
+    .index [:frame.index inc])
+  return-stack-push
+  :frame.body :frame.index list-ref)
+
+(+jojo local-get dict-get)
+
+(+jojo local-set
+  : (-> String Obj Dict
+        (: :local-name String)
+        (: :obj Obj)
+     -- String Obj Dict)
+  (dict :local-name :obj)
+  dict-update)
+
+(+jojo new-local-scope
+  : (-> <env> -- <env>)
+  (dict) local-stack-push)
+
+(+data <goal>
+  .lhs : [Obj List]
+  .rhs : [Obj List]
+  .index : Nat)
+
+(+jojo hypo-dict-find
+  : (-> <env> <hypo-obj>
+     -- <env> (+ Obj true
+               | false))
+  ><)
+
+(+jojo match-dict-get
+  : (-> <env> <match-obj>
+     -- <env> Match)
+ ><)
+
+(+union Exp
+  <call-exp>
+  <get-local-exp>
+  <set-local-exp>
+  <clo-exp>
+  <arrow-exp>
+  <match-exp>
+  Ins)
+
+(+type exp-t : type-tt
+  call-exp : (-> .name : string-t -- exp-t)
+  get-local-exp : (-> .name : string-t -- exp-t)
+  set-local-exp : (-> .name : string-t -- exp-t)
+  clo-exp : (-> .body : [exp-t list-t] -- exp-t)
+  arrow-exp : (-> .ante : [exp-t list-t]
+                  .succ : [exp-t list-t] -- exp-t)
+  match-exp : (-> .arg : [exp-t list-t]
+                  .clause-dict : [string-t clo-exp-t dict-t]
+               -- exp-t))
+
+(+data exp-t : type-tt
+  call-exp [.name : string-t]
+  get-local-exp [.name : string-t]
+  set-local-exp [.name : string-t]
+  clo-exp [.body : exp-t list-t]
+  arrow-exp [.ante : exp-t list-t
+             .succ : exp-t list-t]
+  match-exp [.arg : exp-t list-t
+             .clause-dict : string-t clo-exp-t dict-t])
+
+(+data exp-t : type-tt
+  call-exp
+  [.name : string-t]
+  get-local-exp
+  [.name : string-t]
+  set-local-exp
+  [.name : string-t]
+  clo-exp
+  [.body : exp-t list-t]
+  arrow-exp
+  [.ante : exp-t list-t
+   .succ : exp-t list-t]
+  match-exp
+  [.arg : exp-t list-t
+   .clause-dict : string-t clo-exp-t dict-t])
+
+(+jojo list-eval
+  : (-> (: :env <env>) (: :exp-list Exp List) -- <env>)
+  :env .return-stack list-length :base!
+  (create <simple-frame>
+     .body :exp-list
+     .index 0)
+  return-stack-push
+  :env :base eval-with-base)
+
+(+jojo eval-with-base
+  : (-> <env> (: :base Nat) -- <env>)
+  (when [dup .return-stack list-length :base equal? not]
+    eval-one-step :base recur))
+
+(note it is assumed that
+  there is at least one step to exe)
+
+(+jojo eval-one-step
+  : (-> <env> -- <env>)
+  (if top-frame-finished?
+    (case return-stack-pop
+      <scoping-frame> local-stack-drop
+      <simple-frame> nop)
+    [top-frame-next-exp exe]))
+
+(+jojo collect-obj-list
+  : (-> <env> Exp List -- <env> Obj List)
+  swap mark-stack-mark
+  swap list-eval
+  mark-stack-collect)
+
+(+jojo collect-obj
+  : (-> <env> List -- <env> Obj)
+  null cons
+  collect-obj-list
+  car)
+
+(+gene exe
+  : (-> <env> (: :exp Exp) -- <env>)
+  "- exe fail" p nl
+  "  :exp = " p :exp p nl
+  error)
+
+(+fun exe
+  : (-> <env> (: :exp Exp) -- <env>)
+  (case :exp
+    (<call-exp>
+     :exp.name name-dict-getget den-exe)
+    (<get-local-exp>
+     local-stack-tos :exp.local-name local-get
+     data-stack-push)
+    (<set-local-exp>
+     data-stack-pop :obj!
+     local-stack-pop :exp.local-name :obj local-set
+     local-stack-push)
+    (<clo-exp>
+     (create <clo-obj>
+       .locals local-stack-tos
+       .body [:exp.body])
+     data-stack-push)
+    (<arrow-exp>
+     (create <arrow-obj>
+       .ante [:exp.ante collect-obj-list]
+       .succ [:exp.succ collect-obj-list])
+     data-stack-push)
+    (<match-exp>
+     :exp.arg collect-obj-list car
+     :exp obj-match)))
+
+(+gene cut
+  : (-> (: :env <env>) (: :exp Exp) -- <env>)
+  error)
+
+(+jojo list-cut
+  : (-> <env> (: :exp-list Exp List) -- <env>)
+  )
+
+(+data <call-exp>
+  .name : String)
+
+(+disp exe : (-> <env> (: :exp <call-exp>) -- <env>)
+  :exp.name name-dict-getget den-exe)
+
+(+data <get-local-exp>
+  .local-name : String)
+
+(+disp exe
+  : (-> <env> (: :exp <get-local-exp>) -- <env>)
+  local-stack-tos :exp.local-name local-get
+  data-stack-push)
+
+(+data <set-local-exp>
+  .local-name : String)
+
+(+disp exe
+  : (-> <env> (: :exp <set-local-exp>) -- <env>)
+  data-stack-pop :obj!
+  local-stack-pop :exp.local-name :obj local-set
+  local-stack-push)
+
+(+data <clo-exp>
+  .body : [Exp List])
+
+(+disp exe
+  : (-> <env> (: :exp <clo-exp>) -- <env>)
+  (create <clo-obj>
+    .locals local-stack-tos
+    .body [:exp.body])
+  data-stack-push)
+
+(+data <arrow-exp>
+  .ante : [Exp List]
+  .succ : [Exp List])
+
+(+disp exe
+  : (-> <env> (: :exp <arrow-exp>) -- <env>)
+  (create <arrow-obj>
+    .ante [:exp.ante collect-obj-list]
+    .succ [:exp.succ collect-obj-list])
+  data-stack-push)
+
+(+data <match-exp>
+  .arg : [Exp List]
+  .clause-dict : [String <clo-exp> Dict])
+
+(+disp exe
+  : (-> <env> (: :exp <match-exp>) -- <env>)
+  :exp.arg collect-obj-list car
+  :exp obj-match)
+
+(+jojo obj-match
+  : (-> <env>
+        (: :obj Obj)
+        (: :match-exp <match-exp>)
+     -- <env>)
+  (case :obj
+    <data-cons-obj>
+    [:obj.data-cons-name
+     :match-exp.clause-dict
+     dict-get collect-obj
+     clo-obj-apply]
+    <hypo-obj>
+    (if [:obj hypo-dict-find]
+      [:match-exp recur]
+      [:obj :match-exp new-match-obj
+       data-stack-push])
+    <match-obj>
+    [><><><]
+    else error))
+
+(+jojo new-match-obj
+  : (-> <env>
+        (: :obj <hypo-obj>)
+        (: :match-exp <match-exp>)
+     -- <env> <match-obj>)
+  :match-exp.clause-dict eval-clause-dict :clause-dict!
+  :obj :clause-dict new-sum-obj :sum-obj!
+  (create <todo-match>
+    .type :sum-obj
+    .arg :obj
+    .clause-dict :clause-dict))
+
+(+jojo eval-clause-dict
+  : (-> <env> String <clo-exp> Dict
+     -- <env> String <clo-obj> Dict))
+
+(+jojo new-sum-obj
+  : (-> <env>
+        (: :obj <hypo-obj>)
+        (: :clause-dict [String <clo-obj> Dict])
+     -- <env> <sum-obj>)
+   )
+
+(+jojo clo-obj-apply
+  : (-> <env> <clo-obj> -- <env>)
+  )
+
+(+data <suppose-ins>)
+
+(+disp exe
+  : (-> <env> (: :ins <suppose-ins>) -- <env>)
+  data-stack-pop :type!
+  generate-hypo-id :hypo-id!
+  (create <hypo-type-obj>
+    .hypo-id :hypo-id
+    .type :type)
+  :hypo-type-obj!
+  (create <hypo-obj>
+    .hypo-id :hypo-id
+    .hypo-type :hypo-type-obj)
+  data-stack-push)
+
+(+data <infer-ins>)
+
+(+disp exe
+  : (-> <env> (: :ins <infer-ins>)-- <env>)
+  )
+
+(+union Den
+  <fun-den>
+  <data-cons-den>
+  <type-cons-den>)
+
+(+gene den-exe
+  : (-> (: :env <env>) (: :den Den) -- <env>)
+  "- den-exe fail" p nl
+  "  unknown den : " p :den p nl
+  error)
+
+(+gene den-cut
+  ><)
+
+(+data <fun-den>
+  .type : <arrow-exp>
+  .body : [Exp List])
+
+(+disp den-exe
+  : (-> <env> (: :den <fun-den>) -- <env>)
+  new-local-scope
+  :den.type collect-obj :type!
+  :type.ante ante-prepare
+  :type.ante ante-correspond
+  (create <scoping-frame>
+    .body :den.body
+    .index 0)
+  return-stack-push)
+
+(+data <data-cons-den>
+  .type : Exp
+  .data-cons-name : String
+  .field-name-list : [String List]
+  .type-cons-name : String)
+
+(+disp den-exe
+  : (-> <env> (: :den <data-cons-den>)
+     -- <env>)
+  :den.type collect-obj :type!
+  :type.ante ante-prepare
+  :den.field-name-list data-stack-zip-by-list :fields!
+  (create <data-cons-obj>
+    .type :type type->return-type
+    .data-cons-name :den.data-cons-name
+    .fields :fields)
+  data-stack-push)
+
+(+data <type-cons-den>
+  .type : Exp
+  .type-cons-name : String
+  .field-name-list : [String List]
+  .data-cons-name-list : [String List])
+
+(+disp den-exe
+  : (-> <env> (: :den <type-cons-den>)
+     -- <env>)
+  :den.type collect-obj :type!
+  :type.ante ante-prepare
+  :den.field-name-list data-stack-zip-by-list :fields!
+  (create <type-cons-obj>
+    .type :type type->return-type
+    .type-cons-name :den.type-cons-name
+    .fields :fields)
+  data-stack-push)
+
+(+jojo ante-prepare
+  : (-> <env> (: :ante Obj List) -- <env>)
+  :ante list-length data-stack-n-pop :obj-list!
+  :obj-list {infer} list-map :ante list-unifiy)
+
+(+jojo ante-correspond
+  : (-> <env> (: :ante Obj List) -- <env>)
+  )
+
+(+jojo type->return-type
+  : (-> Obj -- Obj)
+  (when [dup arrow-obj?]
+    .succ .car))
+
+(+union Obj
+  <data-cons-obj> <type-cons-obj>
+  <clo-obj> <arrow-obj>
+  <hypo-obj> <hypo-type-obj>
+  <match-obj> <sum-obj>)
+
+(+gene infer
+  : (-> (: :env <env>) (: :obj Obj) -- <env> Obj)
+  error)
+
+(+jojo list-unifiy
+  : (-> <env> (: :l Obj List) (: :r Obj List) -- <env>)
+  )
+
+(+jojo unify-one-step
+  : (-> <env> -- <env>)
+  )
+
+(+gene unify
+  : (-> <env> Obj Obj -- <env>)
+  )
+
+(+jojo list-cover
+  : (-> <env> Obj List Obj List
+     -- <env>))
+
+(+data <data-cons-obj>
+  .type : <type-cons-obj>
+  .data-cons-name : String
+  .fields : [String Obj Dict])
+
+(+disp infer
+ : (-> <env> <data-cons-obj>
+    -- <env> <type-cons-obj>)
+ )
+
+(+data <type-cons-obj>
+  .type : <higher-type-obj>
+  .type-cons-name : String
+  .fields : [String Obj Dict])
+
+(+disp infer
+ : (-> <env> <type-cons-obj>
+    -- <env> <type-cons-obj>))
+
+(+data <clo-obj>
+  .locals : [String Obj Dict]
+  .body : [Exp List])
+
+(note every time the the type of a closure is asked for,
+  we use the body of the closure
+  to construct a new arrow object.)
+
+(+disp infer
+ : (-> <env> <clo-obj>
+    -- <env> <arrow-obj>))
+
+(+data <arrow-obj>
+  .ante : [Obj List]
+  .succ : [Obj List])
+
+(+disp infer
+ : (-> <env> <arrow-obj>
+    -- <env> <arrow-obj>))
+
+(+data <hypo-id>
+  .id : String)
+
+(+data <hypo-obj>
+  .hypo-id : <hypo-id>
+  .hypo-type : <hypo-type-obj>)
+
+(+disp infer
+  : (-> <env> <hypo-obj>
+     -- <env> <hypo-type-obj>))
+
+(+data <hypo-type-obj>
+  .hypo-id : <hypo-id>
+  .type : Obj)
+
+(+disp infer
+  : (-> <env> <hypo-type-obj>
+     -- <env> ><><><))
+
+(+jojo hypo-type-obj->hypo-obj
+  : (-> <env> <hypo-type-obj>
+     -- <env> <hypo-obj>))
+
+(+data <match-id>
+  .id : String)
+
+(+data <match-obj>
+  .match-id : <match-id>)
+
+(+disp infer
+ : (-> <env> <match-obj>
+    -- <env> Obj))
+
+(+union Match
+  <todo-match>
+  <done-match>)
+
+(+data <todo-match>
+  .type : <sum-obj>
+  .arg : <hypo-obj>
+  .clause-dict : [String <clo-obj> Dict])
+
+(+data <done-match>
+  .type : Obj
+  .result : Obj)
+
+(+data <sum-obj>
+  .objs : [Obj List])
+
+(+disp infer
+ : (-> <env> <sum-obj>
+    -- <env> <sum-obj>))
+
+(+jojo fun-den-type-check
+  : (-> <env> (: :den <fun-den>))
+  mark-stack-mark
+  :den.type.ante list-eval
+  :den.body list-cut
+  mark-stack-collect :results!
+  :den.type.succ collect-obj-list
+  :results list-cover)

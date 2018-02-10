@@ -1,5 +1,4 @@
-#+property: tangle simple.jo
-#+title: simple
+#+title: old
 
 * [todo-stack]
 
@@ -74,6 +73,40 @@
 
 * [note]
 
+*** upon re-entering the code
+
+    - to re-capture the conceptual model
+      is to to renew :
+      1. the datatypes
+      2. the interface functions
+      3. mutual recursiveness
+
+*** as a type checker
+
+    - this interpreter only implements
+      the type checker of a programming language.
+
+    - it can execute functions in the language,
+      but it can only do so in a non-optimized way.
+
+      - for example, without proper tail call.
+
+    - another interpreter will be implemented
+      to execute functions in the language
+      in a better way, which will ignore
+      much of the informations about type.
+
+    - to really optimize the execution,
+      a compiler must be written,
+      in which all the informations about type
+      can be used to optimize the compilation.
+
+*** proxy to hypo and match
+
+    - in a simple type system,
+      there is no hypo obj,
+      thus we do not need match obj.
+
 *** mutual recursive
 
     - exe call infer through ante-prepare
@@ -83,6 +116,19 @@
     ------
 
     - thus it is hard to incrementally test this implementation
+
+*** <todo-match> to <done-match>
+
+    - x -
+      when to change a Match from <todo-match> to <done-match> ?
+
+    - k -
+      every time we amend a <hypo-obj>'s value
+
+    - x -
+      then, every time we see a <todo-match>
+      we know we can not change it to a <done-match> yet
+      because we already tried
 
 * <env>
 
@@ -95,7 +141,9 @@
       .mark-stack : [Nat List]
       .return-stack : [Frame List]
       .local-stack : [String Obj Dict List]
-      .goal-stack : [<goal> List])
+      .goal-stack : [<goal> List]
+      .hypo-dict : [<hypo-id> Obj Dict]
+      .match-dict : [<match-id> Match Dict])
     #+end_src
 
 *** name-dict

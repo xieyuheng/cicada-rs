@@ -16,9 +16,10 @@
 
   #+begin_src jojo
   (+trait functor-tr < (-> type-tt -- type-tt)
-    map : (-> :t1 functor-r
+    map : (-> (. :functor-t : functor-tr)
+              :t1 :functor-t
               (-> :t1 -- :t2)
-           -- :t2 functor-r))
+           -- :t2 :functor-t))
   #+end_src
 
 * list-u : functor-tr
@@ -38,10 +39,12 @@
 
   #+begin_src jojo
   (+trait monad-tr < (-> type-tt -- type-tt)
-    return : (-> :t -- :t monad-r)
-    bind : (-> [:t1 monad-r]
-               (-> :t1 -- :t2 monad-r)
-            -- :t2 monad-r))
+    return : (-> (. :monad-t : monad-tr)
+                 :t -- :t :monad-t)
+    bind : (-> (. :monad-t : monad-tr)
+               :t1 :monad-t
+               (-> :t1 -- :t2 :monad-t)
+            -- :t2 :monad-t))
   #+end_src
 
 * maybe
@@ -49,8 +52,8 @@
 *** maybe-u
 
     #+begin_src jojo
-    (+type maybe-u : (-> type-tt -- type-tt)
-      none : [:t none-t]
+    (+union maybe-u : (-> type-tt -- type-tt)
+      none : (-> -- :t none-t)
       just : (-> .value : :t -- :t just-t))
     #+end_src
 
