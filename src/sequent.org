@@ -5,6 +5,8 @@
 
 *** use the new style
 
+    - no (+gene) and (+disp)
+
 *** >< exe
 
 ***** new-sum-obj
@@ -526,6 +528,36 @@
       "- exe fail" p nl
       "  :exp = " p :exp p nl
       error)
+    #+end_src
+
+*** exe -- inline
+
+    #+begin_src jojo
+    (+fun exe
+      : (-> <env> (: :exp Exp) -- <env>)
+      (case :exp
+        (<call-exp>
+         :exp.name name-dict-getget den-exe)
+        (<get-local-exp>
+         local-stack-tos :exp.local-name local-get
+         data-stack-push)
+        (<set-local-exp>
+         data-stack-pop :obj!
+         local-stack-pop :exp.local-name :obj local-set
+         local-stack-push)
+        (<clo-exp>
+         (create <clo-obj>
+           .locals local-stack-tos
+           .body [:exp.body])
+         data-stack-push)
+        (<arrow-exp>
+         (create <arrow-obj>
+           .ante [:exp.ante collect-obj-list]
+           .succ [:exp.succ collect-obj-list])
+         data-stack-push)
+        (<match-exp>
+         :exp.arg collect-obj-list car
+         :exp obj-match)))
     #+end_src
 
 *** [note] cut

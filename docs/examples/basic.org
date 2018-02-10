@@ -1,5 +1,7 @@
 #+title: basic
 
+- change the syntax of (case)
+
 * [todo-list]
 
 *** a better language to write type-check detail
@@ -340,6 +342,16 @@
        -- [:t cons-t]))
     #+end_src
 
+*** list-u -- inline subtypes
+
+    #+begin_src jojo
+    (+union list-u : (-> type-tt -- type-tt)
+      [:t null-t]
+      (-> .car : :t
+          .cdr : [:t cons-t]
+       -- [:t cons-t]))
+    #+end_src
+
 *** cons-t -- inline constructor
 
     #+begin_src jojo
@@ -347,16 +359,6 @@
       cons : (-> .car : :t
                  .cdr : [:t cons-t]
               -- [:t cons-t]))
-    #+end_src
-
-*** list-u -- inline subtypes
-
-    #+begin_src jojo
-    (+union list-u : (-> type-tt -- type-tt)
-      [null-t [:t null-t]]
-      [cons-t (-> .car : :t
-                  .cdr : [:t cons-t]
-               -- [:t cons-t])])
     #+end_src
 
 *** cons -- (+fun)
@@ -370,13 +372,7 @@
         .cdr :cdr))
     #+end_src
 
-*** cons -- (+constructor)
-
-    #+begin_src jojo
-    (+constructor cons cons-t)
-    #+end_src
-
-*** list-u -- inline subtypes and constructors
+*** list-u
 
     #+begin_src jojo
     (+union list-u : (-> type-tt -- type-tt)
@@ -394,49 +390,6 @@
             :l : [:t list-u]
          -- :t list-u)
       (case :r
-        null-t :l
-        cons-t [:r.car :r.cdr :l recur cons]))
-    #+end_src
-
-*** append -- (+gene)
-
-    #+begin_src jojo
-    (+gene append
-      : (-> [:t list-u]
-            [:t list-u]
-         -- :t list-u))
-
-    (+disp append
-      : (-> :r : [:t null-t]
-            :l : [:t list-u]
-         -- :t list-u)
-      :l)
-
-    (+disp append
-      : (-> :r : [:t cons-t]
-            :l : [:t list-u]
-         -- :t list-u)
-      :r.car :r.cdr :l recur cons)
-    #+end_src
-
-*** append -- (+gene) with swap and (clone)
-
-    #+begin_src jojo
-    (+gene append
-      : (-> [:t list-u]
-            [:t list-u]
-         -- :t list-u))
-
-    (+disp append
-      : (-> :t null-t
-            :t list-u
-         -- :t list-u)
-      swap drop)
-
-    (+disp append
-      : (-> :r : [:t cons-t]
-            :l : [:t list-u]
-         -- :t list-u)
-      (clone :r
-        .cdr [:r.cdr :l recur]))
+        (null-t :l)
+        (cons-t :r.car :r.cdr :l recur cons)))
     #+end_src
