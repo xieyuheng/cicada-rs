@@ -24,14 +24,14 @@
 * list-u : functor-tr
 
   #+begin_src jojo
-  (+impl list-u : functor-tr
+  (+imp list-u : functor-tr
     (+fun map
       : (-> :l : [:t1 list-u]
             :f : (-> :t1 -- :t2)
          -- :t2 list-u)
       (case :l
-        null-t null
-        cons-t [:l.car :f apply :l.cdr :f recur cons])))
+        (null-t null)
+        (cons-t :l.car :f apply :l.cdr :f recur cons))))
   #+end_src
 
 * monad-tr
@@ -57,7 +57,7 @@
 *** maybe-u : monad-tr
 
     #+begin_src jojo
-    (+impl maybe-u : monad-tr
+    (+imp maybe-u : monad-tr
       (+fun return : (-> :v : :t -- :t maybe-u)
         :v just)
       (+fun bind
@@ -65,8 +65,8 @@
               :f : (-> :t1 -- :t2 maybe-u)
            -- :t2 maybe-u)
         (case :m
-          none-t none
-          just-t [:m.value :f apply])))
+          (none-t none)
+          (just-t :m.value :f apply))))
     #+end_src
 
 * state
@@ -82,7 +82,7 @@
 *** {:v-t state-t} : monad-tr
 
     #+begin_src jojo
-    (+impl {:v-t state-t} : monad-tr
+    (+imp {:v-t state-t} : monad-tr
       (+fun return : (-> :v : :v-t -- :s-t :v-t state-t)
         {:v} state)
       (+fun bind
@@ -107,15 +107,15 @@
 *** tree-u : functor-tr
 
     #+begin_src jojo
-    (+impl tree-u : functor-tr
+    (+imp tree-u : functor-tr
       (+fun map
         : (-> :tree : [:t1 tree-u]
               :f : (-> :t1 -- :t2)
            -- :t2 tree-u)
         (case :tree
-          leaf-t [:tree.value :f apply leaf]
-          node-t [:tree.left :f recur
-                  :tree.right :f recur node])))
+          (leaf-t :tree.value :f apply leaf)
+          (node-t :tree.left :f recur
+                  :tree.right :f recur node))))
     #+end_src
 
 *** tree-numbering
@@ -125,10 +125,10 @@
       : (-> nat-u :tree : [:t tree-u]
          -- nat-u nat-u tree-u)
       (case :tree
-        leaf-t [dup inc swap leaf]
-        node-t [:tree.left recur :left!
+        (leaf-t dup inc swap leaf)
+        (node-t :tree.left recur :left!
                 :tree.right recur :right!
-                :left :right node]))
+                :left :right node)))
     #+end_src
 
 *** tree-numbering-curry
@@ -139,10 +139,10 @@
          -- (-> nat-u
              -- nat-u tree-u))
       (case :tree
-        leaf-t {dup inc swap leaf}
-        node-t {:tree.left recur apply :left!
-                :tree.right recur apply :right!
-                :left :right node}))
+        (leaf-t {dup inc swap leaf})
+        (node-t {:tree.left recur apply :left!
+                 :tree.right recur apply :right!
+                 :left :right node})))
     #+end_src
 
 *** tree-numbering-state
@@ -152,11 +152,11 @@
       : (-> :tree : [:t tree-u]
          -- nat-u tree-u state-t)
       (case :tree
-        leaf-t [{dup inc swap leaf} state]
-        node-t (do
-                 :left = [:tree.left recur]
-                 :right = [:tree.right recur]
-                 [:left :right node])))
+        (leaf-t {dup inc swap leaf} state)
+        (node-t (do
+                  :left = [:tree.left recur]
+                  :right = [:tree.right recur]
+                  [:left :right node]))))
 
     (note
       (do

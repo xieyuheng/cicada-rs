@@ -4,10 +4,10 @@
 
   #+begin_src jojo
   (+union vector-u : (-> nat-u type-tt -- type-tt)
-    null [zero :t vector-u]
-    cons (-> .car : :t
-             .cdr : [:n :t vector-u]
-          -- :n succ :t vector-u))
+    null : (-> -- zero :t vector-u)
+    cons : (-> .car : :t
+               .cdr : [:n :t vector-u]
+            -- :n succ :t vector-u))
   #+end_src
 
 * append
@@ -18,8 +18,8 @@
           :l1 : [:n :t vector-u]
        -- :m :n add :t vector-u)
     (case :l1
-      null-t :l0
-      cons-t [:l1.car :l0 :l1.cdr recur cons]))
+      (null-t :l0)
+      (cons-t :l1.car :l0 :l1.cdr recur cons)))
   #+end_src
 
 * map
@@ -30,8 +30,8 @@
           :f : (-> :t1 -- :t2)
        -- :n :t2 vector-u)
     (case :l
-      null-t null
-      cons-t [:l.car :f apply :l.cdr :f recur cons]))
+      (null-t null)
+      (cons-t :l.car :f apply :l.cdr :f recur cons)))
   #+end_src
 
 * [note] type-check detail of 'append'
@@ -114,12 +114,4 @@
    [:n :t2 vector-u]
 
    [:n#0 succ :t2 vector-u])
-  #+end_src
-
-* list-u as forgetful functor -- to reuse vector-u
-
-  - forgetful functor of type [not type-class]
-
-  #+begin_src jojo
-  (+var list-u (forget .length vector-u))
   #+end_src
