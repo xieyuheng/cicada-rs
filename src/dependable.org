@@ -20,12 +20,12 @@
 
     - thus it is hard to incrementally test this implementation
 
-*** todo-match-t to done-match-t
+*** todo-case-t to done-case-t
 
     - every time we amend a hypo-obj-t's value
 
-    - then, every time we see a todo-match-t
-      we know we can not change it to a done-match-t yet
+    - then, every time we see a todo-case-t
+      we know we can not change it to a done-case-t yet
       because we already tried
 
 * env -- environment
@@ -38,10 +38,10 @@
       .data-stack : [obj-u list-u]
       .mark-stack : [nat-u list-u]
       .return-stack : [frame-u list-u]
-      .local-stack : [string-t obj-u dict-t list-u]
+      .scope-stack : [string-t obj-u dict-t list-u]
       .goal-stack : [goal-t list-u]
       .hypo-dict : [hypo-id-t obj-u dict-t]
-      .match-dict : [match-id-t match-u dict-t])
+      .case-dict : [case-id-t case-u dict-t])
     #+end_src
 
 *** name-t
@@ -235,15 +235,15 @@
         :frame.body :frame.index list-ref)
       #+end_src
 
-*** >< local-stack
+*** >< scope-stack
 
-***** >< local-stack-push
+***** >< scope-stack-push
 
-***** >< local-stack-pop
+***** >< scope-stack-pop
 
-***** >< local-stack-drop
+***** >< scope-stack-drop
 
-***** >< local-stack-tos
+***** >< scope-stack-tos
 
 ***** local-get
 
@@ -268,7 +268,7 @@
       #+begin_src jojo
       (+fun new-local-scope
         : (-> env-t -- env-t)
-        (dict) local-stack-push)
+        (dict) scope-stack-push)
       #+end_src
 
 *** goal-stack
@@ -293,14 +293,14 @@
         ><)
       #+end_src
 
-*** match-dict
+*** case-dict
 
-***** >< match-dict-get
+***** >< case-dict-get
 
       #+begin_src jojo
-      (+fun match-dict-get
-        : (-> env-t match-obj-t
-           -- env-t match-u)
+      (+fun case-dict-get
+        : (-> env-t case-obj-t
+           -- env-t case-u)
        ><)
       #+end_src
 
@@ -321,7 +321,7 @@
       set-local-exp-t
       clo-exp-t
       arrow-exp-t
-      match-exp-t
+      case-exp-t
       ins-u)
     #+end_src
 
@@ -361,10 +361,10 @@
       .succ : [exp-u list-u])
     #+end_src
 
-*** match-exp-t
+*** case-exp-t
 
     #+begin_src jojo
-    (+data match-exp-t
+    (+data case-exp-t
       .arg : [exp-u list-u]
       .clause-dict : [string-t clo-exp-t dict-t])
     #+end_src
@@ -403,7 +403,7 @@
       : (-> env-t -- env-t)
       (if top-frame-finished?
         (case return-stack-pop
-          (scoping-frame-t local-stack-drop)
+          (scoping-frame-t scope-stack-drop)
           (simple-frame-t nop))
         [top-frame-next-exp exe]))
     #+end_src
@@ -454,7 +454,7 @@
     #+begin_src jojo
     (+disp exe
       : (-> env-t (: :exp get-local-exp-t) -- env-t)
-      local-stack-tos :exp.local-name local-get
+      scope-stack-tos :exp.local-name local-get
       data-stack-push)
     #+end_src
 
@@ -464,8 +464,8 @@
     (+disp exe
       : (-> env-t (: :exp set-local-exp-t) -- env-t)
       data-stack-pop :obj!
-      local-stack-pop :exp.local-name :obj local-set
-      local-stack-push)
+      scope-stack-pop :exp.local-name :obj local-set
+      scope-stack-push)
     #+end_src
 
 *** (exe env-t clo-exp-t)
@@ -474,7 +474,7 @@
     (+disp exe
       : (-> env-t (: :exp clo-exp-t) -- env-t)
       (create clo-obj-t
-        .locals local-stack-tos
+        .locals scope-stack-tos
         .body [:exp.body])
       data-stack-push)
     #+end_src
@@ -490,18 +490,18 @@
       data-stack-push)
     #+end_src
 
-*** (exe env-t match-exp-t)
+*** (exe env-t case-exp-t)
 
     #+begin_src jojo
     (+disp exe
-      : (-> env-t (: :exp match-exp-t) -- env-t)
+      : (-> env-t (: :exp case-exp-t) -- env-t)
       :exp.arg collect-obj-list car
       :exp obj-match)
     #+end_src
 
 *** [note] obj-match
 
-    - when .arg of match-exp-t eval to
+    - when .arg of case-exp-t eval to
 
       1. <data-cons-obj>
          by the name of the cons
@@ -510,7 +510,7 @@
       2. hypo-obj-t
          if hypo-obj-t has not bound to value
          we can not decide which branch to go
-         a new match-obj-t will be created
+         a new case-obj-t will be created
 
 *** >< obj-match
 
@@ -518,37 +518,37 @@
     (+fun obj-match
       : (-> env-t
             (: :obj obj-u)
-            (: :match-exp match-exp-t)
+            (: :case-exp case-exp-t)
          -- env-t)
       (case :obj
         (<data-cons-obj>
          :obj.data-cons-name
-         :match-exp.clause-dict
+         :case-exp.clause-dict
          dict-get collect-obj
          clo-obj-apply)
         (hypo-obj-t
          (case [:obj hypo-dict-find]
            (some-t
-            :match-exp recur)
+            :case-exp recur)
            (none-t
-            :obj :match-exp new-match-obj
+            :obj :case-exp new-case-obj
             data-stack-push)))
-        (match-obj-t
+        (case-obj-t
          ><><><)
         (else error)))
     #+end_src
 
-*** new-match-obj
+*** new-case-obj
 
     #+begin_src jojo
-    (+fun new-match-obj
+    (+fun new-case-obj
       : (-> env-t
             (: :obj hypo-obj-t)
-            (: :match-exp match-exp-t)
-         -- env-t match-obj-t)
-      :match-exp.clause-dict eval-clause-dict :clause-dict!
+            (: :case-exp case-exp-t)
+         -- env-t case-obj-t)
+      :case-exp.clause-dict eval-clause-dict :clause-dict!
       :obj :clause-dict new-sum-obj :sum-obj!
-      (create todo-match-t
+      (create todo-case-t
         .type :sum-obj
         .arg :obj
         .clause-dict :clause-dict))
@@ -904,7 +904,7 @@
       data-cons-obj-t type-cons-obj-t
       clo-obj-t arrow-obj-t
       hypo-obj-t hypo-type-obj-t
-      match-obj-t sum-obj-t)
+      case-obj-t sum-obj-t)
     #+end_src
 
 *** data-cons-obj-t
@@ -1003,45 +1003,45 @@
          -- env-t hypo-obj-t))
     #+end_src
 
-*** [note] match-obj-t & sum-obj-t
+*** [note] case-obj-t & sum-obj-t
 
-    - match-obj-t proxy to match-u
-      for the state of match-u
-      might can change from todo-match-t to done-match-t
+    - case-obj-t proxy to case-u
+      for the state of case-u
+      might can change from todo-case-t to done-case-t
 
-    - the type of todo-match-t
+    - the type of todo-case-t
       is sum-obj-t
 
-    - the type of done-match-t
+    - the type of done-case-t
       is one branch of the sum-obj-t
 
-*** match-id-t
+*** case-id-t
 
     #+begin_src jojo
-    (+data match-id-t
+    (+data case-id-t
       .id : string-t)
     #+end_src
 
-*** match-obj-t
+*** case-obj-t
 
     #+begin_src jojo
-    (+data match-obj-t
-      .match-id : match-id-t)
+    (+data case-obj-t
+      .case-id : case-id-t)
     #+end_src
 
-*** match-u
+*** case-u
 
     #+begin_src jojo
-    (+union match-u
-      todo-match-t
-      done-match-t)
+    (+union case-u
+      todo-case-t
+      done-case-t)
 
-    (+data todo-match-t
+    (+data todo-case-t
       .type : sum-obj-t
       .arg : hypo-obj-t
       .clause-dict : [string-t clo-obj-t dict-t])
 
-    (+data done-match-t
+    (+data done-case-t
       .type : obj-u
       .result : obj-u)
     #+end_src
@@ -1116,11 +1116,11 @@
          -- env-t ><><><))
     #+end_src
 
-*** >< (infer env-t match-obj-t)
+*** >< (infer env-t case-obj-t)
 
     #+begin_src jojo
     (+disp infer
-     : (-> env-t match-obj-t
+     : (-> env-t case-obj-t
         -- env-t obj-u))
     #+end_src
 

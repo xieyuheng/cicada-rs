@@ -3,8 +3,6 @@
 
 * [todo-stack]
 
-*** den_u
-
 *** name_dict
 
 *** data_stack
@@ -31,14 +29,17 @@
 *** env_t
 
     #+begin_src js
-    class env_t {
+    class env_t
+    {
         constructor (name_dict,
                      data_stack,
-                     return_stack)
+                     return_stack,
+                     scope_stack)
         {
             this.name_dict = name_dict;
             this.data_stack = data_stack;
             this.return_stack = return_stack;
+            this.scope_stack = scope_stack;
         }
     }
     #+end_src
@@ -50,6 +51,7 @@
     function new_env ()
     {
         let env = new env_t (new Map (),
+                             [],
                              [],
                              []);
         return env;
@@ -66,24 +68,106 @@
 
 *** call_exp_t
 
+    #+begin_src js
+    class call_exp_t
+    {
+        constructor (name)
+        {
+            this.name = name;
+        }
+
+        exe (env)
+        {
+             env.name_dict.get()
+        }
+    }
+    #+end_src
+
 *** get_local_exp_t
+
+    #+begin_src js
+    class get_local_exp_t
+    {
+        constructor (local_name)
+        {
+            this.local_name = local_name;
+        }
+    }
+    #+end_src
 
 *** set_local_exp_t
 
+    #+begin_src js
+    class set_local_exp_t
+    {
+        constructor (local_name)
+        {
+            this.local_name = local_name;
+        }
+    }
+    #+end_src
+
 *** clo_exp_t
 
-*** arrow_exp_t
+    #+begin_src js
+    class clo_exp_t
+    {
+        constructor (exp_list)
+        {
+            this.exp_list = exp_list;
+        }
+    }
+    #+end_src
 
-*** match_exp_t
+*** case_exp_t
+
+    #+begin_src js
+    class case_exp_t
+    {
+        constructor (arg, clause_dict)
+        {
+            this.arg = arg;
+            this.clause_dict = clause_dict;
+        }
+    }
+    #+end_src
+
+*** >< create_exp_t
+
+    #+begin_src js
+    class create_exp_t
+    {
+        constructor ()
+        {
+
+        }
+    }
+    #+end_src
+
+*** >< clone_exp_t
+
+    #+begin_src js
+    class clone_exp_t
+    {
+        constructor ()
+        {
+
+        }
+    }
+    #+end_src
 
 *** apply_exp_t
 
-* >< eval
+    #+begin_src js
+    class apply_exp_t
+    { }
+    #+end_src
+
+* eval
 
 *** list_eval
 
     #+begin_src js
-    // env_t
     function list_eval (env, exp_list)
     {
 
@@ -93,42 +177,143 @@
 *** eval_with_base
 
     #+begin_src js
-    // env_t
     function eval_with_base (env, base)
     {
+
     }
     #+end_src
 
 *** eval_one_step
 
     #+begin_src js
-    // env_t
     function eval_one_step (env)
     {
-        frame_t *frame = return_stack_tos (env->return_stack);
-        ins_u ins = frame->body[frame->index];
-        frame->index = frame->index + 1;
-        ins_exe (ins, env);
+        // frame_t *frame = return_stack_tos (env->return_stack);
+        // ins_u ins = frame->body[frame->index];
+        // frame->index = frame->index + 1;
+        // ins_exe (ins, env);
+    }
+    #+end_src
+
+* collect
+
+*** collect_obj_list
+
+    #+begin_src js
+    // obj_list
+    function collect_obj_list (env, exp_list)
+    {
+    }
+    #+end_src
+
+*** collect_obj
+
+    #+begin_src js
+    // obj_list
+    function collect_obj (env, exp)
+    {
     }
     #+end_src
 
 * den -- denotation
 
-*** fun_den_t
-
 *** union_den_t
+
+    #+begin_src js
+    class union_den_t
+    {
+        constructor (name, type_arrow, union_list)
+        {
+            this.name = name;
+            this.type_arrow = type_arrow;
+            this.union_list = union_list;
+        }
+    }
+    #+end_src
 
 *** type_den_t
 
+    #+begin_src js
+    class type_den_t
+    {
+        constructor (name, type_arrow, cons_arrow)
+        {
+            this.name = name;
+            this.type_arrow = type_arrow;
+            this.cons_arrow = cons_arrow;
+        }
+    }
+    #+end_src
+
+*** fun_den_t
+
+    #+begin_src js
+    class fun_den_t
+    {
+        constructor (name, type_arrow, exp_list)
+        {
+            this.name = name;
+            this.type_arrow = type_arrow;
+            this.exp_list = exp_list;
+        }
+    }
+    #+end_src
+
 *** gene_den_t
 
+    #+begin_src js
+    class gene_den_t
+    {
+        constructor (name, type_arrow, exp_list)
+        {
+            this.name = name;
+            this.type_arrow = type_arrow;
+            this.exp_list = exp_list;
+        }
+    }
+    #+end_src
+
 *** disp_den_t
+
+    #+begin_src js
+    class disp_den_t
+    {
+        constructor (name, type_arrow, exp_list)
+        {
+            this.name = name;
+            this.type_arrow = type_arrow;
+            this.exp_list = exp_list;
+        }
+    }
+    #+end_src
 
 * obj -- object
 
 *** data_obj_t
 
+    #+begin_src js
+    class data_obj_t
+    {
+        constructor ()
+        {
+            this.type_name = type_name;
+            this.fields = fields;
+        }
+    }
+    #+end_src
+
 *** clo_obj_t
+
+    #+begin_src js
+    class clo_obj_t
+    {
+        constructor (exp_list, locals)
+        {
+            this.exp_list = exp_list;
+            this.locals = locals;
+        }
+    }
+    #+end_src
 
 * prim -- primitive
 
