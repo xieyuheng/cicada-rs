@@ -3,18 +3,7 @@
 
 * [todo-stack]
 
-*** gc before 'read'
-
-*** 'read'
-
 * [note]
-
-*** naming convention
-
-    | _t  | class     |
-    | _u  | union     |
-    | _fn | function  |
-    | _p  | predicate |
 
 * prolog
 
@@ -27,12 +16,12 @@
     {
         constructor (name_dict,
                      data_stack,
-                     return_stack,
+                     frame_stack,
                      scope_stack)
         {
             this.name_dict = name_dict;
             this.data_stack = data_stack;
-            this.return_stack = return_stack;
+            this.frame_stack = frame_stack;
             this.scope_stack = scope_stack;
         }
     }
@@ -86,37 +75,214 @@
 ***** data_stack_pop
 
       #+begin_src js
-      // obj
       function data_stack_pop (env)
       {
           return env.data_stack.pop ();
       }
       #+end_src
 
-*** return_stack
-
-***** return_stack_push
+***** data_stack_tos
 
       #+begin_src js
-      function return_stack_push (env, obj)
+      function data_stack_tos (env)
       {
-          env.return_stack.push (obj);
+           let length = data_stack_length (env);
+           return env.data_stack[length - 1];
       }
       #+end_src
 
-***** return_stack_pop
+***** data_stack_drop
 
       #+begin_src js
-      // obj
-      function return_stack_pop (env)
+      function data_stack_drop (env)
       {
-          return env.return_stack.pop ();
+          data_stack_pop (env);
       }
       #+end_src
+
+***** data_stack_length
+
+      #+begin_src js
+      function data_stack_length (env)
+      {
+          return env.data_stack.length;
+      }
+      #+end_src
+
+*** frame_stack
+
+***** frame_stack_push
+
+      #+begin_src js
+      function frame_stack_push (env, frame)
+      {
+          env.frame_stack.push (frame);
+      }
+      #+end_src
+
+***** frame_stack_pop
+
+      #+begin_src js
+      function frame_stack_pop (env)
+      {
+          return env.frame_stack.pop ();
+      }
+      #+end_src
+
+***** frame_stack_tos
+
+      #+begin_src js
+      function frame_stack_tos (env)
+      {
+           let length = frame_stack_length (env);
+           return env.frame_stack[length - 1];
+      }
+      #+end_src
+
+***** frame_stack_length
+
+      #+begin_src js
+      function frame_stack_length (env)
+      {
+          return env.frame_stack.length;
+      }
+      #+end_src
+
+*** scope_stack
+
+***** scope_stack_push
+
+      #+begin_src js
+      function scope_stack_push (env, scope)
+      {
+          env.scope_stack.push (scope);
+      }
+      #+end_src
+
+***** scope_stack_pop
+
+      #+begin_src js
+      function scope_stack_pop (env)
+      {
+          return env.scope_stack.pop ();
+      }
+      #+end_src
+
+***** scope_stack_tos
+
+      #+begin_src js
+      function scope_stack_tos (env)
+      {
+           let length = scope_stack_length (env);
+           return env.scope_stack[length - 1];
+      }
+      #+end_src
+
+***** scope_stack_length
+
+      #+begin_src js
+      function scope_stack_length (env)
+      {
+          return env.scope_stack.length;
+      }
+      #+end_src
+
+*** frame
+
+***** scoping_frame_t
+
+      #+begin_src js
+      class scoping_frame_t
+      {
+          constructor (exp_list)
+          {
+              this.exp_list = exp_list;
+              this.length = exp_list.length;
+              this.index = 0;
+          }
+      }
+      #+end_src
+
+***** simple_frame_t
+
+      #+begin_src js
+      class simple_frame_t
+      {
+          constructor (exp_list)
+          {
+              this.exp_list = exp_list;
+              this.length = exp_list.length;
+              this.index = 0;
+          }
+      }
+      #+end_src
+
+***** frame_end_p
+
+      #+begin_src js
+      function frame_end_p (frame)
+      {
+          return frame.index == frame.length;
+      }
+      #+end_src
+
+***** frame_next_exp
+
+      #+begin_src js
+      function frame_next_exp (frame)
+      {
+          let exp = frame.exp_list[frame.index];
+          frame.index = frame.index + 1;
+          return exp;
+      }
+      #+end_src
+
+* eval
+
+*** list_eval
+
+    #+begin_src js
+    function list_eval (env, exp_list)
+    {
+        let base = frame_stack_length (env);
+        let frame = new simple_frame_t (exp_list);
+        frame_stack_push (env, frame);
+        eval_with_base (env, base);
+    }
+    #+end_src
+
+*** eval_with_base
+
+    #+begin_src js
+    function eval_with_base (env, base)
+    {
+        while (frame_stack_length (env) < base) {
+            eval_one_step (env);
+        }
+    }
+    #+end_src
+
+*** eval_one_step
+
+    #+begin_src js
+    function eval_one_step (env)
+    {
+        let frame = frame_stack_tos (env);
+        let scope = scope_stack_tos (env);
+        let exp = frame_next_exp (frame);
+        if (frame_end_p (frame)) {
+            // proper tail call
+            frame_stack_drop (env);
+            if (frame instanceof scoping_frame_t)
+                scope_stack_drop (env);
+        }
+        exp.exe (env, scope);
+    }
+    #+end_src
 
 * exp -- expression
 
-*** call_exp_t
+*** >< call_exp_t
 
     #+begin_src js
     class call_exp_t
@@ -126,7 +292,7 @@
             this.name = name;
         }
 
-        exe (env)
+        exe (env, scope)
         {
              name_dict_get(env);
         }
@@ -182,7 +348,7 @@
     }
     #+end_src
 
-*** >< create_exp_t
+*** ><>< create_exp_t
 
     #+begin_src js
     class create_exp_t
@@ -194,7 +360,7 @@
     }
     #+end_src
 
-*** >< clone_exp_t
+*** ><>< clone_exp_t
 
     #+begin_src js
     class clone_exp_t
@@ -211,38 +377,6 @@
     #+begin_src js
     class apply_exp_t
     { }
-    #+end_src
-
-* eval
-
-*** list_eval
-
-    #+begin_src js
-    function list_eval (env, exp_list)
-    {
-
-    }
-    #+end_src
-
-*** eval_with_base
-
-    #+begin_src js
-    function eval_with_base (env, base)
-    {
-
-    }
-    #+end_src
-
-*** eval_one_step
-
-    #+begin_src js
-    function eval_one_step (env)
-    {
-        // frame_t *frame = return_stack_tos (env->return_stack);
-        // ins_u ins = frame->body[frame->index];
-        // frame->index = frame->index + 1;
-        // ins_exe (ins, env);
-    }
     #+end_src
 
 * collect
@@ -357,10 +491,10 @@
     #+begin_src js
     class clo_obj_t
     {
-        constructor (exp_list, locals)
+        constructor (exp_list, scope)
         {
             this.exp_list = exp_list;
-            this.locals = locals;
+            this.scope = scope;
         }
     }
     #+end_src
@@ -369,7 +503,7 @@
 
 *** string_t
 
-*** sexp_t
+*** >< sexp -- symbol expression
 
 * epilog
 
