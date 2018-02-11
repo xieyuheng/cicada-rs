@@ -3,8 +3,6 @@
 
 * [todo-stack]
 
-*** name_dict
-
 *** data_stack
 
 *** return_stack
@@ -47,7 +45,7 @@
 *** new_env
 
     #+begin_src js
-    // env_t
+    // env
     function new_env ()
     {
         let env = new env_t (new Map (),
@@ -60,9 +58,36 @@
 
 *** name_dict
 
-*** return_stack
+***** name_dict_get
+
+      #+begin_src js
+      // den
+      function name_dict_get (env, name)
+      {
+          return env.name_dict.get(name);
+      }
+      #+end_src
+
+***** name_dict_set
+
+      #+begin_src js
+      function name_dict_set (env, name, den)
+      {
+          return env.name_dict.set(name, den);
+      }
+      #+end_src
 
 *** data_stack
+
+***** data_stack_push
+
+***** data_stack_pop
+
+*** return_stack
+
+***** return_stack_push
+
+***** return_stack_pop
 
 * exp -- expression
 
@@ -78,7 +103,7 @@
 
         exe (env)
         {
-             env.name_dict.get()
+             name_dict_get(env);
         }
     }
     #+end_src
@@ -200,7 +225,7 @@
 *** collect_obj_list
 
     #+begin_src js
-    // obj_list
+    // obj list
     function collect_obj_list (env, exp_list)
     {
     }
@@ -209,7 +234,7 @@
 *** collect_obj
 
     #+begin_src js
-    // obj_list
+    // obj list
     function collect_obj (env, exp)
     {
     }
