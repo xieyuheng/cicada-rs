@@ -385,6 +385,13 @@ class clo_obj_t
     }
 }
 
+function run (code)
+{
+    let env = new env_t ();
+    compile_code (env, code);
+
+}
+
 let env = new env_t ();
 
 let fun_den = new fun_den_t (
