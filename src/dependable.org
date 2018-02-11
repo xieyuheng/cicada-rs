@@ -3,13 +3,18 @@
 
 * [todo-stack]
 
+*** fix the structure of den
+
+    - (+union) (+type)
+    - (+gene) (+disp)
+
 * [note]
 
 *** mutual recursive
 
     - exe call infer through ante-prepare
     - infer call cut on clo-obj-t
-    - cut call infer on non Den
+    - cut call infer on non den-u
 
     ------
 
@@ -23,13 +28,13 @@
       we know we can not change it to a done-match-t yet
       because we already tried
 
-* env-t -- environment
+* env -- environment
 
 *** env-t
 
     #+begin_src jojo
     (+data env-t
-      .name-dict : [string-t den-u dict-t]
+      .name-dict : [name-t den-u dict-t]
       .data-stack : [obj-u list-u]
       .mark-stack : [nat-u list-u]
       .return-stack : [frame-u list-u]
@@ -39,13 +44,19 @@
       .match-dict : [match-id-t match-u dict-t])
     #+end_src
 
+*** name-t
+
+    #+begin_src jojo
+    (+alias name-t [string-t list-u])
+    #+end_src
+
 *** name-dict
 
-***** name-dict-getget
+***** name-dict-get
 
       #+begin_src jojo
-      (+fun name-dict-getget
-        : (-> env-t (: :name string-t) -- env-t den-u)
+      (+fun name-dict-get
+        : (-> env-t (: :name name-t) -- env-t den-u)
         dup .name-dict :name dict-get)
       #+end_src
 
@@ -293,7 +304,7 @@
        ><)
       #+end_src
 
-* exp-u -- expression
+* exp -- expression
 
 *** [note] exp-u
 
@@ -318,7 +329,7 @@
 
     #+begin_src jojo
     (+data call-exp-t
-      .name : string-t)
+      .name : name-t)
     #+end_src
 
 *** get-local-exp-t
@@ -356,6 +367,136 @@
     (+data match-exp-t
       .arg : [exp-u list-u]
       .clause-dict : [string-t clo-exp-t dict-t])
+    #+end_src
+
+* eval
+
+*** list-eval
+
+    #+begin_src jojo
+    (+fun list-eval
+      : (-> (: :env env-t) (: :exp-list exp-u list-u) -- env-t)
+      :env .return-stack list-length :base!
+      (create simple-frame-t
+         .body :exp-list
+         .index 0)
+      return-stack-push
+      :env :base eval-with-base)
+    #+end_src
+
+*** eval-with-base
+
+    #+begin_src jojo
+    (+fun eval-with-base
+      : (-> env-t (: :base nat-u) -- env-t)
+      (when [dup .return-stack list-length :base equal? not]
+        eval-one-step :base recur))
+    #+end_src
+
+*** eval-one-step -- pop rs
+
+    #+begin_src jojo
+    (note it is assumed that
+      there is at least one step to exe)
+
+    (+fun eval-one-step
+      : (-> env-t -- env-t)
+      (if top-frame-finished?
+        (case return-stack-pop
+          (scoping-frame-t local-stack-drop)
+          (simple-frame-t nop))
+        [top-frame-next-exp exe]))
+    #+end_src
+
+* collect
+
+*** collect-obj-list
+
+    #+begin_src jojo
+    (+fun collect-obj-list
+      : (-> env-t exp-u list-u -- env-t obj-u list-u)
+      swap mark-stack-mark
+      swap list-eval
+      mark-stack-collect)
+    #+end_src
+
+*** collect-obj
+
+    #+begin_src jojo
+    (+fun collect-obj
+      : (-> env-t list-u -- env-t obj-u)
+      null cons
+      collect-obj-list
+      car)
+    #+end_src
+
+* exe
+
+*** (exe env-t exp-u) -- might push rs
+
+    #+begin_src jojo
+    (+gene exe
+      : (-> env-t (: :exp exp-u) -- env-t)
+      "- exe fail" p nl
+      "  :exp = " p :exp p nl
+      error)
+    #+end_src
+
+*** (exe env-t call-exp-t)
+
+    #+begin_src jojo
+    (+disp exe : (-> env-t (: :exp call-exp-t) -- env-t)
+      :exp.name name-dict-get den-exe)
+    #+end_src
+
+*** (exe env-t get-local-exp-t)
+
+    #+begin_src jojo
+    (+disp exe
+      : (-> env-t (: :exp get-local-exp-t) -- env-t)
+      local-stack-tos :exp.local-name local-get
+      data-stack-push)
+    #+end_src
+
+*** (exe env-t set-local-exp-t)
+
+    #+begin_src jojo
+    (+disp exe
+      : (-> env-t (: :exp set-local-exp-t) -- env-t)
+      data-stack-pop :obj!
+      local-stack-pop :exp.local-name :obj local-set
+      local-stack-push)
+    #+end_src
+
+*** (exe env-t clo-exp-t)
+
+    #+begin_src jojo
+    (+disp exe
+      : (-> env-t (: :exp clo-exp-t) -- env-t)
+      (create clo-obj-t
+        .locals local-stack-tos
+        .body [:exp.body])
+      data-stack-push)
+    #+end_src
+
+*** (exe env-t arrow-exp-t)
+
+    #+begin_src jojo
+    (+disp exe
+      : (-> env-t (: :exp arrow-exp-t) -- env-t)
+      (create arrow-obj-t
+        .ante [:exp.ante collect-obj-list]
+        .succ [:exp.succ collect-obj-list])
+      data-stack-push)
+    #+end_src
+
+*** (exe env-t match-exp-t)
+
+    #+begin_src jojo
+    (+disp exe
+      : (-> env-t (: :exp match-exp-t) -- env-t)
+      :exp.arg collect-obj-list car
+      :exp obj-match)
     #+end_src
 
 *** [note] obj-match
@@ -446,136 +587,6 @@
       )
     #+end_src
 
-* eval
-
-*** list-eval
-
-    #+begin_src jojo
-    (+fun list-eval
-      : (-> (: :env env-t) (: :exp-list exp-u list-u) -- env-t)
-      :env .return-stack list-length :base!
-      (create simple-frame-t
-         .body :exp-list
-         .index 0)
-      return-stack-push
-      :env :base eval-with-base)
-    #+end_src
-
-*** eval-with-base
-
-    #+begin_src jojo
-    (+fun eval-with-base
-      : (-> env-t (: :base nat-u) -- env-t)
-      (when [dup .return-stack list-length :base equal? not]
-        eval-one-step :base recur))
-    #+end_src
-
-*** eval-one-step -- pop rs
-
-    #+begin_src jojo
-    (note it is assumed that
-      there is at least one step to exe)
-
-    (+fun eval-one-step
-      : (-> env-t -- env-t)
-      (if top-frame-finished?
-        (case return-stack-pop
-          (scoping-frame-t local-stack-drop)
-          (simple-frame-t nop))
-        [top-frame-next-exp exe]))
-    #+end_src
-
-* collect
-
-*** collect-obj-list
-
-    #+begin_src jojo
-    (+fun collect-obj-list
-      : (-> env-t exp-u list-u -- env-t obj-u list-u)
-      swap mark-stack-mark
-      swap list-eval
-      mark-stack-collect)
-    #+end_src
-
-*** collect-obj
-
-    #+begin_src jojo
-    (+fun collect-obj
-      : (-> env-t list-u -- env-t obj-u)
-      null cons
-      collect-obj-list
-      car)
-    #+end_src
-
-* exe
-
-*** exe -- might push rs
-
-    #+begin_src jojo
-    (+gene exe
-      : (-> env-t (: :exp exp-u) -- env-t)
-      "- exe fail" p nl
-      "  :exp = " p :exp p nl
-      error)
-    #+end_src
-
-*** exe call-exp-t
-
-    #+begin_src jojo
-    (+disp exe : (-> env-t (: :exp call-exp-t) -- env-t)
-      :exp.name name-dict-getget den-exe)
-    #+end_src
-
-*** exe get-local-exp-t
-
-    #+begin_src jojo
-    (+disp exe
-      : (-> env-t (: :exp get-local-exp-t) -- env-t)
-      local-stack-tos :exp.local-name local-get
-      data-stack-push)
-    #+end_src
-
-*** exe set-local-exp-t
-
-    #+begin_src jojo
-    (+disp exe
-      : (-> env-t (: :exp set-local-exp-t) -- env-t)
-      data-stack-pop :obj!
-      local-stack-pop :exp.local-name :obj local-set
-      local-stack-push)
-    #+end_src
-
-*** exe clo-exp-t
-
-    #+begin_src jojo
-    (+disp exe
-      : (-> env-t (: :exp clo-exp-t) -- env-t)
-      (create clo-obj-t
-        .locals local-stack-tos
-        .body [:exp.body])
-      data-stack-push)
-    #+end_src
-
-*** exe arrow-exp-t
-
-    #+begin_src jojo
-    (+disp exe
-      : (-> env-t (: :exp arrow-exp-t) -- env-t)
-      (create arrow-obj-t
-        .ante [:exp.ante collect-obj-list]
-        .succ [:exp.succ collect-obj-list])
-      data-stack-push)
-    #+end_src
-
-*** exe match-exp-t
-
-    #+begin_src jojo
-    (+disp exe
-      : (-> env-t (: :exp match-exp-t) -- env-t)
-      :exp.arg collect-obj-list car
-      :exp obj-match)
-    #+end_src
-
 * >< cut
 
 *** [note] cut
@@ -608,7 +619,7 @@
       the argument in the ds might be sum-obj-t
       the result of the cut must also be sum-obj-t
 
-*** cut
+*** (cut env-t exp-u)
 
     #+begin_src jojo
     (+gene cut
@@ -624,7 +635,7 @@
       )
     #+end_src
 
-* >< ins-u -- instruction
+* >< ins -- instruction
 
 *** [note] ins-u
 
@@ -694,7 +705,7 @@
       data-stack-push)
     #+end_src
 
-* den-u
+* den -- denotation
 
 *** [note] den-u
 
@@ -710,23 +721,6 @@
       data-cons-den-t
       type-cons-den-t)
     #+end_src
-
-*** [note] fun-den-t
-
-    - to execute a function
-      is to apply a function
-      to objects in the data-stack.
-
-    - when you execute a function,
-      a new arrow object will be created
-      from the type of the function.
-
-    - the antecedent is used
-      to do an unification with the objects in the data-stack.
-
-    - note that,
-      new-frame will be formed for each function call,
-      to give them new scope for local bindings.
 
 *** fun-den-t
 
@@ -758,7 +752,7 @@
 
 * den-exe
 
-*** den-exe
+*** (den-exe env-t den-u)
 
     #+begin_src jojo
     (+gene den-exe
@@ -768,7 +762,24 @@
       error)
     #+end_src
 
-*** den-exe fun-den-t
+*** [note] fun-den-t
+
+    - to execute a function
+      is to apply a function
+      to objects in the data-stack.
+
+    - when you execute a function,
+      a new arrow object will be created
+      from the type of the function.
+
+    - the antecedent is used
+      to do an unification with the objects in the data-stack.
+
+    - note that,
+      new-frame will be formed for each function call,
+      to give them new scope for local bindings.
+
+*** (den-exe env-t fun-den-t)
 
     #+begin_src jojo
     (+disp den-exe
@@ -783,7 +794,7 @@
       return-stack-push)
     #+end_src
 
-*** den-exe data-cons-den-t
+*** (den-exe env-t data-cons-den-t)
 
     #+begin_src jojo
     (+disp den-exe
@@ -799,7 +810,7 @@
       data-stack-push)
     #+end_src
 
-*** den-exe type-cons-den-t
+*** (den-exe env-t type-cons-den-t)
 
     #+begin_src jojo
     (+disp den-exe
@@ -877,7 +888,7 @@
 
 * >< den-cut
 
-* obj-u -- object
+* obj -- object
 
 *** [note] obj-u
 
@@ -1044,7 +1055,7 @@
 
 * infer
 
-*** infer
+*** (infer env-t obj-u)
 
     #+begin_src jojo
     (+gene infer
@@ -1052,7 +1063,7 @@
       error)
     #+end_src
 
-*** >< infer data-cons-obj-t
+*** >< (infer env-t data-cons-obj-t)
 
     #+begin_src jojo
     (+disp infer
@@ -1061,7 +1072,7 @@
      )
     #+end_src
 
-*** >< infer type-cons-obj-t
+*** >< (infer env-t type-cons-obj-t)
 
     #+begin_src jojo
     (+disp infer
@@ -1069,7 +1080,7 @@
         -- env-t type-cons-obj-t))
     #+end_src
 
-*** >< infer clo-obj-t
+*** >< (infer env-t clo-obj-t)
 
     #+begin_src jojo
     (note every time the the type of a closure is asked for,
@@ -1081,7 +1092,7 @@
         -- env-t arrow-obj-t))
     #+end_src
 
-*** >< infer arrow-obj-t
+*** >< (infer env-t arrow-obj-t)
 
     #+begin_src jojo
     (+disp infer
@@ -1089,7 +1100,7 @@
         -- env-t arrow-obj-t))
     #+end_src
 
-*** >< infer arrow-obj-t
+*** >< (infer env-t arrow-obj-t)
 
     #+begin_src jojo
     (+disp infer
@@ -1097,7 +1108,7 @@
          -- env-t hypo-type-obj-t))
     #+end_src
 
-*** >< infer hypo-type-obj-t
+*** >< (infer env-t hypo-type-obj-t)
 
     #+begin_src jojo
     (+disp infer
@@ -1105,7 +1116,7 @@
          -- env-t ><><><))
     #+end_src
 
-*** >< infer match-obj-t
+*** >< (infer env-t match-obj-t)
 
     #+begin_src jojo
     (+disp infer
@@ -1113,7 +1124,7 @@
         -- env-t obj-u))
     #+end_src
 
-*** >< infer sum-obj-t
+*** >< (infer env-t sum-obj-t)
 
     #+begin_src jojo
     (+disp infer
