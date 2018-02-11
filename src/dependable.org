@@ -3,144 +3,40 @@
 
 * [todo-stack]
 
-*** >< exe
-
-***** new-sum-obj
-
-*** >< infer
-
-***** Type & levels of Type
-
-      - maybe <higher-type-obj>
-        such as <<type>> <<functor>> <<monad>>
-
-***** subtype
-
-      - x -
-        should we view <<functor>> and <<monad>>
-        as subtype of <<type>> ?
-
-      - k -
-        but <<functor>> and <<monad>>
-        are of form (-> <<type>> -- <<type>>)
-        are they subtypes of (-> <<type>> -- <<type>>) ?
-        it is (-> <<type>> -- <<type>>) subtype of <<type>> ?
-
-      - x -
-        in language like agda and idris
-        they are not implemented as subtype of <<type>>
-        how ?
-        ><><><
-
-      - k -
-        in idris, type class is encoded by interface functions.
-        subtype relation is also encoded by interface functions.
-        could we do the similar ?
-
-      - x -
-        if we do so,
-        we would need levels of Type
-        and every type class must be viewed subtype of Type1
-
-      - k -
-        should we try un leveled Type ?
-        with [Type : Type]
-        and see how it would introduce paradox.
-
-      - x -
-        can we see how it is bad by intuition ?
-        ><><><
-
-      ------
-
-      - x -
-        <<monad>> : (-> <<type>> -- <<type>>)
-        <maybe> : <<monad>>
-        <maybe> must also of form (-> <<type>> -- <<type>>)
-
-*** >< cut
-
-*** >< unify & cover
-
-***** use (+type <eq>) to test the implemention of unification
-
-*** check
-
-***** >< fun-den-type-check
-
 * [note]
-
-*** upon re-entering the code
-
-    - to re-capture the conceptual model
-      is to to renew :
-      1. the datatypes
-      2. the interface functions
-      3. mutual recursiveness
-
-*** as a type checker
-
-    - this interpreter only implements
-      the type checker of a programming language.
-
-    - it can execute functions in the language,
-      but it can only do so in a non-optimized way.
-
-      - for example, without proper tail call.
-
-    - another interpreter will be implemented
-      to execute functions in the language
-      in a better way, which will ignore
-      much of the informations about type.
-
-    - to really optimize the execution,
-      a compiler must be written,
-      in which all the informations about type
-      can be used to optimize the compilation.
-
-*** proxy to hypo and match
-
-    - in a simple type system,
-      there is no hypo obj,
-      thus we do not need match obj.
 
 *** mutual recursive
 
     - exe call infer through ante-prepare
-    - infer call cut on <clo-obj>
+    - infer call cut on clo-obj-t
     - cut call infer on non Den
 
     ------
 
     - thus it is hard to incrementally test this implementation
 
-*** <todo-match> to <done-match>
+*** todo-match-t to done-match-t
 
-    - x -
-      when to change a Match from <todo-match> to <done-match> ?
+    - every time we amend a hypo-obj-t's value
 
-    - k -
-      every time we amend a <hypo-obj>'s value
-
-    - x -
-      then, every time we see a <todo-match>
-      we know we can not change it to a <done-match> yet
+    - then, every time we see a todo-match-t
+      we know we can not change it to a done-match-t yet
       because we already tried
 
-* <env>
+* env-t -- environment
 
-*** <env>
+*** env-t
 
     #+begin_src jojo
-    (+data <env>
-      .name-dict : [String Den Dict]
-      .data-stack : [Obj List]
-      .mark-stack : [Nat List]
-      .return-stack : [Frame List]
-      .local-stack : [String Obj Dict List]
-      .goal-stack : [<goal> List]
-      .hypo-dict : [<hypo-id> Obj Dict]
-      .match-dict : [<match-id> Match Dict])
+    (+data env-t
+      .name-dict : [string-t den-u dict-t]
+      .data-stack : [obj-u list-u]
+      .mark-stack : [nat-u list-u]
+      .return-stack : [frame-u list-u]
+      .local-stack : [string-t obj-u dict-t list-u]
+      .goal-stack : [goal-t list-u]
+      .hypo-dict : [hypo-id-t obj-u dict-t]
+      .match-dict : [match-id-t match-u dict-t])
     #+end_src
 
 *** name-dict
@@ -148,8 +44,8 @@
 ***** name-dict-getget
 
       #+begin_src jojo
-      (+jojo name-dict-getget
-        : (-> <env> (: :name String) -- <env> Den)
+      (+fun name-dict-getget
+        : (-> env-t (: :name string-t) -- env-t den-u)
         dup .name-dict :name dict-get)
       #+end_src
 
@@ -158,8 +54,8 @@
 ***** data-stack-push
 
       #+begin_src jojo
-      (+jojo data-stack-push
-        : (-> (: :env <env>) (: :obj Obj) -- <env>)
+      (+fun data-stack-push
+        : (-> (: :env env-t) (: :obj obj-u) -- env-t)
         (clone :env
           .data-stack [:obj :env.data-stack cons]))
       #+end_src
@@ -167,8 +63,8 @@
 ***** data-stack-pop
 
       #+begin_src jojo
-      (+jojo data-stack-pop
-        : (-> (: :env <env>) -- <env> Obj)
+      (+fun data-stack-pop
+        : (-> (: :env env-t) -- env-t obj-u)
         (clone :env
           .data-stack [:env.data-stack.cdr])
         :env.data-stack.car)
@@ -177,32 +73,32 @@
 ***** data-stack-drop
 
       #+begin_src jojo
-      (+jojo data-stack-drop
-        : (-> <env> -- <env>)
+      (+fun data-stack-drop
+        : (-> env-t -- env-t)
         data-stack-pop drop)
       #+end_src
 
 ***** data-stack-tos
 
       #+begin_src jojo
-      (+jojo data-stack-tos
-        : (-> <env> -- <env> Obj)
+      (+fun data-stack-tos
+        : (-> env-t -- env-t obj-u)
         dup .data-stack.car)
       #+end_src
 
 ***** >< data-stack-n-pop
 
       #+begin_src jojo
-      (+jojo data-stack-n-pop
-        : (-> <env> Nat -- <env> Obj List)
+      (+fun data-stack-n-pop
+        : (-> env-t nat-u -- env-t obj-u list-u)
         )
       #+end_src
 
 ***** >< data-stack-zip-by-list
 
       #+begin_src jojo
-      (+jojo data-stack-zip-by-list
-        : (-> <env> (: :list Any List) -- <env> Any Obj Dict)
+      (+fun data-stack-zip-by-list
+        : (-> env-t (: :list Any list-u) -- env-t Any obj-u dict-t)
         )
       #+end_src
 
@@ -211,8 +107,8 @@
 ***** mark-stack-push
 
       #+begin_src jojo
-      (+jojo mark-stack-push
-        : (-> (: :env <env>) (: :x Nat) -- <env>)
+      (+fun mark-stack-push
+        : (-> (: :env env-t) (: :x nat-u) -- env-t)
         (clone :env
           .mark-stack [:x :env.mark-stack cons]))
       #+end_src
@@ -220,8 +116,8 @@
 ***** mark-stack-pop
 
       #+begin_src jojo
-      (+jojo mark-stack-pop
-        : (-> (: :env <env>) -- <env> Nat)
+      (+fun mark-stack-pop
+        : (-> (: :env env-t) -- env-t nat-u)
         (clone :env
           .mark-stack [:env.mark-stack.cdr])
         :env.mark-stack.car)
@@ -230,8 +126,8 @@
 ***** mark-stack-mark
 
       #+begin_src jojo
-      (+jojo mark-stack-mark
-        : (-> <env> -- <env>)
+      (+fun mark-stack-mark
+        : (-> env-t -- env-t)
         dup .data-stack list-length
         mark-stack-push)
       #+end_src
@@ -239,43 +135,43 @@
 ***** mark-stack-collect
 
       #+begin_src jojo
-      (+jojo mark-stack-collect
-        : (-> <env> -- <env> Obj List)
+      (+fun mark-stack-collect
+        : (-> env-t -- env-t obj-u list-u)
         dup .data-stack list-length mark-stack-pop sub
         data-stack-n-pop)
       #+end_src
 
 *** return-stack
 
-***** Frame
+***** frame-u
 
       #+begin_src jojo
-      (+union Frame
-        <scoping-frame>
-        <simple-frame>)
+      (+union frame-u
+        scoping-frame-t
+        simple-frame-t)
       #+end_src
 
-***** <scoping-frame>
+***** scoping-frame-t
 
       #+begin_src jojo
-      (+data <scoping-frame>
-        .body : [Exp List]
-        .index : Nat)
+      (+data scoping-frame-t
+        .body : [exp-u list-u]
+        .index : nat-u)
       #+end_src
 
-***** <simple-frame>
+***** simple-frame-t
 
       #+begin_src jojo
-      (+data <simple-frame>
-        .body : [Exp List]
-        .index : Nat)
+      (+data simple-frame-t
+        .body : [exp-u list-u]
+        .index : nat-u)
       #+end_src
 
 ***** return-stack-push
 
       #+begin_src jojo
-      (+jojo return-stack-push
-        : (-> (: :env <env>) (: :frame Frame) -- <env>)
+      (+fun return-stack-push
+        : (-> (: :env env-t) (: :frame frame-u) -- env-t)
         (clone :env
           .return-stack [:frame :env.return-stack cons]))
       #+end_src
@@ -283,8 +179,8 @@
 ***** return-stack-pop
 
       #+begin_src jojo
-      (+jojo return-stack-pop
-        : (-> (: :env <env>) -- <env> Frame)
+      (+fun return-stack-pop
+        : (-> (: :env env-t) -- env-t frame-u)
         (clone :env
           .return-stack [:env.return-stack.cdr])
         :env.return-stack.car)
@@ -293,24 +189,24 @@
 ***** return-stack-drop
 
       #+begin_src jojo
-      (+jojo return-stack-drop
-        : (-> <env> -- <env>)
+      (+fun return-stack-drop
+        : (-> env-t -- env-t)
         return-stack-pop drop)
       #+end_src
 
 ***** return-stack-tos
 
       #+begin_src jojo
-      (+jojo return-stack-tos
-        : (-> <env> -- <env> Frame)
+      (+fun return-stack-tos
+        : (-> env-t -- env-t frame-u)
         dup .return-stack.car)
       #+end_src
 
 ***** top-frame-finished?
 
       #+begin_src jojo
-      (+jojo top-frame-finished?
-        : (-> <env> -- <env> Bool)
+      (+fun top-frame-finished?
+        : (-> env-t -- env-t bool-u)
         return-stack-tos :frame!
         :frame.index :frame.body list-length eq?)
       #+end_src
@@ -318,8 +214,8 @@
 ***** top-frame-next-exp
 
       #+begin_src jojo
-      (+jojo top-frame-next-exp
-        : (-> <env> -- <env> Exp)
+      (+fun top-frame-next-exp
+        : (-> env-t -- env-t exp-u)
         return-stack-pop :frame!
         (clone :frame
           .index [:frame.index inc])
@@ -340,17 +236,17 @@
 ***** local-get
 
       #+begin_src jojo
-      (+jojo local-get dict-get)
+      (+fun local-get dict-get)
       #+end_src
 
 ***** local-set
 
       #+begin_src jojo
-      (+jojo local-set
-        : (-> String Obj Dict
-              (: :local-name String)
-              (: :obj Obj)
-           -- String Obj Dict)
+      (+fun local-set
+        : (-> string-t obj-u dict-t
+              (: :local-name string-t)
+              (: :obj obj-u)
+           -- string-t obj-u dict-t)
         (dict :local-name :obj)
         dict-update)
       #+end_src
@@ -358,20 +254,20 @@
 ***** new-local-scope
 
       #+begin_src jojo
-      (+jojo new-local-scope
-        : (-> <env> -- <env>)
+      (+fun new-local-scope
+        : (-> env-t -- env-t)
         (dict) local-stack-push)
       #+end_src
 
 *** goal-stack
 
-***** <goal>
+***** goal-t
 
       #+begin_src jojo
-      (+data <goal>
-        .lhs : [Obj List]
-        .rhs : [Obj List]
-        .index : Nat)
+      (+data goal-t
+        .lhs : [obj-u list-u]
+        .rhs : [obj-u list-u]
+        .index : nat-u)
       #+end_src
 
 *** hypo-dict
@@ -379,10 +275,9 @@
 ***** >< hypo-dict-find -- one step
 
       #+begin_src jojo
-      (+jojo hypo-dict-find
-        : (-> <env> <hypo-obj>
-           -- <env> (+ Obj true
-                     | false))
+      (+fun hypo-dict-find
+        : (-> env-t hypo-obj-t
+           -- env-t obj-u maybe-u)
         ><)
       #+end_src
 
@@ -391,140 +286,296 @@
 ***** >< match-dict-get
 
       #+begin_src jojo
-      (+jojo match-dict-get
-        : (-> <env> <match-obj>
-           -- <env> Match)
+      (+fun match-dict-get
+        : (-> env-t match-obj-t
+           -- env-t match-u)
        ><)
       #+end_src
 
-* Exp
+* exp-u -- expression
 
-*** [note] Exp
+*** [note] exp-u
 
-    - each Exp implement
+    - each exp-u implement
       1. exe
-      2. cut -- for Exp can occur in body
+      2. cut -- for exp-u can occur in body
 
-*** Exp
+*** exp-u
 
     #+begin_src jojo
-    (+union Exp
-      <call-exp>
-      <get-local-exp>
-      <set-local-exp>
-      <clo-exp>
-      <arrow-exp>
-      <match-exp>
-      Ins)
-
-    (+type exp-t : type-tt
-      call-exp : (-> .name : string-t -- exp-t)
-      get-local-exp : (-> .name : string-t -- exp-t)
-      set-local-exp : (-> .name : string-t -- exp-t)
-      clo-exp : (-> .body : [exp-t list-t] -- exp-t)
-      arrow-exp : (-> .ante : [exp-t list-t]
-                      .succ : [exp-t list-t] -- exp-t)
-      match-exp : (-> .arg : [exp-t list-t]
-                      .clause-dict : [string-t clo-exp-t dict-t]
-                   -- exp-t))
-
-    (+data exp-t : type-tt
-      call-exp [.name : string-t]
-      get-local-exp [.name : string-t]
-      set-local-exp [.name : string-t]
-      clo-exp [.body : exp-t list-t]
-      arrow-exp [.ante : exp-t list-t
-                 .succ : exp-t list-t]
-      match-exp [.arg : exp-t list-t
-                 .clause-dict : string-t clo-exp-t dict-t])
-
-    (+data exp-t : type-tt
-      call-exp
-      [.name : string-t]
-      get-local-exp
-      [.name : string-t]
-      set-local-exp
-      [.name : string-t]
-      clo-exp
-      [.body : exp-t list-t]
-      arrow-exp
-      [.ante : exp-t list-t
-       .succ : exp-t list-t]
-      match-exp
-      [.arg : exp-t list-t
-       .clause-dict : string-t clo-exp-t dict-t])
+    (+union exp-u
+      call-exp-t
+      get-local-exp-t
+      set-local-exp-t
+      clo-exp-t
+      arrow-exp-t
+      match-exp-t
+      ins-u)
     #+end_src
 
-*** about eval
+*** call-exp-t
 
-***** list-eval
+    #+begin_src jojo
+    (+data call-exp-t
+      .name : string-t)
+    #+end_src
 
-      #+begin_src jojo
-      (+jojo list-eval
-        : (-> (: :env <env>) (: :exp-list Exp List) -- <env>)
-        :env .return-stack list-length :base!
-        (create <simple-frame>
-           .body :exp-list
-           .index 0)
-        return-stack-push
-        :env :base eval-with-base)
-      #+end_src
+*** get-local-exp-t
 
-***** eval-with-base
+    #+begin_src jojo
+    (+data get-local-exp-t
+      .local-name : string-t)
+    #+end_src
 
-      #+begin_src jojo
-      (+jojo eval-with-base
-        : (-> <env> (: :base Nat) -- <env>)
-        (when [dup .return-stack list-length :base equal? not]
-          eval-one-step :base recur))
-      #+end_src
+*** set-local-exp-t
 
-***** eval-one-step -- pop rs
+    #+begin_src jojo
+    (+data set-local-exp-t
+      .local-name : string-t)
+    #+end_src
 
-      #+begin_src jojo
-      (note it is assumed that
-        there is at least one step to exe)
+*** clo-exp-t
 
-      (+jojo eval-one-step
-        : (-> <env> -- <env>)
-        (if top-frame-finished?
-          (case return-stack-pop
-            (<scoping-frame> local-stack-drop)
-            (<simple-frame> nop))
-          [top-frame-next-exp exe]))
-      #+end_src
+    #+begin_src jojo
+    (+data clo-exp-t
+      .body : [exp-u list-u])
+    #+end_src
 
-*** about collect
+*** arrow-exp-t
 
-***** collect-obj-list
+    #+begin_src jojo
+    (+data arrow-exp-t
+      .ante : [exp-u list-u]
+      .succ : [exp-u list-u])
+    #+end_src
 
-      #+begin_src jojo
-      (+jojo collect-obj-list
-        : (-> <env> Exp List -- <env> Obj List)
-        swap mark-stack-mark
-        swap list-eval
-        mark-stack-collect)
-      #+end_src
+*** match-exp-t
 
-***** collect-obj
+    #+begin_src jojo
+    (+data match-exp-t
+      .arg : [exp-u list-u]
+      .clause-dict : [string-t clo-exp-t dict-t])
+    #+end_src
 
-      #+begin_src jojo
-      (+jojo collect-obj
-        : (-> <env> List -- <env> Obj)
-        null cons
-        collect-obj-list
-        car)
-      #+end_src
+*** [note] obj-match
+
+    - when .arg of match-exp-t eval to
+
+      1. <data-cons-obj>
+         by the name of the cons
+         we can decide which branch to go
+
+      2. hypo-obj-t
+         if hypo-obj-t has not bound to value
+         we can not decide which branch to go
+         a new match-obj-t will be created
+
+*** >< obj-match
+
+    #+begin_src jojo
+    (+fun obj-match
+      : (-> env-t
+            (: :obj obj-u)
+            (: :match-exp match-exp-t)
+         -- env-t)
+      (case :obj
+        (<data-cons-obj>
+         :obj.data-cons-name
+         :match-exp.clause-dict
+         dict-get collect-obj
+         clo-obj-apply)
+        (hypo-obj-t
+         (case [:obj hypo-dict-find]
+           (some-t
+            :match-exp recur)
+           (none-t
+            :obj :match-exp new-match-obj
+            data-stack-push)))
+        (match-obj-t
+         ><><><)
+        (else error)))
+    #+end_src
+
+*** new-match-obj
+
+    #+begin_src jojo
+    (+fun new-match-obj
+      : (-> env-t
+            (: :obj hypo-obj-t)
+            (: :match-exp match-exp-t)
+         -- env-t match-obj-t)
+      :match-exp.clause-dict eval-clause-dict :clause-dict!
+      :obj :clause-dict new-sum-obj :sum-obj!
+      (create todo-match-t
+        .type :sum-obj
+        .arg :obj
+        .clause-dict :clause-dict))
+    #+end_src
+
+*** >< eval-clause-dict
+
+    #+begin_src jojo
+    (+fun eval-clause-dict
+      : (-> env-t string-t clo-exp-t dict-t
+         -- env-t string-t clo-obj-t dict-t))
+    #+end_src
+
+*** [note] new-sum-obj
+
+    - given the data-constructor
+      ><><>< hypo argument
+      the type of each branch of a (match) can be known
+
+*** >< new-sum-obj
+
+    #+begin_src jojo
+    (+fun new-sum-obj
+      : (-> env-t
+            (: :obj hypo-obj-t)
+            (: :clause-dict [string-t clo-obj-t dict-t])
+         -- env-t sum-obj-t)
+       )
+    #+end_src
+
+*** >< clo-obj-apply
+
+    #+begin_src jojo
+    (+fun clo-obj-apply
+      : (-> env-t clo-obj-t -- env-t)
+      )
+    #+end_src
+
+* eval
+
+*** list-eval
+
+    #+begin_src jojo
+    (+fun list-eval
+      : (-> (: :env env-t) (: :exp-list exp-u list-u) -- env-t)
+      :env .return-stack list-length :base!
+      (create simple-frame-t
+         .body :exp-list
+         .index 0)
+      return-stack-push
+      :env :base eval-with-base)
+    #+end_src
+
+*** eval-with-base
+
+    #+begin_src jojo
+    (+fun eval-with-base
+      : (-> env-t (: :base nat-u) -- env-t)
+      (when [dup .return-stack list-length :base equal? not]
+        eval-one-step :base recur))
+    #+end_src
+
+*** eval-one-step -- pop rs
+
+    #+begin_src jojo
+    (note it is assumed that
+      there is at least one step to exe)
+
+    (+fun eval-one-step
+      : (-> env-t -- env-t)
+      (if top-frame-finished?
+        (case return-stack-pop
+          (scoping-frame-t local-stack-drop)
+          (simple-frame-t nop))
+        [top-frame-next-exp exe]))
+    #+end_src
+
+* collect
+
+*** collect-obj-list
+
+    #+begin_src jojo
+    (+fun collect-obj-list
+      : (-> env-t exp-u list-u -- env-t obj-u list-u)
+      swap mark-stack-mark
+      swap list-eval
+      mark-stack-collect)
+    #+end_src
+
+*** collect-obj
+
+    #+begin_src jojo
+    (+fun collect-obj
+      : (-> env-t list-u -- env-t obj-u)
+      null cons
+      collect-obj-list
+      car)
+    #+end_src
+
+* exe
 
 *** exe -- might push rs
 
     #+begin_src jojo
     (+gene exe
-      : (-> <env> (: :exp Exp) -- <env>)
+      : (-> env-t (: :exp exp-u) -- env-t)
       "- exe fail" p nl
       "  :exp = " p :exp p nl
       error)
     #+end_src
+
+*** exe call-exp-t
+
+    #+begin_src jojo
+    (+disp exe : (-> env-t (: :exp call-exp-t) -- env-t)
+      :exp.name name-dict-getget den-exe)
+    #+end_src
+
+*** exe get-local-exp-t
+
+    #+begin_src jojo
+    (+disp exe
+      : (-> env-t (: :exp get-local-exp-t) -- env-t)
+      local-stack-tos :exp.local-name local-get
+      data-stack-push)
+    #+end_src
+
+*** exe set-local-exp-t
+
+    #+begin_src jojo
+    (+disp exe
+      : (-> env-t (: :exp set-local-exp-t) -- env-t)
+      data-stack-pop :obj!
+      local-stack-pop :exp.local-name :obj local-set
+      local-stack-push)
+    #+end_src
+
+*** exe clo-exp-t
+
+    #+begin_src jojo
+    (+disp exe
+      : (-> env-t (: :exp clo-exp-t) -- env-t)
+      (create clo-obj-t
+        .locals local-stack-tos
+        .body [:exp.body])
+      data-stack-push)
+    #+end_src
+
+*** exe arrow-exp-t
+
+    #+begin_src jojo
+    (+disp exe
+      : (-> env-t (: :exp arrow-exp-t) -- env-t)
+      (create arrow-obj-t
+        .ante [:exp.ante collect-obj-list]
+        .succ [:exp.succ collect-obj-list])
+      data-stack-push)
+    #+end_src
+
+*** exe match-exp-t
+
+    #+begin_src jojo
+    (+disp exe
+      : (-> env-t (: :exp match-exp-t) -- env-t)
+      :exp.arg collect-obj-list car
+      :exp obj-match)
+    #+end_src
+
+* >< cut
 
 *** [note] cut
 
@@ -552,222 +603,48 @@
     ------
 
     - x -
-      when cutting a <fun-den>
-      the argument in the ds might be <sum-obj>
-      the result of the cut must also be <sum-obj>
+      when cutting a fun-den-t
+      the argument in the ds might be sum-obj-t
+      the result of the cut must also be sum-obj-t
 
 *** cut
 
     #+begin_src jojo
     (+gene cut
-      : (-> (: :env <env>) (: :exp Exp) -- <env>)
+      : (-> (: :env env-t) (: :exp exp-u) -- env-t)
       error)
     #+end_src
 
 *** >< list-cut
 
     #+begin_src jojo
-    (+jojo list-cut
-      : (-> <env> (: :exp-list Exp List) -- <env>)
+    (+fun list-cut
+      : (-> env-t (: :exp-list exp-u list-u) -- env-t)
       )
     #+end_src
 
-*** <call-exp>
+* >< ins-u -- instruction
 
-    #+begin_src jojo
-    (+data <call-exp>
-      .name : String)
-    #+end_src
+*** [note] ins-u
 
-*** <call-exp> exe
-
-    #+begin_src jojo
-    (+disp exe : (-> <env> (: :exp <call-exp>) -- <env>)
-      :exp.name name-dict-getget den-exe)
-    #+end_src
-
-*** <get-local-exp>
-
-    #+begin_src jojo
-    (+data <get-local-exp>
-      .local-name : String)
-    #+end_src
-
-*** <get-local-exp> exe
-
-    #+begin_src jojo
-    (+disp exe
-      : (-> <env> (: :exp <get-local-exp>) -- <env>)
-      local-stack-tos :exp.local-name local-get
-      data-stack-push)
-    #+end_src
-
-*** <set-local-exp>
-
-    #+begin_src jojo
-    (+data <set-local-exp>
-      .local-name : String)
-    #+end_src
-
-*** <set-local-exp> exe
-
-    #+begin_src jojo
-    (+disp exe
-      : (-> <env> (: :exp <set-local-exp>) -- <env>)
-      data-stack-pop :obj!
-      local-stack-pop :exp.local-name :obj local-set
-      local-stack-push)
-    #+end_src
-
-*** <clo-exp>
-
-    #+begin_src jojo
-    (+data <clo-exp>
-      .body : [Exp List])
-    #+end_src
-
-*** <clo-exp> exe
-
-    #+begin_src jojo
-    (+disp exe
-      : (-> <env> (: :exp <clo-exp>) -- <env>)
-      (create <clo-obj>
-        .locals local-stack-tos
-        .body [:exp.body])
-      data-stack-push)
-    #+end_src
-
-*** <arrow-exp>
-
-    #+begin_src jojo
-    (+data <arrow-exp>
-      .ante : [Exp List]
-      .succ : [Exp List])
-    #+end_src
-
-*** <arrow-exp> exe
-
-    #+begin_src jojo
-    (+disp exe
-      : (-> <env> (: :exp <arrow-exp>) -- <env>)
-      (create <arrow-obj>
-        .ante [:exp.ante collect-obj-list]
-        .succ [:exp.succ collect-obj-list])
-      data-stack-push)
-    #+end_src
-
-*** <match-exp>
-
-    #+begin_src jojo
-    (+data <match-exp>
-      .arg : [Exp List]
-      .clause-dict : [String <clo-exp> Dict])
-    #+end_src
-
-*** <match-exp> exe
-
-    #+begin_src jojo
-    (+disp exe
-      : (-> <env> (: :exp <match-exp>) -- <env>)
-      :exp.arg collect-obj-list car
-      :exp obj-match)
-    #+end_src
-
-*** [note] obj-match
-
-    - when .arg of <match-exp> eval to
-
-      1. <data-cons-obj>
-         by the name of the cons
-         we can decide which branch to go
-
-      2. <hypo-obj>
-         if <hypo-obj> has not bound to value
-         we can not decide which branch to go
-         a new <match-obj> will be created
-
-*** >< obj-match
-
-    #+begin_src jojo
-    (+jojo obj-match
-      : (-> <env>
-            (: :obj Obj)
-            (: :match-exp <match-exp>)
-         -- <env>)
-      (case :obj
-        (<data-cons-obj>
-         :obj.data-cons-name
-         :match-exp.clause-dict
-         dict-get collect-obj
-         clo-obj-apply)
-        (<hypo-obj>
-         (if [:obj hypo-dict-find]
-           [:match-exp recur]
-           [:obj :match-exp new-match-obj
-            data-stack-push]))
-        (<match-obj>
-         ><><><)
-        (else error)))
-    #+end_src
-
-*** new-match-obj
-
-    #+begin_src jojo
-    (+jojo new-match-obj
-      : (-> <env>
-            (: :obj <hypo-obj>)
-            (: :match-exp <match-exp>)
-         -- <env> <match-obj>)
-      :match-exp.clause-dict eval-clause-dict :clause-dict!
-      :obj :clause-dict new-sum-obj :sum-obj!
-      (create <todo-match>
-        .type :sum-obj
-        .arg :obj
-        .clause-dict :clause-dict))
-    #+end_src
-
-*** >< eval-clause-dict
-
-    #+begin_src jojo
-    (+jojo eval-clause-dict
-      : (-> <env> String <clo-exp> Dict
-         -- <env> String <clo-obj> Dict))
-    #+end_src
-
-*** [note] new-sum-obj
-
-    - given the data-constructor
-      ><><>< hypo argument
-      the type of each branch of a (match) can be known
-
-*** >< new-sum-obj
-
-    #+begin_src jojo
-    (+jojo new-sum-obj
-      : (-> <env>
-            (: :obj <hypo-obj>)
-            (: :clause-dict [String <clo-obj> Dict])
-         -- <env> <sum-obj>)
-       )
-    #+end_src
-
-*** >< clo-obj-apply
-
-    #+begin_src jojo
-    (+jojo clo-obj-apply
-      : (-> <env> <clo-obj> -- <env>)
-      )
-    #+end_src
-
-* >< Ins
-
-*** [note] Ins
-
-    - 'Ins' denotes 'instruction'
-
-    - an Ins is a special Exp
+    - an ins-u is a special exp-u
       in the sense that
       as a data it has no fields
+
+*** ins-u
+
+    #+begin_src jojo
+    (+union ins-u
+      suppose-ins-t
+      dup-ins-t
+      infer-ins-t
+      apply-ins-t)
+
+    (+data suppose-ins-t)
+    (+data dup-ins-t)
+    (+data infer-ins-t)
+    (+data apply-ins-t)
+    #+end_src
 
 *** [note] about hypothetically constructed object
 
@@ -790,91 +667,50 @@
          we do not have the arguments yet,
          thus a hypo will be created.
 
-*** [note] <suppose-ins>
+*** [note] suppose-ins-t
 
     - [:n : <nat>]
       compiles to
       [<nat> suppose dup :n! infer]
 
     - two occurences of [<nat> suppose]
-      create two different <hypo-obj>s.
+      create two different hypo-obj-ts.
 
-*** <suppose-ins>
-
-    #+begin_src jojo
-    (+data <suppose-ins>)
-    #+end_src
-
-*** <suppose-ins> exe
+*** suppose-ins-t exe
 
     #+begin_src jojo
     (+disp exe
-      : (-> <env> (: :ins <suppose-ins>) -- <env>)
+      : (-> env-t (: :ins suppose-ins-t) -- env-t)
       data-stack-pop :type!
       generate-hypo-id :hypo-id!
-      (create <hypo-type-obj>
+      (create hypo-type-obj-t
         .hypo-id :hypo-id
         .type :type)
       :hypo-type-obj!
-      (create <hypo-obj>
+      (create hypo-obj-t
         .hypo-id :hypo-id
         .hypo-type :hypo-type-obj)
       data-stack-push)
     #+end_src
 
-*** >< <dup-ins>
+* den-u
 
-*** <infer-ins>
+*** [note] den-u
 
-    #+begin_src jojo
-    (+data <infer-ins>)
-    #+end_src
-
-*** >< <infer-ins> exe
-
-    #+begin_src jojo
-    (+disp exe
-      : (-> <env> (: :ins <infer-ins>)-- <env>)
-      )
-    #+end_src
-
-*** >< <apply-ins>
-
-* Den
-
-*** [note] Den
-
-    - each Den must implement
+    - each den-u must implement
       1. den-exe
       2. den-cut
 
-*** Den
+*** den-u
 
     #+begin_src jojo
-    (+union Den
-      <fun-den>
-      <data-cons-den>
-      <type-cons-den>)
+    (+union den-u
+      fun-den-t
+      data-cons-den-t
+      type-cons-den-t)
     #+end_src
 
-*** den-exe
-
-    #+begin_src jojo
-    (+gene den-exe
-      : (-> (: :env <env>) (: :den Den) -- <env>)
-      "- den-exe fail" p nl
-      "  unknown den : " p :den p nl
-      error)
-    #+end_src
-
-*** >< den-cut
-
-    #+begin_src jojo
-    (+gene den-cut
-      ><)
-    #+end_src
-
-*** [note] <fun-den>
+*** [note] fun-den-t
 
     - to execute a function
       is to apply a function
@@ -891,45 +727,67 @@
       new-frame will be formed for each function call,
       to give them new scope for local bindings.
 
-*** <fun-den>
+*** fun-den-t
 
     #+begin_src jojo
-    (+data <fun-den>
-      .type : <arrow-exp>
-      .body : [Exp List])
+    (+data fun-den-t
+      .type : arrow-exp-t
+      .body : [exp-u list-u])
     #+end_src
 
-*** <fun-den> den-exe
+*** data-cons-den-t
+
+    #+begin_src jojo
+    (+data data-cons-den-t
+      .type : exp-u
+      .data-cons-name : string-t
+      .field-name-list : [string-t list-u]
+      .type-cons-name : string-t)
+    #+end_src
+
+*** type-cons-den-t
+
+    #+begin_src jojo
+    (+data type-cons-den-t
+      .type : exp-u
+      .type-cons-name : string-t
+      .field-name-list : [string-t list-u]
+      .data-cons-name-list : [string-t list-u])
+    #+end_src
+
+* den-exe
+
+*** den-exe
+
+    #+begin_src jojo
+    (+gene den-exe
+      : (-> (: :env env-t) (: :den den-u) -- env-t)
+      "- den-exe fail" p nl
+      "  unknown den : " p :den p nl
+      error)
+    #+end_src
+
+*** den-exe fun-den-t
 
     #+begin_src jojo
     (+disp den-exe
-      : (-> <env> (: :den <fun-den>) -- <env>)
+      : (-> env-t (: :den fun-den-t) -- env-t)
       new-local-scope
       :den.type collect-obj :type!
       :type.ante ante-prepare
       :type.ante ante-correspond
-      (create <scoping-frame>
+      (create scoping-frame-t
         .body :den.body
         .index 0)
       return-stack-push)
     #+end_src
 
-*** <data-cons-den>
-
-    #+begin_src jojo
-    (+data <data-cons-den>
-      .type : Exp
-      .data-cons-name : String
-      .field-name-list : [String List]
-      .type-cons-name : String)
-    #+end_src
-
-*** <data-cons-den> den-exe
+*** den-exe data-cons-den-t
 
     #+begin_src jojo
     (+disp den-exe
-      : (-> <env> (: :den <data-cons-den>)
-         -- <env>)
+      : (-> env-t (: :den data-cons-den-t)
+         -- env-t)
       :den.type collect-obj :type!
       :type.ante ante-prepare
       :den.field-name-list data-stack-zip-by-list :fields!
@@ -940,26 +798,16 @@
       data-stack-push)
     #+end_src
 
-*** <type-cons-den>
-
-    #+begin_src jojo
-    (+data <type-cons-den>
-      .type : Exp
-      .type-cons-name : String
-      .field-name-list : [String List]
-      .data-cons-name-list : [String List])
-    #+end_src
-
-*** <type-cons-den> den-exe
+*** den-exe type-cons-den-t
 
     #+begin_src jojo
     (+disp den-exe
-      : (-> <env> (: :den <type-cons-den>)
-         -- <env>)
+      : (-> env-t (: :den type-cons-den-t)
+         -- env-t)
       :den.type collect-obj :type!
       :type.ante ante-prepare
       :den.field-name-list data-stack-zip-by-list :fields!
-      (create <type-cons-obj>
+      (create type-cons-obj-t
         .type :type type->return-type
         .type-cons-name :den.type-cons-name
         .fields :fields)
@@ -968,9 +816,9 @@
 
 *** [note] ante-prepare
 
-    1. get Obj List from ds of length of ante
+    1. get obj-u list-u from ds of length of ante
 
-    2. Obj List infer and unifiy with ante
+    2. obj-u list-u infer and unifiy with ante
 
        - this unification can let us write less types.
          for example, if we know 'add' is going to be applied
@@ -987,71 +835,292 @@
 *** ante-prepare
 
     #+begin_src jojo
-    (+jojo ante-prepare
-      : (-> <env> (: :ante Obj List) -- <env>)
+    (+fun ante-prepare
+      : (-> env-t (: :ante obj-u list-u) -- env-t)
       :ante list-length data-stack-n-pop :obj-list!
       :obj-list {infer} list-map :ante list-unifiy)
     #+end_src
 
 *** [note] ante-correspond
 
-    1. for <hypo-type-obj> in ante
-       type->obj and unifiy with corresponding Obj
+    1. for hypo-type-obj-t in ante
+       type->obj and unifiy with corresponding obj-u
 
-    2. put those Obj s
-       that not correspond with <hypo-type-obj>
+    2. put those obj-u s
+       that not correspond with hypo-type-obj-t
        back to ds
 
     ------
 
     - note that, in ante,
-      the occurance of <hypo-type-obj>,
+      the occurance of hypo-type-obj-t,
       is used as a criterion to take value out of ds.
       - not the occurance of local name.
 
 *** >< ante-correspond
 
     #+begin_src jojo
-    (+jojo ante-correspond
-      : (-> <env> (: :ante Obj List) -- <env>)
+    (+fun ante-correspond
+      : (-> env-t (: :ante obj-u list-u) -- env-t)
       )
     #+end_src
 
 *** type->return-type
 
     #+begin_src jojo
-    (+jojo type->return-type
-      : (-> Obj -- Obj)
+    (+fun type->return-type
+      : (-> obj-u -- obj-u)
       (when [dup arrow-obj?]
         .succ .car))
     #+end_src
 
-* Obj
+* >< den-cut
 
-*** [note] Obj
+* obj-u -- object
 
-    - each Obj must implement
+*** [note] obj-u
+
+    - each obj-u must implement
       1. infer
       2. cover
       3. unify
 
-*** Obj
+*** obj-u
 
     #+begin_src jojo
-    (+union Obj
-      <data-cons-obj> <type-cons-obj>
-      <clo-obj> <arrow-obj>
-      <hypo-obj> <hypo-type-obj>
-      <match-obj> <sum-obj>)
+    (+union obj-u
+      data-cons-obj-t type-cons-obj-t
+      clo-obj-t arrow-obj-t
+      hypo-obj-t hypo-type-obj-t
+      match-obj-t sum-obj-t)
     #+end_src
+
+*** data-cons-obj-t
+
+    #+begin_src jojo
+    (+data data-cons-obj-t
+      .type : type-cons-obj-t
+      .data-cons-name : string-t
+      .fields : [string-t obj-u dict-t])
+    #+end_src
+
+*** type-cons-obj-t
+
+    #+begin_src jojo
+    (+data type-cons-obj-t
+      .type : ><><><
+      .type-cons-name : string-t
+      .fields : [string-t obj-u dict-t])
+    #+end_src
+
+*** clo-obj-t
+
+    #+begin_src jojo
+    (+data clo-obj-t
+      .locals : [string-t obj-u dict-t]
+      .body : [exp-u list-u])
+    #+end_src
+
+*** arrow-obj-t
+
+    #+begin_src jojo
+    (+data arrow-obj-t
+      .ante : [obj-u list-u]
+      .succ : [obj-u list-u])
+    #+end_src
+
+*** [note] hypo-obj-t & hypo-type-obj-t
+
+    - hypo-obj-t is the hero of unification.
+
+    - hypo-obj-t denotes "hypothetically constructed object"
+      whose type is known, but value is unknown for now.
+
+      - a phrase learned from Arend Heyting
+        << Intuitionistic Views on the Nature of Mathematics >>
+
+    - in the future,
+      unification-stack will be used
+      to bind hypo-obj-t's value.
+
+      - a hypo-obj-t can be viewed as a proxy to actual obj-u
+        [through unification-stack].
+
+    - be careful about
+      'information non-decreasing principle'
+      when asked for the type of a hypo-obj-t
+      we must maintain the type is of which hypo-obj-t.
+
+      thus hypo-type-obj-t is used
+
+    - hypo-obj-t infer hypo-type-obj-t
+      hypo-type-obj-t type->obj hypo-obj-t
+
+      - note that
+        hypo-type-obj-t is the only obj-u
+        which 'type->obj' can applied to
+
+*** hypo-id-t
+
+    #+begin_src jojo
+    (+data hypo-id-t
+      .id : string-t)
+    #+end_src
+
+*** hypo-obj-t
+
+    #+begin_src jojo
+    (+data hypo-obj-t
+      .hypo-id : hypo-id-t
+      .hypo-type : hypo-type-obj-t)
+    #+end_src
+
+*** hypo-type-obj-t
+
+    #+begin_src jojo
+    (+data hypo-type-obj-t
+      .hypo-id : hypo-id-t
+      .type : obj-u)
+    #+end_src
+
+*** >< hypo-type-obj->hypo-obj
+
+    #+begin_src jojo
+    (+fun hypo-type-obj->hypo-obj
+      : (-> env-t hypo-type-obj-t
+         -- env-t hypo-obj-t))
+    #+end_src
+
+*** [note] match-obj-t & sum-obj-t
+
+    - match-obj-t proxy to match-u
+      for the state of match-u
+      might can change from todo-match-t to done-match-t
+
+    - the type of todo-match-t
+      is sum-obj-t
+
+    - the type of done-match-t
+      is one branch of the sum-obj-t
+
+*** match-id-t
+
+    #+begin_src jojo
+    (+data match-id-t
+      .id : string-t)
+    #+end_src
+
+*** match-obj-t
+
+    #+begin_src jojo
+    (+data match-obj-t
+      .match-id : match-id-t)
+    #+end_src
+
+*** match-u
+
+    #+begin_src jojo
+    (+union match-u
+      todo-match-t
+      done-match-t)
+
+    (+data todo-match-t
+      .type : sum-obj-t
+      .arg : hypo-obj-t
+      .clause-dict : [string-t clo-obj-t dict-t])
+
+    (+data done-match-t
+      .type : obj-u
+      .result : obj-u)
+    #+end_src
+
+*** sum-obj-t
+
+    #+begin_src jojo
+    (+data sum-obj-t
+      .objs : [obj-u list-u])
+    #+end_src
+
+* infer
 
 *** infer
 
     #+begin_src jojo
     (+gene infer
-      : (-> (: :env <env>) (: :obj Obj) -- <env> Obj)
+      : (-> (: :env env-t) (: :obj obj-u) -- env-t obj-u)
       error)
     #+end_src
+
+*** >< infer data-cons-obj-t
+
+    #+begin_src jojo
+    (+disp infer
+     : (-> env-t data-cons-obj-t
+        -- env-t type-cons-obj-t)
+     )
+    #+end_src
+
+*** >< infer type-cons-obj-t
+
+    #+begin_src jojo
+    (+disp infer
+     : (-> env-t type-cons-obj-t
+        -- env-t type-cons-obj-t))
+    #+end_src
+
+*** >< infer clo-obj-t
+
+    #+begin_src jojo
+    (note every time the the type of a closure is asked for,
+      we use the body of the closure
+      to construct a new arrow object.)
+
+    (+disp infer
+     : (-> env-t clo-obj-t
+        -- env-t arrow-obj-t))
+    #+end_src
+
+*** >< infer arrow-obj-t
+
+    #+begin_src jojo
+    (+disp infer
+     : (-> env-t arrow-obj-t
+        -- env-t arrow-obj-t))
+    #+end_src
+
+*** >< infer arrow-obj-t
+
+    #+begin_src jojo
+    (+disp infer
+      : (-> env-t hypo-obj-t
+         -- env-t hypo-type-obj-t))
+    #+end_src
+
+*** >< infer hypo-type-obj-t
+
+    #+begin_src jojo
+    (+disp infer
+      : (-> env-t hypo-type-obj-t
+         -- env-t ><><><))
+    #+end_src
+
+*** >< infer match-obj-t
+
+    #+begin_src jojo
+    (+disp infer
+     : (-> env-t match-obj-t
+        -- env-t obj-u))
+    #+end_src
+
+*** >< infer sum-obj-t
+
+    #+begin_src jojo
+    (+disp infer
+     : (-> env-t sum-obj-t
+        -- env-t sum-obj-t))
+    #+end_src
+
+* >< unify
 
 *** [note] sub term lattice & subtype relation
 
@@ -1060,16 +1129,16 @@
 *** >< list-unifiy
 
     #+begin_src jojo
-    (+jojo list-unifiy
-      : (-> <env> (: :l Obj List) (: :r Obj List) -- <env>)
+    (+fun list-unifiy
+      : (-> env-t (: :l obj-u list-u) (: :r obj-u list-u) -- env-t)
       )
     #+end_src
 
 *** >< unify-one-step
 
     #+begin_src jojo
-    (+jojo unify-one-step
-      : (-> <env> -- <env>)
+    (+fun unify-one-step
+      : (-> env-t -- env-t)
       )
     #+end_src
 
@@ -1077,231 +1146,18 @@
 
     #+begin_src jojo
     (+gene unify
-      : (-> <env> Obj Obj -- <env>)
+      : (-> env-t obj-u obj-u -- env-t)
       )
     #+end_src
+
+* >< cover
 
 *** list-cover
 
     #+begin_src jojo
-    (+jojo list-cover
-      : (-> <env> Obj List Obj List
-         -- <env>))
-    #+end_src
-
-*** <data-cons-obj>
-
-    #+begin_src jojo
-    (+data <data-cons-obj>
-      .type : <type-cons-obj>
-      .data-cons-name : String
-      .fields : [String Obj Dict])
-    #+end_src
-
-*** >< <data-cons-obj> infer
-
-    #+begin_src jojo
-    (+disp infer
-     : (-> <env> <data-cons-obj>
-        -- <env> <type-cons-obj>)
-     )
-    #+end_src
-
-*** <type-cons-obj>
-
-    #+begin_src jojo
-    (+data <type-cons-obj>
-      .type : <higher-type-obj>
-      .type-cons-name : String
-      .fields : [String Obj Dict])
-    #+end_src
-
-*** >< <type-cons-obj> infer
-
-    #+begin_src jojo
-    (+disp infer
-     : (-> <env> <type-cons-obj>
-        -- <env> <type-cons-obj>))
-    #+end_src
-
-*** <clo-obj>
-
-    #+begin_src jojo
-    (+data <clo-obj>
-      .locals : [String Obj Dict]
-      .body : [Exp List])
-    #+end_src
-
-*** >< <clo-obj> infer
-
-    #+begin_src jojo
-    (note every time the the type of a closure is asked for,
-      we use the body of the closure
-      to construct a new arrow object.)
-
-    (+disp infer
-     : (-> <env> <clo-obj>
-        -- <env> <arrow-obj>))
-    #+end_src
-
-*** <arrow-obj>
-
-    #+begin_src jojo
-    (+data <arrow-obj>
-      .ante : [Obj List]
-      .succ : [Obj List])
-    #+end_src
-
-*** >< <arrow-obj> infer
-
-    #+begin_src jojo
-    (+disp infer
-     : (-> <env> <arrow-obj>
-        -- <env> <arrow-obj>))
-    #+end_src
-
-*** [note] <hypo-obj> & <hypo-type-obj>
-
-    - <hypo-obj> is the hero of unification.
-
-    - <hypo-obj> denotes "hypothetically constructed object"
-      whose type is known, but value is unknown for now.
-
-      - a phrase learned from Arend Heyting
-        << Intuitionistic Views on the Nature of Mathematics >>
-
-    - in the future,
-      unification-stack will be used
-      to bind <hypo-obj>'s value.
-
-      - a <hypo-obj> can be viewed as a proxy to actual Obj
-        [through unification-stack].
-
-    - be careful about
-      'information non-decreasing principle'
-      when asked for the type of a <hypo-obj>
-      we must maintain the type is of which <hypo-obj>.
-
-      thus <hypo-type-obj> is used
-
-    - <hypo-obj> infer <hypo-type-obj>
-      <hypo-type-obj> type->obj <hypo-obj>
-
-      - note that
-        <hypo-type-obj> is the only Obj
-        which 'type->obj' can applied to
-
-*** <hypo-id>
-
-    #+begin_src jojo
-    (+data <hypo-id>
-      .id : String)
-    #+end_src
-
-*** <hypo-obj>
-
-    #+begin_src jojo
-    (+data <hypo-obj>
-      .hypo-id : <hypo-id>
-      .hypo-type : <hypo-type-obj>)
-    #+end_src
-
-*** >< <arrow-obj> infer
-
-    #+begin_src jojo
-    (+disp infer
-      : (-> <env> <hypo-obj>
-         -- <env> <hypo-type-obj>))
-    #+end_src
-
-*** <hypo-type-obj>
-
-    #+begin_src jojo
-    (+data <hypo-type-obj>
-      .hypo-id : <hypo-id>
-      .type : Obj)
-    #+end_src
-
-*** >< <hypo-type-obj> infer
-
-    #+begin_src jojo
-    (+disp infer
-      : (-> <env> <hypo-type-obj>
-         -- <env> ><><><))
-    #+end_src
-
-*** >< hypo-type-obj->hypo-obj
-
-    #+begin_src jojo
-    (+jojo hypo-type-obj->hypo-obj
-      : (-> <env> <hypo-type-obj>
-         -- <env> <hypo-obj>))
-    #+end_src
-
-*** [note] <match-obj> & <sum-obj>
-
-    - <match-obj> proxy to Match
-      for the state of Match
-      might can change from <todo-match> to <done-match>
-
-    - the type of <todo-match>
-      is <sum-obj>
-
-    - the type of <done-match>
-      is one branch of the <sum-obj>
-
-*** <match-id>
-
-    #+begin_src jojo
-    (+data <match-id>
-      .id : String)
-    #+end_src
-
-*** <match-obj>
-
-    #+begin_src jojo
-    (+data <match-obj>
-      .match-id : <match-id>)
-    #+end_src
-
-*** >< <match-obj> infer
-
-    #+begin_src jojo
-    (+disp infer
-     : (-> <env> <match-obj>
-        -- <env> Obj))
-    #+end_src
-
-*** Match
-
-    #+begin_src jojo
-    (+union Match
-      <todo-match>
-      <done-match>)
-
-    (+data <todo-match>
-      .type : <sum-obj>
-      .arg : <hypo-obj>
-      .clause-dict : [String <clo-obj> Dict])
-
-    (+data <done-match>
-      .type : Obj
-      .result : Obj)
-    #+end_src
-
-*** <sum-obj>
-
-    #+begin_src jojo
-    (+data <sum-obj>
-      .objs : [Obj List])
-    #+end_src
-
-*** >< <sum-obj> infer
-
-    #+begin_src jojo
-    (+disp infer
-     : (-> <env> <sum-obj>
-        -- <env> <sum-obj>))
+    (+fun list-cover
+      : (-> env-t obj-u list-u obj-u list-u
+         -- env-t))
     #+end_src
 
 * check
@@ -1309,18 +1165,18 @@
 *** [note] fun-den-type-check
 
     - to type-check a function definition,
-      [of which the type exp must be a <arrow-exp>]
-      1. we first exe the ante of the <arrow-exp>
+      [of which the type exp must be a arrow-exp-t]
+      1. we first exe the ante of the arrow-exp-t
       2. and cut the body exp to it
          and collect the result
-      3. exe the succ of the <arrow-exp>
+      3. exe the succ of the arrow-exp-t
          cover it to the result of cut
 
 *** fun-den-type-check
 
     #+begin_src jojo
-    (+jojo fun-den-type-check
-      : (-> <env> (: :den <fun-den>))
+    (+fun fun-den-type-check
+      : (-> env-t (: :den fun-den-t))
       mark-stack-mark
       :den.type.ante list-eval
       :den.body list-cut
