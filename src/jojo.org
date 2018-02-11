@@ -3,10 +3,6 @@
 
 * [todo-stack]
 
-*** data_stack
-
-*** return_stack
-
 *** gc before 'read'
 
 *** 'read'
@@ -48,11 +44,10 @@
     // env
     function new_env ()
     {
-        let env = new env_t (new Map (),
-                             [],
-                             [],
-                             []);
-        return env;
+        return new env_t (new Map (),
+                          [],
+                          [],
+                          []);
     }
     #+end_src
 
@@ -64,7 +59,7 @@
       // den
       function name_dict_get (env, name)
       {
-          return env.name_dict.get(name);
+          return env.name_dict.get (name);
       }
       #+end_src
 
@@ -73,7 +68,7 @@
       #+begin_src js
       function name_dict_set (env, name, den)
       {
-          return env.name_dict.set(name, den);
+          env.name_dict.set (name, den);
       }
       #+end_src
 
@@ -81,13 +76,43 @@
 
 ***** data_stack_push
 
+      #+begin_src js
+      function data_stack_push (env, obj)
+      {
+          env.data_stack.push (obj);
+      }
+      #+end_src
+
 ***** data_stack_pop
+
+      #+begin_src js
+      // obj
+      function data_stack_pop (env)
+      {
+          return env.data_stack.pop ();
+      }
+      #+end_src
 
 *** return_stack
 
 ***** return_stack_push
 
+      #+begin_src js
+      function return_stack_push (env, obj)
+      {
+          env.return_stack.push (obj);
+      }
+      #+end_src
+
 ***** return_stack_pop
+
+      #+begin_src js
+      // obj
+      function return_stack_pop (env)
+      {
+          return env.return_stack.pop ();
+      }
+      #+end_src
 
 * exp -- expression
 

@@ -12,14 +12,24 @@ class env_t
     }
 }
 
-// env_t
+// env
 function new_env ()
 {
-    let env = new env_t (new Map (),
-                         [],
-                         [],
-                         []);
-    return env;
+    return new env_t (new Map (),
+                      [],
+                      [],
+                      []);
+}
+
+// den
+function name_dict_get (env, name)
+{
+    return env.name_dict.get(name);
+}
+
+function name_dict_set (env, name, den)
+{
+    return env.name_dict.set(name, den);
 }
 
 class call_exp_t
@@ -27,6 +37,11 @@ class call_exp_t
     constructor (name)
     {
         this.name = name;
+    }
+
+    exe (env)
+    {
+         name_dict_get(env);
     }
 }
 
@@ -54,15 +69,6 @@ class clo_exp_t
     }
 }
 
-class arrow_exp_t
-{
-    constructor (ante, succ)
-    {
-        this.ante = ante;
-        this.succ = succ;
-    }
-}
-
 class case_exp_t
 {
     constructor (arg, clause_dict)
@@ -74,18 +80,18 @@ class case_exp_t
 
 class create_exp_t
 {
-   constructor ()
-   {
+    constructor ()
+    {
 
-   }
+    }
 }
 
 class clone_exp_t
 {
-   constructor ()
-   {
+    constructor ()
+    {
 
-   }
+    }
 }
 
 class apply_exp_t
@@ -109,12 +115,12 @@ function eval_one_step (env)
     // ins_exe (ins, env);
 }
 
-// obj_list
+// obj list
 function collect_obj_list (env, exp_list)
 {
 }
 
-// obj_list
+// obj list
 function collect_obj (env, exp)
 {
 }
