@@ -2,10 +2,6 @@
 
 * [todo-list]
 
-*** ><><>< local name do not block function [again]
-
-    - for better syntax of type class
-
 *** a better language to write type-check detail
 
     - here is why we need redex
@@ -77,8 +73,8 @@
       refl : [:z :z eq-t])
 
     (+proof eq-apply
-      : (-> :x :y eq-t, :f : (-> :t1 -- :t2)
-         -- :x :f apply, :y :f apply, eq-t)
+      : (-> :x :y eq-t, :fun : (-> :t1 -- :t2)
+         -- :x @fun, :y @fun, eq-t)
       refl)
 
     (+proof eq-swap
@@ -287,11 +283,11 @@
     #+begin_src jojo
     (+fun map
       : (-> :l : [:t1 list-u]
-            :f : (-> :t1 -- :t2)
+            :fun : (-> :t1 -- :t2)
          -- :t2 list-u)
       (case :l
         (null-t null)
-        (cons-t :l.car :f apply :l.cdr :f recur cons)))
+        (cons-t :l.car @fun :l.cdr :fun recur cons)))
     #+end_src
 
 *** ref -- will not pass type check
@@ -332,7 +328,7 @@
 
       (+fun map-has-length
         : (-> :has-length : [:l :n has-length-u]
-           -- :l :f map :n has-length-u)
+           -- :l :fun map :n has-length-u)
         (case :has-length
           (null-has-length-t null-has-length)
           (cons-has-length-t :has-length.cdr recur cons-has-length)))
@@ -357,16 +353,16 @@
        [:l#0 :n#0 has-length-t]
        [recur cons-has-length]
 
-       [:l#0 :f#0 map :n#0 has-length-t]
+       [:l#0 :fun#0 map :n#0 has-length-t]
        [cons-has-length]
 
-       [:a#1 :l#0 :f#0 map cons :n#0 succ has-length-t])
+       [:a#1 :l#0 :fun#0 map cons :n#0 succ has-length-t])
 
       (type-asserted:
 
-       [:l :f map :n has-length-t]
+       [:l :fun map :n has-length-t]
 
-       [:a#0 :l#0 cons :f map :n#0 succ has-length-t]
+       [:a#0 :l#0 cons :fun map :n#0 succ has-length-t]
 
-       [:a#0 :f apply :l#0 :f map cons :n#0 succ has-length-t])
+       [:a#0 @fun :l#0 :fun map cons :n#0 succ has-length-t])
       #+end_src
