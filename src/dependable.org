@@ -3,10 +3,6 @@
 
 * [todo-stack]
 
-*** no (+gene) and (+disp)
-
-*** fix (case)
-
 *** >< exe
 
 ***** new-sum-obj
@@ -493,8 +489,8 @@
         : (-> <env> -- <env>)
         (if top-frame-finished?
           (case return-stack-pop
-            <scoping-frame> local-stack-drop
-            <simple-frame> nop)
+            (<scoping-frame> local-stack-drop)
+            (<simple-frame> nop))
           [top-frame-next-exp exe]))
       #+end_src
 
@@ -528,36 +524,6 @@
       "- exe fail" p nl
       "  :exp = " p :exp p nl
       error)
-    #+end_src
-
-*** exe -- inline
-
-    #+begin_src jojo
-    (+fun exe
-      : (-> <env> (: :exp Exp) -- <env>)
-      (case :exp
-        (<call-exp>
-         :exp.name name-dict-getget den-exe)
-        (<get-local-exp>
-         local-stack-tos :exp.local-name local-get
-         data-stack-push)
-        (<set-local-exp>
-         data-stack-pop :obj!
-         local-stack-pop :exp.local-name :obj local-set
-         local-stack-push)
-        (<clo-exp>
-         (create <clo-obj>
-           .locals local-stack-tos
-           .body [:exp.body])
-         data-stack-push)
-        (<arrow-exp>
-         (create <arrow-obj>
-           .ante [:exp.ante collect-obj-list]
-           .succ [:exp.succ collect-obj-list])
-         data-stack-push)
-        (<match-exp>
-         :exp.arg collect-obj-list car
-         :exp obj-match)))
     #+end_src
 
 *** [note] cut
@@ -729,19 +695,19 @@
             (: :match-exp <match-exp>)
          -- <env>)
       (case :obj
-        <data-cons-obj>
-        [:obj.data-cons-name
+        (<data-cons-obj>
+         :obj.data-cons-name
          :match-exp.clause-dict
          dict-get collect-obj
-         clo-obj-apply]
-        <hypo-obj>
-        (if [:obj hypo-dict-find]
-          [:match-exp recur]
-          [:obj :match-exp new-match-obj
-           data-stack-push])
-        <match-obj>
-        [><><><]
-        else error))
+         clo-obj-apply)
+        (<hypo-obj>
+         (if [:obj hypo-dict-find]
+           [:match-exp recur]
+           [:obj :match-exp new-match-obj
+            data-stack-push]))
+        (<match-obj>
+         ><><><)
+        (else error)))
     #+end_src
 
 *** new-match-obj
