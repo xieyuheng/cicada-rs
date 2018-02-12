@@ -1,6 +1,6 @@
 #+property: tangle dependable.jo
 #+title: dependable
-- unify local and global
+
 * [todo-stack]
 
 *** fix the structure of den
@@ -64,8 +64,8 @@
 
       #+begin_src jojo
       (+fun name-dict-get
-        : (-> env-t (: :name name-t) -- env-t den-u)
-        dup .name-dict :name dict-get)
+        : (-> env-t (: name name-t) -- env-t den-u)
+        dup .name-dict name dict-get)
       #+end_src
 
 *** data-stack
@@ -74,19 +74,19 @@
 
       #+begin_src jojo
       (+fun data-stack-push
-        : (-> (: :env env-t) (: :obj obj-u) -- env-t)
-        (. .data-stack [:obj :env.data-stack cons])
-        :env clone)
+        : (-> (: env env-t) (: obj obj-u) -- env-t)
+        (. .data-stack [obj env.data-stack cons])
+        env clone)
       #+end_src
 
 ***** data-stack-pop
 
       #+begin_src jojo
       (+fun data-stack-pop
-        : (-> (: :env env-t) -- env-t obj-u)
-        (. .data-stack [:env.data-stack.cdr])
-        :env clone
-        :env.data-stack.car)
+        : (-> (: env env-t) -- env-t obj-u)
+        (. .data-stack [env.data-stack.cdr])
+        env clone
+        env.data-stack.car)
       #+end_src
 
 ***** data-stack-drop
@@ -117,8 +117,8 @@
 
       #+begin_src jojo
       (+fun data-stack-zip-by-list
-        : (-> env-t (: :list :t list-u)
-           -- env-t :t obj-u dict-t)
+        : (-> env-t (: list t list-u)
+           -- env-t t obj-u dict-t)
         )
       #+end_src
 
@@ -128,19 +128,19 @@
 
       #+begin_src jojo
       (+fun mark-stack-push
-        : (-> (: :env env-t) (: :x nat-u) -- env-t)
-        (. .mark-stack [:x :env.mark-stack cons])
-        :env clone)
+        : (-> (: env env-t) (: x nat-u) -- env-t)
+        (. .mark-stack [x env.mark-stack cons])
+        env clone)
       #+end_src
 
 ***** mark-stack-pop
 
       #+begin_src jojo
       (+fun mark-stack-pop
-        : (-> (: :env env-t) -- env-t nat-u)
-        (. .mark-stack [:env.mark-stack.cdr])
-        :env clone
-        :env.mark-stack.car)
+        : (-> (: env env-t) -- env-t nat-u)
+        (. .mark-stack [env.mark-stack.cdr])
+        env clone
+        env.mark-stack.car)
       #+end_src
 
 ***** mark-stack-mark
@@ -191,19 +191,19 @@
 
       #+begin_src jojo
       (+fun frame-stack-push
-        : (-> (: :env env-t) (: :frame frame-u) -- env-t)
-        (. .frame-stack [:frame :env.frame-stack cons])
-        :env clone)
+        : (-> (: env env-t) (: frame frame-u) -- env-t)
+        (. .frame-stack [frame env.frame-stack cons])
+        env clone)
       #+end_src
 
 ***** frame-stack-pop
 
       #+begin_src jojo
       (+fun frame-stack-pop
-        : (-> (: :env env-t) -- env-t frame-u)
-        (. .frame-stack [:env.frame-stack.cdr])
-        :env clone
-        :env.frame-stack.car)
+        : (-> (: env env-t) -- env-t frame-u)
+        (. .frame-stack [env.frame-stack.cdr])
+        env clone
+        env.frame-stack.car)
       #+end_src
 
 ***** frame-stack-drop
@@ -227,8 +227,8 @@
       #+begin_src jojo
       (+fun top-frame-finished?
         : (-> env-t -- env-t bool-u)
-        frame-stack-tos :frame!
-        :frame.index :frame.body list-length eq?)
+        frame-stack-tos frame!
+        frame.index frame.body list-length eq?)
       #+end_src
 
 ***** top-frame-next-exp
@@ -236,11 +236,11 @@
       #+begin_src jojo
       (+fun top-frame-next-exp
         : (-> env-t -- env-t exp-u)
-        frame-stack-pop :frame!
-        (. .index [:frame.index inc])
-        :frame clone
+        frame-stack-pop frame!
+        (. .index [frame.index inc])
+        frame clone
         frame-stack-push
-        :frame.body :frame.index list-ref)
+        frame.body frame.index list-ref)
       #+end_src
 
 *** >< scope-stack
@@ -264,10 +264,10 @@
       #+begin_src jojo
       (+fun scope-set
         : (-> string-t obj-u dict-t
-              (: :local-name string-t)
-              (: :obj obj-u)
+              (: local-name string-t)
+              (: obj obj-u)
            -- string-t obj-u dict-t)
-        (dict :local-name :obj)
+        (dict local-name obj)
         dict-update)
       #+end_src
 
@@ -375,22 +375,22 @@
 
     #+begin_src jojo
     (+fun list-eval
-      : (-> (: :env env-t) (: :exp-list exp-u list-u) -- env-t)
-      :env .frame-stack list-length :base!
-      (. .body :exp-list
+      : (-> (: env env-t) (: exp-list exp-u list-u) -- env-t)
+      env .frame-stack list-length base!
+      (. .body exp-list
          .index 0)
       simple-frame-cr
       frame-stack-push
-      :env :base eval-with-base)
+      env base eval-with-base)
     #+end_src
 
 *** eval-with-base
 
     #+begin_src jojo
     (+fun eval-with-base
-      : (-> env-t (: :base nat-u) -- env-t)
-      (when [dup .frame-stack list-length :base equal? not]
-        eval-one-step :base recur))
+      : (-> env-t (: base nat-u) -- env-t)
+      (when [dup .frame-stack list-length base equal? not]
+        eval-one-step base recur))
     #+end_src
 
 *** eval-one-step -- pop rs
@@ -436,25 +436,25 @@
 
     #+begin_src jojo
     (+gene exe
-      : (-> env-t (: :exp exp-u) -- env-t)
+      : (-> env-t (: exp exp-u) -- env-t)
       "- exe fail" p nl
-      "  :exp = " p :exp p nl
+      "  exp = " p exp p nl
       error)
     #+end_src
 
 *** (exe env-t call-exp-t)
 
     #+begin_src jojo
-    (+disp exe : (-> env-t (: :exp call-exp-t) -- env-t)
-      :exp.name name-dict-get den-exe)
+    (+disp exe : (-> env-t (: exp call-exp-t) -- env-t)
+      exp.name name-dict-get den-exe)
     #+end_src
 
 *** (exe env-t get-exp-t)
 
     #+begin_src jojo
     (+disp exe
-      : (-> env-t (: :exp get-exp-t) -- env-t)
-      scope-stack-tos :exp.local-name scope-get
+      : (-> env-t (: exp get-exp-t) -- env-t)
+      scope-stack-tos exp.local-name scope-get
       data-stack-push)
     #+end_src
 
@@ -462,9 +462,9 @@
 
     #+begin_src jojo
     (+disp exe
-      : (-> env-t (: :exp set-exp-t) -- env-t)
-      data-stack-pop :obj!
-      scope-stack-pop :exp.local-name :obj scope-set
+      : (-> env-t (: exp set-exp-t) -- env-t)
+      data-stack-pop obj!
+      scope-stack-pop exp.local-name obj scope-set
       scope-stack-push)
     #+end_src
 
@@ -472,9 +472,9 @@
 
     #+begin_src jojo
     (+disp exe
-      : (-> env-t (: :exp clo-exp-t) -- env-t)
+      : (-> env-t (: exp clo-exp-t) -- env-t)
       (. .scope scope-stack-tos
-         .body [:exp.body])
+         .body [exp.body])
       clo-obj-cr
       data-stack-push)
     #+end_src
@@ -483,9 +483,9 @@
 
     #+begin_src jojo
     (+disp exe
-      : (-> env-t (: :exp arrow-exp-t) -- env-t)
-      (. .ante [:exp.ante collect-obj-list]
-         .succ [:exp.succ collect-obj-list])
+      : (-> env-t (: exp arrow-exp-t) -- env-t)
+      (. .ante [exp.ante collect-obj-list]
+         .succ [exp.succ collect-obj-list])
       arrow-obj-cr
       data-stack-push)
     #+end_src
@@ -494,9 +494,9 @@
 
     #+begin_src jojo
     (+disp exe
-      : (-> env-t (: :exp case-exp-t) -- env-t)
-      :exp.arg collect-obj-list car
-      :exp obj-match)
+      : (-> env-t (: exp case-exp-t) -- env-t)
+      exp.arg collect-obj-list car
+      exp obj-match)
     #+end_src
 
 *** [note] obj-match
@@ -517,21 +517,21 @@
     #+begin_src jojo
     (+fun obj-match
       : (-> env-t
-            (: :obj obj-u)
-            (: :case-exp case-exp-t)
+            (: obj obj-u)
+            (: case-exp case-exp-t)
          -- env-t)
-      (case :obj
+      (case obj
         (data-cons-obj-t
-         :obj.data-cons-name
-         :case-exp.clause-dict
+         obj.data-cons-name
+         case-exp.clause-dict
          dict-get collect-obj
          clo-obj-apply)
         (hypo-obj-t
-         (case [:obj hypo-dict-find]
+         (case [obj hypo-dict-find]
            (some-t
-            :case-exp recur)
+            case-exp recur)
            (none-t
-            :obj :case-exp new-case-obj
+            obj case-exp new-case-obj
             data-stack-push)))
         (case-obj-t
          ><><><)
@@ -543,14 +543,14 @@
     #+begin_src jojo
     (+fun new-case-obj
       : (-> env-t
-            (: :obj hypo-obj-t)
-            (: :case-exp case-exp-t)
+            (: obj hypo-obj-t)
+            (: case-exp case-exp-t)
          -- env-t case-obj-t)
-      :case-exp.clause-dict eval-clause-dict :clause-dict!
-      :obj :clause-dict new-sum-obj :sum-obj!
-      (. .type :sum-obj
-         .arg :obj
-         .clause-dict :clause-dict)
+      case-exp.clause-dict eval-clause-dict clause-dict!
+      obj clause-dict new-sum-obj sum-obj!
+      (. .type sum-obj
+         .arg obj
+         .clause-dict clause-dict)
       todo-case-cr)
     #+end_src
 
@@ -573,8 +573,8 @@
     #+begin_src jojo
     (+fun new-sum-obj
       : (-> env-t
-            (: :obj hypo-obj-t)
-            (: :clause-dict [string-t clo-obj-t dict-t])
+            (: obj hypo-obj-t)
+            (: clause-dict [string-t clo-obj-t dict-t])
          -- env-t sum-obj-t)
        )
     #+end_src
@@ -623,7 +623,7 @@
 
     #+begin_src jojo
     (+gene cut
-      : (-> (: :env env-t) (: :exp exp-u) -- env-t)
+      : (-> (: env env-t) (: exp exp-u) -- env-t)
       error)
     #+end_src
 
@@ -631,7 +631,7 @@
 
     #+begin_src jojo
     (+fun list-cut
-      : (-> env-t (: :exp-list exp-u list-u) -- env-t)
+      : (-> env-t (: exp-list exp-u list-u) -- env-t)
       )
     #+end_src
 
@@ -681,9 +681,9 @@
 
 *** [note] suppose-ins-t
 
-    - [:n : <nat>]
+    - [n : <nat>]
       compiles to
-      [<nat> suppose dup :n! infer]
+      [<nat> suppose dup n! infer]
 
     - two occurences of [<nat> suppose]
       create two different hypo-obj-ts.
@@ -692,15 +692,15 @@
 
     #+begin_src jojo
     (+disp exe
-      : (-> env-t (: :ins suppose-ins-t) -- env-t)
-      data-stack-pop :type!
-      generate-hypo-id :hypo-id!
-      (. .hypo-id :hypo-id
-         .type :type)
+      : (-> env-t (: ins suppose-ins-t) -- env-t)
+      data-stack-pop type!
+      generate-hypo-id hypo-id!
+      (. .hypo-id hypo-id
+         .type type)
       hypo-type-obj-cr
-      :hypo-type-obj!
-      (. .hypo-id :hypo-id
-         .hypo-type :hypo-type-obj)
+      hypo-type-obj!
+      (. .hypo-id hypo-id
+         .hypo-type hypo-type-obj)
       hypo-obj-cr
       data-stack-push)
     #+end_src
@@ -756,9 +756,9 @@
 
     #+begin_src jojo
     (+gene den-exe
-      : (-> (: :env env-t) (: :den den-u) -- env-t)
+      : (-> (: env env-t) (: den den-u) -- env-t)
       "- den-exe fail" p nl
-      "  unknown den : " p :den p nl
+      "  unknown den : " p den p nl
       error)
     #+end_src
 
@@ -783,12 +783,12 @@
 
     #+begin_src jojo
     (+disp den-exe
-      : (-> env-t (: :den fun-den-t) -- env-t)
+      : (-> env-t (: den fun-den-t) -- env-t)
       (dict) scope-stack-push
-      :den.type collect-obj :type!
-      :type.ante ante-prepare
-      :type.ante ante-correspond
-      (. .body :den.body
+      den.type collect-obj type!
+      type.ante ante-prepare
+      type.ante ante-correspond
+      (. .body den.body
          .index 0)
       scoping-frame-cr
       frame-stack-push)
@@ -798,14 +798,14 @@
 
     #+begin_src jojo
     (+disp den-exe
-      : (-> env-t (: :den data-cons-den-t)
+      : (-> env-t (: den data-cons-den-t)
          -- env-t)
-      :den.type collect-obj :type!
-      :type.ante ante-prepare
-      :den.field-name-list data-stack-zip-by-list :fields!
-      (. .type :type type->return-type
-         .data-cons-name :den.data-cons-name
-         .fields :fields)
+      den.type collect-obj type!
+      type.ante ante-prepare
+      den.field-name-list data-stack-zip-by-list fields!
+      (. .type type type->return-type
+         .data-cons-name den.data-cons-name
+         .fields fields)
       data-cons-obj-cr
       data-stack-push)
     #+end_src
@@ -814,14 +814,14 @@
 
     #+begin_src jojo
     (+disp den-exe
-      : (-> env-t (: :den type-cons-den-t)
+      : (-> env-t (: den type-cons-den-t)
          -- env-t)
-      :den.type collect-obj :type!
-      :type.ante ante-prepare
-      :den.field-name-list data-stack-zip-by-list :fields!
-      (. .type :type type->return-type
-         .type-cons-name :den.type-cons-name
-         .fields :fields)
+      den.type collect-obj type!
+      type.ante ante-prepare
+      den.field-name-list data-stack-zip-by-list fields!
+      (. .type type type->return-type
+         .type-cons-name den.type-cons-name
+         .fields fields)
       type-cons-obj-cr
       data-stack-push)
     #+end_src
@@ -834,7 +834,7 @@
 
        - this unification can let us write less types.
          for example, if we know 'add' is going to be applied
-         to :x, we do not need to assert [:x : <nat>]
+         to x, we do not need to assert [x : <nat>]
 
        - this unification might be part of the type-checking,
          because function application
@@ -848,9 +848,9 @@
 
     #+begin_src jojo
     (+fun ante-prepare
-      : (-> env-t (: :ante obj-u list-u) -- env-t)
-      :ante list-length data-stack-n-pop :obj-list!
-      :obj-list {infer} list-map :ante list-unifiy)
+      : (-> env-t (: ante obj-u list-u) -- env-t)
+      ante list-length data-stack-n-pop obj-list!
+      obj-list {infer} list-map ante list-unifiy)
     #+end_src
 
 *** [note] ante-correspond
@@ -873,7 +873,7 @@
 
     #+begin_src jojo
     (+fun ante-correspond
-      : (-> env-t (: :ante obj-u list-u) -- env-t)
+      : (-> env-t (: ante obj-u list-u) -- env-t)
       )
     #+end_src
 
@@ -1059,7 +1059,7 @@
 
     #+begin_src jojo
     (+gene infer
-      : (-> (: :env env-t) (: :obj obj-u) -- env-t obj-u)
+      : (-> (: env env-t) (: obj obj-u) -- env-t obj-u)
       error)
     #+end_src
 
@@ -1142,7 +1142,7 @@
 
     #+begin_src jojo
     (+fun list-unifiy
-      : (-> env-t (: :l obj-u list-u) (: :r obj-u list-u) -- env-t)
+      : (-> env-t (: l obj-u list-u) (: r obj-u list-u) -- env-t)
       )
     #+end_src
 
@@ -1188,11 +1188,11 @@
 
     #+begin_src jojo
     (+fun fun-den-type-check
-      : (-> env-t (: :den fun-den-t))
+      : (-> env-t (: den fun-den-t))
       mark-stack-mark
-      :den.type.ante list-eval
-      :den.body list-cut
-      mark-stack-collect :results!
-      :den.type.succ collect-obj-list
-      :results list-cover)
+      den.type.ante list-eval
+      den.body list-cut
+      mark-stack-collect results!
+      den.type.succ collect-obj-list
+      results list-cover)
     #+end_src
