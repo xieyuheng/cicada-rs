@@ -1,0 +1,123 @@
+#+title: semantic
+
+* ><
+
+*** [note] type-check detail of 'add-zero-commutative'
+
+    #+begin_src jojo
+    (match m succ-c)
+    (= m m.prev succ-c)
+
+    (type-computed
+
+     [m.prev]
+     [recur {succ-c} eq-apply]
+
+     [m.prev zero-c add
+      zero-c m.prev add eq-t]
+     [{succ-c} eq-apply]
+
+     [m.prev zero-c add succ-c
+      zero-c m.prev add succ-c eq-t]
+
+     [m.prev add succ-c
+      zero-c m.prev add succ-c eq-t])
+
+    (type-asserted
+
+     [m zero-c add
+      zero-c m add eq-t]
+
+     [m.prev succ-c zero-c add
+      zero-c m.prev succ-c add eq-t]
+
+     [m.prev succ-c add
+      zero-c m.prev succ-c add eq-t]
+
+     [m.prev add succ-c
+      zero-c m.prev succ-c add eq-t]
+
+     [m.prev add succ-c
+      zero-c m.prev add succ-c eq-t])
+    #+end_src
+
+*** [note] type-check detail of 'add-commutative'
+
+    #+begin_src jojo
+    (match n succ-c)
+    (= n n.prev succ-c)
+
+    (type-computed
+
+     [m n.prev]
+     [recur {succ-c} eq-apply
+      n.prev m add-succ-commutative eq-swap eq-compose]
+
+     [m n.prev add
+      n.prev m add eq-t]
+     [{succ} eq-apply
+      n.prev m add-succ-commutative eq-swap eq-compose]
+
+     [m n.prev add succ-c
+      n.prev m add succ-c eq-t]
+     [n.prev m add-succ-commutative eq-swap eq-compose]
+
+     [m n.prev add succ-c
+      n.prev m add succ-c eq-t
+      n.prev succ-c m add
+      n.prev m add succ-c eq-t]
+     [eq-swap eq-compose]
+
+     [m n.prev add succ-c
+      n.prev m add succ-c eq-t
+      n.prev m add succ-c
+      n.prev succ-c m add eq-t]
+     [eq-compose]
+
+     [m n.prev add succ-c
+      n.prev succ-c m add eq-t])
+
+    (type-asserted
+
+     [m n add
+      n m add eq-t]
+
+     [m n.prev succ-c add
+      n.prev succ-c m add eq-t]
+
+     [m n.prev add succ-c
+      n.prev succ-c m add eq-t])
+    #+end_src
+
+*** [note] type-check detail of 'map-has-length'
+
+    #+begin_src jojo
+    (: has-length l n has-length-t)
+
+    (match has-length cons-has-length)
+      (= has-length has-length.cdr cons-has-length)
+        (: has-length.cdr [l#0 n#0 has-length-t])
+      (: has-length [a#0 l#0 cons n#0 succ-c has-length-t])
+        (= l a#0 l#0 cons)
+        (= n n#0 succ)
+
+    (type-computed
+
+     [has-length.cdr recur cons-has-length]
+
+     [l#0 n#0 has-length-t]
+     [recur cons-has-length]
+
+     [l#0 fun#0 map n#0 has-length-t]
+     [cons-has-length]
+
+     [a#1 l#0 fun#0 map cons n#0 succ-c has-length-t])
+
+    (type-asserted
+
+     [l fun map n has-length-t]
+
+     [a#0 l#0 cons fun map n#0 succ-c has-length-t]
+
+     [a#0 @fun l#0 fun map cons n#0 succ-c has-length-t])
+    #+end_src

@@ -392,26 +392,40 @@ function run (code)
 
 }
 
-let env = new env_t ();
+function test ()
+{
+    let env = new env_t ();
 
-let fun_den = new fun_den_t (
-   "dup",
-   undefined,
-   [
-       new set_local_exp_t (":x"),
-       new get_local_exp_t (":x"),
-       new get_local_exp_t (":x"),
-   ]
-);
+    let fun_den = new fun_den_t (
+        "dup",
+        undefined,
+        [
+            new set_local_exp_t (":x"),
+            new get_local_exp_t (":x"),
+            new get_local_exp_t (":x"),
+        ]
+    );
 
-let main_exp_list = [
-    new call_exp_t ("dup"),
-];
+    let main_exp_list = [
+        new call_exp_t ("dup"),
+    ];
 
-data_stack_push (env, 4);
+    data_stack_push (env, 4);
 
-name_dict_set (env, "dup", fun_den);
+    name_dict_set (env, "dup", fun_den);
 
-list_eval (env, main_exp_list);
+    list_eval (env, main_exp_list);
+}
 
-console.log (env);
+function test_many ()
+{
+    let counter = 0;
+    while (counter < 1000000) {
+        test ();
+        counter = counter + 1;
+    }
+}
+
+test_many ();
+
+// console.log (env);
