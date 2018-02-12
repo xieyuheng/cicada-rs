@@ -77,73 +77,14 @@
       even-plus-two-is-even-c)
     #+end_src
 
-* eq
-
-*** eq-t -- an interface to the internal unification
-
-    #+begin_src jojo
-    (+type eq-t
-      : (-> :t :t -- type-tt)
-      (-> -- :z :z eq-t))
-
-    (+proof eq-apply
-      : (-> :x :y eq-t fun : (-> :t1 -- :t2)
-         -- :x fun :y fun eq-t)
-      eq-c)
-
-    (+proof eq-swap
-      : (-> :x :y eq-t -- :y :x eq-t)
-      eq-c)
-
-    (+proof eq-compose
-      : (-> :x :y eq-t :y :z eq-t -- :x :z eq-t)
-      eq-c)
-    #+end_src
-
-*** add-associative
-
-    #+begin_src jojo
-    (+proof add-associative
-      : (-> [x y z] : nat-u
-         -- x y add z add
-            x y z add add eq-t)
-      (case z
-        (zero-t eq-c)
-        (succ-t x y z.prev recur {succ-c} eq-apply)))
-    #+end_src
-
-*** add-commutative
-
-    #+begin_src jojo
-    (+proof add-commutative
-      : (-> [m n] : nat-u
-         -- m n add, n m add eq-t)
-      (case n
-        (zero-t m add-zero-commutative)
-        (succ-t m n.prev recur {succ-c} eq-apply
-                n.prev m add-succ-commutative eq-compose)))
-
-    (+proof add-zero-commutative
-      : (-> m : nat-u
-         -- m zero-c add, zero-c m add eq-t)
-      (case m
-        (zero-t eq-c)
-        (succ-t m.prev recur {succ-c} eq-apply)))
-
-    (+proof add-succ-commutative
-      : (-> [m n] : nat-u
-         -- m succ-c n add, m n add succ-c eq-t)
-      (case n
-        (zero-t eq-c)
-        (succ-t m n.prev recur {succ-c} eq-apply)))
-    #+end_src
-
 * ==
 
 *** ==
 
+    - an interface to the internal unification
+
     #+begin_src jojo
-    (+type ==
+    (+type == #:infix
       : (-> :t :t -- type-tt)
       (-> -- :z == :z))
 
@@ -168,7 +109,7 @@
       : (-> [x y z] : nat-u
          -- [x y add z add] == [x y z add add])
       (case z
-        (zero-t eq-c)
+        (zero-t ==-c)
         (succ-t x y z.prev recur {succ-c} ==-apply)))
     #+end_src
 

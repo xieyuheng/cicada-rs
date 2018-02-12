@@ -212,26 +212,18 @@ class call_exp_t
 
     exe (env, scope)
     {
-        let den = name_dict_get (env, this.name);
-        den.den_exe (env);
+        let obj = scope_get (scope, this.name);
+        if (obj) {
+            obj.apply (env);
+        }
+        else {
+            let den = name_dict_get (env, this.name);
+            den.den_exe (env);
+        }
     }
 }
 
-class get_local_exp_t
-{
-    constructor (local_name)
-    {
-        this.local_name = local_name;
-    }
-
-    exe (env, scope)
-    {
-         let obj = scope_get (scope, this.local_name);
-         data_stack_push (env, obj);
-    }
-}
-
-class set_local_exp_t
+class set_exp_t
 {
     constructor (local_name)
     {
@@ -369,10 +361,15 @@ class disp_den_t
 
 class data_obj_t
 {
-    constructor ()
+    constructor (type_name, fields)
     {
         this.type_name = type_name;
         this.fields = fields;
+    }
+
+    apply (env)
+    {
+        data_stack_push (env, this);
     }
 }
 
@@ -382,6 +379,13 @@ class clo_obj_t
     {
         this.exp_list = exp_list;
         this.scope = scope;
+    }
+
+    apply (env)
+    {
+        let frame = new scoping_frame_t (this.exp_list);
+        frame_stack_push (env, frame);
+        scope_stack_push (env, this.scope);
     }
 }
 
@@ -400,22 +404,22 @@ function test ()
         "dup",
         undefined,
         [
-            new set_local_exp_t (":x"),
-            new get_local_exp_t (":x"),
-            new get_local_exp_t (":x"),
+            new set_exp_t ("x"),
+            new call_exp_t ("x"),
+            new call_exp_t ("x"),
         ]
     );
 
-    let main_exp_list = [
-        new call_exp_t ("dup"),
-    ];
-
-    data_stack_push (env, 4);
-
+    data_stack_push (env, new data_obj_t ("nat", "><><><"));
+    scope_stack_push (env, new scope_t ());
     name_dict_set (env, "dup", fun_den);
-
-    list_eval (env, main_exp_list);
+    list_eval (env, [
+        new call_exp_t ("dup"),
+    ]);
+    console.log (env);
 }
+
+test ();
 
 function test_many ()
 {
@@ -426,6 +430,4 @@ function test_many ()
     }
 }
 
-test_many ();
-
-// console.log (env);
+// test_many ();
