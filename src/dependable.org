@@ -1,7 +1,6 @@
 #+property: tangle dependable.jo
 #+title: dependable
 - unify local and global
-- locals to scope
 * use postfix {.field2! .field1! ...} for -cr and -cl
 
   - otherwise there will be a lot of naming.
@@ -322,8 +321,8 @@
     #+begin_src jojo
     (+union exp-u
       call-exp-t
-      get-local-exp-t
-      set-local-exp-t
+      get-exp-t
+      set-exp-t
       clo-exp-t
       arrow-exp-t
       case-exp-t
@@ -337,17 +336,17 @@
       .name : name-t)
     #+end_src
 
-*** get-local-exp-t
+*** get-exp-t
 
     #+begin_src jojo
-    (+data get-local-exp-t
+    (+data get-exp-t
       .local-name : string-t)
     #+end_src
 
-*** set-local-exp-t
+*** set-exp-t
 
     #+begin_src jojo
-    (+data set-local-exp-t
+    (+data set-exp-t
       .local-name : string-t)
     #+end_src
 
@@ -454,20 +453,20 @@
       :exp.name name-dict-get den-exe)
     #+end_src
 
-*** (exe env-t get-local-exp-t)
+*** (exe env-t get-exp-t)
 
     #+begin_src jojo
     (+disp exe
-      : (-> env-t (: :exp get-local-exp-t) -- env-t)
+      : (-> env-t (: :exp get-exp-t) -- env-t)
       scope-stack-tos :exp.local-name scope-get
       data-stack-push)
     #+end_src
 
-*** (exe env-t set-local-exp-t)
+*** (exe env-t set-exp-t)
 
     #+begin_src jojo
     (+disp exe
-      : (-> env-t (: :exp set-local-exp-t) -- env-t)
+      : (-> env-t (: :exp set-exp-t) -- env-t)
       data-stack-pop :obj!
       scope-stack-pop :exp.local-name :obj scope-set
       scope-stack-push)
