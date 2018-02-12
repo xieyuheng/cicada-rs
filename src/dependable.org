@@ -1,15 +1,12 @@
 #+property: tangle dependable.jo
 #+title: dependable
+- unify local and global
+- locals to scope
+* use postfix {.field2! .field1! ...} for -cr and -cl
+
+  - otherwise there will be a lot of naming.
 
 * [todo-stack]
-
-*** use postfix {.field2! .field1! ...} for -cr and -cl
-
-    - otherwise there will be a lot of naming.
-
-*** return-stack to frame-stack
-
-*** locals to scope
 
 *** fix the structure of den
 
@@ -53,7 +50,7 @@
       .name-dict : [name-t den-u dict-t]
       .data-stack : [obj-u list-u]
       .mark-stack : [nat-u list-u]
-      .return-stack : [frame-u list-u]
+      .frame-stack : [frame-u list-u]
       .scope-stack : [string-t obj-u dict-t list-u]
       .goal-stack : [goal-t list-u]
       .hypo-dict : [hypo-id-t obj-u dict-t]
@@ -169,7 +166,7 @@
         data-stack-n-pop)
       #+end_src
 
-*** return-stack
+*** frame-stack
 
 ***** frame-u
 
@@ -195,39 +192,39 @@
         .index : nat-u)
       #+end_src
 
-***** return-stack-push
+***** frame-stack-push
 
       #+begin_src jojo
-      (+fun return-stack-push
+      (+fun frame-stack-push
         : (-> (: :env env-t) (: :frame frame-u) -- env-t)
         (clone :env
-          .return-stack [:frame :env.return-stack cons]))
+          .frame-stack [:frame :env.frame-stack cons]))
       #+end_src
 
-***** return-stack-pop
+***** frame-stack-pop
 
       #+begin_src jojo
-      (+fun return-stack-pop
+      (+fun frame-stack-pop
         : (-> (: :env env-t) -- env-t frame-u)
         (clone :env
-          .return-stack [:env.return-stack.cdr])
-        :env.return-stack.car)
+          .frame-stack [:env.frame-stack.cdr])
+        :env.frame-stack.car)
       #+end_src
 
-***** return-stack-drop
+***** frame-stack-drop
 
       #+begin_src jojo
-      (+fun return-stack-drop
+      (+fun frame-stack-drop
         : (-> env-t -- env-t)
-        return-stack-pop drop)
+        frame-stack-pop drop)
       #+end_src
 
-***** return-stack-tos
+***** frame-stack-tos
 
       #+begin_src jojo
-      (+fun return-stack-tos
+      (+fun frame-stack-tos
         : (-> env-t -- env-t frame-u)
-        dup .return-stack.car)
+        dup .frame-stack.car)
       #+end_src
 
 ***** top-frame-finished?
@@ -235,7 +232,7 @@
       #+begin_src jojo
       (+fun top-frame-finished?
         : (-> env-t -- env-t bool-u)
-        return-stack-tos :frame!
+        frame-stack-tos :frame!
         :frame.index :frame.body list-length eq?)
       #+end_src
 
@@ -244,10 +241,10 @@
       #+begin_src jojo
       (+fun top-frame-next-exp
         : (-> env-t -- env-t exp-u)
-        return-stack-pop :frame!
+        frame-stack-pop :frame!
         (clone :frame
           .index [:frame.index inc])
-        return-stack-push
+        frame-stack-push
         :frame.body :frame.index list-ref)
       #+end_src
 
@@ -261,30 +258,22 @@
 
 ***** >< scope-stack-tos
 
-***** local-get
+***** scope-get
 
       #+begin_src jojo
-      (+fun local-get dict-get)
+      (+fun scope-get dict-get)
       #+end_src
 
-***** local-set
+***** scope-set
 
       #+begin_src jojo
-      (+fun local-set
+      (+fun scope-set
         : (-> string-t obj-u dict-t
               (: :local-name string-t)
               (: :obj obj-u)
            -- string-t obj-u dict-t)
         (dict :local-name :obj)
         dict-update)
-      #+end_src
-
-***** new-local-scope
-
-      #+begin_src jojo
-      (+fun new-local-scope
-        : (-> env-t -- env-t)
-        (dict) scope-stack-push)
       #+end_src
 
 *** goal-stack
@@ -392,11 +381,11 @@
     #+begin_src jojo
     (+fun list-eval
       : (-> (: :env env-t) (: :exp-list exp-u list-u) -- env-t)
-      :env .return-stack list-length :base!
+      :env .frame-stack list-length :base!
       (create simple-frame-t
          .body :exp-list
          .index 0)
-      return-stack-push
+      frame-stack-push
       :env :base eval-with-base)
     #+end_src
 
@@ -405,7 +394,7 @@
     #+begin_src jojo
     (+fun eval-with-base
       : (-> env-t (: :base nat-u) -- env-t)
-      (when [dup .return-stack list-length :base equal? not]
+      (when [dup .frame-stack list-length :base equal? not]
         eval-one-step :base recur))
     #+end_src
 
@@ -418,7 +407,7 @@
     (+fun eval-one-step
       : (-> env-t -- env-t)
       (if top-frame-finished?
-        (case return-stack-pop
+        (case frame-stack-pop
           (scoping-frame-t scope-stack-drop)
           (simple-frame-t nop))
         [top-frame-next-exp exe]))
@@ -470,7 +459,7 @@
     #+begin_src jojo
     (+disp exe
       : (-> env-t (: :exp get-local-exp-t) -- env-t)
-      scope-stack-tos :exp.local-name local-get
+      scope-stack-tos :exp.local-name scope-get
       data-stack-push)
     #+end_src
 
@@ -480,7 +469,7 @@
     (+disp exe
       : (-> env-t (: :exp set-local-exp-t) -- env-t)
       data-stack-pop :obj!
-      scope-stack-pop :exp.local-name :obj local-set
+      scope-stack-pop :exp.local-name :obj scope-set
       scope-stack-push)
     #+end_src
 
@@ -490,7 +479,7 @@
     (+disp exe
       : (-> env-t (: :exp clo-exp-t) -- env-t)
       (create clo-obj-t
-        .locals scope-stack-tos
+        .scope scope-stack-tos
         .body [:exp.body])
       data-stack-push)
     #+end_src
@@ -800,14 +789,14 @@
     #+begin_src jojo
     (+disp den-exe
       : (-> env-t (: :den fun-den-t) -- env-t)
-      new-local-scope
+      (dict) scope-stack-push
       :den.type collect-obj :type!
       :type.ante ante-prepare
       :type.ante ante-correspond
       (create scoping-frame-t
         .body :den.body
         .index 0)
-      return-stack-push)
+      frame-stack-push)
     #+end_src
 
 *** (den-exe env-t data-cons-den-t)
@@ -945,7 +934,7 @@
 
     #+begin_src jojo
     (+data clo-obj-t
-      .locals : [string-t obj-u dict-t]
+      .scope : [string-t obj-u dict-t]
       .body : [exp-u list-u])
     #+end_src
 
