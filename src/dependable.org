@@ -222,13 +222,13 @@
         dup .frame-stack.car)
       #+end_src
 
-***** top-frame-finished?
+***** top-frame-finished-p
 
       #+begin_src jojo
-      (+fun top-frame-finished?
+      (+fun top-frame-finished-p
         : (-> env-t -- env-t bool-u)
         frame-stack-tos frame!
-        frame.index frame.body list-length eq?)
+        frame.index frame.body list-length equal-p)
       #+end_src
 
 ***** top-frame-next-exp
@@ -389,7 +389,7 @@
     #+begin_src jojo
     (+fun eval-with-base
       : (-> env-t (: base nat-u) -- env-t)
-      (when [dup .frame-stack list-length base equal? not]
+      (when [dup .frame-stack list-length base equal-p not]
         eval-one-step base recur))
     #+end_src
 
@@ -401,7 +401,7 @@
 
     (+fun eval-one-step
       : (-> env-t -- env-t)
-      (if top-frame-finished?
+      (if top-frame-finished-p
         (case frame-stack-pop
           (scoping-frame-t scope-stack-drop)
           (simple-frame-t nop))
@@ -882,7 +882,7 @@
     #+begin_src jojo
     (+fun type->return-type
       : (-> obj-u -- obj-u)
-      (when [dup arrow-obj?]
+      (when [dup arrow-obj-p]
         .succ .car))
     #+end_src
 

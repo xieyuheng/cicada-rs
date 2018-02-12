@@ -3,6 +3,25 @@
 
 * [todo-stack]
 
+*** finish the semantic
+
+*** fix clo_obj_t
+
+    - when creating clo_obj_t,
+      scope need to be cloned.
+
+*** optimize scope_t -- use nameless local variable
+
+*** optimize name_dict_t
+
+*** read sexp
+
+*** interpret
+
+*** test
+
+*** ffi
+
 * [note]
 
 *** to be useful
@@ -317,10 +336,10 @@
 
 * eval
 
-*** list_eval
+*** exp_list_eval
 
     #+begin_src js
-    function list_eval (env, exp_list)
+    function exp_list_eval (env, exp_list)
     {
         let base = frame_stack_length (env);
         let frame = new simple_frame_t (exp_list);
@@ -449,10 +468,10 @@
     }
     #+end_src
 
-*** ><>< create_exp_t
+*** ><>< dot_exp_t
 
     #+begin_src js
-    class create_exp_t
+    class dot_exp_t
     {
         constructor ()
         {
@@ -460,6 +479,10 @@
         }
     }
     #+end_src
+
+*** ><>< cons_exp_t
+
+*** ><>< create_exp_t
 
 *** ><>< clone_exp_t
 
@@ -623,15 +646,31 @@
 
 *** string_t
 
-* run --
+* >< interpret
 
-*** run
+*** >< interpret_code
 
     #+begin_src js
-    function run (code)
+    function interpret_code (env, code)
     {
-        let env = new env_t ();
-        compile_code (env, code);
+
+    }
+    #+end_src
+
+*** >< interpret_sexp_list
+
+    #+begin_src js
+    function interpret_sexp_list (env, sexp_list)
+    {
+
+    }
+    #+end_src
+
+*** >< interpret_sexp
+
+    #+begin_src js
+    function interpret_sexp (env, sexp)
+    {
 
     }
     #+end_src
@@ -660,7 +699,7 @@
         data_stack_push (env, new data_obj_t ("nat", "><><><"));
         scope_stack_push (env, new scope_t ());
         name_dict_set (env, "dup", fun_den);
-        list_eval (env, [
+        exp_list_eval (env, [
             new call_exp_t ("dup"),
         ]);
         console.log (env);
