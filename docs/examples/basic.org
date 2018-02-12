@@ -86,6 +86,8 @@
       even-plus-two-is-even-c)
     #+end_src
 
+* eq
+
 *** eq-t -- an interface to the internal unification
 
     #+begin_src jojo
@@ -107,7 +109,7 @@
       eq-c)
     #+end_src
 
-*** add-associative -- structural induction proof
+*** add-associative
 
     #+begin_src jojo
     (+proof add-associative
@@ -143,6 +145,66 @@
       (case n
         (zero-t eq-c)
         (succ-t m n.prev recur {succ-c} eq-apply)))
+    #+end_src
+
+* ==
+
+*** ==
+
+    #+begin_src jojo
+    (+type ==
+      : (-> :t :t -- type-tt)
+      (-> -- :z == :z))
+
+    (+proof ==-apply
+      : (-> :x == :y, fun : (-> :t1 -- :t2)
+         -- [:x fun] == [:y fun])
+      ==-c)
+
+    (+proof ==-swap
+      : (-> :x == :y -- :y == :x)
+      ==-c)
+
+    (+proof ==-compose
+      : (-> :x == :y, :y == :z -- :x == :z)
+      ==-c)
+    #+end_src
+
+*** add-associative
+
+    #+begin_src jojo
+    (+proof add-associative
+      : (-> [x y z] : nat-u
+         -- [x y add z add] == [x y z add add])
+      (case z
+        (zero-t eq-c)
+        (succ-t x y z.prev recur {succ-c} ==-apply)))
+    #+end_src
+
+*** add-commutative
+
+    #+begin_src jojo
+    (+proof add-commutative
+      : (-> [m n] : nat-u
+         -- [m n add] == [n m add])
+      (case n
+        (zero-t m add-zero-commutative)
+        (succ-t m n.prev recur {succ-c} ==-apply
+                n.prev m add-succ-commutative ==-compose)))
+
+    (+proof add-zero-commutative
+      : (-> m : nat-u
+         -- [m zero-c add] == [zero-c m add])
+      (case m
+        (zero-t ==-c)
+        (succ-t m.prev recur {succ-c} ==-apply)))
+
+    (+proof add-succ-commutative
+      : (-> [m n] : nat-u
+         -- [m succ-c n add] == [m n add succ-c])
+      (case n
+        (zero-t ==-c)
+        (succ-t m n.prev recur {succ-c} ==-apply)))
     #+end_src
 
 * list

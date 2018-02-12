@@ -23,22 +23,22 @@
     (-> .left : nat-u
         .right : nat-u
      -- int-q)
-    (+fun equal-p : (-> [:x :y] : int-q -- bool-u)
-      :x.left :x.right sub
-      :y.left :y.right sub
+    (+fun equal-p : (-> [x y] : int-q -- bool-u)
+      x.left x.right sub
+      y.left y.right sub
       equal-p))
 
   (note
     ;; if we view type-tt as a trait,
     ;; equal-p will be its only interface function.
 
-    (+trait type-tr < type-tt
-      equal-p : (-> [:x :y] : type-tr -- bool-u))
+    (+trait type-tc < type-tt
+      equal-p : (-> [x y] : type-tc -- bool-u))
 
-    (+impl int-q : type-tr
-      (+fun equal-p : (-> [:x :y] : int-q -- bool-u)
-        :x.left :x.right sub
-        :y.left :y.right sub
+    (+impl int-q : type-tc
+      (+fun equal-p : (-> [x y] : int-q -- bool-u)
+        x.left x.right sub
+        y.left y.right sub
         equal-p)))
   #+end_src
 
