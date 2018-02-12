@@ -1,0 +1,177 @@
+#+title: class
+
+* [todo-list]
+
+*** zip example
+
+*** learn more about haskell type-class
+
+*** use category theory to test type-class
+
+    - group theory
+
+* [note]
+
+* functor-tc
+
+  #+begin_src jojo
+  (+class functor-tc < (-> type-tt -- type-tt)
+    map : (-> functor-t :: functor-tc
+              :t1 functor-t
+              (-> :t1 -- :t2)
+           -- :t2 functor-t))
+  #+end_src
+
+* list-u : functor-tc
+
+  #+begin_src jojo
+  (+imp list-u : functor-tc
+    (+fun map
+      : (-> :l : [:t1 list-u]
+            fun : (-> :t1 -- :t2)
+         -- :t2 list-u)
+      (case l
+        (null-t null-c)
+        (cons-t l.car fun l.cdr {fun} recur cons-c))))
+  #+end_src
+
+* monad-tc
+
+  #+begin_src jojo
+  (+class monad-tc < (-> type-tt -- type-tt)
+    return : (-> monad-t :: monad-tc
+                 :t -- :t monad-t)
+    bind : (-> monad-t :: monad-tc
+               :t1 monad-t
+               (-> :t1 -- :t2 monad-t)
+            -- :t2 monad-t))
+  #+end_src
+
+* maybe
+
+*** maybe-u
+
+    #+begin_src jojo
+    (+union maybe-u : (-> type-tt -- type-tt)
+      (-> -- :t none-t)
+      (-> .value : :t -- :t just-t))
+    #+end_src
+
+*** maybe-u : monad-tc
+
+    #+begin_src jojo
+    (+imp maybe-u : monad-tc
+      (+fun return : (-> value : :t -- :t maybe-u)
+        value just-c)
+      (+fun bind
+        : (-> maybe : [:t1 maybe-u]
+              fun : (-> :t1 -- :t2 maybe-u)
+           -- :t2 maybe-u)
+        (case maybe
+          (none-t none-c)
+          (just-t :m.value fun))))
+    #+end_src
+
+* state
+
+*** state-t
+
+    #+begin_src jojo
+    (+type state-t : (-> type-tt type-tt -- type-tt)
+      (-> .fun : (-> :s-t -- :s-t :v-t)
+       -- :s-t :v-t state-t))
+    #+end_src
+
+*** {:v-t state-t} : monad-tc
+
+    #+begin_src jojo
+    (+imp {:v-t state-t} : monad-tc
+      (+fun return : (-> value : :v-t -- :s-t :v-t state-t)
+        {value} state-c)
+      (+fun bind
+        : (-> state : [:s-t :v1-t state-t]
+              fun : (-> :v1-t -- :s-t :v2-t state-t)
+           -- :s-t :v2-t state-t)
+        {state.fun fun .fun apply} state-c))
+    #+end_src
+
+* tree
+
+*** tree-u
+
+    #+begin_src jojo
+    (+union tree-u : (-> type-tt -- type-tt)
+      (-> .value : :t -- :t leaf-t)
+      (-> .left : :t .right : :t -- :t node-t))
+    #+end_src
+
+*** tree-u : functor-tc
+
+    #+begin_src jojo
+    (+imp tree-u : functor-tc
+      (+fun map
+        : (-> tree : [:t1 tree-u]
+              fun : (-> :t1 -- :t2)
+           -- :t2 tree-u)
+        (case tree
+          (leaf-t tree.value fun leaf-c)
+          (node-t tree.left {fun} recur
+                  tree.right {fun} recur node-c))))
+    #+end_src
+
+*** tree-numbering
+
+    #+begin_src jojo
+    (+fun tree-numbering
+      : (-> nat-u tree : [:t tree-u]
+         -- nat-u nat-u tree-u)
+      (case tree
+        (leaf-t dup inc swap leaf-c)
+        (node-t tree.left recur left!
+                tree.right recur right!
+                left right node-c)))
+    #+end_src
+
+*** tree-numbering-curry
+
+    #+begin_src jojo
+    (+fun tree-numbering-curry
+      : (-> tree : [:t tree-u]
+         -- (-> nat-u
+             -- nat-u tree-u))
+      (case tree
+        (leaf-t {dup inc swap leaf-c})
+        (node-t {tree.left recur apply left!
+                 tree.right recur apply right!
+                 left right node-c})))
+    #+end_src
+
+*** tree-numbering-state
+
+    #+begin_src jojo
+    (+fun tree-numbering-state
+      : (-> tree : [:t tree-u]
+         -- nat-u tree-u state-t)
+      (case tree
+        (leaf-t {dup inc swap leaf} state-c)
+        (node-t (do
+                  left = [tree.left recur]
+                  right = [tree.right recur]
+                  [left right node-c]))))
+
+    (note
+      (do
+        left = [tree.left recur]
+        right = [tree.right recur]
+        [left right node])
+      ;; =expand-to=>
+      (begin
+        [tree.left recur]
+        {left!
+         [tree.right recur]
+         {right!
+          [left right node]
+          return}
+         bind}
+        bind))
+    #+end_src
