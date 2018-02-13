@@ -3,8 +3,6 @@
 
 * [todo-stack]
 
-*** clone_exp_t
-
 *** *finish the semantic*
 
 *** read sexp
@@ -714,14 +712,16 @@
         {
             let dot_obj = data_stack_pop (env);
             assert (dot_obj instanceof dot_obj_t);
-            let data_obj =
-                new data_obj_t (this.type_name, dot_obj.field_dict);
+            let data_obj
+                = new data_obj_t (
+                    this.type_name,
+                    dot_obj.field_dict);
             data_stack_push (env, data_obj);
         }
     }
     #+end_src
 
-*** >< clone_exp_t
+*** clone_exp_t
 
     #+begin_src js
     class clone_exp_t
@@ -730,7 +730,22 @@
 
         exe (env, scope)
         {
-
+            let data_obj = data_stack_pop (env);
+            assert (data_obj instanceof data_obj_t);
+            let dot_obj = data_stack_pop (env);
+            assert (dot_obj instanceof dot_obj_t);
+            let new_field_dict = new field_dict_t ();
+            for (let [field_name, obj] of data_obj.field_dict) {
+                new_field_dict.set (field_name, obj);
+            }
+            for (let [field_name, obj] of dot_obj.field_dict) {
+                new_field_dict.set (field_name, obj);
+            }
+            let new_data_obj
+                = new data_obj_t (
+                    data_obj.type_name,
+                    new_field_dict);
+            data_stack_push (env, new_data_obj);
         }
     }
     #+end_src
