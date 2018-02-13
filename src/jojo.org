@@ -3,8 +3,6 @@
 
 * [todo-stack]
 
-*** gene_dict_t
-
 *** create_exp_t
 
     - how dot_obj_t is used
@@ -53,10 +51,10 @@
       let print = console.log;
       #+end_src
 
-***** vect_equal_p
+***** vect_eq_p
 
       #+begin_src js
-      function vect_equal_p (v1, v2)
+      function vect_eq_p (v1, v2)
       {
           if (v1.length !== v2.length)
               return false;
@@ -869,7 +867,7 @@
     }
     #+end_src
 
-*** >< gene_dict_t -- type_name_vect to gene_den
+*** gene_dict_t -- type_name_vect to gene_den
 
     #+begin_src js
     class gene_dict_t
@@ -879,15 +877,56 @@
             this.dict = new Map ();
         }
 
-        get (gene_name)
+        get (type_name_vect)
         {
-
+            for (let [key, value] of this.dict) {
+                if (type_name_vect_lteq_p
+                    (env, type_name_vect, key))
+                    return value;
+            }
+            return undefined;
         }
 
-        set (gene_name, gene_den)
+        set (type_name_vect, gene_den)
         {
-
+            for (let key of this.dict.keys ()) {
+                if (vect_eq_p (key, type_name_vect)) {
+                    this.dict.set (key, gene_den);
+                    return;
+                }
+            }
+            this.dict.set (type_name_vect, gene_den)
         }
+    }
+    #+end_src
+
+*** type_name_vect_lteq_p
+
+    #+begin_src js
+    function type_name_vect_lteq_p (env, v1, v2)
+    {
+        for (let [t1, t2] of [v1, v2]) {
+            if (type_name_lteq_p (env, t1, t2))
+                return false;
+        }
+        return true;
+    }
+    #+end_src
+
+*** type_name_lteq_p
+
+    #+begin_src js
+    function type_name_lteq_p (env, t1, t2)
+    {
+        if (t1 === t2)
+            return true;
+        let union_den = name_dict_get (env, t2);
+        if (! union_den instanceof union_den_t)
+            return false;
+        if (t1 in union_den.union_vect)
+            return true;
+        else
+            return false;
     }
     #+end_src
 
@@ -926,7 +965,7 @@
         get (type_name_vect)
         {
             for (let [key, value] of this.dict) {
-                if (vect_equal_p (key, type_name_vect))
+                if (vect_equal_p (type_name_vect, key))
                     return value;
             }
             return undefined;
