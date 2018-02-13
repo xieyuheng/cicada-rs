@@ -75,7 +75,7 @@
       #+begin_src jojo
       (+fun data-stack-push
         : (-> (: env env-t) (: obj obj-u) -- env-t)
-        (. .data-stack [obj env.data-stack cons])
+        (. .data-stack = [obj env.data-stack cons])
         env clone)
       #+end_src
 
@@ -84,7 +84,7 @@
       #+begin_src jojo
       (+fun data-stack-pop
         : (-> (: env env-t) -- env-t obj-u)
-        (. .data-stack [env.data-stack.cdr])
+        (. .data-stack = [env.data-stack.cdr])
         env clone
         env.data-stack.car)
       #+end_src
@@ -129,7 +129,7 @@
       #+begin_src jojo
       (+fun mark-stack-push
         : (-> (: env env-t) (: x nat-u) -- env-t)
-        (. .mark-stack [x env.mark-stack cons])
+        (. .mark-stack = [x env.mark-stack cons])
         env clone)
       #+end_src
 
@@ -138,7 +138,7 @@
       #+begin_src jojo
       (+fun mark-stack-pop
         : (-> (: env env-t) -- env-t nat-u)
-        (. .mark-stack [env.mark-stack.cdr])
+        (. .mark-stack = [env.mark-stack.cdr])
         env clone
         env.mark-stack.car)
       #+end_src
@@ -192,7 +192,7 @@
       #+begin_src jojo
       (+fun frame-stack-push
         : (-> (: env env-t) (: frame frame-u) -- env-t)
-        (. .frame-stack [frame env.frame-stack cons])
+        (. .frame-stack = [frame env.frame-stack cons])
         env clone)
       #+end_src
 
@@ -201,7 +201,7 @@
       #+begin_src jojo
       (+fun frame-stack-pop
         : (-> (: env env-t) -- env-t frame-u)
-        (. .frame-stack [env.frame-stack.cdr])
+        (. .frame-stack = [env.frame-stack.cdr])
         env clone
         env.frame-stack.car)
       #+end_src
@@ -237,7 +237,7 @@
       (+fun top-frame-next-exp
         : (-> env-t -- env-t exp-u)
         frame-stack-pop frame!
-        (. .index [frame.index inc])
+        (. .index = [frame.index inc])
         frame clone
         frame-stack-push
         frame.body frame.index list-ref)
@@ -377,8 +377,8 @@
     (+fun list-eval
       : (-> (: env env-t) (: exp-list exp-u list-u) -- env-t)
       env .frame-stack list-length base!
-      (. .body exp-list
-         .index 0)
+      (. .body = exp-list
+         .index = 0)
       simple-frame-cr
       frame-stack-push
       env base eval-with-base)
@@ -473,8 +473,8 @@
     #+begin_src jojo
     (+disp exe
       : (-> env-t (: exp clo-exp-t) -- env-t)
-      (. .scope scope-stack-tos
-         .body [exp.body])
+      (. .scope = scope-stack-tos
+         .body = [exp.body])
       clo-obj-cr
       data-stack-push)
     #+end_src
@@ -484,8 +484,8 @@
     #+begin_src jojo
     (+disp exe
       : (-> env-t (: exp arrow-exp-t) -- env-t)
-      (. .ante [exp.ante collect-obj-list]
-         .succ [exp.succ collect-obj-list])
+      (. .ante = [exp.ante collect-obj-list]
+         .succ = [exp.succ collect-obj-list])
       arrow-obj-cr
       data-stack-push)
     #+end_src
@@ -548,9 +548,9 @@
          -- env-t case-obj-t)
       case-exp.clause-dict eval-clause-dict clause-dict!
       obj clause-dict new-sum-obj sum-obj!
-      (. .type sum-obj
-         .arg obj
-         .clause-dict clause-dict)
+      (. .type = sum-obj
+         .arg = obj
+         .clause-dict = clause-dict)
       todo-case-cr)
     #+end_src
 
@@ -695,12 +695,12 @@
       : (-> env-t (: ins suppose-ins-t) -- env-t)
       data-stack-pop type!
       generate-hypo-id hypo-id!
-      (. .hypo-id hypo-id
-         .type type)
+      (. .hypo-id = hypo-id
+         .type = type)
       hypo-type-obj-cr
       hypo-type-obj!
-      (. .hypo-id hypo-id
-         .hypo-type hypo-type-obj)
+      (. .hypo-id = hypo-id
+         .hypo-type = hypo-type-obj)
       hypo-obj-cr
       data-stack-push)
     #+end_src
@@ -788,8 +788,8 @@
       den.type collect-obj type!
       type.ante ante-prepare
       type.ante ante-correspond
-      (. .body den.body
-         .index 0)
+      (. .body = den.body
+         .index = 0)
       scoping-frame-cr
       frame-stack-push)
     #+end_src
@@ -803,9 +803,9 @@
       den.type collect-obj type!
       type.ante ante-prepare
       den.field-name-list data-stack-zip-by-list fields!
-      (. .type type type->return-type
-         .data-cons-name den.data-cons-name
-         .fields fields)
+      (. .type = [type type->return-type]
+         .data-cons-name = den.data-cons-name
+         .fields = fields)
       data-cons-obj-cr
       data-stack-push)
     #+end_src
@@ -819,9 +819,9 @@
       den.type collect-obj type!
       type.ante ante-prepare
       den.field-name-list data-stack-zip-by-list fields!
-      (. .type type type->return-type
-         .type-cons-name den.type-cons-name
-         .fields fields)
+      (. .type = [type type->return-type]
+         .type-cons-name = den.type-cons-name
+         .fields = fields)
       type-cons-obj-cr
       data-stack-push)
     #+end_src

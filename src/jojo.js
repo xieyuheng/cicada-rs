@@ -1,3 +1,18 @@
+let print = console.log;
+
+function vect_eq_p (v1, v2)
+{
+    if (v1.length !== v2.length)
+        return false;
+    let index = 0;
+    while (index < v1.length) {
+        if (v1[index] !== v2[index])
+            return false;
+        index = index + 1;
+    }
+    return true;
+}
+
 function error ()
 {
     assert (false);
@@ -9,7 +24,6 @@ class env_t
     {
         this.name_dict = new name_dict_t ();
         this.data_stack = [];
-        this.mark_stack = [];
         this.frame_stack = [];
         this.scope_stack = [];
     }
@@ -76,32 +90,6 @@ function data_stack_length (env)
     return env.data_stack.length;
 }
 
-function mark_stack_push (env, mark)
-{
-    env.mark_stack.push (mark);
-}
-
-function mark_stack_pop (env)
-{
-    return env.mark_stack.pop ();
-}
-
-function mark_stack_tos (env)
-{
-    let length = mark_stack_length (env);
-    return env.mark_stack[length - 1];
-}
-
-function mark_stack_drop (env)
-{
-    mark_stack_pop (env);
-}
-
-function mark_stack_length (env)
-{
-    return env.mark_stack.length;
-}
-
 function frame_stack_push (env, frame)
 {
     env.frame_stack.push (frame);
@@ -150,7 +138,7 @@ class simple_frame_t
 
 function frame_end_p (frame)
 {
-    return frame.index == frame.length;
+    return frame.index === frame.length;
 }
 
 function frame_next_exp (frame)
@@ -238,25 +226,39 @@ function eval_one_step (env)
             scope_stack_drop (env);
     }
     // {
-    //     console.log ("- eval_one_step");
-    //     console.log ("  env :", env);
-    //     console.log ("  exp :", exp);
-    //     console.log ("  scope :", scope);
+    //     print ("- eval_one_step");
+    //     print ("  env :", env);
+    //     print ("  exp :", exp);
+    //     print ("  scope :", scope);
     // }
     exp.exe (env, scope);
 }
 
 function exp_vect_to_obj_vect (env, exp_vect)
 {
+    let mark = data_stack_length (env);
+    exp_vect_eval (env, exp_vect);
+    let length = data_stack_length (env);
+    let obj_vect = [];
+    while (length > mark) {
+       let obj = data_stack_pop (env);
+       obj_vect.unshift (obj);
+       length = length - 1;
+    }
+    return obj_vect;
+
 }
 
 function exp_vect_to_obj (env, exp_vect)
 {
+    let obj_vect = exp_vect_to_obj_vect (env, exp_vect);
+    assert (obj_vect.length === 1);
+    return obj_vect[0];
 }
 
 function exp_to_obj (env, exp)
 {
-
+    return exp_vect_to_obj (env, [exp]);
 }
 
 class call_exp_t
@@ -585,15 +587,48 @@ class gene_dict_t
         this.dict = new Map ();
     }
 
-    get (gene_name)
+    get (type_name_vect)
     {
-
+        for (let [key, value] of this.dict) {
+            if (type_name_vect_lteq_p
+                (env, type_name_vect, key))
+                return value;
+        }
+        return undefined;
     }
 
-    set (gene_name, gene_den)
+    set (type_name_vect, gene_den)
     {
-
+        for (let key of this.dict.keys ()) {
+            if (vect_eq_p (key, type_name_vect)) {
+                this.dict.set (key, gene_den);
+                return;
+            }
+        }
+        this.dict.set (type_name_vect, gene_den)
     }
+}
+
+function type_name_vect_lteq_p (env, v1, v2)
+{
+    for (let [t1, t2] of [v1, v2]) {
+        if (type_name_lteq_p (env, t1, t2))
+            return false;
+    }
+    return true;
+}
+
+function type_name_lteq_p (env, t1, t2)
+{
+    if (t1 === t2)
+        return true;
+    let union_den = name_dict_get (env, t2);
+    if (! union_den instanceof union_den_t)
+        return false;
+    if (t1 in union_den.union_vect)
+        return true;
+    else
+        return false;
 }
 
 class gene_den_t
@@ -616,7 +651,30 @@ class gene_den_t
 
 class disp_dict_t
 {
+    constructor ()
+    {
+        this.dict = new Map ();
+    }
 
+    get (type_name_vect)
+    {
+        for (let [key, value] of this.dict) {
+            if (vect_equal_p (type_name_vect, key))
+                return value;
+        }
+        return undefined;
+    }
+
+    set (type_name_vect, fun_den)
+    {
+        for (let key of this.dict.keys ()) {
+            if (vect_equal_p (key, type_name_vect)) {
+                this.dict.set (key, fun_den);
+                return;
+            }
+        }
+        this.dict.set (type_name_vect, fun_den)
+    }
 }
 
 function interpret_code (env, code)
@@ -652,7 +710,7 @@ function test ()
     exp_vect_eval (env, [
         new call_exp_t ("dup"),
     ]);
-    console.log (env);
+    print (env);
 }
 
 test ();
