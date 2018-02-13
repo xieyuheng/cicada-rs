@@ -5,11 +5,6 @@
 
 *** finish the semantic
 
-*** fix clo_obj_t
-
-    - when creating clo_obj_t,
-      scope need to be cloned.
-
 *** optimize scope_t -- use nameless local variable
 
 *** optimize name_dict_t
@@ -313,6 +308,14 @@
           {
               this.dict.set(name, obj);
           }
+
+          clone ()
+          {
+              let scope = new scope_t ();
+              for (let [name, obj] of this.dict) {
+                  scope.set(name, obj);
+              }
+          }
       }
       #+end_src
 
@@ -390,14 +393,26 @@
 
         exe (env, scope)
         {
+            let den = name_dict_get (env, this.name);
+            den.den_exe (env);
+        }
+    }
+    #+end_src
+
+*** get_exp_t
+
+    #+begin_src js
+    class get_exp_t
+    {
+        constructor (name)
+        {
+            this.name = name;
+        }
+
+        exe (env, scope)
+        {
             let obj = scope_get (scope, this.name);
-            if (obj) {
-                obj.apply (env);
-            }
-            else {
-                let den = name_dict_get (env, this.name);
-                den.den_exe (env);
-            }
+            obj.apply (env);
         }
     }
     #+end_src
@@ -432,7 +447,7 @@
 
         exe (env, scope)
         {
-            let clo_obj = new clo_obj_t (this.exp_list, scope);
+            let clo_obj = new clo_obj_t (this.exp_list, scope.clone ());
             data_stack_push (env, clo_obj);
         }
     }
@@ -691,8 +706,8 @@
             undefined,
             [
                 new set_exp_t ("x"),
-                new call_exp_t ("x"),
-                new call_exp_t ("x"),
+                new get_exp_t ("x"),
+                new get_exp_t ("x"),
             ]
         );
 

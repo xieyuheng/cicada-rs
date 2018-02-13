@@ -163,6 +163,14 @@ class scope_t
     {
         this.dict.set(name, obj);
     }
+
+    clone ()
+    {
+        let scope = new scope_t ();
+        for (let [name, obj] of this.dict) {
+            scope.set(name, obj);
+        }
+    }
 }
 
 function scope_get (scope, name)
@@ -175,7 +183,7 @@ function scope_set (scope, name, obj)
     scope.set(name, obj);
 }
 
-function list_eval (env, exp_list)
+function exp_list_eval (env, exp_list)
 {
     let base = frame_stack_length (env);
     let frame = new simple_frame_t (exp_list);
@@ -212,14 +220,22 @@ class call_exp_t
 
     exe (env, scope)
     {
+        let den = name_dict_get (env, this.name);
+        den.den_exe (env);
+    }
+}
+
+class get_exp_t
+{
+    constructor (name)
+    {
+        this.name = name;
+    }
+
+    exe (env, scope)
+    {
         let obj = scope_get (scope, this.name);
-        if (obj) {
-            obj.apply (env);
-        }
-        else {
-            let den = name_dict_get (env, this.name);
-            den.den_exe (env);
-        }
+        obj.apply (env);
     }
 }
 
@@ -246,7 +262,7 @@ class clo_exp_t
 
     exe (env, scope)
     {
-        let clo_obj = new clo_obj_t (this.exp_list, scope);
+        let clo_obj = new clo_obj_t (this.exp_list, scope.clone ());
         data_stack_push (env, clo_obj);
     }
 }
@@ -273,7 +289,7 @@ class case_exp_t
     }
 }
 
-class create_exp_t
+class dot_exp_t
 {
     constructor ()
     {
@@ -389,10 +405,18 @@ class clo_obj_t
     }
 }
 
-function run (code)
+function interpret_code (env, code)
 {
-    let env = new env_t ();
-    compile_code (env, code);
+
+}
+
+function interpret_sexp_list (env, sexp_list)
+{
+
+}
+
+function interpret_sexp (env, sexp)
+{
 
 }
 
@@ -405,15 +429,15 @@ function test ()
         undefined,
         [
             new set_exp_t ("x"),
-            new call_exp_t ("x"),
-            new call_exp_t ("x"),
+            new get_exp_t ("x"),
+            new get_exp_t ("x"),
         ]
     );
 
     data_stack_push (env, new data_obj_t ("nat", "><><><"));
     scope_stack_push (env, new scope_t ());
     name_dict_set (env, "dup", fun_den);
-    list_eval (env, [
+    exp_list_eval (env, [
         new call_exp_t ("dup"),
     ]);
     console.log (env);
