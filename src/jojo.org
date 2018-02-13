@@ -3,6 +3,8 @@
 
 * [todo-stack]
 
+*** gene_dict_t
+
 *** create_exp_t
 
     - how dot_obj_t is used
@@ -12,10 +14,6 @@
 *** dot_obj_t
 
 *** clone_exp_t
-
-*** disp_dict_t
-
-*** gene_dict_t
 
 *** *finish the semantic*
 
@@ -48,6 +46,29 @@
 * prolog
 
 *** utility
+
+***** print
+
+      #+begin_src js
+      let print = console.log;
+      #+end_src
+
+***** vect_equal_p
+
+      #+begin_src js
+      function vect_equal_p (v1, v2)
+      {
+          if (v1.length !== v2.length)
+              return false;
+          let index = 0;
+          while (index < v1.length) {
+              if (v1[index] !== v2[index])
+                  return false;
+              index = index + 1;
+          }
+          return true;
+      }
+      #+end_src
 
 ***** error
 
@@ -259,7 +280,7 @@
       #+begin_src js
       function frame_end_p (frame)
       {
-          return frame.index == frame.length;
+          return frame.index === frame.length;
       }
       #+end_src
 
@@ -393,10 +414,10 @@
                 scope_stack_drop (env);
         }
         // {
-        //     console.log ("- eval_one_step");
-        //     console.log ("  env :", env);
-        //     console.log ("  exp :", exp);
-        //     console.log ("  scope :", scope);
+        //     print ("- eval_one_step");
+        //     print ("  env :", env);
+        //     print ("  exp :", exp);
+        //     print ("  scope :", scope);
         // }
         exp.exe (env, scope);
     }
@@ -429,7 +450,7 @@
     function exp_vect_to_obj (env, exp_vect)
     {
         let obj_vect = exp_vect_to_obj_vect (env, exp_vect);
-        assert (obj_vect.length == 1);
+        assert (obj_vect.length === 1);
         return obj_vect[0];
     }
     #+end_src
@@ -892,12 +913,35 @@
     }
     #+end_src
 
-*** >< disp_dict_t -- type_name_vect to fun_den
+*** disp_dict_t -- type_name_vect to fun_den
 
     #+begin_src js
     class disp_dict_t
     {
+        constructor ()
+        {
+            this.dict = new Map ();
+        }
 
+        get (type_name_vect)
+        {
+            for (let [key, value] of this.dict) {
+                if (vect_equal_p (key, type_name_vect))
+                    return value;
+            }
+            return undefined;
+        }
+
+        set (type_name_vect, fun_den)
+        {
+            for (let key of this.dict.keys ()) {
+                if (vect_equal_p (key, type_name_vect)) {
+                    this.dict.set (key, fun_den);
+                    return;
+                }
+            }
+            this.dict.set (type_name_vect, fun_den)
+        }
     }
     #+end_src
 
@@ -963,7 +1007,7 @@
         exp_vect_eval (env, [
             new call_exp_t ("dup"),
         ]);
-        console.log (env);
+        print (env);
     }
 
     test ();
