@@ -3,7 +3,11 @@
 
 * [todo-stack]
 
-*** finish the semantic about exp
+*** collect -- with the help of mark_stack
+
+*** create_exp_t
+
+    - how dot_obj_t is used
 
 *** field_dict_t
 
@@ -11,32 +15,33 @@
 
 *** gene_dict_t
 
+*** finish the semantic
+
 *** read sexp
+
+*** write data out in a standard way
 
 *** interpret
 
 *** test
 
-*** ffi
-
-*** optimize name_dict_t
-
-*** optimize scope_t -- use nameless local variable
+*** ffi to js
 
 * [note]
 
-*** to be useful
+*** as prototype
 
-    - write data out in a standard way
+    - without optimizing the searches
+      involved in :
+      - name_dict
+      - scope
+      - data field
+      - sig to gene
+      - gene to disp
+      this implementation can only be a prototype.
 
-    - ffi to js
-
-    - macro system
-
-    - module system
-      must use js ecosystem ?
-
-    - type class
+    - to do the optimizations well,
+      a compiler is needed.
 
 * prolog
 
@@ -70,7 +75,7 @@
 
 *** name_dict
 
-***** name_dict_t
+***** name_dict_t -- name to den
 
       #+begin_src js
       class name_dict_t
@@ -389,6 +394,33 @@
     }
     #+end_src
 
+* >< collect
+
+*** exp_vect_to_obj_vect
+
+    #+begin_src js
+    function exp_vect_to_obj_vect (env, exp_vect)
+    {
+    }
+    #+end_src
+
+*** exp_vect_to_obj
+
+    #+begin_src js
+    function exp_vect_to_obj (env, exp_vect)
+    {
+    }
+    #+end_src
+
+*** exp_to_obj
+
+    #+begin_src js
+    function exp_to_obj (env, exp)
+    {
+
+    }
+    #+end_src
+
 * exp -- expression
 
 *** call_exp_t
@@ -468,15 +500,15 @@
     #+begin_src js
     class apply_exp_t
     {
-       constructor () { }
+        constructor () { }
 
-       exe (env, scope)
-       {
+        exe (env, scope)
+        {
             let clo_obj = data_stack_pop (env);
             let frame = new scoping_frame_t (clo_obj.exp_vect);
             frame_stack_push (env, frame);
             scope_stack_push (env, clo_obj.scope);
-       }
+        }
     }
     #+end_src
 
@@ -485,25 +517,38 @@
     #+begin_src js
     class case_exp_t
     {
-        constructor (clause_dict)
+        constructor (exp_vect, clause_dict)
         {
+            this.exp_vect = exp_vect;
             this.clause_dict = clause_dict;
         }
 
         exe (env, scope)
         {
-            let obj = data_stack_pop ();
+            let obj = exp_vect_to_obj (env, exp_vect);
             assert (obj instanceof data_obj_t);
             let exp_vect = this.clause_dict.get (obj.type_name);
-            let frame = new simple_frame_t (exp_vect);
-            frame_stack_push (env, frame);
+            if (exp_vect) {
+                let frame = new simple_frame_t (exp_vect);
+                frame_stack_push (env, frame);
+            }
+            else {
+                let exp_vect = this.clause_dict.get ("else");
+                if (exp_vect) {
+                    let frame = new simple_frame_t (exp_vect);
+                    frame_stack_push (env, frame);
+                }
+                else {
+                    error ();
+                }
+            }
         }
     }
     #+end_src
 
 *** clause_dict
 
-***** clause_dict_t
+***** clause_dict_t -- type_name to exp_vect
 
       #+begin_src js
       class clause_dict_t
@@ -553,11 +598,31 @@
 
 *** >< field_dict
 
-***** field_dict_t
+***** field_dict_t -- field_name to obj
 
       #+begin_src js
 
       #+end_src
+
+*** field_exp_t
+
+    #+begin_src js
+    class field_exp_t
+    {
+        constructor (field_name)
+        {
+            this.field_name = field_name;
+        }
+
+        exe (env, scope)
+        {
+            let data_obj = data_stack_pop (env);
+            assert (data_obj instanceof data_obj_t);
+            let obj = data_obj.field_dict.get (field_name);
+            data_stack_push (env, obj);
+        }
+    }
+    #+end_src
 
 *** >< dot_exp_t
 
@@ -581,9 +646,9 @@
     #+begin_src js
     class create_exp_t
     {
-        constructor ()
+        constructor (type_name)
         {
-
+            this.type_name = type_name;
         }
 
         exe (env, scope)
@@ -598,32 +663,11 @@
     #+begin_src js
     class clone_exp_t
     {
-        constructor ()
-        {
-
-        }
+        constructor () { }
 
         exe (env, scope)
         {
 
-        }
-    }
-    #+end_src
-
-*** arrow_exp_t
-
-    #+begin_src js
-    class arrow_exp_t
-    {
-        constructor (ante, succ)
-        {
-            this.ante = ante;
-            this.succ = succ;
-        }
-
-        exe (env, scope)
-        {
-            error ();
         }
     }
     #+end_src
@@ -655,6 +699,7 @@
     {
         constructor (exp_vect, scope)
         {
+            this.type_name = "$arrow-t";
             this.exp_vect = exp_vect;
             this.scope = scope;
         }
@@ -771,7 +816,7 @@
 
 *** gene_dict
 
-***** >< gene_dict_t
+***** >< gene_dict_t -- type_name_vect to gene_den
 
       #+begin_src js
       class gene_dict_t
@@ -817,7 +862,7 @@
 
 ***** disp_dict
 
-******* >< disp_dict_t
+******* >< disp_dict_t -- type_name_vect to fun_den
 
         #+begin_src js
         class disp_dict_t
