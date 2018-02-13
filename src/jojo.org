@@ -13,8 +13,6 @@
 
 *** clone_exp_t
 
-*** collect -- with the help of mark_stack
-
 *** disp_dict_t
 
 *** gene_dict_t
@@ -404,13 +402,24 @@
     }
     #+end_src
 
-* >< collect
+* collect
 
 *** exp_vect_to_obj_vect
 
     #+begin_src js
     function exp_vect_to_obj_vect (env, exp_vect)
     {
+        let mark = data_stack_length (env);
+        exp_vect_eval (env, exp_vect);
+        let length = data_stack_length (env);
+        let obj_vect = [];
+        while (length > mark) {
+           let obj = data_stack_pop (env);
+           obj_vect.unshift (obj);
+           length = length - 1;
+        }
+        return obj_vect;
+
     }
     #+end_src
 
@@ -419,6 +428,9 @@
     #+begin_src js
     function exp_vect_to_obj (env, exp_vect)
     {
+        let obj_vect = exp_vect_to_obj_vect (env, exp_vect);
+        assert (obj_vect.length == 1);
+        return obj_vect[0];
     }
     #+end_src
 
@@ -427,7 +439,7 @@
     #+begin_src js
     function exp_to_obj (env, exp)
     {
-
+        return exp_vect_to_obj (env, [exp]);
     }
     #+end_src
 

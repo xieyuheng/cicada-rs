@@ -9,6 +9,7 @@ class env_t
     {
         this.name_dict = new name_dict_t ();
         this.data_stack = [];
+        this.mark_stack = [];
         this.frame_stack = [];
         this.scope_stack = [];
     }
@@ -73,6 +74,32 @@ function data_stack_peek (env, index)
 function data_stack_length (env)
 {
     return env.data_stack.length;
+}
+
+function mark_stack_push (env, mark)
+{
+    env.mark_stack.push (mark);
+}
+
+function mark_stack_pop (env)
+{
+    return env.mark_stack.pop ();
+}
+
+function mark_stack_tos (env)
+{
+    let length = mark_stack_length (env);
+    return env.mark_stack[length - 1];
+}
+
+function mark_stack_drop (env)
+{
+    mark_stack_pop (env);
+}
+
+function mark_stack_length (env)
+{
+    return env.mark_stack.length;
 }
 
 function frame_stack_push (env, frame)
