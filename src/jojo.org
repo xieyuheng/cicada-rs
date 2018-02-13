@@ -3,8 +3,6 @@
 
 * [todo-stack]
 
-*** create_exp_t
-
 *** clone_exp_t
 
 *** *finish the semantic*
@@ -702,7 +700,7 @@
     }
     #+end_src
 
-*** >< create_exp_t
+*** create_exp_t
 
     #+begin_src js
     class create_exp_t
@@ -716,7 +714,9 @@
         {
             let dot_obj = data_stack_pop (env);
             assert (dot_obj instanceof dot_obj_t);
-
+            let data_obj =
+                new data_obj_t (this.type_name, dot_obj.field_dict);
+            data_stack_push (env, data_obj);
         }
     }
     #+end_src
