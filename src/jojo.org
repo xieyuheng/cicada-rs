@@ -3,11 +3,13 @@
 
 * [todo-stack]
 
-*** finish the semantic
+*** finish the semantic about exp
 
-*** optimize scope_t -- use nameless local variable
+*** field_dict_t
 
-*** optimize name_dict_t
+*** disp_dict_t
+
+*** gene_dict_t
 
 *** read sexp
 
@@ -16,6 +18,10 @@
 *** test
 
 *** ffi
+
+*** optimize name_dict_t
+
+*** optimize scope_t -- use nameless local variable
 
 * [note]
 
@@ -33,6 +39,17 @@
     - type class
 
 * prolog
+
+*** utility
+
+***** error
+
+      #+begin_src js
+      function error ()
+      {
+          assert (false);
+      }
+      #+end_src
 
 * env -- environment
 
@@ -65,12 +82,12 @@
 
           get (name)
           {
-              return this.dict.get(name);
+              return this.dict.get (name);
           }
 
           set (name, den)
           {
-              this.dict.set(name, den);
+              this.dict.set (name, den);
           }
       }
       #+end_src
@@ -118,8 +135,8 @@
       #+begin_src js
       function data_stack_tos (env)
       {
-           let length = data_stack_length (env);
-           return env.data_stack[length - 1];
+          let length = data_stack_length (env);
+          return env.data_stack[length - 1];
       }
       #+end_src
 
@@ -129,6 +146,17 @@
       function data_stack_drop (env)
       {
           data_stack_pop (env);
+      }
+      #+end_src
+
+***** data_stack_peek
+
+      #+begin_src js
+      function data_stack_peek (env, index)
+      {
+          // index start from 1
+          let length = data_stack_length (env);
+          return env.data_stack[length - index];
       }
       #+end_src
 
@@ -166,8 +194,8 @@
       #+begin_src js
       function frame_stack_tos (env)
       {
-           let length = frame_stack_length (env);
-           return env.frame_stack[length - 1];
+          let length = frame_stack_length (env);
+          return env.frame_stack[length - 1];
       }
       #+end_src
 
@@ -196,10 +224,10 @@
       #+begin_src js
       class scoping_frame_t
       {
-          constructor (exp_list)
+          constructor (exp_vect)
           {
-              this.exp_list = exp_list;
-              this.length = exp_list.length;
+              this.exp_vect = exp_vect;
+              this.length = exp_vect.length;
               this.index = 0;
           }
       }
@@ -210,10 +238,10 @@
       #+begin_src js
       class simple_frame_t
       {
-          constructor (exp_list)
+          constructor (exp_vect)
           {
-              this.exp_list = exp_list;
-              this.length = exp_list.length;
+              this.exp_vect = exp_vect;
+              this.length = exp_vect.length;
               this.index = 0;
           }
       }
@@ -233,7 +261,7 @@
       #+begin_src js
       function frame_next_exp (frame)
       {
-          let exp = frame.exp_list[frame.index];
+          let exp = frame.exp_vect[frame.index];
           frame.index = frame.index + 1;
           return exp;
       }
@@ -264,8 +292,8 @@
       #+begin_src js
       function scope_stack_tos (env)
       {
-           let length = scope_stack_length (env);
-           return env.scope_stack[length - 1];
+          let length = scope_stack_length (env);
+          return env.scope_stack[length - 1];
       }
       #+end_src
 
@@ -301,51 +329,33 @@
 
           get (name)
           {
-              return this.dict.get(name);
+              return this.dict.get (name);
           }
 
           set (name, obj)
           {
-              this.dict.set(name, obj);
+              this.dict.set (name, obj);
           }
 
           clone ()
           {
               let scope = new scope_t ();
               for (let [name, obj] of this.dict) {
-                  scope.set(name, obj);
+                  scope.set (name, obj);
               }
           }
       }
       #+end_src
 
-***** scope_get
-
-      #+begin_src js
-      function scope_get (scope, name)
-      {
-          return scope.get(name);
-      }
-      #+end_src
-
-***** scope_set
-
-      #+begin_src js
-      function scope_set (scope, name, obj)
-      {
-          scope.set(name, obj);
-      }
-      #+end_src
-
 * eval
 
-*** exp_list_eval
+*** exp_vect_eval
 
     #+begin_src js
-    function exp_list_eval (env, exp_list)
+    function exp_vect_eval (env, exp_vect)
     {
         let base = frame_stack_length (env);
-        let frame = new simple_frame_t (exp_list);
+        let frame = new simple_frame_t (exp_vect);
         frame_stack_push (env, frame);
         eval_with_base (env, base);
     }
@@ -411,7 +421,7 @@
 
         exe (env, scope)
         {
-            let obj = scope_get (scope, this.name);
+            let obj = scope.get (scope, this.name);
             obj.apply (env);
         }
     }
@@ -430,7 +440,7 @@
         exe (env, scope)
         {
             let obj = data_stack_pop (env);
-            scope_set (scope, this.local_name, obj);
+            scope.set (scope, this.local_name, obj);
         }
     }
     #+end_src
@@ -440,14 +450,14 @@
     #+begin_src js
     class clo_exp_t
     {
-        constructor (exp_list)
+        constructor (exp_vect)
         {
-            this.exp_list = exp_list;
+            this.exp_vect = exp_vect;
         }
 
         exe (env, scope)
         {
-            let clo_obj = new clo_obj_t (this.exp_list, scope.clone ());
+            let clo_obj = new clo_obj_t (this.exp_vect, scope.clone ());
             data_stack_push (env, clo_obj);
         }
     }
@@ -463,27 +473,93 @@
        exe (env, scope)
        {
             let clo_obj = data_stack_pop (env);
-            let frame = new scoping_frame_t (clo_obj.exp_list);
+            let frame = new scoping_frame_t (clo_obj.exp_vect);
             frame_stack_push (env, frame);
             scope_stack_push (env, clo_obj.scope);
        }
     }
     #+end_src
 
-*** >< case_exp_t
+*** case_exp_t
 
     #+begin_src js
     class case_exp_t
     {
-        constructor (arg, clause_dict)
+        constructor (clause_dict)
         {
-            this.arg = arg;
             this.clause_dict = clause_dict;
+        }
+
+        exe (env, scope)
+        {
+            let obj = data_stack_pop ();
+            assert (obj instanceof data_obj_t);
+            let exp_vect = this.clause_dict.get (obj.type_name);
+            let frame = new simple_frame_t (exp_vect);
+            frame_stack_push (env, frame);
         }
     }
     #+end_src
 
-*** ><>< dot_exp_t
+*** clause_dict
+
+***** clause_dict_t
+
+      #+begin_src js
+      class clause_dict_t
+      {
+          constructor ()
+          {
+              this.dict = new Map ();
+          }
+
+          get (type_name)
+          {
+              return this.dict.get (type_name);
+          }
+
+          set (type_name, exp_vect)
+          {
+              this.dict.set (type_name, exp_vect);
+          }
+      }
+      #+end_src
+
+*** cons_exp_t
+
+    #+begin_src js
+    class cons_exp_t
+    {
+        constructor (type_name)
+        {
+            this.type_name = type_name;
+        }
+
+        exe (env, scope)
+        {
+            let type_name = this.type_name;
+            let type_den = name_dict_get (type_name);
+            assert (type_den instanceof type_den_t);
+            let field_dict = new field_dict_t ();
+            for (let field of type_den.reversed_field_vect) {
+                let obj = data_stack_pop (env);
+                field_dict.set (field, obj)
+            }
+            let data_obj = new data_obj_t (type_name, field_dict);
+            data_stack_push (env, data_obj);
+        }
+    }
+    #+end_src
+
+*** >< field_dict
+
+***** field_dict_t
+
+      #+begin_src js
+
+      #+end_src
+
+*** >< dot_exp_t
 
     #+begin_src js
     class dot_exp_t
@@ -492,14 +568,32 @@
         {
 
         }
+
+        exe (env, scope)
+        {
+
+        }
     }
     #+end_src
 
-*** ><>< cons_exp_t
+*** >< create_exp_t
 
-*** ><>< create_exp_t
+    #+begin_src js
+    class create_exp_t
+    {
+        constructor ()
+        {
 
-*** ><>< clone_exp_t
+        }
+
+        exe (env, scope)
+        {
+
+        }
+    }
+    #+end_src
+
+*** >< clone_exp_t
 
     #+begin_src js
     class clone_exp_t
@@ -508,107 +602,28 @@
         {
 
         }
-    }
-    #+end_src
 
-* >< collect
-
-*** collect_obj_list
-
-    #+begin_src js
-    // obj list
-    function collect_obj_list (env, exp_list)
-    {
-    }
-    #+end_src
-
-*** collect_obj
-
-    #+begin_src js
-    // obj list
-    function collect_obj (env, exp)
-    {
-    }
-    #+end_src
-
-* den -- denotation
-
-*** >< union_den_t
-
-    #+begin_src js
-    class union_den_t
-    {
-        constructor (name, type_arrow, union_list)
+        exe (env, scope)
         {
-            this.name = name;
-            this.type_arrow = type_arrow;
-            this.union_list = union_list;
+
         }
     }
     #+end_src
 
-*** >< type_den_t
+*** arrow_exp_t
 
     #+begin_src js
-    class type_den_t
+    class arrow_exp_t
     {
-        constructor (name, type_arrow, cons_arrow)
+        constructor (ante, succ)
         {
-            this.name = name;
-            this.type_arrow = type_arrow;
-            this.cons_arrow = cons_arrow;
-        }
-    }
-    #+end_src
-
-*** fun_den_t
-
-    #+begin_src js
-    class fun_den_t
-    {
-        constructor (name, type_arrow, exp_list)
-        {
-            this.name = name;
-            this.type_arrow = type_arrow;
-            this.exp_list = exp_list;
+            this.ante = ante;
+            this.succ = succ;
         }
 
-        den_exe (env)
+        exe (env, scope)
         {
-            // ><><><
-            // handle type_arrow
-            let frame = new scoping_frame_t (this.exp_list);
-            let scope = new scope_t ();
-            frame_stack_push (env, frame);
-            scope_stack_push (env, scope);
-        }
-    }
-    #+end_src
-
-*** >< gene_den_t
-
-    #+begin_src js
-    class gene_den_t
-    {
-        constructor (name, type_arrow, exp_list)
-        {
-            this.name = name;
-            this.type_arrow = type_arrow;
-            this.exp_list = exp_list;
-        }
-    }
-    #+end_src
-
-*** >< disp_den_t
-
-    #+begin_src js
-    class disp_den_t
-    {
-        constructor (name, type_arrow, exp_list)
-        {
-            this.name = name;
-            this.type_arrow = type_arrow;
-            this.exp_list = exp_list;
+            error ();
         }
     }
     #+end_src
@@ -620,10 +635,10 @@
     #+begin_src js
     class data_obj_t
     {
-        constructor (type_name, fields)
+        constructor (type_name, field_dict)
         {
             this.type_name = type_name;
-            this.fields = fields;
+            this.field_dict = field_dict;
         }
 
         apply (env)
@@ -638,20 +653,178 @@
     #+begin_src js
     class clo_obj_t
     {
-        constructor (exp_list, scope)
+        constructor (exp_vect, scope)
         {
-            this.exp_list = exp_list;
+            this.exp_vect = exp_vect;
             this.scope = scope;
         }
 
         apply (env)
         {
-            let frame = new scoping_frame_t (this.exp_list);
+            let frame = new scoping_frame_t (this.exp_vect);
             frame_stack_push (env, frame);
             scope_stack_push (env, this.scope);
         }
     }
     #+end_src
+
+*** >< dot_obj_t
+
+    #+begin_src js
+    class dot_obj_t
+    {
+        constructor ()
+        {
+
+        }
+
+        apply (env)
+        {
+            data_stack_push (env, this);
+        }
+    }
+    #+end_src
+
+* den -- denotation
+
+*** union_den_t
+
+    #+begin_src js
+    class union_den_t
+    {
+        constructor (union_vect)
+        {
+            this.union_vect = union_vect;
+        }
+
+        den_exe (env)
+        {
+            error ();
+        }
+    }
+    #+end_src
+
+*** type_den_t
+
+    #+begin_src js
+    class type_den_t
+    {
+        constructor (reversed_field_vect)
+        {
+            this.reversed_field_vect = reversed_field_vect;
+        }
+
+        den_exe (env)
+        {
+            error ();
+        }
+    }
+    #+end_src
+
+*** fun_den_t
+
+    #+begin_src js
+    class fun_den_t
+    {
+        constructor (exp_vect)
+        {
+            this.exp_vect = exp_vect;
+        }
+
+        den_exe (env)
+        {
+            let frame = new scoping_frame_t (this.exp_vect);
+            let scope = new scope_t ();
+            frame_stack_push (env, frame);
+            scope_stack_push (env, scope);
+        }
+    }
+    #+end_src
+
+*** sig_den_t
+
+    #+begin_src js
+    class sig_den_t
+    {
+        constructor (input_arity, output_arity)
+        {
+            this.input_arity = input_arity;
+            this.output_arity = output_arity;
+            this.gene_dict = new gene_dict_t ();
+        }
+
+        den_exe (env)
+        {
+            let type_name_vect = [];
+            let counter = 0;
+            while (counter < this.input_arity) {
+                let obj = data_stack_peek (env, counter);
+                type_name_vect.unshift (obj.type_name);
+                counter = counter + 1;
+            }
+            let gene_den = this.gene_dict.get (type_name_vect);
+            assert (gene_den);
+            gene_den.gene_den_exe (env, type_name_vect);
+        }
+    }
+    #+end_src
+
+*** gene_dict
+
+***** >< gene_dict_t
+
+      #+begin_src js
+      class gene_dict_t
+      {
+          constructor ()
+          {
+              this.dict = new Map ();
+          }
+
+          get (gene_name)
+          {
+
+          }
+
+          set (gene_name, gene_den)
+          {
+
+          }
+      }
+      #+end_src
+
+***** gene_den_t
+
+      #+begin_src js
+      class gene_den_t
+      {
+          constructor (default_fun_den)
+          {
+              this.default_fun_den = default_fun_den;
+              this.disp_dict = new disp_dict_t ();
+          }
+
+          gene_den_exe (env, type_name_vect)
+          {
+              let fun_den = this.disp_dict.get (type_name_vect);
+              if (fun_den);
+                  fun_den.den_exe (env);
+              else
+                  this.default_fun_den.den_exe (env);
+          }
+      }
+      #+end_src
+
+***** disp_dict
+
+******* >< disp_dict_t
+
+        #+begin_src js
+        class disp_dict_t
+        {
+
+        }
+        #+end_src
 
 * >< sexp -- string expression
 
@@ -672,10 +845,10 @@
     }
     #+end_src
 
-*** >< interpret_sexp_list
+*** >< interpret_sexp_vect
 
     #+begin_src js
-    function interpret_sexp_list (env, sexp_list)
+    function interpret_sexp_vect (env, sexp_vect)
     {
 
     }
@@ -714,7 +887,7 @@
         data_stack_push (env, new data_obj_t ("nat", "><><><"));
         scope_stack_push (env, new scope_t ());
         name_dict_set (env, "dup", fun_den);
-        exp_list_eval (env, [
+        exp_vect_eval (env, [
             new call_exp_t ("dup"),
         ]);
         console.log (env);
