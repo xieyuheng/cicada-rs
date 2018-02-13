@@ -3,13 +3,11 @@
 
 * [todo-stack]
 
-*** collect -- with the help of mark_stack
-
 *** create_exp_t
 
     - how dot_obj_t is used
 
-*** field_dict_t
+*** collect -- with the help of mark_stack
 
 *** disp_dict_t
 
@@ -546,29 +544,27 @@
     }
     #+end_src
 
-*** clause_dict
+*** >< clause_dict_t -- type_name to exp_vect
 
-***** clause_dict_t -- type_name to exp_vect
+    #+begin_src js
+    class clause_dict_t
+    {
+        constructor ()
+        {
+            this.dict = new Map ();
+        }
 
-      #+begin_src js
-      class clause_dict_t
-      {
-          constructor ()
-          {
-              this.dict = new Map ();
-          }
+        get (type_name)
+        {
+            return this.dict.get (type_name);
+        }
 
-          get (type_name)
-          {
-              return this.dict.get (type_name);
-          }
-
-          set (type_name, exp_vect)
-          {
-              this.dict.set (type_name, exp_vect);
-          }
-      }
-      #+end_src
+        set (type_name, exp_vect)
+        {
+            this.dict.set (type_name, exp_vect);
+        }
+    }
+    #+end_src
 
 *** cons_exp_t
 
@@ -596,13 +592,27 @@
     }
     #+end_src
 
-*** >< field_dict
+*** field_dict_t -- field_name to obj
 
-***** field_dict_t -- field_name to obj
+    #+begin_src js
+    class field_dict_t
+    {
+        constructor ()
+        {
+            this.dict = new Map ();
+        }
 
-      #+begin_src js
+        get (field_name)
+        {
+            return this.dict.get (field_name);
+        }
 
-      #+end_src
+        set (field_name, obj)
+        {
+            this.dict.set (field_name, obj);
+        }
+    }
+    #+end_src
 
 *** field_exp_t
 
@@ -814,62 +824,58 @@
     }
     #+end_src
 
-*** gene_dict
+*** >< gene_dict_t -- type_name_vect to gene_den
 
-***** >< gene_dict_t -- type_name_vect to gene_den
+    #+begin_src js
+    class gene_dict_t
+    {
+        constructor ()
+        {
+            this.dict = new Map ();
+        }
 
-      #+begin_src js
-      class gene_dict_t
-      {
-          constructor ()
-          {
-              this.dict = new Map ();
-          }
-
-          get (gene_name)
-          {
-
-          }
-
-          set (gene_name, gene_den)
-          {
-
-          }
-      }
-      #+end_src
-
-***** gene_den_t
-
-      #+begin_src js
-      class gene_den_t
-      {
-          constructor (default_fun_den)
-          {
-              this.default_fun_den = default_fun_den;
-              this.disp_dict = new disp_dict_t ();
-          }
-
-          gene_den_exe (env, type_name_vect)
-          {
-              let fun_den = this.disp_dict.get (type_name_vect);
-              if (fun_den);
-                  fun_den.den_exe (env);
-              else
-                  this.default_fun_den.den_exe (env);
-          }
-      }
-      #+end_src
-
-***** disp_dict
-
-******* >< disp_dict_t -- type_name_vect to fun_den
-
-        #+begin_src js
-        class disp_dict_t
+        get (gene_name)
         {
 
         }
-        #+end_src
+
+        set (gene_name, gene_den)
+        {
+
+        }
+    }
+    #+end_src
+
+*** gene_den_t
+
+    #+begin_src js
+    class gene_den_t
+    {
+        constructor (default_fun_den)
+        {
+            this.default_fun_den = default_fun_den;
+            this.disp_dict = new disp_dict_t ();
+        }
+
+        gene_den_exe (env, type_name_vect)
+        {
+            let fun_den = this.disp_dict.get (type_name_vect);
+            if (fun_den);
+                fun_den.den_exe (env);
+            else
+                this.default_fun_den.den_exe (env);
+        }
+    }
+    #+end_src
+
+*** >< disp_dict_t -- type_name_vect to fun_den
+
+    #+begin_src js
+    class disp_dict_t
+    {
+
+    }
+    #+end_src
 
 * >< sexp -- string expression
 
