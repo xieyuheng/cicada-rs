@@ -3,11 +3,13 @@
 
 * [todo-stack]
 
-*** read sexp
+*** scan
+
+*** sexp
 
 *** write data out in a standard way
 
-*** interpret
+*** eval
 
 *** test
 
@@ -361,34 +363,12 @@
       }
       #+end_src
 
-* eval
+* run -- run programs
 
-*** exp_vect_eval
-
-    #+begin_src js
-    function exp_vect_eval (env, exp_vect)
-    {
-        let base = frame_stack_length (env);
-        let frame = new simple_frame_t (exp_vect);
-        frame_stack_push (env, frame);
-        eval_with_base (env, base);
-    }
-    #+end_src
-
-*** eval_with_base
+*** run_one_step
 
     #+begin_src js
-    function eval_with_base (env, base)
-    {
-        while (frame_stack_length (env) > base)
-            eval_one_step (env);
-    }
-    #+end_src
-
-*** eval_one_step
-
-    #+begin_src js
-    function eval_one_step (env)
+    function run_one_step (env)
     {
         let frame = frame_stack_tos (env);
         let scope = scope_stack_tos (env);
@@ -400,7 +380,7 @@
                 scope_stack_drop (env);
         }
         // {
-        //     print ("- eval_one_step");
+        //     print ("- run_one_step");
         //     print ("  env :", env);
         //     print ("  exp :", exp);
         //     print ("  scope :", scope);
@@ -409,7 +389,27 @@
     }
     #+end_src
 
-* collect
+*** run_with_base
+
+    #+begin_src js
+    function run_with_base (env, base)
+    {
+        while (frame_stack_length (env) > base)
+            run_one_step (env);
+    }
+    #+end_src
+
+*** run_exp_vect
+
+    #+begin_src js
+    function run_exp_vect (env, exp_vect)
+    {
+        let base = frame_stack_length (env);
+        let frame = new simple_frame_t (exp_vect);
+        frame_stack_push (env, frame);
+        run_with_base (env, base);
+    }
+    #+end_src
 
 *** exp_vect_to_obj_vect
 
@@ -417,7 +417,7 @@
     function exp_vect_to_obj_vect (env, exp_vect)
     {
         let mark = data_stack_length (env);
-        exp_vect_eval (env, exp_vect);
+        run_exp_vect (env, exp_vect);
         let length = data_stack_length (env);
         let obj_vect = [];
         while (length > mark) {
@@ -1010,36 +1010,69 @@
 
 * >< sexp -- string expression
 
-*** ><
+*** scan -- lexer for sexp
 
-* >< prim -- primitive
+***** code_scan
 
-*** string_t
+      - ';' as line comment
 
-* >< interpret
+      #+begin_src js
 
-*** >< interpret_code
+      #+end_src
+
+***** ><
+
+*** null
+
+*** cons_t
+
+*** [note] syntax sugar
+
+    - [...] -> (begin ...)
+    - {...} -> (clo ...)
+    - ' ... -> (quote ...)
+    - ` ... -> (partquote ...)
+
+*** parse_sexp_vect -- string vect to sexp vect
+
+*** parse_sexp
+
+*** parse_sexp_cons_until_ket
+
+*** sexp_print
+
+*** sexp_list_print
+
+* prim -- primitive
+
+*** >< p_string
+
+*** >< p_sexp
+
+* eval -- evaluate
+
+*** >< eval_code
 
     #+begin_src js
-    function interpret_code (env, code)
+    function eval_code (env, code)
     {
 
     }
     #+end_src
 
-*** >< interpret_sexp_vect
+*** >< eval_sexp_vect
 
     #+begin_src js
-    function interpret_sexp_vect (env, sexp_vect)
+    function eval_sexp_vect (env, sexp_vect)
     {
 
     }
     #+end_src
 
-*** >< interpret_sexp
+*** >< eval_sexp
 
     #+begin_src js
-    function interpret_sexp (env, sexp)
+    function eval_sexp (env, sexp)
     {
 
     }
@@ -1067,7 +1100,7 @@
         data_stack_push (env, new data_obj_t ("nat", "><><><"));
         scope_stack_push (env, new scope_t ());
         name_dict_set (env, "dup", fun_den);
-        exp_vect_eval (env, [
+        run_exp_vect (env, [
             new call_exp_t ("dup"),
         ]);
         print (env);
