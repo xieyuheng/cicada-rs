@@ -5,11 +5,7 @@
 
 *** create_exp_t
 
-    - how dot_obj_t is used
-
 *** dot_exp_t
-
-*** dot_obj_t
 
 *** clone_exp_t
 
@@ -677,7 +673,7 @@
     }
     #+end_src
 
-*** >< dot_exp_t
+*** dot_exp_t
 
     #+begin_src js
     class dot_exp_t
@@ -747,6 +743,23 @@
     }
     #+end_src
 
+*** dot_obj_t
+
+    #+begin_src js
+    class dot_obj_t
+    {
+        constructor (field_dict)
+        {
+            this.field_dict = field_dict;
+        }
+
+        apply (env)
+        {
+            data_stack_push (env, this);
+        }
+    }
+    #+end_src
+
 *** clo_obj_t
 
     #+begin_src js
@@ -764,23 +777,6 @@
             let frame = new scoping_frame_t (this.exp_vect);
             frame_stack_push (env, frame);
             scope_stack_push (env, this.scope);
-        }
-    }
-    #+end_src
-
-*** >< dot_obj_t
-
-    #+begin_src js
-    class dot_obj_t
-    {
-        constructor ()
-        {
-
-        }
-
-        apply (env)
-        {
-            data_stack_push (env, this);
         }
     }
     #+end_src
