@@ -5,8 +5,6 @@
 
 *** create_exp_t
 
-*** dot_exp_t
-
 *** clone_exp_t
 
 *** *finish the semantic*
@@ -554,23 +552,23 @@
     #+begin_src js
     class case_exp_t
     {
-        constructor (exp_vect, clause_dict)
+        constructor (exp_vect, case_clause_dict)
         {
             this.exp_vect = exp_vect;
-            this.clause_dict = clause_dict;
+            this.case_clause_dict = case_clause_dict;
         }
 
         exe (env, scope)
         {
             let obj = exp_vect_to_obj (env, exp_vect);
             assert (obj instanceof data_obj_t);
-            let exp_vect = this.clause_dict.get (obj.type_name);
+            let exp_vect = this.case_clause_dict.get (obj.type_name);
             if (exp_vect) {
                 let frame = new simple_frame_t (exp_vect);
                 frame_stack_push (env, frame);
             }
             else {
-                let exp_vect = this.clause_dict.get ("else");
+                let exp_vect = this.case_clause_dict.get ("else");
                 if (exp_vect) {
                     let frame = new simple_frame_t (exp_vect);
                     frame_stack_push (env, frame);
@@ -583,10 +581,10 @@
     }
     #+end_src
 
-*** clause_dict_t -- type_name to exp_vect
+*** case_clause_dict_t -- type_name to exp_vect
 
     #+begin_src js
-    class clause_dict_t
+    class case_clause_dict_t
     {
         constructor ()
         {
@@ -621,9 +619,9 @@
             let type_den = name_dict_get (type_name);
             assert (type_den instanceof type_den_t);
             let field_dict = new field_dict_t ();
-            for (let field of type_den.reversed_field_vect) {
+            for (let field_name of type_den.reversed_field_name_vect) {
                 let obj = data_stack_pop (env);
-                field_dict.set (field, obj)
+                field_dict.set (field_name, obj)
             }
             let data_obj = new data_obj_t (type_name, field_dict);
             data_stack_push (env, data_obj);
@@ -678,14 +676,28 @@
     #+begin_src js
     class dot_exp_t
     {
-        constructor ()
+        constructor (reversed_field_name_vect,
+                     dot_clause_map)
         {
-
+            this.reversed_field_name_vect
+                = reversed_field_name_vect;
+            this.dot_clause_map
+                = dot_clause_map;
         }
 
         exe (env, scope)
         {
-
+            let field_dict = new field_dict_t ();
+            for (let field_name of this.reversed_field_name_vect) {
+                let obj = data_stack_pop (env);
+                field_dict.set (field_name, obj)
+            }
+            for (let [field_name, exp_vect] of this.dot_clause_map) {
+                let obj = exp_vect_to_obj (exp_vect);
+                field_dict.set (field_name, obj)
+            }
+            let dot_obj = new dot_obj_t (field_dict);
+            data_stack_push (env, dot_obj);
         }
     }
     #+end_src
@@ -805,9 +817,10 @@
     #+begin_src js
     class type_den_t
     {
-        constructor (reversed_field_vect)
+        constructor (reversed_field_name_vect)
         {
-            this.reversed_field_vect = reversed_field_vect;
+            this.reversed_field_name_vect
+                = reversed_field_name_vect;
         }
 
         den_exe (env)
