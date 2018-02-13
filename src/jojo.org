@@ -7,13 +7,19 @@
 
     - how dot_obj_t is used
 
+*** dot_exp_t
+
+*** dot_obj_t
+
+*** clone_exp_t
+
 *** collect -- with the help of mark_stack
 
 *** disp_dict_t
 
 *** gene_dict_t
 
-*** finish the semantic
+*** *finish the semantic*
 
 *** read sexp
 
@@ -388,6 +394,12 @@
             if (frame instanceof scoping_frame_t)
                 scope_stack_drop (env);
         }
+        // {
+        //     console.log ("- eval_one_step");
+        //     console.log ("  env :", env);
+        //     console.log ("  exp :", exp);
+        //     console.log ("  scope :", scope);
+        // }
         exp.exe (env, scope);
     }
     #+end_src
@@ -444,14 +456,14 @@
     #+begin_src js
     class get_exp_t
     {
-        constructor (name)
+        constructor (local_name)
         {
-            this.name = name;
+            this.local_name = local_name;
         }
 
         exe (env, scope)
         {
-            let obj = scope.get (scope, this.name);
+            let obj = scope.get (this.local_name);
             obj.apply (env);
         }
     }
@@ -470,7 +482,7 @@
         exe (env, scope)
         {
             let obj = data_stack_pop (env);
-            scope.set (scope, this.local_name, obj);
+            scope.set (this.local_name, obj);
         }
     }
     #+end_src
@@ -544,7 +556,7 @@
     }
     #+end_src
 
-*** >< clause_dict_t -- type_name to exp_vect
+*** clause_dict_t -- type_name to exp_vect
 
     #+begin_src js
     class clause_dict_t
@@ -629,7 +641,7 @@
             let data_obj = data_stack_pop (env);
             assert (data_obj instanceof data_obj_t);
             let obj = data_obj.field_dict.get (field_name);
-            data_stack_push (env, obj);
+            obj.apply (env);
         }
     }
     #+end_src
@@ -860,7 +872,7 @@
         gene_den_exe (env, type_name_vect)
         {
             let fun_den = this.disp_dict.get (type_name_vect);
-            if (fun_den);
+            if (fun_den)
                 fun_den.den_exe (env);
             else
                 this.default_fun_den.den_exe (env);
@@ -926,8 +938,6 @@
         let env = new env_t ();
 
         let fun_den = new fun_den_t (
-            "dup",
-            undefined,
             [
                 new set_exp_t ("x"),
                 new get_exp_t ("x"),
