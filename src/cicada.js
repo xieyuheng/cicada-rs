@@ -865,24 +865,44 @@
     }
     function eval_sexp (env, sexp)
     {
-        // ><><><
-        // handle string
         assert (cons_p (sexp));
         let keyword = car (sexp);
         let sexp_list = cdr (sexp);
-        top_eval (env, keyword, sexp_list);
+        sexp_list = apply_all_passes (sexp_list);
+        keyword_apply (env, keyword, sexp_list);
     }
-    let top_level_keyword_dict = new Map ();
-    function new_top (keyword, top_fn)
+    let pass_vect = [];
+    function new_pass (pass_fn)
     {
-        top_level_keyword_dict.set (keyword, top_fn);
+        pass_vect.push (pass_fn);
     }
-    function top_eval (env, keyword, sexp_list)
+    function apply_all_passes (sexp_list)
     {
-        let top_fn = top_level_keyword_dict.get (keyword);
-        assert (top_fn);
-        top_fn (env, sexp_list);
+        for (let pass_fn of pass_vect) {
+            assert (pass_fn instanceof Function);
+            sexp_list = pass_fn (sexp_list);
+        }
+        return sexp_list;
     }
+    let keyword_dict = new Map ();
+    function new_keyword (keyword, keyword_fn)
+    {
+        keyword_dict.set (keyword, keyword_fn);
+    }
+    function keyword_apply (env, keyword, sexp_list)
+    {
+        let keyword_fn = keyword_dict.get (keyword);
+        assert (keyword_fn instanceof Function);
+        keyword_fn (env, sexp_list);
+    }
+    new_keyword (
+        "+union",
+        function (sexp_list)
+        {
+            // ><><><
+            return sexp_list;
+        }
+    );
     function test ()
     {
         let env = new env_t ();
