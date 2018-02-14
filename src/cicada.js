@@ -713,7 +713,85 @@ class disp_dict_t
     }
 }
 
+// string_vect
+function scan_string (string)
+{
+    let string_vect = [];
+    let i = 0;
+    let length = string.length;
+    while (i < length) {
+        let char = string[i];
+        if (space_p (char))
+            i = i + 1;
+        else if (char === ';') {
+            let end = string.indexOf ('\n', i+1);
+            if (end === -1)
+                break;
+            else
+                i = end + 1;
+        }
+        else if (delimiter_p (char)) {
+            string_vect.push (char);
+            i = i + 1;
+        }
+        else if (char === '"') {
+            let end = string.indexOf ('"', i+1);
+            if (end === -1) {
+                print ("- scan_string fail")
+                print ("  doublequote mismatch")
+                print ("  string : {}".format(string))
+                error ()
+            }
+            string_vect.push (string.slice (i, end + 1));
+            i = end + 1;
+        }
+        else {
+            let end = find_end (string, i+1);
+            string_vect.push (string.slice (i, end + 1));
+            i = end + 1;
+        }
+    }
+    return string_vect;
+}
 
+function space_p (char)
+{
+    return (char == ' ' ||
+            char == '\n' ||
+            char == '\t');
+}
+
+function delimiter_p (char)
+{
+    return (char == '(' ||
+            char == ')' ||
+            char == '[' ||
+            char == ']' ||
+            char == '{' ||
+            char == '}' ||
+            char == ',' ||
+            char == ';' ||
+            char == '`' ||
+            char == "'");
+}
+
+function find_end (string, begin)
+{
+    let length = string.length;
+    let i = begin;
+    while (true) {
+        if (i === length)
+            return i - 1;
+        let char = string[i];
+        if (space_p (char) ||
+            delimiter_p (char) ||
+            (char === '.') ||
+            (char === '"'))
+            return i - 1;
+        else
+            i = i + 1;
+    }
+}
 
 function eval_code (env, code)
 {
@@ -751,7 +829,7 @@ function test ()
     print (env);
 }
 
-test ();
+// test ();
 
 function test_many ()
 {
@@ -763,3 +841,19 @@ function test_many ()
 }
 
 // test_many ();
+
+function scan_string_test ()
+{
+    let string = "                              \
+(+fun ref                                       \
+  : (-> l : [:t list-u], index : nat-u -- :t)   \
+  (case index                                   \
+    (zero-t l.car)                              \
+    (succ-t l.cdr index.prev recur)))           \
+    ";
+    let string_vect = scan_string (string);
+    print (string);
+    print (string_vect);
+}
+
+scan_string_test ();
