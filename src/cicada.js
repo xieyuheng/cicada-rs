@@ -196,7 +196,7 @@
         while (frame_stack_length (env) > base)
             run_one_step (env);
     }
-    function run_exp_vect (env, exp_vect)
+    function exp_vect_run (env, exp_vect)
     {
         let base = frame_stack_length (env);
         let frame = new simple_frame_t (exp_vect);
@@ -206,7 +206,7 @@
     function exp_vect_to_obj_vect (env, exp_vect)
     {
         let mark = data_stack_length (env);
-        run_exp_vect (env, exp_vect);
+        exp_vect_run (env, exp_vect);
         let length = data_stack_length (env);
         let obj_vect = [];
         while (length > mark) {
@@ -654,8 +654,7 @@
             this.dict.set (type_name_vect, fun_den)
         }
     }
-    // string_vect
-    function scan_string (string)
+    function code_scan (string)
     {
         let string_vect = [];
         let i = 0;
@@ -678,7 +677,7 @@
             else if (char === '"') {
                 let end = string.indexOf ('"', i+1);
                 if (end === -1) {
-                    print ("- scan_string fail")
+                    print ("- code_scan fail")
                     print ("  doublequote mismatch")
                     print ("  string : {}".format(string))
                     error ()
@@ -757,7 +756,7 @@
         data_stack_push (env, new data_obj_t ("nat", "><><><"));
         scope_stack_push (env, new scope_t ());
         name_dict_set (env, "dup", fun_den);
-        run_exp_vect (env, [
+        exp_vect_run (env, [
             new call_exp_t ("dup"),
         ]);
         print (env);
@@ -776,7 +775,7 @@
 
     // test_many ();
 
-    function scan_string_test ()
+    function code_scan_test ()
     {
         let string = "                              \
     (+fun ref                                       \
@@ -785,9 +784,9 @@
         (zero-t l.car)                              \
         (succ-t l.cdr index.prev recur)))           \
         ";
-        let string_vect = scan_string (string);
+        let string_vect = code_scan (string);
         print (string);
         print (string_vect);
     }
 
-    scan_string_test ();
+    code_scan_test ();

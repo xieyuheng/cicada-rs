@@ -1,4 +1,9 @@
 #! /bin/bash
 
-gcc jojo.c -o jojo # -lczmq
-# ./jojo_selftest
+test ()
+{
+    ./tangle.js
+    node cicada.js
+}
+
+test
