@@ -3,7 +3,6 @@
 
 * [todo-stack]
 
-*** (+data)
 *** (+type)
 *** (+fun)
 *** (+gene)
@@ -762,8 +761,8 @@
             for (let [field_name, obj] of dot_obj.field_dict) {
                 new_field_dict.set (field_name, obj);
             }
-            let new_data_obj
-                = new data_obj_t (
+            let new_data_obj =
+                new data_obj_t (
                     data_obj.type_name,
                     new_field_dict);
             data_stack_push (env, new_data_obj);
@@ -1454,7 +1453,41 @@
     );
     #+end_src
 
-*** >< (+data)
+*** (+data)
+
+    #+begin_src js
+    new_keyword (
+        "+data",
+        function (env, sexp_list)
+        {
+            let name = car (sexp_list);
+            let rest_list = cdr (sexp_list);
+            let rest_vect = sexp_list_to_vect (rest_list);
+            let reversed_field_name_vect = [];
+            for (let field_name of rest_vect) {
+                if (field_name_p (field_name))
+                    reversed_field_name_vect.push (field_name);
+            }
+            let type_den =
+                new type_den_t (reversed_field_name_vect);
+            name_dict_set (env, name, type_den);
+        }
+    );
+    #+end_src
+
+*** field_name_p
+
+    #+begin_src js
+    function field_name_p (x)
+    {
+        if (typeof x !== 'string')
+            return false;
+        else if (x[0] !== '.')
+            return false;
+        else
+            return true;
+    }
+    #+end_src
 
 *** >< (+type)
 
