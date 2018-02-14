@@ -3,13 +3,9 @@
 
 * [todo-stack]
 
-*** sexp
+*** eval
 
 *** ffi to js
-
-*** repr -- standard data representation
-
-*** eval
 
 *** test
 
@@ -53,6 +49,13 @@
               index = index + 1;
           }
           return true;
+      }
+      #+end_src
+
+***** assert
+
+      #+begin_src js
+      function assert (x) {
       }
       #+end_src
 
@@ -1108,9 +1111,75 @@
 
 * sexp -- string expression
 
-*** null
+*** null_p
+
+    #+begin_src js
+    function null_p (x)
+    {
+        return x === null;
+    }
+    #+end_src
 
 *** cons_t
+
+    #+begin_src js
+    class cons_t
+    {
+        constructor (car, cdr)
+        {
+            this.car = car;
+            this.cdr = cdr;
+        }
+    }
+    #+end_src
+
+*** cons
+
+    #+begin_src js
+    function cons (car, cdr)
+    {
+        assert (list_p (cdr));
+        return new cons_t (car, cdr);
+    }
+    #+end_src
+
+*** cons_p
+
+    #+begin_src js
+    function cons_p (x)
+    {
+        return x instanceof cons_t;
+    }
+    #+end_src
+
+*** car
+
+    #+begin_src js
+    function car (c)
+    {
+        assert (cons_p (c));
+        return c.car;
+    }
+    #+end_src
+
+*** cdr
+
+    #+begin_src js
+    function cdr (c)
+    {
+        assert (cons_p (c));
+        return c.cdr;
+    }
+    #+end_src
+
+*** list_p
+
+    #+begin_src js
+    function list_p (x)
+    {
+        return (null_p (x) || cons_p (x));
+    }
+    #+end_src
 
 *** [note] syntax sugar
 
@@ -1119,15 +1188,114 @@
     - ' ... -> (quote ...)
     - ` ... -> (partquote ...)
 
-*** parse_sexp_vect -- string vect to sexp vect
+*** parse_sexp_vect -- string_vect to sexp_vect
+
+    - sexp := null | cons(sexp, sexp_list) | string
+
+    #+begin_src js
+    function parse_sexp_vect (string_vect)
+    {
+        let length = string_vect.length;
+        let i = 0;
+        let sexp_vect = [];
+        while (i < length) {
+            let v = parse_sexp (string_vect, i);
+            let s = v[0];
+            i = v[1];
+            sexp_vect.push (s);
+        }
+        return sexp_vect;
+    }
+    #+end_src
 
 *** parse_sexp
 
+    #+begin_src js
+    function parse_sexp (string_vect, i)
+    {
+        let string = string_vect[i];
+        if (string === '(')
+            return parse_sexp_cons_until_ket (string_vect, i+1, ')');
+        else if (string === '[') {
+            let v = parse_sexp_cons_until_ket (string_vect, i+1, ']');
+            let sc = v[0];
+            let i1 = v[1];
+            return [cons ('begin', sc), i1];
+        }
+        else if (string === '{') {
+            let v = parse_sexp_cons_until_ket (string_vect, i+1, '}');
+            let sc = v[0];
+            let i1 = v[1];
+            return [cons ('clo', sc), i1];
+        }
+        else if (string === "'") {
+            let v = parse_sexp (string_vect, i+1);
+            let s = v[0];
+            let i1 = v[1];
+            let sc = cons (s, null);
+            return [cons ('quote', cs), i1];
+        }
+        else if (string === "`") {
+            let v = parse_sexp (string_vect, i+1);
+            let s = v[0];
+            let i1 = v[1];
+            let sc = cons (s, null);
+            return [cons ('partquote', cs), i1];
+        }
+        else
+            return [string, i+1];
+    }
+    #+end_src
+
 *** parse_sexp_cons_until_ket
 
-*** sexp_print
+    #+begin_src js
+    function parse_sexp_cons_until_ket (string_vect, i, ket)
+    {
+        let string = string_vect[i];
+        if (string == ket)
+            return [null, i+1];
+        else {
+            let v = parse_sexp (string_vect, i);
+            let s = v[0];
+            let i1 = v[1];
+            let v2 =
+                parse_sexp_cons_until_ket (string_vect, i1, ket);
+            let sc = v2[0];
+            let i2 = v2[1];
+            return [cons (s, sc), i2];
+        }
+    }
+    #+end_src
 
-*** sexp_list_print
+*** sexp_repr
+
+    #+begin_src js
+    function sexp_repr (sexp)
+    {
+        if (null_p (sexp))
+            return "null";
+        else if (cons_p (sexp))
+            return "(" +  sexp_list_repr (sexp) +  ")";
+        else
+            return sexp;
+    }
+    #+end_src
+
+*** sexp_list_repr
+
+    #+begin_src js
+    function sexp_list_repr (sexp_cons)
+    {
+        if (null_p (cdr (sexp_cons)))
+            return sexp_repr (car (sexp_cons));
+        else {
+            let car_repr = sexp_repr (car (sexp_cons));
+            let cdr_repr = sexp_list_repr (cdr (sexp_cons));
+            return car_repr + " " + cdr_repr;
+        }
+    }
+    #+end_src
 
 * prim -- primitive
 
@@ -1205,19 +1373,37 @@
 
     // test_many ();
 
-    function code_scan_test ()
+    function test_code_scan ()
     {
-        let string = "                              \
-    (+fun ref                                       \
-      : (-> l : [:t list-u], index : nat-u -- :t)   \
-      (case index                                   \
-        (zero-t l.car)                              \
-        (succ-t l.cdr index.prev recur)))           \
+        let code = "                                    \
+        (+fun ref                                       \
+          : (-> l : [:t list-u], index : nat-u -- :t)   \
+          (case index                                   \
+            (zero-t l.car)                              \
+            (succ-t l.cdr index.prev recur)))           \
         ";
-        let string_vect = code_scan (string);
-        print (string);
+        let string_vect = code_scan (code + code);
+        print (code);
         print (string_vect);
     }
 
-    code_scan_test ();
+    // test_code_scan ();
+
+    function test_parse_sexp_vect ()
+    {
+        let code = "                                    \
+        (+fun ref                                       \
+          : (-> l : [:t list-u], index : nat-u -- :t)   \
+          (case index                                   \
+            (zero-t l.car)                              \
+            (succ-t l.cdr index.prev recur)))           \
+        ";
+        let string_vect = code_scan (code + code);
+        let sexp_vect = parse_sexp_vect (string_vect);
+        for (let sexp of sexp_vect) {
+            print (sexp_repr (sexp));
+        }
+    }
+
+    test_parse_sexp_vect ();
     #+end_src
