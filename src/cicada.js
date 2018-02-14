@@ -853,15 +853,35 @@
     }
     function eval_code (env, code)
     {
-
+        let string_vect = code_scan (code);
+        let sexp_vect = parse_sexp_vect (string_vect);
+        eval_sexp_vect (env, sexp_vect);
     }
     function eval_sexp_vect (env, sexp_vect)
     {
-
+        for (let sexp of sexp_vect) {
+            eval_sexp_vect (env, sexp);
+        }
     }
     function eval_sexp (env, sexp)
     {
-
+        // ><><><
+        // handle string
+        assert (cons_p (sexp));
+        let keyword = car (sexp);
+        let sexp_list = cdr (sexp);
+        top_eval (env, keyword, sexp_list);
+    }
+    let top_level_keyword_dict = new Map ();
+    function new_top (keyword, top_fn)
+    {
+        top_level_keyword_dict.set (keyword, top_fn);
+    }
+    function top_eval (env, keyword, sexp_list)
+    {
+        let top_fn = top_level_keyword_dict.get (keyword);
+        assert (top_fn);
+        top_fn (env, sexp_list);
     }
     function test ()
     {
