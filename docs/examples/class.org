@@ -14,7 +14,7 @@
 
 * functor-tc
 
-  #+begin_src jojo
+  #+begin_src cicada
   (+class functor-tc < (-> type-tt -- type-tt)
     map : (-> functor-t :: functor-tc
               :t1 functor-t
@@ -24,7 +24,7 @@
 
 * list-u : functor-tc
 
-  #+begin_src jojo
+  #+begin_src cicada
   (+imp list-u : functor-tc
     (+fun map
       : (-> :l : [:t1 list-u]
@@ -37,7 +37,7 @@
 
 * monad-tc
 
-  #+begin_src jojo
+  #+begin_src cicada
   (+class monad-tc < (-> type-tt -- type-tt)
     return : (-> monad-t :: monad-tc
                  :t -- :t monad-t)
@@ -51,7 +51,7 @@
 
 *** maybe-u
 
-    #+begin_src jojo
+    #+begin_src cicada
     (+union maybe-u : (-> type-tt -- type-tt)
       (-> -- :t none-t)
       (-> .value : :t -- :t just-t))
@@ -59,7 +59,7 @@
 
 *** maybe-u : monad-tc
 
-    #+begin_src jojo
+    #+begin_src cicada
     (+imp maybe-u : monad-tc
       (+fun return : (-> value : :t -- :t maybe-u)
         value just-c)
@@ -76,7 +76,7 @@
 
 *** state-t
 
-    #+begin_src jojo
+    #+begin_src cicada
     (+type state-t : (-> type-tt type-tt -- type-tt)
       (-> .fun : (-> :s-t -- :s-t :v-t)
        -- :s-t :v-t state-t))
@@ -84,7 +84,7 @@
 
 *** {:v-t state-t} : monad-tc
 
-    #+begin_src jojo
+    #+begin_src cicada
     (+imp {:v-t state-t} : monad-tc
       (+fun return : (-> value : :v-t -- :s-t :v-t state-t)
         {value} state-c)
@@ -99,7 +99,7 @@
 
 *** tree-u
 
-    #+begin_src jojo
+    #+begin_src cicada
     (+union tree-u : (-> type-tt -- type-tt)
       (-> .value : :t -- :t leaf-t)
       (-> .left : :t .right : :t -- :t node-t))
@@ -107,7 +107,7 @@
 
 *** tree-u : functor-tc
 
-    #+begin_src jojo
+    #+begin_src cicada
     (+imp tree-u : functor-tc
       (+fun map
         : (-> tree : [:t1 tree-u]
@@ -121,7 +121,7 @@
 
 *** tree-numbering
 
-    #+begin_src jojo
+    #+begin_src cicada
     (+fun tree-numbering
       : (-> nat-u tree : [:t tree-u]
          -- nat-u nat-u tree-u)
@@ -134,7 +134,7 @@
 
 *** tree-numbering-curry
 
-    #+begin_src jojo
+    #+begin_src cicada
     (+fun tree-numbering-curry
       : (-> tree : [:t tree-u]
          -- (-> nat-u
@@ -148,7 +148,7 @@
 
 *** tree-numbering-state
 
-    #+begin_src jojo
+    #+begin_src cicada
     (+fun tree-numbering-state
       : (-> tree : [:t tree-u]
          -- nat-u tree-u state-t)

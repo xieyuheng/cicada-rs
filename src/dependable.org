@@ -1,4 +1,4 @@
-#+property: tangle dependable.jo
+#+property: tangle dependable.cn
 #+title: dependable
 
 * [todo-stack]
@@ -40,7 +40,7 @@
 
 *** env-t
 
-    #+begin_src jojo
+    #+begin_src cicada
     (+data env-t
       .name-dict : [name-t den-u dict-t]
       .data-stack : [obj-u list-u]
@@ -54,7 +54,7 @@
 
 *** name-t
 
-    #+begin_src jojo
+    #+begin_src cicada
     (+alias name-t [string-t list-u])
     #+end_src
 
@@ -62,7 +62,7 @@
 
 ***** name-dict-get
 
-      #+begin_src jojo
+      #+begin_src cicada
       (+fun name-dict-get
         : (-> env-t (: name name-t) -- env-t den-u)
         dup .name-dict name dict-get)
@@ -72,7 +72,7 @@
 
 ***** data-stack-push
 
-      #+begin_src jojo
+      #+begin_src cicada
       (+fun data-stack-push
         : (-> (: env env-t) (: obj obj-u) -- env-t)
         (. .data-stack = [obj env.data-stack cons])
@@ -81,7 +81,7 @@
 
 ***** data-stack-pop
 
-      #+begin_src jojo
+      #+begin_src cicada
       (+fun data-stack-pop
         : (-> (: env env-t) -- env-t obj-u)
         (. .data-stack = [env.data-stack.cdr])
@@ -91,7 +91,7 @@
 
 ***** data-stack-drop
 
-      #+begin_src jojo
+      #+begin_src cicada
       (+fun data-stack-drop
         : (-> env-t -- env-t)
         data-stack-pop drop)
@@ -99,7 +99,7 @@
 
 ***** data-stack-tos
 
-      #+begin_src jojo
+      #+begin_src cicada
       (+fun data-stack-tos
         : (-> env-t -- env-t obj-u)
         dup .data-stack.car)
@@ -107,7 +107,7 @@
 
 ***** >< data-stack-n-pop
 
-      #+begin_src jojo
+      #+begin_src cicada
       (+fun data-stack-n-pop
         : (-> env-t nat-u -- env-t obj-u list-u)
         )
@@ -115,7 +115,7 @@
 
 ***** >< data-stack-zip-by-list
 
-      #+begin_src jojo
+      #+begin_src cicada
       (+fun data-stack-zip-by-list
         : (-> env-t (: list t list-u)
            -- env-t t obj-u dict-t)
@@ -126,7 +126,7 @@
 
 ***** mark-stack-push
 
-      #+begin_src jojo
+      #+begin_src cicada
       (+fun mark-stack-push
         : (-> (: env env-t) (: x nat-u) -- env-t)
         (. .mark-stack = [x env.mark-stack cons])
@@ -135,7 +135,7 @@
 
 ***** mark-stack-pop
 
-      #+begin_src jojo
+      #+begin_src cicada
       (+fun mark-stack-pop
         : (-> (: env env-t) -- env-t nat-u)
         (. .mark-stack = [env.mark-stack.cdr])
@@ -145,7 +145,7 @@
 
 ***** mark-stack-mark
 
-      #+begin_src jojo
+      #+begin_src cicada
       (+fun mark-stack-mark
         : (-> env-t -- env-t)
         dup .data-stack list-length
@@ -154,7 +154,7 @@
 
 ***** mark-stack-collect
 
-      #+begin_src jojo
+      #+begin_src cicada
       (+fun mark-stack-collect
         : (-> env-t -- env-t obj-u list-u)
         dup .data-stack list-length mark-stack-pop sub
@@ -165,7 +165,7 @@
 
 ***** frame-u
 
-      #+begin_src jojo
+      #+begin_src cicada
       (+union frame-u
         scoping-frame-t
         simple-frame-t)
@@ -173,7 +173,7 @@
 
 ***** scoping-frame-t
 
-      #+begin_src jojo
+      #+begin_src cicada
       (+data scoping-frame-t
         .body : [exp-u list-u]
         .index : nat-u)
@@ -181,7 +181,7 @@
 
 ***** simple-frame-t
 
-      #+begin_src jojo
+      #+begin_src cicada
       (+data simple-frame-t
         .body : [exp-u list-u]
         .index : nat-u)
@@ -189,7 +189,7 @@
 
 ***** frame-stack-push
 
-      #+begin_src jojo
+      #+begin_src cicada
       (+fun frame-stack-push
         : (-> (: env env-t) (: frame frame-u) -- env-t)
         (. .frame-stack = [frame env.frame-stack cons])
@@ -198,7 +198,7 @@
 
 ***** frame-stack-pop
 
-      #+begin_src jojo
+      #+begin_src cicada
       (+fun frame-stack-pop
         : (-> (: env env-t) -- env-t frame-u)
         (. .frame-stack = [env.frame-stack.cdr])
@@ -208,7 +208,7 @@
 
 ***** frame-stack-drop
 
-      #+begin_src jojo
+      #+begin_src cicada
       (+fun frame-stack-drop
         : (-> env-t -- env-t)
         frame-stack-pop drop)
@@ -216,7 +216,7 @@
 
 ***** frame-stack-tos
 
-      #+begin_src jojo
+      #+begin_src cicada
       (+fun frame-stack-tos
         : (-> env-t -- env-t frame-u)
         dup .frame-stack.car)
@@ -224,7 +224,7 @@
 
 ***** top-frame-finished-p
 
-      #+begin_src jojo
+      #+begin_src cicada
       (+fun top-frame-finished-p
         : (-> env-t -- env-t bool-u)
         frame-stack-tos frame!
@@ -233,7 +233,7 @@
 
 ***** top-frame-next-exp
 
-      #+begin_src jojo
+      #+begin_src cicada
       (+fun top-frame-next-exp
         : (-> env-t -- env-t exp-u)
         frame-stack-pop frame!
@@ -255,13 +255,13 @@
 
 ***** scope-get
 
-      #+begin_src jojo
+      #+begin_src cicada
       (+fun scope-get dict-get)
       #+end_src
 
 ***** scope-set
 
-      #+begin_src jojo
+      #+begin_src cicada
       (+fun scope-set
         : (-> string-t obj-u dict-t
               (: local-name string-t)
@@ -275,7 +275,7 @@
 
 ***** goal-t
 
-      #+begin_src jojo
+      #+begin_src cicada
       (+data goal-t
         .lhs : [obj-u list-u]
         .rhs : [obj-u list-u]
@@ -286,7 +286,7 @@
 
 ***** >< hypo-dict-find -- one step
 
-      #+begin_src jojo
+      #+begin_src cicada
       (+fun hypo-dict-find
         : (-> env-t hypo-obj-t
            -- env-t obj-u maybe-u)
@@ -297,7 +297,7 @@
 
 ***** >< case-dict-get
 
-      #+begin_src jojo
+      #+begin_src cicada
       (+fun case-dict-get
         : (-> env-t case-obj-t
            -- env-t case-u)
@@ -314,7 +314,7 @@
 
 *** exp-u
 
-    #+begin_src jojo
+    #+begin_src cicada
     (+union exp-u
       call-exp-t
       get-exp-t
@@ -327,35 +327,35 @@
 
 *** call-exp-t
 
-    #+begin_src jojo
+    #+begin_src cicada
     (+data call-exp-t
       .name : name-t)
     #+end_src
 
 *** get-exp-t
 
-    #+begin_src jojo
+    #+begin_src cicada
     (+data get-exp-t
       .local-name : string-t)
     #+end_src
 
 *** set-exp-t
 
-    #+begin_src jojo
+    #+begin_src cicada
     (+data set-exp-t
       .local-name : string-t)
     #+end_src
 
 *** clo-exp-t
 
-    #+begin_src jojo
+    #+begin_src cicada
     (+data clo-exp-t
       .body : [exp-u list-u])
     #+end_src
 
 *** arrow-exp-t
 
-    #+begin_src jojo
+    #+begin_src cicada
     (+data arrow-exp-t
       .ante : [exp-u list-u]
       .succ : [exp-u list-u])
@@ -363,7 +363,7 @@
 
 *** case-exp-t
 
-    #+begin_src jojo
+    #+begin_src cicada
     (+data case-exp-t
       .arg : [exp-u list-u]
       .clause-dict : [string-t clo-exp-t dict-t])
@@ -373,7 +373,7 @@
 
 *** list-eval
 
-    #+begin_src jojo
+    #+begin_src cicada
     (+fun list-eval
       : (-> (: env env-t) (: exp-list exp-u list-u) -- env-t)
       env .frame-stack list-length base!
@@ -386,7 +386,7 @@
 
 *** eval-with-base
 
-    #+begin_src jojo
+    #+begin_src cicada
     (+fun eval-with-base
       : (-> env-t (: base nat-u) -- env-t)
       (when [dup .frame-stack list-length base equal-p not]
@@ -395,7 +395,7 @@
 
 *** eval-one-step -- pop rs
 
-    #+begin_src jojo
+    #+begin_src cicada
     (note it is assumed that
       there is at least one step to exe)
 
@@ -412,7 +412,7 @@
 
 *** collect-obj-list
 
-    #+begin_src jojo
+    #+begin_src cicada
     (+fun collect-obj-list
       : (-> env-t exp-u list-u -- env-t obj-u list-u)
       swap mark-stack-mark
@@ -422,7 +422,7 @@
 
 *** collect-obj
 
-    #+begin_src jojo
+    #+begin_src cicada
     (+fun collect-obj
       : (-> env-t list-u -- env-t obj-u)
       null cons
@@ -434,7 +434,7 @@
 
 *** (exe env-t exp-u) -- might push rs
 
-    #+begin_src jojo
+    #+begin_src cicada
     (+gene exe
       : (-> env-t (: exp exp-u) -- env-t)
       "- exe fail" p nl
@@ -444,14 +444,14 @@
 
 *** (exe env-t call-exp-t)
 
-    #+begin_src jojo
+    #+begin_src cicada
     (+disp exe : (-> env-t (: exp call-exp-t) -- env-t)
       exp.name name-dict-get den-exe)
     #+end_src
 
 *** (exe env-t get-exp-t)
 
-    #+begin_src jojo
+    #+begin_src cicada
     (+disp exe
       : (-> env-t (: exp get-exp-t) -- env-t)
       scope-stack-tos exp.local-name scope-get
@@ -460,7 +460,7 @@
 
 *** (exe env-t set-exp-t)
 
-    #+begin_src jojo
+    #+begin_src cicada
     (+disp exe
       : (-> env-t (: exp set-exp-t) -- env-t)
       data-stack-pop obj!
@@ -470,7 +470,7 @@
 
 *** (exe env-t clo-exp-t)
 
-    #+begin_src jojo
+    #+begin_src cicada
     (+disp exe
       : (-> env-t (: exp clo-exp-t) -- env-t)
       (. .scope = scope-stack-tos
@@ -481,7 +481,7 @@
 
 *** (exe env-t arrow-exp-t)
 
-    #+begin_src jojo
+    #+begin_src cicada
     (+disp exe
       : (-> env-t (: exp arrow-exp-t) -- env-t)
       (. .ante = [exp.ante collect-obj-list]
@@ -492,7 +492,7 @@
 
 *** (exe env-t case-exp-t)
 
-    #+begin_src jojo
+    #+begin_src cicada
     (+disp exe
       : (-> env-t (: exp case-exp-t) -- env-t)
       exp.arg collect-obj-list car
@@ -514,7 +514,7 @@
 
 *** >< obj-match
 
-    #+begin_src jojo
+    #+begin_src cicada
     (+fun obj-match
       : (-> env-t
             (: obj obj-u)
@@ -540,7 +540,7 @@
 
 *** new-case-obj
 
-    #+begin_src jojo
+    #+begin_src cicada
     (+fun new-case-obj
       : (-> env-t
             (: obj hypo-obj-t)
@@ -556,7 +556,7 @@
 
 *** >< eval-clause-dict
 
-    #+begin_src jojo
+    #+begin_src cicada
     (+fun eval-clause-dict
       : (-> env-t string-t clo-exp-t dict-t
          -- env-t string-t clo-obj-t dict-t))
@@ -570,7 +570,7 @@
 
 *** >< new-sum-obj
 
-    #+begin_src jojo
+    #+begin_src cicada
     (+fun new-sum-obj
       : (-> env-t
             (: obj hypo-obj-t)
@@ -581,7 +581,7 @@
 
 *** >< clo-obj-apply
 
-    #+begin_src jojo
+    #+begin_src cicada
     (+fun clo-obj-apply
       : (-> env-t clo-obj-t -- env-t)
       )
@@ -621,7 +621,7 @@
 
 *** (cut env-t exp-u)
 
-    #+begin_src jojo
+    #+begin_src cicada
     (+gene cut
       : (-> (: env env-t) (: exp exp-u) -- env-t)
       error)
@@ -629,7 +629,7 @@
 
 *** >< list-cut
 
-    #+begin_src jojo
+    #+begin_src cicada
     (+fun list-cut
       : (-> env-t (: exp-list exp-u list-u) -- env-t)
       )
@@ -645,7 +645,7 @@
 
 *** ins-u
 
-    #+begin_src jojo
+    #+begin_src cicada
     (+union ins-u
       suppose-ins-t
       dup-ins-t
@@ -666,7 +666,7 @@
       to form an object of that class.
       [the init function might takes arguments]
 
-    - in jojo,
+    - in cicada,
       when you ask for a new object of a type,
 
       1. the type might has many data-constructors,
@@ -690,7 +690,7 @@
 
 *** suppose-ins-t exe
 
-    #+begin_src jojo
+    #+begin_src cicada
     (+disp exe
       : (-> env-t (: ins suppose-ins-t) -- env-t)
       data-stack-pop type!
@@ -715,7 +715,7 @@
 
 *** den-u
 
-    #+begin_src jojo
+    #+begin_src cicada
     (+union den-u
       fun-den-t
       data-cons-den-t
@@ -724,7 +724,7 @@
 
 *** fun-den-t
 
-    #+begin_src jojo
+    #+begin_src cicada
     (+data fun-den-t
       .type : arrow-exp-t
       .body : [exp-u list-u])
@@ -732,7 +732,7 @@
 
 *** data-cons-den-t
 
-    #+begin_src jojo
+    #+begin_src cicada
     (+data data-cons-den-t
       .type : exp-u
       .data-cons-name : string-t
@@ -742,7 +742,7 @@
 
 *** type-cons-den-t
 
-    #+begin_src jojo
+    #+begin_src cicada
     (+data type-cons-den-t
       .type : exp-u
       .type-cons-name : string-t
@@ -754,7 +754,7 @@
 
 *** (den-exe env-t den-u)
 
-    #+begin_src jojo
+    #+begin_src cicada
     (+gene den-exe
       : (-> (: env env-t) (: den den-u) -- env-t)
       "- den-exe fail" p nl
@@ -781,7 +781,7 @@
 
 *** (den-exe env-t fun-den-t)
 
-    #+begin_src jojo
+    #+begin_src cicada
     (+disp den-exe
       : (-> env-t (: den fun-den-t) -- env-t)
       (dict) scope-stack-push
@@ -796,7 +796,7 @@
 
 *** (den-exe env-t data-cons-den-t)
 
-    #+begin_src jojo
+    #+begin_src cicada
     (+disp den-exe
       : (-> env-t (: den data-cons-den-t)
          -- env-t)
@@ -812,7 +812,7 @@
 
 *** (den-exe env-t type-cons-den-t)
 
-    #+begin_src jojo
+    #+begin_src cicada
     (+disp den-exe
       : (-> env-t (: den type-cons-den-t)
          -- env-t)
@@ -846,7 +846,7 @@
 
 *** ante-prepare
 
-    #+begin_src jojo
+    #+begin_src cicada
     (+fun ante-prepare
       : (-> env-t (: ante obj-u list-u) -- env-t)
       ante list-length data-stack-n-pop obj-list!
@@ -871,7 +871,7 @@
 
 *** >< ante-correspond
 
-    #+begin_src jojo
+    #+begin_src cicada
     (+fun ante-correspond
       : (-> env-t (: ante obj-u list-u) -- env-t)
       )
@@ -879,7 +879,7 @@
 
 *** type->return-type
 
-    #+begin_src jojo
+    #+begin_src cicada
     (+fun type->return-type
       : (-> obj-u -- obj-u)
       (when [dup arrow-obj-p]
@@ -899,7 +899,7 @@
 
 *** obj-u
 
-    #+begin_src jojo
+    #+begin_src cicada
     (+union obj-u
       data-cons-obj-t type-cons-obj-t
       clo-obj-t arrow-obj-t
@@ -909,7 +909,7 @@
 
 *** data-cons-obj-t
 
-    #+begin_src jojo
+    #+begin_src cicada
     (+data data-cons-obj-t
       .type : type-cons-obj-t
       .data-cons-name : string-t
@@ -918,7 +918,7 @@
 
 *** type-cons-obj-t
 
-    #+begin_src jojo
+    #+begin_src cicada
     (+data type-cons-obj-t
       .type : ><><><
       .type-cons-name : string-t
@@ -927,7 +927,7 @@
 
 *** clo-obj-t
 
-    #+begin_src jojo
+    #+begin_src cicada
     (+data clo-obj-t
       .scope : [string-t obj-u dict-t]
       .body : [exp-u list-u])
@@ -935,7 +935,7 @@
 
 *** arrow-obj-t
 
-    #+begin_src jojo
+    #+begin_src cicada
     (+data arrow-obj-t
       .ante : [obj-u list-u]
       .succ : [obj-u list-u])
@@ -974,14 +974,14 @@
 
 *** hypo-id-t
 
-    #+begin_src jojo
+    #+begin_src cicada
     (+data hypo-id-t
       .id : string-t)
     #+end_src
 
 *** hypo-obj-t
 
-    #+begin_src jojo
+    #+begin_src cicada
     (+data hypo-obj-t
       .hypo-id : hypo-id-t
       .hypo-type : hypo-type-obj-t)
@@ -989,7 +989,7 @@
 
 *** hypo-type-obj-t
 
-    #+begin_src jojo
+    #+begin_src cicada
     (+data hypo-type-obj-t
       .hypo-id : hypo-id-t
       .type : obj-u)
@@ -997,7 +997,7 @@
 
 *** >< hypo-type-obj->hypo-obj
 
-    #+begin_src jojo
+    #+begin_src cicada
     (+fun hypo-type-obj->hypo-obj
       : (-> env-t hypo-type-obj-t
          -- env-t hypo-obj-t))
@@ -1017,21 +1017,21 @@
 
 *** case-id-t
 
-    #+begin_src jojo
+    #+begin_src cicada
     (+data case-id-t
       .id : string-t)
     #+end_src
 
 *** case-obj-t
 
-    #+begin_src jojo
+    #+begin_src cicada
     (+data case-obj-t
       .case-id : case-id-t)
     #+end_src
 
 *** case-u
 
-    #+begin_src jojo
+    #+begin_src cicada
     (+union case-u
       todo-case-t
       done-case-t)
@@ -1048,7 +1048,7 @@
 
 *** sum-obj-t
 
-    #+begin_src jojo
+    #+begin_src cicada
     (+data sum-obj-t
       .objs : [obj-u list-u])
     #+end_src
@@ -1057,7 +1057,7 @@
 
 *** (infer env-t obj-u)
 
-    #+begin_src jojo
+    #+begin_src cicada
     (+gene infer
       : (-> (: env env-t) (: obj obj-u) -- env-t obj-u)
       error)
@@ -1065,7 +1065,7 @@
 
 *** >< (infer env-t data-cons-obj-t)
 
-    #+begin_src jojo
+    #+begin_src cicada
     (+disp infer
      : (-> env-t data-cons-obj-t
         -- env-t type-cons-obj-t)
@@ -1074,7 +1074,7 @@
 
 *** >< (infer env-t type-cons-obj-t)
 
-    #+begin_src jojo
+    #+begin_src cicada
     (+disp infer
      : (-> env-t type-cons-obj-t
         -- env-t type-cons-obj-t))
@@ -1082,7 +1082,7 @@
 
 *** >< (infer env-t clo-obj-t)
 
-    #+begin_src jojo
+    #+begin_src cicada
     (note every time the the type of a closure is asked for,
       we use the body of the closure
       to construct a new arrow object.)
@@ -1094,7 +1094,7 @@
 
 *** >< (infer env-t arrow-obj-t)
 
-    #+begin_src jojo
+    #+begin_src cicada
     (+disp infer
      : (-> env-t arrow-obj-t
         -- env-t arrow-obj-t))
@@ -1102,7 +1102,7 @@
 
 *** >< (infer env-t arrow-obj-t)
 
-    #+begin_src jojo
+    #+begin_src cicada
     (+disp infer
       : (-> env-t hypo-obj-t
          -- env-t hypo-type-obj-t))
@@ -1110,7 +1110,7 @@
 
 *** >< (infer env-t hypo-type-obj-t)
 
-    #+begin_src jojo
+    #+begin_src cicada
     (+disp infer
       : (-> env-t hypo-type-obj-t
          -- env-t ><><><))
@@ -1118,7 +1118,7 @@
 
 *** >< (infer env-t case-obj-t)
 
-    #+begin_src jojo
+    #+begin_src cicada
     (+disp infer
      : (-> env-t case-obj-t
         -- env-t obj-u))
@@ -1126,7 +1126,7 @@
 
 *** >< (infer env-t sum-obj-t)
 
-    #+begin_src jojo
+    #+begin_src cicada
     (+disp infer
      : (-> env-t sum-obj-t
         -- env-t sum-obj-t))
@@ -1140,7 +1140,7 @@
 
 *** >< list-unifiy
 
-    #+begin_src jojo
+    #+begin_src cicada
     (+fun list-unifiy
       : (-> env-t (: l obj-u list-u) (: r obj-u list-u) -- env-t)
       )
@@ -1148,7 +1148,7 @@
 
 *** >< unify-one-step
 
-    #+begin_src jojo
+    #+begin_src cicada
     (+fun unify-one-step
       : (-> env-t -- env-t)
       )
@@ -1156,7 +1156,7 @@
 
 *** unify
 
-    #+begin_src jojo
+    #+begin_src cicada
     (+gene unify
       : (-> env-t obj-u obj-u -- env-t)
       )
@@ -1166,7 +1166,7 @@
 
 *** list-cover
 
-    #+begin_src jojo
+    #+begin_src cicada
     (+fun list-cover
       : (-> env-t obj-u list-u obj-u list-u
          -- env-t))
@@ -1186,7 +1186,7 @@
 
 *** fun-den-type-check
 
-    #+begin_src jojo
+    #+begin_src cicada
     (+fun fun-den-type-check
       : (-> env-t (: den fun-den-t))
       mark-stack-mark

@@ -200,21 +200,7 @@ class scope_t
     }
 }
 
-function exp_vect_eval (env, exp_vect)
-{
-    let base = frame_stack_length (env);
-    let frame = new simple_frame_t (exp_vect);
-    frame_stack_push (env, frame);
-    eval_with_base (env, base);
-}
-
-function eval_with_base (env, base)
-{
-    while (frame_stack_length (env) > base)
-        eval_one_step (env);
-}
-
-function eval_one_step (env)
+function run_one_step (env)
 {
     let frame = frame_stack_tos (env);
     let scope = scope_stack_tos (env);
@@ -226,7 +212,7 @@ function eval_one_step (env)
             scope_stack_drop (env);
     }
     // {
-    //     print ("- eval_one_step");
+    //     print ("- run_one_step");
     //     print ("  env :", env);
     //     print ("  exp :", exp);
     //     print ("  scope :", scope);
@@ -234,10 +220,24 @@ function eval_one_step (env)
     exp.exe (env, scope);
 }
 
+function run_with_base (env, base)
+{
+    while (frame_stack_length (env) > base)
+        run_one_step (env);
+}
+
+function run_exp_vect (env, exp_vect)
+{
+    let base = frame_stack_length (env);
+    let frame = new simple_frame_t (exp_vect);
+    frame_stack_push (env, frame);
+    run_with_base (env, base);
+}
+
 function exp_vect_to_obj_vect (env, exp_vect)
 {
     let mark = data_stack_length (env);
-    exp_vect_eval (env, exp_vect);
+    run_exp_vect (env, exp_vect);
     let length = data_stack_length (env);
     let obj_vect = [];
     while (length > mark) {
@@ -332,23 +332,23 @@ class apply_exp_t
 
 class case_exp_t
 {
-    constructor (exp_vect, clause_dict)
+    constructor (exp_vect, case_clause_dict)
     {
         this.exp_vect = exp_vect;
-        this.clause_dict = clause_dict;
+        this.case_clause_dict = case_clause_dict;
     }
 
     exe (env, scope)
     {
         let obj = exp_vect_to_obj (env, exp_vect);
         assert (obj instanceof data_obj_t);
-        let exp_vect = this.clause_dict.get (obj.type_name);
+        let exp_vect = this.case_clause_dict.get (obj.type_name);
         if (exp_vect) {
             let frame = new simple_frame_t (exp_vect);
             frame_stack_push (env, frame);
         }
         else {
-            let exp_vect = this.clause_dict.get ("else");
+            let exp_vect = this.case_clause_dict.get ("else");
             if (exp_vect) {
                 let frame = new simple_frame_t (exp_vect);
                 frame_stack_push (env, frame);
@@ -360,7 +360,7 @@ class case_exp_t
     }
 }
 
-class clause_dict_t
+class case_clause_dict_t
 {
     constructor ()
     {
@@ -391,9 +391,9 @@ class cons_exp_t
         let type_den = name_dict_get (type_name);
         assert (type_den instanceof type_den_t);
         let field_dict = new field_dict_t ();
-        for (let field of type_den.reversed_field_vect) {
+        for (let field_name of type_den.reversed_field_name_vect) {
             let obj = data_stack_pop (env);
-            field_dict.set (field, obj)
+            field_dict.set (field_name, obj)
         }
         let data_obj = new data_obj_t (type_name, field_dict);
         data_stack_push (env, data_obj);
@@ -436,14 +436,28 @@ class field_exp_t
 
 class dot_exp_t
 {
-    constructor ()
+    constructor (reversed_field_name_vect,
+                 dot_clause_map)
     {
-
+        this.reversed_field_name_vect
+            = reversed_field_name_vect;
+        this.dot_clause_map
+            = dot_clause_map;
     }
 
     exe (env, scope)
     {
-
+        let field_dict = new field_dict_t ();
+        for (let field_name of this.reversed_field_name_vect) {
+            let obj = data_stack_pop (env);
+            field_dict.set (field_name, obj)
+        }
+        for (let [field_name, exp_vect] of this.dot_clause_map) {
+            let obj = exp_vect_to_obj (exp_vect);
+            field_dict.set (field_name, obj)
+        }
+        let dot_obj = new dot_obj_t (field_dict);
+        data_stack_push (env, dot_obj);
     }
 }
 
@@ -456,7 +470,13 @@ class create_exp_t
 
     exe (env, scope)
     {
-
+        let dot_obj = data_stack_pop (env);
+        assert (dot_obj instanceof dot_obj_t);
+        let data_obj
+            = new data_obj_t (
+                this.type_name,
+                dot_obj.field_dict);
+        data_stack_push (env, data_obj);
     }
 }
 
@@ -466,7 +486,22 @@ class clone_exp_t
 
     exe (env, scope)
     {
-
+        let data_obj = data_stack_pop (env);
+        assert (data_obj instanceof data_obj_t);
+        let dot_obj = data_stack_pop (env);
+        assert (dot_obj instanceof dot_obj_t);
+        let new_field_dict = new field_dict_t ();
+        for (let [field_name, obj] of data_obj.field_dict) {
+            new_field_dict.set (field_name, obj);
+        }
+        for (let [field_name, obj] of dot_obj.field_dict) {
+            new_field_dict.set (field_name, obj);
+        }
+        let new_data_obj
+            = new data_obj_t (
+                data_obj.type_name,
+                new_field_dict);
+        data_stack_push (env, new_data_obj);
     }
 }
 
@@ -475,6 +510,19 @@ class data_obj_t
     constructor (type_name, field_dict)
     {
         this.type_name = type_name;
+        this.field_dict = field_dict;
+    }
+
+    apply (env)
+    {
+        data_stack_push (env, this);
+    }
+}
+
+class dot_obj_t
+{
+    constructor (field_dict)
+    {
         this.field_dict = field_dict;
     }
 
@@ -501,19 +549,6 @@ class clo_obj_t
     }
 }
 
-class dot_obj_t
-{
-    constructor ()
-    {
-
-    }
-
-    apply (env)
-    {
-        data_stack_push (env, this);
-    }
-}
-
 class union_den_t
 {
     constructor (union_vect)
@@ -529,9 +564,10 @@ class union_den_t
 
 class type_den_t
 {
-    constructor (reversed_field_vect)
+    constructor (reversed_field_name_vect)
     {
-        this.reversed_field_vect = reversed_field_vect;
+        this.reversed_field_name_vect
+            = reversed_field_name_vect;
     }
 
     den_exe (env)
@@ -677,17 +713,19 @@ class disp_dict_t
     }
 }
 
-function interpret_code (env, code)
+
+
+function eval_code (env, code)
 {
 
 }
 
-function interpret_sexp_vect (env, sexp_vect)
+function eval_sexp_vect (env, sexp_vect)
 {
 
 }
 
-function interpret_sexp (env, sexp)
+function eval_sexp (env, sexp)
 {
 
 }
@@ -707,7 +745,7 @@ function test ()
     data_stack_push (env, new data_obj_t ("nat", "><><><"));
     scope_stack_push (env, new scope_t ());
     name_dict_set (env, "dup", fun_den);
-    exp_vect_eval (env, [
+    run_exp_vect (env, [
         new call_exp_t ("dup"),
     ]);
     print (env);

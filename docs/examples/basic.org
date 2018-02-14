@@ -34,7 +34,7 @@
 
 *** bool-u
 
-    #+begin_src jojo
+    #+begin_src cicada
     (+union bool-u : type-tt
       (-> -- true-t)
       (-> -- false-t))
@@ -44,7 +44,7 @@
 
 *** nat-u
 
-    #+begin_src jojo
+    #+begin_src cicada
     (+union nat-u : type-tt
       (-> -- zero-t)
       (-> .prev : nat-u -- succ-t))
@@ -67,7 +67,7 @@
 
 *** even-u
 
-    #+begin_src jojo
+    #+begin_src cicada
     (+union is-even-u : (-> nat-u -- type-tt)
       (-> -- zero-c zero-is-even-t)
       (-> .prev : [:m is-even-u]
@@ -85,7 +85,7 @@
 
     - an interface to the internal unification
 
-    #+begin_src jojo
+    #+begin_src cicada
     (+type == #:infix
       : (-> :t :t -- type-tt)
       (-> -- :z == :z))
@@ -106,7 +106,7 @@
 
 *** add-associative
 
-    #+begin_src jojo
+    #+begin_src cicada
     (+proof add-associative
       : (-> [x y z] : nat-u
          -- [x y add z add] == [x y z add add])
@@ -117,7 +117,7 @@
 
 *** add-commutative
 
-    #+begin_src jojo
+    #+begin_src cicada
     (+proof add-commutative
       : (-> [m n] : nat-u
          -- [m n add] == [n m add])
@@ -145,7 +145,7 @@
 
 *** list-u
 
-    #+begin_src jojo
+    #+begin_src cicada
     (+union list-u : (-> type-tt -- type-tt)
       (-> -- :t null-t)
       (-> .car : :t
@@ -155,7 +155,7 @@
 
 *** list-u -- not inline
 
-    #+begin_src jojo
+    #+begin_src cicada
     (+union list-u : (-> type-tt -- type-tt)
       null-t
       cons-t)
@@ -171,7 +171,7 @@
 
 *** length
 
-    #+begin_src jojo
+    #+begin_src cicada
     (+fun length : (-> l : [:t list-u] -- nat-u)
       (case l
         (null-t zero-c)
@@ -180,7 +180,7 @@
 
 *** map
 
-    #+begin_src jojo
+    #+begin_src cicada
     (+fun map
       : (-> l : [:t1 list-u]
             fun : (-> :t1 -- :t2)
@@ -192,7 +192,7 @@
 
 *** ref -- will not pass type check
 
-    #+begin_src jojo
+    #+begin_src cicada
     ;; this function will not pass type check
     ;;   because we can not use .car .cdr on list-u
     ;;   we can only use them on cons-t
@@ -205,7 +205,7 @@
 
 *** remove-first
 
-    #+begin_src jojo
+    #+begin_src cicada
     (+fun remove-first
       : (-> x : :t, l : [:t list-u]
          -- :t list-u)
@@ -220,7 +220,7 @@
 
 ***** has-length-u
 
-      #+begin_src jojo
+      #+begin_src cicada
       (+union has-length-u : (-> :t list-u nat-u -- type-tt)
         (-> -- null-c zero-c null-has-length-t)
         (-> .cdr : [:l :n has-length-u]
@@ -229,7 +229,7 @@
 
 ***** map-has-length
 
-      #+begin_src jojo
+      #+begin_src cicada
       (+fun map-has-length
         : (-> fun :: (-> :t1 -- :t2)
               has-length : [:l :n has-length-u]

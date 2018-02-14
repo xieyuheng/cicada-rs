@@ -4,7 +4,7 @@
 
 *** <bool>
 
-    #+begin_src jojo
+    #+begin_src cicada
     +type <bool> : <<type>>
      true  : <bool>
      false : <bool>
@@ -12,7 +12,7 @@
 
 *** <nat>
 
-    #+begin_src jojo
+    #+begin_src cicada
     +type <nat> : <<type>>
      zero : <nat>
      succ : -> .pre : <nat> -- <nat>
@@ -35,7 +35,7 @@
 
 *** <even>
 
-    #+begin_src jojo
+    #+begin_src cicada
     +type <even> : -> .num : <nat> -- <<type>>
      zero : zero <even>
      plus-two : -> .pre : [:m <even>]
@@ -47,7 +47,7 @@
 
 *** even?
 
-    #+begin_src jojo
+    #+begin_src cicada
     +fun even? : -> :n : <nat> -- <bool>
      match :n
        zero true
@@ -58,7 +58,7 @@
 
 *** <odd>
 
-    #+begin_src jojo
+    #+begin_src cicada
     +type <even> : -> <nat> -- <<type>>
      zero-even : zero <even>
      plus-two-even : -> .pre : [:m <even>]
@@ -72,7 +72,7 @@
 
 *** even? -- returns more informations
 
-    #+begin_src jojo
+    #+begin_src cicada
     +fun even?
      : -> :n : <nat>
        -- + true lit :n <even>
@@ -89,7 +89,7 @@
 
 *** <eq> -- an interface to the internal unification
 
-    #+begin_src jojo
+    #+begin_src cicada
     +type <eq> : -> [.lhs .rhs] : :<t> -- <<type>>
      refl : :z :z <eq>
 
@@ -109,7 +109,7 @@
 
 *** add-associative -- structural induction proof
 
-    #+begin_src jojo
+    #+begin_src cicada
     +proof add-associative
      : -> [:x :y :z] : <nat>
        -- :x :y add :z add
@@ -121,7 +121,7 @@
 
 *** add-commutative
 
-    #+begin_src jojo
+    #+begin_src cicada
     +proof add-commutative
      : -> [:m :n] : <nat>
        -- :m :n add, :n :m add <eq>
@@ -151,7 +151,7 @@
 
     - <list> := <null> | (<sexp> . <list>)
 
-    #+begin_src jojo
+    #+begin_src cicada
     +type <list> : -> .<t> : <<type>> -- <<type>>
      null : :<t> <list>
      cons : -> .cdr : [:<t> <list>]
@@ -161,7 +161,7 @@
 
 *** length
 
-    #+begin_src jojo
+    #+begin_src cicada
     +fun length : -> :l : [:<t> <list>] -- <nat>
      match :l
        null zero
@@ -170,7 +170,7 @@
 
 *** map
 
-    #+begin_src jojo
+    #+begin_src cicada
     +fun map
      : -> :l : [:<t1> <list>]
           :f : (-> :<t1> -- :<t2>)
@@ -182,7 +182,7 @@
 
 *** ref
 
-    #+begin_src jojo
+    #+begin_src cicada
     +fun ref
      : -> :l : [:<t> <list>], :index : <nat> -- :<t>
      match :index
@@ -192,7 +192,7 @@
 
 *** remove-first
 
-    #+begin_src jojo
+    #+begin_src cicada
     +fun remove-first
      : -> :x : :<t>, :l : [:<t> <list>]
        -- :<t> <list>
@@ -207,7 +207,7 @@
 
 *** <has-length>
 
-    #+begin_src jojo
+    #+begin_src cicada
     +type <has-length>
      : -> .list : [:<t> <list>]
           .length : <nat>
@@ -230,7 +230,7 @@
 
     - <sexp> := <symbol> | <list>
 
-    #+begin_src jojo
+    #+begin_src cicada
     (+var <sexp>
       (+ <symbol>, <sexp> <list>))
 
@@ -243,7 +243,7 @@
 
 *** subst
 
-    #+begin_src jojo
+    #+begin_src cicada
     +fun subst
      : -> :new  : <symbol>
           :old  : <symbol>
@@ -273,7 +273,7 @@
 
     - <lexp> := <var> | (lambda (<var>) <lexp>) | (<lexp> <lexp>)
 
-    #+begin_src jojo
+    #+begin_src cicada
     +type <lexp> : <<type>>
      var-lexp : -> .var : <var> -- <lexp>
      lam-lexp : -> .var : <var>, .body : <lexp> -- <lexp>
@@ -282,7 +282,7 @@
 
 *** occurs-free?
 
-    #+begin_src jojo
+    #+begin_src cicada
     +fun occurs-free?
      : -> :search-var : <var>, :lexp : <lexp>
        -- <bool>
@@ -298,7 +298,7 @@
 
 *** <vector>
 
-    #+begin_src jojo
+    #+begin_src cicada
     +type <vector>
      : -> .length : <nat>
           .<t> : <<type>>
@@ -311,7 +311,7 @@
 
 *** append
 
-    #+begin_src jojo
+    #+begin_src cicada
     +fun append
      : -> :l0 : [:m :<t> <vector>]
           :l1 : [:n :<t> <vector>]
@@ -323,7 +323,7 @@
 
 *** map
 
-    #+begin_src jojo
+    #+begin_src cicada
     +fun map
      : -> :l : [:n :<t1> <vector>]
           :f : -> :<t1> -- :<t2>
@@ -343,7 +343,7 @@
       1. key in the left subtree <= key in the current node
       2. keys in the right subtree > key in the current node
 
-    #+begin_src jojo
+    #+begin_src cicada
     +type <order> : <<type>>
      lt : <order>
      eq : <order>
@@ -360,7 +360,7 @@
 
 *** search
 
-    #+begin_src jojo
+    #+begin_src cicada
     +fun search
      : -> :tree : <binary-search-tree>
           :key  : <symbol>
@@ -375,7 +375,7 @@
 
 *** insert
 
-    #+begin_src jojo
+    #+begin_src cicada
     +fun insert
      : -> :tree  : <binary-search-tree>
           :key   : <symbol>
@@ -394,7 +394,7 @@
 
 *** delete
 
-    #+begin_src jojo
+    #+begin_src cicada
     +fun delete
      : -> :tree : <binary-search-tree>
           :key : <symbol>
