@@ -56,6 +56,9 @@
 
       #+begin_src js
       function assert (x) {
+          if (! x) {
+              throw new Error('assert fail!');
+          }
       }
       #+end_src
 
@@ -64,7 +67,7 @@
       #+begin_src js
       function error ()
       {
-          assert (false);
+          throw new Error('fatal error!');
       }
       #+end_src
 

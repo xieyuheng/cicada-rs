@@ -12,10 +12,13 @@
           return true;
       }
       function assert (x) {
+          if (! x) {
+              throw new Error('assert fail!');
+          }
       }
       function error ()
       {
-          assert (false);
+          throw new Error('fatal error!');
       }
     class env_t
     {
