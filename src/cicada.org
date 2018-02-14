@@ -4,7 +4,6 @@
 * [todo-stack]
 
 *** (+type)
-*** (+fun)
 *** (+gene)
 *** (+disp)
 *** (main)
@@ -67,6 +66,15 @@
               index = index + 1;
           }
           return true;
+      }
+      #+end_src
+
+***** string_p
+
+      #+begin_src js
+      function string_p (x)
+      {
+          return typeof x === 'string';
       }
       #+end_src
 
@@ -1391,8 +1399,6 @@
 
 *** >< pass_for_apply_exp
 
-*** >< pass_for_recur
-
 *** >< pass_for_field_exp
 
 *** >< pass_for_dot_exp
@@ -1400,6 +1406,10 @@
 *** >< pass_for_create_exp
 
 *** >< pass_for_clone_exp
+
+*** >< pass_for_recur
+
+*** >< pass_for_arrow
 
 * keyword -- syntax keywords
 
@@ -1466,7 +1476,7 @@
             let reversed_field_name_vect = [];
             for (let field_name of rest_vect) {
                 if (field_name_p (field_name))
-                    reversed_field_name_vect.push (field_name);
+                    reversed_field_name_vect.unshift (field_name);
             }
             let type_den =
                 new type_den_t (reversed_field_name_vect);
@@ -1480,7 +1490,7 @@
     #+begin_src js
     function field_name_p (x)
     {
-        if (typeof x !== 'string')
+        if (! string_p (x))
             return false;
         else if (x[0] !== '.')
             return false;
@@ -1491,7 +1501,49 @@
 
 *** >< (+type)
 
-*** >< (+fun)
+*** (+fun)
+
+    #+begin_src js
+    new_keyword (
+        "+fun",
+        function (env, sexp_list)
+        {
+            let name = car (sexp_list);
+            let rest_list = cdr (sexp_list);
+            let exp_vect = sexp_list_compile (rest_list);
+            let fun_den = new fun_den_t (exp_vect);
+            name_dict_set (env, name, fun_den);
+        }
+    );
+    #+end_src
+
+*** sexp_list_compile
+
+    #+begin_src js
+    function sexp_list_compile (sexp_list)
+    {
+        let exp_vect = [];
+        let sexp = car (sexp_list);
+        sexp_list = cdr (sexp_list);
+        while (sexp) {
+            if (string_p (sexp)) {
+                let name = sexp;
+                let call_exp = new call_exp_t (name);
+                exp_vect.push (call_exp);
+            }
+            else {
+                assert (cons_p (sexp));
+                let keyword = car (sexp);
+                let rest_list = cdr (sexp);
+                let new_exp_vect =
+                    keyword_apply (env, keyword, rest_list);
+                assert (new_exp_vect);
+                exp_vect.concat (new_exp_vect);
+            }
+        }
+        return exp_vect;
+    }
+    #+end_src
 
 *** >< (+gene)
 
