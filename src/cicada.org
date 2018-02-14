@@ -3,15 +3,37 @@
 
 * [todo-stack]
 
-*** >< (+union)
+*** sexp_list_to_vect
 
-*** >< (+type)
+*** sexp_vect_to_list
 
-*** >< (+fun)
+*** pass_for_apply_exp
 
-*** >< (+gene)
+*** pass_for_recur
 
-*** >< (+disp)
+*** pass_for_field_exp
+
+*** pass_for_dot_exp
+
+*** pass_for_create_exp
+
+*** pass_for_clone_exp
+
+*** (main)
+
+*** (+union)
+
+*** (+data)
+
+*** (+type)
+
+*** (+fun)
+
+*** (+gene)
+
+*** (+disp)
+
+*** rec_exp
 
 *** ffi to js
 
@@ -1308,11 +1330,9 @@
     }
     #+end_src
 
-* prim -- primitive
+*** >< sexp_list_to_vect
 
-*** >< p_string
-
-*** >< p_sexp
+*** >< sexp_vect_to_list
 
 * eval -- evaluate
 
@@ -1343,44 +1363,97 @@
     #+begin_src js
     function eval_sexp (env, sexp)
     {
-        // ><><><
-        // handle string
         assert (cons_p (sexp));
         let keyword = car (sexp);
         let sexp_list = cdr (sexp);
-        top_eval (env, keyword, sexp_list);
+        sexp_list = apply_all_passes (sexp_list);
+        keyword_apply (env, keyword, sexp_list);
     }
     #+end_src
 
-* top -- top level keywords
+* pass -- normalize syntax
 
-*** top_level_keyword_dict -- keyword to top_fn
+*** pass_vect -- of pass_fn
 
     #+begin_src js
-    let top_level_keyword_dict = new Map ();
+    let pass_vect = [];
     #+end_src
 
-*** new_top
+*** new_pass
 
     #+begin_src js
-    function new_top (keyword, top_fn)
+    function new_pass (pass_fn)
     {
-        top_level_keyword_dict.set (keyword, top_fn);
+        pass_vect.push (pass_fn);
     }
     #+end_src
 
-*** top_eval
+*** apply_all_passes
 
     #+begin_src js
-    function top_eval (env, keyword, sexp_list)
+    function apply_all_passes (sexp_list)
     {
-        let top_fn = top_level_keyword_dict.get (keyword);
-        assert (top_fn);
-        top_fn (env, sexp_list);
+        for (let pass_fn of pass_vect) {
+            assert (pass_fn instanceof Function);
+            sexp_list = pass_fn (sexp_list);
+        }
+        return sexp_list;
+    }
+    #+end_src
+
+*** >< pass_for_apply_exp
+
+*** >< pass_for_recur
+
+*** >< pass_for_field_exp
+
+*** >< pass_for_dot_exp
+
+*** >< pass_for_create_exp
+
+*** >< pass_for_clone_exp
+
+* keyword -- syntax keywords
+
+*** keyword_dict -- keyword to keyword_fn
+
+    #+begin_src js
+    let keyword_dict = new Map ();
+    #+end_src
+
+*** new_keyword
+
+    #+begin_src js
+    function new_keyword (keyword, keyword_fn)
+    {
+        keyword_dict.set (keyword, keyword_fn);
+    }
+    #+end_src
+
+*** keyword_apply
+
+    #+begin_src js
+    function keyword_apply (env, keyword, sexp_list)
+    {
+        let keyword_fn = keyword_dict.get (keyword);
+        assert (keyword_fn instanceof Function);
+        keyword_fn (env, sexp_list);
     }
     #+end_src
 
 *** >< (+union)
+
+    #+begin_src js
+    new_keyword (
+        "+union",
+        function (sexp_list)
+        {
+            return sexp_list;
+        }
+    );
+    #+end_src
+
+*** >< (+data)
 
 *** >< (+type)
 
@@ -1389,6 +1462,14 @@
 *** >< (+gene)
 
 *** >< (+disp)
+
+*** >< (main)
+
+* prim -- ffi to js
+
+*** >< p_string
+
+*** >< p_sexp
 
 * epilog
 
