@@ -3,7 +3,6 @@
 
 * [todo-stack]
 
-*** (+union)
 *** (+data)
 *** (+type)
 *** (+fun)
@@ -1436,10 +1435,21 @@
     #+begin_src js
     new_keyword (
         "+union",
-        function (sexp_list)
+        function (env, sexp_list)
         {
-            // ><><><
-            return sexp_list;
+            let name = car (sexp_list);
+            let rest_list = cdr (sexp_list);
+            assert (! null_p (rest_list));
+            let next = car (rest_list);
+            if (next === ':')
+                rest_list === cdr (cdr (rest_list)); // over an arrow
+            let union_vect = [];
+            let rest_vect = sexp_list_to_vect (rest_list);
+            for (let type_name of rest_vect) {
+                union_vect.push (type_name);
+            }
+            let union_den = new union_den_t (union_vect);
+            name_dict_set (env, name, union_den);
         }
     );
     #+end_src
