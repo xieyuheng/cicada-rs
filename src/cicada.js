@@ -876,7 +876,10 @@
     }
     function vect_to_list (vect)
     {
-
+        if (vect.length === 0)
+            return null;
+        else
+            return cons (vect[0], vect_to_list (vect.slice (1)));
     }
     function code_eval (env, code)
     {
@@ -935,12 +938,15 @@
           let new_sexp_vect = [];
           let index = 0;
           while (index < sexp_vect.length) {
+              let sexp = sexp_vect[index];
+              let next = sexp_vect[index +1];
               if (sexp === "--")
                   break;
-              else if (sexp === ":")
-                  index = index + 2;
-              else {
+              else if (next === ":") {
                   new_sexp_vect.push (sexp);
+                  index = index + 2;
+              }
+              else {
                   index = index + 1;
               }
           }
@@ -1160,7 +1166,6 @@
             exp_vect_run (env, exp_vect);
         }
     );
-
     new_keyword (
         "let",
         function (sexp_list)
@@ -1219,7 +1224,7 @@
         print (env);
     }
 
-    test_env ();
+    // test_env ();
     function test_code_scan ()
     {
         let code = "                                    \
@@ -1257,6 +1262,8 @@
     {
         assert (string_p (code));
         let env = new env_t ();
+        let top_level_scope = new scope_t ();
+        scope_stack_push (env, top_level_scope);
         code_eval (env, code);
         return env;
     }

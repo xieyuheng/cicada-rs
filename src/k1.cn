@@ -1,6 +1,14 @@
+(+union nat-u
+  zero-t
+  succ-t)
+
 (+data zero-t)
 
 (+data succ-t .prev)
 
+(+fun swap : (-> x : nat-u, y : nat-u -- nat-u)
+  y x)
+
 (main
- zero-c succ-c  succ-c .prev .prev)
+ zero-c
+ zero-c succ-c swap)

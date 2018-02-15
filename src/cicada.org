@@ -3,6 +3,8 @@
 
 * [todo-stack]
 
+*** (case)
+
 *** test with pass_for_fun -- for recur
 
 *** test with pass_for_dot
@@ -1462,12 +1464,15 @@
           let new_sexp_vect = [];
           let index = 0;
           while (index < sexp_vect.length) {
+              let sexp = sexp_vect[index];
+              let next = sexp_vect[index +1];
               if (sexp === "--")
                   break;
-              else if (sexp === ":")
-                  index = index + 2;
-              else {
+              else if (next === ":") {
                   new_sexp_vect.push (sexp);
+                  index = index + 2;
+              }
+              else {
                   index = index + 1;
               }
           }
@@ -1778,12 +1783,6 @@
 
 * keyword -- sexp_list to exp_vect
 
-*** >< (get)
-
-    #+begin_src js
-
-    #+end_src
-
 *** (let)
 
     #+begin_src js
@@ -1881,7 +1880,7 @@
         print (env);
     }
 
-    test_env ();
+    // test_env ();
     #+end_src
 
 *** test_code_scan
@@ -1936,6 +1935,8 @@
     {
         assert (string_p (code));
         let env = new env_t ();
+        let top_level_scope = new scope_t ();
+        scope_stack_push (env, top_level_scope);
         code_eval (env, code);
         return env;
     }
