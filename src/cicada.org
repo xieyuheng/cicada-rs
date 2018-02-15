@@ -3,21 +3,19 @@
 
 * [todo-stack]
 
+*** gene & disp
+
+***** pass_for_gene
+
+***** pass_for_disp
+
+***** (+gene)
+
+***** (+disp)
+
 *** fix the use of "#<closure-obj>"
 
 *** fix the use of "#<dot-obj>"
-
-*** pass_for_dot
-
-*** pass_for_gene
-
-*** pass_for_disp
-
-*** (.)
-
-*** (+gene)
-
-*** (+disp)
 
 *** (+type)
 
@@ -762,6 +760,7 @@
                 = reversed_field_name_vect;
             this.dot_clause_map
                 = dot_clause_map;
+            // field_name to exp_vect
         }
 
         exe (env, scope)
@@ -822,10 +821,12 @@
             let dot_obj = data_stack_pop (env);
             assert (dot_obj instanceof dot_obj_t);
             let new_field_dict = new field_dict_t ();
-            for (let [field_name, obj] of data_obj.field_dict) {
+            // .dict of field_dict should be hidden
+            //   but I used it here
+            for (let [field_name, obj] of data_obj.field_dict.dict) {
                 new_field_dict.set (field_name, obj);
             }
-            for (let [field_name, obj] of dot_obj.field_dict) {
+            for (let [field_name, obj] of dot_obj.field_dict.dict) {
                 new_field_dict.set (field_name, obj);
             }
             let new_data_obj =
@@ -1678,8 +1679,6 @@
       new_pass (pass_for_create);
       #+end_src
 
-***** >< pass_for_dot
-
 ***** >< pass_for_gene
 
 ***** >< pass_for_disp
@@ -1954,16 +1953,53 @@
     );
     #+end_src
 
-*** >< (.)
+*** (.)
 
     #+begin_src js
     new_keyword (
         ".",
         function (sexp_list)
         {
-
+            let sexp_vect = list_to_vect (sexp_list);
+            let reversed_field_name_vect = [];
+            let dot_clause_map = new Map ();
+            let index = 0;
+            while (index < sexp_vect.length) {
+                let sexp = sexp_vect[index];
+                let next = sexp_vect[index +1];
+                // next might be undefined
+                if (field_sexp_p (sexp) &&
+                    (next !== "=")) {
+                    let field_name = sexp.cdr.car;
+                    reversed_field_name_vect.unshift (field_name);
+                    index = index + 1;
+                }
+                else if (field_sexp_p (sexp) &&
+                         (next === "=")) {
+                    let clause_sexp = sexp_vect[index +2];
+                    let field_name = sexp.cdr.car;
+                    let exp_vect = sexp_compile (clause_sexp);
+                    dot_clause_map.set (field_name, exp_vect);
+                    index = index + 2;
+                }
+                else {
+                    index = index + 1;
+                }
+            }
+            return [new dot_exp_t (reversed_field_name_vect,
+                                   dot_clause_map)];
         }
     );
+    #+end_src
+
+*** field_sexp_p
+
+    #+begin_src js
+    function field_sexp_p (x)
+    {
+        return (cons_p (x) &&
+                (x.car === "field"));
+    }
     #+end_src
 
 *** (construct)
