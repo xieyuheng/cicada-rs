@@ -1,0 +1,21 @@
+#!/usr/bin/env node
+
+const fs = require("fs");
+const path = require("path");
+
+const cicada = require("./cicada.js");
+
+function main ()
+{
+    let arg_vect = process.argv.slice(2);
+    for (let arg of arg_vect) {
+        console.log (arg);
+        let code =
+            fs.readFileSync(arg)
+            .toString();
+        let env = cicada.eval_code (code);
+        env.print ();
+    }
+}
+
+main ();

@@ -15,7 +15,11 @@
       {
           return typeof x === 'string';
       }
-      function array_empty_p (x)
+      function vect_p (x)
+      {
+          return x instanceof Array;
+      }
+      function vect_empty_p (x)
       {
           assert (x instanceof Array);
           return x.length === 0;
@@ -37,6 +41,11 @@
             this.data_stack = [];
             this.frame_stack = [];
             this.scope_stack = [];
+        }
+
+        print ()
+        {
+            print (this.data_stack);
         }
     }
       class name_dict_t
@@ -189,6 +198,12 @@
     function run_one_step (env)
     {
         let frame = frame_stack_tos (env);
+        if (frame_end_p (frame)) {
+            frame_stack_drop (env);
+            if (frame instanceof scoping_frame_t)
+                scope_stack_drop (env);
+            return;
+        }
         let scope = scope_stack_tos (env);
         let exp = frame_next_exp (frame);
         if (frame_end_p (frame)) {
@@ -351,7 +366,7 @@
             this.dict.set (type_name, exp_vect);
         }
     }
-    class cons_exp_t
+    class construct_exp_t
     {
         constructor (type_name)
         {
@@ -361,7 +376,7 @@
         exe (env, scope)
         {
             let type_name = this.type_name;
-            let type_den = name_dict_get (type_name);
+            let type_den = name_dict_get (env, type_name);
             assert (type_den instanceof type_den_t);
             let field_dict = new field_dict_t ();
             for (let field_name of type_den.reversed_field_name_vect) {
@@ -873,7 +888,7 @@
     }
     function sexp_vect_to_list (sexp_vect)
     {
-        if (array_empty_p (sexp_vect))
+        if (vect_empty_p (sexp_vect))
             return null;
         else {
             let sexp = sexp_vect [0];
@@ -881,19 +896,19 @@
             return cons (sexp, rest_list);
         }
     }
-    function eval_code (env, code)
+    function code_eval (env, code)
     {
         let string_vect = code_scan (code);
         let sexp_vect = parse_sexp_vect (string_vect);
-        eval_sexp_vect (env, sexp_vect);
+        sexp_vect_eval (env, sexp_vect);
     }
-    function eval_sexp_vect (env, sexp_vect)
+    function sexp_vect_eval (env, sexp_vect)
     {
         for (let sexp of sexp_vect) {
-            eval_sexp_vect (env, sexp);
+            sexp_eval (env, sexp);
         }
     }
-    function eval_sexp (env, sexp)
+    function sexp_eval (env, sexp)
     {
         assert (cons_p (sexp));
         let keyword = car (sexp);
@@ -913,6 +928,47 @@
             sexp_list = pass_fn (sexp_list);
         }
         return sexp_list;
+    }
+    function field_name_p (x)
+    {
+        if (! string_p (x))
+            return false;
+        else if (x[0] !== '.')
+            return false;
+        else
+            return true;
+    }
+    function sexp_list_compile (sexp_list)
+    {
+        let sexp_vect = sexp_list_to_vect (sexp_list);
+        let exp_vect = [];
+        for (let sexp of sexp_vect) {
+            exp_vect = exp_vect.concat (sexp_compile (sexp));
+        }
+        return exp_vect;
+    }
+    function sexp_compile (sexp)
+    {
+        if (string_p (sexp)) {
+            if (sexp === "apply")
+                return [new apply_exp_t ()];
+            else if (sexp === "clone")
+                return [new clone_exp_t ()];
+            else {
+                let name = sexp;
+                let call_exp = new call_exp_t (name);
+                return [call_exp];
+            }
+        }
+        else {
+            assert (cons_p (sexp));
+            let keyword = car (sexp);
+            let rest_list = cdr (sexp);
+            let new_exp_vect =
+                keyword_apply (keyword, rest_list);
+            assert (vect_p (new_exp_vect));
+            return new_exp_vect;
+        }
     }
     let keyword_dict = new Map ();
     function new_keyword (keyword, keyword_fn)
@@ -962,15 +1018,6 @@
             name_dict_set (env, name, type_den);
         }
     );
-    function field_name_p (x)
-    {
-        if (! string_p (x))
-            return false;
-        else if (x[0] !== '.')
-            return false;
-        else
-            return true;
-    }
     new_keyword (
         "+fun",
         function (env, sexp_list)
@@ -982,29 +1029,6 @@
             name_dict_set (env, name, fun_den);
         }
     );
-    function sexp_list_compile (sexp_list)
-    {
-        let exp_vect = [];
-        let sexp = car (sexp_list);
-        sexp_list = cdr (sexp_list);
-        while (sexp) {
-            if (string_p (sexp)) {
-                let name = sexp;
-                let call_exp = new call_exp_t (name);
-                exp_vect.push (call_exp);
-            }
-            else {
-                assert (cons_p (sexp));
-                let keyword = car (sexp);
-                let rest_list = cdr (sexp);
-                let new_exp_vect =
-                    keyword_apply (env, keyword, rest_list);
-                assert (new_exp_vect);
-                exp_vect.concat (new_exp_vect);
-            }
-        }
-        return exp_vect;
-    }
     new_keyword (
         "+gene",
         function (env, sexp_list)
@@ -1031,10 +1055,20 @@
         "main",
         function (env, sexp_list)
         {
-            exp_vect_run (env, sexp_list);
+            let exp_vect = sexp_list_compile (sexp_list);
+            exp_vect_run (env, exp_vect);
         }
     );
-    function test ()
+    new_keyword (
+        "construct",
+        function (sexp_list)
+        {
+            let name = car (sexp_list);
+            return [new construct_exp_t (name)];
+        }
+    );
+
+    function test_env ()
     {
         let env = new env_t ();
 
@@ -1055,19 +1089,7 @@
         print (env);
     }
 
-    // test ();
-
-    function test_many ()
-    {
-        let counter = 0;
-        while (counter < 1000000) {
-            test ();
-            counter = counter + 1;
-        }
-    }
-
-    // test_many ();
-
+    // test_env ();
     function test_code_scan ()
     {
         let code = "                                    \
@@ -1083,7 +1105,6 @@
     }
 
     // test_code_scan ();
-
     function test_parse_sexp_vect ()
     {
         let code = "                                    \
@@ -1100,4 +1121,12 @@
         }
     }
 
-    test_parse_sexp_vect ();
+    // test_parse_sexp_vect ();
+    function eval_code (code)
+    {
+        assert (string_p (code));
+        let env = new env_t ();
+        code_eval (env, code);
+        return env;
+    }
+    module.exports.eval_code = eval_code;
