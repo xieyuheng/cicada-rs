@@ -1496,9 +1496,43 @@
       new_pass (pass_for_construct);
       #+end_src
 
-***** >< pass_for_dot_exp
+***** pass_for_create
 
-***** >< pass_for_create_exp
+      - cons_cr -> (create cons_t)
+
+      #+begin_src js
+      function pass_for_create (sexp)
+      {
+          if (string_p (sexp)) {
+              if (sexp.length <= 3)
+                  return sexp
+              let post_fix =
+                  sexp.slice (sexp.length -3,
+                              sexp.length);
+              if (post_fix === "-cr") {
+                  sexp = sexp.slice (0, sexp.length -3);
+                  sexp = sexp.concat ("-t");
+                  sexp = cons (sexp, null);
+                  sexp = cons ("create", sexp);
+                  return sexp;
+              }
+              else
+                  return sexp;
+
+          }
+          else if (null_p (sexp)) {
+              return null;
+          }
+          else {
+              return cons (pass_for_create (car (sexp)),
+                           pass_for_create (cdr (sexp)));
+          }
+      }
+
+      new_pass (pass_for_create);
+      #+end_src
+
+***** >< pass_for_dot_exp
 
 ***** >< pass_for_recur
 
@@ -1745,11 +1779,7 @@
     );
     #+end_src
 
-* prim -- ffi to js
-
-*** >< p_string
-
-*** >< p_sexp
+* >< prim -- ffi to js
 
 * test
 
