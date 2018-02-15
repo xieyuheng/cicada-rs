@@ -911,9 +911,9 @@
     function sexp_eval (env, sexp)
     {
         assert (cons_p (sexp));
+        sexp = apply_all_passes (sexp);
         let keyword = car (sexp);
         let sexp_list = cdr (sexp);
-        sexp_list = apply_all_passes (sexp_list);
         top_keyword_apply (env, keyword, sexp_list);
     }
     let pass_vect = [];
@@ -921,23 +921,52 @@
     {
         pass_vect.push (pass_fn);
     }
-    function apply_all_passes (sexp_list)
+    function apply_all_passes (sexp)
     {
         for (let pass_fn of pass_vect) {
             assert (pass_fn instanceof Function);
-            sexp_list = pass_fn (sexp_list);
+            sexp = pass_fn (sexp);
         }
-        return sexp_list;
+        return sexp;
     }
-    function field_name_p (x)
-    {
-        if (! string_p (x))
-            return false;
-        else if (x[0] !== '.')
-            return false;
-        else
-            return true;
-    }
+      function pass_for_construct (sexp)
+      {
+          if (string_p (sexp)) {
+              if (sexp.length <= 2)
+                  return sexp
+              let post_fix =
+                  sexp.slice (sexp.length -2,
+                              sexp.length);
+              if (post_fix === "-c") {
+                  sexp = sexp.slice (0, sexp.length -2);
+                  sexp = sexp.concat ("-t");
+                  sexp = cons (sexp, null);
+                  sexp = cons ("construct", sexp);
+                  return sexp;
+              }
+              else
+                  return sexp;
+
+          }
+          else if (null_p (sexp)) {
+              return null;
+          }
+          else {
+              return cons (pass_for_construct (car (sexp)),
+                           pass_for_construct (cdr (sexp)));
+          }
+      }
+
+      new_pass (pass_for_construct);
+      function field_name_p (x)
+      {
+          if (! string_p (x))
+              return false;
+          else if (x[0] !== '.')
+              return false;
+          else
+              return true;
+      }
     function sexp_list_compile (sexp_list)
     {
         let sexp_vect = sexp_list_to_vect (sexp_list);
@@ -954,6 +983,8 @@
                 return [new apply_exp_t ()];
             else if (sexp === "clone")
                 return [new clone_exp_t ()];
+            // ><><><
+            // drop dup over tuck swap
             else {
                 let name = sexp;
                 let call_exp = new call_exp_t (name);
@@ -1060,6 +1091,13 @@
         }
     );
     new_keyword (
+        ".",
+        function (sexp_list)
+        {
+
+        }
+    );
+    new_keyword (
         "construct",
         function (sexp_list)
         {
@@ -1067,7 +1105,14 @@
             return [new construct_exp_t (name)];
         }
     );
-
+    new_keyword (
+        "create",
+        function (sexp_list)
+        {
+            let name = car (sexp_list);
+            return [new create_exp_t (name)];
+        }
+    );
     function test_env ()
     {
         let env = new env_t ();

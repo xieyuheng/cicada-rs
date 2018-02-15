@@ -3,10 +3,17 @@
 
 * [todo-stack]
 
+*** (.)
+
 *** (+gene)
 *** (+disp)
 
 *** (+type)
+
+*** pass_for_recur
+*** pass_for_field_exp
+*** pass_for_create_exp
+*** pass_for_dot_exp
 
 *** passes
 
@@ -14,19 +21,6 @@
 
     - pass change the language to
       what cicada.js really implemented.
-
-    - use ins
-
-      - drop dup over tuck swap
-      - apply
-      - clone
-
-*** pass_for_apply_exp
-*** pass_for_recur
-*** pass_for_field_exp
-*** pass_for_dot_exp
-*** pass_for_create_exp
-*** pass_for_clone_exp
 
 *** rec_exp_t
 
@@ -1427,9 +1421,9 @@
     function sexp_eval (env, sexp)
     {
         assert (cons_p (sexp));
+        sexp = apply_all_passes (sexp);
         let keyword = car (sexp);
         let sexp_list = cdr (sexp);
-        sexp_list = apply_all_passes (sexp_list);
         top_keyword_apply (env, keyword, sexp_list);
     }
     #+end_src
@@ -1454,43 +1448,75 @@
 *** apply_all_passes
 
     #+begin_src js
-    function apply_all_passes (sexp_list)
+    function apply_all_passes (sexp)
     {
         for (let pass_fn of pass_vect) {
             assert (pass_fn instanceof Function);
-            sexp_list = pass_fn (sexp_list);
+            sexp = pass_fn (sexp);
         }
-        return sexp_list;
+        return sexp;
     }
     #+end_src
 
-*** >< pass_for_apply_exp
+*** passes
 
-*** >< pass_for_field_exp
+***** pass_for_construct
 
-*** >< pass_for_dot_exp
+      - cons_c -> (construct cons_t)
 
-*** >< pass_for_create_exp
+      #+begin_src js
+      function pass_for_construct (sexp)
+      {
+          if (string_p (sexp)) {
+              if (sexp.length <= 2)
+                  return sexp
+              let post_fix =
+                  sexp.slice (sexp.length -2,
+                              sexp.length);
+              if (post_fix === "-c") {
+                  sexp = sexp.slice (0, sexp.length -2);
+                  sexp = sexp.concat ("-t");
+                  sexp = cons (sexp, null);
+                  sexp = cons ("construct", sexp);
+                  return sexp;
+              }
+              else
+                  return sexp;
 
-*** >< pass_for_clone_exp
+          }
+          else if (null_p (sexp)) {
+              return null;
+          }
+          else {
+              return cons (pass_for_construct (car (sexp)),
+                           pass_for_construct (cdr (sexp)));
+          }
+      }
 
-*** >< pass_for_recur
+      new_pass (pass_for_construct);
+      #+end_src
 
-*** >< pass_for_arrow
+***** >< pass_for_dot_exp
 
-*** field_name_p
+***** >< pass_for_create_exp
 
-    #+begin_src js
-    function field_name_p (x)
-    {
-        if (! string_p (x))
-            return false;
-        else if (x[0] !== '.')
-            return false;
-        else
-            return true;
-    }
-    #+end_src
+***** >< pass_for_recur
+
+***** >< pass_for_arrow
+
+***** field_name_p
+
+      #+begin_src js
+      function field_name_p (x)
+      {
+          if (! string_p (x))
+              return false;
+          else if (x[0] !== '.')
+              return false;
+          else
+              return true;
+      }
+      #+end_src
 
 * compile -- to exp_vect
 
@@ -1518,6 +1544,8 @@
                 return [new apply_exp_t ()];
             else if (sexp === "clone")
                 return [new clone_exp_t ()];
+            // ><><><
+            // drop dup over tuck swap
             else {
                 let name = sexp;
                 let call_exp = new call_exp_t (name);
@@ -1679,6 +1707,18 @@
 
 * keyword -- sexp_list to exp_vect
 
+*** >< (.)
+
+    #+begin_src js
+    new_keyword (
+        ".",
+        function (sexp_list)
+        {
+
+        }
+    );
+    #+end_src
+
 *** (construct)
 
     #+begin_src js
@@ -1692,10 +1732,17 @@
     );
     #+end_src
 
-*** >< (create)
+*** (create)
 
     #+begin_src js
-
+    new_keyword (
+        "create",
+        function (sexp_list)
+        {
+            let name = car (sexp_list);
+            return [new create_exp_t (name)];
+        }
+    );
     #+end_src
 
 * prim -- ffi to js
