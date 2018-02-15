@@ -3,6 +3,16 @@
 
 * [todo-stack]
 
+*** test with pass_for_fun -- for arrow
+
+*** test with pass_for_fun -- for recur
+
+*** test with pass_for_dot
+
+*** test with pass_for_gene
+
+*** test with pass_for_disp
+
 *** (.)
 
 *** (+gene)
@@ -10,18 +20,15 @@
 
 *** (+type)
 
-*** passes
-
-    - pass for ': (->)'
-
-    - pass change the language to
-      what cicada.js really implemented.
-
 *** rec_exp_t
 
     - for little recursion
 
+    - current frame need to be added as a new argument to exe
+
 *** ffi to js
+
+    - only to -t
 
 *** test
 
@@ -109,8 +116,9 @@
 ***** error
 
       #+begin_src js
-      function error ()
+      function error (report)
       {
+          print (report);
           throw new Error('fatal error!');
       }
       #+end_src
@@ -718,7 +726,8 @@
         {
             let data_obj = data_stack_pop (env);
             assert (data_obj instanceof data_obj_t);
-            let obj = data_obj.field_dict.get (field_name);
+            let obj = data_obj.field_dict.get (this.field_name);
+            assert (obj);
             obj.apply (env);
         }
     }
@@ -1355,35 +1364,36 @@
     }
     #+end_src
 
-*** sexp_list_to_vect
+*** list_to_vect
 
     #+begin_src js
-    function sexp_list_to_vect (sexp_list)
+    function list_to_vect (list)
     {
-        if (null_p (sexp_list))
+        if (null_p (list))
             return [];
         else {
-            let sexp = car (sexp_list);
-            let sexp_vect = [sexp];
-            let rest_list = (cdr (sexp_list));
-            return sexp_vect.concat (sexp_list_to_vect (rest_list));
+            let e = car (list);
+            let vect = [e];
+            let rest = (cdr (list));
+            return vect.concat (list_to_vect (rest));
         }
     }
-    #+end_src
 
-*** sexp_vect_to_list
-
-    #+begin_src js
-    function sexp_vect_to_list (sexp_vect)
-    {
-        if (vect_empty_p (sexp_vect))
-            return null;
-        else {
-            let sexp = sexp_vect [0];
-            let rest_list = sexp_vect_to_list (sexp_vect.slice (1));
-            return cons (sexp, rest_list);
-        }
-    }
+    // {
+    //     if (null_p (sexp_list))
+    //         return [];
+    //     let sexp = car (sexp_list);
+    //     if (string_p (sexp)) {
+    //         let sexp_vect = [sexp];
+    //         let rest_list = (cdr (sexp_list));
+    //         return sexp_vect.concat (list_to_vect (rest_list));
+    //     }
+    //     else {
+    //         let sexp_vect = [list_to_vect (sexp)];
+    //         let rest_list = (cdr (sexp_list));
+    //         return sexp_vect.concat (list_to_vect (rest_list));
+    //     }
+    // }
     #+end_src
 
 * eval -- evaluate
@@ -1425,7 +1435,7 @@
 
 * pass -- normalize syntax in sexp
 
-*** pass_vect -- of pass_fn
+*** pass_vect -- the order of pass_fn matters
 
     #+begin_src js
     let pass_vect = [];
@@ -1455,6 +1465,95 @@
 
 *** passes
 
+***** >< pass_for_fun
+
+      #+begin_src js
+      function pass_for_fun (sexp)
+      {
+          if (cons_p (sexp) &&
+              (car (sexp) === "+fun")) {
+              let name = sexp.cdr.car;
+              let arrow_sexp = sexp.cdr.cdr.cdr.car;
+              let old_body = sexp.cdr.cdr.cdr.cdr;
+              let new_body = pass_for_fun_help (arrow_sexp, old_body);
+              return cons ("+fun", cons (name, new_body));
+          }
+          else
+              return sexp;
+      }
+
+      new_pass (pass_for_fun);
+
+      function pass_for_fun_help (arrow_sexp, old_body)
+      {   
+          let local_map = arrow_to_local (arrow_sexp);
+    
+      }
+      #+end_src
+
+***** pass_for_set
+
+      #+begin_src js
+      function pass_for_set (sexp)
+      {
+          if (string_p (sexp)) {
+              if (sexp.length <= 1)
+                  return sexp;
+              let post_fix =
+                  sexp.slice (sexp.length -1, sexp.length);
+              if (post_fix === "!") {
+                  sexp = sexp.slice (0, sexp.length -1);
+                  sexp = cons (sexp, null);
+                  sexp = cons ("set", sexp);
+                  return sexp;
+              }
+              else
+                  return sexp;
+          }
+          else if (null_p (sexp)) {
+              return null;
+          }
+          else {
+              return cons (pass_for_set (car (sexp)),
+                           pass_for_set (cdr (sexp)));
+          }
+      }
+
+      new_pass (pass_for_set);
+      #+end_src
+
+***** pass_for_field
+
+      - .field -> (field .field)
+
+      #+begin_src js
+      function pass_for_field (sexp)
+      {
+          if (string_p (sexp)) {
+              if (sexp.length <= 1)
+                  return sexp;
+              let pre_fix =
+                  sexp.slice (0, 1);
+              if (pre_fix === ".") {
+                  sexp = cons (sexp, null);
+                  sexp = cons ("field", sexp);
+                  return sexp;
+              }
+              else
+                  return sexp;
+          }
+          else if (null_p (sexp)) {
+              return null;
+          }
+          else {
+              return cons (pass_for_field (car (sexp)),
+                           pass_for_field (cdr (sexp)));
+          }
+      }
+
+      new_pass (pass_for_field);
+      #+end_src
+
 ***** pass_for_construct
 
       - cons_c -> (construct cons_t)
@@ -1464,7 +1563,7 @@
       {
           if (string_p (sexp)) {
               if (sexp.length <= 2)
-                  return sexp
+                  return sexp;
               let post_fix =
                   sexp.slice (sexp.length -2,
                               sexp.length);
@@ -1477,7 +1576,6 @@
               }
               else
                   return sexp;
-
           }
           else if (null_p (sexp)) {
               return null;
@@ -1500,7 +1598,7 @@
       {
           if (string_p (sexp)) {
               if (sexp.length <= 3)
-                  return sexp
+                  return sexp;
               let post_fix =
                   sexp.slice (sexp.length -3,
                               sexp.length);
@@ -1513,7 +1611,6 @@
               }
               else
                   return sexp;
-
           }
           else if (null_p (sexp)) {
               return null;
@@ -1527,33 +1624,7 @@
       new_pass (pass_for_create);
       #+end_src
 
-***** pass_for_field
-
-      - .field -> (field .field)
-
-      #+begin_src js
-
-      #+end_src
-
 ***** >< pass_for_dot
-
-***** >< pass_for_recur
-
-***** >< pass_for_arrow
-
-***** field_name_p
-
-      #+begin_src js
-      function field_name_p (x)
-      {
-          if (! string_p (x))
-              return false;
-          else if (x[0] !== '.')
-              return false;
-          else
-              return true;
-      }
-      #+end_src
 
 * compile -- to exp_vect
 
@@ -1562,7 +1633,7 @@
     #+begin_src js
     function sexp_list_compile (sexp_list)
     {
-        let sexp_vect = sexp_list_to_vect (sexp_list);
+        let sexp_vect = list_to_vect (sexp_list);
         let exp_vect = [];
         for (let sexp of sexp_vect) {
             exp_vect = exp_vect.concat (sexp_compile (sexp));
@@ -1590,12 +1661,17 @@
             }
         }
         else {
-            assert (cons_p (sexp));
+            if (! cons_p (sexp)) {
+                print (sexp);
+                error ("- sexp_compile 1");
+            }
             let keyword = car (sexp);
             let rest_list = cdr (sexp);
             let new_exp_vect =
                 keyword_apply (keyword, rest_list);
-            assert (vect_p (new_exp_vect));
+            if (! (vect_p (new_exp_vect))) {
+                error ("- sexp_compile 2");
+            }
             return new_exp_vect;
         }
     }
@@ -1650,7 +1726,7 @@
             let name = car (sexp_list);
             let rest_list = cdr (sexp_list);
             let union_vect = [];
-            let rest_vect = sexp_list_to_vect (rest_list);
+            let rest_vect = list_to_vect (rest_list);
             for (let type_name of rest_vect) {
                 union_vect.push (type_name);
             }
@@ -1669,10 +1745,14 @@
         {
             let name = car (sexp_list);
             let rest_list = cdr (sexp_list);
-            let rest_vect = sexp_list_to_vect (rest_list);
+            let rest_vect = list_to_vect (rest_list);
             let reversed_field_name_vect = [];
-            for (let field_name of rest_vect) {
-                reversed_field_name_vect.unshift (field_name);
+            for (let sexp of rest_vect) {
+                if (cons_p (sexp)) {
+                    if (car (sexp) === "field")
+                        reversed_field_name_vect
+                        .unshift (car (cdr (sexp)));
+                }
             }
             let type_den =
                 new type_den_t (reversed_field_name_vect);
@@ -1750,10 +1830,17 @@
 
     #+end_src
 
-*** >< (set)
+*** (set)
 
     #+begin_src js
-
+    new_keyword (
+        "set",
+        function (sexp_list)
+        {
+            let name = car (sexp_list);
+            return [new set_exp_t (name)];
+        }
+    );
     #+end_src
 
 *** >< (closure)
@@ -1764,10 +1851,17 @@
 
     #+end_src
 
-*** >< (field)
+*** (field)
 
     #+begin_src js
-
+    new_keyword (
+        "field",
+        function (sexp_list)
+        {
+            let name = car (sexp_list);
+            return [new field_exp_t (name)];
+        }
+    );
     #+end_src
 
 *** >< (.)
@@ -1875,6 +1969,7 @@
         let sexp_vect = parse_sexp_vect (string_vect);
         for (let sexp of sexp_vect) {
             print (sexp_repr (sexp));
+            print (list_to_vect (sexp));
         }
     }
 

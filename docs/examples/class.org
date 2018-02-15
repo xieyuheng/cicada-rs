@@ -127,8 +127,8 @@
          -- nat-u nat-u tree-u)
       (case tree
         (leaf-t dup inc swap leaf-c)
-        (node-t tree.left recur left!
-                tree.right recur right!
+        (node-t tree.left recur (let left)
+                tree.right recur (let right)
                 left right node-c)))
     #+end_src
 
@@ -141,8 +141,8 @@
              -- nat-u tree-u))
       (case tree
         (leaf-t {dup inc swap leaf-c})
-        (node-t {tree.left recur apply left!
-                 tree.right recur apply right!
+        (node-t {tree.left recur apply (let left)
+                 tree.right recur apply (let right)
                  left right node-c})))
     #+end_src
 
@@ -167,9 +167,9 @@
       ;; =expand-to=>
       (begin
         [tree.left recur]
-        {left!
+        {(let left)
          [tree.right recur]
-         {right!
+         {(let right)
           [left right node]
           return}
          bind}

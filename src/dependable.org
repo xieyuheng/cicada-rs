@@ -234,7 +234,7 @@
       #+begin_src cicada
       (+fun top-frame-finished-p
         : (-> env-t -- env-t bool-u)
-        frame-stack-tos frame!
+        frame-stack-tos (let frame)
         frame.index frame.body list-length equal-p)
       #+end_src
 
@@ -243,7 +243,7 @@
       #+begin_src cicada
       (+fun top-frame-next-exp
         : (-> env-t -- env-t exp-u)
-        frame-stack-pop frame!
+        frame-stack-pop (let frame)
         (. .index = [frame.index inc])
         frame clone
         frame-stack-push
@@ -383,7 +383,7 @@
     #+begin_src cicada
     (+fun list-eval
       : (-> (: env env-t) (: exp-list exp-u list-u) -- env-t)
-      env .frame-stack list-length base!
+      env .frame-stack list-length (let base)
       (. .body = exp-list
          .index = 0)
       simple-frame-cr
@@ -470,7 +470,7 @@
     #+begin_src cicada
     (+disp exe
       : (-> env-t (: exp set-exp-t) -- env-t)
-      data-stack-pop obj!
+      data-stack-pop (let obj)
       scope-stack-pop exp.local-name obj scope-set
       scope-stack-push)
     #+end_src
@@ -553,8 +553,8 @@
             (: obj hypo-obj-t)
             (: case-exp case-exp-t)
          -- env-t case-obj-t)
-      case-exp.clause-dict eval-clause-dict clause-dict!
-      obj clause-dict new-sum-obj sum-obj!
+      case-exp.clause-dict eval-clause-dict (let clause-dict)
+      obj clause-dict new-sum-obj (let sum-obj)
       (. .type = sum-obj
          .arg = obj
          .clause-dict = clause-dict)
@@ -690,7 +690,7 @@
 
     - [n : <nat>]
       compiles to
-      [<nat> suppose dup n! infer]
+      [<nat> suppose dup (let n) infer]
 
     - two occurences of [<nat> suppose]
       create two different hypo-obj-ts.
@@ -700,12 +700,12 @@
     #+begin_src cicada
     (+disp exe
       : (-> env-t (: ins suppose-ins-t) -- env-t)
-      data-stack-pop type!
-      generate-hypo-id hypo-id!
+      data-stack-pop (let type)
+      generate-hypo-id (let hypo-id)
       (. .hypo-id = hypo-id
          .type = type)
       hypo-type-obj-cr
-      hypo-type-obj!
+      (let hypo-type-obj)
       (. .hypo-id = hypo-id
          .hypo-type = hypo-type-obj)
       hypo-obj-cr
@@ -792,7 +792,7 @@
     (+disp den-exe
       : (-> env-t (: den fun-den-t) -- env-t)
       (dict) scope-stack-push
-      den.type collect-obj type!
+      den.type collect-obj (let type)
       type.ante ante-prepare
       type.ante ante-correspond
       (. .body = den.body
@@ -807,9 +807,9 @@
     (+disp den-exe
       : (-> env-t (: den data-cons-den-t)
          -- env-t)
-      den.type collect-obj type!
+      den.type collect-obj (let type)
       type.ante ante-prepare
-      den.field-name-list data-stack-zip-by-list fields!
+      den.field-name-list data-stack-zip-by-list (let fields)
       (. .type = [type type->return-type]
          .data-cons-name = den.data-cons-name
          .fields = fields)
@@ -823,9 +823,9 @@
     (+disp den-exe
       : (-> env-t (: den type-cons-den-t)
          -- env-t)
-      den.type collect-obj type!
+      den.type collect-obj (let type)
       type.ante ante-prepare
-      den.field-name-list data-stack-zip-by-list fields!
+      den.field-name-list data-stack-zip-by-list (let fields)
       (. .type = [type type->return-type]
          .type-cons-name = den.type-cons-name
          .fields = fields)
@@ -856,7 +856,7 @@
     #+begin_src cicada
     (+fun ante-prepare
       : (-> env-t (: ante obj-u list-u) -- env-t)
-      ante list-length data-stack-n-pop obj-list!
+      ante list-length data-stack-n-pop (let obj-list)
       obj-list {infer} list-map ante list-unifiy)
     #+end_src
 
@@ -1199,7 +1199,7 @@
       mark-stack-mark
       den.type.ante list-eval
       den.body list-cut
-      mark-stack-collect results!
+      mark-stack-collect (let results)
       den.type.succ collect-obj-list
       results list-cover)
     #+end_src
