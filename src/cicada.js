@@ -266,34 +266,30 @@
 
         exe (env, scope)
         {
-            let den = name_dict_get (env, this.name);
-            den.den_exe (env);
+            let obj = scope.get (this.name);
+            if (obj)
+                obj.apply (env);
+            else {
+                let den = name_dict_get (env, this.name);
+                den.den_exe (env);
+            }
         }
     }
-    class get_exp_t
+    class let_exp_t
     {
-        constructor (local_name)
+        constructor (name_vect)
         {
-            this.local_name = local_name;
+            this.name_vect = name_vect;
         }
 
         exe (env, scope)
         {
-            let obj = scope.get (this.local_name);
-            obj.apply (env);
-        }
-    }
-    class set_exp_t
-    {
-        constructor (local_name)
-        {
-            this.local_name = local_name;
-        }
-
-        exe (env, scope)
-        {
-            let obj = data_stack_pop (env);
-            scope.set (this.local_name, obj);
+            let name_vect = this.name_vect.slice ();
+            while (name_vect.length > 0) {
+                let name = name_vect.pop ();
+                let obj = data_stack_pop (env);
+                scope.set (name, obj);
+            }
         }
     }
     class closure_exp_t
@@ -781,16 +777,6 @@
     {
         return x instanceof cons_t;
     }
-    function car (c)
-    {
-        assert (cons_p (c));
-        return c.car;
-    }
-    function cdr (c)
-    {
-        assert (cons_p (c));
-        return c.cdr;
-    }
     function list_p (x)
     {
         return (null_p (x) || cons_p (x));
@@ -869,11 +855,11 @@
     }
     function sexp_list_repr (sexp_cons)
     {
-        if (null_p (cdr (sexp_cons)))
-            return sexp_repr (car (sexp_cons));
+        if (null_p (sexp_cons.cdr))
+            return sexp_repr (sexp_cons.car);
         else {
-            let car_repr = sexp_repr (car (sexp_cons));
-            let cdr_repr = sexp_list_repr (cdr (sexp_cons));
+            let car_repr = sexp_repr (sexp_cons.car);
+            let cdr_repr = sexp_list_repr (sexp_cons.cdr);
             return car_repr + " " + cdr_repr;
         }
     }
@@ -882,28 +868,16 @@
         if (null_p (list))
             return [];
         else {
-            let e = car (list);
+            let e = list.car;
             let vect = [e];
-            let rest = (cdr (list));
+            let rest = list.cdr;
             return vect.concat (list_to_vect (rest));
         }
     }
+    function vect_to_list (vect)
+    {
 
-    // {
-    //     if (null_p (sexp_list))
-    //         return [];
-    //     let sexp = car (sexp_list);
-    //     if (string_p (sexp)) {
-    //         let sexp_vect = [sexp];
-    //         let rest_list = (cdr (sexp_list));
-    //         return sexp_vect.concat (list_to_vect (rest_list));
-    //     }
-    //     else {
-    //         let sexp_vect = [list_to_vect (sexp)];
-    //         let rest_list = (cdr (sexp_list));
-    //         return sexp_vect.concat (list_to_vect (rest_list));
-    //     }
-    // }
+    }
     function code_eval (env, code)
     {
         let string_vect = code_scan (code);
@@ -920,8 +894,8 @@
     {
         assert (cons_p (sexp));
         sexp = apply_all_passes (sexp);
-        let keyword = car (sexp);
-        let sexp_list = cdr (sexp);
+        let keyword = sexp.car;
+        let sexp_list = sexp.cdr;
         top_keyword_apply (env, keyword, sexp_list);
     }
     let pass_vect = [];
@@ -937,32 +911,42 @@
         }
         return sexp;
     }
-      function pass_for_set (sexp)
+      function pass_for_fun (sexp)
       {
-          if (string_p (sexp)) {
-              if (sexp.length <= 1)
-                  return sexp;
-              let post_fix =
-                  sexp.slice (sexp.length -1, sexp.length);
-              if (post_fix === "!") {
-                  sexp = sexp.slice (0, sexp.length -1);
-                  sexp = cons (sexp, null);
-                  sexp = cons ("set", sexp);
-                  return sexp;
-              }
-              else
-                  return sexp;
+          if (cons_p (sexp) &&
+              (sexp.car === "+fun")) {
+              let name = sexp.cdr.car;
+              let arrow_sexp = sexp.cdr.cdr.cdr.car;
+              let old_body = sexp.cdr.cdr.cdr.cdr;
+              let let_sexp = arrow_sexp_to_let_sexp (arrow_sexp);
+              let new_body = cons (let_sexp, old_body);
+              return cons ("+fun", cons (name, new_body));
           }
-          else if (null_p (sexp)) {
-              return null;
-          }
-          else {
-              return cons (pass_for_set (car (sexp)),
-                           pass_for_set (cdr (sexp)));
-          }
+          else
+              return sexp;
       }
 
-      new_pass (pass_for_set);
+      new_pass (pass_for_fun);
+      function arrow_sexp_to_let_sexp (arrow_sexp)
+      {
+          // (-> ... -- ...) => (let ...)
+          let sexp_list = arrow_sexp.cdr;
+          let sexp_vect = list_to_vect (sexp_list);
+          let new_sexp_vect = [];
+          let index = 0;
+          while (index < sexp_vect.length) {
+              if (sexp === "--")
+                  break;
+              else if (sexp === ":")
+                  index = index + 2;
+              else {
+                  new_sexp_vect.push (sexp);
+                  index = index + 1;
+              }
+          }
+          let new_sexp_list = vect_to_list (new_sexp_vect);
+          return cons ("let", new_sexp_list);
+      }
       function pass_for_field (sexp)
       {
           if (string_p (sexp)) {
@@ -982,8 +966,8 @@
               return null;
           }
           else {
-              return cons (pass_for_field (car (sexp)),
-                           pass_for_field (cdr (sexp)));
+              return cons (pass_for_field (sexp.car),
+                           pass_for_field (sexp.cdr));
           }
       }
 
@@ -1010,8 +994,8 @@
               return null;
           }
           else {
-              return cons (pass_for_construct (car (sexp)),
-                           pass_for_construct (cdr (sexp)));
+              return cons (pass_for_construct (sexp.car),
+                           pass_for_construct (sexp.cdr));
           }
       }
 
@@ -1038,8 +1022,8 @@
               return null;
           }
           else {
-              return cons (pass_for_create (car (sexp)),
-                           pass_for_create (cdr (sexp)));
+              return cons (pass_for_create (sexp.car),
+                           pass_for_create (sexp.cdr));
           }
       }
 
@@ -1073,8 +1057,8 @@
                 print (sexp);
                 error ("- sexp_compile 1");
             }
-            let keyword = car (sexp);
-            let rest_list = cdr (sexp);
+            let keyword = sexp.car;
+            let rest_list = sexp.cdr;
             let new_exp_vect =
                 keyword_apply (keyword, rest_list);
             if (! (vect_p (new_exp_vect))) {
@@ -1104,8 +1088,8 @@
         "+union",
         function (env, sexp_list)
         {
-            let name = car (sexp_list);
-            let rest_list = cdr (sexp_list);
+            let name = sexp_list.car;
+            let rest_list = sexp_list.cdr;
             let union_vect = [];
             let rest_vect = list_to_vect (rest_list);
             for (let type_name of rest_vect) {
@@ -1119,15 +1103,15 @@
         "+data",
         function (env, sexp_list)
         {
-            let name = car (sexp_list);
-            let rest_list = cdr (sexp_list);
+            let name = sexp_list.car;
+            let rest_list = sexp_list.cdr;
             let rest_vect = list_to_vect (rest_list);
             let reversed_field_name_vect = [];
             for (let sexp of rest_vect) {
                 if (cons_p (sexp)) {
-                    if (car (sexp) === "field")
+                    if (sexp.car === "field")
                         reversed_field_name_vect
-                        .unshift (car (cdr (sexp)));
+                        .unshift (sexp.cdr.car);
                 }
             }
             let type_den =
@@ -1139,8 +1123,8 @@
         "+fun",
         function (env, sexp_list)
         {
-            let name = car (sexp_list);
-            let rest_list = cdr (sexp_list);
+            let name = sexp_list.car;
+            let rest_list = sexp_list.cdr;
             let exp_vect = sexp_list_compile (rest_list);
             let fun_den = new fun_den_t (exp_vect);
             name_dict_set (env, name, fun_den);
@@ -1150,8 +1134,8 @@
         "+gene",
         function (env, sexp_list)
         {
-            let name = car (sexp_list);
-            let rest_list = cdr (sexp_list);
+            let name = sexp_list.car;
+            let rest_list = sexp_list.cdr;
             let exp_vect = sexp_list_compile (rest_list);
             let fun_den = new fun_den_t (exp_vect);
             name_dict_set (env, name, fun_den);
@@ -1161,8 +1145,8 @@
         "+disp",
         function (env, sexp_list)
         {
-            let name = car (sexp_list);
-            let rest_list = cdr (sexp_list);
+            let name = sexp_list.car;
+            let rest_list = sexp_list.cdr;
             let exp_vect = sexp_list_compile (rest_list);
             let fun_den = new fun_den_t (exp_vect);
             name_dict_set (env, name, fun_den);
@@ -1178,11 +1162,11 @@
     );
 
     new_keyword (
-        "set",
+        "let",
         function (sexp_list)
         {
-            let name = car (sexp_list);
-            return [new set_exp_t (name)];
+            let sexp_vect = list_to_vect (sexp_list);
+            return [new let_exp_t (sexp_vect)];
         }
     );
 
@@ -1190,8 +1174,7 @@
         "field",
         function (sexp_list)
         {
-            let name = car (sexp_list);
-            return [new field_exp_t (name)];
+            return [new field_exp_t (sexp_list.car)];
         }
     );
     new_keyword (
@@ -1205,16 +1188,14 @@
         "construct",
         function (sexp_list)
         {
-            let name = car (sexp_list);
-            return [new construct_exp_t (name)];
+            return [new construct_exp_t (sexp_list.car)];
         }
     );
     new_keyword (
         "create",
         function (sexp_list)
         {
-            let name = car (sexp_list);
-            return [new create_exp_t (name)];
+            return [new create_exp_t (sexp_list.car)];
         }
     );
     function test_env ()
@@ -1223,9 +1204,9 @@
 
         let fun_den = new fun_den_t (
             [
-                new set_exp_t ("x"),
-                new get_exp_t ("x"),
-                new get_exp_t ("x"),
+                new let_exp_t (["x"]),
+                new call_exp_t ("x"),
+                new call_exp_t ("x"),
             ]
         );
 
@@ -1238,7 +1219,7 @@
         print (env);
     }
 
-    // test_env ();
+    test_env ();
     function test_code_scan ()
     {
         let code = "                                    \
