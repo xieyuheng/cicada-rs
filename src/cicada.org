@@ -5,8 +5,6 @@
 
 *** pass_for_fun handles 'recur'
 
-*** (begin)
-
 *** fix the use of "#<closure-obj>"
 
 *** fix the use of "#<dot-obj>"
@@ -1875,6 +1873,18 @@
         {
             let sexp_vect = list_to_vect (sexp_list);
             return [new let_exp_t (sexp_vect)];
+        }
+    );
+    #+end_src
+
+*** (begin)
+
+    #+begin_src js
+    new_keyword (
+        "begin",
+        function (sexp_list)
+        {
+            return sexp_list_compile (sexp_list);
         }
     );
     #+end_src

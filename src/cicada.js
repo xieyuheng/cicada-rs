@@ -46,12 +46,9 @@
 
         data_stack_print_vertically ()
         {
-            let string = "";
             for (let obj of this.data_stack) {
-                string = string.concat (obj.repr ());
-                string = string.concat ("\n");
+                print (obj.repr ());
             }
-            print (string);
         }
     }
       class name_dict_t
@@ -534,6 +531,8 @@
 
         repr ()
         {
+            // .dict in field_dict should be hidden
+            //   but I used it here
             let string = "";
             for (let obj of this.field_dict.dict.values()) {
                 string = string.concat (obj.repr ());
@@ -1249,6 +1248,13 @@
         {
             let sexp_vect = list_to_vect (sexp_list);
             return [new let_exp_t (sexp_vect)];
+        }
+    );
+    new_keyword (
+        "begin",
+        function (sexp_list)
+        {
+            return sexp_list_compile (sexp_list);
         }
     );
     new_keyword (
