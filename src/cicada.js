@@ -44,9 +44,14 @@
             this.scope_stack = [];
         }
 
-        print ()
+        data_stack_print_vertically ()
         {
-            print (this.data_stack);
+            let string = "";
+            for (let obj of this.data_stack) {
+                string = string.concat (obj.repr ());
+                string = string.concat ("\n");
+            }
+            print (string);
         }
     }
       class name_dict_t
@@ -271,13 +276,13 @@
         exe (env, scope)
         {
             let obj = scope.get (this.name);
-            {
-                print ("- call_exp");
-                print (this.name);
-                print (scope);
-                print (env);
-                print ("");
-            }
+            // {
+            //     print ("- call_exp");
+            //     print (this.name);
+            //     print (scope);
+            //     print (env);
+            //     print ("");
+            // }
             if (obj)
                 obj.apply (env);
             else {
@@ -526,17 +531,36 @@
         {
             data_stack_push (env, this);
         }
-    }
-    class dot_obj_t
-    {
-        constructor (field_dict)
-        {
-            this.field_dict = field_dict;
-        }
 
-        apply (env)
+        repr ()
         {
-            data_stack_push (env, this);
+            let string = "";
+            for (let obj of this.field_dict.dict.values()) {
+                string = string.concat (obj.repr ());
+                string = string.concat (" ");
+            }
+            if (this.field_dict.dict.size > 1) {
+                if (this.field_dict.dict.size !== 0) {
+                    string = string.concat ("(. ");
+                    for (let key of this.field_dict.dict.keys()) {
+                        string = string.concat (key);
+                        string = string.concat (" ");
+                    }
+                    string = string.concat (") ");
+                    let type_name = this.type_name;
+                    let cr = type_name.slice (0, type_name.length -2);
+                    cr = cr.concat ("-cr");
+                    string = string.concat (cr);
+                    return string;
+                }
+            }
+            else {
+                let type_name = this.type_name;
+                let c = type_name.slice (0, type_name.length -2);
+                c = c.concat ("-c");
+                string = string.concat (c);
+                return string;
+            }
         }
     }
     class closure_obj_t
@@ -553,6 +577,28 @@
             let frame = new scoping_frame_t (this.exp_vect);
             frame_stack_push (env, frame);
             scope_stack_push (env, this.scope);
+        }
+
+        repr ()
+        {
+            return "#<closure-obj>";
+        }
+    }
+    class dot_obj_t
+    {
+        constructor (field_dict)
+        {
+            this.field_dict = field_dict;
+        }
+
+        apply (env)
+        {
+            data_stack_push (env, this);
+        }
+
+        repr ()
+        {
+            return "#<dot-obj>";
         }
     }
     class union_den_t
@@ -1079,6 +1125,8 @@
                 return [new apply_exp_t ()];
             else if (sexp === "clone")
                 return [new clone_exp_t ()];
+            else if (sexp === ",")
+                return [];
             // ><><><
             // drop dup over tuck swap
             else {

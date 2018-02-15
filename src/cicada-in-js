@@ -9,12 +9,11 @@ function main ()
 {
     let arg_vect = process.argv.slice(2);
     for (let arg of arg_vect) {
-        console.log (arg);
         let code =
             fs.readFileSync(arg)
             .toString();
         let env = cicada.eval_code (code);
-        env.print ();
+        env.data_stack_print_vertically ();
     }
 }
 
