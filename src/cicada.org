@@ -3,11 +3,6 @@
 
 * [todo-stack]
 
-*** fix naked exp_vect
-
-    - there shall be no naked exp_vect in compound exp,
-      closure must be used in such cases.
-
 *** (case)
 
 *** (begin)
@@ -428,6 +423,7 @@
               for (let [name, obj] of this.dict) {
                   scope.set (name, obj);
               }
+              return scope;
           }
       }
       #+end_src
@@ -487,13 +483,26 @@
     }
     #+end_src
 
-*** exp_vect_to_obj_vect
+* apply -- apply closure to the data_stack
+
+*** closure_obj_apply
 
     #+begin_src js
-    function exp_vect_to_obj_vect (env, exp_vect)
+    function closure_obj_apply (env, closure_obj)
+    {
+        data_stack_push (env, closure_obj);
+        let exp_vect = [new apply_exp_t ()];
+        exp_vect_run (env, exp_vect);
+    }
+    #+end_src
+
+*** closure_obj_to_obj_vect
+
+    #+begin_src js
+    function closure_obj_to_obj_vect (env, closure_obj)
     {
         let mark = data_stack_length (env);
-        exp_vect_run (env, exp_vect);
+        closure_obj_apply (env, closure_obj);
         let length = data_stack_length (env);
         let obj_vect = [];
         while (length > mark) {
@@ -506,23 +515,14 @@
     }
     #+end_src
 
-*** exp_vect_to_obj
+*** closure_obj_to_obj
 
     #+begin_src js
-    function exp_vect_to_obj (env, exp_vect)
+    function closure_obj_to_obj (env, closure_obj)
     {
-        let obj_vect = exp_vect_to_obj_vect (env, exp_vect);
+        let obj_vect = closure_obj_to_obj_vect (env, closure_obj);
         assert (obj_vect.length === 1);
         return obj_vect[0];
-    }
-    #+end_src
-
-*** exp_to_obj
-
-    #+begin_src js
-    function exp_to_obj (env, exp)
-    {
-        return exp_vect_to_obj (env, [exp]);
     }
     #+end_src
 
@@ -541,9 +541,13 @@
         exe (env, scope)
         {
             let obj = scope.get (this.name);
-            // print (this.name);
-            // print (scope);
-            // print (env);
+            // {
+            //     print ("- call_exp");
+            //     print (this.name);
+            //     print (scope);
+            //     print (env);
+            //     print ("");
+            // }
             if (obj)
                 obj.apply (env);
             else {
@@ -588,7 +592,10 @@
 
         exe (env, scope)
         {
-            let closure_obj = new closure_obj_t (this.exp_vect, scope.clone ());
+            let closure_obj =
+                new closure_obj_t (
+                    this.exp_vect,
+                    scope.clone ());
             data_stack_push (env, closure_obj);
         }
     }
@@ -624,20 +631,31 @@
 
         exe (env, scope)
         {
-            let obj = exp_vect_to_obj (env, this.arg_exp_vect);
+            let closure_obj =
+                new closure_obj_t (
+                    this.arg_exp_vect,
+                    scope.clone ());
+            let obj = closure_obj_to_obj (env, closure_obj);
             assert (obj instanceof data_obj_t);
             let exp_vect = this.case_clause_dict.get (obj.type_name);
             if (exp_vect) {
-                let frame = new simple_frame_t (exp_vect);
-                frame_stack_push (env, frame);
+                let closure_obj =
+                    new closure_obj_t (
+                        exp_vect,
+                        scope.clone ());
+                closure_obj_apply (env, closure_obj);
             }
             else {
                 let exp_vect = this.case_clause_dict.get ("else");
                 if (exp_vect) {
-                    let frame = new simple_frame_t (exp_vect);
-                    frame_stack_push (env, frame);
+                    let closure_obj =
+                        new closure_obj_t (
+                            exp_vect,
+                            scope.clone ());
+                    closure_obj_apply (env, closure_obj);
                 }
                 else {
+                    print ("- case mismatch!");
                     error ();
                 }
             }
@@ -758,7 +776,11 @@
                 field_dict.set (field_name, obj)
             }
             for (let [field_name, exp_vect] of this.dot_clause_map) {
-                let obj = exp_vect_to_obj (exp_vect);
+                let closure_obj =
+                    new closure_obj_t (
+                        exp_vect,
+                        scope.clone ());
+                let obj = closure_obj_to_obj (env, closure_obj);
                 field_dict.set (field_name, obj)
             }
             let dot_obj = new dot_obj_t (field_dict);
