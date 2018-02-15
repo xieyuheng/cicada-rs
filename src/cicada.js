@@ -219,6 +219,10 @@
         //     print ("  exp :", exp);
         //     print ("  scope :", scope);
         // }
+        print (exp);
+        print (scope);
+        print (env);
+        print ("");
         exp.exe (env, scope);
     }
     function run_with_base (env, base)
@@ -267,6 +271,9 @@
         exe (env, scope)
         {
             let obj = scope.get (this.name);
+            // print (this.name);
+            // print (scope);
+            // print (env);
             if (obj)
                 obj.apply (env);
             else {
@@ -319,15 +326,15 @@
     }
     class case_exp_t
     {
-        constructor (exp_vect, case_clause_dict)
+        constructor (arg_exp_vect, case_clause_dict)
         {
-            this.exp_vect = exp_vect;
+            this.arg_exp_vect = arg_exp_vect;
             this.case_clause_dict = case_clause_dict;
         }
 
         exe (env, scope)
         {
-            let obj = exp_vect_to_obj (env, exp_vect);
+            let obj = exp_vect_to_obj (env, this.arg_exp_vect);
             assert (obj instanceof data_obj_t);
             let exp_vect = this.case_clause_dict.get (obj.type_name);
             if (exp_vect) {
@@ -1174,7 +1181,21 @@
             return [new let_exp_t (sexp_vect)];
         }
     );
-
+    new_keyword (
+        "case",
+        function (sexp_list)
+        {
+            let case_clause_dict = new case_clause_dict_t ();
+            let arg_exp_vect = sexp_compile (sexp_list.car);
+            let rest_vect = list_to_vect (sexp_list.cdr);
+            for (let sexp of rest_vect) {
+                let case_name = sexp.car;
+                let exp_vect = sexp_list_compile (sexp.cdr)
+                case_clause_dict.set (case_name, exp_vect);
+            }
+            return [new case_exp_t (arg_exp_vect, case_clause_dict)];
+        }
+    );
     new_keyword (
         "field",
         function (sexp_list)

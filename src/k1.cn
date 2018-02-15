@@ -6,9 +6,11 @@
 
 (+data succ-t .prev)
 
-(+fun swap : (-> x : nat-u, y : nat-u -- nat-u)
-  y x)
+(+fun add : (-> m : nat-u n : nat-u -- nat-u)
+  (case n
+    (zero-t m)
+    (succ-t m n.prev add succ-c)))
 
 (main
  zero-c
- zero-c succ-c swap)
+ zero-c succ-c add)

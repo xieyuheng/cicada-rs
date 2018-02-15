@@ -3,19 +3,27 @@
 
 * [todo-stack]
 
+*** fix naked exp_vect
+
+    - there shall be no naked exp_vect in compound exp,
+      closure must be used in such cases.
+
 *** (case)
 
-*** test with pass_for_fun -- for recur
+*** (begin)
 
-*** test with pass_for_dot
+*** pass_for_fun handles 'recur'
 
-*** test with pass_for_gene
+*** pass_for_dot
 
-*** test with pass_for_disp
+*** pass_for_gene
+
+*** pass_for_disp
 
 *** (.)
 
 *** (+gene)
+
 *** (+disp)
 
 *** (+type)
@@ -448,9 +456,10 @@
         }
         // {
         //     print ("- run_one_step");
-        //     print ("  env :", env);
         //     print ("  exp :", exp);
         //     print ("  scope :", scope);
+        //     print ("  env :", env);
+        //     print ("");
         // }
         exp.exe (env, scope);
     }
@@ -532,6 +541,9 @@
         exe (env, scope)
         {
             let obj = scope.get (this.name);
+            // print (this.name);
+            // print (scope);
+            // print (env);
             if (obj)
                 obj.apply (env);
             else {
@@ -604,15 +616,15 @@
     #+begin_src js
     class case_exp_t
     {
-        constructor (exp_vect, case_clause_dict)
+        constructor (arg_exp_vect, case_clause_dict)
         {
-            this.exp_vect = exp_vect;
+            this.arg_exp_vect = arg_exp_vect;
             this.case_clause_dict = case_clause_dict;
         }
 
         exe (env, scope)
         {
-            let obj = exp_vect_to_obj (env, exp_vect);
+            let obj = exp_vect_to_obj (env, this.arg_exp_vect);
             assert (obj instanceof data_obj_t);
             let exp_vect = this.case_clause_dict.get (obj.type_name);
             if (exp_vect) {
@@ -1796,12 +1808,37 @@
     );
     #+end_src
 
-*** >< (closure)
-
-*** >< (case)
+*** (closure)
 
     #+begin_src js
+    new_keyword (
+        "closure",
+        function (sexp_list)
+        {
+            let sexp_vect = list_to_vect (sexp_list);
+            return [new closure_exp_t (sexp_vect)];
+        }
+    )
+    #+end_src
 
+*** (case)
+
+    #+begin_src js
+    new_keyword (
+        "case",
+        function (sexp_list)
+        {
+            let case_clause_dict = new case_clause_dict_t ();
+            let arg_exp_vect = sexp_compile (sexp_list.car);
+            let rest_vect = list_to_vect (sexp_list.cdr);
+            for (let sexp of rest_vect) {
+                let case_name = sexp.car;
+                let exp_vect = sexp_list_compile (sexp.cdr)
+                case_clause_dict.set (case_name, exp_vect);
+            }
+            return [new case_exp_t (arg_exp_vect, case_clause_dict)];
+        }
+    );
     #+end_src
 
 *** (field)
