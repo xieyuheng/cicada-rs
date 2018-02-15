@@ -3,10 +3,23 @@
 
 * [todo-stack]
 
-*** (+type)
 *** (+gene)
 *** (+disp)
-*** (main)
+
+*** (+type)
+
+*** passes
+
+    - pass for ': (->)'
+
+    - pass change the language to
+      what cicada.js really implemented.
+
+    - use ins
+
+      - drop dup over tuck swap
+      - apply
+      - clone
 
 *** pass_for_apply_exp
 *** pass_for_recur
@@ -1363,7 +1376,7 @@
         let keyword = car (sexp);
         let sexp_list = cdr (sexp);
         sexp_list = apply_all_passes (sexp_list);
-        keyword_apply (env, keyword, sexp_list);
+        top_keyword_apply (env, keyword, sexp_list);
     }
     #+end_src
 
@@ -1411,7 +1424,7 @@
 
 *** >< pass_for_arrow
 
-* keyword -- syntax keywords
+* top -- top level keywords
 
 *** keyword_dict -- keyword to keyword_fn
 
@@ -1428,14 +1441,25 @@
     }
     #+end_src
 
+*** top_keyword_apply
+
+    #+begin_src js
+    function top_keyword_apply (env, keyword, sexp_list)
+    {
+        let top_keyword_fn = keyword_dict.get (keyword);
+        assert (top_keyword_fn instanceof Function);
+        top_keyword_fn (env, sexp_list);
+    }
+    #+end_src
+
 *** keyword_apply
 
     #+begin_src js
-    function keyword_apply (env, keyword, sexp_list)
+    function keyword_apply (keyword, sexp_list)
     {
         let keyword_fn = keyword_dict.get (keyword);
         assert (keyword_fn instanceof Function);
-        keyword_fn (env, sexp_list);
+        return keyword_fn (sexp_list);
     }
     #+end_src
 
@@ -1448,10 +1472,6 @@
         {
             let name = car (sexp_list);
             let rest_list = cdr (sexp_list);
-            assert (! null_p (rest_list));
-            let next = car (rest_list);
-            if (next === ':')
-                rest_list === cdr (cdr (rest_list)); // over an arrow
             let union_vect = [];
             let rest_vect = sexp_list_to_vect (rest_list);
             for (let type_name of rest_vect) {
@@ -1475,8 +1495,7 @@
             let rest_vect = sexp_list_to_vect (rest_list);
             let reversed_field_name_vect = [];
             for (let field_name of rest_vect) {
-                if (field_name_p (field_name))
-                    reversed_field_name_vect.unshift (field_name);
+                reversed_field_name_vect.unshift (field_name);
             }
             let type_den =
                 new type_den_t (reversed_field_name_vect);
@@ -1498,8 +1517,6 @@
             return true;
     }
     #+end_src
-
-*** >< (+type)
 
 *** (+fun)
 
@@ -1547,9 +1564,69 @@
 
 *** >< (+gene)
 
+    #+begin_src js
+    new_keyword (
+        "+gene",
+        function (env, sexp_list)
+        {
+            let name = car (sexp_list);
+            let rest_list = cdr (sexp_list);
+            let exp_vect = sexp_list_compile (rest_list);
+            let fun_den = new fun_den_t (exp_vect);
+            name_dict_set (env, name, fun_den);
+        }
+    );
+    #+end_src
+
 *** >< (+disp)
 
-*** >< (main)
+    #+begin_src js
+    new_keyword (
+        "+disp",
+        function (env, sexp_list)
+        {
+            let name = car (sexp_list);
+            let rest_list = cdr (sexp_list);
+            let exp_vect = sexp_list_compile (rest_list);
+            let fun_den = new fun_den_t (exp_vect);
+            name_dict_set (env, name, fun_den);
+        }
+    );
+    #+end_src
+
+*** (main)
+
+    #+begin_src js
+    new_keyword (
+        "main",
+        function (env, sexp_list)
+        {
+            exp_vect_run (env, sexp_list);
+        }
+    );
+    #+end_src
+
+* keyword -- sexp_list to exp_vect
+
+*** (apply)
+
+*** >< (rec)
+
+*** (cons)
+
+*** (create)
+
+*** (clone)
+
+*** (drop)
+
+*** (dup)
+
+*** (over)
+
+*** (tuck)
+
+*** (swap)
 
 * prim -- ffi to js
 
