@@ -28,9 +28,6 @@
 *** pass_for_create_exp
 *** pass_for_clone_exp
 
-*** sexp_list_to_vect
-*** sexp_vect_to_list
-
 *** rec_exp_t
 
     - for little recursion
@@ -88,6 +85,16 @@
       function string_p (x)
       {
           return typeof x === 'string';
+      }
+      #+end_src
+
+***** array_empty_p
+
+      #+begin_src js
+      function array_empty_p (x)
+      {
+          assert (x instanceof Array);
+          return x.length === 0;
       }
       #+end_src
 
@@ -1339,9 +1346,36 @@
     }
     #+end_src
 
-*** >< sexp_list_to_vect
+*** sexp_list_to_vect
 
-*** >< sexp_vect_to_list
+    #+begin_src js
+    function sexp_list_to_vect (sexp_list)
+    {
+        if (null_p (sexp_list))
+            return [];
+        else {
+            let sexp = car (sexp_list);
+            let sexp_vect = [sexp];
+            let rest_list = (cdr (sexp_list));
+            return sexp_vect.concat (sexp_list_to_vect (rest_list));
+        }
+    }
+    #+end_src
+
+*** sexp_vect_to_list
+
+    #+begin_src js
+    function sexp_vect_to_list (sexp_vect)
+    {
+        if (array_empty_p (sexp_vect))
+            return null;
+        else {
+            let sexp = sexp_vect [0];
+            let rest_list = sexp_vect_to_list (sexp_vect.slice (1));
+            return cons (sexp, rest_list);
+        }
+    }
+    #+end_src
 
 * eval -- evaluate
 
