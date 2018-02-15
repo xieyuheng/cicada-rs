@@ -995,6 +995,7 @@
               let name = sexp.cdr.car;
               let arrow_sexp = sexp.cdr.cdr.cdr.car;
               let old_body = sexp.cdr.cdr.cdr.cdr;
+              old_body = substitute_recur (name, old_body);
               let let_sexp = arrow_sexp_to_let_sexp (arrow_sexp);
               let new_body = cons (let_sexp, old_body);
               return cons ("+fun", cons (name, new_body));
@@ -1004,6 +1005,22 @@
       }
 
       new_pass (pass_for_fun);
+      function substitute_recur (name, sexp)
+      {
+          if (string_p (sexp)) {
+              if (sexp === "recur")
+                  return name;
+              else
+                  return sexp;
+          }
+          else if (null_p (sexp)) {
+              return null;
+          }
+          else {
+              return cons (substitute_recur (name, sexp.car),
+                           substitute_recur (name, sexp.cdr));
+          }
+      }
       function arrow_sexp_to_let_sexp (arrow_sexp)
       {
           // (-> ... -- ...) => (let ...)
