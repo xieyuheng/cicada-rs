@@ -1,27 +1,30 @@
+(+union bool-u
+  true-t
+  false-t)
+
 (+union nat-u
   zero-t
   succ-t)
 
 (+data zero-t)
 
-;; (+data succ-t .prev)
+(+data succ-t .prev)
 
-(+type succ-t : (-> -- type-tt)
-  (-> .prev : nat-u -- succ-t))
+(+fun add : (-> m : nat-u, n : nat-u -- nat-u)
+  (case n
+    (zero-t m)
+    (succ-t m n.prev recur succ-c)))
 
-;; (+fun add : (-> m : nat-u n : nat-u -- nat-u)
-;;   (case n
-;;     (zero-t m)
-;;     (succ-t m n.prev recur succ-c)))
+(+fun mul : (-> m : nat-u, n : nat-u -- nat-u)
+  (case n
+    (zero-t n)
+    (succ-t m n.prev recur m add)))
 
-(+gene add : (-> m : nat-u n : nat-u -- nat-u))
-
-(+disp add : (-> m : nat-u n : zero-t -- nat-u)
-  m)
-
-(+disp add : (-> m : nat-u n : succ-t -- nat-u)
-  m n.prev recur succ-c)
+(+fun factorial : (-> n : nat-u -- nat-u)
+  (case n
+    (zero-t n succ-c)
+    (succ-t n.prev recur n mul)))
 
 (main
  zero-c succ-c succ-c succ-c
- zero-c succ-c succ-c succ-c add)
+ zero-c succ-c succ-c succ-c add factorial)
