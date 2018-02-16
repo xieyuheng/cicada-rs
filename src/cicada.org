@@ -3,8 +3,6 @@
 
 * [todo-stack]
 
-*** pass_for_union
-
 *** fix the use of "#<closure-obj>"
 
 *** fix the use of "#<dot-obj>"
@@ -1709,6 +1707,33 @@
       }
 
       new_pass (pass_for_type);
+      #+end_src
+
+***** pass_for_union
+
+      - (+union name : (-> ... -- ...) ...) =>
+        (+union name ...)
+
+      #+begin_src js
+      function pass_for_union (sexp)
+      {
+          if (cons_p (sexp) &&
+              (sexp.car === "+union")) {
+              let name = sexp.cdr.car;
+              let after_name = sexp.cdr.cdr;
+              if (null_p (after_name))
+                  return sexp;
+              let next = sexp.cdr.cdr.car;
+              if (next !== ':')
+                  return sexp;
+              let new_body = sexp.cdr.cdr.cdr.cdr;
+              return cons ("+union", cons (name, new_body));
+          }
+          else
+              return sexp;
+      }
+
+      new_pass (pass_for_union);
       #+end_src
 
 * compile -- to exp_vect

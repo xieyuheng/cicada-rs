@@ -1160,6 +1160,25 @@
       }
 
       new_pass (pass_for_type);
+      function pass_for_union (sexp)
+      {
+          if (cons_p (sexp) &&
+              (sexp.car === "+union")) {
+              let name = sexp.cdr.car;
+              let after_name = sexp.cdr.cdr;
+              if (null_p (after_name))
+                  return sexp;
+              let next = sexp.cdr.cdr.car;
+              if (next !== ':')
+                  return sexp;
+              let new_body = sexp.cdr.cdr.cdr.cdr;
+              return cons ("+union", cons (name, new_body));
+          }
+          else
+              return sexp;
+      }
+
+      new_pass (pass_for_union);
     function sexp_list_compile (sexp_list)
     {
         let sexp_vect = list_to_vect (sexp_list);
