@@ -3,8 +3,6 @@
 
 * [todo-stack]
 
-*** pass_for_type -- (+type) to (+data)
-
 *** fix the use of "#<closure-obj>"
 
 *** fix the use of "#<dot-obj>"
@@ -1688,6 +1686,27 @@
       }
 
       new_pass (pass_for_create);
+      #+end_src
+
+***** pass_for_type -- (+type) to (+data)
+
+      #+begin_src js
+      function pass_for_type (sexp)
+      {
+          if (cons_p (sexp) &&
+              (sexp.car === "+type")) {
+              let name = sexp.cdr.car;
+              let cons_arrow_sexp = sexp.cdr.cdr.cdr.cdr.car;
+              // reuse arrow_sexp_to_let_sexp
+              let let_sexp = arrow_sexp_to_let_sexp (cons_arrow_sexp);
+              let new_body = let_sexp.cdr;
+              return cons ("+data", cons (name, new_body));
+          }
+          else
+              return sexp;
+      }
+
+      new_pass (pass_for_type);
       #+end_src
 
 * compile -- to exp_vect

@@ -1144,6 +1144,22 @@
       }
 
       new_pass (pass_for_create);
+      function pass_for_type (sexp)
+      {
+          if (cons_p (sexp) &&
+              (sexp.car === "+type")) {
+              let name = sexp.cdr.car;
+              let cons_arrow_sexp = sexp.cdr.cdr.cdr.cdr.car;
+              // reuse arrow_sexp_to_let_sexp
+              let let_sexp = arrow_sexp_to_let_sexp (cons_arrow_sexp);
+              let new_body = let_sexp.cdr;
+              return cons ("+data", cons (name, new_body));
+          }
+          else
+              return sexp;
+      }
+
+      new_pass (pass_for_type);
     function sexp_list_compile (sexp_list)
     {
         let sexp_vect = list_to_vect (sexp_list);
