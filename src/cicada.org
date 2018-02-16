@@ -3,8 +3,6 @@
 
 * [todo-stack]
 
-*** (note)
-
 *** pass_for_type -- (+type) to (+data)
 
 *** fix the use of "#<closure-obj>"
@@ -1975,6 +1973,18 @@
         {
             let exp_vect = sexp_list_compile (sexp_list);
             exp_vect_run (env, exp_vect);
+        }
+    );
+    #+end_src
+
+*** (note) -- also works as body level keyword
+
+    #+begin_src js
+    new_keyword (
+        "note",
+        function (env, sexp_list)
+        {
+            return [];
         }
     );
     #+end_src
