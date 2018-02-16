@@ -6,15 +6,19 @@
 
 (+data succ-t .prev)
 
-(+fun add : (-> m : nat-u n : nat-u -- nat-u)
-  (case n
-    (zero-t m)
-    (succ-t m n.prev recur succ-c)))
+;; (+fun add : (-> m : nat-u n : nat-u -- nat-u)
+;;   (case n
+;;     (zero-t m)
+;;     (succ-t m n.prev recur succ-c)))
+
+(+gene add : (-> m : nat-u n : nat-u -- nat-u))
+
+(+disp add : (-> m : nat-u n : zero-t -- nat-u)
+  m)
+
+(+disp add : (-> m : nat-u n : succ-t -- nat-u)
+  m n.prev recur succ-c)
 
 (main
- ;;  zero-c
- ;;  zero-c succ-c succ-c succ-c
- ;;  zero-c succ-c add
- (. .prev = [zero-c succ-c succ-c])
- (. .prev = zero-c) succ-cr clone
- )
+ zero-c succ-c succ-c succ-c
+ zero-c succ-c succ-c succ-c add)

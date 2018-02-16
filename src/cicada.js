@@ -24,14 +24,22 @@
           assert (x instanceof Array);
           return x.length === 0;
       }
+      function vect_member_p (x, vect)
+      {
+          assert (vect_p (vect));
+          for (let y of vect) {
+              if (x === y)
+                  return true;
+          }
+          return false;
+      }
       function assert (x) {
           if (! x) {
               throw new Error('assert fail!');
           }
       }
-      function error (report)
+      function error ()
       {
-          print (report);
           throw new Error('fatal error!');
       }
     class env_t
@@ -95,7 +103,7 @@
       }
       function data_stack_peek (env, index)
       {
-          // index start from 1
+          index = index + 1;
           let length = data_stack_length (env);
           return env.data_stack[length - index];
       }
@@ -645,10 +653,9 @@
     }
     class sig_den_t
     {
-        constructor (input_arity, output_arity)
+        constructor (arity)
         {
-            this.input_arity = input_arity;
-            this.output_arity = output_arity;
+            this.arity = arity;
             this.gene_dict = new gene_dict_t ();
         }
 
@@ -656,12 +663,12 @@
         {
             let type_name_vect = [];
             let counter = 0;
-            while (counter < this.input_arity) {
+            while (counter < this.arity) {
                 let obj = data_stack_peek (env, counter);
                 type_name_vect.unshift (obj.type_name);
                 counter = counter + 1;
             }
-            let gene_den = this.gene_dict.get (type_name_vect);
+            let gene_den = this.gene_dict.find (env, type_name_vect);
             assert (gene_den);
             gene_den.gene_den_exe (env, type_name_vect);
         }
@@ -673,7 +680,7 @@
             this.dict = new Map ();
         }
 
-        get (type_name_vect)
+        find (env, type_name_vect)
         {
             for (let [key, value] of this.dict) {
                 if (type_name_vect_lteq_p
@@ -696,9 +703,18 @@
     }
     function type_name_vect_lteq_p (env, v1, v2)
     {
-        for (let [t1, t2] of [v1, v2]) {
-            if (type_name_lteq_p (env, t1, t2))
+        assert (vect_p (v1));
+        assert (vect_p (v2));
+        if (v1.length !== v2.length)
+            return false;
+        let length = v1.length;
+        let index = 0;
+        while (index < length) {
+            let t1 = v1[index];
+            let t2 = v2[index];
+            if (! (type_name_lteq_p (env, t1, t2)))
                 return false;
+            index = index + 1;
         }
         return true;
     }
@@ -707,9 +723,9 @@
         if (t1 === t2)
             return true;
         let union_den = name_dict_get (env, t2);
-        if (! union_den instanceof union_den_t)
+        if (! (union_den instanceof union_den_t))
             return false;
-        if (t1 in union_den.union_vect)
+        if (vect_member_p (t1, union_den.union_vect))
             return true;
         else
             return false;
@@ -724,7 +740,7 @@
 
         gene_den_exe (env, type_name_vect)
         {
-            let fun_den = this.disp_dict.get (type_name_vect);
+            let fun_den = this.disp_dict.find (env, type_name_vect);
             if (fun_den)
                 fun_den.den_exe (env);
             else
@@ -738,10 +754,10 @@
             this.dict = new Map ();
         }
 
-        get (type_name_vect)
+        find (env, type_name_vect)
         {
             for (let [key, value] of this.dict) {
-                if (vect_equal_p (type_name_vect, key))
+                if (type_name_vect_lteq_p (env, type_name_vect, key))
                     return value;
             }
             return undefined;
@@ -750,7 +766,7 @@
         set (type_name_vect, fun_den)
         {
             for (let key of this.dict.keys ()) {
-                if (vect_equal_p (key, type_name_vect)) {
+                if (vect_eq_p (key, type_name_vect)) {
                     this.dict.set (key, fun_den);
                     return;
                 }
@@ -1155,16 +1171,20 @@
             }
         }
         else {
-            if (! cons_p (sexp)) {
+            if (! (cons_p (sexp))) {
+                // fix report ><><><
                 print (sexp);
-                error ("- sexp_compile 1");
+                print ("- sexp_compile 1");
+                error ();
             }
             let keyword = sexp.car;
             let rest_list = sexp.cdr;
             let new_exp_vect =
                 keyword_apply (keyword, rest_list);
             if (! (vect_p (new_exp_vect))) {
-                error ("- sexp_compile 2");
+                // fix report ><><><
+                print ("- sexp_compile 2");
+                error ();
             }
             return new_exp_vect;
         }
@@ -1237,21 +1257,96 @@
         function (env, sexp_list)
         {
             let name = sexp_list.car;
-            let rest_list = sexp_list.cdr;
-            let exp_vect = sexp_list_compile (rest_list);
-            let fun_den = new fun_den_t (exp_vect);
-            name_dict_set (env, name, fun_den);
+            let arrow_sexp = sexp_list.cdr.cdr.car;
+            let old_body = sexp_list.cdr.cdr.cdr;
+            old_body = substitute_recur (name, old_body);
+            let let_sexp = arrow_sexp_to_let_sexp (arrow_sexp);
+            let new_body = cons (let_sexp, old_body);
+            let exp_vect = sexp_list_compile (new_body);
+            let default_fun_den = new fun_den_t (exp_vect);
+            let gene_den = new gene_den_t (default_fun_den);
+            let arity = arrow_sexp_to_arity (arrow_sexp);
+            let type_name_vect =
+                arrow_sexp_to_type_name_vect (arrow_sexp);
+            let sig_den = name_dict_get (env, name);
+            if (sig_den) {
+                assert (sig_den.arity === arity);
+                sig_den.gene_dict.set (type_name_vect, gene_den);
+            }
+            else {
+                let sig_den = new sig_den_t (arity);
+                name_dict_set (env, name, sig_den);
+                sig_den.gene_dict.set (type_name_vect, gene_den);
+            }
         }
     );
+    function arrow_sexp_to_type_name_vect (arrow_sexp)
+    {
+        // (-> ... -- ...) => [...]
+        let sexp_list = arrow_sexp.cdr;
+        let sexp_vect = list_to_vect (sexp_list);
+        let type_name_vect = [];
+        let index = 0;
+        while (index < sexp_vect.length) {
+            let sexp = sexp_vect[index];
+            let next = sexp_vect[index +1];
+            if (sexp === "--")
+                break;
+            else if (next === ":") {
+                let type_sexp = sexp_vect[index +2];
+                if (string_p (type_sexp)) {
+                    type_name_vect.push (type_sexp);
+                    index = index + 2;
+                }
+                else {
+                    let type_vect = list_to_vect (type_sexp);
+                    let type_name = type_vect[type_vect.length -1];
+                    type_name_vect.push (sexp);
+                    index = index + 2;
+                }
+            }
+            else {
+                index = index + 1;
+            }
+        }
+        return type_name_vect;
+    }
+    function arrow_sexp_to_arity (arrow_sexp)
+    {
+        let type_name_vect =
+            arrow_sexp_to_type_name_vect (arrow_sexp);
+        return type_name_vect.length;
+    }
     new_keyword (
         "+disp",
         function (env, sexp_list)
         {
             let name = sexp_list.car;
-            let rest_list = sexp_list.cdr;
-            let exp_vect = sexp_list_compile (rest_list);
+            let sig_den = name_dict_get (env, name);
+            if (! (sig_den instanceof sig_den_t)) {
+                print ("- (+disp) missing sig :", name);
+                error ();
+            }
+            let arrow_sexp = sexp_list.cdr.cdr.car;
+            let old_body = sexp_list.cdr.cdr.cdr;
+            old_body = substitute_recur (name, old_body);
+            let let_sexp = arrow_sexp_to_let_sexp (arrow_sexp);
+            let new_body = cons (let_sexp, old_body);
+            let exp_vect = sexp_list_compile (new_body);
             let fun_den = new fun_den_t (exp_vect);
-            name_dict_set (env, name, fun_den);
+            let arity = arrow_sexp_to_arity (arrow_sexp);
+            assert (sig_den.arity === arity);
+            let type_name_vect =
+                arrow_sexp_to_type_name_vect (arrow_sexp);
+            let gene_den = sig_den.gene_dict.find (env, type_name_vect);
+            if (! (gene_den instanceof gene_den_t)) {
+                print (sig_den.gene_dict);
+                print ("- (+disp) missing gene");
+                print ("  sig_name:", name);
+                print ("  type_name_vect:", type_name_vect);
+                error ();
+            }
+            gene_den.disp_dict.set (type_name_vect, fun_den);
         }
     );
     new_keyword (
