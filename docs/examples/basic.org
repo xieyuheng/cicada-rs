@@ -45,7 +45,7 @@
     #+begin_src cicada
     (+union nat-u : type-tt
       (-> -- zero-t)
-      (-> .prev : nat-u -- succ-t))
+      (-> prev : nat-u -- succ-t))
 
     (+fun add : (-> [m n] : nat-u -- nat-u)
       (case n
@@ -68,7 +68,7 @@
     #+begin_src cicada
     (+union is-even-u : (-> nat-u -- type-tt)
       (-> -- zero-c zero-is-even-t)
-      (-> .prev : [:m is-even-u]
+      (-> prev : [:m is-even-u]
        -- :m succ-c succ-c even-plus-two-is-even-t))
 
     (+proof two-is-even
@@ -146,8 +146,8 @@
     #+begin_src cicada
     (+union list-u : (-> type-tt -- type-tt)
       (-> -- :t null-t)
-      (-> .car : :t
-          .cdr : [:t list-u]
+      (-> car : :t
+          cdr : [:t list-u]
        -- :t list-u))
     #+end_src
 
@@ -162,8 +162,8 @@
       (-> -- :t null-t))
 
     (+type cons-t : (-> type-tt -- type-tt)
-      (-> .car : :t
-          .cdr : [:t cons-t]
+      (-> car : :t
+          cdr : [:t cons-t]
        -- :t cons-t))
     #+end_src
 
@@ -192,7 +192,7 @@
 
     #+begin_src cicada
     ;; this function will not pass type check
-    ;;   because we can not use .car .cdr on list-u
+    ;;   because we can not use car cdr on list-u
     ;;   we can only use them on cons-t
     (+fun ref
       : (-> l : [:t list-u], index : nat-u -- :t)
@@ -221,7 +221,7 @@
       #+begin_src cicada
       (+union has-length-u : (-> :t list-u nat-u -- type-tt)
         (-> -- null-c zero-c null-has-length-t)
-        (-> .cdr : [:l :n has-length-u]
+        (-> cdr : [:l :n has-length-u]
          -- :a :l cons-c :n succ-c cons-has-length-t))
       #+end_src
 
