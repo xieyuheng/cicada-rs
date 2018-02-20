@@ -115,8 +115,16 @@
            -- :t2 tree-u)
         (case tree
           (leaf-t tree.value fun leaf-c)
-          (node-t tree.left {fun} recur
-                  tree.right {fun} recur node-c))))
+          (node-t
+            tree.left {fun} recur
+            tree.right {fun} recur node-c))))
+    #+end_src
+
+*** tree-zip
+
+    #+begin_src cicada
+    (+fun tree-zip
+      : () )
     #+end_src
 
 *** tree-numbering
@@ -127,9 +135,10 @@
          -- nat-u nat-u tree-u)
       (case tree
         (leaf-t dup inc swap leaf-c)
-        (node-t tree.left recur (let left)
-                tree.right recur (let right)
-                left right node-c)))
+        (node-t
+          tree.left recur (let left)
+          tree.right recur (let right)
+          left right node-c)))
     #+end_src
 
 *** tree-numbering-curry
@@ -158,20 +167,25 @@
                   left = [tree.left recur]
                   right = [tree.right recur]
                   [left right node-c]))))
+    #+end_src
 
-    (note
-      (do
-        left = [tree.left recur]
-        right = [tree.right recur]
-        [left right node])
-      ;; =expand-to=>
-      (begin
-        [tree.left recur]
-        {(let left)
-         [tree.right recur]
-         {(let right)
-          [left right node]
-          return}
-         bind}
-        bind))
+*** [note] macro expansion of (do)
+
+    #+begin_src cicada
+    (do
+      left = [tree.left recur]
+      right = [tree.right recur]
+      [left right node])
+
+    ;; =expand-to=>
+
+    (begin
+      [tree.left recur]
+      {(let left)
+       [tree.right recur]
+       {(let right)
+        [left right node]
+        return}
+       bind}
+      bind)
     #+end_src

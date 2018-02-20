@@ -1,0 +1,61 @@
+#+title: programming in agda
+
+- by ulf norell
+
+* ><
+
+  #+begin_src cicada
+  (+union type-u
+    nat-type-t
+    bool-type-t)
+
+  (+data nat-type-t)
+  (+data bool-type-t)
+
+  (+union member-u
+    : (-> (: .element :type)
+          (: .list :type list-u)
+       -- type-tt)
+    (-> -- :element :element :rest cons-c zero-member-t)
+    (-> :element :list member-u
+     -- :element :next :list cons-c succ-member-t))
+
+  (+union exp-u : (-> type-u list-u, type-u -- type-tt)
+    (-> :type :cxt member-u -- :cxt :type var-exp-t)
+    (-> .n : nat-u -- :cxt nat-type-c lit-exp-t)
+    (-> -- :cxt bool-type-c true-exp-t)
+    (-> -- :cxt bool-type-c false-exp-t)
+    (-> (: .a .b nat-type-c exp-u) -- :cxt bool-type-c less-exp-t)
+    (-> (: .a .b nat-type-c exp-u) -- :cxt bool-type-c plus-exp-t)
+    (-> (: .a bool-type-c exp-u)
+        (: .b :type exp-u)
+        (: .c :type exp-u)
+     -- :cxt :type if-exp-t))
+
+  (+fun value : (-> (: type type-u) -- type-tt)
+    (case type
+      (nat-type-t nat-u)
+      (bool-type-t bool-u)))
+
+  (+union all-u
+    : (-> (: .judgment (-> :type -- type-tt))
+          (: .list :type list-u)
+       -- type-tt)
+    (-> -- :judgment null-c null-all-t)
+    (->
+     --  cons-all-t))
+
+  (+fun eval
+    : (-> (: exp :ctx :type exp-u)
+       -- :type value)
+    (case exp
+      (var-exp-t ><><><)
+      (lit-exp-t exp.n)
+      (true-exp-t true-c)
+      (false-exp-t false-c)
+      (less-exp-t exp.a exp.b lt-p)
+      (plus-exp-t exp.a exp.b add)
+      (if-exp-t (case [exp.a recur]
+                  (true-t exp.b recur)
+                  (false-t exp.c recur)))))
+  #+end_src
