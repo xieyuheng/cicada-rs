@@ -509,7 +509,7 @@
     #+begin_src cicada
     (+data hypo-obj-t
       hypo-id : string-t
-      hypo-type : hypo-type-t)
+      type : type-u)
     #+end_src
 
 *** case-trunk-obj-t
@@ -544,7 +544,6 @@
     (+union type-u
       data-type-t
       type-type-t
-      hypo-type-t
       arrow-type-t
       sum-type-t)
     #+end_src
@@ -562,14 +561,6 @@
     #+begin_src cicada
     (+data type-type-t
       level : nat-u)
-    #+end_src
-
-*** hypo-type-t
-
-    #+begin_src cicada
-    (+data hypo-type-t
-      hypo-id : string-t
-      type : type-u)
     #+end_src
 
 *** arrow-type-t
@@ -699,7 +690,6 @@
       (case type
         (data-type-t)
         (sum-type-t)
-        (hypo-type-t)
         (type-type-t error)
         (arrow-type-t error)))
     #+end_src
