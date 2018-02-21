@@ -3,14 +3,6 @@
 
 * [todo-stack]
 
-*** the kind of trunks
-
-    - kind of trunks must close under exe
-
-    - we also need the following [at least] :
-      - field-trunk-obj-t
-      - apply-trunk-obj-t
-
 *** type constructor can occur in function body
 
     - type constructor need field_name too
@@ -22,7 +14,7 @@
 *** unification digraph
 
     - what is its property ?
-      [note that only hypo can be bound to]
+      [note that only var can be bound to]
 
     - what is its interface ?
 
@@ -54,16 +46,16 @@
       1. the type might has many data-constructors,
          we do not know
          which data-constructors should be used,
-         thus a hypo will be created.
+         thus a var-trunk will be created.
 
       2. the type might has only one data-constructor.
          but it takes arguments,
          we do not have the arguments yet,
-         thus a hypo will be created.
+         thus a var-trunk will be created.
 
-*** todo-case-t to done-case-t
+*** todo to done
 
-    - every time we amend a hypo-obj-t's value
+    - every time we change a var-trunk-t to done-t
 
     - then, every time we see a todo-case-t
       we know we can not change it to a done-case-t yet
@@ -72,8 +64,8 @@
 *** ffi
 
     - to handle ffi,
-      primitive function must can be applied to hypo-obj,
-      and return new proxy obj.
+      primitive function must can be applied to trunks,
+      and return new todo obj.
 
       thus I do not implement this feature for now.
 
@@ -152,7 +144,7 @@
 
       #+end_src
 
-* env -- environment
+* env
 
 *** env-t
 
@@ -163,8 +155,7 @@
       frame-stack : [frame-u list-u]
       scope-stack : [string-t obj-u dict-t list-u]
       goal-stack : [goal-t list-u]
-      hypo-dict : [string-t obj-u dict-t]
-      case-trunk-dict : [string-t case-trunk-u dict-t])
+      todo-dict : [string-t todo-u dict-t])
     #+end_src
 
 *** name-dict
@@ -337,9 +328,7 @@
 
 *** goal-stack
 
-*** hypo-dict
-
-*** case-trunk-dict
+*** todo-dict
 
 * exp
 
@@ -481,11 +470,10 @@
 
     #+begin_src cicada
     (+union obj-u
+      #:with trunk-u
       #:with type-u
       data-obj-t
-      closure-obj-t
-      hypo-obj-t
-      case-trunk-obj-t)
+      closure-obj-t)
     #+end_src
 
 *** data-obj-t
@@ -504,36 +492,99 @@
       body-exp-list : [exp-u list-u])
     #+end_src
 
-*** hypo-obj-t
+* trunk
+
+*** trunk-u
 
     #+begin_src cicada
-    (+data hypo-obj-t
-      hypo-id : string-t
+    (+union trunk-u
+      var-trunk-t
+      case-trunk-t
+      apply-trunk-t
+      field-trunk-t)
+    #+end_src
+
+*** var-trunk-t
+
+    #+begin_src cicada
+    (+data var-trunk-t
+      trunk-id : string-t)
+    #+end_src
+
+*** case-trunk-t
+
+    #+begin_src cicada
+    (+data case-trunk-t
+      trunk-id : string-t)
+    #+end_src
+
+*** apply-trunk-t
+
+    #+begin_src cicada
+    (+data apply-trunk-t
+      trunk-id : string-t)
+    #+end_src
+
+*** field-trunk-t
+
+    #+begin_src cicada
+    (+data field-trunk-t
+      trunk-id : string-t)
+    #+end_src
+
+* todo
+
+*** todo-u
+
+    #+begin_src cicada
+    (+union todo-u
+      done-t
+      var-todo-t
+      case-todo-t
+      apply-todo-t
+      field-todo-t)
+    #+end_src
+
+*** done-t
+
+    #+begin_src cicada
+    (+data done-t
+      type : type-u
+      obj : obj-u)
+    #+end_src
+
+*** var-todo-t
+
+    #+begin_src cicada
+    (+data var-todo-t
       type : type-u)
     #+end_src
 
-*** case-trunk-obj-t
+*** case-todo-t
 
     #+begin_src cicada
-    (+data case-trunk-obj-t
-      case-trunk-id : string-t)
+    (+data case-todo-t
+      sum-type : sum-type-t
+      arg-trunk : trunk-u
+      closure-obj-dict : [string-t closure-obj-t dict-t])
     #+end_src
 
-*** case-trunk-u
+*** apply-todo-t
 
     #+begin_src cicada
-    (+union case-trunk-u
-      todo-case-trunk-t
-      done-case-trunk-t)
-
-    (+data todo-case-trunk-t
-      sum-type : sum-type-t
-      arg-obj : obj-u
-      closure-obj-dict : [string-t closure-obj-t dict-t])
-
-    (+data done-case-trunk-t
+    (+data apply-todo-t
       type : type-u
-      result-obj : obj-u)
+      fun-trunk : trunk-u
+      arg-obj-list : [obj-u list-u])
+    #+end_src
+
+*** field-todo-t
+
+    #+begin_src cicada
+    (+data field-todo-t
+      type : type-u
+      arg-trunk : trunk-u
+      field-name : string-t)
     #+end_src
 
 * type
@@ -585,11 +636,6 @@
     #+begin_src cicada
     (+fun exe
       : (-> env-t exp-u -- env-t)
-      ;; ><><><
-      ;; must handle :
-      ;;   hypo-obj-t
-      ;;   case-trunk-obj-t
-      ;;   sum-type-t
       (case dup
         (call-exp-t call-exp/exe)
         (let-exp-t let-exp/exe)
@@ -660,7 +706,7 @@
       data-stack/push)
     #+end_src
 
-*** apply-exp/exe
+*** >< apply-exp/exe
 
     #+begin_src cicada
     (+data apply-exp/exe
@@ -670,14 +716,17 @@
         (closure-obj-t
           obj.scope scope-stack/push
           obj.body-exp-list new/scoping-frame frame-stack/push)
-        ;; ><><><
-        ;; no apply-trunk for now
-        ;;   thus case-trunk-obj-t and hypo-obj-t
-        ;;   are not handled
-        (else obj data-stack/push)))
+        (trunk-u
+          )))
     #+end_src
 
-*** ><><>< case-exp/exe
+*** >< apply-exp/exe/obj
+
+    #+begin_src cicada
+
+    #+end_src
+
+*** >< case-exp/exe
 
     #+begin_src cicada
     (+data case-exp/exe
@@ -694,7 +743,7 @@
         (arrow-type-t error)))
     #+end_src
 
-*** sum-exp/exe
+*** >< sum-exp/exe
 
     #+begin_src cicada
     (+fun sum-exp/exe
@@ -702,7 +751,7 @@
       )
     #+end_src
 
-*** construct-exp/exe
+*** >< construct-exp/exe
 
     #+begin_src cicada
     (+data construct-exp/exe
@@ -710,7 +759,7 @@
       )
     #+end_src
 
-*** field-exp/exe
+*** >< field-exp/exe
 
     #+begin_src cicada
     (+data field-exp/exe
@@ -718,20 +767,30 @@
       )
     #+end_src
 
-*** colon-exp/exe
+*** >< general/trunk-id
+
+*** >< colon-exp/exe
 
     #+begin_src cicada
     (+data colon-exp/exe
       : (-> env-t (: exp colon-exp-t) -- env-t)
-      )
+      exp.type-exp-list collect (let type)
+      (. trunk-id = [exp.local-name general/trunk-id]
+         type = type)
+      var-trunk-cr (let var-trunk)
+      scope-stack/pop
+      exp.local-name var-trunk scope/set
+      scope-stack/push
+      type data-stack/push)
     #+end_src
 
 *** double-colon-exp/exe
 
     #+begin_src cicada
     (+data double-colon-exp/exe
-      : (-> env-t (: exp double-colon-exp-t) -- env-t)
-      )
+      : (-> env-t double-colon-exp-t -- env-t)
+      colon-exp/exe
+      data-stack/drop)
     #+end_src
 
 * run
@@ -763,11 +822,6 @@
     #+begin_src cicada
     (+fun cut
       : (-> env-t exp-u -- env-t)
-      ;; ><><><
-      ;; must handle :
-      ;;   hypo-obj-t
-      ;;   case-trunk-obj-t
-      ;;   sum-type-t
       (case dup
         (call-exp-t call-exp/cut)
         (let-exp-t let-exp/cut)
@@ -825,7 +879,7 @@
       new/scope scope-stack/push
       den.type-arrow-exp collect (let arrow-type)
       arrow-type.ante-type-list ante-type-list/prepare
-      arrow-type.ante-type-list ante-type-list/correspond
+      den.type-arrow-exp.ante-exp-list ante-exp-list/correspond
       den.body-exp-list new/scoping-frame frame-stack/push)
     #+end_src
 
@@ -837,11 +891,11 @@
       )
     #+end_src
 
-*** >< ante-type-list/correspond
+*** >< ante-exp-list/correspond
 
     #+begin_src cicada
-    (+fun ante-type-list/correspond
-      : (-> env-t (: ante-type-list type-u list-u) -- env-t)
+    (+fun ante-exp-list/correspond
+      : (-> env-t (: ante-exp-list exp-u list-u) -- env-t)
       )
     #+end_src
 
