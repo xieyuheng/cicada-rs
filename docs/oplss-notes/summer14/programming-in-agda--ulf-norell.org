@@ -129,15 +129,6 @@
          -- {judgment} element list cons-c cons-all-t))
       #+end_src
 
-***** all-of-value-type
-
-      #+begin_src cicada
-      (+fun all-of-value-type
-        : (-> context : type-u list-u
-           -- type-tt)
-        {to-value-type} context all-u)
-      #+end_src
-
 ***** index-lookup
 
       #+begin_src cicada
@@ -157,11 +148,11 @@
 
       #+begin_src cicada
       (+fun eval
-        : (-> env : :context all-of-value-type
+        : (-> env : {to-value-type} :context all-u
               exp : :context :type exp-u
            -- :type to-value-type)
         (case exp
-          (var-exp-t ><><><)
+          (var-exp-t env exp.index index-lookup)
           (lit-exp-t exp.n)
           (true-exp-t true-c)
           (false-exp-t false-c)
@@ -171,3 +162,36 @@
                       (true-t env exp.b recur)
                       (false-t env exp.c recur)))))
       #+end_src
+
+***** test
+
+      #+begin_src cicada
+      (+fun context
+        : (-> -- type-u list-u)
+        nat-type-c bool-type-c null-c
+        cons-c cons-c)
+
+      (+fun env
+        : (-> -- {to-value-type} context all-u)
+        zero-c succ-c, false-c null-all-c
+        cons-all-c cons-all-c)
+
+      (+fun exp
+        : (-> -- context nat-type-c exp-u)
+        (create if-exp-t
+          a = zero-c succ-c var-exp-c
+          b = zero-c var-exp-c
+          c = zero-c var-exp-c
+              zero-c succ-c succ-c succ-c lit-exp-c
+              plus-exp-c))
+
+      (assert
+        env exp eval
+        zero-c succ-c succ-c succ-c
+        zero-c succ-c add
+        eq-p)
+      #+end_src
+
+* ><
+
+*** ><

@@ -11,8 +11,6 @@
 
 *** about return value of unification and error report
 
-*** (+) [sum-exp-t] for literal sum-type-t
-
 *** unification digraph
 
     - what is its property ?
@@ -134,7 +132,7 @@
 
       #+begin_src cicada
       (+data succ-t
-        .prev : nat-u)
+        prev : nat-u)
       #+end_src
 
 *** >< list
@@ -171,13 +169,13 @@
 
     #+begin_src cicada
     (+data env-t
-      .name-dict : [string-t den-u dict-t]
-      .data-stack : [obj-u list-u]
-      .frame-stack : [frame-u list-u]
-      .scope-stack : [string-t obj-u dict-t list-u]
-      .goal-stack : [goal-t list-u]
-      .hypo-dict : [hypo-id-t obj-u dict-t]
-      .case-trunk-dict : [case-trunk-id-t case-trunk-u dict-t])
+      name-dict : [string-t den-u dict-t]
+      data-stack : [obj-u list-u]
+      frame-stack : [frame-u list-u]
+      scope-stack : [string-t obj-u dict-t list-u]
+      goal-stack : [goal-t list-u]
+      hypo-dict : [hypo-id-t obj-u dict-t]
+      case-trunk-dict : [case-trunk-id-t case-trunk-u dict-t])
     #+end_src
 
 *** name-dict
@@ -197,7 +195,7 @@
       #+begin_src cicada
       (+fun data-stack/push
         : (-> (: env env-t) (: obj obj-u) -- env-t)
-        (. .data-stack = [obj env.data-stack cons])
+        (. data-stack = [obj env.data-stack cons])
         env clone)
       #+end_src
 
@@ -206,7 +204,7 @@
       #+begin_src cicada
       (+fun data-stack/pop
         : (-> (: env env-t) -- env-t obj-u)
-        (. .data-stack = [env.data-stack.cdr])
+        (. data-stack = [env.data-stack.cdr])
         env clone
         env.data-stack.car)
       #+end_src
@@ -234,7 +232,7 @@
       #+begin_src cicada
       (+fun frame-stack/push
         : (-> (: env env-t) (: frame frame-u) -- env-t)
-        (. .frame-stack = [frame env.frame-stack cons])
+        (. frame-stack = [frame env.frame-stack cons])
         env clone)
       #+end_src
 
@@ -243,7 +241,7 @@
       #+begin_src cicada
       (+fun frame-stack/pop
         : (-> (: env env-t) -- env-t frame-u)
-        (. .frame-stack = [env.frame-stack.cdr])
+        (. frame-stack = [env.frame-stack.cdr])
         env clone
         env.frame-stack.car)
       #+end_src
@@ -278,8 +276,8 @@
 
       #+begin_src cicada
       (+data scoping-frame-t
-        .body-exp-list : [exp-u list-u]
-        .index : nat-u)
+        body-exp-list : [exp-u list-u]
+        index : nat-u)
       #+end_src
 
 ***** new/scoping-frame
@@ -287,8 +285,8 @@
       #+begin_src cicada
       (+fun new/scoping-frame
         : (-> (: body-exp-list exp-u list-u) -- scoping-frame-t)
-        (. .body-exp-list = body-exp-list
-           .index = 0)
+        (. body-exp-list = body-exp-list
+           index = 0)
         scoping-frame-cr)
       #+end_src
 
@@ -296,8 +294,8 @@
 
       #+begin_src cicada
       (+data simple-frame-t
-        .body-exp-list : [exp-u list-u]
-        .index : nat-u)
+        body-exp-list : [exp-u list-u]
+        index : nat-u)
       #+end_src
 
 ***** new/simple-frame
@@ -305,8 +303,8 @@
       #+begin_src cicada
       (+fun new/simple-frame
         : (-> (: body-exp-list exp-u list-u) -- simple-frame-t)
-        (. .body-exp-list = body-exp-list
-           .index = 0)
+        (. body-exp-list = body-exp-list
+           index = 0)
         simple-frame-cr)
       #+end_src
 
@@ -366,6 +364,7 @@
       arrow-exp-t
       apply-exp-t
       case-exp-t
+      sum-exp-t
       construct-exp-t
       field-exp-t
       colon-exp-t
@@ -376,29 +375,29 @@
 
     #+begin_src cicada
     (+data call-exp-t
-      .name : string-t)
+      name : string-t)
     #+end_src
 
 *** let-exp-t
 
     #+begin_src cicada
     (+data let-exp-t
-      .local-name-list : [string-t list-u])
+      local-name-list : [string-t list-u])
     #+end_src
 
 *** closure-exp-t
 
     #+begin_src cicada
     (+data closure-exp-t
-      .body-exp-list : [exp-u list-u])
+      body-exp-list : [exp-u list-u])
     #+end_src
 
 *** arrow-exp-t
 
     #+begin_src cicada
     (+data arrow-exp-t
-      .ante-exp-list : [exp-u list-u]
-      .succ-exp-list : [exp-u list-u])
+      ante-exp-list : [exp-u list-u]
+      succ-exp-list : [exp-u list-u])
     #+end_src
 
 *** apply-exp-t
@@ -411,38 +410,45 @@
 
     #+begin_src cicada
     (+data case-exp-t
-      .arg-exp-list : [exp-u list-u]
-      .closure-exp-dict : [string-t closure-exp-t dict-t])
+      arg-exp-list : [exp-u list-u]
+      closure-exp-dict : [string-t closure-exp-t dict-t])
+    #+end_src
+
+*** sum-exp-t
+
+    #+begin_src cicada
+    (+data sum-exp-t
+       sub-exp-list-list : [exp-u list-u list-u])
     #+end_src
 
 *** construct-exp-t
 
     #+begin_src cicada
     (+data construct-exp-t
-      .type-name : string-t)
+      type-name : string-t)
     #+end_src
 
 *** field-exp-t
 
     #+begin_src cicada
     (+data field-exp-t
-      .field-name : string-t)
+      field-name : string-t)
     #+end_src
 
 *** colon-exp-t
 
     #+begin_src cicada
     (+data colon-exp-t
-      .local-name : string-t
-      .type-exp-list : [exp-u list-u])
+      local-name : string-t
+      type-exp-list : [exp-u list-u])
     #+end_src
 
 *** double-colon-exp-t
 
     #+begin_src cicada
     (+data double-colon-exp-t
-      .local-name : string-t
-      .type-exp-list : [exp-u list-u])
+      local-name : string-t
+      type-exp-list : [exp-u list-u])
     #+end_src
 
 * exe
@@ -502,8 +508,8 @@
     #+begin_src cicada
     (+fun closure-exp/exe
       : (-> env-t (: exp closure-exp-t) -- env-t)
-      (. .scope = scope-stack/tos
-         .body-exp-list = [exp.body-exp-list])
+      (. scope = scope-stack/tos
+         body-exp-list = [exp.body-exp-list])
       closure-obj-cr
       data-stack/push)
     #+end_src
@@ -513,8 +519,8 @@
     #+begin_src cicada
     (+data arrow-exp/exe
       : (-> env-t (: exp arrow-exp-t) -- env-t)
-      (. .ante-type-list = [exp.ante-exp-list collect-list]
-         .succ-type-list = [exp.succ-exp-list collect-list])
+      (. ante-type-list = [exp.ante-exp-list collect-list]
+         succ-type-list = [exp.succ-exp-list collect-list])
       arrow-obj-cr
       data-stack/push)
     #+end_src
@@ -658,24 +664,24 @@
 
     #+begin_src cicada
     (+data fun-den-t
-      .type-arrow-exp : arrow-exp-t
-      .body-exp-list : [exp-u list-u])
+      type-arrow-exp : arrow-exp-t
+      body-exp-list : [exp-u list-u])
     #+end_src
 
 *** type-den-t
 
     #+begin_src cicada
     (+data type-den-t
-      .type-arrow-exp : arrow-exp-t
-      .cons-arrow-exp : arrow-exp-t)
+      type-arrow-exp : arrow-exp-t
+      cons-arrow-exp : arrow-exp-t)
     #+end_src
 
 *** union-den-t
 
     #+begin_src cicada
     (+data union-den-t
-      .type-arrow-exp : arrow-exp-t
-      .type-name-list : [string-t list-u])
+      type-arrow-exp : arrow-exp-t
+      type-name-list : [string-t list-u])
     #+end_src
 
 * den-exe
@@ -789,45 +795,45 @@
 
     #+begin_src cicada
     (+data data-obj-t
-      .type : type-u
-      .field-obj-dict : [string-t obj-u dict-t])
+      type : type-u
+      field-obj-dict : [string-t obj-u dict-t])
     #+end_src
 
 *** closure-obj-t
 
     #+begin_src cicada
     (+data closure-obj-t
-      .scope : [string-t obj-u dict-t]
-      .body-exp-list : [exp-u list-u])
+      scope : [string-t obj-u dict-t]
+      body-exp-list : [exp-u list-u])
     #+end_src
 
 *** hypo-id-t
 
     #+begin_src cicada
     (+data hypo-id-t
-      .id-string : string-t)
+      id-string : string-t)
     #+end_src
 
 *** hypo-obj-t
 
     #+begin_src cicada
     (+data hypo-obj-t
-      .hypo-id : hypo-id-t
-      .hypo-type : hypo-type-t)
+      hypo-id : hypo-id-t
+      hypo-type : hypo-type-t)
     #+end_src
 
 *** case-trunk-id-t
 
     #+begin_src cicada
     (+data case-trunk-id-t
-      .id-string : string-t)
+      id-string : string-t)
     #+end_src
 
 *** case-trunk-obj-t
 
     #+begin_src cicada
     (+data case-trunk-obj-t
-      .case-trunk-id : case-trunk-id-t)
+      case-trunk-id : case-trunk-id-t)
     #+end_src
 
 *** case-trunk-u
@@ -838,13 +844,13 @@
       done-case-trunk-t)
 
     (+data todo-case-trunk-t
-      .sum-type : sum-type-t
-      .arg-obj : (+ hypo-obj-t | case-trunk-obj-t)
-      .closure-obj-dict : [string-t closure-obj-t dict-t])
+      sum-type : sum-type-t
+      arg-obj : (+ hypo-obj-t | case-trunk-obj-t)
+      closure-obj-dict : [string-t closure-obj-t dict-t])
 
     (+data done-case-trunk-t
-      .type : type-u
-      .result-obj : obj-u)
+      type : type-u
+      result-obj : obj-u)
     #+end_src
 
 *** type-u
@@ -863,46 +869,46 @@
 
     #+begin_src cicada
     (+data data-type-t
-      .type-name : string-t
-      .field-obj-dict : [string-t obj-u dict-t])
+      type-name : string-t
+      field-obj-dict : [string-t obj-u dict-t])
     #+end_src
 
 *** union-type-t
 
     #+begin_src cicada
     (+data union-type-t
-      .type-name : string-t
-      .field-obj-dict : [string-t obj-u dict-t])
+      type-name : string-t
+      field-obj-dict : [string-t obj-u dict-t])
     #+end_src
 
 *** type-type-t
 
     #+begin_src cicada
     (+data type-type-t
-      .level : nat-u)
+      level : nat-u)
     #+end_src
 
 *** hypo-type-t
 
     #+begin_src cicada
     (+data hypo-type-t
-      .hypo-id : hypo-id-t
-      .type : type-u)
+      hypo-id : hypo-id-t
+      type : type-u)
     #+end_src
 
 *** arrow-type-t
 
     #+begin_src cicada
     (+data arrow-type-t
-      .ante-type-list : [type-u list-u]
-      .succ-type-list : [type-u list-u])
+      ante-type-list : [type-u list-u]
+      succ-type-list : [type-u list-u])
     #+end_src
 
 *** sum-type-t
 
     #+begin_src cicada
     (+data sum-type-t
-      .sub-type-list : [type-u list-u])
+      sub-type-list : [type-u list-u])
     #+end_src
 
 * infer
