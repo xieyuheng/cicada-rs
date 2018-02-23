@@ -1,11 +1,12 @@
-(+union nat-u
+(+union nat-u : (-> -- type-tt)
   zero-t
   succ-t)
 
-(+data zero-t)
+(+type zero-t : (-> -- type-tt)
+  (-> -- zero-t))
 
-(+data succ-t
-  prev : nat-u)
+(+type succ-t : (-> -- type-tt)
+  (-> prev : nat-u -- succ-t))
 
 (+fun add : (-> m : nat-u, n : nat-u -- nat-u)
   (case n

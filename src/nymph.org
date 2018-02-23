@@ -677,22 +677,41 @@
         den.body-exp-list new/scoping-frame frame-stack/push)
       #+end_src
 
-***** ><><>< type-den/den-exe
+***** type-den/den-exe
 
       #+begin_src cicada
       (+fun type-den/den-exe
         : (-> env-t, den : type-den-t -- env-t)
-        den.type-arrow-exp collect (let arrow-type)
         (. type-name = den.type-name
-           field-obj-dict = )
-        data-type-cr)
-
-      ;; (+data data-type-t
-      ;;   type-name : string-t
-      ;;   field-obj-dict : [string-t obj-u dict-t])
+           field-obj-dict =
+           [new/dict den.type-arrow-exp.ante-exp-list
+            ante-exp-list/merge-fields])
+        data-type-cr data-stack/push)
       #+end_src
 
-***** ><><>< union-den/den-exe
+***** ante-exp-list/merge-fields
+
+      #+begin_src cicada
+      (+fun ante-exp-list/merge-fields
+        : (-> env-t
+              field-obj-dict : [string-t obj-u dict-t]
+              ante-exp-list : [exp-u list-u]
+           -- env-t, string-t obj-u dict-t)
+        (case ante-exp-list
+          (null-t)
+          (cons-t
+            (case ante-exp-list.car
+              (colon-exp-t
+                field-obj-dict
+                ante-exp-list.car.local-name
+                data-stack/pop dict/set
+                ante-exp-list.cdr recur)
+              (else
+                field-obj-dict
+                ante-exp-list.cdr recur)))))
+      #+end_src
+
+***** union-den/den-exe
 
       #+begin_src cicada
       (+fun union-den/den-exe
@@ -853,13 +872,20 @@
       )
     #+end_src
 
-*** ><><>< construct-exp/exe
+*** construct-exp/exe
 
     #+begin_src cicada
     (+fun construct-exp/exe
       : (-> env-t, exp : construct-exp-t -- env-t)
-      exp.type-name name-dict/get (let type-den)
-      type-den.cons-arrow-exp )
+      ;; put bindings of arrow into scope
+      den.type-arrow-exp collect drop
+      exp.type-name name-dict/get (let den)
+      (. type =
+         [den.cons-arrow-exp.succ-exp-list collect]
+         field-obj-dict =
+         [new/dict den.cons-arrow-exp.ante-exp-list
+          ante-exp-list/merge-fields])
+      data-obj-cr data-stack/push)
     #+end_src
 
 *** ><><>< field-exp/exe

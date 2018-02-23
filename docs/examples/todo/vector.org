@@ -3,20 +3,23 @@
 * vector-u
 
   #+begin_src cicada
-  (+union vector-u : (-> nat-u type-tt -- type-tt)
-    (-> -- zero-c :t vector-u)
-    (-> .car : :t
-        .cdr : [:n :t vector-u]
-     -- :n succ-c :t vector-u))
+  (+union vector-u
+    : (-> length : nat-u
+          type : type-tt
+       -- type-tt)
+    (-> -- zero-c type vector-u)
+    (-> car : type
+        cdr : [length type vector-u]
+     -- length succ-c type vector-u))
   #+end_src
 
 * append
 
   #+begin_src cicada
   (+fun append
-    : (-> l0 : [:m :t vector-u]
-          l1 : [:n :t vector-u]
-       -- :m :n add :t vector-u)
+    : (-> l0 : [:m :type vector-u]
+          l1 : [:n :type vector-u]
+       -- :m :n add :type vector-u)
     (case l1
       (null-t l0)
       (cons-t l1.car l0 l1.cdr recur cons-c)))
@@ -26,10 +29,10 @@
 
   #+begin_src cicada
   (+fun map
-    : (-> l : [:n :t1 vector-u]
-          fun : (-> :t1 -- :t2)
-       -- :n :t2 vector-u)
+    : (-> l : [:n :type1 vector-u]
+          fun : (-> :type1 -- :type2)
+       -- :n :type2 vector-u)
     (case l
       (null-t null-c)
-      (cons-t l.car fun :l.cdr {fun} recur cons-c)))
+      (cons-t l.car fun l.cdr {fun} recur cons-c)))
   #+end_src

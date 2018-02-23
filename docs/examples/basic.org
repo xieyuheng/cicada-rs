@@ -144,11 +144,11 @@
 *** list-u
 
     #+begin_src cicada
-    (+union list-u : (-> type-tt -- type-tt)
-      (-> -- :t null-t)
-      (-> car : :t
-          cdr : [:t list-u]
-       -- :t list-u))
+    (+union list-u : (-> type : type-tt -- type-tt)
+      (-> -- type null-t)
+      (-> car : type
+          cdr : [type list-u]
+       -- type list-u))
     #+end_src
 
 *** list-u -- not inline
@@ -158,13 +158,13 @@
       null-t
       cons-t)
 
-    (+type null-t : (-> type-tt -- type-tt)
-      (-> -- :t null-t))
+    (+type null-t : (-> type : type-tt -- type-tt)
+      (-> -- type null-t))
 
-    (+type cons-t : (-> type-tt -- type-tt)
-      (-> car : :t
-          cdr : [:t cons-t]
-       -- :t cons-t))
+    (+type cons-t : (-> type : type-tt -- type-tt)
+      (-> car : type
+          cdr : [type cons-t]
+       -- type cons-t))
     #+end_src
 
 *** length
@@ -223,6 +223,17 @@
         (-> -- null-c zero-c null-has-length-t)
         (-> cdr : [:l :n has-length-u]
          -- :a :l cons-c :n succ-c cons-has-length-t))
+
+      (+union has-length-u
+        : (-> type :: type-tt
+              list : [type list-u]
+              length : nat-u
+           -- type-tt)
+        (-> -- null-c zero-c null-has-length-t)
+        (-> cdr : [list length has-length-u]
+         -- element :: type
+            element list cons-c
+            length succ-c cons-has-length-t))
       #+end_src
 
 ***** map-has-length
