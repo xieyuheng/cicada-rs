@@ -3,8 +3,6 @@
 
 * [todo-stack]
 
-*** no sum-exp and sum-type
-
 *** handle :name as special var-trunk
 
 *** as logic programming language
@@ -403,7 +401,6 @@
       arrow-exp-t
       apply-exp-t
       case-exp-t
-      sum-exp-t
       construct-exp-t
       field-exp-t
       colon-exp-t
@@ -451,13 +448,6 @@
     (+data case-exp-t
       arg-exp-list : [exp-u list-u]
       closure-exp-dict : [string-t closure-exp-t dict-t])
-    #+end_src
-
-*** sum-exp-t
-
-    #+begin_src cicada
-    (+data sum-exp-t
-      sub-exp-list-list : [exp-u list-u list-u])
     #+end_src
 
 *** construct-exp-t
@@ -616,8 +606,7 @@
       (+union type-u
         data-type-t
         type-type-t
-        arrow-type-t
-        sum-type-t)
+        arrow-type-t)
       #+end_src
 
 ***** data-type-t
@@ -643,13 +632,6 @@
         succ-type-list : [type-u list-u])
       #+end_src
 
-***** sum-type-t
-
-      #+begin_src cicada
-      (+data sum-type-t
-        sub-type-list : [type-u list-u])
-      #+end_src
-
 * exe
 
 *** exe
@@ -664,7 +646,6 @@
         (arrow-exp-t arrow-exp/exe)
         (apply-exp-t apply-exp/exe)
         (case-exp-t case-exp/exe)
-        (sum-exp-t sum-exp/exe)
         (construct-exp-t construct-exp/exe)
         (field-exp-t field-exp/exe)
         (colon-exp-t colon-exp/exe)
@@ -850,19 +831,7 @@
           exp.closure-exp-dict
           obj.data-type.type-name dict/get
           closure-exp/exe
-          apply-exp/exe)
-        (trunk-u
-          exp.closure-exp-dict
-          closure-exp-dict->closure-obj-dict
-          (let closure-obj-dict)
-          obj closure-obj-dict closure-obj-dict->sum-type
-          (let sum-type)
-          (. sum-type = sum-type
-             arg-trunk = obj
-             closure-obj-dict = closure-obj-dict)
-          case-todo-cr
-          new/case-trunk
-          data-stack/push)))
+          apply-exp/exe)))
     #+end_src
 
 *** >< new/case-trunk
@@ -874,25 +843,6 @@
       : (-> env-t
             closure-exp-dict : [string-t closure-exp-t dict-t]
          -- env-t, string-t closure-obj-t dict-t)
-      )
-    #+end_src
-
-*** >< closure-obj-dict->sum-type
-
-    #+begin_src cicada
-    (+fun closure-obj-dict->sum-type
-      : (-> env-t
-            obj : obj-u
-            closure-obj-dict : [string-t closure-obj-t dict-t]
-         -- env-t, sum-type-t)
-      )
-    #+end_src
-
-*** ><><>< sum-exp/exe
-
-    #+begin_src cicada
-    (+fun sum-exp/exe
-      : (-> env-t, exp : sum-exp-t -- env-t)
       )
     #+end_src
 
@@ -989,7 +939,6 @@
         (arrow-exp-t arrow-exp/cut)
         (apply-exp-t apply-exp/cut)
         (case-exp-t case-exp/cut)
-        (sum-exp-t sum-exp/cut)
         (construct-exp-t construct-exp/cut)
         (field-exp-t field-exp/cut)
         (colon-exp-t colon-exp/cut)
@@ -1066,8 +1015,6 @@
 *** apply-exp/cut
 
 *** case-exp/cut
-
-*** sum-exp/cut
 
 *** construct-exp/cut
 
