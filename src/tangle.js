@@ -46,5 +46,5 @@ function line_array_to_string (line_array) {
   return result_string;
 }
 
-tangle("cicada-in-js.org", "cicada-in-js.js");
+tangle("nymph.org", "nymph.js");
 tangle("cicada.org", "cicada.js");
