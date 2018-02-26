@@ -51,6 +51,8 @@
       }
       function error ()
       {
+          print ("");
+          print ("");
           throw new Error('fatal error!');
       }
     class env_t
@@ -300,7 +302,11 @@
             }
             else {
                 let den = name_dict_get (env, this.name);
-                assert (den);
+                if (! den) {
+                    print ("- exe call_exp_t");
+                    print ("  unknown name :", this.name);
+                    error ();
+                }
                 den.den_exe (env);
             }
         }
@@ -1019,7 +1025,9 @@
               if (this.type_name !== that.type_name)
                   return false;
               else if (! (this.car.eq_p (that.car)))
-                  return true;
+                  return false;
+              else if (! (this.cdr.eq_p (that.cdr)))
+                  return false;
               else
                   return true;
           }
@@ -1103,14 +1111,29 @@
             if (i === length)
                 return i - 1;
             let char = string[i];
+            let next = string[i+1];
             if (space_p (char) ||
                 delimiter_p (char) ||
-                (char === '.') ||
                 (char === '"'))
+                return i - 1;
+            if ((char === '.') && (! (digital_char_p (next))))
                 return i - 1;
             else
                 i = i + 1;
         }
+    }
+    function digital_char_p (x)
+    {
+        return ((x === "0") ||
+                (x === "1") ||
+                (x === "2") ||
+                (x === "3") ||
+                (x === "4") ||
+                (x === "5") ||
+                (x === "6") ||
+                (x === "7") ||
+                (x === "8") ||
+                (x === "9"));
     }
     function parse_sexp_vect (string_vect)
     {

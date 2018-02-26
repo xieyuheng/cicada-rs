@@ -5,11 +5,7 @@
 
 *** reader for number
 
-    - fix the use of .field
-
 *** about string
-
-*** about bool
 
 *** about number
 
@@ -149,6 +145,8 @@
       #+begin_src js
       function error ()
       {
+          print ("");
+          print ("");
           throw new Error('fatal error!');
       }
       #+end_src
@@ -578,7 +576,11 @@
             }
             else {
                 let den = name_dict_get (env, this.name);
-                assert (den);
+                if (! den) {
+                    print ("- exe call_exp_t");
+                    print ("  unknown name :", this.name);
+                    error ();
+                }
                 den.den_exe (env);
             }
         }
@@ -1514,7 +1516,7 @@
       );
       #+end_src
 
-*** number
+*** >< number
 
 ***** number_t
 
@@ -1537,7 +1539,7 @@
       }
       #+end_src
 
-*** string
+*** >< string
 
 ***** string_t
 
@@ -1560,7 +1562,7 @@
       }
       #+end_src
 
-*** list
+*** >< list
 
 ***** null_t
 
@@ -1743,14 +1745,34 @@
             if (i === length)
                 return i - 1;
             let char = string[i];
+            let next = string[i+1];
             if (space_p (char) ||
                 delimiter_p (char) ||
-                (char === '.') ||
                 (char === '"'))
+                return i - 1;
+            if ((char === '.') && (! (digital_char_p (next))))
                 return i - 1;
             else
                 i = i + 1;
         }
+    }
+    #+end_src
+
+*** digital_char_p
+
+    #+begin_src js
+    function digital_char_p (x)
+    {
+        return ((x === "0") ||
+                (x === "1") ||
+                (x === "2") ||
+                (x === "3") ||
+                (x === "4") ||
+                (x === "5") ||
+                (x === "6") ||
+                (x === "7") ||
+                (x === "8") ||
+                (x === "9"));
     }
     #+end_src
 
