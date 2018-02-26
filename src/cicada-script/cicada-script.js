@@ -1,0 +1,1187 @@
+      let print = console.log;
+      function vect_eq_p (v1, v2)
+      {
+          if (v1.length !== v2.length)
+              return false;
+          let index = 0;
+          while (index < v1.length) {
+              if (v1[index] !== v2[index])
+                  return false;
+              index = index + 1;
+          }
+          return true;
+      }
+      function string_p (x)
+      {
+          return typeof x === 'string';
+      }
+      function vect_p (x)
+      {
+          return x instanceof Array;
+      }
+      function vect_empty_p (x)
+      {
+          assert (x instanceof Array);
+          return x.length === 0;
+      }
+      function vect_member_p (x, vect)
+      {
+          assert (vect_p (vect));
+          for (let y of vect) {
+              if (x === y)
+                  return true;
+          }
+          return false;
+      }
+      function assert (x) {
+          if (! x) {
+              throw new Error('assert fail!');
+          }
+      }
+      function error ()
+      {
+          throw new Error('fatal error!');
+      }
+    class env_t
+    {
+        constructor ()
+        {
+            this.name_dict = new name_dict_t ();
+            this.data_stack = [];
+            this.frame_stack = [];
+            this.scope_stack = [];
+        }
+    }
+      class name_dict_t
+      {
+          constructor ()
+          {
+              this.dict = new Map ();
+          }
+
+          get (name)
+          {
+              return this.dict.get (name);
+          }
+
+          set (name, den)
+          {
+              this.dict.set (name, den);
+          }
+      }
+      function name_dict_get (env, name)
+      {
+          return env.name_dict.get (name);
+      }
+      function name_dict_set (env, name, den)
+      {
+          env.name_dict.set (name, den);
+      }
+      function data_stack_push (env, obj)
+      {
+          env.data_stack.push (obj);
+      }
+      function data_stack_pop (env)
+      {
+          return env.data_stack.pop ();
+      }
+      function data_stack_tos (env)
+      {
+          let length = data_stack_length (env);
+          return env.data_stack[length - 1];
+      }
+      function data_stack_drop (env)
+      {
+          data_stack_pop (env);
+      }
+      function data_stack_peek (env, index)
+      {
+          index = index + 1;
+          let length = data_stack_length (env);
+          return env.data_stack[length - index];
+      }
+      function data_stack_length (env)
+      {
+          return env.data_stack.length;
+      }
+      function frame_stack_push (env, frame)
+      {
+          env.frame_stack.push (frame);
+      }
+      function frame_stack_pop (env)
+      {
+          return env.frame_stack.pop ();
+      }
+      function frame_stack_tos (env)
+      {
+          let length = frame_stack_length (env);
+          return env.frame_stack[length - 1];
+      }
+      function frame_stack_drop (env)
+      {
+          frame_stack_pop (env);
+      }
+      function frame_stack_length (env)
+      {
+          return env.frame_stack.length;
+      }
+      class scoping_frame_t
+      {
+          constructor (exp_vect)
+          {
+              this.exp_vect = exp_vect;
+              this.length = exp_vect.length;
+              this.index = 0;
+          }
+      }
+      class simple_frame_t
+      {
+          constructor (exp_vect)
+          {
+              this.exp_vect = exp_vect;
+              this.length = exp_vect.length;
+              this.index = 0;
+          }
+      }
+      function frame_end_p (frame)
+      {
+          return frame.index === frame.length;
+      }
+      function frame_next_exp (frame)
+      {
+          let exp = frame.exp_vect[frame.index];
+          frame.index = frame.index + 1;
+          return exp;
+      }
+      function scope_stack_push (env, scope)
+      {
+          env.scope_stack.push (scope);
+      }
+      function scope_stack_pop (env)
+      {
+          return env.scope_stack.pop ();
+      }
+      function scope_stack_tos (env)
+      {
+          let length = scope_stack_length (env);
+          return env.scope_stack[length - 1];
+      }
+      function scope_stack_drop (env)
+      {
+          scope_stack_pop (env);
+      }
+      function scope_stack_length (env)
+      {
+          return env.scope_stack.length;
+      }
+      class scope_t
+      {
+          constructor ()
+          {
+              this.dict = new Map ();
+          }
+
+          get (name)
+          {
+              return this.dict.get (name);
+          }
+
+          set (name, obj)
+          {
+              this.dict.set (name, obj);
+          }
+
+          clone ()
+          {
+              let scope = new scope_t ();
+              for (let [name, obj] of this.dict) {
+                  scope.set (name, obj);
+              }
+              return scope;
+          }
+      }
+    function run_one_step (env)
+    {
+        let frame = frame_stack_tos (env);
+        if (frame_end_p (frame)) {
+            frame_stack_drop (env);
+            if (frame instanceof scoping_frame_t)
+                scope_stack_drop (env);
+            return;
+        }
+        let scope = scope_stack_tos (env);
+        let exp = frame_next_exp (frame);
+        if (frame_end_p (frame)) {
+            // proper tail call
+            frame_stack_drop (env);
+            if (frame instanceof scoping_frame_t)
+                scope_stack_drop (env);
+        }
+        // {
+        //     print ("- run_one_step");
+        //     print ("  exp :", exp);
+        //     print ("  scope :", scope);
+        //     print ("  env :", env);
+        //     print ("");
+        // }
+        exp.exe (env, scope);
+    }
+    function run_with_base (env, base)
+    {
+        while (frame_stack_length (env) > base)
+            run_one_step (env);
+    }
+    function exp_vect_run (env, exp_vect)
+    {
+        let base = frame_stack_length (env);
+        let frame = new simple_frame_t (exp_vect);
+        frame_stack_push (env, frame);
+        run_with_base (env, base);
+    }
+    function closure_apply (env, closure)
+    {
+        data_stack_push (env, closure);
+        let exp_vect = [new apply_exp_t ()];
+        exp_vect_run (env, exp_vect);
+    }
+    function closure_to_obj_vect (env, closure)
+    {
+        let mark = data_stack_length (env);
+        closure_apply (env, closure);
+        let length = data_stack_length (env);
+        let obj_vect = [];
+        while (length > mark) {
+           let obj = data_stack_pop (env);
+           obj_vect.unshift (obj);
+           length = length - 1;
+        }
+        return obj_vect;
+
+    }
+    function closure_to_obj (env, closure)
+    {
+        let obj_vect = closure_to_obj_vect (env, closure);
+        assert (obj_vect.length === 1);
+        return obj_vect[0];
+    }
+    class call_exp_t
+    {
+        constructor (name)
+        {
+            this.name = name;
+        }
+
+        exe (env, scope)
+        {
+            let obj = scope.get (this.name);
+            // {
+            //     print ("- call_exp");
+            //     print (this.name);
+            //     print (scope);
+            //     print (env);
+            //     print ("");
+            // }
+            if (obj) {
+                if (obj instanceof closure_t)
+                    closure_apply (env, obj);
+                else
+                    data_stack_push (env, obj);
+            }
+            else {
+                let den = name_dict_get (env, this.name);
+                den.den_exe (env);
+            }
+        }
+    }
+    class let_exp_t
+    {
+        constructor (name_vect)
+        {
+            this.name_vect = name_vect;
+        }
+
+        exe (env, scope)
+        {
+            let name_vect = this.name_vect.slice ();
+            while (name_vect.length > 0) {
+                let name = name_vect.pop ();
+                let obj = data_stack_pop (env);
+                scope.set (name, obj);
+            }
+        }
+    }
+    class closure_exp_t
+    {
+        constructor (exp_vect)
+        {
+            this.exp_vect = exp_vect;
+        }
+
+        exe (env, scope)
+        {
+            let closure =
+                new closure_t (
+                    this.exp_vect,
+                    scope.clone ());
+            data_stack_push (env, closure);
+        }
+    }
+    class apply_exp_t
+    {
+        constructor () { }
+
+        exe (env, scope)
+        {
+            let closure = data_stack_pop (env);
+            let frame = new scoping_frame_t (closure.exp_vect);
+            frame_stack_push (env, frame);
+            scope_stack_push (env, closure.scope);
+        }
+    }
+    class case_exp_t
+    {
+        constructor (arg_exp_vect, case_clause_dict)
+        {
+            this.arg_exp_vect = arg_exp_vect;
+            this.case_clause_dict = case_clause_dict;
+        }
+
+        exe (env, scope)
+        {
+            let closure =
+                new closure_t (
+                    this.arg_exp_vect,
+                    scope.clone ());
+            let obj = closure_to_obj (env, closure);
+            assert (obj instanceof data_t);
+            let exp_vect = this.case_clause_dict.get (obj.type_name);
+            if (exp_vect) {
+                let closure =
+                    new closure_t (
+                        exp_vect,
+                        scope.clone ());
+                closure_apply (env, closure);
+            }
+            else {
+                let exp_vect = this.case_clause_dict.get ("else");
+                if (exp_vect) {
+                    let closure =
+                        new closure_t (
+                            exp_vect,
+                            scope.clone ());
+                    closure_apply (env, closure);
+                }
+                else {
+                    print ("- case mismatch!");
+                    error ();
+                }
+            }
+        }
+    }
+    class case_clause_dict_t
+    {
+        constructor ()
+        {
+            this.dict = new Map ();
+        }
+
+        get (type_name)
+        {
+            return this.dict.get (type_name);
+        }
+
+        set (type_name, exp_vect)
+        {
+            this.dict.set (type_name, exp_vect);
+        }
+    }
+    class field_exp_t
+    {
+        constructor (field_name)
+        {
+            this.field_name = field_name;
+        }
+
+        exe (env, scope)
+        {
+            let data = data_stack_pop (env);
+            assert (data instanceof data_t);
+            let obj = data.field_dict.get (this.field_name);
+            assert (obj);
+            if (obj instanceof closure_t)
+                closure_apply (env, obj);
+            else
+                data_stack_push (env, obj);
+        }
+    }
+    class dot_exp_t
+    {
+        constructor (reversed_field_name_vect)
+        {
+            this.reversed_field_name_vect
+                = reversed_field_name_vect;
+        }
+
+        exe (env, scope)
+        {
+            let field_dict = new field_dict_t ();
+            for (let field_name of this.reversed_field_name_vect) {
+                let obj = data_stack_pop (env);
+                field_dict.set (field_name, obj)
+            }
+            data_stack_push (env, field_dict);
+        }
+    }
+    class clone_exp_t
+    {
+        constructor () { }
+
+        exe (env, scope)
+        {
+            let data = data_stack_pop (env);
+            assert (data instanceof data_t);
+            let field_dict = data_stack_pop (env);
+            assert (field_dict instanceof field_dict_t);
+            let new_field_dict = new field_dict_t ();
+            // .dict of field_dict should be hidden
+            //   but I used it here
+            for (let [field_name, obj] of data.field_dict.dict) {
+                new_field_dict.set (field_name, obj);
+            }
+            for (let [field_name, obj] of field_dict.dict) {
+                new_field_dict.set (field_name, obj);
+            }
+            let new_data =
+                new data_t (
+                    data.type_name,
+                    new_field_dict);
+            data_stack_push (env, new_data);
+        }
+    }
+    class jojo_den_t
+    {
+        constructor (exp_vect)
+        {
+            this.exp_vect = exp_vect;
+        }
+
+        den_exe (env)
+        {
+            let frame = new scoping_frame_t (this.exp_vect);
+            let scope = new scope_t ();
+            frame_stack_push (env, frame);
+            scope_stack_push (env, scope);
+        }
+    }
+    class var_den_t
+    {
+        constructor ()
+        {
+        }
+
+        den_exe ()
+        {
+
+        }
+    }
+    class union_den_t
+    {
+        constructor (union_vect)
+        {
+            this.union_vect = union_vect;
+        }
+
+        den_exe (env)
+        {
+            error ();
+        }
+    }
+
+    class data_den_t
+    {
+        constructor (reversed_field_name_vect)
+        {
+            this.reversed_field_name_vect
+                = reversed_field_name_vect;
+        }
+
+        den_exe (env)
+        {
+            error ();
+        }
+    }
+    class data_cons_den_t
+    {
+        constructor (type_name)
+        {
+            this.type_name = type_name;
+        }
+
+        den_exe (env)
+        {
+            let type_name = this.type_name;
+            let data_den = name_dict_get (env, type_name);
+            assert (data_den instanceof data_den_t);
+            let field_dict = new field_dict_t ();
+            for (let field_name of data_den.reversed_field_name_vect) {
+                let obj = data_stack_pop (env);
+                field_dict.set (field_name, obj)
+            }
+            let data = new data_t (type_name, field_dict);
+            data_stack_push (env, data);
+        }
+    }
+    class data_create_den_t
+    {
+        constructor (type_name)
+        {
+            this.type_name = type_name;
+        }
+
+        den_exe (env)
+        {
+            let field_dict = data_stack_pop (env);
+            assert (field_dict instanceof field_dict_t);
+            let data
+                = new data_t (
+                    this.type_name,
+                    field_dict);
+            data_stack_push (env, data);
+        }
+    }
+    class prim_den_t
+    {
+        constructor (prim_fn)
+        {
+            this.prim_fn = prim_fn;
+        }
+
+        den_exe (env)
+        {
+            this.prim_fn (env);
+        }
+    }
+    class data_t
+    {
+        constructor (type_name, field_dict)
+        {
+            this.type_name = type_name;
+            this.field_dict = field_dict;
+        }
+    }
+    class closure_t
+    {
+        constructor (exp_vect, scope)
+        {
+            this.type_name = "closure-t";
+            this.exp_vect = exp_vect;
+            this.scope = scope;
+        }
+    }
+    class field_dict_t
+    {
+        constructor ()
+        {
+            this.type_name = "field-dict-t";
+            this.dict = new Map ();
+        }
+
+        get (field_name)
+        {
+            return this.dict.get (field_name);
+        }
+
+        set (field_name, obj)
+        {
+            this.dict.set (field_name, obj);
+        }
+    }
+
+
+    let the_prim_dict = new Map ();
+    function merge_the_prim_dict (env)
+    {
+        for (let [name, prim_den] of the_prim_dict) {
+            name_dict_set (env, name, prim_den);
+        }
+    }
+    function new_prim (name, prim_fn)
+    {
+        let prim_den = new prim_den_t (prim_fn);
+        the_prim_dict.set (name, prim_den);
+    }
+      class true_t
+      {
+          constructor ()
+          {
+              this.type_name = "true-t";
+          }
+      }
+      class false_t
+      {
+          constructor ()
+          {
+              this.type_name = "false-t";
+          }
+      }
+      new_prim (
+          "true-c",
+          function (env)
+          {
+              data_stack_push (env, new true_t ());
+          }
+      );
+      new_prim (
+          "false-c",
+          function (env)
+          {
+              data_stack_push (env, new false_t ());
+          }
+      );
+      class number_t
+      {
+          constructor (number)
+          {
+              this.type_name = "number-t";
+              this.number = number;
+          }
+      }
+      class string_t
+      {
+          constructor (string)
+          {
+              this.type_name = "string-t";
+              this.string = string;
+          }
+      }
+      class null_t
+      {
+          constructor ()
+          {
+              this.type_name = "null-t";
+          }
+      }
+      function null_c ()
+      {
+          return new null_t ();
+      }
+      function null_p (x)
+      {
+          return x instanceof null_t;
+      }
+      class cons_t
+      {
+          constructor (car, cdr)
+          {
+              this.type_name = "cons-t";
+              this.car = car;
+              this.cdr = cdr;
+          }
+      }
+      function cons_c (car, cdr)
+      {
+          assert (list_p (cdr));
+          return new cons_t (car, cdr);
+      }
+      function cons_p (x)
+      {
+          return x instanceof cons_t;
+      }
+      function list_p (x)
+      {
+          return (null_p (x) || cons_p (x));
+      }
+    function code_scan (string)
+    {
+        let string_vect = [];
+        let i = 0;
+        let length = string.length;
+        while (i < length) {
+            let char = string[i];
+            if (space_p (char))
+                i = i + 1;
+            else if (char === ';') {
+                let end = string.indexOf ('\n', i+1);
+                if (end === -1)
+                    break;
+                else
+                    i = end + 1;
+            }
+            else if (delimiter_p (char)) {
+                string_vect.push (char);
+                i = i + 1;
+            }
+            else if (char === '"') {
+                let end = string.indexOf ('"', i+1);
+                if (end === -1) {
+                    print ("- code_scan fail")
+                    print ("  doublequote mismatch")
+                    print ("  string : {}".format(string))
+                    error ()
+                }
+                string_vect.push (string.slice (i, end + 1));
+                i = end + 1;
+            }
+            else {
+                let end = find_end (string, i+1);
+                string_vect.push (string.slice (i, end + 1));
+                i = end + 1;
+            }
+        }
+        return string_vect;
+    }
+    function space_p (char)
+    {
+        return (char == ' ' ||
+                char == '\n' ||
+                char == '\t');
+    }
+    function delimiter_p (char)
+    {
+        return (char == '(' ||
+                char == ')' ||
+                char == '[' ||
+                char == ']' ||
+                char == '{' ||
+                char == '}' ||
+                char == ',' ||
+                char == ';' ||
+                char == '`' ||
+                char == "'");
+    }
+    function find_end (string, begin)
+    {
+        let length = string.length;
+        let i = begin;
+        while (true) {
+            if (i === length)
+                return i - 1;
+            let char = string[i];
+            if (space_p (char) ||
+                delimiter_p (char) ||
+                (char === '.') ||
+                (char === '"'))
+                return i - 1;
+            else
+                i = i + 1;
+        }
+    }
+    function parse_sexp_vect (string_vect)
+    {
+        let length = string_vect.length;
+        let i = 0;
+        let sexp_vect = [];
+        while (i < length) {
+            let v = parse_sexp (string_vect, i);
+            let s = v[0];
+            i = v[1];
+            sexp_vect.push (s);
+        }
+        return sexp_vect;
+    }
+    function parse_sexp (string_vect, i)
+    {
+        let string = string_vect[i];
+        if (string === '(')
+            return parse_sexp_cons_until_ket (string_vect, i+1, ')');
+        else if (string === '[') {
+            let v = parse_sexp_cons_until_ket (string_vect, i+1, ']');
+            let sc = v[0];
+            let i1 = v[1];
+            return [cons_c ('begin', sc), i1];
+        }
+        else if (string === '{') {
+            let v = parse_sexp_cons_until_ket (string_vect, i+1, '}');
+            let sc = v[0];
+            let i1 = v[1];
+            return [cons_c ('closure', sc), i1];
+        }
+        else if (string === "'") {
+            let v = parse_sexp (string_vect, i+1);
+            let s = v[0];
+            let i1 = v[1];
+            let sc = cons_c (s, null_c ());
+            return [cons_c ('quote', cs), i1];
+        }
+        else if (string === "`") {
+            let v = parse_sexp (string_vect, i+1);
+            let s = v[0];
+            let i1 = v[1];
+            let sc = cons_c (s, null_c ());
+            return [cons_c ('partquote', cs), i1];
+        }
+        else
+            return [string, i+1];
+    }
+    function parse_sexp_cons_until_ket (string_vect, i, ket)
+    {
+        let string = string_vect[i];
+        if (string == ket)
+            return [null_c (), i+1];
+        else {
+            let v = parse_sexp (string_vect, i);
+            let s = v[0];
+            let i1 = v[1];
+            let v2 =
+                parse_sexp_cons_until_ket (string_vect, i1, ket);
+            let sc = v2[0];
+            let i2 = v2[1];
+            return [cons_c (s, sc), i2];
+        }
+    }
+    function sexp_repr (sexp)
+    {
+        if (null_p (sexp))
+            return "null-c";
+        else if (cons_p (sexp))
+            return "(" +  sexp_list_repr (sexp) +  ")";
+        else
+            return sexp;
+    }
+    function sexp_list_repr (sexp_cons)
+    {
+        if (null_p (sexp_cons.cdr))
+            return sexp_repr (sexp_cons.car);
+        else {
+            let car_repr = sexp_repr (sexp_cons.car);
+            let cdr_repr = sexp_list_repr (sexp_cons.cdr);
+            return car_repr + " " + cdr_repr;
+        }
+    }
+    function list_to_vect (list)
+    {
+        if (null_p (list))
+            return [];
+        else {
+            let e = list.car;
+            let vect = [e];
+            let rest = list.cdr;
+            return vect.concat (list_to_vect (rest));
+        }
+    }
+    function vect_to_list (vect)
+    {
+        if (vect.length === 0)
+            return null_c ();
+        else
+            return cons_c (vect[0], vect_to_list (vect.slice (1)));
+    }
+    function code_eval (env, code)
+    {
+        let string_vect = code_scan (code);
+        let sexp_vect = parse_sexp_vect (string_vect);
+        sexp_vect_eval (env, sexp_vect);
+    }
+    function sexp_vect_eval (env, sexp_vect)
+    {
+        for (let sexp of sexp_vect) {
+            sexp_eval (env, sexp);
+        }
+    }
+    function sexp_eval (env, sexp)
+    {
+        assert (cons_p (sexp));
+        sexp = apply_all_passes (sexp);
+        let keyword = sexp.car;
+        let sexp_list = sexp.cdr;
+        top_keyword_apply (env, keyword, sexp_list);
+    }
+    let the_pass_vect = [];
+    function new_pass (pass_fn)
+    {
+        the_pass_vect.push (pass_fn);
+    }
+    function apply_all_passes (sexp)
+    {
+        for (let pass_fn of the_pass_vect) {
+            assert (pass_fn instanceof Function);
+            sexp = pass_fn (sexp);
+        }
+        return sexp;
+    }
+      function pass_for_jojo (sexp)
+      {
+          if (cons_p (sexp) &&
+              (sexp.car === "+jojo")) {
+              let name = sexp.cdr.car;
+              let body = sexp.cdr.cdr;
+              body = substitute_recur (name, body);
+              return cons_c ("+jojo", cons_c (name, body));
+          }
+          else
+              return sexp;
+      }
+
+      new_pass (pass_for_jojo);
+      function substitute_recur (name, sexp)
+      {
+          if (string_p (sexp)) {
+              if (sexp === "recur")
+                  return name;
+              else
+                  return sexp;
+          }
+          else if (null_p (sexp)) {
+              return null_c ();
+          }
+          else {
+              return cons_c (substitute_recur (name, sexp.car),
+                             substitute_recur (name, sexp.cdr));
+          }
+      }
+      function pass_for_field (sexp)
+      {
+          if (string_p (sexp)) {
+              if (sexp.length <= 1)
+                  return sexp;
+              let pre_fix =
+                  sexp.slice (0, 1);
+              if (pre_fix === ".") {
+                  sexp = sexp.slice (1, sexp.length);
+                  sexp = cons_c (sexp, null_c ());
+                  sexp = cons_c ("field", sexp);
+                  return sexp;
+              }
+              else
+                  return sexp;
+          }
+          else if (null_p (sexp)) {
+              return null_c ();
+          }
+          else {
+              return cons_c (pass_for_field (sexp.car),
+                             pass_for_field (sexp.cdr));
+          }
+      }
+
+      new_pass (pass_for_field);
+    function sexp_list_compile (sexp_list)
+    {
+        let sexp_vect = list_to_vect (sexp_list);
+        let exp_vect = [];
+        for (let sexp of sexp_vect) {
+            exp_vect = exp_vect.concat (sexp_compile (sexp));
+        }
+        return exp_vect;
+    }
+    function sexp_compile (sexp)
+    {
+        if (string_p (sexp)) {
+            if (sexp === "apply")
+                return [new apply_exp_t ()];
+            else if (sexp === "clone")
+                return [new clone_exp_t ()];
+            else if (sexp === ",")
+                return [];
+            // ><><><
+            // drop dup over tuck swap
+            else {
+                let name = sexp;
+                let call_exp = new call_exp_t (name);
+                return [call_exp];
+            }
+        }
+        else {
+            if (! (cons_p (sexp))) {
+                // fix report ><><><
+                print (sexp);
+                print ("- sexp_compile 1");
+                error ();
+            }
+            let keyword = sexp.car;
+            let rest_list = sexp.cdr;
+            let new_exp_vect =
+                keyword_apply (keyword, rest_list);
+            if (! (vect_p (new_exp_vect))) {
+                // fix report ><><><
+                print ("- sexp_compile 2");
+                error ();
+            }
+            return new_exp_vect;
+        }
+    }
+    let keyword_dict = new Map ();
+    function new_keyword (keyword, keyword_fn)
+    {
+        keyword_dict.set (keyword, keyword_fn);
+    }
+    function top_keyword_apply (env, keyword, sexp_list)
+    {
+        let top_keyword_fn = keyword_dict.get (keyword);
+        assert (top_keyword_fn instanceof Function);
+        top_keyword_fn (env, sexp_list);
+    }
+    function keyword_apply (keyword, sexp_list)
+    {
+        let keyword_fn = keyword_dict.get (keyword);
+        assert (keyword_fn instanceof Function);
+        return keyword_fn (sexp_list);
+    }
+    new_keyword (
+        "+union",
+        function (env, sexp_list)
+        {
+            let name = sexp_list.car;
+            let rest_list = sexp_list.cdr;
+            let union_vect = [];
+            let rest_vect = list_to_vect (rest_list);
+            for (let type_name of rest_vect) {
+                union_vect.push (type_name);
+            }
+            let union_den = new union_den_t (union_vect);
+            name_dict_set (env, name, union_den);
+        }
+    );
+    function union_name_p (x)
+    {
+        if (! string_p (x))
+            return false;
+        if (x.length <= 2)
+            return false;
+        if (x.slice (x.length -2, x.length) === "-u")
+            return true;
+        else
+            return false;
+    }
+    function union_name_prefix (x)
+    {
+        return x.slice (0, x.length -2);
+    }
+    new_keyword (
+        "+data",
+        function (env, sexp_list)
+        {
+            let name = sexp_list.car;
+            assert (data_name_p (name));
+            let rest_list = sexp_list.cdr;
+            let rest_vect = list_to_vect (rest_list);
+            let reversed_field_name_vect = [];
+            let index = 0;
+            let length = rest_vect.length;
+            while (index < length) {
+                let sexp = rest_vect[index];
+                reversed_field_name_vect
+                    .unshift (sexp);
+                index = index + 3;
+            }
+            name_dict_set (
+                env, name,
+                new data_den_t (reversed_field_name_vect));
+            let prefix = data_name_prefix (name);
+            name_dict_set (
+                env, prefix.concat ("-c"),
+                new data_cons_den_t (name));
+            name_dict_set (
+                env, prefix.concat ("-cr"),
+                new data_create_den_t (name));
+        }
+    );
+    function data_name_p (x)
+    {
+        if (! string_p (x))
+            return false;
+        if (x.length <= 2)
+            return false;
+        if (x.slice (x.length -2, x.length) === "-t")
+            return true;
+        else
+            return false;
+    }
+    function data_name_prefix (x)
+    {
+        return x.slice (0, x.length -2);
+    }
+    new_keyword (
+        "+jojo",
+        function (env, sexp_list)
+        {
+            let name = sexp_list.car;
+            let rest_list = sexp_list.cdr;
+            let exp_vect = sexp_list_compile (rest_list);
+            let jojo_den = new jojo_den_t (exp_vect);
+            name_dict_set (env, name, jojo_den);
+        }
+    );
+    new_keyword (
+        "main",
+        function (env, sexp_list)
+        {
+            let exp_vect = sexp_list_compile (sexp_list);
+            exp_vect_run (env, exp_vect);
+        }
+    );
+    new_keyword (
+        "note",
+        function (env, sexp_list)
+        {
+            return [];
+        }
+    );
+    new_keyword (
+        "let",
+        function (sexp_list)
+        {
+            let sexp_vect = list_to_vect (sexp_list);
+            return [new let_exp_t (sexp_vect)];
+        }
+    );
+    new_keyword (
+        "begin",
+        function (sexp_list)
+        {
+            return sexp_list_compile (sexp_list);
+        }
+    );
+    new_keyword (
+        "closure",
+        function (sexp_list)
+        {
+            let sexp_vect = list_to_vect (sexp_list);
+            return [new closure_exp_t (sexp_vect)];
+        }
+    )
+    new_keyword (
+        "case",
+        function (sexp_list)
+        {
+            let case_clause_dict = new case_clause_dict_t ();
+            let arg_exp_vect = sexp_compile (sexp_list.car);
+            let rest_vect = list_to_vect (sexp_list.cdr);
+            for (let sexp of rest_vect) {
+                let case_name = sexp.car;
+                let exp_vect = sexp_list_compile (sexp.cdr)
+                case_clause_dict.set (case_name, exp_vect);
+            }
+            return [new case_exp_t (arg_exp_vect, case_clause_dict)];
+        }
+    );
+    new_keyword (
+        "field",
+        function (sexp_list)
+        {
+            return [new field_exp_t (sexp_list.car)];
+        }
+    );
+    new_keyword (
+        ".",
+        function (sexp_list)
+        {
+            let sexp_vect = list_to_vect (sexp_list);
+            let reversed_field_name_vect = [];
+            for (let field_name of sexp_vect) {
+                reversed_field_name_vect.unshift (field_name);
+            }
+            return [new dot_exp_t (reversed_field_name_vect)];
+        }
+    );
+    function eval_code (code)
+    {
+        assert (string_p (code));
+        let env = new env_t ();
+        let top_level_scope = new scope_t ();
+        scope_stack_push (env, top_level_scope);
+        merge_the_prim_dict (env);
+        code_eval (env, code);
+        return env;
+    }
+    module.exports.eval_code = eval_code;
