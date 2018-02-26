@@ -77,29 +77,32 @@
       even-plus-two-is-even-c)
     #+end_src
 
-* ==
+* eqv
 
-*** ==
-
-    - an interface to the internal unification
+*** eqv
 
     #+begin_src cicada
-    (+type == #:infix
+    (+type eqv-t
       : (-> :t :t -- type-tt)
-      (-> -- :z == :z))
+      (-> -- :z :z eqv-t))
 
-    (+proof ==-apply
-      : (-> :x == :y, fun : (-> :t1 -- :t2)
-         -- [:x fun] == [:y fun])
-      ==-c)
+    (+proof eqv-apply
+      : (-> :x :y eqv-t, fun : (-> :t1 -- :t2)
+         -- :x fun, :y fun eqv-t)
+      eqv-c)
 
-    (+proof ==-swap
-      : (-> :x == :y -- :y == :x)
-      ==-c)
+    (+proof eqv-apply
+      : (-> :x :y eqv-t, fun : (-> :t1 -- :t2)
+         -- :x fun, :y fun eqv-t)
+      eqv-c)
 
-    (+proof ==-compose
-      : (-> :x == :y, :y == :z -- :x == :z)
-      ==-c)
+    (+proof eqv-swap
+      : (-> :x :y eqv-t -- :y :x eqv-t)
+      eqv-c)
+
+    (+proof eqv-compose
+      : (-> :x :y eqv-t, :y :z eqv-t -- :x :z eqv-t)
+      eqv-c)
     #+end_src
 
 *** add-associative
@@ -107,10 +110,10 @@
     #+begin_src cicada
     (+proof add-associative
       : (-> [x y z] : nat-u
-         -- [x y add z add] == [x y z add add])
+         -- x y add z add, x y z add add eqv-t)
       (case z
-        (zero-t ==-c)
-        (succ-t x y z.prev recur {succ-c} ==-apply)))
+        (zero-t eqv-c)
+        (succ-t x y z.prev recur {succ-c} eqv-apply)))
     #+end_src
 
 *** add-commutative
@@ -118,25 +121,25 @@
     #+begin_src cicada
     (+proof add-commutative
       : (-> [m n] : nat-u
-         -- [m n add] == [n m add])
+         -- m n add, n m add eqv-t)
       (case n
         (zero-t m add-zero-commutative)
-        (succ-t m n.prev recur {succ-c} ==-apply
-                n.prev m add-succ-commutative ==-compose)))
+        (succ-t m n.prev recur {succ-c} eqv-apply
+                n.prev m add-succ-commutative eqv-compose)))
 
     (+proof add-zero-commutative
       : (-> m : nat-u
-         -- [m zero-c add] == [zero-c m add])
+         -- m zero-c add, zero-c m add eqv-t)
       (case m
-        (zero-t ==-c)
-        (succ-t m.prev recur {succ-c} ==-apply)))
+        (zero-t eqv-c)
+        (succ-t m.prev recur {succ-c} eqv-apply)))
 
     (+proof add-succ-commutative
       : (-> [m n] : nat-u
-         -- [m succ-c n add] == [m n add succ-c])
+         -- m succ-c n add, m n add succ-c eqv-t)
       (case n
-        (zero-t ==-c)
-        (succ-t m n.prev recur {succ-c} ==-apply)))
+        (zero-t eqv-c)
+        (succ-t m n.prev recur {succ-c} eqv-apply)))
     #+end_src
 
 * list
@@ -209,7 +212,7 @@
          -- :t list-u)
       (case l
         (null-t null-c)
-        (cons-t (case [l.car x equal-p]
+        (cons-t (case [l.car x eq-p]
                    (true-t  l.cdr)
                    (false-t l.car l.cdr x recur cons)))))
     #+end_src

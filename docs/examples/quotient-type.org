@@ -19,7 +19,7 @@
 
 *** quotient-type
 
-    - to use define a quotient-type is to to re-implement 'equal-p'.
+    - to use define a quotient-type is to to re-implement 'eq-p'.
 
       - or, generally,
         to re-implement interface functions
@@ -38,23 +38,23 @@
     (-> left : nat-u
         right : nat-u
      -- int-q)
-    (+fun equal-p : (-> [x y] : int-q -- bool-u)
+    (+fun eq-p : (-> [x y] : int-q -- bool-u)
       x.left x.right sub
       y.left y.right sub
-      equal-p))
+      eq-p))
 
   (note
     ;; if we view type-tt as a trait,
-    ;; equal-p will be its only interface function.
+    ;; eq-p will be its only interface function.
 
     (+trait type-tc < type-tt
-      equal-p : (-> [x y] : type-tc -- bool-u))
+      eq-p : (-> [x y] : type-tc -- bool-u))
 
     (+impl int-q : type-tc
-      (+fun equal-p : (-> [x y] : int-q -- bool-u)
+      (+fun eq-p : (-> [x y] : int-q -- bool-u)
         x.left x.right sub
         y.left y.right sub
-        equal-p)))
+        eq-p)))
   #+end_src
 
 * fraction-q
@@ -64,8 +64,8 @@
     (-> up : int-q
         down : int-q
      -- fraction-q)
-    (+fun equal-p : (-> [x y] : fraction-q -- bool-u)
+    (+fun eq-p : (-> [x y] : fraction-q -- bool-u)
       x.up y.down mul
       y.up x.down mul
-      equal-p))
+      eq-p))
   #+end_src
