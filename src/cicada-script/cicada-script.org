@@ -3,7 +3,31 @@
 
 * [todo-stack]
 
-*** macro system
+*** reader for number
+
+    - fix the use of .field
+
+*** about string
+
+*** about bool
+
+*** about number
+
+*** about cons and null
+
+*** (+def)
+
+*** (+macro)
+
+*** (+top-macro)
+
+*** data_predicate_den_t
+
+*** union_predicate_den_t
+
+*** (+gene)
+
+*** (+disp)
 
 * [note]
 
@@ -542,6 +566,7 @@
             }
             else {
                 let den = name_dict_get (env, this.name);
+                assert (den);
                 den.den_exe (env);
             }
         }
@@ -753,6 +778,23 @@
     }
     #+end_src
 
+*** lit_exp_t
+
+    #+begin_src js
+    class lit_exp_t
+    {
+        constructor (obj)
+        {
+            this.obj = obj;
+        }
+
+        exe (env, scope)
+        {
+            data_stack_push (env, this.obj);
+        }
+    }
+    #+end_src
+
 * den
 
 *** jojo_den_t
@@ -775,10 +817,10 @@
     }
     #+end_src
 
-*** >< var_den_t
+*** >< def_den_t
 
     #+begin_src js
-    class var_den_t
+    class def_den_t
     {
         constructor ()
         {
@@ -1153,6 +1195,18 @@
             return [];
         }
     );
+    #+end_src
+
+*** >< (+macro)
+
+    #+begin_src js
+
+    #+end_src
+
+*** >< (+top-macro)
+
+    #+begin_src js
+
     #+end_src
 
 * keyword
@@ -1551,7 +1605,7 @@
         let i = 0;
         let sexp_vect = [];
         while (i < length) {
-            let v = parse_sexp (string_vect, i);
+            let v = parse_sexp_with_index (string_vect, i);
             let s = v[0];
             i = v[1];
             sexp_vect.push (s);
@@ -1563,7 +1617,7 @@
 *** parse_sexp
 
     #+begin_src js
-    function parse_sexp (string_vect, i)
+    function parse_sexp_with_index (string_vect, i)
     {
         let string = string_vect[i];
         if (string === '(')
@@ -1581,18 +1635,18 @@
             return [cons_c ('closure', sc), i1];
         }
         else if (string === "'") {
-            let v = parse_sexp (string_vect, i+1);
+            let v = parse_sexp_with_index (string_vect, i+1);
             let s = v[0];
             let i1 = v[1];
             let sc = cons_c (s, null_c ());
-            return [cons_c ('quote', cs), i1];
+            return [cons_c ('quote', sc), i1];
         }
         else if (string === "`") {
-            let v = parse_sexp (string_vect, i+1);
+            let v = parse_sexp_with_index (string_vect, i+1);
             let s = v[0];
             let i1 = v[1];
             let sc = cons_c (s, null_c ());
-            return [cons_c ('partquote', cs), i1];
+            return [cons_c ('partquote', sc), i1];
         }
         else
             return [string, i+1];
@@ -1608,7 +1662,7 @@
         if (string == ket)
             return [null_c (), i+1];
         else {
-            let v = parse_sexp (string_vect, i);
+            let v = parse_sexp_with_index (string_vect, i);
             let s = v[0];
             let i1 = v[1];
             let v2 =
@@ -1677,7 +1731,9 @@
     }
     #+end_src
 
-* eval _eval
+* eval
+
+*** code_eval
 
     #+begin_src js
     function code_eval (env, code)
@@ -1857,6 +1913,10 @@
                 return [];
             // ><><><
             // drop dup over tuck swap
+            else if (string_string_p (sexp)) {
+                let string = string_string_to_string (sexp);
+                return [new lit_exp_t (new string_t (string))];
+            }
             else {
                 let name = sexp;
                 return [new call_exp_t (name)];
@@ -1884,6 +1944,33 @@
                 return sexp_compile (new_sexp);
             }
         }
+    }
+    #+end_src
+
+*** string_string_p
+
+    #+begin_src js
+    function string_string_p (x)
+    {
+        if (! string_p (x))
+            return false;
+        else if (x.length <= 1)
+            return false;
+        else if (x[0] !== '"')
+            return false;
+        else if (x[x.length -1] !== '"')
+            return false;
+        else
+            return true;
+    }
+    #+end_src
+
+*** string_string_to_string
+
+    #+begin_src js
+    function string_string_to_string (ss)
+    {
+        return ss.slice (1, ss.length -1);
     }
     #+end_src
 

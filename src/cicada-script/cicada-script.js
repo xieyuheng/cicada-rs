@@ -293,6 +293,7 @@
             }
             else {
                 let den = name_dict_get (env, this.name);
+                assert (den);
                 den.den_exe (env);
             }
         }
@@ -462,6 +463,18 @@
             data_stack_push (env, new_data);
         }
     }
+    class lit_exp_t
+    {
+        constructor (obj)
+        {
+            this.obj = obj;
+        }
+
+        exe (env, scope)
+        {
+            data_stack_push (env, this.obj);
+        }
+    }
     class jojo_den_t
     {
         constructor (exp_vect)
@@ -477,7 +490,7 @@
             scope_stack_push (env, scope);
         }
     }
-    class var_den_t
+    class def_den_t
     {
         constructor ()
         {
@@ -731,6 +744,8 @@
             return [];
         }
     );
+
+
     let the_keyword_dict = new Map ();
     function new_keyword (name, prim_fn)
     {
@@ -961,14 +976,14 @@
         let i = 0;
         let sexp_vect = [];
         while (i < length) {
-            let v = parse_sexp (string_vect, i);
+            let v = parse_sexp_with_index (string_vect, i);
             let s = v[0];
             i = v[1];
             sexp_vect.push (s);
         }
         return sexp_vect;
     }
-    function parse_sexp (string_vect, i)
+    function parse_sexp_with_index (string_vect, i)
     {
         let string = string_vect[i];
         if (string === '(')
@@ -986,18 +1001,18 @@
             return [cons_c ('closure', sc), i1];
         }
         else if (string === "'") {
-            let v = parse_sexp (string_vect, i+1);
+            let v = parse_sexp_with_index (string_vect, i+1);
             let s = v[0];
             let i1 = v[1];
             let sc = cons_c (s, null_c ());
-            return [cons_c ('quote', cs), i1];
+            return [cons_c ('quote', sc), i1];
         }
         else if (string === "`") {
-            let v = parse_sexp (string_vect, i+1);
+            let v = parse_sexp_with_index (string_vect, i+1);
             let s = v[0];
             let i1 = v[1];
             let sc = cons_c (s, null_c ());
-            return [cons_c ('partquote', cs), i1];
+            return [cons_c ('partquote', sc), i1];
         }
         else
             return [string, i+1];
@@ -1008,7 +1023,7 @@
         if (string == ket)
             return [null_c (), i+1];
         else {
-            let v = parse_sexp (string_vect, i);
+            let v = parse_sexp_with_index (string_vect, i);
             let s = v[0];
             let i1 = v[1];
             let v2 =
@@ -1174,6 +1189,10 @@
                 return [];
             // ><><><
             // drop dup over tuck swap
+            else if (string_string_p (sexp)) {
+                let string = string_string_to_string (sexp);
+                return [new lit_exp_t (new string_t (string))];
+            }
             else {
                 let name = sexp;
                 return [new call_exp_t (name)];
@@ -1201,6 +1220,23 @@
                 return sexp_compile (new_sexp);
             }
         }
+    }
+    function string_string_p (x)
+    {
+        if (! string_p (x))
+            return false;
+        else if (x.length <= 1)
+            return false;
+        else if (x[0] !== '"')
+            return false;
+        else if (x[x.length -1] !== '"')
+            return false;
+        else
+            return true;
+    }
+    function string_string_to_string (ss)
+    {
+        return ss.slice (1, ss.length -1);
     }
     function eval_code (code)
     {
