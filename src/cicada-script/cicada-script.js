@@ -37,6 +37,13 @@
           }
           return false;
       }
+      function dict_length (dict)
+      {
+          let length = 0;
+          for (let x of dict.keys ())
+              length = length +1;
+          return length;
+      }
       function assert (x) {
           if (! x) {
               throw new Error('assert fail!');
@@ -503,9 +510,9 @@
     }
     class union_den_t
     {
-        constructor (union_vect)
+        constructor (sub_type_name_vect)
         {
-            this.union_vect = union_vect;
+            this.sub_type_name_vect = sub_type_name_vect;
         }
 
         den_exe (env)
@@ -605,6 +612,14 @@
             this.type_name = type_name;
             this.field_dict = field_dict;
         }
+
+        eq_p (that)
+        {
+            if (this.type_name !== that.type_name)
+                return false;
+            else
+                return this.field_dict.eq_p (that.field_dict);
+        }
     }
     class closure_t
     {
@@ -614,6 +629,18 @@
             this.exp_vect = exp_vect;
             this.scope = scope;
         }
+
+        eq_p (that)
+        {
+            if (this.type_name !== that.type_name)
+                return false;
+            if (this.exp_vect !== that.exp_vect)
+                return false;
+            if (this.scope !== that.scope)
+                return false;
+            else
+                return true;
+        }
     }
     class field_dict_t
     {
@@ -621,6 +648,19 @@
         {
             this.type_name = "field-dict-t";
             this.dict = new Map ();
+        }
+
+        eq_p (that)
+        {
+            if (this.type_name !== that.type_name)
+                return false;
+            if (dict_length (this.dict) !== dict_length (that.dict))
+                return false;
+            for (let [field_name, obj] of this.dict) {
+                if (! (obj.eq_p (that.dict.get (field_name))))
+                    return false;
+            }
+            return true;
         }
 
         get (field_name)
@@ -650,18 +690,18 @@
         {
             let name = sexp_list.car;
             let rest_list = sexp_list.cdr;
-            let union_vect = [];
+            let sub_type_name_vect = [];
             let rest_vect = list_to_vect (rest_list);
             for (let type_name of rest_vect) {
-                union_vect.push (type_name);
+                sub_type_name_vect.push (type_name);
             }
-            let union_den = new union_den_t (union_vect);
+            let union_den = new union_den_t (sub_type_name_vect);
             name_dict_set (env, name, union_den);
         }
     );
     function union_name_p (x)
     {
-        if (! string_p (x))
+        if (! (string_p (x)))
             return false;
         if (x.length <= 2)
             return false;
@@ -705,7 +745,7 @@
     );
     function data_name_p (x)
     {
-        if (! string_p (x))
+        if (! (string_p (x)))
             return false;
         if (x.length <= 2)
             return false;
@@ -820,12 +860,28 @@
           {
               this.type_name = "true-t";
           }
+
+          eq_p (that)
+          {
+            if (this.type_name !== that.type_name)
+                return false;
+            else
+                return true;
+          }
       }
       class false_t
       {
           constructor ()
           {
               this.type_name = "false-t";
+          }
+
+          eq_p (that)
+          {
+            if (this.type_name !== that.type_name)
+                return false;
+            else
+                return true;
           }
       }
       new_prim (
@@ -842,12 +898,72 @@
               data_stack_push (env, new false_t ());
           }
       );
+      new_prim (
+          "bool-and",
+          function (env)
+          {
+              let b = data_stack_pop (env);
+              let a = data_stack_pop (env);
+              if (a instanceof false_t)
+                  data_stack_push (env, new false_t ());
+              else if (b instanceof false_t)
+                  data_stack_push (env, new false_t ());
+              else
+                  data_stack_push (env, new true_t ());
+          }
+      );
+      new_prim (
+          "bool-or",
+          function (env)
+          {
+              let b = data_stack_pop (env);
+              let a = data_stack_pop (env);
+              if (a instanceof true_t)
+                  data_stack_push (env, new true_t ());
+              else if (b instanceof true_t)
+                  data_stack_push (env, new true_t ());
+              else
+                  data_stack_push (env, new false_t ());
+          }
+      );
+      new_prim (
+          "bool-not",
+          function (env)
+          {
+              let a = data_stack_pop (env);
+              if (a instanceof false_t)
+                  data_stack_push (env, new true_t ());
+              else
+                  data_stack_push (env, new false_t ());
+          }
+      );
+      new_prim (
+          "bool-p",
+          function (env)
+          {
+              let a = data_stack_pop (env);
+              if (a instanceof false_t)
+                  data_stack_push (env, new true_t ());
+              if (a instanceof true_t)
+                  data_stack_push (env, new true_t ());
+              else
+                  data_stack_push (env, new false_t ());
+          }
+      );
       class number_t
       {
           constructor (number)
           {
               this.type_name = "number-t";
               this.number = number;
+          }
+
+          eq_p (that)
+          {
+            if (this.type_name !== that.type_name)
+                return false;
+            else
+                return this.number === that.number;
           }
       }
       class string_t
@@ -857,12 +973,28 @@
               this.type_name = "string-t";
               this.string = string;
           }
+
+          eq_p (that)
+          {
+            if (this.type_name !== that.type_name)
+                return false;
+            else
+                return this.string === that.string;
+          }
       }
       class null_t
       {
           constructor ()
           {
               this.type_name = "null-t";
+          }
+
+          eq_p (that)
+          {
+              if (this.type_name !== that.type_name)
+                  return false;
+              else
+                  return true;
           }
       }
       function null_c ()
@@ -880,6 +1012,16 @@
               this.type_name = "cons-t";
               this.car = car;
               this.cdr = cdr;
+          }
+
+          eq_p (that)
+          {
+              if (this.type_name !== that.type_name)
+                  return false;
+              else if (! (this.car.eq_p (that.car)))
+                  return true;
+              else
+                  return true;
           }
       }
       function cons_c (car, cdr)
@@ -1223,7 +1365,7 @@
     }
     function string_string_p (x)
     {
-        if (! string_p (x))
+        if (! (string_p (x)))
             return false;
         else if (x.length <= 1)
             return false;
