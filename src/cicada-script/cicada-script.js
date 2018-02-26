@@ -11,6 +11,10 @@
           }
           return true;
       }
+      function function_p (x)
+      {
+          return x instanceof Function;
+      }
       function string_p (x)
       {
           return typeof x === 'string';
@@ -549,6 +553,26 @@
             data_stack_push (env, data);
         }
     }
+    class top_macro_den_t
+    {
+        constructor ()
+        {
+        }
+
+        den_exe (env)
+        {
+        }
+    }
+    class macro_den_t
+    {
+        constructor ()
+        {
+        }
+
+        den_exe (env)
+        {
+        }
+    }
     class prim_den_t
     {
         constructor (prim_fn)
@@ -596,15 +620,180 @@
             this.dict.set (field_name, obj);
         }
     }
-
-
-    let the_prim_dict = new Map ();
-    function merge_the_prim_dict (env)
+    let the_top_keyword_dict = new Map ();
+    function env_merge (env, den_dict)
     {
-        for (let [name, prim_den] of the_prim_dict) {
-            name_dict_set (env, name, prim_den);
+        for (let [name, den] of den_dict) {
+            name_dict_set (env, name, den);
         }
     }
+    function new_top_keyword (name, prim_fn)
+    {
+        the_top_keyword_dict.set (name, prim_fn);
+    }
+    new_top_keyword (
+        "+union",
+        function (env, sexp_list)
+        {
+            let name = sexp_list.car;
+            let rest_list = sexp_list.cdr;
+            let union_vect = [];
+            let rest_vect = list_to_vect (rest_list);
+            for (let type_name of rest_vect) {
+                union_vect.push (type_name);
+            }
+            let union_den = new union_den_t (union_vect);
+            name_dict_set (env, name, union_den);
+        }
+    );
+    function union_name_p (x)
+    {
+        if (! string_p (x))
+            return false;
+        if (x.length <= 2)
+            return false;
+        if (x.slice (x.length -2, x.length) === "-u")
+            return true;
+        else
+            return false;
+    }
+    function union_name_prefix (x)
+    {
+        return x.slice (0, x.length -2);
+    }
+    new_top_keyword (
+        "+data",
+        function (env, sexp_list)
+        {
+            let name = sexp_list.car;
+            assert (data_name_p (name));
+            let rest_list = sexp_list.cdr;
+            let rest_vect = list_to_vect (rest_list);
+            let reversed_field_name_vect = [];
+            let index = 0;
+            let length = rest_vect.length;
+            while (index < length) {
+                let sexp = rest_vect[index];
+                reversed_field_name_vect
+                    .unshift (sexp);
+                index = index + 3;
+            }
+            name_dict_set (
+                env, name,
+                new data_den_t (reversed_field_name_vect));
+            let prefix = data_name_prefix (name);
+            name_dict_set (
+                env, prefix.concat ("-c"),
+                new data_cons_den_t (name));
+            name_dict_set (
+                env, prefix.concat ("-cr"),
+                new data_create_den_t (name));
+        }
+    );
+    function data_name_p (x)
+    {
+        if (! string_p (x))
+            return false;
+        if (x.length <= 2)
+            return false;
+        if (x.slice (x.length -2, x.length) === "-t")
+            return true;
+        else
+            return false;
+    }
+    function data_name_prefix (x)
+    {
+        return x.slice (0, x.length -2);
+    }
+    new_top_keyword (
+        "+jojo",
+        function (env, sexp_list)
+        {
+            let name = sexp_list.car;
+            let rest_list = sexp_list.cdr;
+            let exp_vect = sexp_list_compile (rest_list);
+            let jojo_den = new jojo_den_t (exp_vect);
+            name_dict_set (env, name, jojo_den);
+        }
+    );
+    new_top_keyword (
+        "main",
+        function (env, sexp_list)
+        {
+            let exp_vect = sexp_list_compile (sexp_list);
+            exp_vect_run (env, exp_vect);
+        }
+    );
+    new_top_keyword (
+        "note",
+        function (env, sexp_list)
+        {
+            return [];
+        }
+    );
+    let the_keyword_dict = new Map ();
+    function new_keyword (name, prim_fn)
+    {
+        the_keyword_dict.set (name, prim_fn);
+    }
+    new_keyword (
+        "let",
+        function (sexp_list)
+        {
+            let sexp_vect = list_to_vect (sexp_list);
+            return [new let_exp_t (sexp_vect)];
+        }
+    );
+    new_keyword (
+        "begin",
+        function (sexp_list)
+        {
+            return sexp_list_compile (sexp_list);
+        }
+    );
+    new_keyword (
+        "closure",
+        function (sexp_list)
+        {
+            let sexp_vect = list_to_vect (sexp_list);
+            return [new closure_exp_t (sexp_vect)];
+        }
+    )
+    new_keyword (
+        "case",
+        function (sexp_list)
+        {
+            let case_clause_dict = new case_clause_dict_t ();
+            let arg_exp_vect = sexp_compile (sexp_list.car);
+            let rest_vect = list_to_vect (sexp_list.cdr);
+            for (let sexp of rest_vect) {
+                let case_name = sexp.car;
+                let exp_vect = sexp_list_compile (sexp.cdr)
+                case_clause_dict.set (case_name, exp_vect);
+            }
+            return [new case_exp_t (arg_exp_vect, case_clause_dict)];
+        }
+    );
+    new_keyword (
+        "field",
+        function (sexp_list)
+        {
+            return [new field_exp_t (sexp_list.car)];
+        }
+    );
+    new_keyword (
+        ".",
+        function (sexp_list)
+        {
+            let sexp_vect = list_to_vect (sexp_list);
+            let reversed_field_name_vect = [];
+            for (let field_name of sexp_vect) {
+                reversed_field_name_vect.unshift (field_name);
+            }
+            return [new dot_exp_t (reversed_field_name_vect)];
+        }
+    );
+    let the_prim_dict = new Map ();
     function new_prim (name, prim_fn)
     {
         let prim_den = new prim_den_t (prim_fn);
@@ -882,9 +1071,19 @@
     {
         assert (cons_p (sexp));
         sexp = apply_all_passes (sexp);
-        let keyword = sexp.car;
+        let name = sexp.car;
         let sexp_list = sexp.cdr;
-        top_keyword_apply (env, keyword, sexp_list);
+        let top_keyword_fn = the_top_keyword_dict.get (name);
+        if (top_keyword_fn) {
+            assert (function_p (top_keyword_fn));
+            top_keyword_fn (env, sexp_list);
+        }
+        else {
+            let den = name_dict_get (env, name);
+            assert (den instanceof top_macro_den_t);
+            data_stack_push (env, sexp_list);
+            den.den_exe (env);
+        }
     }
     let the_pass_vect = [];
     function new_pass (pass_fn)
@@ -977,210 +1176,39 @@
             // drop dup over tuck swap
             else {
                 let name = sexp;
-                let call_exp = new call_exp_t (name);
-                return [call_exp];
+                return [new call_exp_t (name)];
             }
         }
         else {
             if (! (cons_p (sexp))) {
-                // fix report ><><><
-                print (sexp);
-                print ("- sexp_compile 1");
+                print ("- sexp_compile fail");
+                print ("  non sexp :", sexp);
                 error ();
             }
-            let keyword = sexp.car;
+            let name = sexp.car;
             let rest_list = sexp.cdr;
-            let new_exp_vect =
-                keyword_apply (keyword, rest_list);
-            if (! (vect_p (new_exp_vect))) {
-                // fix report ><><><
-                print ("- sexp_compile 2");
-                error ();
+            let keyword_fn = the_keyword_dict.get (name);
+            if (keyword_fn) {
+                assert (function_p (keyword_fn));
+                return keyword_fn (rest_list);
             }
-            return new_exp_vect;
-        }
-    }
-    let keyword_dict = new Map ();
-    function new_keyword (keyword, keyword_fn)
-    {
-        keyword_dict.set (keyword, keyword_fn);
-    }
-    function top_keyword_apply (env, keyword, sexp_list)
-    {
-        let top_keyword_fn = keyword_dict.get (keyword);
-        assert (top_keyword_fn instanceof Function);
-        top_keyword_fn (env, sexp_list);
-    }
-    function keyword_apply (keyword, sexp_list)
-    {
-        let keyword_fn = keyword_dict.get (keyword);
-        assert (keyword_fn instanceof Function);
-        return keyword_fn (sexp_list);
-    }
-    new_keyword (
-        "+union",
-        function (env, sexp_list)
-        {
-            let name = sexp_list.car;
-            let rest_list = sexp_list.cdr;
-            let union_vect = [];
-            let rest_vect = list_to_vect (rest_list);
-            for (let type_name of rest_vect) {
-                union_vect.push (type_name);
+            else {
+                let den = name_dict_get (env, name);
+                assert (den instanceof macro_den_t);
+                data_stack_push (env, rest_list);
+                den.den_exe (env);
+                let new_sexp = data_stack_pop (env);
+                return sexp_compile (new_sexp);
             }
-            let union_den = new union_den_t (union_vect);
-            name_dict_set (env, name, union_den);
         }
-    );
-    function union_name_p (x)
-    {
-        if (! string_p (x))
-            return false;
-        if (x.length <= 2)
-            return false;
-        if (x.slice (x.length -2, x.length) === "-u")
-            return true;
-        else
-            return false;
     }
-    function union_name_prefix (x)
-    {
-        return x.slice (0, x.length -2);
-    }
-    new_keyword (
-        "+data",
-        function (env, sexp_list)
-        {
-            let name = sexp_list.car;
-            assert (data_name_p (name));
-            let rest_list = sexp_list.cdr;
-            let rest_vect = list_to_vect (rest_list);
-            let reversed_field_name_vect = [];
-            let index = 0;
-            let length = rest_vect.length;
-            while (index < length) {
-                let sexp = rest_vect[index];
-                reversed_field_name_vect
-                    .unshift (sexp);
-                index = index + 3;
-            }
-            name_dict_set (
-                env, name,
-                new data_den_t (reversed_field_name_vect));
-            let prefix = data_name_prefix (name);
-            name_dict_set (
-                env, prefix.concat ("-c"),
-                new data_cons_den_t (name));
-            name_dict_set (
-                env, prefix.concat ("-cr"),
-                new data_create_den_t (name));
-        }
-    );
-    function data_name_p (x)
-    {
-        if (! string_p (x))
-            return false;
-        if (x.length <= 2)
-            return false;
-        if (x.slice (x.length -2, x.length) === "-t")
-            return true;
-        else
-            return false;
-    }
-    function data_name_prefix (x)
-    {
-        return x.slice (0, x.length -2);
-    }
-    new_keyword (
-        "+jojo",
-        function (env, sexp_list)
-        {
-            let name = sexp_list.car;
-            let rest_list = sexp_list.cdr;
-            let exp_vect = sexp_list_compile (rest_list);
-            let jojo_den = new jojo_den_t (exp_vect);
-            name_dict_set (env, name, jojo_den);
-        }
-    );
-    new_keyword (
-        "main",
-        function (env, sexp_list)
-        {
-            let exp_vect = sexp_list_compile (sexp_list);
-            exp_vect_run (env, exp_vect);
-        }
-    );
-    new_keyword (
-        "note",
-        function (env, sexp_list)
-        {
-            return [];
-        }
-    );
-    new_keyword (
-        "let",
-        function (sexp_list)
-        {
-            let sexp_vect = list_to_vect (sexp_list);
-            return [new let_exp_t (sexp_vect)];
-        }
-    );
-    new_keyword (
-        "begin",
-        function (sexp_list)
-        {
-            return sexp_list_compile (sexp_list);
-        }
-    );
-    new_keyword (
-        "closure",
-        function (sexp_list)
-        {
-            let sexp_vect = list_to_vect (sexp_list);
-            return [new closure_exp_t (sexp_vect)];
-        }
-    )
-    new_keyword (
-        "case",
-        function (sexp_list)
-        {
-            let case_clause_dict = new case_clause_dict_t ();
-            let arg_exp_vect = sexp_compile (sexp_list.car);
-            let rest_vect = list_to_vect (sexp_list.cdr);
-            for (let sexp of rest_vect) {
-                let case_name = sexp.car;
-                let exp_vect = sexp_list_compile (sexp.cdr)
-                case_clause_dict.set (case_name, exp_vect);
-            }
-            return [new case_exp_t (arg_exp_vect, case_clause_dict)];
-        }
-    );
-    new_keyword (
-        "field",
-        function (sexp_list)
-        {
-            return [new field_exp_t (sexp_list.car)];
-        }
-    );
-    new_keyword (
-        ".",
-        function (sexp_list)
-        {
-            let sexp_vect = list_to_vect (sexp_list);
-            let reversed_field_name_vect = [];
-            for (let field_name of sexp_vect) {
-                reversed_field_name_vect.unshift (field_name);
-            }
-            return [new dot_exp_t (reversed_field_name_vect)];
-        }
-    );
     function eval_code (code)
     {
         assert (string_p (code));
         let env = new env_t ();
         let top_level_scope = new scope_t ();
         scope_stack_push (env, top_level_scope);
-        merge_the_prim_dict (env);
+        env_merge (env, the_prim_dict);
         code_eval (env, code);
         return env;
     }
