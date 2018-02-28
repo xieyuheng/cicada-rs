@@ -1691,7 +1691,7 @@
     {
         return ss.slice (1, ss.length -1);
     }
-    function eval_code (code)
+    function eval_script (code)
     {
         assert (string_p (code));
         let env = new env_t ();
@@ -1701,4 +1701,4 @@
         code_eval (env, code);
         return env;
     }
-    module.exports.eval_code = eval_code;
+    module.exports.eval_script = eval_script;

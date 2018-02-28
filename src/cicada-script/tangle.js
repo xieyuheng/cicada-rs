@@ -47,3 +47,4 @@ function line_array_to_string (line_array) {
 }
 
 tangle("cicada-script.org", "cicada-script.js");
+tangle("core-script.org", "core-script.cs");

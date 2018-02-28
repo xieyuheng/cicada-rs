@@ -1,9 +1,3 @@
-#+property: tangle core-script.cs
-#+title: core-script
-
-* ><
-
-  #+begin_src cicada
   (+union nat-u
     zero-t
     succ-t)
@@ -47,4 +41,3 @@
   (main
     1 2 3 null-c cons-c cons-c cons-c
     1 2 3 null-c cons-c cons-c cons-c eq-p)
-  #+end_src

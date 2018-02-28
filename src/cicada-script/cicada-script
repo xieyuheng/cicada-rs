@@ -8,13 +8,17 @@ const cicada = require("./cicada-script.js");
 function main ()
 {
     let arg_vect = process.argv.slice(2);
+    let script =
+        fs.readFileSync ("./core-script.cs")
+        .toString ();
     for (let arg of arg_vect) {
-        let code =
-            fs.readFileSync(arg)
-            .toString();
-        let env = cicada.eval_code (code);
-        console.log (env);
+        let arg_script =
+            fs.readFileSync (arg)
+            .toString ();
+        script = script.concat (arg_script);
     }
+    let env = cicada.eval_script (script);
+    console.log (env.data_stack);
 }
 
 main ();
