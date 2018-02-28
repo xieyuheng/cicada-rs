@@ -1035,7 +1035,7 @@
               let begin = data_stack_pop (env);
               let string = data_stack_pop (env);
               let new_string
-                  = string.string.slice (a.number, b.number);
+                  = string.string.slice (begin.number, end.number);
               data_stack_push (env, new string_t (new_string));
           }
       );
@@ -1409,6 +1409,10 @@
                 let string = string_string_to_string (sexp);
                 return [new lit_exp_t (new string_t (string))];
             }
+            else if (number_string_p (sexp)) {
+                let number = number_string_to_number (sexp);
+                return [new lit_exp_t (new number_t (number))];
+            }
             else {
                 let name = sexp;
                 return [new call_exp_t (name)];
@@ -1449,6 +1453,22 @@
             return false;
         else
             return true;
+    }
+    function number_string_p (number_string)
+    {
+        if (! (string_p (number_string)))
+            return false;
+        for (let x of number_string) {
+            if (digital_char_p (x))
+                return true;
+            else if (x === ".")
+                return true;
+        }
+        return false;
+    }
+    function number_string_to_number (number_string)
+    {
+        return eval (number_string);
     }
     function string_string_to_string (ss)
     {
