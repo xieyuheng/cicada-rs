@@ -3,8 +3,6 @@
 
 * [todo-stack]
 
-*** about cons and null
-
 *** overload -c to (.) in stack, and stop using -cr
 
     - also overload every function call with (.) in stack
@@ -1461,6 +1459,8 @@
       }
       #+end_src
 
+*** *bool*
+
 ***** true-c
 
       #+begin_src js
@@ -1547,12 +1547,9 @@
           function (env)
           {
               let a = data_stack_pop (env);
-              if (a instanceof false_t)
-                  data_stack_push (env, new true_t ());
-              if (a instanceof true_t)
-                  data_stack_push (env, new true_t ());
-              else
-                  data_stack_push (env, new false_t ());
+              data_stack_push (env, new_bool (
+                  ((a instanceof false_t) ||
+                   (a instanceof true_t))));
           }
       );
       #+end_src
@@ -1580,6 +1577,8 @@
       }
       #+end_src
 
+*** *number*
+
 ***** number-p
 
       #+begin_src js
@@ -1588,10 +1587,8 @@
           function (env)
           {
               let obj = data_stack_pop (env);
-              if (obj.type_name === "number-t")
-                  data_stack_push (env, new true_t ());
-              else
-                  data_stack_push (env, new false_t ());
+              data_stack_push (env, new_bool (
+                  a.type_name === "number-t"));
           }
       );
       #+end_src
@@ -1828,6 +1825,8 @@
       }
       #+end_src
 
+*** *string*
+
 ***** string-p
 
       #+begin_src js
@@ -1836,10 +1835,8 @@
           function (env)
           {
               let a = data_stack_pop (env);
-              if (a.type_name === "string-t")
-                  data_stack_push (env, new true_t ());
-              else
-                  data_stack_push (env, new false_t ());
+              data_stack_push (env, new_bool (
+                  a.type_name === "string-t"));
           }
       );
       #+end_src
@@ -1995,6 +1992,78 @@
       {
           return (null_p (x) || cons_p (x));
       }
+      #+end_src
+
+*** *list*
+
+***** null-c
+
+      #+begin_src js
+      new_prim (
+          "null-c",
+          function (env)
+          {
+              data_stack_push (env, new null_t ());
+          }
+      );
+      #+end_src
+
+***** null-p
+
+      #+begin_src js
+      new_prim (
+          "null-p",
+          function (env)
+          {
+              let a = data_stack_pop (env);
+              data_stack_push (env, new_bool (
+                  a.type_name === "null-t"));
+          }
+      );
+      #+end_src
+
+***** cons-c
+
+      #+begin_src js
+      new_prim (
+          "cons-c",
+          function (env)
+          {
+              let b = data_stack_pop (env);
+              let a = data_stack_pop (env);
+              data_stack_push (env, new cons_t (a, b));
+          }
+      );
+      #+end_src
+
+***** cons-p
+
+      #+begin_src js
+      new_prim (
+          "cons-p",
+          function (env)
+          {
+              let a = data_stack_pop (env);
+              data_stack_push (env, new_bool (
+                  a.type_name === "cons-t"));
+          }
+      );
+
+      #+end_src
+
+***** list-p
+
+      #+begin_src js
+      new_prim (
+          "list-p",
+          function (env)
+          {
+              let a = data_stack_pop (env);
+              data_stack_push (env, new_bool (
+                  ((a.type_name === "cons-t") ||
+                   (a.type_name === "null-t"))));
+          }
+      );
       #+end_src
 
 * scan

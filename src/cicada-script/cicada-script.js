@@ -976,12 +976,9 @@
           function (env)
           {
               let a = data_stack_pop (env);
-              if (a instanceof false_t)
-                  data_stack_push (env, new true_t ());
-              if (a instanceof true_t)
-                  data_stack_push (env, new true_t ());
-              else
-                  data_stack_push (env, new false_t ());
+              data_stack_push (env, new_bool (
+                  ((a instanceof false_t) ||
+                   (a instanceof true_t))));
           }
       );
       class number_t
@@ -1005,10 +1002,8 @@
           function (env)
           {
               let obj = data_stack_pop (env);
-              if (obj.type_name === "number-t")
-                  data_stack_push (env, new true_t ());
-              else
-                  data_stack_push (env, new false_t ());
+              data_stack_push (env, new_bool (
+                  a.type_name === "number-t"));
           }
       );
       new_prim (
@@ -1171,10 +1166,8 @@
           function (env)
           {
               let a = data_stack_pop (env);
-              if (a.type_name === "string-t")
-                  data_stack_push (env, new true_t ());
-              else
-                  data_stack_push (env, new false_t ());
+              data_stack_push (env, new_bool (
+                  a.type_name === "string-t"));
           }
       );
       new_prim (
@@ -1273,6 +1266,51 @@
       {
           return (null_p (x) || cons_p (x));
       }
+      new_prim (
+          "null-c",
+          function (env)
+          {
+              data_stack_push (env, new null_t ());
+          }
+      );
+      new_prim (
+          "null-p",
+          function (env)
+          {
+              let a = data_stack_pop (env);
+              data_stack_push (env, new_bool (
+                  a.type_name === "null-t"));
+          }
+      );
+      new_prim (
+          "cons-c",
+          function (env)
+          {
+              let b = data_stack_pop (env);
+              let a = data_stack_pop (env);
+              data_stack_push (env, new cons_t (a, b));
+          }
+      );
+      new_prim (
+          "cons-p",
+          function (env)
+          {
+              let a = data_stack_pop (env);
+              data_stack_push (env, new_bool (
+                  a.type_name === "cons-t"));
+          }
+      );
+
+      new_prim (
+          "list-p",
+          function (env)
+          {
+              let a = data_stack_pop (env);
+              data_stack_push (env, new_bool (
+                  ((a.type_name === "cons-t") ||
+                   (a.type_name === "null-t"))));
+          }
+      );
     function code_scan (string)
     {
         let string_vect = [];
