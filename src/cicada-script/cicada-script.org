@@ -3,8 +3,6 @@
 
 * [todo-stack]
 
-*** about number
-
 *** about cons and null
 
 *** overload -c to (.) in stack, and stop using -cr
@@ -1441,6 +1439,18 @@
       }
       #+end_src
 
+***** new_bool
+
+      #+begin_src js
+      function new_bool (bool)
+      {
+          if (bool)
+              return new true_t ();
+          else
+              return new false_t ();
+      }
+      #+end_src
+
 ***** true-c
 
       #+begin_src js
@@ -1578,31 +1588,212 @@
 
 ***** number-inc
 
+      #+begin_src js
+      new_prim (
+          "number-inc",
+          function (env)
+          {
+              let a = data_stack_pop (env);
+              data_stack_push (env, new number_t (a.number +1));
+          }
+      );
+      #+end_src
+
 ***** number-dec
+
+      #+begin_src js
+      new_prim (
+          "number-dec",
+          function (env)
+          {
+              let a = data_stack_pop (env);
+              data_stack_push (env, new number_t (a.number -1));
+          }
+      );
+      #+end_src
 
 ***** numebr-neg
 
+      #+begin_src js
+      new_prim (
+          "number-neg",
+          function (env)
+          {
+              let a = data_stack_pop (env);
+              data_stack_push (env, new number_t (- a.number));
+          }
+      );
+      #+end_src
+
 ***** number-add
+
+      #+begin_src js
+      new_prim (
+          "number-add",
+          function (env)
+          {
+              let b = data_stack_pop (env);
+              let a = data_stack_pop (env);
+              data_stack_push (env, new number_t (
+                  a.number + b.number));
+          }
+      );
+      #+end_src
 
 ***** number-sub
 
+      #+begin_src js
+      new_prim (
+          "number-sub",
+          function (env)
+          {
+              let b = data_stack_pop (env);
+              let a = data_stack_pop (env);
+              data_stack_push (env, new number_t (
+                  a.number - b.number));
+          }
+      );
+      #+end_src
+
 ***** numebr-mul
+
+      #+begin_src js
+      new_prim (
+          "number-mul",
+          function (env)
+          {
+              let b = data_stack_pop (env);
+              let a = data_stack_pop (env);
+              data_stack_push (env, new number_t (
+                  a.number * b.number));
+          }
+      );
+      #+end_src
 
 ***** numebr-div
 
+      #+begin_src js
+      new_prim (
+          "number-div",
+          function (env)
+          {
+              let b = data_stack_pop (env);
+              let a = data_stack_pop (env);
+              data_stack_push (env, new number_t (
+                  a.number / b.number));
+          }
+      );
+
+      #+end_src
+
 ***** numebr-mod
+
+      #+begin_src js
+      new_prim (
+          "number-mod",
+          function (env)
+          {
+              let b = data_stack_pop (env);
+              let a = data_stack_pop (env);
+              data_stack_push (env, new number_t (
+                  a.number % b.number));
+          }
+      );
+      #+end_src
 
 ***** numebr-divmod
 
+      #+begin_src js
+      new_prim (
+          "number-divmod",
+          function (env)
+          {
+              let b = data_stack_pop (env);
+              let a = data_stack_pop (env);
+              data_stack_push (env, new number_t (
+                  a.number / b.number));
+              data_stack_push (env, new number_t (
+                  a.number % b.number));
+          }
+      );
+      #+end_src
+
 ***** numebr-moddiv
+
+      #+begin_src js
+      new_prim (
+          "number-moddiv",
+          function (env)
+          {
+              let b = data_stack_pop (env);
+              let a = data_stack_pop (env);
+              data_stack_push (env, new number_t (
+                  a.number % b.number));
+              data_stack_push (env, new number_t (
+                  a.number / b.number));
+          }
+      );
+      #+end_src
 
 ***** numebr-lt-p
 
+      #+begin_src js
+      new_prim (
+          "number-lt-p",
+          function (env)
+          {
+              let b = data_stack_pop (env);
+              let a = data_stack_pop (env);
+              data_stack_push (env, new_bool (
+                  a.number < b.number));
+          }
+      );
+      #+end_src
+
 ***** numebr-lteq-p
+
+      #+begin_src js
+      new_prim (
+          "number-lteq-p",
+          function (env)
+          {
+              let b = data_stack_pop (env);
+              let a = data_stack_pop (env);
+              data_stack_push (env, new_bool (
+                  a.number <= b.number));
+          }
+      );
+      #+end_src
 
 ***** numebr-gt-p
 
+      #+begin_src js
+      new_prim (
+          "number-gt-p",
+          function (env)
+          {
+              let b = data_stack_pop (env);
+              let a = data_stack_pop (env);
+              data_stack_push (env, new_bool (
+                  a.number > b.number));
+          }
+      );
+      #+end_src
+
 ***** numebr-gteq-p
+
+      #+begin_src js
+      new_prim (
+          "number-gteq-p",
+          function (env)
+          {
+              let b = data_stack_pop (env);
+              let a = data_stack_pop (env);
+              data_stack_push (env, new_bool (
+                  a.number >= b.number));
+          }
+      );
+      #+end_src
 
 *** string
 
@@ -1634,8 +1825,8 @@
           "string-p",
           function (env)
           {
-              let obj = data_stack_pop (env);
-              if (obj.type_name === "string-t")
+              let a = data_stack_pop (env);
+              if (a.type_name === "string-t")
                   data_stack_push (env, new true_t ());
               else
                   data_stack_push (env, new false_t ());
@@ -1650,8 +1841,8 @@
           "string-length",
           function (env)
           {
-              let obj = data_stack_pop (env);
-              data_stack_push (env, new number_t (obj.string.length));
+              let a = data_stack_pop (env);
+              data_stack_push (env, new number_t (a.string.length));
           }
       );
       #+end_src
@@ -1680,8 +1871,8 @@
           {
               let b = data_stack_pop (env);
               let a = data_stack_pop (env);
-              let new_string = a.string.concat (b.string);
-              data_stack_push (env, new string_t (new_string));
+              data_stack_push (env, new string_t (
+                  a.string.concat (b.string)));
           }
       );
       #+end_src
@@ -1695,10 +1886,9 @@
           {
               let end = data_stack_pop (env);
               let begin = data_stack_pop (env);
-              let string = data_stack_pop (env);
-              let new_string
-                  = string.string.slice (begin.number, end.number);
-              data_stack_push (env, new string_t (new_string));
+              let a = data_stack_pop (env);
+              data_stack_push (env, new string_t (
+                  a.string.slice (begin.number, end.number)));
           }
       );
       #+end_src

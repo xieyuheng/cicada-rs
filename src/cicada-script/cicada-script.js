@@ -906,6 +906,13 @@
                 return true;
           }
       }
+      function new_bool (bool)
+      {
+          if (bool)
+              return new true_t ();
+          else
+              return new false_t ();
+      }
       new_prim (
           "true-c",
           function (env)
@@ -999,6 +1006,145 @@
                   data_stack_push (env, new false_t ());
           }
       );
+      new_prim (
+          "number-inc",
+          function (env)
+          {
+              let a = data_stack_pop (env);
+              data_stack_push (env, new number_t (a.number +1));
+          }
+      );
+      new_prim (
+          "number-dec",
+          function (env)
+          {
+              let a = data_stack_pop (env);
+              data_stack_push (env, new number_t (a.number -1));
+          }
+      );
+      new_prim (
+          "number-neg",
+          function (env)
+          {
+              let a = data_stack_pop (env);
+              data_stack_push (env, new number_t (- a.number));
+          }
+      );
+      new_prim (
+          "number-add",
+          function (env)
+          {
+              let b = data_stack_pop (env);
+              let a = data_stack_pop (env);
+              data_stack_push (env, new number_t (
+                  a.number + b.number));
+          }
+      );
+      new_prim (
+          "number-sub",
+          function (env)
+          {
+              let b = data_stack_pop (env);
+              let a = data_stack_pop (env);
+              data_stack_push (env, new number_t (
+                  a.number - b.number));
+          }
+      );
+      new_prim (
+          "number-mul",
+          function (env)
+          {
+              let b = data_stack_pop (env);
+              let a = data_stack_pop (env);
+              data_stack_push (env, new number_t (
+                  a.number * b.number));
+          }
+      );
+      new_prim (
+          "number-div",
+          function (env)
+          {
+              let b = data_stack_pop (env);
+              let a = data_stack_pop (env);
+              data_stack_push (env, new number_t (
+                  a.number / b.number));
+          }
+      );
+
+      new_prim (
+          "number-mod",
+          function (env)
+          {
+              let b = data_stack_pop (env);
+              let a = data_stack_pop (env);
+              data_stack_push (env, new number_t (
+                  a.number % b.number));
+          }
+      );
+      new_prim (
+          "number-divmod",
+          function (env)
+          {
+              let b = data_stack_pop (env);
+              let a = data_stack_pop (env);
+              data_stack_push (env, new number_t (
+                  a.number / b.number));
+              data_stack_push (env, new number_t (
+                  a.number % b.number));
+          }
+      );
+      new_prim (
+          "number-moddiv",
+          function (env)
+          {
+              let b = data_stack_pop (env);
+              let a = data_stack_pop (env);
+              data_stack_push (env, new number_t (
+                  a.number % b.number));
+              data_stack_push (env, new number_t (
+                  a.number / b.number));
+          }
+      );
+      new_prim (
+          "number-lt-p",
+          function (env)
+          {
+              let b = data_stack_pop (env);
+              let a = data_stack_pop (env);
+              data_stack_push (env, new_bool (
+                  a.number < b.number));
+          }
+      );
+      new_prim (
+          "number-lteq-p",
+          function (env)
+          {
+              let b = data_stack_pop (env);
+              let a = data_stack_pop (env);
+              data_stack_push (env, new_bool (
+                  a.number <= b.number));
+          }
+      );
+      new_prim (
+          "number-gt-p",
+          function (env)
+          {
+              let b = data_stack_pop (env);
+              let a = data_stack_pop (env);
+              data_stack_push (env, new_bool (
+                  a.number > b.number));
+          }
+      );
+      new_prim (
+          "number-gteq-p",
+          function (env)
+          {
+              let b = data_stack_pop (env);
+              let a = data_stack_pop (env);
+              data_stack_push (env, new_bool (
+                  a.number >= b.number));
+          }
+      );
       class string_t
       {
           constructor (string)
@@ -1019,8 +1165,8 @@
           "string-p",
           function (env)
           {
-              let obj = data_stack_pop (env);
-              if (obj.type_name === "string-t")
+              let a = data_stack_pop (env);
+              if (a.type_name === "string-t")
                   data_stack_push (env, new true_t ());
               else
                   data_stack_push (env, new false_t ());
@@ -1030,8 +1176,8 @@
           "string-length",
           function (env)
           {
-              let obj = data_stack_pop (env);
-              data_stack_push (env, new number_t (obj.string.length));
+              let a = data_stack_pop (env);
+              data_stack_push (env, new number_t (a.string.length));
           }
       );
       new_prim (
@@ -1050,8 +1196,8 @@
           {
               let b = data_stack_pop (env);
               let a = data_stack_pop (env);
-              let new_string = a.string.concat (b.string);
-              data_stack_push (env, new string_t (new_string));
+              data_stack_push (env, new string_t (
+                  a.string.concat (b.string)));
           }
       );
       new_prim (
@@ -1060,10 +1206,9 @@
           {
               let end = data_stack_pop (env);
               let begin = data_stack_pop (env);
-              let string = data_stack_pop (env);
-              let new_string
-                  = string.string.slice (begin.number, end.number);
-              data_stack_push (env, new string_t (new_string));
+              let a = data_stack_pop (env);
+              data_stack_push (env, new string_t (
+                  a.string.slice (begin.number, end.number)));
           }
       );
       class null_t
