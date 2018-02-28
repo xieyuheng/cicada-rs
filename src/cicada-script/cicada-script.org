@@ -5,11 +5,11 @@
 
 *** about number
 
+*** about cons and null
+
 *** overload -c to (.) in stack, and stop using -cr
 
     - also overload every function call with (.) in stack
-
-*** about cons and null
 
 *** (+def)
 
@@ -809,6 +809,27 @@
     }
     #+end_src
 
+*** eq_p_exp_t
+
+    #+begin_src js
+    class eq_p_exp_t
+    {
+        constructor () { }
+
+        exe (env, scope)
+        {
+            let b = data_stack_pop (env);
+            let a = data_stack_pop (env);
+            if (a.eq_p (b)) {
+                data_stack_push (env, new true_t ());
+            }
+            else {
+                data_stack_push (env, new false_t ());
+            }
+        }
+    }
+    #+end_src
+
 * den
 
 *** jojo_den_t
@@ -1516,7 +1537,7 @@
       );
       #+end_src
 
-*** >< number
+*** number
 
 ***** number_t
 
@@ -1539,7 +1560,51 @@
       }
       #+end_src
 
-*** >< string
+***** number-p
+
+      #+begin_src js
+      new_prim (
+          "number-p",
+          function (env)
+          {
+              let obj = data_stack_pop (env);
+              if (obj.type_name === "number-t")
+                  data_stack_push (env, new true_t ());
+              else
+                  data_stack_push (env, new false_t ());
+          }
+      );
+      #+end_src
+
+***** number-inc
+
+***** number-dec
+
+***** numebr-neg
+
+***** number-add
+
+***** number-sub
+
+***** numebr-mul
+
+***** numebr-div
+
+***** numebr-mod
+
+***** numebr-divmod
+
+***** numebr-moddiv
+
+***** numebr-lt-p
+
+***** numebr-lteq-p
+
+***** numebr-gt-p
+
+***** numebr-gteq-p
+
+*** string
 
 ***** string_t
 
@@ -2174,6 +2239,8 @@
         if (string_p (sexp)) {
             if (sexp === "apply")
                 return [new apply_exp_t ()];
+            else if (sexp === "eq-p")
+                return [new eq_p_exp_t ()];
             else if (sexp === "clone")
                 return [new clone_exp_t ()];
             else if (sexp === ",")

@@ -488,6 +488,22 @@
             data_stack_push (env, this.obj);
         }
     }
+    class eq_p_exp_t
+    {
+        constructor () { }
+
+        exe (env, scope)
+        {
+            let b = data_stack_pop (env);
+            let a = data_stack_pop (env);
+            if (a.eq_p (b)) {
+                data_stack_push (env, new true_t ());
+            }
+            else {
+                data_stack_push (env, new false_t ());
+            }
+        }
+    }
     class jojo_den_t
     {
         constructor (exp_vect)
@@ -972,6 +988,17 @@
                 return this.number === that.number;
           }
       }
+      new_prim (
+          "number-p",
+          function (env)
+          {
+              let obj = data_stack_pop (env);
+              if (obj.type_name === "number-t")
+                  data_stack_push (env, new true_t ());
+              else
+                  data_stack_push (env, new false_t ());
+          }
+      );
       class string_t
       {
           constructor (string)
@@ -1399,6 +1426,8 @@
         if (string_p (sexp)) {
             if (sexp === "apply")
                 return [new apply_exp_t ()];
+            else if (sexp === "eq-p")
+                return [new eq_p_exp_t ()];
             else if (sexp === "clone")
                 return [new clone_exp_t ()];
             else if (sexp === ",")
