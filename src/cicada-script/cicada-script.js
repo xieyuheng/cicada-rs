@@ -988,6 +988,57 @@
                 return this.string === that.string;
           }
       }
+      new_prim (
+          "string-p",
+          function (env)
+          {
+              let obj = data_stack_pop (env);
+              if (obj.type_name === "string-t")
+                  data_stack_push (env, new true_t ());
+              else
+                  data_stack_push (env, new false_t ());
+          }
+      );
+      new_prim (
+          "string-length",
+          function (env)
+          {
+              let obj = data_stack_pop (env);
+              data_stack_push (env, new number_t (obj.string.length));
+          }
+      );
+      new_prim (
+          "string-ref",
+          function (env)
+          {
+              let index = data_stack_pop (env);
+              let string = data_stack_pop (env);
+              let char = string.string[index.number];
+              data_stack_push (env, new string_t (char));
+          }
+      );
+      new_prim (
+          "string-append",
+          function (env)
+          {
+              let b = data_stack_pop (env);
+              let a = data_stack_pop (env);
+              let new_string = a.string.concat (b.string);
+              data_stack_push (env, new string_t (new_string));
+          }
+      );
+      new_prim (
+          "string-slice",
+          function (env)
+          {
+              let end = data_stack_pop (env);
+              let begin = data_stack_pop (env);
+              let string = data_stack_pop (env);
+              let new_string
+                  = string.string.slice (a.number, b.number);
+              data_stack_push (env, new string_t (new_string));
+          }
+      );
       class null_t
       {
           constructor ()

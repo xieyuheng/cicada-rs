@@ -1,0 +1,53 @@
+#+title: idris
+
+- by edwin brady
+
+* [todo-stack]
+
+*** matrix-transpose
+
+*** state in stack
+
+* day 1
+
+*** [note] type-check of succedent
+
+    - we must use equal to check succedent
+      instead of cover
+
+      because we do not want the following function
+      to pass type-check
+
+      if [Vector (add ZERO m) a] cover [Vector ZERO a]
+      [Vector m a] in the input argument
+      will be more special than it ought to be
+
+      type of input argument should not be constrained by
+      type of return value
+
+    #+begin_src idris
+    append : Vector n a -> Vector m a -> Vector (add n m) a
+    append NULL y = [] -- instead of y
+    append (CONS x z) y = (CONS x (append z y))
+    #+end_src
+
+    - also type-check of antecedent
+      should use cover instead of unify
+
+*** [note] pull data from type
+
+    - we must be able to pull data from type
+      to be able to write matrix-transpose
+
+    - thus,
+      runtime must contain data in type in almost all cases,
+      which makes the language dynamicly typed at runtime
+      with even more overhead
+
+*** >< matrix-transpose
+
+    #+begin_src cicada
+    (+fun matrix-transpose
+      : (->  vect-u --)
+      )
+    #+end_src
