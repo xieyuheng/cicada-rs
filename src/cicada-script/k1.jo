@@ -19,14 +19,21 @@
     (zero-t n)
     (succ-t m n.prev recur m add)))
 
+;; (+jojo factorial
+;;   (let n)
+;;   (case n
+;;     (zero-t zero-c succ-c)
+;;     (succ-t n.prev recur n mul)))
+
+;; (main
+;;   zero-c succ-c succ-c succ-c
+;;   zero-c succ-c succ-c succ-c add factorial)
+
 (+jojo factorial
   (let n)
-  (case n
-    (zero-t n succ-c)
-    (succ-t n.prev recur n mul)))
+  (case [n 0 eq-p]
+    (true-t 1)
+    (false-t n number-dec recur n number-mul)))
 
 (main
-  ;; zero-c succ-c succ-c succ-c
-  ;; zero-c succ-c succ-c succ-c add factorial
-  ;; "zero-c " "string-p" string-append 3 5 string-slice
-  2 2  number-neg number-add)
+  10 factorial)

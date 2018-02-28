@@ -508,6 +508,17 @@
     #+begin_src js
     function closure_apply (env, closure)
     {
+        let frame = new scoping_frame_t (closure.exp_vect);
+        frame_stack_push (env, frame);
+        scope_stack_push (env, closure.scope);
+    }
+    #+end_src
+
+*** closure_apply_now
+
+    #+begin_src js
+    function closure_apply_now (env, closure)
+    {
         data_stack_push (env, closure);
         let exp_vect = [new apply_exp_t ()];
         exp_vect_run (env, exp_vect);
@@ -520,7 +531,7 @@
     function closure_to_obj_vect (env, closure)
     {
         let mark = data_stack_length (env);
-        closure_apply (env, closure);
+        closure_apply_now (env, closure);
         let length = data_stack_length (env);
         let obj_vect = [];
         while (length > mark) {
@@ -663,7 +674,6 @@
                     this.arg_exp_vect,
                     scope.clone ());
             let obj = closure_to_obj (env, closure);
-            assert (obj instanceof data_t);
             let exp_vect = this.case_clause_dict.get (obj.type_name);
             if (exp_vect) {
                 let closure =
