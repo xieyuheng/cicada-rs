@@ -1,4 +1,7 @@
-      let print = console.log;
+      function print (x)
+      {
+          process.stdout.write (x);
+      }
       function vect_eq_p (v1, v2)
       {
           if (v1.length !== v2.length)
@@ -50,13 +53,14 @@
       }
       function assert (x) {
           if (! x) {
+              print ("- assertion fail\n");
               throw new Error('assert fail!');
           }
       }
       function error ()
       {
-          print ("");
-          print ("");
+          print ("\n");
+          print ("\n");
           throw new Error('fatal error!');
       }
     class env_t
@@ -234,13 +238,6 @@
             if (frame instanceof scoping_frame_t)
                 scope_stack_drop (env);
         }
-        // {
-        //     print ("- run_one_step");
-        //     print ("  exp :", exp);
-        //     print ("  scope :", scope);
-        //     print ("  env :", env);
-        //     print ("");
-        // }
         exp.exe (env, scope);
     }
     function run_with_base (env, base)
@@ -297,14 +294,7 @@
         exe (env, scope)
         {
             let obj = scope.get (this.name);
-            // {
-            //     print ("- call_exp");
-            //     print (this.name);
-            //     print (scope);
-            //     print (env);
-            //     print ("");
-            // }
-            if (obj) {
+            if (obj !== undefined) {
                 if (obj instanceof closure_t)
                     closure_apply (env, obj);
                 else
@@ -313,8 +303,10 @@
             else {
                 let den = name_dict_get (env, this.name);
                 if (! den) {
-                    print ("- exe call_exp_t");
-                    print ("  unknown name :", this.name);
+                    print ("- exe call_exp_t\n");
+                    print ("  unknown name : ");
+                    print (this.name);
+                    print ("\n");
                     error ();
                 }
                 den.den_exe (env);
@@ -399,7 +391,7 @@
                     closure_apply (env, closure);
                 }
                 else {
-                    print ("- case mismatch!");
+                    print ("- case mismatch!\n");
                     error ();
                 }
             }
@@ -703,6 +695,58 @@
             this.prim_fn (env);
         }
     }
+    class gene_den_t
+    {
+        constructor (arity, default_fun_den)
+        {
+            this.arity = arity;
+            this.default_fun_den = default_fun_den;
+            this.disp_dict = new disp_dict_t ();
+        }
+
+        den_exe (env)
+        {
+            let type_name_vect = [];
+            let counter = 0;
+            while (counter < this.arity) {
+                let obj = data_stack_peek (env, counter);
+                type_name_vect.unshift (type_of (obj));
+                counter = counter + 1;
+            }
+            let fun_den = this.disp_dict.find (env, type_name_vect);
+            if (fun_den !== undefined)
+                fun_den.den_exe (env);
+            else
+                this.default_fun_den.den_exe (env);
+        }
+    }
+    class disp_dict_t
+    {
+        constructor ()
+        {
+            this.dict = new Map ();
+        }
+
+        find (env, type_name_vect)
+        {
+            for (let [key, value] of this.dict) {
+                if (vect_eq_p (type_name_vect, key))
+                    return value;
+            }
+            return undefined;
+        }
+
+        set (type_name_vect, fun_den)
+        {
+            for (let key of this.dict.keys ()) {
+                if (vect_eq_p (key, type_name_vect)) {
+                    this.dict.set (key, fun_den);
+                    return;
+                }
+            }
+            this.dict.set (type_name_vect, fun_den)
+        }
+    }
     function type_of (x)
     {
         let type_name = x.type_name;
@@ -718,7 +762,9 @@
             return "false-t";
         else
             // return dashlize (x.constructor.name);
-            print ("- type_of fail on :", x);
+            print ("- type_of fail on : ");
+            print (x);
+            print ("\n");
             error ();
     }
     function eq_p (x, y)
@@ -952,6 +998,78 @@
                 new top_macro_den_t (exp_vect));
         }
     );
+    new_top_keyword (
+        "+gene",
+        function (env, sexp_list)
+        {
+            let name = sexp_list.car;
+            let arity = eval (sexp_list.cdr.car);
+            let rest_list = sexp_list.cdr.cdr;
+            let exp_vect = sexp_list_compile (env, rest_list);
+            name_dict_set (
+                env, name,
+                new gene_den_t (arity, new fun_den_t (exp_vect)));
+        }
+    );
+    new_top_keyword (
+        "+disp",
+        function (env, sexp_list)
+        {
+            let name = sexp_list.car;
+            let type_name_list = sexp_list.cdr.car.cdr;
+            let rest_list = sexp_list.cdr.cdr;
+            let exp_vect = sexp_list_compile (env, rest_list);
+            let fun_den = new fun_den_t (exp_vect);
+            let type_name_vect = list_to_vect (type_name_list);
+            let gene_den = name_dict_get (env, name);
+            if (! (gene_den instanceof gene_den_t)) {
+                print ("- (+disp) missing gene\n");
+                print ("  name : ");
+                print (name);
+                print ("\n");
+                print ("  type_name_vect : ");
+                print (type_name_vect);
+                print ("\n");
+                error ();
+            }
+            let vect_vect = expand_type_name_vect (env, type_name_vect);
+            for (let vect of vect_vect) {
+                gene_den.disp_dict.set (vect, fun_den);
+            }
+        }
+    );
+    function expand_type_name_vect (env, type_name_vect)
+    {
+        let vect_vect = [];
+        for (let type_name of type_name_vect) {
+            let den = name_dict_get (env, type_name);
+            if (den instanceof union_den_t) {
+                vect_vect = vect_vect_bind (
+                    den.sub_type_name_vect,
+                    vect_vect);
+            }
+            else {
+                vect_vect = vect_vect_bind (
+                    [type_name],
+                    vect_vect);
+            }
+        }
+        return vect_vect;
+    }
+    function vect_vect_bind (vect, vect_vect)
+    {
+        if (vect_vect.length === 0)
+            return [vect];
+        if (vect.length === 0)
+            return vect_vect;
+        let new_vect_vect = [];
+        for (let x of vect) {
+            for (let v of vect_vect) {
+                new_vect_vect.push ([x].concat (v));
+            }
+        }
+        return new_vect_vect;
+    }
     let the_keyword_dict = new Map ();
     function new_keyword (name, prim_fn)
     {
@@ -976,8 +1094,8 @@
         "closure",
         function (env, sexp_list)
         {
-            let sexp_vect = list_to_vect (sexp_list);
-            return [new closure_exp_t (sexp_vect)];
+            let exp_vect = sexp_list_compile (env, sexp_list);
+            return [new closure_exp_t (exp_vect)];
         }
     )
     new_keyword (
@@ -1312,6 +1430,21 @@
               data_stack_push (env, a.toString ());
           }
       );
+      new_prim (
+          "string-print",
+          function (env)
+          {
+              let a = data_stack_pop (env);
+              print (a);
+          }
+      );
+      new_prim (
+          "newline",
+          function (env)
+          {
+              print ("\n");
+          }
+      );
       class null_t
       {
           constructor ()
@@ -1403,7 +1536,6 @@
                   type_of (a) === "cons-t"));
           }
       );
-
       new_prim (
           "list-p",
           function (env)
@@ -1412,6 +1544,40 @@
               data_stack_push (env, (
                   ((type_of (a) === "cons-t") ||
                    (type_of (a) === "null-t"))));
+          }
+      );
+      new_prim (
+          "list-spread",
+          function (env)
+          {
+              let list = data_stack_pop (env);
+              let vect = list_to_vect (list);
+              for (let x of vect) {
+                  data_stack_push (env, x);
+              }
+          }
+      );
+      new_prim (
+          "sexp-print",
+          function (env)
+          {
+              let sexp = data_stack_pop (env);
+              sexp_print (sexp);
+          }
+      );
+      new_prim (
+          "sexp-list-print",
+          function (env)
+          {
+              let sexp_list = data_stack_pop (env);
+              sexp_list_print (sexp_list);
+          }
+      );
+      new_prim (
+          "error",
+          function (env)
+          {
+              error ();
           }
       );
     function code_scan (string)
@@ -1437,9 +1603,10 @@
             else if (char === '"') {
                 let end = string.indexOf ('"', i+1);
                 if (end === -1) {
-                    print ("- code_scan fail")
-                    print ("  doublequote mismatch")
+                    print ("- code_scan fail\n")
+                    print ("  doublequote mismatch\n")
                     print ("  string : {}".format(string))
+                    print ("\n")
                     error ()
                 }
                 string_vect.push (string.slice (i, end + 1));
@@ -1567,23 +1734,26 @@
             return [cons_c (s, sc), i2];
         }
     }
-    function sexp_repr (sexp)
+    function sexp_print (sexp)
     {
         if (null_p (sexp))
-            return "null-c";
-        else if (cons_p (sexp))
-            return "(" +  sexp_list_repr (sexp) +  ")";
+            print ("null-c");
+        else if (cons_p (sexp)) {
+            print ("(");
+            sexp_list_print (sexp);
+            print (")");
+        }
         else
-            return sexp;
+            print (sexp);
     }
-    function sexp_list_repr (sexp_cons)
+    function sexp_list_print (sexp_cons)
     {
         if (null_p (sexp_cons.cdr))
-            return sexp_repr (sexp_cons.car);
+            sexp_print (sexp_cons.car);
         else {
-            let car_repr = sexp_repr (sexp_cons.car);
-            let cdr_repr = sexp_list_repr (sexp_cons.cdr);
-            return car_repr + " " + cdr_repr;
+            sexp_print (sexp_cons.car);
+            print (" ");
+            sexp_list_print (sexp_cons.cdr);
         }
     }
     function list_to_vect (list)
@@ -1761,8 +1931,10 @@
                 return sexp_compile (env, new_sexp);
             }
             else {
-                print ("- sexp_compile fail");
-                print ("  unknown name :", name);
+                print ("- sexp_compile fail\n");
+                print ("  unknown name : ");
+                print (name);
+                print ("\n");
                 error ();
             }
         }
@@ -1781,8 +1953,6 @@
             return [new collect_list_exp_t ()];
         else if (sexp === ",")
             return [];
-        // ><><><
-        // drop dup over tuck swap
         else if (string_string_p (sexp)) {
             let string = string_string_to_string (sexp);
             return [new lit_exp_t (string)];
