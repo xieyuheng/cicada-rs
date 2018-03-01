@@ -1041,15 +1041,13 @@
         let exp_vect = [];
         let sexp_vect = list_to_vect (sexp_list);
         for (let sexp of sexp_vect) {
-            print (partquote_compile_one (env, sexp));
-            exp_vect.concat (partquote_compile_one (env, sexp));
+            exp_vect = exp_vect.concat (partquote_compile_one (env, sexp));
         }
         return exp_vect;
     }
     function partquote_compile_one (env, sexp)
     {
         if (string_p (sexp)) {
-            // print (sexp);
             return [new lit_exp_t (sexp)];
         }
         else {
@@ -1059,7 +1057,7 @@
             else {
                 let exp_vect = [];
                 exp_vect.push (new mark_exp_t ());
-                exp_vect.concat (partquote_compile (env, sexp));
+                exp_vect = exp_vect.concat (partquote_compile (env, sexp));
                 exp_vect.push (new collect_list_exp_t ());
                 return exp_vect;
             }
@@ -1304,6 +1302,14 @@
               let begin = data_stack_pop (env);
               let a = data_stack_pop (env);
               data_stack_push (env, a.slice (begin, end));
+          }
+      );
+      new_prim (
+          "number->string",
+          function (env)
+          {
+              let a = data_stack_pop (env);
+              data_stack_push (env, a.toString ());
           }
       );
       class null_t

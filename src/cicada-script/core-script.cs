@@ -49,5 +49,6 @@
   ;; (echo-car begin var-1 2 number-add)
 
   (begin
-    `(1 2 3)
+    `(1 2 (@ 1 2 number-add number->string))
+    '(1 2 3) eq-p
     )
