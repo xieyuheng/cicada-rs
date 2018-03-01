@@ -509,7 +509,7 @@
             }
         }
     }
-    class jojo_den_t
+    class fun_den_t
     {
         constructor (exp_vect)
         {
@@ -524,7 +524,7 @@
             scope_stack_push (env, scope);
         }
     }
-    class def_den_t
+    class var_den_t
     {
         constructor ()
         {
@@ -786,22 +786,14 @@
         return x.slice (0, x.length -2);
     }
     new_top_keyword (
-        "+jojo",
+        "+fun",
         function (env, sexp_list)
         {
             let name = sexp_list.car;
             let rest_list = sexp_list.cdr;
-            let exp_vect = sexp_list_compile (rest_list);
-            let jojo_den = new jojo_den_t (exp_vect);
-            name_dict_set (env, name, jojo_den);
-        }
-    );
-    new_top_keyword (
-        "main",
-        function (env, sexp_list)
-        {
-            let exp_vect = sexp_list_compile (sexp_list);
-            exp_vect_run (env, exp_vect);
+            let exp_vect = sexp_list_compile (env, rest_list);
+            let fun_den = new fun_den_t (exp_vect);
+            name_dict_set (env, name, fun_den);
         }
     );
     new_top_keyword (
@@ -820,7 +812,7 @@
     }
     new_keyword (
         "let",
-        function (sexp_list)
+        function (env, sexp_list)
         {
             let sexp_vect = list_to_vect (sexp_list);
             return [new let_exp_t (sexp_vect)];
@@ -828,14 +820,14 @@
     );
     new_keyword (
         "begin",
-        function (sexp_list)
+        function (env, sexp_list)
         {
-            return sexp_list_compile (sexp_list);
+            return sexp_list_compile (env, sexp_list);
         }
     );
     new_keyword (
         "closure",
-        function (sexp_list)
+        function (env, sexp_list)
         {
             let sexp_vect = list_to_vect (sexp_list);
             return [new closure_exp_t (sexp_vect)];
@@ -843,14 +835,14 @@
     )
     new_keyword (
         "case",
-        function (sexp_list)
+        function (env, sexp_list)
         {
             let case_clause_dict = new case_clause_dict_t ();
-            let arg_exp_vect = sexp_compile (sexp_list.car);
+            let arg_exp_vect = sexp_compile (env, sexp_list.car);
             let rest_vect = list_to_vect (sexp_list.cdr);
             for (let sexp of rest_vect) {
                 let case_name = sexp.car;
-                let exp_vect = sexp_list_compile (sexp.cdr)
+                let exp_vect = sexp_list_compile (env, sexp.cdr)
                 case_clause_dict.set (case_name, exp_vect);
             }
             return [new case_exp_t (arg_exp_vect, case_clause_dict)];
@@ -858,14 +850,14 @@
     );
     new_keyword (
         "field",
-        function (sexp_list)
+        function (env, sexp_list)
         {
             return [new field_exp_t (sexp_list.car)];
         }
     );
     new_keyword (
         ".",
-        function (sexp_list)
+        function (env, sexp_list)
         {
             let sexp_vect = list_to_vect (sexp_list);
             let reversed_field_name_vect = [];
@@ -1505,31 +1497,59 @@
     {
         let string_vect = code_scan (code);
         let sexp_vect = parse_sexp_vect (string_vect);
-        sexp_vect_eval (env, sexp_vect);
+        top_sexp_vect_eval (env, sexp_vect);
     }
-    function sexp_vect_eval (env, sexp_vect)
+    function top_sexp_vect_eval (env, sexp_vect)
     {
         for (let sexp of sexp_vect) {
-            sexp_eval (env, sexp);
+            top_sexp_eval (env, sexp);
         }
     }
-    function sexp_eval (env, sexp)
+    function top_sexp_eval (env, sexp)
     {
-        assert (cons_p (sexp));
         sexp = apply_all_passes (sexp);
-        let name = sexp.car;
-        let sexp_list = sexp.cdr;
+        if (string_p (sexp)) {
+            let exp_vect = sexp_compile (env, sexp);
+            exp_vect_run (env, exp_vect);
+        }
+        else {
+            assert (cons_p (sexp));
+            let name = sexp.car;
+            let sexp_list = sexp.cdr;
+            if (top_keyword_name_p (env, name)) {
+                let top_keyword_fn = the_top_keyword_dict.get (name);
+                top_keyword_fn (env, sexp_list);
+            }
+            else if (top_macro_name_p (env, name)) {
+                let den = name_dict_get (env, name);
+                data_stack_push (env, sexp_list);
+                den.den_exe (env);
+            }
+            else {
+                let exp_vect = sexp_compile (env, sexp);
+                exp_vect_run (env, exp_vect);
+            }
+        }
+    }
+    function top_keyword_name_p (env, name)
+    {
         let top_keyword_fn = the_top_keyword_dict.get (name);
         if (top_keyword_fn) {
             assert (function_p (top_keyword_fn));
-            top_keyword_fn (env, sexp_list);
+            return true;
         }
-        else {
-            let den = name_dict_get (env, name);
-            assert (den instanceof top_macro_den_t);
-            data_stack_push (env, sexp_list);
-            den.den_exe (env);
-        }
+        else
+            return false;
+    }
+    function top_macro_name_p (env, name)
+    {
+        let den = name_dict_get (env, name);
+        if (! den)
+            return false;
+        if (den instanceof top_macro_den_t)
+            return true;
+        else
+            return false;
     }
     let the_pass_vect = [];
     function new_pass (pass_fn)
@@ -1544,20 +1564,20 @@
         }
         return sexp;
     }
-      function pass_for_jojo (sexp)
+      function pass_for_fun (sexp)
       {
           if (cons_p (sexp) &&
-              (sexp.car === "+jojo")) {
+              (sexp.car === "+fun")) {
               let name = sexp.cdr.car;
               let body = sexp.cdr.cdr;
               body = substitute_recur (name, body);
-              return cons_c ("+jojo", cons_c (name, body));
+              return cons_c ("+fun", cons_c (name, body));
           }
           else
               return sexp;
       }
 
-      new_pass (pass_for_jojo);
+      new_pass (pass_for_fun);
       function substitute_recur (name, sexp)
       {
           if (string_p (sexp)) {
@@ -1600,63 +1620,81 @@
       }
 
       new_pass (pass_for_field);
-    function sexp_list_compile (sexp_list)
+    function sexp_list_compile (env, sexp_list)
     {
         let sexp_vect = list_to_vect (sexp_list);
         let exp_vect = [];
         for (let sexp of sexp_vect) {
-            exp_vect = exp_vect.concat (sexp_compile (sexp));
+            exp_vect = exp_vect.concat (sexp_compile (env, sexp));
         }
         return exp_vect;
     }
-    function sexp_compile (sexp)
+    function sexp_compile (env, sexp)
     {
         if (string_p (sexp)) {
-            if (sexp === "apply")
-                return [new apply_exp_t ()];
-            else if (sexp === "eq-p")
-                return [new eq_p_exp_t ()];
-            else if (sexp === "clone")
-                return [new clone_exp_t ()];
-            else if (sexp === ",")
-                return [];
-            // ><><><
-            // drop dup over tuck swap
-            else if (string_string_p (sexp)) {
-                let string = string_string_to_string (sexp);
-                return [new lit_exp_t (new string_t (string))];
-            }
-            else if (number_string_p (sexp)) {
-                let number = number_string_to_number (sexp);
-                return [new lit_exp_t (new number_t (number))];
-            }
-            else {
-                let name = sexp;
-                return [new call_exp_t (name)];
-            }
+            return string_compile (sexp);
         }
         else {
-            if (! (cons_p (sexp))) {
-                print ("- sexp_compile fail");
-                print ("  non sexp :", sexp);
-                error ();
-            }
+            assert (cons_p (sexp));
             let name = sexp.car;
             let rest_list = sexp.cdr;
-            let keyword_fn = the_keyword_dict.get (name);
-            if (keyword_fn) {
-                assert (function_p (keyword_fn));
-                return keyword_fn (rest_list);
+            if (keyword_name_p (env, name)) {
+                let keyword_fn = the_keyword_dict.get (name);
+                return keyword_fn (env, rest_list);
             }
-            else {
+            else if (macro_name_p (env, name)) {
                 let den = name_dict_get (env, name);
-                assert (den instanceof macro_den_t);
                 data_stack_push (env, rest_list);
                 den.den_exe (env);
                 let new_sexp = data_stack_pop (env);
-                return sexp_compile (new_sexp);
+                return sexp_compile (env, new_sexp);
             }
         }
+    }
+    function string_compile (sexp)
+    {
+        if (sexp === "apply")
+            return [new apply_exp_t ()];
+        else if (sexp === "eq-p")
+            return [new eq_p_exp_t ()];
+        else if (sexp === "clone")
+            return [new clone_exp_t ()];
+        else if (sexp === ",")
+            return [];
+        // ><><><
+        // drop dup over tuck swap
+        else if (string_string_p (sexp)) {
+            let string = string_string_to_string (sexp);
+            return [new lit_exp_t (new string_t (string))];
+        }
+        else if (number_string_p (sexp)) {
+            let number = number_string_to_number (sexp);
+            return [new lit_exp_t (new number_t (number))];
+        }
+        else {
+            let name = sexp;
+            return [new call_exp_t (name)];
+        }
+    }
+    function keyword_name_p (env, name)
+    {
+        let keyword_fn = the_keyword_dict.get (name);
+        if (keyword_fn) {
+            assert (function_p (keyword_fn));
+            return true;
+        }
+        else
+            return false;
+    }
+    function macro_name_p (env, name)
+    {
+        let den = name_dict_get (env, name);
+        if (! den)
+            return false;
+        if (den instanceof macro_den_t)
+            return true;
+        else
+            return false;
     }
     function string_string_p (x)
     {
