@@ -3,8 +3,6 @@
 
 * [todo-stack]
 
-*** union_predicate_den_t
-
 *** (+var)
 
 *** (+top-macro)
@@ -897,12 +895,21 @@
     #+begin_src js
     class union_predicate_den_t
     {
-        constructor ()
+        constructor (sub_type_name_vect)
         {
+            this.sub_type_name_vect = sub_type_name_vect;
         }
 
         den_exe (env)
         {
+            let a = data_stack_pop (env);
+            for (let type_name of this.sub_type_name_vect) {
+                if (type_name === a.type_name) {
+                    data_stack_push (env, new true_t ());
+                    return;
+                }
+            }
+            data_stack_push (env, new false_t ());
         }
     }
     #+end_src
@@ -1161,14 +1168,20 @@
         function (env, sexp_list)
         {
             let name = sexp_list.car;
+            assert (union_name_p (name));
             let rest_list = sexp_list.cdr;
-            let sub_type_name_vect = [];
             let rest_vect = list_to_vect (rest_list);
+            let sub_type_name_vect = [];
             for (let type_name of rest_vect) {
                 sub_type_name_vect.push (type_name);
             }
-            let union_den = new union_den_t (sub_type_name_vect);
-            name_dict_set (env, name, union_den);
+            name_dict_set (
+                env, name,
+                new union_den_t (sub_type_name_vect));
+            let prefix = union_name_prefix (name);
+            name_dict_set (
+                env, prefix.concat ("-p"),
+                new union_predicate_den_t (sub_type_name_vect));
         }
     );
     #+end_src
@@ -1210,13 +1223,8 @@
             let rest_list = sexp_list.cdr;
             let rest_vect = list_to_vect (rest_list);
             let reversed_field_name_vect = [];
-            let index = 0;
-            let length = rest_vect.length;
-            while (index < length) {
-                let sexp = rest_vect[index];
-                reversed_field_name_vect
-                    .unshift (sexp);
-                index = index + 3;
+            for (let sexp of rest_vect) {
+                reversed_field_name_vect.unshift (sexp);
             }
             name_dict_set (
                 env, name,

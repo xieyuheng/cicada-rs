@@ -42,4 +42,4 @@
   ;;   1 2 3 null-c cons-c cons-c cons-c
   ;;   1 2 3 null-c cons-c cons-c cons-c eq-p)
 
-  zero-c cons-p
+  null-c nat-p
