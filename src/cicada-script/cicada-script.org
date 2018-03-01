@@ -3,8 +3,6 @@
 
 * [todo-stack]
 
-*** (quote)
-
 *** (partquote)
 
 *** (@) -- unquote
@@ -1451,6 +1449,27 @@
         }
     );
     #+end_src
+
+*** (quote)
+
+    #+begin_src js
+    new_keyword (
+        "quote",
+        function (env, sexp_list)
+        {
+            let lit_vect = [];
+            let sexp_vect = list_to_vect (sexp_list);
+            for (let sexp of sexp_vect) {
+                lit_vect.push (new lit_exp_t (sexp));
+            }
+            return lit_vect;
+        }
+    );
+    #+end_src
+
+*** (partquote)
+
+*** (@) -- unquote
 
 * prim
 

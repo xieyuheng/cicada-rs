@@ -46,4 +46,7 @@
 
   (+macro echo-car)
 
-  (echo-car begin var-1 2 number-add)
+  ;; (echo-car begin var-1 2 number-add)
+
+  (begin
+    (quote asd 1 2 3))

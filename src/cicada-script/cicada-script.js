@@ -945,6 +945,18 @@
             return [];
         }
     );
+    new_keyword (
+        "quote",
+        function (env, sexp_list)
+        {
+            let lit_vect = [];
+            let sexp_vect = list_to_vect (sexp_list);
+            for (let sexp of sexp_vect) {
+                lit_vect.push (new lit_exp_t (sexp));
+            }
+            return lit_vect;
+        }
+    );
     let the_prim_dict = new Map ();
     function new_prim (name, prim_fn)
     {
