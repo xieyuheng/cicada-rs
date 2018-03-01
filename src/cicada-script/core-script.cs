@@ -44,4 +44,6 @@
 
   (+var var-1 1)
 
-  var-1 2 number-add
+  (+macro echo-car)
+
+  (echo-car begin var-1 2 number-add)

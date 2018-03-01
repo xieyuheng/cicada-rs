@@ -635,22 +635,26 @@
     }
     class top_macro_den_t
     {
-        constructor ()
+        constructor (exp_vect)
         {
+            this.exp_vect = exp_vect;
         }
 
         den_exe (env)
         {
+            exp_vect_run (env, this.exp_vect)
         }
     }
     class macro_den_t
     {
-        constructor ()
+        constructor (exp_vect)
         {
+            this.exp_vect = exp_vect;
         }
 
         den_exe (env)
         {
+            exp_vect_run (env, this.exp_vect)
         }
     }
     class prim_den_t
@@ -848,8 +852,30 @@
                 new var_den_t (obj));
         }
     );
-
-
+    new_top_keyword (
+        "+macro",
+        function (env, sexp_list)
+        {
+            let name = sexp_list.car;
+            let rest_list = sexp_list.cdr;
+            let exp_vect = sexp_list_compile (env, rest_list);
+            name_dict_set (
+                env, name,
+                new macro_den_t (exp_vect));
+        }
+    );
+    new_top_keyword (
+        "+top-macro",
+        function (env, sexp_list)
+        {
+            let name = sexp_list.car;
+            let rest_list = sexp_list.cdr;
+            let exp_vect = sexp_list_compile (env, rest_list);
+            name_dict_set (
+                env, name,
+                new top_macro_den_t (exp_vect));
+        }
+    );
     let the_keyword_dict = new Map ();
     function new_keyword (name, prim_fn)
     {
