@@ -42,4 +42,6 @@
   ;;   1 2 3 null-c cons-c cons-c cons-c
   ;;   1 2 3 null-c cons-c cons-c cons-c eq-p)
 
-  null-c nat-p
+  (+var var-1 1)
+
+  var-1 2 number-add

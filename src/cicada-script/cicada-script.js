@@ -526,14 +526,14 @@
     }
     class var_den_t
     {
-        constructor ()
+        constructor (obj)
         {
-
+            this.obj = obj;
         }
 
-        den_exe ()
+        den_exe (env)
         {
-
+            data_stack_push (env, this.obj);
         }
     }
     class union_den_t
@@ -829,8 +829,23 @@
             let name = sexp_list.car;
             let rest_list = sexp_list.cdr;
             let exp_vect = sexp_list_compile (env, rest_list);
-            let fun_den = new fun_den_t (exp_vect);
-            name_dict_set (env, name, fun_den);
+            name_dict_set (
+                env, name,
+                new fun_den_t (exp_vect));
+        }
+    );
+    new_top_keyword (
+        "+var",
+        function (env, sexp_list)
+        {
+            let name = sexp_list.car;
+            let rest_list = sexp_list.cdr;
+            let exp_vect = sexp_list_compile (env, rest_list);
+            exp_vect_run (env, exp_vect);
+            let obj = data_stack_pop (env);
+            name_dict_set (
+                env, name,
+                new var_den_t (obj));
         }
     );
 
@@ -1755,13 +1770,17 @@
     {
         if (! (string_p (number_string)))
             return false;
+        let number_of_dots = 0;
         for (let x of number_string) {
-            if (digital_char_p (x))
-                return true;
-            else if (x === ".")
-                return true;
+            if (x === ".")
+                number_of_dots = number_of_dots +1;
+            else if (! (digital_char_p (x)))
+                return false;
         }
-        return false;
+        if (number_of_dots > 1)
+            return false;
+        else
+            return true;
     }
     function number_string_to_number (number_string)
     {
