@@ -126,7 +126,7 @@
 
     (+disp k [number-t number-t]
       drop drop
-      "number-t number-t k\n"
+      "number-t number-t k"
       string-print
       newline)
 
