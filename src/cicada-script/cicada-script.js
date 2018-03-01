@@ -17,7 +17,11 @@
       }
       function string_p (x)
       {
-          return typeof x === 'string';
+          return typeof x === "string";
+      }
+      function number_p (x)
+      {
+          return typeof x === "number";
       }
       function vect_p (x)
       {
@@ -377,7 +381,7 @@
                     this.arg_exp_vect,
                     scope.clone ());
             let obj = closure_to_obj (env, closure);
-            let exp_vect = this.case_clause_dict.get (obj.type_name);
+            let exp_vect = this.case_clause_dict.get (type_of (obj));
             if (exp_vect) {
                 let closure =
                     new closure_t (
@@ -428,8 +432,11 @@
         exe (env, scope)
         {
             let data = data_stack_pop (env);
-            assert (data instanceof data_t);
-            let obj = data.field_dict.get (this.field_name);
+            let obj = undefined;
+            if (data instanceof data_t)
+                obj = data.field_dict.get (this.field_name);
+            else
+                obj = data[this.field_name];
             assert (obj);
             if (obj instanceof closure_t)
                 closure_apply (env, obj);
@@ -501,12 +508,38 @@
         {
             let b = data_stack_pop (env);
             let a = data_stack_pop (env);
-            if (a.eq_p (b)) {
-                data_stack_push (env, new true_t ());
+            if (eq_p (a, b)) {
+                data_stack_push (env, true);
             }
             else {
-                data_stack_push (env, new false_t ());
+                data_stack_push (env, false);
             }
+        }
+    }
+    class mark_exp_t
+    {
+        constructor () { }
+
+        exe (env, scope)
+        {
+            data_stack_push (env, new marker_t ());
+        }
+    }
+    class collect_list_exp_t
+    {
+        constructor () { }
+
+        exe (env, scope)
+        {
+            let vect = [];
+            while (true) {
+                let obj = data_stack_pop (env);
+                if (obj instanceof marker_t)
+                    break;
+                else
+                    vect.unshift (obj);
+            }
+            data_stack_push (env, vect_to_list (vect));
         }
     }
     class fun_den_t
@@ -559,12 +592,12 @@
         {
             let a = data_stack_pop (env);
             for (let type_name of this.sub_type_name_vect) {
-                if (type_name === a.type_name) {
-                    data_stack_push (env, new true_t ());
+                if (type_name === type_of (a)) {
+                    data_stack_push (env, true);
                     return;
                 }
             }
-            data_stack_push (env, new false_t ());
+            data_stack_push (env, false);
         }
     }
     class data_den_t
@@ -629,8 +662,9 @@
         den_exe (env)
         {
             let a = data_stack_pop (env);
-            data_stack_push (env, new_bool (
-                a.type_name === this.type_name));
+            data_stack_push (
+                env,
+                type_of (a) === this.type_name);
         }
     }
     class top_macro_den_t
@@ -669,6 +703,33 @@
             this.prim_fn (env);
         }
     }
+    function type_of (x)
+    {
+        let type_name = x.type_name;
+        if (type_name)
+            return type_name
+        else if (string_p (x))
+            return "string-t";
+        else if (number_p (x))
+            return "number-t";
+        else if (x === true)
+            return "true-t";
+        else if (x === false)
+            return "false-t";
+        else
+            // return dashlize (x.constructor.name);
+            print ("- type_of fail on :", x);
+            error ();
+    }
+    function eq_p (x, y)
+    {
+        if (function_p (x.eq_p))
+            return x.eq_p (y);
+        if (function_p (y.eq_p))
+            return y.eq_p (x);
+        else
+            return x === y;
+    }
     class data_t
     {
         constructor (type_name, field_dict)
@@ -679,10 +740,10 @@
 
         eq_p (that)
         {
-            if (this.type_name !== that.type_name)
+            if (this.type_name !== type_of (that))
                 return false;
             else
-                return this.field_dict.eq_p (that.field_dict);
+                return eq_p (this.field_dict, that.field_dict);
         }
     }
     class closure_t
@@ -696,7 +757,7 @@
 
         eq_p (that)
         {
-            if (this.type_name !== that.type_name)
+            if (this.type_name !== type_of (that))
                 return false;
             if (this.exp_vect !== that.exp_vect)
                 return false;
@@ -716,12 +777,12 @@
 
         eq_p (that)
         {
-            if (this.type_name !== that.type_name)
+            if (this.type_name !== type_of (that))
                 return false;
             if (dict_length (this.dict) !== dict_length (that.dict))
                 return false;
             for (let [field_name, obj] of this.dict) {
-                if (! (obj.eq_p (that.dict.get (field_name))))
+                if (! (eq_p (obj, that.dict.get (field_name))))
                     return false;
             }
             return true;
@@ -735,6 +796,21 @@
         set (field_name, obj)
         {
             this.dict.set (field_name, obj);
+        }
+    }
+    class marker_t
+    {
+        constructor (exp_vect, scope)
+        {
+            this.type_name = "marker-t";
+        }
+
+        eq_p (that)
+        {
+            if (this.type_name !== type_of (that))
+                return false;
+            else
+                return true;
         }
     }
     let the_top_keyword_dict = new Map ();
@@ -949,69 +1025,64 @@
         "quote",
         function (env, sexp_list)
         {
-            let lit_vect = [];
+            let exp_vect = [];
             let sexp_vect = list_to_vect (sexp_list);
             for (let sexp of sexp_vect) {
-                lit_vect.push (new lit_exp_t (sexp));
+                exp_vect.push (new lit_exp_t (sexp));
             }
-            return lit_vect;
+            return exp_vect;
         }
     );
+    new_keyword (
+        "partquote",
+        partquote_compile);
+    function partquote_compile (env, sexp_list)
+    {
+        let exp_vect = [];
+        let sexp_vect = list_to_vect (sexp_list);
+        for (let sexp of sexp_vect) {
+            print (partquote_compile_one (env, sexp));
+            exp_vect.concat (partquote_compile_one (env, sexp));
+        }
+        return exp_vect;
+    }
+    function partquote_compile_one (env, sexp)
+    {
+        if (string_p (sexp)) {
+            // print (sexp);
+            return [new lit_exp_t (sexp)];
+        }
+        else {
+            assert (cons_p (sexp));
+            if (sexp.car === "@")
+                return sexp_list_compile (env, sexp.cdr);
+            else {
+                let exp_vect = [];
+                exp_vect.push (new mark_exp_t ());
+                exp_vect.concat (partquote_compile (env, sexp));
+                exp_vect.push (new collect_list_exp_t ());
+                return exp_vect;
+            }
+        }
+    }
     let the_prim_dict = new Map ();
     function new_prim (name, prim_fn)
     {
         let prim_den = new prim_den_t (prim_fn);
         the_prim_dict.set (name, prim_den);
     }
-      class true_t
-      {
-          constructor ()
-          {
-              this.type_name = "true-t";
-          }
-
-          eq_p (that)
-          {
-            if (this.type_name !== that.type_name)
-                return false;
-            else
-                return true;
-          }
-      }
-      class false_t
-      {
-          constructor ()
-          {
-              this.type_name = "false-t";
-          }
-
-          eq_p (that)
-          {
-            if (this.type_name !== that.type_name)
-                return false;
-            else
-                return true;
-          }
-      }
-      function new_bool (bool)
-      {
-          if (bool)
-              return new true_t ();
-          else
-              return new false_t ();
-      }
       new_prim (
           "true-c",
           function (env)
           {
-              data_stack_push (env, new true_t ());
+              data_stack_push (env, true);
           }
       );
       new_prim (
           "false-c",
           function (env)
           {
-              data_stack_push (env, new false_t ());
+              data_stack_push (env, false);
           }
       );
       new_prim (
@@ -1020,12 +1091,7 @@
           {
               let b = data_stack_pop (env);
               let a = data_stack_pop (env);
-              if (a instanceof false_t)
-                  data_stack_push (env, new false_t ());
-              else if (b instanceof false_t)
-                  data_stack_push (env, new false_t ());
-              else
-                  data_stack_push (env, new true_t ());
+              data_stack_push (env, (a && b));
           }
       );
       new_prim (
@@ -1034,12 +1100,7 @@
           {
               let b = data_stack_pop (env);
               let a = data_stack_pop (env);
-              if (a instanceof true_t)
-                  data_stack_push (env, new true_t ());
-              else if (b instanceof true_t)
-                  data_stack_push (env, new true_t ());
-              else
-                  data_stack_push (env, new false_t ());
+              data_stack_push (env, (a || b));
           }
       );
       new_prim (
@@ -1047,10 +1108,7 @@
           function (env)
           {
               let a = data_stack_pop (env);
-              if (a instanceof false_t)
-                  data_stack_push (env, new true_t ());
-              else
-                  data_stack_push (env, new false_t ());
+              data_stack_push (env, (! a));
           }
       );
       new_prim (
@@ -1058,34 +1116,18 @@
           function (env)
           {
               let a = data_stack_pop (env);
-              data_stack_push (env, new_bool (
-                  ((a instanceof false_t) ||
-                   (a instanceof true_t))));
+              data_stack_push (env, (
+                  ((a === false) ||
+                   (a === true))));
           }
       );
-      class number_t
-      {
-          constructor (number)
-          {
-              this.type_name = "number-t";
-              this.number = number;
-          }
-
-          eq_p (that)
-          {
-            if (this.type_name !== that.type_name)
-                return false;
-            else
-                return this.number === that.number;
-          }
-      }
       new_prim (
           "number-p",
           function (env)
           {
               let obj = data_stack_pop (env);
-              data_stack_push (env, new_bool (
-                  a.type_name === "number-t"));
+              data_stack_push (env, (
+                  type_of (a) === "number-t"));
           }
       );
       new_prim (
@@ -1093,7 +1135,7 @@
           function (env)
           {
               let a = data_stack_pop (env);
-              data_stack_push (env, new number_t (a.number +1));
+              data_stack_push (env, a +1);
           }
       );
       new_prim (
@@ -1101,7 +1143,7 @@
           function (env)
           {
               let a = data_stack_pop (env);
-              data_stack_push (env, new number_t (a.number -1));
+              data_stack_push (env, a -1);
           }
       );
       new_prim (
@@ -1109,7 +1151,7 @@
           function (env)
           {
               let a = data_stack_pop (env);
-              data_stack_push (env, new number_t (- a.number));
+              data_stack_push (env, - a);
           }
       );
       new_prim (
@@ -1118,8 +1160,7 @@
           {
               let b = data_stack_pop (env);
               let a = data_stack_pop (env);
-              data_stack_push (env, new number_t (
-                  a.number + b.number));
+              data_stack_push (env, a + b);
           }
       );
       new_prim (
@@ -1128,8 +1169,7 @@
           {
               let b = data_stack_pop (env);
               let a = data_stack_pop (env);
-              data_stack_push (env, new number_t (
-                  a.number - b.number));
+              data_stack_push (env, a - b);
           }
       );
       new_prim (
@@ -1138,8 +1178,7 @@
           {
               let b = data_stack_pop (env);
               let a = data_stack_pop (env);
-              data_stack_push (env, new number_t (
-                  a.number * b.number));
+              data_stack_push (env, a * b);
           }
       );
       new_prim (
@@ -1148,8 +1187,7 @@
           {
               let b = data_stack_pop (env);
               let a = data_stack_pop (env);
-              data_stack_push (env, new number_t (
-                  a.number / b.number));
+              data_stack_push (env, a / b);
           }
       );
 
@@ -1159,8 +1197,7 @@
           {
               let b = data_stack_pop (env);
               let a = data_stack_pop (env);
-              data_stack_push (env, new number_t (
-                  a.number % b.number));
+              data_stack_push (env, a % b);
           }
       );
       new_prim (
@@ -1169,10 +1206,8 @@
           {
               let b = data_stack_pop (env);
               let a = data_stack_pop (env);
-              data_stack_push (env, new number_t (
-                  a.number / b.number));
-              data_stack_push (env, new number_t (
-                  a.number % b.number));
+              data_stack_push (env, a / b);
+              data_stack_push (env, a % b);
           }
       );
       new_prim (
@@ -1181,10 +1216,8 @@
           {
               let b = data_stack_pop (env);
               let a = data_stack_pop (env);
-              data_stack_push (env, new number_t (
-                  a.number % b.number));
-              data_stack_push (env, new number_t (
-                  a.number / b.number));
+              data_stack_push (env, a % b);
+              data_stack_push (env, a / b);
           }
       );
       new_prim (
@@ -1193,8 +1226,8 @@
           {
               let b = data_stack_pop (env);
               let a = data_stack_pop (env);
-              data_stack_push (env, new_bool (
-                  a.number < b.number));
+              data_stack_push (env, (
+                  a < b));
           }
       );
       new_prim (
@@ -1203,8 +1236,8 @@
           {
               let b = data_stack_pop (env);
               let a = data_stack_pop (env);
-              data_stack_push (env, new_bool (
-                  a.number <= b.number));
+              data_stack_push (env, (
+                  a <= b));
           }
       );
       new_prim (
@@ -1213,8 +1246,8 @@
           {
               let b = data_stack_pop (env);
               let a = data_stack_pop (env);
-              data_stack_push (env, new_bool (
-                  a.number > b.number));
+              data_stack_push (env, (
+                  a > b));
           }
       );
       new_prim (
@@ -1223,33 +1256,17 @@
           {
               let b = data_stack_pop (env);
               let a = data_stack_pop (env);
-              data_stack_push (env, new_bool (
-                  a.number >= b.number));
+              data_stack_push (env, (
+                  a >= b));
           }
       );
-      class string_t
-      {
-          constructor (string)
-          {
-              this.type_name = "string-t";
-              this.string = string;
-          }
-
-          eq_p (that)
-          {
-            if (this.type_name !== that.type_name)
-                return false;
-            else
-                return this.string === that.string;
-          }
-      }
       new_prim (
           "string-p",
           function (env)
           {
               let a = data_stack_pop (env);
-              data_stack_push (env, new_bool (
-                  a.type_name === "string-t"));
+              data_stack_push (env, (
+                  type_of (a) === "string-t"));
           }
       );
       new_prim (
@@ -1257,7 +1274,7 @@
           function (env)
           {
               let a = data_stack_pop (env);
-              data_stack_push (env, new number_t (a.string.length));
+              data_stack_push (env, a.length);
           }
       );
       new_prim (
@@ -1266,8 +1283,8 @@
           {
               let index = data_stack_pop (env);
               let string = data_stack_pop (env);
-              let char = string.string[index.number];
-              data_stack_push (env, new string_t (char));
+              let char = string[index];
+              data_stack_push (env, char);
           }
       );
       new_prim (
@@ -1276,8 +1293,7 @@
           {
               let b = data_stack_pop (env);
               let a = data_stack_pop (env);
-              data_stack_push (env, new string_t (
-                  a.string.concat (b.string)));
+              data_stack_push (env, a.concat (b));
           }
       );
       new_prim (
@@ -1287,8 +1303,7 @@
               let end = data_stack_pop (env);
               let begin = data_stack_pop (env);
               let a = data_stack_pop (env);
-              data_stack_push (env, new string_t (
-                  a.string.slice (begin.number, end.number)));
+              data_stack_push (env, a.slice (begin, end));
           }
       );
       class null_t
@@ -1300,7 +1315,7 @@
 
           eq_p (that)
           {
-              if (this.type_name !== that.type_name)
+              if (this.type_name !== type_of (that))
                   return false;
               else
                   return true;
@@ -1325,11 +1340,11 @@
 
           eq_p (that)
           {
-              if (this.type_name !== that.type_name)
+              if (this.type_name !== type_of (that))
                   return false;
-              else if (! (this.car.eq_p (that.car)))
+              else if (! (eq_p (this.car, that.car)))
                   return false;
-              else if (! (this.cdr.eq_p (that.cdr)))
+              else if (! (eq_p (this.cdr, (that.cdr))))
                   return false;
               else
                   return true;
@@ -1360,8 +1375,8 @@
           function (env)
           {
               let a = data_stack_pop (env);
-              data_stack_push (env, new_bool (
-                  a.type_name === "null-t"));
+              data_stack_push (env, (
+                  type_of (a) === "null-t"));
           }
       );
       new_prim (
@@ -1378,8 +1393,8 @@
           function (env)
           {
               let a = data_stack_pop (env);
-              data_stack_push (env, new_bool (
-                  a.type_name === "cons-t"));
+              data_stack_push (env, (
+                  type_of (a) === "cons-t"));
           }
       );
 
@@ -1388,9 +1403,9 @@
           function (env)
           {
               let a = data_stack_pop (env);
-              data_stack_push (env, new_bool (
-                  ((a.type_name === "cons-t") ||
-                   (a.type_name === "null-t"))));
+              data_stack_push (env, (
+                  ((type_of (a) === "cons-t") ||
+                   (type_of (a) === "null-t"))));
           }
       );
     function code_scan (string)
@@ -1754,17 +1769,21 @@
             return [new eq_p_exp_t ()];
         else if (sexp === "clone")
             return [new clone_exp_t ()];
+        else if (sexp === "mark")
+            return [new mark_exp_t ()];
+        else if (sexp === "collect-list")
+            return [new collect_list_exp_t ()];
         else if (sexp === ",")
             return [];
         // ><><><
         // drop dup over tuck swap
         else if (string_string_p (sexp)) {
             let string = string_string_to_string (sexp);
-            return [new lit_exp_t (new string_t (string))];
+            return [new lit_exp_t (string)];
         }
         else if (number_string_p (sexp)) {
             let number = number_string_to_number (sexp);
-            return [new lit_exp_t (new number_t (number))];
+            return [new lit_exp_t (number)];
         }
         else {
             let name = sexp;
