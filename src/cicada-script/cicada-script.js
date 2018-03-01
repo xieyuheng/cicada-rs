@@ -528,6 +528,7 @@
     {
         constructor ()
         {
+
         }
 
         den_exe ()
@@ -547,7 +548,16 @@
             error ();
         }
     }
+    class union_predicate_den_t
+    {
+        constructor ()
+        {
+        }
 
+        den_exe (env)
+        {
+        }
+    }
     class data_den_t
     {
         constructor (reversed_field_name_vect)
@@ -598,6 +608,20 @@
                     this.type_name,
                     field_dict);
             data_stack_push (env, data);
+        }
+    }
+    class data_predicate_den_t
+    {
+        constructor (type_name)
+        {
+            this.type_name = type_name;
+        }
+
+        den_exe (env)
+        {
+            let a = data_stack_pop (env);
+            data_stack_push (env, new_bool (
+                a.type_name === this.type_name));
         }
     }
     class top_macro_den_t
@@ -765,6 +789,9 @@
             name_dict_set (
                 env, prefix.concat ("-c"),
                 new data_cons_den_t (name));
+            name_dict_set (
+                env, prefix.concat ("-p"),
+                new data_predicate_den_t (name));
             name_dict_set (
                 env, prefix.concat ("-cr"),
                 new data_create_den_t (name));

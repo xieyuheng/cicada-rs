@@ -3,7 +3,7 @@
 test ()
 {
     ./tangle.js
-    node cicada-script.js
+    ./cicada-script
 }
 
 test

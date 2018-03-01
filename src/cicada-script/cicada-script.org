@@ -3,15 +3,9 @@
 
 * [todo-stack]
 
-*** (assert) and (assert!)
-
-    - be able to write tests
+*** union_predicate_den_t
 
 *** (+var)
-
-*** data_predicate_den_t
-
-*** union_predicate_den_t
 
 *** (+top-macro)
 
@@ -871,6 +865,7 @@
     {
         constructor ()
         {
+
         }
 
         den_exe ()
@@ -897,10 +892,19 @@
     }
     #+end_src
 
-*** >< union_predicate_den_t
+*** union_predicate_den_t
 
     #+begin_src js
+    class union_predicate_den_t
+    {
+        constructor ()
+        {
+        }
 
+        den_exe (env)
+        {
+        }
+    }
     #+end_src
 
 *** data_den_t
@@ -970,7 +974,24 @@
     }
     #+end_src
 
-*** >< data_predicate_den_t
+*** data_predicate_den_t
+
+    #+begin_src js
+    class data_predicate_den_t
+    {
+        constructor (type_name)
+        {
+            this.type_name = type_name;
+        }
+
+        den_exe (env)
+        {
+            let a = data_stack_pop (env);
+            data_stack_push (env, new_bool (
+                a.type_name === this.type_name));
+        }
+    }
+    #+end_src
 
 *** >< top_macro_den_t
 
@@ -1204,6 +1225,9 @@
             name_dict_set (
                 env, prefix.concat ("-c"),
                 new data_cons_den_t (name));
+            name_dict_set (
+                env, prefix.concat ("-p"),
+                new data_predicate_den_t (name));
             name_dict_set (
                 env, prefix.concat ("-cr"),
                 new data_create_den_t (name));

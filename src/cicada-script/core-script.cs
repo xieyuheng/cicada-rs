@@ -38,6 +38,8 @@
   ;; (begin
   ;;   10 factorial)
 
-  (begin
-    1 2 3 null-c cons-c cons-c cons-c
-    1 2 3 null-c cons-c cons-c cons-c eq-p)
+  ;; (begin
+  ;;   1 2 3 null-c cons-c cons-c cons-c
+  ;;   1 2 3 null-c cons-c cons-c cons-c eq-p)
+
+  zero-c cons-p
