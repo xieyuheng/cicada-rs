@@ -796,13 +796,6 @@
             name_dict_set (env, name, fun_den);
         }
     );
-    new_top_keyword (
-        "note",
-        function (env, sexp_list)
-        {
-            return [];
-        }
-    );
 
 
     let the_keyword_dict = new Map ();
@@ -865,6 +858,13 @@
                 reversed_field_name_vect.unshift (field_name);
             }
             return [new dot_exp_t (reversed_field_name_vect)];
+        }
+    );
+    new_keyword (
+        "note",
+        function (env, sexp_list)
+        {
+            return [];
         }
     );
     let the_prim_dict = new Map ();
@@ -1648,6 +1648,11 @@
                 den.den_exe (env);
                 let new_sexp = data_stack_pop (env);
                 return sexp_compile (env, new_sexp);
+            }
+            else {
+                print ("- sexp_compile fail");
+                print ("  unknown name :", name);
+                error ();
             }
         }
     }

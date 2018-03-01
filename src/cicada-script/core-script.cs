@@ -25,8 +25,9 @@
   ;;     (zero-t zero-c succ-c)
   ;;     (succ-t n.prev recur n mul)))
 
-  ;; zero-c succ-c succ-c succ-c
-  ;; zero-c succ-c succ-c succ-c add factorial
+  ;; (begin
+  ;;   zero-c succ-c succ-c succ-c
+  ;;   zero-c succ-c succ-c succ-c add factorial)
 
   ;; (+fun factorial
   ;;   (let n)
@@ -34,8 +35,9 @@
   ;;     (true-t 1)
   ;;     (false-t n number-dec recur n number-mul)))
 
-  ;; 10 factorial
+  ;; (begin
+  ;;   10 factorial)
 
-
-  1 2 3 null-c cons-c cons-c cons-c
-  1 2 3 null-c cons-c cons-c cons-c eq-p
+  (begin
+    1 2 3 null-c cons-c cons-c cons-c
+    1 2 3 null-c cons-c cons-c cons-c eq-p)

@@ -3,8 +3,6 @@
 
 * [todo-stack]
 
-*** (note) as keyword instead of top keyword
-
 *** (assert) and (assert!)
 
     - be able to write tests
@@ -1254,18 +1252,6 @@
     );
     #+end_src
 
-*** (note) -- also works as body level macro
-
-    #+begin_src js
-    new_top_keyword (
-        "note",
-        function (env, sexp_list)
-        {
-            return [];
-        }
-    );
-    #+end_src
-
 *** >< (+macro)
 
     #+begin_src js
@@ -1378,6 +1364,18 @@
                 reversed_field_name_vect.unshift (field_name);
             }
             return [new dot_exp_t (reversed_field_name_vect)];
+        }
+    );
+    #+end_src
+
+*** (note)
+
+    #+begin_src js
+    new_keyword (
+        "note",
+        function (env, sexp_list)
+        {
+            return [];
         }
     );
     #+end_src
