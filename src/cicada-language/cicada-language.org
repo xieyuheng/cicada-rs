@@ -3,11 +3,13 @@
 
 * [todo-stack]
 
-*** handle :name as ???
+*** fix the use of (.)
 
-*** type constructor can occur in function body
+*** finish the semantic
 
-    - type constructor need field_name too
+*** dummy syntax
+
+* [todo-list]
 
 *** eq-p in unification
 
@@ -23,6 +25,10 @@
 *** need gc on proxies
 
 * [note]
+
+*** type constructor
+
+    - type constructors can not occur in function body
 
 *** (case)
 
@@ -84,27 +90,11 @@
 
 * prolog
 
-*** bool
+*** >< dummy :
 
-***** bool-u
+*** >< (->) to (let)
 
-      #+begin_src cicada
-      (+union bool-u
-        true-t
-        false-t)
-      #+end_src
-
-***** true-t
-
-      #+begin_src cicada
-      (+type true-t)
-      #+end_src
-
-***** false-t
-
-      #+begin_src cicada
-      (+type false-t)
-      #+end_src
+*** >< (+type) to (+data)
 
 *** nat
 
@@ -127,26 +117,6 @@
       #+begin_src cicada
       (+type succ-t
         prev : nat-u)
-      #+end_src
-
-*** >< list
-
-***** list-u
-
-      #+begin_src cicada
-
-      #+end_src
-
-***** null-u
-
-      #+begin_src cicada
-
-      #+end_src
-
-***** cons-u
-
-      #+begin_src cicada
-
       #+end_src
 
 *** >< dict
@@ -549,6 +519,7 @@
       (+union hypo-u
         done-hypo-t
         todo-hypo-t
+        fresh-hypo-t
         bound-hypo-t)
       #+end_src
 
@@ -565,6 +536,12 @@
       #+begin_src cicada
       (+type todo-hypo-t
         type : type-u)
+      #+end_src
+
+***** fresh-hypo-t
+
+      #+begin_src cicada
+      (+type fresh-hypo-t)
       #+end_src
 
 ***** bound-hypo-t
@@ -590,6 +567,14 @@
       #+begin_src cicada
       (+type data-type-t
         type-name : string-t
+        field-obj-dict : [string-t obj-u dict-t])
+      #+end_src
+
+***** union-type-t
+
+      #+begin_src cicada
+      (+type union-type-t
+        union-name : string-t
         field-obj-dict : [string-t obj-u dict-t])
       #+end_src
 
@@ -711,7 +696,7 @@
                 ante-exp-list.cdr recur)))))
       #+end_src
 
-***** union-den/den-exe
+***** >< union-den/den-exe
 
       #+begin_src cicada
       (+fun union-den/den-exe
@@ -1029,3 +1014,9 @@
 * check
 
 * epilog
+
+*** main
+
+    #+begin_src cicada
+
+    #+end_src
