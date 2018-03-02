@@ -1,4 +1,4 @@
-#+property: tangle LETREC.jo
+#+property: tangle LETREC.cs
 #+title: LETREC
 
 * intro
@@ -8,7 +8,7 @@
 
   - example :
 
-  #+begin_src jojo
+  #+begin_src cicada
   (note
     (letrec :double :x
       (if (zero? :x) 0
@@ -18,7 +18,7 @@
 
 * exp
 
-  #+begin_src jojo
+  #+begin_src cicada
   (note program = exp)
   (note exp
     = <const-exp>
@@ -47,7 +47,7 @@
 
 * expval
 
-  #+begin_src jojo
+  #+begin_src cicada
   (note expval
     = <num-val>
     | <bool-val>
@@ -61,7 +61,7 @@
 
 * proc
 
-  #+begin_src jojo
+  #+begin_src cicada
   (+data <proc> .var .body .saved-env)
 
   (+jojo proc-apply (-> :val :proc -- expval)
@@ -71,7 +71,7 @@
 
 * specifying letrec-exp
 
-  #+begin_src jojo
+  #+begin_src cicada
   (note
     (= :proc-name :bound-var :proc-body :letrec-body lerrec-exp
        :env eval,
@@ -86,7 +86,7 @@
     - Let :env1 be the environment produced by this constructor
     - Then what should [:var :env1 env-apply] return ?
 
-  #+begin_src jojo
+  #+begin_src cicada
   (note
     (case :env <cons-rec-env>)
     (= :var :env env-apply,
@@ -99,7 +99,7 @@
 
 * env
 
-  #+begin_src jojo
+  #+begin_src cicada
   (note env = <null-env> | <cons-env>)
 
   (+data <null-env>)
@@ -123,7 +123,7 @@
 
 * program
 
-  #+begin_src jojo
+  #+begin_src cicada
   (+jojo init-env
     null-env
     ':x 10 num-val cons-env
@@ -136,7 +136,7 @@
 
 * eval
 
-  #+begin_src jojo
+  #+begin_src cicada
   (+jojo eval (-> :exp :env -- expval)
     (case :exp
       <const-exp> [:exp .num  num-val]
@@ -168,7 +168,7 @@
 
 * parse
 
-  #+begin_src jojo
+  #+begin_src cicada
   (note
     123 -- <const-exp>
     (diff ... ...) -- <diff-exp>
@@ -224,7 +224,7 @@
 
 * interface
 
-  #+begin_src jojo
+  #+begin_src cicada
   (+jojo LETREC (-> :body --)
     :body {parse program-eval expval-print nl} list-for-each
     '(begin))
@@ -237,7 +237,7 @@
 
 * [test]
 
-  #+begin_src jojo
+  #+begin_src cicada
   (LETREC
    1 2 3
    (diff 2 1)

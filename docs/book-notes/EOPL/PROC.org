@@ -1,5 +1,5 @@
-#+property: tangle PROC.jo
-#+title: PROC
+#+title: PROC: A Language with Procedures
+#+property: tangle PROC.cs
 
 * intro
 
@@ -11,7 +11,7 @@
 
 * exp
 
-  #+begin_src jojo
+  #+begin_src cicada
   (note program = exp)
   (note exp
     = <const-exp>
@@ -36,7 +36,7 @@
 
 * expval
 
-  #+begin_src jojo
+  #+begin_src cicada
   (note expval
     = <num-val>
     | <bool-val>
@@ -50,7 +50,7 @@
 
 * proc
 
-  #+begin_src jojo
+  #+begin_src cicada
   (+data <proc> .var .body .saved-env)
 
   (+jojo proc-apply (-> :val :proc -- expval)
@@ -60,7 +60,7 @@
 
 * specifying proc-exp
 
-  #+begin_src jojo
+  #+begin_src cicada
   (note
     (= :var :body proc-exp :env eval,
        :var :body :env proc proc-val))
@@ -68,7 +68,7 @@
 
 * specifying call-exp
 
-  #+begin_src jojo
+  #+begin_src cicada
   (note
     (= :rator :rand call-exp :env eval,
        :rator :env eval .proc :proc!
@@ -78,7 +78,7 @@
 
 * environments
 
-  #+begin_src jojo
+  #+begin_src cicada
   (note env = <null-env> | <cons-env>)
 
   (+data <null-env>)
@@ -96,7 +96,7 @@
 
 * program
 
-  #+begin_src jojo
+  #+begin_src cicada
   (+jojo init-env
     null-env
     ':x 10 num-val cons-env
@@ -109,7 +109,7 @@
 
 * eval
 
-  #+begin_src jojo
+  #+begin_src cicada
   (+jojo eval (-> :exp :env -- expval)
     (case :exp
       <const-exp> [:exp .num  num-val]
@@ -134,7 +134,7 @@
 
 * parse
 
-  #+begin_src jojo
+  #+begin_src cicada
   (note
     123 -- <const-exp>
     (diff ... ...) -- <diff-exp>
@@ -181,7 +181,7 @@
 
 * interface
 
-  #+begin_src jojo
+  #+begin_src cicada
   (+jojo PROC (-> :body --)
     :body {parse program-eval expval-print nl} list-for-each
     '(begin))
@@ -194,7 +194,7 @@
 
 * [test]
 
-  #+begin_src jojo
+  #+begin_src cicada
   (PROC
    1 2 3
    (diff 2 1)
@@ -215,7 +215,7 @@
 
 * exercise
 
-  #+begin_src jojo
+  #+begin_src cicada
   (note What is the value of the following PROC program?
 
     (PROC

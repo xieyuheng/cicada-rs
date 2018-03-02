@@ -1,4 +1,4 @@
-#+property: tangle NAMELESS.jo
+#+property: tangle NAMELESS.cs
 #+title: NAMELESS
 
 * intro
@@ -11,7 +11,7 @@
 
   - For example, the program :
 
-  #+begin_src jojo
+  #+begin_src cicada
   (note
     (let :x 37
       (proc :y
@@ -21,7 +21,7 @@
 
   - will be translated to :
 
-  #+begin_src jojo
+  #+begin_src cicada
   (note
     (let-nameless 37
       (proc-nameless
@@ -46,7 +46,7 @@
 
 * exp
 
-  #+begin_src jojo
+  #+begin_src cicada
   (note program = exp)
 
   (note exp
@@ -74,7 +74,7 @@
 
 * nameless-exp
 
-  #+begin_src jojo
+  #+begin_src cicada
   (note nameless-exp
     = <const-exp> -- 123
     | <zero?-exp> -- (diff ... ...)
@@ -112,7 +112,7 @@
 
     - when we translate the last line of the example :
 
-    #+begin_src jojo
+    #+begin_src cicada
     (note
       (let :x 37
         (proc :y
@@ -133,14 +133,14 @@
 
 *** static-env
 
-    #+begin_src jojo
+    #+begin_src cicada
     (+data <null-static-env>)
     (+data <cons-static-env> .rest .var)
     #+end_src
 
 *** static-env-apply
 
-    #+begin_src jojo
+    #+begin_src cicada
     (+jojo static-env-apply
       (-> :var :static-env -- lexical-address)
       (case :static-env
@@ -175,7 +175,7 @@
     3. <proc-exp> -> <proc-nameless-exp>
        the body with be translated in extended static-env.
 
-  #+begin_src jojo
+  #+begin_src cicada
   (+jojo tran (-> :exp :static-env -- nameless-exp)
     (case :exp
       <const-exp> :exp
@@ -221,14 +221,14 @@
 
 *** nameless-env
 
-    #+begin_src jojo
+    #+begin_src cicada
     (+data <null-nameless-env>)
     (+data <cons-nameless-env> .rest .val)
     #+end_src
 
 *** nameless-env-apply
 
-    #+begin_src jojo
+    #+begin_src cicada
     (+jojo nameless-env-apply
       (-> :lexical-address :nameless-env -- denval)
       (cond [:nameless-env null-nameless-env?]
@@ -243,7 +243,7 @@
 
 * expval
 
-  #+begin_src jojo
+  #+begin_src cicada
   (note denval = expval)
 
   (note expval
@@ -262,7 +262,7 @@
   - The revised specification for procedures
     is just the old one with the variable name removed.
 
-  #+begin_src jojo
+  #+begin_src cicada
   (+data <proc> .body .saved-env)
 
   (+jojo proc-apply (-> :val :proc -- expval)
@@ -276,7 +276,7 @@
     :exp is nameless-exp
     :env is nameless-env
 
-  #+begin_src jojo
+  #+begin_src cicada
   (+jojo eval (-> :exp :env -- expval)
     (case :exp
       <const-exp> [:exp .num num-val]
@@ -300,7 +300,7 @@
 
 * program
 
-  #+begin_src jojo
+  #+begin_src cicada
   (+jojo init-static-env
     null-static-env
     ':x cons-static-env
@@ -319,7 +319,7 @@
 
 * parse
 
-  #+begin_src jojo
+  #+begin_src cicada
   (+jojo parse (-> :sexp -- exp)
     (cond
       [:sexp string?] [:sexp parse/string]
@@ -355,7 +355,7 @@
 
 * interface
 
-  #+begin_src jojo
+  #+begin_src cicada
   (+jojo NAMELESS (-> :body --)
     :body {parse
            init-static-env tran
@@ -372,7 +372,7 @@
 
 * [test]
 
-  #+begin_src jojo
+  #+begin_src cicada
   (NAMELESS
    1 2 3
    (diff 2 1)

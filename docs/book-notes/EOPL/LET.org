@@ -1,5 +1,5 @@
-#+property: tangle LET.jo
-#+title: LET
+#+property: tangle LET.cs
+#+title: LET: A Simple Language
 
 * intro
 
@@ -21,7 +21,7 @@
   - example expression :
     (diff 55 (diff x 11))
 
-  #+begin_src jojo
+  #+begin_src cicada
   (note program = exp)
   (note exp
     = <const-exp>
@@ -50,7 +50,7 @@
     - ExpVal = Int + Bool
     - DenVal = Int + Bool
 
-  #+begin_src jojo
+  #+begin_src cicada
   (note expval
     = <num-val>
     | <bool-val>)
@@ -70,7 +70,7 @@
     whose domain is a finite set of variables
     and whose range is the denoted values.
 
-  #+begin_src jojo
+  #+begin_src cicada
   (note env = <null-env> | <cons-env>)
 
   (+data <null-env>)
@@ -88,7 +88,7 @@
 
 * specifying expressions
 
-  #+begin_src jojo
+  #+begin_src cicada
   (+data <const-exp> .num)
   (+data <zero?-exp> .exp1)
   (+data <if-exp>    .exp1 .exp2 .exp3)
@@ -118,7 +118,7 @@
 
   - We choose our initial environment to be [i=1,v=5,x=10].
 
-  #+begin_src jojo
+  #+begin_src cicada
   (+jojo init-env
     null-env
     ':x 10 num-val cons-env
@@ -137,7 +137,7 @@
   - The language has one constructor of booleans -- 'zero?',
     and one observer of booleans -- the if expression.
 
-  #+begin_src jojo
+  #+begin_src cicada
   (note
     (= :exp1 :env eval, :val1)
     ------------------------------------
@@ -149,7 +149,7 @@
 
   - An if expression is an observer of boolean values.
 
-  #+begin_src jojo
+  #+begin_src cicada
   (note
     (= :exp1 :env eval, :val1)
     ------------------------------------
@@ -171,7 +171,7 @@
     We can then use substitution of equals for equals
     to display a calculation.
 
-  #+begin_src jojo
+  #+begin_src cicada
   (note
     (= :exp1 :exp2 :exp3 if-exp :env eval
        (if [:exp1 :env eval .bool]
@@ -181,7 +181,7 @@
 
   - for example :
 
-  #+begin_src jojo
+  #+begin_src cicada
   (note
 
     null-env ':x 33 cons-env ':y 22 cons-env :env!
@@ -216,7 +216,7 @@
 
   - reference rule :
 
-  #+begin_src jojo
+  #+begin_src cicada
   (note
     (= :exp1 :env eval, :val1)
     ------------------------------------
@@ -226,7 +226,7 @@
 
   - equation :
 
-  #+begin_src jojo
+  #+begin_src cicada
   (note
     (= :var :exp1 :body :env eval,
      :env, :var, :exp1 :env eval, cons-env
@@ -235,7 +235,7 @@
 
 * eval
 
-  #+begin_src jojo
+  #+begin_src cicada
   (+jojo eval (-> :exp :env -- expval)
     (case :exp
       <const-exp> [:exp .num  num-val]
@@ -255,7 +255,7 @@
 
 * parse
 
-  #+begin_src jojo
+  #+begin_src cicada
   (note
     123 -- <const-exp>
     (diff ... ...) -- <diff-exp>
@@ -295,7 +295,7 @@
 
 * interface
 
-  #+begin_src jojo
+  #+begin_src cicada
   (+jojo LET (-> :body --)
     :body {parse program-eval expval-print nl} list-for-each
     '(begin))
@@ -308,7 +308,7 @@
 
 * [test]
 
-  #+begin_src jojo
+  #+begin_src cicada
   (LET
    1 2 3
    (diff 2 1)

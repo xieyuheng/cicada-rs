@@ -1,9 +1,9 @@
-#+property: tangle CPI.jo
+#+property: tangle CPI.cs
 #+title: CPI
 
 * exp
 
-  #+begin_src jojo
+  #+begin_src cicada
   (note program = exp)
   (note exp
     = <const-exp>
@@ -32,7 +32,7 @@
 
 * expval
 
-  #+begin_src jojo
+  #+begin_src cicada
   (note expval
     = <num-val>
     | <bool-val>
@@ -46,7 +46,7 @@
 
 * proc
 
-  #+begin_src jojo
+  #+begin_src cicada
   (+data <proc> .var .body .saved-env)
 
   (+jojo proc-apply (-> :val :proc :cont -- expval)
@@ -57,7 +57,7 @@
 
 * env
 
-  #+begin_src jojo
+  #+begin_src cicada
   (note env = <null-env> | <cons-env>)
 
   (+data <null-env>)
@@ -81,7 +81,7 @@
 
 * program
 
-  #+begin_src jojo
+  #+begin_src cicada
   (+jojo init-env
     null-env
     ':x 10 num-val cons-env
@@ -94,7 +94,7 @@
 
 * eval
 
-  #+begin_src jojo
+  #+begin_src cicada
   (+jojo eval (-> :exp :env :cont -- expval)
     (case :exp
       <const-exp> [:exp .num num-val
@@ -137,7 +137,7 @@
 
 *** cont
 
-    #+begin_src jojo
+    #+begin_src cicada
     (+data <end-cont>)
     (+data <zero1-cont> .rest)
 
@@ -153,7 +153,7 @@
 
 *** cont-apply
 
-    #+begin_src jojo
+    #+begin_src cicada
     (+jojo cont-apply (-> :val :cont -- expval)
       (case :cont
 
@@ -196,7 +196,7 @@
 
 * parse
 
-  #+begin_src jojo
+  #+begin_src cicada
   (note
     123 -- <const-exp>
     (diff ... ...) -- <diff-exp>
@@ -252,7 +252,7 @@
 
 * interface
 
-  #+begin_src jojo
+  #+begin_src cicada
   (+jojo CPI (-> :body --)
     :body {parse program-eval expval-print nl} list-for-each
     '(begin))
@@ -265,7 +265,7 @@
 
 * [test]
 
-  #+begin_src jojo
+  #+begin_src cicada
   (CPI
    1 2 3
    (diff 2 1)
