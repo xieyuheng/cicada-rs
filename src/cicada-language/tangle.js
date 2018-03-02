@@ -2,6 +2,7 @@
 "use strict";
 
 const fs = require("fs");
+const path = require("path");
 
 function tangle (input_file_name, output_file_name) {
   let line_array =
@@ -45,5 +46,4 @@ function line_array_to_string (line_array) {
   return result_string;
 }
 
-tangle("cicada-script.org", "cicada-script.js");
-tangle("core-script.org", "core-script.cs");
+tangle("cicada-language.org", "cicada-language.cs");
