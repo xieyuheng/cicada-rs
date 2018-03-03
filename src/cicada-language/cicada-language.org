@@ -3,11 +3,27 @@
 
 * [todo-stack]
 
-*** new object model
+*** refactor new-hypo-in-scope
 
-*** finish the semantic
+*** exe
+
+*** use unmber-t instead of nat-u
 
 *** dummy syntax
+
+*** generate/hypo-id
+
+*** ante-exp-list/pick-up
+
+*** data-bind-dict
+
+*** type-bind-dict
+
+*** run
+
+*** collect
+
+*** test
 
 * [todo-list]
 
@@ -95,29 +111,6 @@
 *** >< (->) to (let)
 
 *** >< (+type) to (+data)
-
-*** nat
-
-***** nat-u
-
-      #+begin_src cicada
-      (+union nat-u
-        zero-t
-        succ-t)
-      #+end_src
-
-***** zero-t
-
-      #+begin_src cicada
-      (+type zero-t)
-      #+end_src
-
-***** succ-t
-
-      #+begin_src cicada
-      (+type succ-t
-        prev : nat-u)
-      #+end_src
 
 *** >< dict
 
@@ -330,6 +323,14 @@
 
 *** goal-stack
 
+*** >< data-bind-dict
+
+***** ><
+
+*** >< type-bind-dict
+
+***** ><
+
 * exp
 
 *** exp-u
@@ -465,13 +466,11 @@
 
     #+begin_src cicada
     (+union obj-u
-      data-obj-t
-      closure-obj-t
-      data-hypo-t
-      type-hypo-t
-      data-type-t
+      data-obj-t data-type-t
+      union-type-t
       type-type-t
-      arrow-type-t)
+      closure-obj-t arrow-type-t
+      data-hypo-t type-hypo-t)
     #+end_src
 
 *** data-obj-t
@@ -480,28 +479,6 @@
     (+type data-obj-t
       data-type : data-type-t
       field-obj-dict : [string-t obj-u dict-t])
-    #+end_src
-
-*** closure-obj-t
-
-    #+begin_src cicada
-    (+type closure-obj-t
-      scope : [string-t obj-u dict-t]
-      body-exp-list : [exp-u list-u])
-    #+end_src
-
-*** data-hypo-t
-
-    #+begin_src cicada
-    (+type data-hypo-t
-      id : hypo-id-t)
-    #+end_src
-
-*** type-hypo-t
-
-    #+begin_src cicada
-    (+type type-hypo-t
-      id : hypo-id-t)
     #+end_src
 
 *** data-type-t
@@ -527,12 +504,41 @@
       level : nat-u)
     #+end_src
 
+*** closure-obj-t
+
+    #+begin_src cicada
+    (+type closure-obj-t
+      scope : [string-t obj-u dict-t]
+      body-exp-list : [exp-u list-u])
+    #+end_src
+
 *** arrow-type-t
 
     #+begin_src cicada
     (+type arrow-type-t
       ante-type-list : [obj-u list-u]
       succ-type-list : [obj-u list-u])
+    #+end_src
+
+*** data-hypo-t
+
+    #+begin_src cicada
+    (+type data-hypo-t
+      id : hypo-id-t)
+    #+end_src
+
+*** type-hypo-t
+
+    #+begin_src cicada
+    (+type type-hypo-t
+      id : hypo-id-t)
+    #+end_src
+
+*** hypo-id-t
+
+    #+begin_src cicada
+    (+type hypo-id-t
+      string : string-t)
     #+end_src
 
 * exe
@@ -583,8 +589,7 @@
         : (-> env-t, den : fun-den-t -- env-t)
         new/scope scope-stack/push
         den.type-arrow-exp arrow-exp/extend-scope
-        den.type-arrow-exp.ante-exp-list
-        ante-exp-list/pick-up
+        den.type-arrow-exp.ante-exp-list ante-exp-list/pick-up
         den.body-exp-list new/scoping-frame frame-stack/push)
       #+end_src
 
@@ -638,12 +643,17 @@
                 ante-exp-list.cdr recur)))))
       #+end_src
 
-***** >< union-den/den-exe
+***** union-den/den-exe
 
       #+begin_src cicada
       (+fun union-den/den-exe
         : (-> env-t, den : union-den-t -- env-t)
-        )
+        (. union-name = den.type-name
+           field-obj-dict =
+           [new/dict den.type-arrow-exp.ante-exp-list
+            ante-exp-list/merge-fields])
+        union-type-cr data-stack/push)
+
       #+end_src
 
 *** let-exp/exe
@@ -779,8 +789,8 @@
 
     #+begin_src cicada
     (+fun generate/hypo-id
-      : (-> env-t, seed : string-t
-         -- env-t, string-t)
+      : (-> env-t, base-name : string-t
+         -- env-t, hypo-id-t)
       )
     #+end_src
 
@@ -793,9 +803,9 @@
       data-stack/drop)
     #+end_src
 
-* run
+* >< run
 
-* collect
+* >< collect
 
 *** collect-list
 
