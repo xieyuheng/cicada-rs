@@ -131,3 +131,12 @@
       newline)
 
     1 2 k
+
+    (+fun nop
+      (case dup
+        (string-t)
+        (number-t)))
+
+    1 nop
+    1 nop
+    "1" nop

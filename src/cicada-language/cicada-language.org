@@ -3,15 +3,13 @@
 
 * [todo-stack]
 
+*** dummy syntax
+
 *** data-bind-dict
 
 *** type-bind-dict
 
-*** generate/hypo-id
-
 *** ante-exp-list/pick-up
-
-*** dummy syntax
 
 *** test exe
 
@@ -640,8 +638,8 @@
         : (-> env-t, den : type-den-t -- env-t)
         (. type-name = den.type-name
            field-obj-dict =
-           [new/dict den.type-arrow-exp.ante-exp-list
-            ante-exp-list/merge-fields])
+           [den.type-arrow-exp.ante-exp-list
+            new/field-obj-dict])
         data-type-cr data-stack/push)
       #+end_src
 
@@ -652,9 +650,20 @@
         : (-> env-t, den : union-den-t -- env-t)
         (. union-name = den.type-name
            field-obj-dict =
-           [new/dict den.type-arrow-exp.ante-exp-list
-            ante-exp-list/merge-fields])
+           [den.type-arrow-exp.ante-exp-list
+            new/field-obj-dict])
         union-type-cr data-stack/push)
+      #+end_src
+
+***** new/field-obj-dict
+
+      #+begin_src cicada
+      (+fun new/field-obj-dict
+        : (-> env-t
+              ante-exp-list : [exp-u list-u]
+           -- env-t, string-t obj-u dict-t)
+        new/dict ante-exp-list
+        ante-exp-list/merge-fields)
       #+end_src
 
 ***** ante-exp-list/merge-fields
@@ -760,13 +769,13 @@
     #+begin_src cicada
     (+fun construct-exp/exe
       : (-> env-t, exp : construct-exp-t -- env-t)
-      den.type-arrow-exp arrow-exp/extend-scope
       exp.type-name name-dict/get (let den)
-      (. type =
-         [den.cons-arrow-exp.succ-exp-list collect-one]
+      den.type-arrow-exp arrow-exp/extend-scope
+      den.cons-arrow-exp.succ-exp-list collect-one (let return-type)
+      (. type = return-type
          field-obj-dict =
-         [new/dict den.cons-arrow-exp.ante-exp-list
-          ante-exp-list/merge-fields])
+         [den.cons-arrow-exp.ante-exp-list
+          new/field-obj-dict])
       data-obj-cr data-stack/push)
     #+end_src
 
@@ -804,13 +813,48 @@
       data-stack/drop)
     #+end_src
 
-*** >< generate/hypo-id
+*** counter-t
 
     #+begin_src cicada
+    (+type counter-t
+      .number : number-t)
+    #+end_src
+
+*** new/counter
+
+    #+begin_src cicada
+    (+fun new/counter
+      : (-> -- counter-t)
+      0 counter-c)
+    #+end_src
+
+*** counter/inc
+
+    #+begin_src cicada
+    (+fun counter/inc
+      : (-> counter-t --)
+      swap .number!)
+    #+end_src
+
+*** counter/number
+
+    #+begin_src cicada
+    (+fun counter/number
+      : (-> counter-t -- number-t)
+      .number)
+    #+end_src
+
+*** generate/hypo-id
+
+    #+begin_src cicada
+    (+var hypo-id/counter new/counter)
+
     (+fun generate/hypo-id
       : (-> env-t, base-name : string-t
          -- env-t, hypo-id-t)
-      )
+      hypo-id/counter counter/number repr (let postfix)
+      hypo-id/counter counter/inc
+      base-name postfix string-append hypo-id-c)
     #+end_src
 
 * run
@@ -823,7 +867,7 @@
       (if top-frame-finished-p
         (case frame-stack-pop
           (scoping-frame-t scope-stack-drop)
-          (simple-frame-t nop))
+          (simple-frame-t))
         [top-frame-next-exp exe]))
     #+end_src
 
