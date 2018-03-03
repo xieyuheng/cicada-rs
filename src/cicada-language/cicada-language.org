@@ -3,8 +3,6 @@
 
 * [todo-stack]
 
-*** refactor new-hypo-in-scope
-
 *** exe
 
 *** use unmber-t instead of nat-u
@@ -309,6 +307,19 @@
            -- string-t obj-u dict-t)
         (dict local-name obj)
         dict-update)
+      #+end_src
+
+***** current-scope/set
+
+      #+begin_src cicada
+      (+fun current-scope/set
+        : (-> string-t obj-u dict-t
+              local-name : string-t
+              obj : obj-u
+           -- string-t obj-u dict-t)
+      scope-stack/pop
+      name hypo-obj scope/set
+      scope-stack/push)
       #+end_src
 
 *** scope
@@ -621,6 +632,18 @@
         data-type-cr data-stack/push)
       #+end_src
 
+***** union-den/den-exe
+
+      #+begin_src cicada
+      (+fun union-den/den-exe
+        : (-> env-t, den : union-den-t -- env-t)
+        (. union-name = den.type-name
+           field-obj-dict =
+           [new/dict den.type-arrow-exp.ante-exp-list
+            ante-exp-list/merge-fields])
+        union-type-cr data-stack/push)
+      #+end_src
+
 ***** ante-exp-list/merge-fields
 
       #+begin_src cicada
@@ -641,19 +664,6 @@
               (else
                 field-obj-dict
                 ante-exp-list.cdr recur)))))
-      #+end_src
-
-***** union-den/den-exe
-
-      #+begin_src cicada
-      (+fun union-den/den-exe
-        : (-> env-t, den : union-den-t -- env-t)
-        (. union-name = den.type-name
-           field-obj-dict =
-           [new/dict den.type-arrow-exp.ante-exp-list
-            ante-exp-list/merge-fields])
-        union-type-cr data-stack/push)
-
       #+end_src
 
 *** let-exp/exe
@@ -765,33 +775,11 @@
     (+fun colon-exp/exe
       : (-> env-t, exp : colon-exp-t -- env-t)
       exp.type-exp-list collect (let type)
-      exp.local-name type new-hypo-in-scope
+      exp.local-name generate/hypo-id (let hypo-id)
+      hypo-id type-hypo-c
+      type type-hypo/set
+      exp.local-name hypo-id data-hypo-c current-scope/set
       type data-stack/push)
-    #+end_src
-
-*** ><><>< new-hypo-in-scope
-
-    #+begin_src cicada
-    (+fun new-hypo-in-scope
-      : (-> env-t, name : string-t, type : obj-u
-         -- env-t)
-      name generate/hypo-id hypo-obj-c (let hypo-obj)
-      scope-stack/pop
-      name hypo-obj scope/set
-      scope-stack/push
-      hypo-obj.hypo-id
-      type todo-hypo-c
-      ><><><
-      hypo-dict/set)
-    #+end_src
-
-*** >< generate/hypo-id
-
-    #+begin_src cicada
-    (+fun generate/hypo-id
-      : (-> env-t, base-name : string-t
-         -- env-t, hypo-id-t)
-      )
     #+end_src
 
 *** double-colon-exp/exe
@@ -801,6 +789,15 @@
       : (-> env-t double-colon-exp-t -- env-t)
       colon-exp/exe
       data-stack/drop)
+    #+end_src
+
+*** >< generate/hypo-id
+
+    #+begin_src cicada
+    (+fun generate/hypo-id
+      : (-> env-t, base-name : string-t
+         -- env-t, hypo-id-t)
+      )
     #+end_src
 
 * >< run
