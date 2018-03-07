@@ -276,13 +276,12 @@
            length = length - 1;
         }
         return obj_vect;
-
     }
     function closure_to_obj (env, closure)
     {
-        let obj_vect = closure_to_obj_vect (env, closure);
-        assert (obj_vect.length === 1);
-        return obj_vect[0];
+        closure_apply_now (env, closure);
+        let obj = data_stack_pop (env);
+        return obj;
     }
     class call_exp_t
     {
@@ -434,6 +433,23 @@
                 closure_apply (env, obj);
             else
                 data_stack_push (env, obj);
+        }
+    }
+    class set_field_exp_t
+    {
+        constructor (field_name)
+        {
+            this.field_name = field_name;
+        }
+
+        exe (env, scope)
+        {
+            let data = data_stack_pop (env);
+            let obj = data_stack_pop (env);
+            if (data instanceof data_t)
+                data.field_dict.set (this.field_name, obj);
+            else
+                data[this.field_name] = obj;
         }
     }
     class dot_exp_t
@@ -1118,6 +1134,13 @@
         function (env, sexp_list)
         {
             return [new field_exp_t (sexp_list.car)];
+        }
+    );
+    new_keyword (
+        "set-field",
+        function (env, sexp_list)
+        {
+            return [new set_field_exp_t (sexp_list.car)];
         }
     );
     new_keyword (
@@ -1878,16 +1901,10 @@
       function pass_for_field (sexp)
       {
           if (string_p (sexp)) {
-              if (sexp.length <= 1)
-                  return sexp;
-              let pre_fix =
-                  sexp.slice (0, 1);
-              if (pre_fix === ".") {
-                  sexp = sexp.slice (1, sexp.length);
-                  sexp = cons_c (sexp, null_c ());
-                  sexp = cons_c ("field", sexp);
-                  return sexp;
-              }
+              if (field_name_string_p (sexp))
+                  return to_field_sexp (sexp);
+              if (set_field_name_string_p (sexp))
+                  return to_set_field_sexp (sexp);
               else
                   return sexp;
           }
@@ -1901,6 +1918,34 @@
       }
 
       new_pass (pass_for_field);
+      function field_name_string_p (s)
+      {
+          return ((string_p (s)) &&
+                  (s.length > 1) &&
+                  (s.slice (0, 1) === ".") &&
+                  (s.slice (s.length -1, s.length) !== "!"));
+      }
+      function set_field_name_string_p (s)
+      {
+          return ((string_p (s)) &&
+                  (s.length > 2) &&
+                  (s.slice (0, 1) === ".") &&
+                  (s.slice (s.length -1, s.length) === "!"));
+      }
+      function to_field_sexp (sexp)
+      {
+          sexp = sexp.slice (1, sexp.length);
+          sexp = cons_c (sexp, null_c ());
+          sexp = cons_c ("field", sexp);
+          return sexp;
+      }
+      function to_set_field_sexp (sexp)
+      {
+          sexp = sexp.slice (1, sexp.length -1);
+          sexp = cons_c (sexp, null_c ());
+          sexp = cons_c ("set-field", sexp);
+          return sexp;
+      }
     function sexp_list_compile (env, sexp_list)
     {
         let sexp_vect = list_to_vect (sexp_list);

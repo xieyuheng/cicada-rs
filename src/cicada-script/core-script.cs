@@ -132,11 +132,23 @@
 
     1 2 k
 
-    (+fun nop
-      (case dup
-        (string-t)
-        (number-t)))
 
-    1 nop
-    1 nop
-    "1" nop
+    (+var x 1 null-c cons-c)
+
+    (begin
+      2 x.car!
+      ;; x
+      )
+
+    (+fun nat->number
+      (let n)
+      (case n
+        (zero-t 0)
+        (succ-t n.prev recur number-inc)))
+
+    (+var n zero-c succ-c succ-c)
+
+    (begin
+      n nat->number
+      zero-c n.prev!
+      n nat->number)
