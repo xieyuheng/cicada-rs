@@ -10,10 +10,6 @@
     - to be able to use it as a repl
     - need to learn to use node for this
 
-*** fix the use (.) to allow '='
-
-*** do not let scan handle name.field
-
 *** set_field_exp_t -- .field!
 
 *** step
@@ -21,6 +17,8 @@
 *** debug
 
     - better error
+
+*** do not let scan handle name.field
 
 * [note]
 
@@ -546,7 +544,6 @@
            length = length - 1;
         }
         return obj_vect;
-
     }
     #+end_src
 
@@ -555,9 +552,9 @@
     #+begin_src js
     function closure_to_obj (env, closure)
     {
-        let obj_vect = closure_to_obj_vect (env, closure);
-        assert (obj_vect.length === 1);
-        return obj_vect[0];
+        closure_apply_now (env, closure);
+        let obj = data_stack_pop (env);
+        return obj;
     }
     #+end_src
 
@@ -1688,6 +1685,8 @@
     #+end_src
 
 *** (.)
+
+    - will run closure and collect whatever on top of the stack
 
     #+begin_src js
     new_keyword (

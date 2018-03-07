@@ -94,7 +94,11 @@
 
 * prolog
 
-*** >< dummy :
+*** dummy :
+
+    #+begin_src cicada
+    (+fun :)
+    #+end_src
 
 *** >< (->) to (let)
 
@@ -140,7 +144,8 @@
       #+begin_src cicada
       (+fun data-stack/push
         : (-> env : env-t, obj : obj-u -- env-t)
-        (. data-stack = [obj env.data-stack cons])
+        obj env.data-stack cons
+        (. data-stack)
         env clone)
       #+end_src
 
@@ -149,7 +154,8 @@
       #+begin_src cicada
       (+fun data-stack/pop
         : (-> env : env-t -- env-t obj-u)
-        (. data-stack = [env.data-stack.cdr])
+        env.data-stack.cdr
+        (. data-stack)
         env clone
         env.data-stack.car)
       #+end_src
@@ -195,7 +201,8 @@
       #+begin_src cicada
       (+fun frame-stack/push
         : (-> env : env-t, frame : frame-u -- env-t)
-        (. frame-stack = [frame env.frame-stack cons])
+        frame env.frame-stack cons
+        (. frame-stack)
         env clone)
       #+end_src
 
@@ -204,7 +211,8 @@
       #+begin_src cicada
       (+fun frame-stack/pop
         : (-> env : env-t -- env-t frame-u)
-        (. frame-stack = [env.frame-stack.cdr])
+        env.frame-stack.cdr
+        (. frame-stack)
         env clone
         env.frame-stack.car)
       #+end_src
@@ -248,8 +256,8 @@
       #+begin_src cicada
       (+fun new/scoping-frame
         : (-> body-exp-list : [exp-u list-u] -- scoping-frame-t)
-        (. body-exp-list = body-exp-list
-           index = 0)
+        body-exp-list 0
+        (. body-exp-list index)
         scoping-frame-cr)
       #+end_src
 
@@ -266,8 +274,8 @@
       #+begin_src cicada
       (+fun new/simple-frame
         : (-> body-exp-list : [exp-u list-u] -- simple-frame-t)
-        (. body-exp-list = body-exp-list
-           index = 0)
+        body-exp-list 0
+        (. body-exp-list index)
         simple-frame-cr)
       #+end_src
 
@@ -286,7 +294,8 @@
       (+fun top-frame-next-exp
         : (-> env-t -- env-t exp-u)
         frame-stack-pop (let frame)
-        (. index = [frame.index number-inc])
+        frame.index number-inc
+        (. index)
         frame clone
         frame-stack-push
         frame.body-exp-list frame.index list-ref)
@@ -636,10 +645,9 @@
       #+begin_src cicada
       (+fun type-den/den-exe
         : (-> env-t, den : type-den-t -- env-t)
-        (. type-name = den.type-name
-           field-obj-dict =
-           [den.type-arrow-exp.ante-exp-list
-            new/field-obj-dict])
+        den.type-arrow-exp.ante-exp-list new/field-obj-dict
+        den.type-name
+        (. field-obj-dict type-name)
         data-type-cr data-stack/push)
       #+end_src
 
@@ -648,10 +656,9 @@
       #+begin_src cicada
       (+fun union-den/den-exe
         : (-> env-t, den : union-den-t -- env-t)
-        (. union-name = den.type-name
-           field-obj-dict =
-           [den.type-arrow-exp.ante-exp-list
-            new/field-obj-dict])
+        den.type-arrow-exp.ante-exp-list new/field-obj-dict
+        den.union-name
+        (. field-obj-dict union-name)
         union-type-cr data-stack/push)
       #+end_src
 
@@ -717,8 +724,9 @@
     #+begin_src cicada
     (+fun closure-exp/exe
       : (-> env-t, exp : closure-exp-t -- env-t)
-      (. scope = scope-stack/tos
-         body-exp-list = [exp.body-exp-list])
+      scope-stack/tos
+      exp.body-exp-list
+      (. scope body-exp-list)
       closure-obj-cr
       data-stack/push)
     #+end_src
@@ -730,8 +738,9 @@
       : (-> env-t, exp : arrow-exp-t -- env-t)
       ;; calling collect-list
       ;;   might effect current scope
-      (. ante-type-list = [exp.ante-exp-list collect-list]
-         succ-type-list = [exp.succ-exp-list collect-list])
+      exp.ante-exp-list collect-list (let ante-type-list)
+      exp.succ-exp-list collect-list (let succ-type-list)
+      (. ante-type-list succ-type-list)
       arrow-type-cr
       data-stack/push)
     #+end_src
@@ -772,10 +781,9 @@
       exp.type-name name-dict/get (let den)
       den.type-arrow-exp arrow-exp/extend-scope
       den.cons-arrow-exp.succ-exp-list collect-one (let return-type)
-      (. type = return-type
-         field-obj-dict =
-         [den.cons-arrow-exp.ante-exp-list
-          new/field-obj-dict])
+      den.cons-arrow-exp.ante-exp-list new/field-obj-dict
+      return-type
+      (. field-obj-dict type)
       data-obj-cr data-stack/push)
     #+end_src
 
