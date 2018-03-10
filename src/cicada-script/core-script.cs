@@ -9,16 +9,20 @@
         (true-t true-fn)
         (false-t false-fn)))
     (+macro if
-      (let sexp-list)
-      `(case (@ sexp-list.car)
-         (true-t (@ sexp-list.cdr.car))
-         (false-t (@ sexp-list.cdr.cdr.car))))
+      (let body)
+      body.car (let question)
+      body.cdr.car (let on-true)
+      body.cdr.cdr.car (let on-false)
+      `(case (@ question)
+         (true-t (@ on-true))
+         (false-t (@ on-false))))
     (+macro assert (let body)
       `(if [(@ body list-spread)]
          []
          ["- (assert) fail" string/print newline
           "  assertion : " string/print
           (quote (@ body)) sexp-list-print newline]))
+
     (+macro assert! (let body)
       `(if [(@ body list-spread)]
          []
@@ -26,6 +30,15 @@
           "  assertion : " string/print
           (quote (@ body)) sexp-list-print newline
           error]))
+    (+macro when (let body)
+      `(if (@ body.car)
+         (@ 'begin body.cdr cons-c)
+         []))
+
+    (+macro unless (let body)
+      `(if (@ body.car)
+         []
+         (@ 'begin body.cdr cons-c)))
 
 
 
@@ -140,3 +153,18 @@
         "number-t number-t gene0")
 
       (assert 1 2 gene0 "number-t number-t gene0" eq-p)
+      (assert
+        (when [1 1 eq-p] 'ok)
+        'ok eq-p)
+
+      (assert
+        true-c
+        (unless [1 1 eq-p] 'ugh))
+
+      (assert
+        true-c
+        (when [1 2 eq-p] 'ugh))
+
+      (assert
+        (unless [1 2 eq-p] 'ok)
+        'ok eq-p)

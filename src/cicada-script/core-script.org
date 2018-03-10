@@ -5,8 +5,6 @@
 
 *** repr
 
-*** (unless)
-
 *** (lit/list)
 
 *** more about list
@@ -81,13 +79,16 @@
 
     #+begin_src cicada
     (+macro if
-      (let sexp-list)
-      `(case (@ sexp-list.car)
-         (true-t (@ sexp-list.cdr.car))
-         (false-t (@ sexp-list.cdr.cdr.car))))
+      (let body)
+      body.car (let question)
+      body.cdr.car (let on-true)
+      body.cdr.cdr.car (let on-false)
+      `(case (@ question)
+         (true-t (@ on-true))
+         (false-t (@ on-false))))
     #+end_src
 
-*** (assert)
+*** (assert) & (assert!)
 
     #+begin_src cicada
     (+macro assert (let body)
@@ -96,11 +97,7 @@
          ["- (assert) fail" string/print newline
           "  assertion : " string/print
           (quote (@ body)) sexp-list-print newline]))
-    #+end_src
 
-*** (assert!)
-
-    #+begin_src cicada
     (+macro assert! (let body)
       `(if [(@ body list-spread)]
          []
@@ -108,6 +105,20 @@
           "  assertion : " string/print
           (quote (@ body)) sexp-list-print newline
           error]))
+    #+end_src
+
+*** (when) & (unless)
+
+    #+begin_src cicada
+    (+macro when (let body)
+      `(if (@ body.car)
+         (@ 'begin body.cdr cons-c)
+         []))
+
+    (+macro unless (let body)
+      `(if (@ body.car)
+         []
+         (@ 'begin body.cdr cons-c)))
     #+end_src
 
 *** >< (and)
@@ -300,4 +311,24 @@
         "number-t number-t gene0")
 
       (assert 1 2 gene0 "number-t number-t gene0" eq-p)
+      #+end_src
+
+***** (when) & (unless)
+
+      #+begin_src cicada
+      (assert
+        (when [1 1 eq-p] 'ok)
+        'ok eq-p)
+
+      (assert
+        true-c
+        (unless [1 1 eq-p] 'ugh))
+
+      (assert
+        true-c
+        (when [1 2 eq-p] 'ugh))
+
+      (assert
+        (unless [1 2 eq-p] 'ok)
+        'ok eq-p)
       #+end_src
