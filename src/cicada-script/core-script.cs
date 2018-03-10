@@ -63,6 +63,79 @@
     (+fun :)
     ;; (+macro (->) )
 
+    (+gene repr 1
+      default-repr)
+    (+disp repr [string-t]
+      doublequote/string swap string/append
+      doublequote/string string/append)
+    (+disp repr [number-t]
+      number->string)
+    (+gene w 1
+      repr string/print)
+    (+gene p 1
+      w)
+    (+disp p [string-t]
+      string/print)
+    (+gene length 1
+      error)
+    (+gene empty-p 1
+      error)
+    (+gene inc 1
+      error)
+    (+gene dec 1
+      error)
+    (+gene add 2
+      error)
+    (+gene sub 2
+      error)
+    (+gene mul 2
+      error)
+    (+gene div 2
+      error)
+    (+gene mod 2
+      error)
+    (+gene moddiv 2
+      (let x y)
+      x y mod
+      x y div)
+    (+gene divmod 2
+      (let x y)
+      x y div
+      x y mod)
+    (+gene gt-p 2
+      error)
+    (+gene lt-p 2
+      error)
+    (+gene gteq-p 2
+      (let x y)
+      (or [x y eq-p]
+          [x y gt-p]))
+    (+gene lteq-p 2
+      (let x y)
+      (or [x y eq-p]
+          [x y lt-p]))
+    (+fun times (let fun n)
+      (unless [n 0 number/lteq-p]
+        fun
+        {fun} n number/dec recur))
+    (+disp gt-p [number-t number-t]
+      number/gt-p)
+    (+disp lt-p [number-t number-t]
+      number/lt-p)
+    (+disp inc [number-t]
+      number/inc)
+    (+disp dec [number-t]
+      number/dec)
+    (+disp add [number-t number-t]
+      number/add)
+    (+disp sub [number-t number-t]
+      number/sub)
+    (+disp mul [number-t number-t]
+      number/mul)
+    (+disp div [number-t number-t]
+      number/div)
+    (+disp mod [number-t number-t]
+      number/mod)
     (+macro lit/list (let body)
       `(begin mark (@ body list/spread) collect-list))
     (+fun list/length (let list)
@@ -74,6 +147,14 @@
         (null-t succ)
         (cons-t ante.car ante.cdr succ recur cons-c)))
     (+fun tail-cons null-c cons-c list/append)
+    (+fun list/reverse null-c swap list/reverse-swap-append)
+
+    (+fun list/reverse-swap-append
+      ;; -> ante list -- list
+      (let list)
+      (case list
+        (null-t)
+        (cons-t list.car swap cons-c list.cdr recur)))
     (+fun list/any-p (let list pred)
       (cond [list null-p] false-c
             [list.car pred] true-c
@@ -97,7 +178,7 @@
             [list.car pred] [null-c list]
             else [list.car
                   list.cdr {pred} recur
-                  succ! cons-c succ]))
+                  (let succ) cons-c succ]))
     (+fun list/map (let list fun)
       (case list
         (null-t null-c)
@@ -111,12 +192,6 @@
             [list.car pred]
             [list.car list.cdr {pred} recur cons-c]
             else [list.cdr {pred} recur]))
-    (+fun list/reverse null-c swap list/reverse-swap-append)
-
-    (+fun list/reverse-swap-append (let ante list)
-      (case list
-        (null-t)
-        (cons-t list.car swap cons-c list.cdr recur)))
     (+fun list/foldr (let list b a-b->b)
       (case list
         (null-t b)
@@ -133,41 +208,6 @@
           b-a->b)))
     (+fun list/member-p (let list x)
       list {x eq-p} list/any-p)
-    (+gene repr 1
-      default-repr)
-    (+disp repr [string-t]
-      doublequote/string swap string/append
-      doublequote/string string/append)
-    (+disp repr [number-t]
-      number->string)
-    (+gene w 1
-      repr string/print)
-    (+gene p 1
-      w)
-    (+disp p [string-t]
-      string/print)
-    (+gene length 1
-      error)
-    (+gene empty-p 1
-      error)
-    (+gene gt-p 2
-      error)
-    (+gene lt-p 2
-      error)
-    (note
-      (+gene gteq-p 2
-        (let x y)
-        (or [x y eq-p]
-            [x y gt-p])))
-    (note
-      (+gene lteq-p 2
-        (let x y)
-        (or [x y eq-p]
-            [x y lt-p])))
-    (+fun times (let fun n)
-      (unless [n 0 number/lteq-p]
-        fun
-        {fun} n number/dec recur))
       (assert
         true-c false-c bool/and
         false-c eq-p)
@@ -322,14 +362,13 @@
         (assert
           "" {"*" string/append} 3 times
           "***" eq-p)
-        (assert '(a b c) list/length 3 eq-p)
-        (assert '(a b c) '(d e f) list/append '(a b c d e f) eq-p)
-        (assert '(a b c) 'd tail-cons '(a b c d) eq-p)
-
         (assert
           mark 0 1 2 3 4 collect-list
           (lit/list 0 1 2 3 4)
           eq-p)
+        (assert '(a b c) list/length 3 eq-p)
+        (assert '(a b c) '(d e f) list/append '(a b c d e f) eq-p)
+        (assert '(a b c) 'd tail-cons '(a b c d) eq-p)
 
         (assert
           (lit/list 0 1 2 3 4)
@@ -339,78 +378,59 @@
           eq-p)
 
         (assert
-          (or       [3 2 eq-p]
-                    [1 1 eq-p]
-                    ))
+          (lit/list 0 1 2 3 4 5 6 7 8 9)
+          list/reverse
+          (lit/list 9 8 7 6 5 4 3 2 1 0)
+          eq-p)
+        (assert
+          (lit/list 0 1 2 3 4 5 6 7 8 9)
+          {5 gteq-p} list/ante
+          (lit/list 0 1 2 3 4)
+          eq-p)
 
-        ;; (assert
-        ;;   (lit/list 0 1 2 3 4 5 6 7 8 9)
-        ;;   {5 gteq-p} list/ante
-        ;;   (lit/list 0 1 2 3 4)
-        ;;   eq-p)
+        (assert
+          (lit/list 0 1 2 3 4 5 6 7 8 9)
+          {5 gteq-p} list/split
+          swap (lit/list 0 1 2 3 4) eq-p
+          swap (lit/list 5 6 7 8 9) eq-p
+          bool/and)
+        (assert
+          (lit/list 0 1 2 3 4 5 6 7 8 9)
+          {inc} list/map
+          (lit/list 1 2 3 4 5 6 7 8 9 10)
+          eq-p)
 
-        ;; (assert
-        ;;   (lit/list 0 1 2 3 4 5 6 7 8 9)
-        ;;   {5 gteq-p} list/split
-        ;;   swap (lit/list 0 1 2 3 4) eq-p
-        ;;   swap (lit/list 5 6 7 8 9) eq-p
-        ;;   and)
+        (assert
+          (lit/list 0 1 2 3 4 5 6 7 8 9)
+          {2 mod 0 eq-p} list/filter
+          (lit/list 0 2 4 6 8)
+          eq-p)
+        (assert
+          (lit/list 0 1 2 3 4 5) 100 {add} list/foldr
+          0 1 2 3 4 5 100 add add add add add add
+          eq-p)
 
-        ;; (assert
-        ;;   (lit/list 0 1 2 3 4 5 6 7 8 9)
-        ;;   {inc} list/map
-        ;;   (lit/list 1 2 3 4 5 6 7 8 9 10)
-        ;;   eq-p)
+        (assert
+          (lit/list 0 1 2 3 4 5) 100 {add} list/foldl
+          100 5 add 4 add 3 add 2 add 1 add 0 add
+          eq-p)
 
-        ;; (assert
-        ;;   (lit/list 0 1 2 3 4 5 6 7 8 9)
-        ;;   {2 mod 0 eq-p} list/filter
-        ;;   (lit/list 0 2 4 6 8)
-        ;;   eq-p)
+        (assert
+          (lit/list
+            (lit/list 1 2 3)
+            (lit/list 4 5 6)
+            (lit/list 7 8 9))
+          null-c {list/append} list/foldr
+          (lit/list 1 2 3, 4 5 6, 7 8 9)
+          eq-p)
 
-        ;; (assert
-        ;;   (lit/list 0 1 2 3 4 5 6 7 8 9)
-        ;;   list/reverse
-        ;;   (lit/list 9 8 7 6 5 4 3 2 1 0)
-        ;;   eq-p)
-
-
-        ;; (assert
-        ;;   (lit/list 0 1 2 3 4 5) 100 {add} list/foldr
-        ;;   0 1 2 3 4 5 100 add add add add add add
-        ;;   eq-p)
-
-        ;; (assert
-        ;;   (lit/list 0 1 2 3 4 5) 100 {add} list/foldl
-        ;;   100 5 add 4 add 3 add 2 add 1 add 0 add
-        ;;   eq-p)
-
-        ;; (assert
-        ;;   (lit/list
-        ;;     (lit/list 1 2 3)
-        ;;     (lit/list 4 5 6)
-        ;;     (lit/list 7 8 9))
-        ;;   null-c {list/append} list/foldr
-
-        ;;   (lit/list 1 2 3, 4 5 6, 7 8 9)
-        ;;   eq-p)
-
-        ;; (assert
-        ;;   (lit/list
-        ;;     (lit/list 1 2 3)
-        ;;     (lit/list 4 5 6)
-        ;;     (lit/list 7 8 9))
-        ;;   null-c {list/append} list/foldl
-        ;;   (lit/list 7 8 9, 4 5 6, 1 2 3)
-        ;;   eq-p)
-
-        ;; (assert
-        ;;   (lit/list 1 2 3 4 5) (lit/list 1 2 3 4 5) list/append
-        ;;   10 tail-cons list/length
-        ;;   11 eq-p)
-
-        ;; (assert
-        ;;   (lit/list 1 2 3 4 5) 2 list/ref
-        ;;   3 eq-p)
+        (assert
+          (lit/list
+            (lit/list 1 2 3)
+            (lit/list 4 5 6)
+            (lit/list 7 8 9))
+          null-c {list/append} list/foldl
+          (lit/list 7 8 9, 4 5 6, 1 2 3)
+          eq-p)
 
 

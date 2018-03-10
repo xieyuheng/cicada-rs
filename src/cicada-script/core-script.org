@@ -160,162 +160,6 @@
 
     #+end_src
 
-* number
-
-* string
-
-* list
-
-*** (lit/list)
-
-    #+begin_src cicada
-    (+macro lit/list (let body)
-      `(begin mark (@ body list/spread) collect-list))
-    #+end_src
-
-*** list/length
-
-    #+begin_src jojo
-    (+fun list/length (let list)
-      (if [list null-p]
-        0
-        [list.cdr recur number/inc]))
-    #+end_src
-
-*** list/append
-
-    #+begin_src jojo
-    (+fun list/append (let ante succ)
-      (case ante
-        (null-t succ)
-        (cons-t ante.car ante.cdr succ recur cons-c)))
-    #+end_src
-
-*** tail-cons
-
-    #+begin_src jojo
-    (+fun tail-cons null-c cons-c list/append)
-    #+end_src
-
-*** list/any-p
-
-    #+begin_src jojo
-    (+fun list/any-p (let list pred)
-      (cond [list null-p] false-c
-            [list.car pred] true-c
-            else [list.cdr {pred} recur]))
-    #+end_src
-
-*** list/every-p
-
-    #+begin_src jojo
-    (+fun list/every-p (let list pred)
-      (cond [list null-p] true-c
-            [list.car pred bool/not] false-c
-            else [list.cdr {pred} recur]))
-    #+end_src
-
-*** list/ante -- antecedent
-
-    #+begin_src jojo
-    (+fun list/ante (let list pred)
-      (cond [list null-p] null-c
-            [list.car pred] null-c
-            else [list.car
-                  list.cdr {pred} recur
-                  cons-c]))
-    #+end_src
-
-*** list/succ -- succedent
-
-    #+begin_src jojo
-    (+fun list/succ (let list pred)
-      (cond [list null-p] null-c
-            [list.car pred] list
-            else [list.cdr {pred} recur]))
-    #+end_src
-
-*** list/split
-
-    #+begin_src jojo
-    (+fun list/split (let list pred) ;; -- ante succ
-      (cond [list null-p] [null-c null-c]
-            [list.car pred] [null-c list]
-            else [list.car
-                  list.cdr {pred} recur
-                  succ! cons-c succ]))
-    #+end_src
-
-*** list/map
-
-    #+begin_src jojo
-    (+fun list/map (let list fun)
-      (case list
-        (null-t null-c)
-        (cons-t list.car fun list.cdr {fun} recur cons-c)))
-    #+end_src
-
-*** list/for-each
-
-    #+begin_src jojo
-    (+fun list/for-each (let list fun)
-      (case list
-        (null-t)
-        (cons-t list.car fun list.cdr {fun} recur)))
-    #+end_src
-
-*** list/filter
-
-    #+begin_src jojo
-    (+fun list/filter (let list pred)
-      (cond [list null-p] null-c
-            [list.car pred]
-            [list.car list.cdr {pred} recur cons-c]
-            else [list.cdr {pred} recur]))
-    #+end_src
-
-*** list/reverse
-
-    #+begin_src jojo
-    (+fun list/reverse null-c swap list/reverse-swap-append)
-
-    (+fun list/reverse-swap-append (let ante list)
-      (case list
-        (null-t)
-        (cons-t list.car swap cons-c list.cdr recur)))
-    #+end_src
-
-*** list/foldr
-
-    #+begin_src jojo
-    (+fun list/foldr (let list b a-b->b)
-      (case list
-        (null-t b)
-        (cons-t
-          list.car
-          list.cdr b {a-b->b} recur
-          a-b->b)))
-    #+end_src
-
-*** list/foldl
-
-    #+begin_src jojo
-    (+fun list/foldl (let list b b-a->b)
-      (case list
-        (null-t b)
-        (cons-t
-          list.cdr b {b-a->b} recur
-          list.car
-          b-a->b)))
-    #+end_src
-
-*** list/member-p
-
-    #+begin_src jojo
-    (+fun list/member-p (let list x)
-      list {x eq-p} list/any-p)
-    #+end_src
-
 * common gene
 
 *** repr
@@ -377,11 +221,72 @@
 
 * algebric gene
 
-*** >< add
+*** inc
 
-*** >< sub
+    #+begin_src cicada
+    (+gene inc 1
+      error)
+    #+end_src
 
-*** >< mul
+*** dec
+
+    #+begin_src cicada
+    (+gene dec 1
+      error)
+    #+end_src
+
+*** add
+
+    #+begin_src cicada
+    (+gene add 2
+      error)
+    #+end_src
+
+*** sub
+
+    #+begin_src cicada
+    (+gene sub 2
+      error)
+    #+end_src
+
+*** mul
+
+    #+begin_src cicada
+    (+gene mul 2
+      error)
+    #+end_src
+
+*** div
+
+    #+begin_src cicada
+    (+gene div 2
+      error)
+    #+end_src
+
+*** mod
+
+    #+begin_src cicada
+    (+gene mod 2
+      error)
+    #+end_src
+
+*** moddiv
+
+    #+begin_src cicada
+    (+gene moddiv 2
+      (let x y)
+      x y mod
+      x y div)
+    #+end_src
+
+*** divmod
+
+    #+begin_src cicada
+    (+gene divmod 2
+      (let x y)
+      x y div
+      x y mod)
+    #+end_src
 
 * order gene
 
@@ -402,21 +307,19 @@
 *** gteq-p
 
     #+begin_src cicada
-    (note
-      (+gene gteq-p 2
-        (let x y)
-        (or [x y eq-p]
-            [x y gt-p])))
+    (+gene gteq-p 2
+      (let x y)
+      (or [x y eq-p]
+          [x y gt-p]))
     #+end_src
 
 *** lteq-p
 
     #+begin_src cicada
-    (note
-      (+gene lteq-p 2
-        (let x y)
-        (or [x y eq-p]
-            [x y lt-p])))
+    (+gene lteq-p 2
+      (let x y)
+      (or [x y eq-p]
+          [x y lt-p]))
     #+end_src
 
 * combinator
@@ -428,6 +331,227 @@
       (unless [n 0 number/lteq-p]
         fun
         {fun} n number/dec recur))
+    #+end_src
+
+* number
+
+*** gt-p [number-t number-t]
+
+    #+begin_src cicada
+    (+disp gt-p [number-t number-t]
+      number/gt-p)
+    #+end_src
+
+*** lt-p [number-t number-t]
+
+    #+begin_src cicada
+    (+disp lt-p [number-t number-t]
+      number/lt-p)
+    #+end_src
+
+*** inc [number-t]
+
+    #+begin_src cicada
+    (+disp inc [number-t]
+      number/inc)
+    #+end_src
+
+*** dec [number-t]
+
+    #+begin_src cicada
+    (+disp dec [number-t]
+      number/dec)
+    #+end_src
+
+*** add [number-t number-t]
+
+    #+begin_src cicada
+    (+disp add [number-t number-t]
+      number/add)
+    #+end_src
+
+*** sub [number-t number-t]
+
+    #+begin_src cicada
+    (+disp sub [number-t number-t]
+      number/sub)
+    #+end_src
+
+*** mul [number-t number-t]
+
+    #+begin_src cicada
+    (+disp mul [number-t number-t]
+      number/mul)
+    #+end_src
+
+*** div [number-t number-t]
+
+    #+begin_src cicada
+    (+disp div [number-t number-t]
+      number/div)
+    #+end_src
+
+*** mod [number-t number-t]
+
+    #+begin_src cicada
+    (+disp mod [number-t number-t]
+      number/mod)
+    #+end_src
+
+* string
+
+* list
+
+*** (lit/list)
+
+    #+begin_src cicada
+    (+macro lit/list (let body)
+      `(begin mark (@ body list/spread) collect-list))
+    #+end_src
+
+*** list/length
+
+    #+begin_src jojo
+    (+fun list/length (let list)
+      (if [list null-p]
+        0
+        [list.cdr recur number/inc]))
+    #+end_src
+
+*** list/append
+
+    #+begin_src jojo
+    (+fun list/append (let ante succ)
+      (case ante
+        (null-t succ)
+        (cons-t ante.car ante.cdr succ recur cons-c)))
+    #+end_src
+
+*** tail-cons
+
+    #+begin_src jojo
+    (+fun tail-cons null-c cons-c list/append)
+    #+end_src
+
+*** list/reverse
+
+    #+begin_src jojo
+    (+fun list/reverse null-c swap list/reverse-swap-append)
+
+    (+fun list/reverse-swap-append
+      ;; -> ante list -- list
+      (let list)
+      (case list
+        (null-t)
+        (cons-t list.car swap cons-c list.cdr recur)))
+    #+end_src
+
+*** list/any-p
+
+    #+begin_src jojo
+    (+fun list/any-p (let list pred)
+      (cond [list null-p] false-c
+            [list.car pred] true-c
+            else [list.cdr {pred} recur]))
+    #+end_src
+
+*** list/every-p
+
+    #+begin_src jojo
+    (+fun list/every-p (let list pred)
+      (cond [list null-p] true-c
+            [list.car pred bool/not] false-c
+            else [list.cdr {pred} recur]))
+    #+end_src
+
+*** list/ante -- antecedent
+
+    #+begin_src jojo
+    (+fun list/ante (let list pred)
+      (cond [list null-p] null-c
+            [list.car pred] null-c
+            else [list.car
+                  list.cdr {pred} recur
+                  cons-c]))
+    #+end_src
+
+*** list/succ -- succedent
+
+    #+begin_src jojo
+    (+fun list/succ (let list pred)
+      (cond [list null-p] null-c
+            [list.car pred] list
+            else [list.cdr {pred} recur]))
+    #+end_src
+
+*** list/split
+
+    #+begin_src jojo
+    (+fun list/split (let list pred) ;; -- ante succ
+      (cond [list null-p] [null-c null-c]
+            [list.car pred] [null-c list]
+            else [list.car
+                  list.cdr {pred} recur
+                  (let succ) cons-c succ]))
+    #+end_src
+
+*** list/map
+
+    #+begin_src jojo
+    (+fun list/map (let list fun)
+      (case list
+        (null-t null-c)
+        (cons-t list.car fun list.cdr {fun} recur cons-c)))
+    #+end_src
+
+*** list/for-each
+
+    #+begin_src jojo
+    (+fun list/for-each (let list fun)
+      (case list
+        (null-t)
+        (cons-t list.car fun list.cdr {fun} recur)))
+    #+end_src
+
+*** list/filter
+
+    #+begin_src jojo
+    (+fun list/filter (let list pred)
+      (cond [list null-p] null-c
+            [list.car pred]
+            [list.car list.cdr {pred} recur cons-c]
+            else [list.cdr {pred} recur]))
+    #+end_src
+
+*** list/foldr
+
+    #+begin_src jojo
+    (+fun list/foldr (let list b a-b->b)
+      (case list
+        (null-t b)
+        (cons-t
+          list.car
+          list.cdr b {a-b->b} recur
+          a-b->b)))
+    #+end_src
+
+*** list/foldl
+
+    #+begin_src jojo
+    (+fun list/foldl (let list b b-a->b)
+      (case list
+        (null-t b)
+        (cons-t
+          list.cdr b {b-a->b} recur
+          list.car
+          b-a->b)))
+    #+end_src
+
+*** list/member-p
+
+    #+begin_src jojo
+    (+fun list/member-p (let list x)
+      list {x eq-p} list/any-p)
     #+end_src
 
 * epilog
@@ -644,27 +768,21 @@
 
 ***** list
 
-******* basic
-
-        #+begin_src cicada
-        (assert '(a b c) list/length 3 eq-p)
-        (assert '(a b c) '(d e f) list/append '(a b c d e f) eq-p)
-        (assert '(a b c) 'd tail-cons '(a b c d) eq-p)
-        #+end_src
-
-******* >< list/any-p & list/every-p
-
-        #+begin_src cicada
-
-        #+end_src
-
-******* ><
+******* (lit/list)
 
         #+begin_src cicada
         (assert
           mark 0 1 2 3 4 collect-list
           (lit/list 0 1 2 3 4)
           eq-p)
+        #+end_src
+
+******* basic
+
+        #+begin_src cicada
+        (assert '(a b c) list/length 3 eq-p)
+        (assert '(a b c) '(d e f) list/append '(a b c d e f) eq-p)
+        (assert '(a b c) 'd tail-cons '(a b c d) eq-p)
 
         (assert
           (lit/list 0 1 2 3 4)
@@ -673,80 +791,77 @@
           (lit/list 0 1 2 3 4 5 6 7 8 9)
           eq-p)
 
-        ;; (assert
-        ;;   (lit/list 0 1 2 3 4 5 6 7 8 9)
-        ;;   {5 gteq-p} list/ante
-        ;;   (lit/list 0 1 2 3 4)
-        ;;   eq-p)
-
-        ;; (assert
-        ;;   (lit/list 0 1 2 3 4 5 6 7 8 9)
-        ;;   {5 gteq-p} list/split
-        ;;   swap (lit/list 0 1 2 3 4) eq-p
-        ;;   swap (lit/list 5 6 7 8 9) eq-p
-        ;;   and)
-
-        ;; (assert
-        ;;   (lit/list 0 1 2 3 4 5 6 7 8 9)
-        ;;   {inc} list/map
-        ;;   (lit/list 1 2 3 4 5 6 7 8 9 10)
-        ;;   eq-p)
-
-        ;; (assert
-        ;;   (lit/list 0 1 2 3 4 5 6 7 8 9)
-        ;;   {2 mod 0 eq-p} list/filter
-        ;;   (lit/list 0 2 4 6 8)
-        ;;   eq-p)
-
-        ;; (assert
-        ;;   (lit/list 0 1 2 3 4 5 6 7 8 9)
-        ;;   list/reverse
-        ;;   (lit/list 9 8 7 6 5 4 3 2 1 0)
-        ;;   eq-p)
-
-
-        ;; (assert
-        ;;   (lit/list 0 1 2 3 4 5) 100 {add} list/foldr
-        ;;   0 1 2 3 4 5 100 add add add add add add
-        ;;   eq-p)
-
-        ;; (assert
-        ;;   (lit/list 0 1 2 3 4 5) 100 {add} list/foldl
-        ;;   100 5 add 4 add 3 add 2 add 1 add 0 add
-        ;;   eq-p)
-
-        ;; (assert
-        ;;   (lit/list
-        ;;     (lit/list 1 2 3)
-        ;;     (lit/list 4 5 6)
-        ;;     (lit/list 7 8 9))
-        ;;   null-c {list/append} list/foldr
-
-        ;;   (lit/list 1 2 3, 4 5 6, 7 8 9)
-        ;;   eq-p)
-
-        ;; (assert
-        ;;   (lit/list
-        ;;     (lit/list 1 2 3)
-        ;;     (lit/list 4 5 6)
-        ;;     (lit/list 7 8 9))
-        ;;   null-c {list/append} list/foldl
-        ;;   (lit/list 7 8 9, 4 5 6, 1 2 3)
-        ;;   eq-p)
-
-        ;; (assert
-        ;;   (lit/list 1 2 3 4 5) (lit/list 1 2 3 4 5) list/append
-        ;;   10 tail-cons list/length
-        ;;   11 eq-p)
-
-        ;; (assert
-        ;;   (lit/list 1 2 3 4 5) 2 list/ref
-        ;;   3 eq-p)
+        (assert
+          (lit/list 0 1 2 3 4 5 6 7 8 9)
+          list/reverse
+          (lit/list 9 8 7 6 5 4 3 2 1 0)
+          eq-p)
         #+end_src
 
-******* ><
+******* list/split
 
-******* ><
+        #+begin_src cicada
+        (assert
+          (lit/list 0 1 2 3 4 5 6 7 8 9)
+          {5 gteq-p} list/ante
+          (lit/list 0 1 2 3 4)
+          eq-p)
+
+        (assert
+          (lit/list 0 1 2 3 4 5 6 7 8 9)
+          {5 gteq-p} list/split
+          swap (lit/list 0 1 2 3 4) eq-p
+          swap (lit/list 5 6 7 8 9) eq-p
+          bool/and)
+        #+end_src
+
+******* list/map & list/filter
+
+        #+begin_src cicada
+        (assert
+          (lit/list 0 1 2 3 4 5 6 7 8 9)
+          {inc} list/map
+          (lit/list 1 2 3 4 5 6 7 8 9 10)
+          eq-p)
+
+        (assert
+          (lit/list 0 1 2 3 4 5 6 7 8 9)
+          {2 mod 0 eq-p} list/filter
+          (lit/list 0 2 4 6 8)
+          eq-p)
+        #+end_src
+
+******* list/foldr & list/foldl
+
+        #+begin_src cicada
+        (assert
+          (lit/list 0 1 2 3 4 5) 100 {add} list/foldr
+          0 1 2 3 4 5 100 add add add add add add
+          eq-p)
+
+        (assert
+          (lit/list 0 1 2 3 4 5) 100 {add} list/foldl
+          100 5 add 4 add 3 add 2 add 1 add 0 add
+          eq-p)
+
+        (assert
+          (lit/list
+            (lit/list 1 2 3)
+            (lit/list 4 5 6)
+            (lit/list 7 8 9))
+          null-c {list/append} list/foldr
+          (lit/list 1 2 3, 4 5 6, 7 8 9)
+          eq-p)
+
+        (assert
+          (lit/list
+            (lit/list 1 2 3)
+            (lit/list 4 5 6)
+            (lit/list 7 8 9))
+          null-c {list/append} list/foldl
+          (lit/list 7 8 9, 4 5 6, 1 2 3)
+          eq-p)
+        #+end_src
 
 *** play
 
