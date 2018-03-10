@@ -19,16 +19,14 @@
     (+macro assert (let body)
       `(if [(@ body list-spread)]
          []
-         ["- (assert) fail" string/print newline
-          "  assertion : " string/print
-          (quote (@ body)) sexp-list-print newline]))
+         ["- assertion fail : " string/print
+          (quote (@ body)) sexp-list-print nl]))
 
     (+macro assert! (let body)
       `(if [(@ body list-spread)]
          []
-         ["- (assert!) fail" string/print newline
-          "  assertion : " string/print
-          (quote (@ body)) sexp-list-print newline
+         ["- assertion fail : " string/print
+          (quote (@ body)) sexp-list-print nl
           error]))
     (+macro when (let body)
       `(if (@ body.car)
@@ -42,18 +40,82 @@
 
 
 
-    (+fun list-length (let list)
+    (+fun list/length (let list)
       (if [list null-p]
         0
         [list.cdr recur number/inc]))
-    (+fun list-append (let ante succ)
+    (+fun list/append (let ante succ)
       (case ante
         (null-t succ)
         (cons-t ante.car ante.cdr succ recur cons-c)))
-    (+fun tail-cons null-c cons-c list-append)
+    (+fun tail-cons null-c cons-c list/append)
+      (assert
+        true-c false-c bool/and
+        false-c eq-p)
+
+      (assert
+        true-c false-c bool/or
+        true-c eq-p)
+
+      (assert
+        true-c bool/not
+        false-c eq-p)
+
+      (assert
+        true-c bool/not bool/not
+        true-c eq-p)
       (assert
         1 2 3 null-c cons-c cons-c cons-c
         1 2 3 null-c cons-c cons-c cons-c eq-p)
+      (+fun number/factorial/case
+        (let n)
+        (case [n 0 eq-p]
+          (true-t 1)
+          (false-t n number/dec recur n number/mul)))
+
+      (assert
+        5 number/factorial/case
+        120 eq-p)
+
+      (+fun number/factorial/ifte
+        (let n)
+        n 0 eq-p
+        {1}
+        {n number/dec recur n number/mul}
+        ifte)
+
+      (assert
+        5 number/factorial/ifte
+        120 eq-p)
+
+      (+fun number/factorial
+        (let n)
+        (if [n 0 eq-p]
+          1
+          [n number/dec recur n number/mul]))
+
+      (assert
+        5 number/factorial
+        120 eq-p)
+      (assert
+        "0123" string/length
+        4 eq-p)
+
+      (assert
+        "0123" "4567" string/append
+        "01234567" eq-p)
+
+      (assert
+        "01234567" 3 string/ref
+        "3" eq-p)
+
+      (assert
+        "01234567" 3 5 string/slice
+        "34" eq-p)
+
+      (assert
+        123 number->string
+        "123" eq-p)
       (+union nat-u
         zero-t
         succ-t)
@@ -89,36 +151,6 @@
         zero-c succ-c succ-c nat/mul
         zero-c succ-c nat/mul
         eq-p)
-      (+fun number/factorial/case
-        (let n)
-        (case [n 0 eq-p]
-          (true-t 1)
-          (false-t n number/dec recur n number/mul)))
-
-      (assert
-        5 number/factorial/case
-        120 eq-p)
-
-      (+fun number/factorial/ifte
-        (let n)
-        n 0 eq-p
-        {1}
-        {n number/dec recur n number/mul}
-        ifte)
-
-      (assert
-        5 number/factorial/ifte
-        120 eq-p)
-
-      (+fun number/factorial
-        (let n)
-        (if [n 0 eq-p]
-          1
-          [n number/dec recur n number/mul]))
-
-      (assert
-        5 number/factorial
-        120 eq-p)
       (+var var/cons 1 null-c cons-c)
 
       (assert

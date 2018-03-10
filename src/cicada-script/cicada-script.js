@@ -1462,7 +1462,7 @@
           }
       );
       new_prim (
-          "newline",
+          "nl",
           function (env)
           {
               print ("\n");
