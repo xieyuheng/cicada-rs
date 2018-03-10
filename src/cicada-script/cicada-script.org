@@ -5,16 +5,16 @@
 
 * [todo-stack]
 
-*** input_stack & output_stack
-
-    - to be able to use it as a repl
-    - need to learn to use node for this
-
 *** step
 
 *** debug
 
     - better error
+
+*** [maybe] input_stack & output_stack
+
+    - to be able to use it as a repl
+    - need to learn to use node for this
 
 *** [maybe] do not let scan handle name.field
 
@@ -1853,47 +1853,6 @@
       );
       #+end_src
 
-***** bool-and
-
-      #+begin_src js
-      new_prim (
-          "bool-and",
-          function (env)
-          {
-              let b = data_stack_pop (env);
-              let a = data_stack_pop (env);
-              data_stack_push (env, (a && b));
-          }
-      );
-      #+end_src
-
-***** bool-or
-
-      #+begin_src js
-      new_prim (
-          "bool-or",
-          function (env)
-          {
-              let b = data_stack_pop (env);
-              let a = data_stack_pop (env);
-              data_stack_push (env, (a || b));
-          }
-      );
-      #+end_src
-
-***** bool-not
-
-      #+begin_src js
-      new_prim (
-          "bool-not",
-          function (env)
-          {
-              let a = data_stack_pop (env);
-              data_stack_push (env, (! a));
-          }
-      );
-      #+end_src
-
 ***** bool-p
 
       #+begin_src js
@@ -1905,6 +1864,47 @@
               data_stack_push (env, (
                   ((a === false) ||
                    (a === true))));
+          }
+      );
+      #+end_src
+
+***** bool/and
+
+      #+begin_src js
+      new_prim (
+          "bool/and",
+          function (env)
+          {
+              let b = data_stack_pop (env);
+              let a = data_stack_pop (env);
+              data_stack_push (env, (a && b));
+          }
+      );
+      #+end_src
+
+***** bool/or
+
+      #+begin_src js
+      new_prim (
+          "bool/or",
+          function (env)
+          {
+              let b = data_stack_pop (env);
+              let a = data_stack_pop (env);
+              data_stack_push (env, (a || b));
+          }
+      );
+      #+end_src
+
+***** bool/not
+
+      #+begin_src js
+      new_prim (
+          "bool/not",
+          function (env)
+          {
+              let a = data_stack_pop (env);
+              data_stack_push (env, (! a));
           }
       );
       #+end_src
@@ -1925,11 +1925,11 @@
       );
       #+end_src
 
-***** number-inc
+***** number/inc
 
       #+begin_src js
       new_prim (
-          "number-inc",
+          "number/inc",
           function (env)
           {
               let a = data_stack_pop (env);
@@ -1938,11 +1938,11 @@
       );
       #+end_src
 
-***** number-dec
+***** number/dec
 
       #+begin_src js
       new_prim (
-          "number-dec",
+          "number/dec",
           function (env)
           {
               let a = data_stack_pop (env);
@@ -1951,11 +1951,11 @@
       );
       #+end_src
 
-***** number-neg
+***** number/neg
 
       #+begin_src js
       new_prim (
-          "number-neg",
+          "number/neg",
           function (env)
           {
               let a = data_stack_pop (env);
@@ -1964,11 +1964,11 @@
       );
       #+end_src
 
-***** number-add
+***** number/add
 
       #+begin_src js
       new_prim (
-          "number-add",
+          "number/add",
           function (env)
           {
               let b = data_stack_pop (env);
@@ -1978,11 +1978,11 @@
       );
       #+end_src
 
-***** number-sub
+***** number/sub
 
       #+begin_src js
       new_prim (
-          "number-sub",
+          "number/sub",
           function (env)
           {
               let b = data_stack_pop (env);
@@ -1992,11 +1992,11 @@
       );
       #+end_src
 
-***** number-mul
+***** number/mul
 
       #+begin_src js
       new_prim (
-          "number-mul",
+          "number/mul",
           function (env)
           {
               let b = data_stack_pop (env);
@@ -2006,11 +2006,11 @@
       );
       #+end_src
 
-***** number-div
+***** number/div
 
       #+begin_src js
       new_prim (
-          "number-div",
+          "number/div",
           function (env)
           {
               let b = data_stack_pop (env);
@@ -2021,11 +2021,11 @@
 
       #+end_src
 
-***** number-mod
+***** number/mod
 
       #+begin_src js
       new_prim (
-          "number-mod",
+          "number/mod",
           function (env)
           {
               let b = data_stack_pop (env);
@@ -2035,11 +2035,11 @@
       );
       #+end_src
 
-***** number-divmod
+***** number/divmod
 
       #+begin_src js
       new_prim (
-          "number-divmod",
+          "number/divmod",
           function (env)
           {
               let b = data_stack_pop (env);
@@ -2050,11 +2050,11 @@
       );
       #+end_src
 
-***** number-moddiv
+***** number/moddiv
 
       #+begin_src js
       new_prim (
-          "number-moddiv",
+          "number/moddiv",
           function (env)
           {
               let b = data_stack_pop (env);
@@ -2065,11 +2065,11 @@
       );
       #+end_src
 
-***** number-lt-p
+***** number/lt-p
 
       #+begin_src js
       new_prim (
-          "number-lt-p",
+          "number/lt-p",
           function (env)
           {
               let b = data_stack_pop (env);
@@ -2080,11 +2080,11 @@
       );
       #+end_src
 
-***** number-lteq-p
+***** number/lteq-p
 
       #+begin_src js
       new_prim (
-          "number-lteq-p",
+          "number/lteq-p",
           function (env)
           {
               let b = data_stack_pop (env);
@@ -2095,11 +2095,11 @@
       );
       #+end_src
 
-***** number-gt-p
+***** number/gt-p
 
       #+begin_src js
       new_prim (
-          "number-gt-p",
+          "number/gt-p",
           function (env)
           {
               let b = data_stack_pop (env);
@@ -2110,11 +2110,11 @@
       );
       #+end_src
 
-***** number-gteq-p
+***** number/gteq-p
 
       #+begin_src js
       new_prim (
-          "number-gteq-p",
+          "number/gteq-p",
           function (env)
           {
               let b = data_stack_pop (env);
@@ -2141,11 +2141,11 @@
       );
       #+end_src
 
-***** string-length
+***** string/length
 
       #+begin_src js
       new_prim (
-          "string-length",
+          "string/length",
           function (env)
           {
               let a = data_stack_pop (env);
@@ -2154,11 +2154,11 @@
       );
       #+end_src
 
-***** string-ref
+***** string/ref
 
       #+begin_src js
       new_prim (
-          "string-ref",
+          "string/ref",
           function (env)
           {
               let index = data_stack_pop (env);
@@ -2169,11 +2169,11 @@
       );
       #+end_src
 
-***** string-append
+***** string/append
 
       #+begin_src js
       new_prim (
-          "string-append",
+          "string/append",
           function (env)
           {
               let b = data_stack_pop (env);
@@ -2183,11 +2183,11 @@
       );
       #+end_src
 
-***** string-slice
+***** string/slice
 
       #+begin_src js
       new_prim (
-          "string-slice",
+          "string/slice",
           function (env)
           {
               let end = data_stack_pop (env);
@@ -2211,11 +2211,11 @@
       );
       #+end_src
 
-***** string-print
+***** string/print
 
       #+begin_src js
       new_prim (
-          "string-print",
+          "string/print",
           function (env)
           {
               let a = data_stack_pop (env);

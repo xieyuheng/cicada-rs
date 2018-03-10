@@ -1225,7 +1225,17 @@
           }
       );
       new_prim (
-          "bool-and",
+          "bool-p",
+          function (env)
+          {
+              let a = data_stack_pop (env);
+              data_stack_push (env, (
+                  ((a === false) ||
+                   (a === true))));
+          }
+      );
+      new_prim (
+          "bool/and",
           function (env)
           {
               let b = data_stack_pop (env);
@@ -1234,7 +1244,7 @@
           }
       );
       new_prim (
-          "bool-or",
+          "bool/or",
           function (env)
           {
               let b = data_stack_pop (env);
@@ -1243,21 +1253,11 @@
           }
       );
       new_prim (
-          "bool-not",
+          "bool/not",
           function (env)
           {
               let a = data_stack_pop (env);
               data_stack_push (env, (! a));
-          }
-      );
-      new_prim (
-          "bool-p",
-          function (env)
-          {
-              let a = data_stack_pop (env);
-              data_stack_push (env, (
-                  ((a === false) ||
-                   (a === true))));
           }
       );
       new_prim (
@@ -1270,7 +1270,7 @@
           }
       );
       new_prim (
-          "number-inc",
+          "number/inc",
           function (env)
           {
               let a = data_stack_pop (env);
@@ -1278,7 +1278,7 @@
           }
       );
       new_prim (
-          "number-dec",
+          "number/dec",
           function (env)
           {
               let a = data_stack_pop (env);
@@ -1286,7 +1286,7 @@
           }
       );
       new_prim (
-          "number-neg",
+          "number/neg",
           function (env)
           {
               let a = data_stack_pop (env);
@@ -1294,7 +1294,7 @@
           }
       );
       new_prim (
-          "number-add",
+          "number/add",
           function (env)
           {
               let b = data_stack_pop (env);
@@ -1303,7 +1303,7 @@
           }
       );
       new_prim (
-          "number-sub",
+          "number/sub",
           function (env)
           {
               let b = data_stack_pop (env);
@@ -1312,7 +1312,7 @@
           }
       );
       new_prim (
-          "number-mul",
+          "number/mul",
           function (env)
           {
               let b = data_stack_pop (env);
@@ -1321,7 +1321,7 @@
           }
       );
       new_prim (
-          "number-div",
+          "number/div",
           function (env)
           {
               let b = data_stack_pop (env);
@@ -1331,7 +1331,7 @@
       );
 
       new_prim (
-          "number-mod",
+          "number/mod",
           function (env)
           {
               let b = data_stack_pop (env);
@@ -1340,7 +1340,7 @@
           }
       );
       new_prim (
-          "number-divmod",
+          "number/divmod",
           function (env)
           {
               let b = data_stack_pop (env);
@@ -1350,7 +1350,7 @@
           }
       );
       new_prim (
-          "number-moddiv",
+          "number/moddiv",
           function (env)
           {
               let b = data_stack_pop (env);
@@ -1360,7 +1360,7 @@
           }
       );
       new_prim (
-          "number-lt-p",
+          "number/lt-p",
           function (env)
           {
               let b = data_stack_pop (env);
@@ -1370,7 +1370,7 @@
           }
       );
       new_prim (
-          "number-lteq-p",
+          "number/lteq-p",
           function (env)
           {
               let b = data_stack_pop (env);
@@ -1380,7 +1380,7 @@
           }
       );
       new_prim (
-          "number-gt-p",
+          "number/gt-p",
           function (env)
           {
               let b = data_stack_pop (env);
@@ -1390,7 +1390,7 @@
           }
       );
       new_prim (
-          "number-gteq-p",
+          "number/gteq-p",
           function (env)
           {
               let b = data_stack_pop (env);
@@ -1409,7 +1409,7 @@
           }
       );
       new_prim (
-          "string-length",
+          "string/length",
           function (env)
           {
               let a = data_stack_pop (env);
@@ -1417,7 +1417,7 @@
           }
       );
       new_prim (
-          "string-ref",
+          "string/ref",
           function (env)
           {
               let index = data_stack_pop (env);
@@ -1427,7 +1427,7 @@
           }
       );
       new_prim (
-          "string-append",
+          "string/append",
           function (env)
           {
               let b = data_stack_pop (env);
@@ -1436,7 +1436,7 @@
           }
       );
       new_prim (
-          "string-slice",
+          "string/slice",
           function (env)
           {
               let end = data_stack_pop (env);
@@ -1454,7 +1454,7 @@
           }
       );
       new_prim (
-          "string-print",
+          "string/print",
           function (env)
           {
               let a = data_stack_pop (env);

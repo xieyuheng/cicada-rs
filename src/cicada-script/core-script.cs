@@ -16,14 +16,14 @@
     (+macro assert (let body)
       `(if [(@ body list-spread)]
          []
-         ["- (assert) fail" string-print newline
-          "  assertion : " string-print
+         ["- (assert) fail" string/print newline
+          "  assertion : " string/print
           (quote (@ body)) sexp-list-print newline]))
     (+macro assert! (let body)
       `(if [(@ body list-spread)]
          []
-         ["- (assert!) fail" string-print newline
-          "  assertion : " string-print
+         ["- (assert!) fail" string/print newline
+          "  assertion : " string/print
           (quote (@ body)) sexp-list-print newline
           error]))
 
@@ -32,123 +32,111 @@
     (+fun list-length (let list)
       (if [list null-p]
         0
-        [list.cdr recur number-inc]))
+        [list.cdr recur number/inc]))
     (+fun list-append (let ante succ)
       (case ante
         (null-t succ)
         (cons-t ante.car ante.cdr succ recur cons-c)))
     (+fun tail-cons null-c cons-c list-append)
-    (+union nat-u
-      zero-t
-      succ-t)
+      (assert
+        1 2 3 null-c cons-c cons-c cons-c
+        1 2 3 null-c cons-c cons-c cons-c eq-p)
+      (+union nat-u
+        zero-t
+        succ-t)
 
-    (+data zero-t)
+      (+data zero-t)
 
-    (+data succ-t
-      prev)
+      (+data succ-t
+        prev)
 
-    (+fun add
-      (let m n)
-      (case n
-        (zero-t m)
-        (succ-t m n.prev recur succ-c)))
+      (+fun nat/add
+        (let m n)
+        (case n
+          (zero-t m)
+          (succ-t m n.prev recur succ-c)))
 
-    (+fun mul
-      (let m n)
-      (case n
-        (zero-t n)
-        (succ-t m n.prev recur m add)))
+      (+fun nat/mul
+        (let m n)
+        (case n
+          (zero-t n)
+          (succ-t m n.prev recur m nat/add)))
 
-    ;; (+fun factorial
-    ;;   (let n)
-    ;;   (case n
-    ;;     (zero-t zero-c succ-c)
-    ;;     (succ-t n.prev recur n mul)))
+      (+fun nat/factorial
+        (let n)
+        (case n
+          (zero-t zero-c succ-c)
+          (succ-t n.prev recur n nat/mul)))
 
-    ;; (begin
-    ;;   zero-c succ-c succ-c succ-c
-    ;;   zero-c succ-c succ-c succ-c add factorial)
+      (assert
+        zero-c succ-c succ-c succ-c succ-c succ-c nat/factorial
+        zero-c succ-c succ-c succ-c succ-c succ-c
+        zero-c succ-c succ-c succ-c succ-c nat/mul
+        zero-c succ-c succ-c succ-c nat/mul
+        zero-c succ-c succ-c nat/mul
+        zero-c succ-c nat/mul
+        eq-p)
+      (+fun number/factorial/case
+        (let n)
+        (case [n 0 eq-p]
+          (true-t 1)
+          (false-t n number/dec recur n number/mul)))
 
-    ;; (+fun factorial
-    ;;   (let n)
-    ;;   (case [n 0 eq-p]
-    ;;     (true-t 1)
-    ;;     (false-t n number-dec recur n number-mul)))
+      (assert
+        5 number/factorial/case
+        120 eq-p)
 
-    ;; (begin
-    ;;   10 factorial)
+      (+fun number/factorial/ifte
+        (let n)
+        n 0 eq-p
+        {1}
+        {n number/dec recur n number/mul}
+        ifte)
 
-    ;; (begin
-    ;;   1 2 3 null-c cons-c cons-c cons-c
-    ;;   1 2 3 null-c cons-c cons-c cons-c eq-p)
+      (assert
+        5 number/factorial/ifte
+        120 eq-p)
 
-    (+var var-1 1)
+      (+fun number/factorial
+        (let n)
+        (if [n 0 eq-p]
+          1
+          [n number/dec recur n number/mul]))
 
-    (+macro echo-car)
+      (assert
+        5 number/factorial
+        120 eq-p)
+      (+var var/cons 1 null-c cons-c)
 
-    ;; (echo-car begin var-1 2 number-add)
+      (assert
+        2 var/cons.car!
+        var/cons 2 null-c cons-c eq-p)
 
-    (begin
-      `(1 2 (@ 1 2 number-add number->string))
-      '(1 2 3) eq-p)
+      (+fun nat->number
+        (let n)
+        (case n
+          (zero-t 0)
+          (succ-t n.prev recur number/inc)))
 
+      (+var var/nat zero-c succ-c succ-c)
 
-    ;; (+fun factorial
-    ;;   (let n)
-    ;;   n 0 eq-p
-    ;;   {1}
-    ;;   {n number-dec recur n number-mul}
-    ;;   ifte)
+      (assert
+        var/nat nat->number 2 eq-p)
 
-    ;; (begin
-    ;;   10 factorial)
+      (assert
+        zero-c var/nat.prev!
+        var/nat nat->number 1 eq-p)
+      (assert
+        `(1 2 (@ 1 2 number/add number->string))
+        '(1 2 3) eq-p)
+      (+gene gene0 2
+        drop drop
+        "default gene0")
 
+      (assert 1 2 gene0 "default gene0" eq-p)
 
-    (+fun factorial
-      (let n)
-      (if [n 0 eq-p]
-        1
-        [n number-dec recur n number-mul]))
+      (+disp gene0 [number-t number-t]
+        drop drop
+        "number-t number-t gene0")
 
-    (begin
-      10 factorial)
-
-    (assert 1 1 eq-p)
-
-
-    (+gene k 2
-      drop drop
-      "default k"
-      string-print
-      newline)
-
-    1 2 k
-
-    (+disp k [number-t number-t]
-      drop drop
-      "number-t number-t k"
-      string-print
-      newline)
-
-    1 2 k
-
-
-    (+var x 1 null-c cons-c)
-
-    (begin
-      2 x.car!
-      ;; x
-      )
-
-    (+fun nat->number
-      (let n)
-      (case n
-        (zero-t 0)
-        (succ-t n.prev recur number-inc)))
-
-    (+var n zero-c succ-c succ-c)
-
-    (begin
-      n nat->number
-      zero-c n.prev!
-      n nat->number)
+      (assert 1 2 gene0 "number-t number-t gene0" eq-p)
