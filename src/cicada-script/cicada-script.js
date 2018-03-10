@@ -428,7 +428,7 @@
                 obj = data.field_dict.get (this.field_name);
             else
                 obj = data[this.field_name];
-            assert (obj);
+            // assert (obj);
             if (obj instanceof closure_t)
                 closure_apply (env, obj);
             else

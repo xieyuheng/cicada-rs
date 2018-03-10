@@ -51,6 +51,8 @@
     (+fun :)
     ;; (+macro (->) )
 
+    (+macro lit/list (let body)
+      `(begin mark (@ body list/spread) collect-list))
     (+fun list/length (let list)
       (if [list null-p]
         0
@@ -298,30 +300,30 @@
         (assert '(a b c) '(d e f) list/append '(a b c d e f) eq-p)
         (assert '(a b c) 'd tail-cons '(a b c d) eq-p)
 
-        ;; (assert
-        ;;   mark 0 1 2 3 4 collect-list
-        ;;   (lit/list 0 1 2 3 4)
-        ;;   eq-p)
+        (assert
+          mark 0 1 2 3 4 collect-list
+          (lit/list 0 1 2 3 4)
+          eq-p)
 
-        ;; (assert
-        ;;   (lit/list 0 1 2 3 4)
-        ;;   (lit/list 5 6 7 8 9)
-        ;;   list/append
-        ;;   (lit/list 0 1 2 3 4 5 6 7 8 9)
-        ;;   eq-p)
+        (assert
+          (lit/list 0 1 2 3 4)
+          (lit/list 5 6 7 8 9)
+          list/append
+          (lit/list 0 1 2 3 4 5 6 7 8 9)
+          eq-p)
 
-        ;; (assert
-        ;;   (lit/list 0 1 2 3 4 5 6 7 8 9)
-        ;;   {5 gteq-p} list/ante
-        ;;   (lit/list 0 1 2 3 4)
-        ;;   eq-p)
+        (assert
+          (lit/list 0 1 2 3 4 5 6 7 8 9)
+          {5 gteq-p} list/ante
+          (lit/list 0 1 2 3 4)
+          eq-p)
 
-        ;; (assert
-        ;;   (lit/list 0 1 2 3 4 5 6 7 8 9)
-        ;;   {5 gteq-p} list/split
-        ;;   swap (lit/list 0 1 2 3 4) eq-p
-        ;;   swap (lit/list 5 6 7 8 9) eq-p
-        ;;   and)
+        (assert
+          (lit/list 0 1 2 3 4 5 6 7 8 9)
+          {5 gteq-p} list/split
+          swap (lit/list 0 1 2 3 4) eq-p
+          swap (lit/list 5 6 7 8 9) eq-p
+          and)
 
         ;; (assert
         ;;   (lit/list 0 1 2 3 4 5 6 7 8 9)

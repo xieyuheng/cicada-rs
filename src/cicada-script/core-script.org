@@ -3,8 +3,6 @@
 
 * [todo-stack]
 
-*** (lit/list)
-
 *** (->) to (let)
 
 *** (+type) to (+data)
@@ -157,6 +155,13 @@
 * string
 
 * list
+
+*** (lit/list)
+
+    #+begin_src cicada
+    (+macro lit/list (let body)
+      `(begin mark (@ body list/spread) collect-list))
+    #+end_src
 
 *** list/length
 
@@ -610,17 +615,17 @@
 ******* ><
 
         #+begin_src cicada
-        ;; (assert
-        ;;   mark 0 1 2 3 4 collect-list
-        ;;   (lit/list 0 1 2 3 4)
-        ;;   eq-p)
+        (assert
+          mark 0 1 2 3 4 collect-list
+          (lit/list 0 1 2 3 4)
+          eq-p)
 
-        ;; (assert
-        ;;   (lit/list 0 1 2 3 4)
-        ;;   (lit/list 5 6 7 8 9)
-        ;;   list/append
-        ;;   (lit/list 0 1 2 3 4 5 6 7 8 9)
-        ;;   eq-p)
+        (assert
+          (lit/list 0 1 2 3 4)
+          (lit/list 5 6 7 8 9)
+          list/append
+          (lit/list 0 1 2 3 4 5 6 7 8 9)
+          eq-p)
 
         ;; (assert
         ;;   (lit/list 0 1 2 3 4 5 6 7 8 9)
