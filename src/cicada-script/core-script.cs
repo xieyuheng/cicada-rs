@@ -17,16 +17,16 @@
          (true-t (@ on-true))
          (false-t (@ on-false))))
     (+macro assert (let body)
-      `(if [(@ body list-spread)]
+      `(if [(@ body list/spread)]
          []
          ["- assertion fail : " string/print
-          (quote (@ body)) sexp-list-print nl]))
+          (quote (@ body)) sexp-list/print nl]))
 
     (+macro assert! (let body)
-      `(if [(@ body list-spread)]
+      `(if [(@ body list/spread)]
          []
          ["- assertion fail : " string/print
-          (quote (@ body)) sexp-list-print nl
+          (quote (@ body)) sexp-list/print nl
           error]))
     (+macro when (let body)
       `(if (@ body.car)
@@ -39,7 +39,16 @@
          (@ 'begin body.cdr cons-c)))
 
 
-
+    (+macro cond (let body)
+      (if [body list/length 1 number/lteq-p]
+        `(begin
+           "- cond mismatch!" string/print nl
+           error)
+        [body.car (when [dup 'else eq-p] drop 'true-c) (let question)
+         body.cdr.car (let answer)
+         `(if (@ question)
+            (@ answer)
+            (@ body.cdr.cdr recur))]))
     (+fun list/length (let list)
       (if [list null-p]
         0
@@ -49,6 +58,27 @@
         (null-t succ)
         (cons-t ante.car ante.cdr succ recur cons-c)))
     (+fun tail-cons null-c cons-c list/append)
+    (+gene repr 1
+      default-repr)
+    (+disp repr [string-t]
+      doublequote/string swap string/append
+      doublequote/string string/append)
+    (+disp repr [number-t]
+      number->string)
+    (+gene w 1
+      repr string/print)
+    (+gene p 1
+      w)
+    (+disp p [string-t]
+      string/print)
+    (+gene length 1
+      error)
+    (+gene empty-p 1
+      error)
+    (+fun times (let fun n)
+      (unless [n 0 number/lteq-p]
+        fun
+        {fun} n number/dec recur))
       (assert
         true-c false-c bool/and
         false-c eq-p)
@@ -67,36 +97,36 @@
       (assert
         1 2 3 null-c cons-c cons-c cons-c
         1 2 3 null-c cons-c cons-c cons-c eq-p)
-      (+fun number/factorial/case
-        (let n)
-        (case [n 0 eq-p]
-          (true-t 1)
-          (false-t n number/dec recur n number/mul)))
+        (+fun number/factorial/case
+          (let n)
+          (case [n 0 eq-p]
+            (true-t 1)
+            (false-t n number/dec recur n number/mul)))
 
-      (assert
-        5 number/factorial/case
-        120 eq-p)
+        (assert
+          5 number/factorial/case
+          120 eq-p)
 
-      (+fun number/factorial/ifte
-        (let n)
-        n 0 eq-p
-        {1}
-        {n number/dec recur n number/mul}
-        ifte)
+        (+fun number/factorial/ifte
+          (let n)
+          n 0 eq-p
+          {1}
+          {n number/dec recur n number/mul}
+          ifte)
 
-      (assert
-        5 number/factorial/ifte
-        120 eq-p)
+        (assert
+          5 number/factorial/ifte
+          120 eq-p)
 
-      (+fun number/factorial
-        (let n)
-        (if [n 0 eq-p]
-          1
-          [n number/dec recur n number/mul]))
+        (+fun number/factorial
+          (let n)
+          (if [n 0 eq-p]
+            1
+            [n number/dec recur n number/mul]))
 
-      (assert
-        5 number/factorial
-        120 eq-p)
+        (assert
+          5 number/factorial
+          120 eq-p)
       (assert
         "0123" string/length
         4 eq-p)
@@ -200,3 +230,9 @@
       (assert
         (unless [1 2 eq-p] 'ok)
         'ok eq-p)
+        (assert
+          "" {"*" string/append} 3 times
+          "***" eq-p)
+    (cond true-c (begin "123" w nl)
+          else (begin "123" p nl))
+

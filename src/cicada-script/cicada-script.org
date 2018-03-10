@@ -5,6 +5,8 @@
 
 * [todo-stack]
 
+*** default-repr for (+data)
+
 *** step
 
 *** debug
@@ -2236,6 +2238,22 @@
       );
       #+end_src
 
+***** doublequote/string
+
+      #+begin_src js
+      new_prim (
+          "doublequote/string",
+          function (env)
+          {
+              data_stack_push (env, '"');
+          }
+      );
+      #+end_src
+
+***** singlequote/string
+
+***** backquote/string
+
 *** list
 
 ***** null_t
@@ -2401,11 +2419,11 @@
       );
       #+end_src
 
-***** list-spread
+***** list/spread
 
       #+begin_src js
       new_prim (
-          "list-spread",
+          "list/spread",
           function (env)
           {
               let list = data_stack_pop (env);
@@ -2417,11 +2435,11 @@
       );
       #+end_src
 
-***** sexp-print
+***** sexp/print
 
       #+begin_src js
       new_prim (
-          "sexp-print",
+          "sexp/print",
           function (env)
           {
               let sexp = data_stack_pop (env);
@@ -2430,11 +2448,11 @@
       );
       #+end_src
 
-***** sexp-list-print
+***** sexp-list/print
 
       #+begin_src js
       new_prim (
-          "sexp-list-print",
+          "sexp-list/print",
           function (env)
           {
               let sexp_list = data_stack_pop (env);
@@ -2844,23 +2862,28 @@
 
 *** passes
 
-***** pass_for_fun
+***** pass_for_recur
 
       #+begin_src js
-      function pass_for_fun (sexp)
+      function pass_for_recur (sexp)
       {
+          let keyword = sexp.car;
           if (cons_p (sexp) &&
-              (sexp.car === "+fun")) {
+              (keyword === "+fun" ||
+               keyword === "+gene" ||
+               keyword === "+disp" ||
+               keyword === "+macro" ||
+               keyword === "+top-macro")) {
               let name = sexp.cdr.car;
               let body = sexp.cdr.cdr;
               body = substitute_recur (name, body);
-              return cons_c ("+fun", cons_c (name, body));
+              return cons_c (keyword, cons_c (name, body));
           }
           else
               return sexp;
       }
 
-      new_pass (pass_for_fun);
+      new_pass (pass_for_recur);
       #+end_src
 
 ***** substitute_recur

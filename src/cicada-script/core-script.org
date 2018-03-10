@@ -3,11 +3,9 @@
 
 * [todo-stack]
 
-*** repr
+*** more about list
 
 *** (lit/list)
-
-*** more about list
 
 *** queue-t
 
@@ -17,15 +15,13 @@
 
 *** (lit/dict)
 
-*** combinator
+*** combinators from joy
 
 *** (and)
 
 *** (or)
 
-*** (cond)
-
-*** test as docs
+*** main
 
 * prolog
 
@@ -90,16 +86,16 @@
 
     #+begin_src cicada
     (+macro assert (let body)
-      `(if [(@ body list-spread)]
+      `(if [(@ body list/spread)]
          []
          ["- assertion fail : " string/print
-          (quote (@ body)) sexp-list-print nl]))
+          (quote (@ body)) sexp-list/print nl]))
 
     (+macro assert! (let body)
-      `(if [(@ body list-spread)]
+      `(if [(@ body list/spread)]
          []
          ["- assertion fail : " string/print
-          (quote (@ body)) sexp-list-print nl
+          (quote (@ body)) sexp-list/print nl
           error]))
     #+end_src
 
@@ -129,10 +125,19 @@
 
     #+end_src
 
-*** >< (cond)
+*** (cond)
 
     #+begin_src cicada
-
+    (+macro cond (let body)
+      (if [body list/length 1 number/lteq-p]
+        `(begin
+           "- cond mismatch!" string/print nl
+           error)
+        [body.car (when [dup 'else eq-p] drop 'true-c) (let question)
+         body.cdr.car (let answer)
+         `(if (@ question)
+            (@ answer)
+            (@ body.cdr.cdr recur))]))
     #+end_src
 
 * number
@@ -167,11 +172,81 @@
 
 * common gene
 
-* converting gene
+*** repr
+
+    #+begin_src cicada
+    (+gene repr 1
+      default-repr)
+    #+end_src
+
+*** repr [string-t]
+
+    #+begin_src cicada
+    (+disp repr [string-t]
+      doublequote/string swap string/append
+      doublequote/string string/append)
+    #+end_src
+
+*** repr [number-t]
+
+    #+begin_src cicada
+    (+disp repr [number-t]
+      number->string)
+    #+end_src
+
+*** w
+
+    #+begin_src cicada
+    (+gene w 1
+      repr string/print)
+    #+end_src
+
+*** p
+
+    #+begin_src cicada
+    (+gene p 1
+      w)
+    #+end_src
+
+*** p [string-t]
+
+    #+begin_src cicada
+    (+disp p [string-t]
+      string/print)
+    #+end_src
+
+*** length
+
+    #+begin_src cicada
+    (+gene length 1
+      error)
+    #+end_src
+
+*** empty-p
+
+    #+begin_src cicada
+    (+gene empty-p 1
+      error)
+    #+end_src
 
 * algebric gene
 
+*** >< add
+
+*** >< sub
+
+*** >< mul
+
 * combinator
+
+*** times
+
+    #+begin_src cicada
+    (+fun times (let fun n)
+      (unless [n 0 number/lteq-p]
+        fun
+        {fun} n number/dec recur))
+    #+end_src
 
 * epilog
 
@@ -207,38 +282,40 @@
 
 ***** number-t
 
-      #+begin_src cicada
-      (+fun number/factorial/case
-        (let n)
-        (case [n 0 eq-p]
-          (true-t 1)
-          (false-t n number/dec recur n number/mul)))
+******* number/factorial
 
-      (assert
-        5 number/factorial/case
-        120 eq-p)
+        #+begin_src cicada
+        (+fun number/factorial/case
+          (let n)
+          (case [n 0 eq-p]
+            (true-t 1)
+            (false-t n number/dec recur n number/mul)))
 
-      (+fun number/factorial/ifte
-        (let n)
-        n 0 eq-p
-        {1}
-        {n number/dec recur n number/mul}
-        ifte)
+        (assert
+          5 number/factorial/case
+          120 eq-p)
 
-      (assert
-        5 number/factorial/ifte
-        120 eq-p)
+        (+fun number/factorial/ifte
+          (let n)
+          n 0 eq-p
+          {1}
+          {n number/dec recur n number/mul}
+          ifte)
 
-      (+fun number/factorial
-        (let n)
-        (if [n 0 eq-p]
-          1
-          [n number/dec recur n number/mul]))
+        (assert
+          5 number/factorial/ifte
+          120 eq-p)
 
-      (assert
-        5 number/factorial
-        120 eq-p)
-      #+end_src
+        (+fun number/factorial
+          (let n)
+          (if [n 0 eq-p]
+            1
+            [n number/dec recur n number/mul]))
+
+        (assert
+          5 number/factorial
+          120 eq-p)
+        #+end_src
 
 ***** string-t
 
@@ -372,3 +449,26 @@
         (unless [1 2 eq-p] 'ok)
         'ok eq-p)
       #+end_src
+
+***** combinator
+
+******* times
+
+        #+begin_src cicada
+        (assert
+          "" {"*" string/append} 3 times
+          "***" eq-p)
+        #+end_src
+
+*** play
+
+    #+begin_src cicada
+    (cond true-c (begin "123" w nl)
+          else (begin "123" p nl))
+    #+end_src
+
+*** main
+
+    #+begin_src cicada
+
+    #+end_src

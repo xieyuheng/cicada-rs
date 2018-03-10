@@ -1468,6 +1468,13 @@
               print ("\n");
           }
       );
+      new_prim (
+          "doublequote/string",
+          function (env)
+          {
+              data_stack_push (env, '"');
+          }
+      );
       class null_t
       {
           constructor ()
@@ -1570,7 +1577,7 @@
           }
       );
       new_prim (
-          "list-spread",
+          "list/spread",
           function (env)
           {
               let list = data_stack_pop (env);
@@ -1581,7 +1588,7 @@
           }
       );
       new_prim (
-          "sexp-print",
+          "sexp/print",
           function (env)
           {
               let sexp = data_stack_pop (env);
@@ -1589,7 +1596,7 @@
           }
       );
       new_prim (
-          "sexp-list-print",
+          "sexp-list/print",
           function (env)
           {
               let sexp_list = data_stack_pop (env);
@@ -1868,20 +1875,25 @@
         }
         return sexp;
     }
-      function pass_for_fun (sexp)
+      function pass_for_recur (sexp)
       {
+          let keyword = sexp.car;
           if (cons_p (sexp) &&
-              (sexp.car === "+fun")) {
+              (keyword === "+fun" ||
+               keyword === "+gene" ||
+               keyword === "+disp" ||
+               keyword === "+macro" ||
+               keyword === "+top-macro")) {
               let name = sexp.cdr.car;
               let body = sexp.cdr.cdr;
               body = substitute_recur (name, body);
-              return cons_c ("+fun", cons_c (name, body));
+              return cons_c (keyword, cons_c (name, body));
           }
           else
               return sexp;
       }
 
-      new_pass (pass_for_fun);
+      new_pass (pass_for_recur);
       function substitute_recur (name, sexp)
       {
           if (string_p (sexp)) {
