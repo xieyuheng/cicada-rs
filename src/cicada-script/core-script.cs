@@ -136,6 +136,9 @@
       number/div)
     (+disp mod [number-t number-t]
       number/mod)
+    (+union list-u
+      null-t
+      cons-t)
     (+macro lit/list (let body)
       `(begin mark (@ body list/spread) collect-list))
     (+fun list/length (let list)
@@ -208,6 +211,23 @@
           b-a->b)))
     (+fun list/member-p (let list x)
       list {x eq-p} list/any-p)
+    (+disp repr [list-u]
+      (let list)
+      (case list
+        (null-t "(lit/list)")
+        (cons-t
+          list list/inner-repr
+          "(lit/list " swap string/append
+          ")" string/append )))
+
+    (+fun list/inner-repr
+      (let list)
+      (case list
+        (null-t "")
+        (cons-t list.car repr
+          (unless [list.cdr null-p]
+            " " string/append
+            list.cdr recur string/append))))
       (assert
         true-c false-c bool/and
         false-c eq-p)
@@ -432,5 +452,8 @@
           null-c {list/append} list/foldl
           (lit/list 7 8 9, 4 5 6, 1 2 3)
           eq-p)
-
+    (note
+      (begin
+        '(a b c) w nl
+        '(a b c) p nl))
 

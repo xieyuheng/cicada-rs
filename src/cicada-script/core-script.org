@@ -13,9 +13,15 @@
 
 *** (lit/dict)
 
-*** combinators from joy
-
 *** queue-t
+
+*** #note
+
+*** #comment & (comment)
+
+*** #test & (test)
+
+*** combinators from joy
 
 *** main
 
@@ -204,6 +210,8 @@
     (+disp p [string-t]
       string/print)
     #+end_src
+
+* collection gene
 
 *** length
 
@@ -402,6 +410,14 @@
 
 * list
 
+*** list-u
+
+    #+begin_src cicada
+    (+union list-u
+      null-t
+      cons-t)
+    #+end_src
+
 *** (lit/list)
 
     #+begin_src cicada
@@ -553,6 +569,32 @@
     (+fun list/member-p (let list x)
       list {x eq-p} list/any-p)
     #+end_src
+
+*** repr [list-u]
+
+    #+begin_src cicada
+    (+disp repr [list-u]
+      (let list)
+      (case list
+        (null-t "(lit/list)")
+        (cons-t
+          list list/inner-repr
+          "(lit/list " swap string/append
+          ")" string/append )))
+
+    (+fun list/inner-repr
+      (let list)
+      (case list
+        (null-t "")
+        (cons-t list.car repr
+          (unless [list.cdr null-p]
+            " " string/append
+            list.cdr recur string/append))))
+    #+end_src
+
+* >< dict
+
+* >< queue
 
 * epilog
 
@@ -866,7 +908,10 @@
 *** play
 
     #+begin_src cicada
-
+    (note
+      (begin
+        '(a b c) w nl
+        '(a b c) p nl))
     #+end_src
 
 *** main

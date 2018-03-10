@@ -1058,31 +1058,27 @@
         let vect_vect = [];
         for (let type_name of type_name_vect) {
             let den = name_dict_get (env, type_name);
-            if (den instanceof union_den_t) {
+            if (den instanceof union_den_t)
                 vect_vect = vect_vect_bind (
                     den.sub_type_name_vect,
                     vect_vect);
-            }
-            else {
+            else
                 vect_vect = vect_vect_bind (
                     [type_name],
                     vect_vect);
-            }
         }
         return vect_vect;
     }
     function vect_vect_bind (vect, vect_vect)
     {
-        if (vect_vect.length === 0)
-            return [vect];
-        if (vect.length === 0)
-            return vect_vect;
         let new_vect_vect = [];
-        for (let x of vect) {
-            for (let v of vect_vect) {
-                new_vect_vect.push ([x].concat (v));
-            }
-        }
+        if (vect_vect.length === 0)
+            for (let x of vect)
+                new_vect_vect.push ([x]);
+        else
+            for (let x of vect)
+                for (let v of vect_vect)
+                    new_vect_vect.push ([x].concat (v));
         return new_vect_vect;
     }
     let the_keyword_dict = new Map ();
@@ -1563,16 +1559,6 @@
               let a = data_stack_pop (env);
               data_stack_push (env, (
                   type_of (a) === "cons-t"));
-          }
-      );
-      new_prim (
-          "list-p",
-          function (env)
-          {
-              let a = data_stack_pop (env);
-              data_stack_push (env, (
-                  ((type_of (a) === "cons-t") ||
-                   (type_of (a) === "null-t"))));
           }
       );
       new_prim (
