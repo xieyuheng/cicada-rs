@@ -15,8 +15,6 @@
 
 *** combinators from joy
 
-*** (and) & (or)
-
 *** queue-t
 
 *** main
@@ -111,10 +109,22 @@
          (@ 'begin body.cdr cons-c)))
     #+end_src
 
-*** >< (and) & (or)
+*** (and) & (or)
 
     #+begin_src cicada
+    (+macro and (let body)
+      (if [body null-p]
+        'true-c
+        `(if (@ body.car)
+           [(@ body.cdr recur)]
+           false-c)))
 
+    (+macro or (let body)
+      (if [body null-p]
+        'false-c
+        `(if (@ body.car)
+           true-c
+           [(@ body.cdr recur)])))
     #+end_src
 
 *** (cond)
@@ -372,6 +382,42 @@
 *** >< sub
 
 *** >< mul
+
+* order gene
+
+*** gt-p
+
+    #+begin_src cicada
+    (+gene gt-p 2
+      error)
+    #+end_src
+
+*** lt-p
+
+    #+begin_src cicada
+    (+gene lt-p 2
+      error)
+    #+end_src
+
+*** gteq-p
+
+    #+begin_src cicada
+    (note
+      (+gene gteq-p 2
+        (let x y)
+        (or [x y eq-p]
+            [x y gt-p])))
+    #+end_src
+
+*** lteq-p
+
+    #+begin_src cicada
+    (note
+      (+gene lteq-p 2
+        (let x y)
+        (or [x y eq-p]
+            [x y lt-p])))
+    #+end_src
 
 * combinator
 

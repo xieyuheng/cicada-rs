@@ -37,7 +37,19 @@
       `(if (@ body.car)
          []
          (@ 'begin body.cdr cons-c)))
+    (+macro and (let body)
+      (if [body null-p]
+        'true-c
+        `(if (@ body.car)
+           [(@ body.cdr recur)]
+           false-c)))
 
+    (+macro or (let body)
+      (if [body null-p]
+        'false-c
+        `(if (@ body.car)
+           true-c
+           [(@ body.cdr recur)])))
     (+macro cond (let body)
       (if [body list/length 1 number/lteq-p]
         `(begin
@@ -138,6 +150,20 @@
       error)
     (+gene empty-p 1
       error)
+    (+gene gt-p 2
+      error)
+    (+gene lt-p 2
+      error)
+    (note
+      (+gene gteq-p 2
+        (let x y)
+        (or [x y eq-p]
+            [x y gt-p])))
+    (note
+      (+gene lteq-p 2
+        (let x y)
+        (or [x y eq-p]
+            [x y lt-p])))
     (+fun times (let fun n)
       (unless [n 0 number/lteq-p]
         fun
@@ -313,17 +339,22 @@
           eq-p)
 
         (assert
-          (lit/list 0 1 2 3 4 5 6 7 8 9)
-          {5 gteq-p} list/ante
-          (lit/list 0 1 2 3 4)
-          eq-p)
+          (or       [3 2 eq-p]
+                    [1 1 eq-p]
+                    ))
 
-        (assert
-          (lit/list 0 1 2 3 4 5 6 7 8 9)
-          {5 gteq-p} list/split
-          swap (lit/list 0 1 2 3 4) eq-p
-          swap (lit/list 5 6 7 8 9) eq-p
-          and)
+        ;; (assert
+        ;;   (lit/list 0 1 2 3 4 5 6 7 8 9)
+        ;;   {5 gteq-p} list/ante
+        ;;   (lit/list 0 1 2 3 4)
+        ;;   eq-p)
+
+        ;; (assert
+        ;;   (lit/list 0 1 2 3 4 5 6 7 8 9)
+        ;;   {5 gteq-p} list/split
+        ;;   swap (lit/list 0 1 2 3 4) eq-p
+        ;;   swap (lit/list 5 6 7 8 9) eq-p
+        ;;   and)
 
         ;; (assert
         ;;   (lit/list 0 1 2 3 4 5 6 7 8 9)
