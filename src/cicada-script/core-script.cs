@@ -4,8 +4,8 @@
     (+fun tuck (let x y) y x y)
     (+fun swap (let x y) y x)
     (+fun ifte
-      (let test true-fn false-fn)
-      (case test
+      (let bool true-fn false-fn)
+      (case bool
         (true-t true-fn)
         (false-t false-fn)))
     (+macro if
@@ -118,6 +118,12 @@
       (unless [n 0 number/lteq-p]
         fun
         {fun} n number/dec recur))
+    (+fun bool/assert
+      (let bool)
+      (if bool
+        []
+        ["- bool/assertion fail : " string/print
+         bool p nl]))
     (+disp gt-p [number-t number-t]
       number/gt-p)
     (+disp lt-p [number-t number-t]
@@ -228,6 +234,48 @@
           (unless [list.cdr null-p]
             " " string/append
             list.cdr recur string/append))))
+    (+data dict-t
+      assoc-list)
+    (+fun new/dict
+      null-c dict-c)
+    (+fun dict/get dict/find bool/assert)
+    (+fun dict/find
+      (let dict key)
+      ;; -- | [ value true-t]
+      ;;      [ false-t]
+      dict.assoc-list
+      key assoc-list/find)
+    (+fun assoc-list/find
+      (let assoc-list key)
+      ;; -- | [ value true-t]
+      ;;      [ false-t]
+      (case assoc-list
+        (null-t false-c)
+        (cons-t
+          (if [assoc-list.car.car key eq-p]
+            [assoc-list.car.cdr true-c]
+            [assoc-list.cdr key recur]))))
+    (+fun dict/insert
+      (let dict key value)
+      ;; -- dict
+      dict.assoc-list
+      key value assoc-list/insert
+      ;; (. assoc-list) dict clone
+      dict-c)
+    (+fun assoc-list/insert
+      (let assoc-list key value)
+      key value cons-c assoc-list cons-c)
+    (+macro lit/dict (let body)
+      `(begin (lit/list (@ body list/spread)) even-list->dict))
+    (+fun even-list->dict
+      even-list->assoc-list dict-c)
+    (+fun even-list->assoc-list
+      (let even-list)
+      (case even-list
+        (null-t null-c)
+        (cons-t
+          even-list.car even-list.cdr.car cons-c
+          even-list.cdr.cdr recur cons-c)))
       (assert
         true-c false-c bool/and
         false-c eq-p)
@@ -452,6 +500,31 @@
           null-c {list/append} list/foldl
           (lit/list 7 8 9, 4 5 6, 1 2 3)
           eq-p)
+      (begin
+        new/dict
+        1 "v1" dict/insert (let dict)
+        dict 1 dict/find bool/assert
+        "v1" eq-p bool/assert)
+
+      (begin
+        (lit/dict
+          1 "v1"
+          2 "v2"
+          3 "v3")
+        (let dict)
+        dict 1 dict/find bool/assert "v1" eq-p bool/assert
+        dict 2 dict/find bool/assert "v2" eq-p bool/assert
+        dict 3 dict/find bool/assert "v3" eq-p bool/assert)
+
+      (begin
+        new/dict
+        1 "v1" dict/insert
+        2 "v2" dict/insert
+        3 "v3" dict/insert
+        (let dict)
+        dict 1 dict/get "v1" eq-p bool/assert
+        dict 2 dict/get "v2" eq-p bool/assert
+        dict 3 dict/get "v3" eq-p bool/assert)
     (note
       (begin
         '(a b c) w nl

@@ -297,10 +297,10 @@
       (+fun scope/get dict/get)
       #+end_src
 
-***** scope/set
+***** scope/insert
 
       #+begin_src cicada
-      (+fun scope/set
+      (+fun scope/insert
         : (-> string-t obj-u dict-t
               local-name : string-t
               obj : obj-u
@@ -309,16 +309,16 @@
         dict-update)
       #+end_src
 
-***** current-scope/set
+***** current-scope/insert
 
       #+begin_src cicada
-      (+fun current-scope/set
+      (+fun current-scope/insert
         : (-> string-t obj-u dict-t
               local-name : string-t
               obj : obj-u
            -- string-t obj-u dict-t)
       scope-stack/pop
-      name hypo-obj scope/set
+      name hypo-obj scope/insert
       scope-stack/push)
       #+end_src
 
@@ -668,7 +668,7 @@
               (colon-exp-t
                 field-obj-dict
                 ante-exp-list.car.local-name
-                data-stack/pop dict/set
+                data-stack/pop dict/insert
                 ante-exp-list.cdr recur)
               (else
                 field-obj-dict
@@ -694,7 +694,7 @@
         (cons-t
           data-stack/pop (let obj)
           scope-stack/pop
-          local-name-list.car obj scope/set
+          local-name-list.car obj scope/insert
           scope-stack/push
           local-name-list.cdr recur)))
     #+end_src
@@ -787,8 +787,8 @@
       exp.type-exp-list collect-one (let type)
       exp.local-name generate/hypo-id (let hypo-id)
       hypo-id type-hypo-c
-      type type-hypo/set
-      exp.local-name hypo-id data-hypo-c current-scope/set
+      type type-hypo/insert
+      exp.local-name hypo-id data-hypo-c current-scope/insert
       type data-stack/push)
     #+end_src
 
