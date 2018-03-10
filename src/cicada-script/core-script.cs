@@ -38,7 +38,6 @@
          []
          (@ 'begin body.cdr cons-c)))
 
-
     (+macro cond (let body)
       (if [body list/length 1 number/lteq-p]
         `(begin
@@ -49,6 +48,9 @@
          `(if (@ question)
             (@ answer)
             (@ body.cdr.cdr recur))]))
+    (+fun :)
+    ;; (+macro (->) )
+
     (+fun list/length (let list)
       (if [list null-p]
         0
@@ -58,6 +60,65 @@
         (null-t succ)
         (cons-t ante.car ante.cdr succ recur cons-c)))
     (+fun tail-cons null-c cons-c list/append)
+    (+fun list/any-p (let list pred)
+      (cond [list null-p] false-c
+            [list.car pred] true-c
+            else [list.cdr {pred} recur]))
+    (+fun list/every-p (let list pred)
+      (cond [list null-p] true-c
+            [list.car pred bool/not] false-c
+            else [list.cdr {pred} recur]))
+    (+fun list/ante (let list pred)
+      (cond [list null-p] null-c
+            [list.car pred] null-c
+            else [list.car
+                  list.cdr {pred} recur
+                  cons-c]))
+    (+fun list/succ (let list pred)
+      (cond [list null-p] null-c
+            [list.car pred] list
+            else [list.cdr {pred} recur]))
+    (+fun list/split (let list pred) ;; -- ante succ
+      (cond [list null-p] [null-c null-c]
+            [list.car pred] [null-c list]
+            else [list.car
+                  list.cdr {pred} recur
+                  succ! cons-c succ]))
+    (+fun list/map (let list fun)
+      (case list
+        (null-t null-c)
+        (cons-t list.car fun list.cdr {fun} recur cons-c)))
+    (+fun list/for-each (let list fun)
+      (case list
+        (null-t)
+        (cons-t list.car fun list.cdr {fun} recur)))
+    (+fun list/filter (let list pred)
+      (cond [list null-p] null-c
+            [list.car pred]
+            [list.car list.cdr {pred} recur cons-c]
+            else [list.cdr {pred} recur]))
+    (+fun list/reverse null-c swap list/reverse-swap-append)
+
+    (+fun list/reverse-swap-append (let ante list)
+      (case list
+        (null-t)
+        (cons-t list.car swap cons-c list.cdr recur)))
+    (+fun list/foldr (let list b a-b->b)
+      (case list
+        (null-t b)
+        (cons-t
+          list.car
+          list.cdr b {a-b->b} recur
+          a-b->b)))
+    (+fun list/foldl (let list b b-a->b)
+      (case list
+        (null-t b)
+        (cons-t
+          list.cdr b {b-a->b} recur
+          list.car
+          b-a->b)))
+    (+fun list/member-p (let list x)
+      list {x eq-p} list/any-p)
     (+gene repr 1
       default-repr)
     (+disp repr [string-t]
@@ -233,6 +294,90 @@
         (assert
           "" {"*" string/append} 3 times
           "***" eq-p)
-    (cond true-c (begin "123" w nl)
-          else (begin "123" p nl))
+        (assert '(a b c) list/length 3 eq-p)
+        (assert '(a b c) '(d e f) list/append '(a b c d e f) eq-p)
+        (assert '(a b c) 'd tail-cons '(a b c d) eq-p)
+
+        ;; (assert
+        ;;   mark 0 1 2 3 4 collect-list
+        ;;   (lit/list 0 1 2 3 4)
+        ;;   eq-p)
+
+        ;; (assert
+        ;;   (lit/list 0 1 2 3 4)
+        ;;   (lit/list 5 6 7 8 9)
+        ;;   list/append
+        ;;   (lit/list 0 1 2 3 4 5 6 7 8 9)
+        ;;   eq-p)
+
+        ;; (assert
+        ;;   (lit/list 0 1 2 3 4 5 6 7 8 9)
+        ;;   {5 gteq-p} list/ante
+        ;;   (lit/list 0 1 2 3 4)
+        ;;   eq-p)
+
+        ;; (assert
+        ;;   (lit/list 0 1 2 3 4 5 6 7 8 9)
+        ;;   {5 gteq-p} list/split
+        ;;   swap (lit/list 0 1 2 3 4) eq-p
+        ;;   swap (lit/list 5 6 7 8 9) eq-p
+        ;;   and)
+
+        ;; (assert
+        ;;   (lit/list 0 1 2 3 4 5 6 7 8 9)
+        ;;   {inc} list/map
+        ;;   (lit/list 1 2 3 4 5 6 7 8 9 10)
+        ;;   eq-p)
+
+        ;; (assert
+        ;;   (lit/list 0 1 2 3 4 5 6 7 8 9)
+        ;;   {2 mod 0 eq-p} list/filter
+        ;;   (lit/list 0 2 4 6 8)
+        ;;   eq-p)
+
+        ;; (assert
+        ;;   (lit/list 0 1 2 3 4 5 6 7 8 9)
+        ;;   list/reverse
+        ;;   (lit/list 9 8 7 6 5 4 3 2 1 0)
+        ;;   eq-p)
+
+
+        ;; (assert
+        ;;   (lit/list 0 1 2 3 4 5) 100 {add} list/foldr
+        ;;   0 1 2 3 4 5 100 add add add add add add
+        ;;   eq-p)
+
+        ;; (assert
+        ;;   (lit/list 0 1 2 3 4 5) 100 {add} list/foldl
+        ;;   100 5 add 4 add 3 add 2 add 1 add 0 add
+        ;;   eq-p)
+
+        ;; (assert
+        ;;   (lit/list
+        ;;     (lit/list 1 2 3)
+        ;;     (lit/list 4 5 6)
+        ;;     (lit/list 7 8 9))
+        ;;   null-c {list/append} list/foldr
+
+        ;;   (lit/list 1 2 3, 4 5 6, 7 8 9)
+        ;;   eq-p)
+
+        ;; (assert
+        ;;   (lit/list
+        ;;     (lit/list 1 2 3)
+        ;;     (lit/list 4 5 6)
+        ;;     (lit/list 7 8 9))
+        ;;   null-c {list/append} list/foldl
+        ;;   (lit/list 7 8 9, 4 5 6, 1 2 3)
+        ;;   eq-p)
+
+        ;; (assert
+        ;;   (lit/list 1 2 3 4 5) (lit/list 1 2 3 4 5) list/append
+        ;;   10 tail-cons list/length
+        ;;   11 eq-p)
+
+        ;; (assert
+        ;;   (lit/list 1 2 3 4 5) 2 list/ref
+        ;;   3 eq-p)
+
 
