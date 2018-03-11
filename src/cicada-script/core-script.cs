@@ -278,8 +278,7 @@
       ;; -- dict
       dict.assoc-list
       key value assoc-list/insert
-      ;; (. assoc-list) dict clone
-      dict-c)
+      (. assoc-list) dict clone)
     (+fun assoc-list/insert
       (let assoc-list key value)
       key value cons-c assoc-list cons-c)

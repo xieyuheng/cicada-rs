@@ -3,7 +3,7 @@
 test ()
 {
     ./tangle.js
-    # ./cicada-language
+    ./cs cicada-language.cs
 }
 
 test

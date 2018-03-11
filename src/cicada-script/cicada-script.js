@@ -1101,20 +1101,6 @@
         }
     );
     new_keyword (
-        "field",
-        function (env, sexp_list)
-        {
-            return [new field_exp_t (sexp_list.car)];
-        }
-    );
-    new_keyword (
-        "set-field",
-        function (env, sexp_list)
-        {
-            return [new set_field_exp_t (sexp_list.car)];
-        }
-    );
-    new_keyword (
         ".",
         function (env, sexp_list)
         {
@@ -1643,8 +1629,6 @@
                 delimiter_p (char) ||
                 (char === '"'))
                 return i - 1;
-            if ((char === '.') && (! (digital_char_p (next))))
-                return i - 1;
             else
                 i = i + 1;
         }
@@ -1835,8 +1819,7 @@
               (keyword === "+fun" ||
                keyword === "+gene" ||
                keyword === "+disp" ||
-               keyword === "+macro" ||
-               keyword === "+top-macro")) {
+               keyword === "+macro")) {
               let name = sexp.cdr.car;
               let body = sexp.cdr.cdr;
               body = substitute_recur (name, body);
@@ -1863,54 +1846,6 @@
                              substitute_recur (name, sexp.cdr));
           }
       }
-      function pass_for_field (sexp)
-      {
-          if (string_p (sexp)) {
-              if (field_name_string_p (sexp))
-                  return to_field_sexp (sexp);
-              if (set_field_name_string_p (sexp))
-                  return to_set_field_sexp (sexp);
-              else
-                  return sexp;
-          }
-          else if (null_p (sexp)) {
-              return null_c ();
-          }
-          else {
-              return cons_c (pass_for_field (sexp.car),
-                             pass_for_field (sexp.cdr));
-          }
-      }
-
-      new_pass (pass_for_field);
-      function field_name_string_p (s)
-      {
-          return ((string_p (s)) &&
-                  (s.length > 1) &&
-                  (s.slice (0, 1) === ".") &&
-                  (s.slice (s.length -1, s.length) !== "!"));
-      }
-      function set_field_name_string_p (s)
-      {
-          return ((string_p (s)) &&
-                  (s.length > 2) &&
-                  (s.slice (0, 1) === ".") &&
-                  (s.slice (s.length -1, s.length) === "!"));
-      }
-      function to_field_sexp (sexp)
-      {
-          sexp = sexp.slice (1, sexp.length);
-          sexp = cons_c (sexp, null_c ());
-          sexp = cons_c ("field", sexp);
-          return sexp;
-      }
-      function to_set_field_sexp (sexp)
-      {
-          sexp = sexp.slice (1, sexp.length -1);
-          sexp = cons_c (sexp, null_c ());
-          sexp = cons_c ("set-field", sexp);
-          return sexp;
-      }
     function sexp_list_compile (env, sexp_list)
     {
         let sexp_vect = list_to_vect (sexp_list);
@@ -1922,9 +1857,8 @@
     }
     function sexp_compile (env, sexp)
     {
-        if (string_p (sexp)) {
+        if (string_p (sexp))
             return string_compile (sexp);
-        }
         else {
             assert (cons_p (sexp));
             let name = sexp.car;
@@ -1970,6 +1904,9 @@
         else if (number_string_p (sexp)) {
             let number = number_string_to_number (sexp);
             return [new lit_exp_t (number)];
+        }
+        else if (dot_string_p (sexp)) {
+            return dot_string_to_exp_vect (sexp);
         }
         else {
             let name = sexp;
@@ -2032,6 +1969,30 @@
     function string_string_to_string (ss)
     {
         return ss.slice (1, ss.length -1);
+    }
+    function dot_string_p (x)
+    {
+        return ((string_p (x)) &&
+                (x.indexOf (".") !== -1));
+    }
+    function dot_string_to_exp_vect (dot_string)
+    {
+        let string_vect = dot_string.split (".");
+        let name = string_vect[0];
+        let exp_vect = [];
+        if (name !== "")
+            exp_vect.push (new call_exp_t (name));
+        let length = string_vect.length;
+        for (let field_name of string_vect.slice (1, length -1)) {
+            exp_vect.push (new field_exp_t (field_name));
+        }
+        let last_field_name = string_vect[length -1];
+        if (last_field_name[last_field_name.length -1] === "!")
+            exp_vect.push (new set_field_exp_t (
+                last_field_name.slice (0, last_field_name.length -1)));
+        else
+            exp_vect.push (new field_exp_t (last_field_name));
+        return exp_vect;
     }
     function eval_script (code)
     {

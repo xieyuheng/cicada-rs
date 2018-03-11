@@ -1,7 +1,22 @@
     (+fun :)
     (+macro -> (let body)
-      )
-    (+macro +type)
+      body {'-- eq-p} list/ante
+      sexp/filter-colon (let new-body)
+      `(let (@ new-body)))
+    (+fun sexp/filter-colon (let ante)
+      (case ante
+        (null-t null-c)
+        (cons-t
+          (case ante.cdr
+            (null-t null-c)
+            (cons-t
+              (if [ante.cdr.car ': eq-p]
+                [ante.car ante.cdr.cdr.cdr recur cons-c]
+                [ante.cdr recur]))))))
+    (+macro +type (let body)
+       body.car (let name)
+       body.cdr (let rest)
+      `(+data (@ name) (@ rest sexp/filter-colon list/spread)))
     (+type env-t
       name-dict : [string-t den-u dict-t]
       data-stack : [obj-u list-u]
