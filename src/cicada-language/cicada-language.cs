@@ -107,7 +107,7 @@
               local-name : string-t
               obj : obj-u
            -- string-t obj-u dict-t)
-        (dict local-name obj)
+        (lit/dict local-name obj)
         dict-update)
       (+fun current-scope/insert
         : (-> string-t obj-u dict-t
@@ -119,7 +119,7 @@
       scope-stack/push)
       (+fun new/scope
         : (-> -- string-t obj-u dict-t)
-        (dict))
+        (lit/dict))
     (+union exp-u
       call-exp-t
       let-exp-t
