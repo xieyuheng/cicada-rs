@@ -674,18 +674,6 @@
                 type_of (a) === this.type_name);
         }
     }
-    class top_macro_den_t
-    {
-        constructor (exp_vect)
-        {
-            this.exp_vect = exp_vect;
-        }
-
-        den_exe (env)
-        {
-            exp_vect_run (env, this.exp_vect)
-        }
-    }
     class macro_den_t
     {
         constructor (exp_vect)
@@ -999,18 +987,6 @@
             name_dict_set (
                 env, name,
                 new macro_den_t (exp_vect));
-        }
-    );
-    new_top_keyword (
-        "+top-macro",
-        function (env, sexp_list)
-        {
-            let name = sexp_list.car;
-            let rest_list = sexp_list.cdr;
-            let exp_vect = sexp_list_compile (env, rest_list);
-            name_dict_set (
-                env, name,
-                new top_macro_den_t (exp_vect));
         }
     );
     new_top_keyword (
@@ -1816,10 +1792,12 @@
                 let top_keyword_fn = the_top_keyword_dict.get (name);
                 top_keyword_fn (env, sexp_list);
             }
-            else if (top_macro_name_p (env, name)) {
+            else if (macro_name_p (env, name)) {
                 let den = name_dict_get (env, name);
                 data_stack_push (env, sexp_list);
                 den.den_exe (env);
+                let new_sexp = data_stack_pop (env);
+                top_sexp_eval (env, new_sexp)
             }
             else {
                 let exp_vect = sexp_compile (env, sexp);
@@ -1834,16 +1812,6 @@
             assert (function_p (top_keyword_fn));
             return true;
         }
-        else
-            return false;
-    }
-    function top_macro_name_p (env, name)
-    {
-        let den = name_dict_get (env, name);
-        if (! den)
-            return false;
-        if (den instanceof top_macro_den_t)
-            return true;
         else
             return false;
     }

@@ -60,9 +60,6 @@
          `(if (@ question)
             (@ answer)
             (@ body.cdr.cdr recur))]))
-    (+fun :)
-    ;; (+macro (->) )
-
     (+gene repr 1
       default-repr)
     (+disp repr [string-t]
