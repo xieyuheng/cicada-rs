@@ -5,8 +5,6 @@
 
 *** parse
 
-*** interface to cicada-script by macro
-
 *** test exe
 
 *** fix exp-list/let-colon
@@ -1243,22 +1241,6 @@
     (+alias sexp-u (| string-t [string-t list-u]))
     #+end_src
 
-* pass
-
-* parse
-
-*** parse/den
-
-*** parse/exp
-
-    #+begin_src cicada
-    (+fun parse/exp
-      : (-> sexp-u -- exp-u)
-      )
-    #+end_src
-
-*** parse/exp-list
-
 * eval
 
 *** top-sexp-list/eval
@@ -1304,6 +1286,48 @@
            (or [sexp.car '+fun]
                [sexp.car '+type]
                [sexp.car '+union])))
+    #+end_src
+
+* parse
+
+*** >< parse/den
+
+    #+begin_src cicada
+    (+fun parse/den
+      : (-> sexp-u -- den-u)
+      )
+    #+end_src
+
+*** >< parse/exp
+
+    #+begin_src cicada
+    (+fun parse/exp
+      : (-> sexp-u -- exp-u)
+      )
+    #+end_src
+
+*** >< parse/exp-list
+
+    #+begin_src cicada
+    (+fun parse/exp-list
+      : (-> [sexp-u list-u] -- exp-u)
+      )
+    #+end_src
+
+* >< pass
+
+* interface
+
+*** (cicada-language) a.k.a. (cl)
+
+    #+begin_src cicada
+    (+macro cl cicada-language)
+
+    (+macro cicada-language
+      (-> body : [sexp-u list-u] -- sexp-u)
+      `(begin
+         new/env (quote (@ body))
+         top-sexp-list/eval))
     #+end_src
 
 * test

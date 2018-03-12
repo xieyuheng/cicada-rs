@@ -545,9 +545,6 @@
         ;; ><><><
         (obj-u type-infer)))
     (+alias sexp-u (| string-t [string-t list-u]))
-    (+fun parse/exp
-      : (-> sexp-u -- exp-u)
-      )
     (+fun top-sexp-list/eval
       : (-> env-t, sexp-list : [sexp-u list-u] -- env-t)
       (case sexp-list
@@ -573,6 +570,22 @@
            (or [sexp.car '+fun]
                [sexp.car '+type]
                [sexp.car '+union])))
+    (+fun parse/den
+      : (-> sexp-u -- den-u)
+      )
+    (+fun parse/exp
+      : (-> sexp-u -- exp-u)
+      )
+    (+fun parse/exp-list
+      : (-> [sexp-u list-u] -- exp-u)
+      )
+    (+macro cl cicada-language)
+
+    (+macro cicada-language
+      (-> body : [sexp-u list-u] -- sexp-u)
+      `(begin
+         new/env (quote (@ body))
+         top-sexp-list/eval))
     (assert
       1 2
       : (-> num0 : number-t, num1 : number-t -- number-t)
