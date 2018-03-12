@@ -136,6 +136,25 @@
         frame clone
         frame-stack-push
         frame.body-exp-list frame.index list-ref)
+      (+fun scope-stack/push
+        : (-> env : env-t
+              scope : [string-t obj-u dict-t]
+           -- env-t)
+        scope env.scope-stack cons-c
+        (. scope-stack)
+        env clone)
+      (+fun scope-stack/pop
+        : (-> env : env-t -- env-t [string-t obj-u dict-t])
+        env.scope-stack.cdr
+        (. scope-stack)
+        env clone
+        env.scope-stack.car)
+      (+fun scope-stack/drop
+        : (-> env-t -- env-t)
+        scope-stack/pop drop)
+      (+fun scope-stack/tos
+        : (-> env-t -- env-t [string-t obj-u dict-t])
+        dup .scope-stack.car)
       (+fun scope/get dict/get)
       (+fun scope/insert
         : (-> string-t obj-u dict-t
@@ -155,6 +174,10 @@
       (+fun new/scope
         : (-> -- string-t obj-u dict-t)
         (lit/dict))
+
+
+
+
     (+union exp-u
       call-exp-t
       let-exp-t
@@ -524,6 +547,20 @@
       data-stack/pop 3 eq-p bool/assert
       data-stack/pop 2 eq-p bool/assert
       data-stack/pop 1 eq-p bool/assert
+      drop)
+    (begin
+      new/env
+      0 scope-stack/push
+      1 scope-stack/push
+      2 scope-stack/push
+      3 scope-stack/push
+      scope-stack/pop p; 3 eq-p bool/assert
+      scope-stack/pop p; 2 eq-p bool/assert
+      scope-stack/tos p; 1 eq-p bool/assert
+      scope-stack/tos p; 1 eq-p bool/assert
+      scope-stack/tos p; 1 eq-p bool/assert
+      scope-stack/drop
+      scope-stack/pop 0 eq-p bool/assert
       drop)
 
 

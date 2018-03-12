@@ -365,13 +365,44 @@
 
 *** scope-stack
 
-***** >< scope-stack/push
+***** scope-stack/push
 
-***** >< scope-stack/pop
+      #+begin_src cicada
+      (+fun scope-stack/push
+        : (-> env : env-t
+              scope : [string-t obj-u dict-t]
+           -- env-t)
+        scope env.scope-stack cons-c
+        (. scope-stack)
+        env clone)
+      #+end_src
 
-***** >< scope-stack/drop
+***** scope-stack/pop
 
-***** >< scope-stack/tos
+      #+begin_src cicada
+      (+fun scope-stack/pop
+        : (-> env : env-t -- env-t [string-t obj-u dict-t])
+        env.scope-stack.cdr
+        (. scope-stack)
+        env clone
+        env.scope-stack.car)
+      #+end_src
+
+***** scope-stack/drop
+
+      #+begin_src cicada
+      (+fun scope-stack/drop
+        : (-> env-t -- env-t)
+        scope-stack/pop drop)
+      #+end_src
+
+***** scope-stack/tos
+
+      #+begin_src cicada
+      (+fun scope-stack/tos
+        : (-> env-t -- env-t [string-t obj-u dict-t])
+        dup .scope-stack.car)
+      #+end_src
 
 ***** scope/get
 
@@ -414,15 +445,35 @@
         (lit/dict))
       #+end_src
 
-*** goal-stack
+*** >< goal-stack
 
 *** >< data-bind-dict
 
-***** ><
+***** data-bind-dict/find
+
+      #+begin_src cicada
+
+      #+end_src
+
+***** data-bind-dict/insert
+
+      #+begin_src cicada
+
+      #+end_src
 
 *** >< type-bind-dict
 
-***** ><
+***** type-bind-dict/find
+
+      #+begin_src cicada
+
+      #+end_src
+
+***** type-bind-dict/insert
+
+      #+begin_src cicada
+
+      #+end_src
 
 * exp
 
@@ -1183,9 +1234,34 @@
       drop)
     #+end_src
 
-*** data-bind-dict
+*** >< frame-stack
 
-*** type-bind-dict
+*** >< frame
+
+*** scope-stack
+
+    #+begin_src cicada
+    (begin
+      new/env
+      0 scope-stack/push
+      1 scope-stack/push
+      2 scope-stack/push
+      3 scope-stack/push
+      scope-stack/pop p 3 eq-p bool/assert
+      scope-stack/pop p 2 eq-p bool/assert
+      scope-stack/tos p 1 eq-p bool/assert
+      scope-stack/tos p 1 eq-p bool/assert
+      scope-stack/tos p 1 eq-p bool/assert
+      scope-stack/drop
+      scope-stack/pop 0 eq-p bool/assert
+      drop)
+    #+end_src
+
+*** >< scope
+
+*** >< data-bind-dict
+
+*** >< type-bind-dict
 
 * epilog
 
