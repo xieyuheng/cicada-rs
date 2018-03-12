@@ -560,7 +560,7 @@
       '(a b c) w nl
       '(a b c) p nl)
 
-    ;; #note
+    #note
     (begin
       zero-c succ-c p nl)
 

@@ -46,6 +46,11 @@
       (+fun name-dict/get
         : (-> env-t, name : string-t -- env-t den-u)
         dup .name-dict name dict/get)
+      (+fun name-dict/insert
+        : (-> env : env-t, name : string-t, den : den-u -- env-t)
+        env.name-dict name den dict/insert
+        (. name-dict)
+        env clone)
       (+fun data-stack/push
         : (-> env : env-t, obj : obj-u -- env-t)
         obj env.data-stack cons-c
@@ -64,13 +69,25 @@
         : (-> env-t -- env-t obj-u)
         dup .data-stack.car)
       (+fun data-stack/n-pop
-        : (-> env-t, number : number-t
+        : (-> env-t, number-t
            -- env-t, obj-u list-u)
-        )
+        null-c data-stack/n-pop-to-list)
+
+      (+fun data-stack/n-pop-to-list
+        : (-> env-t, n : number-t, list : [obj-u list-u]
+           -- env-t, obj-u list-u)
+        (if [n 0 lteq-p]
+          list
+          [data-stack/pop list cons-c
+           n dec swap recur]))
       (+fun data-stack/list-push
-        : (-> env-t obj-u list-u
+        : (-> env-t, list : [obj-u list-u]
            -- env-t)
-        )
+        (case list
+          (null-t)
+          (cons-t
+            list.car data-stack/push
+            list.cdr recur)))
       (+fun frame-stack/push
         : (-> env : env-t, frame : frame-u -- env-t)
         frame env.frame-stack cons-c
@@ -468,9 +485,42 @@
       3 eq-p)
     (begin
       new/env
+      "1" 1 name-dict/insert
+      "2" 2 name-dict/insert
+      "1" name-dict/get 1 eq-p bool/assert
+      "1" name-dict/get 1 eq-p bool/assert
+      "2" name-dict/get 2 eq-p bool/assert
+      "2" name-dict/get 2 eq-p bool/assert
+      drop)
+    (begin
+      new/env
+      0 data-stack/push
       1 data-stack/push
       2 data-stack/push
       3 data-stack/push
+      data-stack/pop 3 eq-p bool/assert
+      data-stack/pop 2 eq-p bool/assert
+      data-stack/tos 1 eq-p bool/assert
+      data-stack/tos 1 eq-p bool/assert
+      data-stack/tos 1 eq-p bool/assert
+      data-stack/drop
+      data-stack/pop 0 eq-p bool/assert
+      drop)
+
+    (begin
+      new/env
+      0 data-stack/push
+      1 data-stack/push
+      2 data-stack/push
+      3 data-stack/push
+      3 data-stack/n-pop
+      (lit/list 1 2 3) eq-p bool/assert
+      data-stack/pop 0 eq-p bool/assert
+      drop)
+
+    (begin
+      new/env
+      (lit/list 1 2 3) data-stack/list-push
       data-stack/pop 3 eq-p bool/assert
       data-stack/pop 2 eq-p bool/assert
       data-stack/pop 1 eq-p bool/assert

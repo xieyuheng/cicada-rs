@@ -1,31 +1,12 @@
 #!/usr/bin/env node
 
-const fs = require("fs");
-// const path = require("path");
-
-const cicada = require("./cicada-script.js");
-
+const fs = require ("fs");
+const cicada = require ("./cicada-script.js");
 
 function repl ()
 {
     eval_file_vect ([]);
     return;
-
-//     let script =
-//         fs.readFileSync ("./core-script.cs")
-//         .toString ();
-//     let env = cicada.eval_script (script);
-
-//     process.stdin.setEncoding('utf8');
-//     process.stdin.on('readable', () => {
-//         const chunk = process.stdin.read();
-//         if (chunk !== null) {
-//             process.stdout.write(`data: ${chunk}`);
-//         }
-//     });
-//     process.stdin.on('end', () => {
-//         process.stdout.write('end');
-//     });
 }
 
 function eval_file_vect (file_vect)
@@ -45,7 +26,7 @@ function eval_file_vect (file_vect)
 
 function main ()
 {
-    let arg_vect = process.argv.slice(2);
+    let arg_vect = process.argv.slice (2);
     if (arg_vect.length === 0)
         repl ();
     else

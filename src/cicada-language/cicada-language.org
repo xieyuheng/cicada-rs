@@ -3,11 +3,7 @@
 
 * [todo-stack]
 
-*** interface to cicada-script
-
-*** data-bind-dict
-
-*** type-bind-dict
+*** interface to cicada-script by macro
 
 *** ante-exp-list/pick-up
 
@@ -181,6 +177,16 @@
         dup .name-dict name dict/get)
       #+end_src
 
+***** name-dict/insert
+
+      #+begin_src cicada
+      (+fun name-dict/insert
+        : (-> env : env-t, name : string-t, den : den-u -- env-t)
+        env.name-dict name den dict/insert
+        (. name-dict)
+        env clone)
+      #+end_src
+
 *** data-stack
 
 ***** data-stack/push
@@ -220,22 +226,34 @@
         dup .data-stack.car)
       #+end_src
 
-***** >< data-stack/n-pop
+***** data-stack/n-pop
 
       #+begin_src cicada
       (+fun data-stack/n-pop
-        : (-> env-t, number : number-t
+        : (-> env-t, number-t
            -- env-t, obj-u list-u)
-        )
+        null-c data-stack/n-pop-to-list)
+
+      (+fun data-stack/n-pop-to-list
+        : (-> env-t, n : number-t, list : [obj-u list-u]
+           -- env-t, obj-u list-u)
+        (if [n 0 lteq-p]
+          list
+          [data-stack/pop list cons-c
+           n dec swap recur]))
       #+end_src
 
-***** >< data-stack/list-push
+***** data-stack/list-push
 
       #+begin_src cicada
       (+fun data-stack/list-push
-        : (-> env-t obj-u list-u
+        : (-> env-t, list : [obj-u list-u]
            -- env-t)
-        )
+        (case list
+          (null-t)
+          (cons-t
+            list.car data-stack/push
+            list.cdr recur)))
       #+end_src
 
 *** frame-stack
@@ -1113,19 +1131,61 @@
       3 eq-p)
     #+end_src
 
+*** name-dict
+
+    #+begin_src cicada
+    (begin
+      new/env
+      "1" 1 name-dict/insert
+      "2" 2 name-dict/insert
+      "1" name-dict/get 1 eq-p bool/assert
+      "1" name-dict/get 1 eq-p bool/assert
+      "2" name-dict/get 2 eq-p bool/assert
+      "2" name-dict/get 2 eq-p bool/assert
+      drop)
+    #+end_src
+
 *** >< data-stack
 
     #+begin_src cicada
     (begin
       new/env
+      0 data-stack/push
       1 data-stack/push
       2 data-stack/push
       3 data-stack/push
       data-stack/pop 3 eq-p bool/assert
       data-stack/pop 2 eq-p bool/assert
+      data-stack/tos 1 eq-p bool/assert
+      data-stack/tos 1 eq-p bool/assert
+      data-stack/tos 1 eq-p bool/assert
+      data-stack/drop
+      data-stack/pop 0 eq-p bool/assert
+      drop)
+
+    (begin
+      new/env
+      0 data-stack/push
+      1 data-stack/push
+      2 data-stack/push
+      3 data-stack/push
+      3 data-stack/n-pop
+      (lit/list 1 2 3) eq-p bool/assert
+      data-stack/pop 0 eq-p bool/assert
+      drop)
+
+    (begin
+      new/env
+      (lit/list 1 2 3) data-stack/list-push
+      data-stack/pop 3 eq-p bool/assert
+      data-stack/pop 2 eq-p bool/assert
       data-stack/pop 1 eq-p bool/assert
       drop)
     #+end_src
+
+*** data-bind-dict
+
+*** type-bind-dict
 
 * epilog
 
