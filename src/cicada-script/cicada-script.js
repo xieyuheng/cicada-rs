@@ -1,6 +1,18 @@
       function print (x)
       {
+          string_print (repr (x));
+      }
+      function repr (x)
+      {
+          return (x.toString ());
+      }
+      function string_print (x)
+      {
           process.stdout.write (x);
+      }
+      function number_to_string (n)
+      {
+          return n.toString ();
       }
       function vect_eq_p (v1, v2)
       {
@@ -53,8 +65,7 @@
       }
       function assert (x) {
           if (! x) {
-              print ("- assertion fail\n");
-              throw new Error('assert fail!');
+              throw new Error('assertion fail!');
           }
       }
       function error ()
@@ -1182,16 +1193,6 @@
           }
       );
       new_prim (
-          "bool-p",
-          function (env)
-          {
-              let a = data_stack_pop (env);
-              data_stack_push (env, (
-                  ((a === false) ||
-                   (a === true))));
-          }
-      );
-      new_prim (
           "bool/and",
           function (env)
           {
@@ -1407,7 +1408,7 @@
           function (env)
           {
               let a = data_stack_pop (env);
-              data_stack_push (env, a.toString ());
+              data_stack_push (env, number_to_string (a));
           }
       );
       new_prim (
@@ -1430,6 +1431,40 @@
           function (env)
           {
               data_stack_push (env, '"');
+          }
+      );
+      new_prim (
+          "singlequote/string",
+          function (env)
+          {
+              data_stack_push (env, "'");
+          }
+      );
+      function default_repr (env, obj)
+      {
+          if (obj instanceof data_t)
+              return data_repr (env, obj);
+          else
+              return repr (obj);
+      }
+      function data_repr (env, obj)
+      {
+          let prefix = data_name_prefix (obj.type_name);
+          let repr_string = prefix.concat ("-c");
+          let data_den = name_dict_get (env, obj.type_name);
+          for (let field_name of data_den.reversed_field_name_vect) {
+              let field_obj = obj.field_dict.get (field_name);
+              repr_string = repr_string.concat (" ");
+              repr_string = repr_string.concat (data_repr (env, field_obj));
+          }
+          return repr_string;
+      }
+      new_prim (
+          "default-repr",
+          function (env)
+          {
+              let obj = data_stack_pop (env);
+              data_stack_push (env, default_repr (env, obj));
           }
       );
       class null_t
@@ -1580,11 +1615,12 @@
             else if (char === '"') {
                 let end = string.indexOf ('"', i+1);
                 if (end === -1) {
-                    print ("- code_scan fail\n")
-                    print ("  doublequote mismatch\n")
-                    print ("  string : {}".format(string))
-                    print ("\n")
-                    error ()
+                    print ("- code_scan fail\n");
+                    print ("  doublequote mismatch\n");
+                    print ("  string : ");
+                    print (string);
+                    print ("\n");
+                    error ();
                 }
                 string_vect.push (string.slice (i, end + 1));
                 i = end + 1;
@@ -1714,7 +1750,7 @@
         if (null_p (sexp))
             print ("null-c");
         else if (cons_p (sexp)) {
-            print ("(");
+        print ("(");
             sexp_list_print (sexp);
             print (")");
         }

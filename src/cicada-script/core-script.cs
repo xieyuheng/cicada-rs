@@ -28,13 +28,13 @@
     (+macro assert (let body)
       `(if [(@ body list/spread)]
          []
-         ["- assertion fail : " string/print
+         ["- (assert) fail : " string/print
           (quote (@ body)) sexp-list/print nl]))
 
     (+macro assert! (let body)
       `(if [(@ body list/spread)]
          []
-         ["- assertion fail : " string/print
+         ["- (assert!) fail : " string/print
           (quote (@ body)) sexp-list/print nl
           error]))
     (+macro and (let body)
@@ -115,12 +115,15 @@
       (unless [n 0 number/lteq-p]
         fun
         {fun} n number/dec recur))
+    (+union bool-u
+      true-t
+      false-t)
     (+fun bool/assert
       (let bool)
-      (if bool
-        []
-        ["- bool/assertion fail : " string/print
-         bool p nl]))
+      (case bool
+        (true-t)
+        (else
+          "- bool/assertion fail : " p bool p nl)))
     (+macro bool/if
       (let body)
       body.car (let true-fn)
@@ -142,6 +145,8 @@
          {}
          {(@ body list/spread)}
          ifte))
+    (+disp repr [bool-u]
+      (bool/if "true-c" "false-c"))
     (+disp gt-p [number-t number-t]
       number/gt-p)
     (+disp lt-p [number-t number-t]
@@ -554,4 +559,8 @@
     (begin
       '(a b c) w nl
       '(a b c) p nl)
+
+    ;; #note
+    (begin
+      zero-c succ-c p nl)
 

@@ -86,13 +86,13 @@
     (+macro assert (let body)
       `(if [(@ body list/spread)]
          []
-         ["- assertion fail : " string/print
+         ["- (assert) fail : " string/print
           (quote (@ body)) sexp-list/print nl]))
 
     (+macro assert! (let body)
       `(if [(@ body list/spread)]
          []
-         ["- assertion fail : " string/print
+         ["- (assert!) fail : " string/print
           (quote (@ body)) sexp-list/print nl
           error]))
     #+end_src
@@ -307,15 +307,23 @@
 
 * bool
 
+*** bool-u
+
+    #+begin_src cicada
+    (+union bool-u
+      true-t
+      false-t)
+    #+end_src
+
 *** bool/assert
 
     #+begin_src cicada
     (+fun bool/assert
       (let bool)
-      (if bool
-        []
-        ["- bool/assertion fail : " string/print
-         bool p nl]))
+      (case bool
+        (true-t)
+        (else
+          "- bool/assertion fail : " p bool p nl)))
     #+end_src
 
 *** bool/if
@@ -347,6 +355,13 @@
          {}
          {(@ body list/spread)}
          ifte))
+    #+end_src
+
+*** repr [bool-u]
+
+    #+begin_src cicada
+    (+disp repr [bool-u]
+      (bool/if "true-c" "false-c"))
     #+end_src
 
 * number
@@ -1052,6 +1067,10 @@
     (begin
       '(a b c) w nl
       '(a b c) p nl)
+
+    ;; #note
+    (begin
+      zero-c succ-c p nl)
     #+end_src
 
 *** >< main
