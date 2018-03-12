@@ -1757,8 +1757,15 @@
     }
     function top_sexp_vect_eval (env, sexp_vect)
     {
-        for (let sexp of sexp_vect) {
-            top_sexp_eval (env, sexp);
+        let index = 0;
+        let length = sexp_vect.length;
+        while (index < length) {
+            let sexp = sexp_vect [index];
+            if (sexp === "#note")
+                index = index +1;
+            else
+                top_sexp_eval (env, sexp);
+            index = index +1;
         }
     }
     function top_sexp_eval (env, sexp)

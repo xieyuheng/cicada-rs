@@ -3,7 +3,7 @@
 test ()
 {
     ./tangle.js
-    ./cs cicada-language.cs
+    time ./cs cicada-language.cs
 }
 
 test

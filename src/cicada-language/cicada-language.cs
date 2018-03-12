@@ -1,8 +1,9 @@
     (+fun :)
     (+macro -> (let body)
       body {'-- eq-p} list/ante
+      {', eq-p bool/not} list/filter
       sexp/filter-colon (let new-body)
-      `(let (@ new-body)))
+      `(let (@ new-body list/spread)))
     (+fun sexp/filter-colon (let ante)
       (case ante
         (null-t null-c)
@@ -25,12 +26,29 @@
       goal-stack : [goal-t list-u]
       data-bind-dict : [hypo-id-t obj-u dict-t]
       type-bind-dict : [hypo-id-t obj-u dict-t])
+    (+fun new/env
+      : (-> -- env-t)
+      (lit/dict)
+      (lit/list)
+      (lit/list)
+      (lit/list)
+      (lit/list)
+      (lit/dict)
+      (lit/dict)
+      (. name-dict
+         data-stack
+         frame-stack
+         scope-stack
+         goal-stack
+         data-bind-dict
+         type-bind-dict)
+      env-cr)
       (+fun name-dict/get
         : (-> env-t, name : string-t -- env-t den-u)
         dup .name-dict name dict/get)
       (+fun data-stack/push
         : (-> env : env-t, obj : obj-u -- env-t)
-        obj env.data-stack cons
+        obj env.data-stack cons-c
         (. data-stack)
         env clone)
       (+fun data-stack/pop
@@ -55,7 +73,7 @@
         )
       (+fun frame-stack/push
         : (-> env : env-t, frame : frame-u -- env-t)
-        frame env.frame-stack cons
+        frame env.frame-stack cons-c
         (. frame-stack)
         env clone)
       (+fun frame-stack/pop
@@ -443,4 +461,19 @@
         (closure-obj-t closure-obj/infer)
         ;; ><><><
         (obj-u type-infer)))
+    (assert
+      1 2
+      : (-> num0 : number-t, num1 : number-t -- number-t)
+      num0 num1 add
+      3 eq-p)
+    (begin
+      new/env
+      1 data-stack/push
+      2 data-stack/push
+      3 data-stack/push
+      data-stack/pop 1 eq-p bool/assert
+      ;; data-stack/pop 2 eq-p ;; bool/assert
+      ;; data-stack/pop 3 eq-p ;; bool/assert
+      )
+
 

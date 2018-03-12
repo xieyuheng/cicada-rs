@@ -3,7 +3,7 @@
 test ()
 {
     ./tangle.js
-    ./cicada-script
+    time ./cicada-script
 }
 
 test

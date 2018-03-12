@@ -5,7 +5,7 @@
 
 * [todo-stack]
 
-*** default-repr for (+data)
+*** default-repr for (+data) and js object
 
 *** step
 
@@ -13,10 +13,17 @@
 
     - better error
 
-*** [maybe] input_stack & output_stack
+* [todo-list]
 
-    - to be able to use it as a repl
-    - need to learn to use node for this
+*** compile to jojo
+
+*** module system
+
+*** UI -- not just a repl
+
+    - we must design rich keyboard UI in js instead of node
+
+*** how to load core-script in js ?
 
 * [note]
 
@@ -2680,8 +2687,15 @@
     #+begin_src js
     function top_sexp_vect_eval (env, sexp_vect)
     {
-        for (let sexp of sexp_vect) {
-            top_sexp_eval (env, sexp);
+        let index = 0;
+        let length = sexp_vect.length;
+        while (index < length) {
+            let sexp = sexp_vect [index];
+            if (sexp === "#note")
+                index = index +1;
+            else
+                top_sexp_eval (env, sexp);
+            index = index +1;
         }
     }
     #+end_src

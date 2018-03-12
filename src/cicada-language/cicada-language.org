@@ -3,9 +3,7 @@
 
 * [todo-stack]
 
-*** (->) to (let)
-
-*** (+type) to (+data)
+*** interface to cicada-script
 
 *** data-bind-dict
 
@@ -107,8 +105,9 @@
     #+begin_src cicada
     (+macro -> (let body)
       body {'-- eq-p} list/ante
+      {', eq-p bool/not} list/filter
       sexp/filter-colon (let new-body)
-      `(let (@ new-body)))
+      `(let (@ new-body list/spread)))
     #+end_src
 
 *** sexp/filter-colon
@@ -150,6 +149,28 @@
       type-bind-dict : [hypo-id-t obj-u dict-t])
     #+end_src
 
+*** new/env
+
+    #+begin_src cicada
+    (+fun new/env
+      : (-> -- env-t)
+      (lit/dict)
+      (lit/list)
+      (lit/list)
+      (lit/list)
+      (lit/list)
+      (lit/dict)
+      (lit/dict)
+      (. name-dict
+         data-stack
+         frame-stack
+         scope-stack
+         goal-stack
+         data-bind-dict
+         type-bind-dict)
+      env-cr)
+    #+end_src
+
 *** name-dict
 
 ***** name-dict/get
@@ -167,7 +188,7 @@
       #+begin_src cicada
       (+fun data-stack/push
         : (-> env : env-t, obj : obj-u -- env-t)
-        obj env.data-stack cons
+        obj env.data-stack cons-c
         (. data-stack)
         env clone)
       #+end_src
@@ -224,7 +245,7 @@
       #+begin_src cicada
       (+fun frame-stack/push
         : (-> env : env-t, frame : frame-u -- env-t)
-        frame env.frame-stack cons
+        frame env.frame-stack cons-c
         (. frame-stack)
         env clone)
       #+end_src
@@ -1078,7 +1099,41 @@
 
 * check
 
+* parse
+
+* test
+
+*** (->)
+
+    #+begin_src cicada
+    (assert
+      1 2
+      : (-> num0 : number-t, num1 : number-t -- number-t)
+      num0 num1 add
+      3 eq-p)
+    #+end_src
+
+*** >< data-stack
+
+    #+begin_src cicada
+    (begin
+      new/env
+      1 data-stack/push
+      2 data-stack/push
+      3 data-stack/push
+      data-stack/pop 1 eq-p bool/assert
+      ;; data-stack/pop 2 eq-p ;; bool/assert
+      ;; data-stack/pop 3 eq-p ;; bool/assert
+      )
+    #+end_src
+
 * epilog
+
+*** play
+
+    #+begin_src cicada
+
+    #+end_src
 
 *** main
 

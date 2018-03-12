@@ -550,8 +550,8 @@
 
     (assert false-c (bool/unless 'ok) 'ok eq-p)
     (assert 'ok true-c (bool/unless 'ugh) 'ok eq-p)
-    (note
-      (begin
-        '(a b c) w nl
-        '(a b c) p nl))
+    #note
+    (begin
+      '(a b c) w nl
+      '(a b c) p nl)
 
