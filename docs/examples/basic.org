@@ -6,9 +6,9 @@
 
 *** alias
 
-    - (+alias macro-a = (-> sexp-u list-u -- sexp-u))
-    - or (+def macro-ar = (-> sexp-u list-u -- sexp-u))
-      -ar for arrow
+    - (+def macro-ar = (-> sexp-u list-u -- sexp-u))
+      "-ar" for arrow
+
     - how should we use postfix of words
 
 * [note]
@@ -257,3 +257,52 @@
           (null-has-length-t null-has-length-c)
           (cons-has-length-t has-length.cdr recur cons-has-length-c)))
       #+end_src
+
+* vect
+
+*** vect-u
+
+    #+begin_src cicada
+    (+union vect-u
+      : (-> length : nat-u, type : type-tt -- type-tt)
+      null-vect-t < type vect-u
+      cons-vect-t < vect-u)
+
+    (+type null-vect-t
+      : (-> length : nat-u -- type-tt)
+      (-> -- zero-c null-vect-t))
+
+    (+type cons-vect-t
+      : (-> length : nat-u, type : type-tt -- type-tt)
+      (-> car : type
+          cdr : [length type vect-u]
+       -- length succ-c type cons-vect-t))
+    #+end_src
+
+*** vect/append
+
+    #+begin_src cicada
+    (+fun vect/append
+      : (-> [m n] :: nat-u
+            type :: type-tt
+            l0 : [m type vect-u]
+            l1 : [n type vect-u]
+         -- m n add type vect-u)
+      (case l1
+        (vect/null-t l0)
+        (vect/cons-t l1.car l0 l1.cdr recur vect/cons-c)))
+    #+end_src
+
+*** vect/map
+
+    #+begin_src cicada
+    (+fun vect/map
+      : (-> n :: nat-u
+            [type1 type2] :: type-tt
+            l : [n type1 vect-u]
+            fun : (-> type1 -- type2)
+         -- n type2 vect-u)
+      (case l
+        (vect/null-t vect/null-c)
+        (vect/cons-t l.car fun l.cdr {fun} recur vect/cons-c)))
+    #+end_src

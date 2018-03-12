@@ -10,6 +10,89 @@
 
 * day 1
 
+*** types are first class
+
+    #+begin_src jojo
+    (+fun StringOrNat
+      : (-> :isStr : Bool
+         -- Type)
+      (match :isStr
+        true String
+        false Nat))
+    #+end_src
+
+*** types of one thing can influence types of another
+
+    #+begin_src jojo
+    (+fun lengthOrDouble
+      : (-> :x : :isStr StringOrNat
+            :isStr : Bool
+         -- Nat)
+      (match :isStr
+        true [:x string-length]
+        false [:x double]))
+
+    (+fun double : (-> Nat -- Nat)
+      dup add)
+
+    (: {true lengthOrDouble}
+       (-> String -- Nat))
+
+    (: {false lengthOrDouble}
+       (-> Nat -- Nat))
+    #+end_src
+
+*** >< printf
+
+    #+begin_src jojo
+    (+type Format : Type
+      Number : (-> .fmt Format -- Format)
+      Str : (-> .fmt Format -- Format)
+      Lit : (-> .str String .fmt Format -- Format)
+      End : Format)
+
+    (note example
+      ><><><)
+
+    (+fun string->format : (-> String -- Format)
+      string->char-list char-list->format)
+
+    (+fun char-list->format : (-> :l : List Char -- Format)
+      (match :l
+        null End
+        cons (if [:l.car "%"]
+               (match :l.cdr
+                 null []
+                 cons [])
+               (match :l.cdr
+                 ))))
+
+    (+fun printfType : (-> :fmt Format -- Type)
+      (match :fmt
+        Number [Int :fmt.fmt printfType ante-cons]
+        Str [String :fmt.fmt printfType ante-cons]
+        Lit [:fmt.fmt printfType]
+        End [String]))
+
+    (note example
+      ><><><)
+
+    (+fun printf
+      : (-> :s : String
+         -- :s string->format printfType)
+      :s string->format "" printf-aux)
+
+    (+fun printf-aux
+      : (-> :fmt : Format
+            :x : String
+         -- :fmt printfType)
+      (match :fmt
+        Number {:n! :fmt.fmt :x :n nat->string string-append recur}
+        Str {:s! :fmt.fmt :x :s string-append recur}
+        Lit [:fmt.fmt :x :fmt.str string-append recur]
+        End :x))
+    #+end_src
+
 *** [note] type-check of succedent
 
     - we must use equal to check succedent
@@ -47,7 +130,34 @@
 *** >< matrix-transpose
 
     #+begin_src cicada
-    (+fun matrix-transpose
-      : (->  vect-u --)
+    (+fun matrix/transpose
+      : (-> m n type vect-u vect-u % matrix
+         -- n m type vect-u vect-u)
+      (case matrix
+        (null-vect-t
+          matrix zero-vect/transpose)
+        (cons-vect-t
+          matrix.car one-vect/transpose
+          matrix.cdr recur vect/zip)))
+
+    (+fun vect/zip
+      : (-> n type1 vect-u
+            n type2 vect-u
+         -- n type1 type2  vect-u))
+
+    1 n type vect-u vect-u
+    n 1 type vect-u vect-u
+
+    n 1 type vect-u vect-u
+    n m.prev type vect-u vect-u
+
+    (+fun ><
+      : (-> m zero-c type vect-u vect-u
+         -- zero-c m type vect-u vect-u)
       )
+
+    (+fun zero-vect/transpose
+      : (-> zero-c n type vect-u vect-u
+         -- n zero-c type vect-u vect-u)
+      n many/null-vect)
     #+end_src

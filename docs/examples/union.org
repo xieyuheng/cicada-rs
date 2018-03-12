@@ -2,22 +2,73 @@
 
 * [todo-list]
 
-  - what relations do we need out of (+union)
+* [note]
 
-    1. subtype relation
+*** (+union)
 
-    2. a case-clause refines a union-type
+    - (+union) define relation between
+      an union-constructor
+      and a list of type-constructors for the union's subtypes
 
-    3. for each union-type
-       we need to know all the ways
-       of constructing data of subtype of this union-type
+    - this relation is more generate than subtype relation between types
+      because union-constructor or type-constructor is not of type type-tt
+      but of function type in general
 
-  - union can must be able to handle
+    - the condition of being union-constructor and type-constructor
+      can be loose
+      because bodies can be viewed as type-constructors
 
-    - string-t < sexp-u
-      sexp-u list-u < sexp-u
-
-    - node-t : name-t -> type-tt
-      edge-t : name-t, name-t -> type-tt
-      edge-t < path-u
+      #+begin_src cicada
+      node-t : (-> name-t -- type-tt)
+      path-u : (-> name-t, name-t -- type-tt)
       node-t < [dup path-u]
+
+      (+union path-u : (-> begin : name-t, ending : name-t -- type-tt)
+        node-t
+        edge-t
+        composed-path-t)
+
+      string-t < sexp-u
+      [string-t list-u] < sexp-u
+
+      (+union sexp-u
+        string-t
+        [string-t list-u])
+      #+end_src
+
+    - but an union can not have more information than its subtype
+
+      #+begin_src cicada
+      null-t : type-tt
+      list-u : (-> type : type-tt -- type-tt)
+      null-t < [type list-u]
+      ;; the line above is invalid
+      ;;   because the information of type in list-u
+      ;;   is not in list-u's subtype null-t
+      #+end_src
+
+    - we need the following information from (+union)
+      - subtype relation
+      - for each union
+        we need to know all the ways
+        of constructing data of subtype of this union
+
+*** (case)
+
+    - (case) dispatches over a value of union-type or sumtype
+      to type-constructors
+      or bodies that can be viewed as type-constructors
+
+    - a case-clause refines an union
+
+*** (|) -- sumtype
+
+    - (|) for literal sumtype
+
+      #+begin_src cicada
+      (| false-t
+         [obj-u true-t])
+      #+end_src
+
+    - different subtypes of a sumtype
+      can have different information
