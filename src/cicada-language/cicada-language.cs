@@ -477,6 +477,9 @@
       dup .frame-stack list-length (let base)
       exp-list new/simple-frame frame-stack/push
       base run-with-base)
+    (+fun exp/run
+      : (-> env-t, exp : exp-u -- env-t)
+      null-c cons-c exp-list/run)
     (+fun collect-list
       : (-> env-t, exp-list : [exp-u list-u]
          -- env-t, obj-u list-u)
@@ -541,13 +544,35 @@
         (closure-obj-t closure-obj/infer)
         ;; ><><><
         (obj-u type-infer)))
-    (+alias sexp-u [string-t list-u])
+    (+alias sexp-u (| string-t [string-t list-u]))
     (+fun parse/exp
-      : (-> sexp-u -- ))
+      : (-> sexp-u -- exp-u)
+      )
+    (+fun top-sexp-list/eval
+      : (-> env-t, sexp-list : [sexp-u list-u] -- env-t)
+      (case sexp-list
+        (null-t)
+        (cons-t
+          sexp-list.car top-sexp/eval
+          sexp-list.cdr recur)))
     (+fun top-sexp/eval
       : (-> env-t, sexp : sexp-u -- env-t)
-      (case sexp
-        ))
+      (cond
+        [sexp sexp/den-p]
+        [sexp parse/den dup den->name swap name-dict/insert]
+        else [sexp parse/exp exp/run]))
+    (+fun den->name
+      : (-> den : den-u -- string-t)
+      (case den
+        (fun-den-t den.fun-name)
+        (type-den-t den.type-name)
+        (union-den-t den.union-name)))
+    (+fun sexp/den-p
+      : (-> sexp : sexp-u -- bool-u)
+      (and [sexp string-p]
+           (or [sexp.car '+fun]
+               [sexp.car '+type]
+               [sexp.car '+union])))
     (assert
       1 2
       : (-> num0 : number-t, num1 : number-t -- number-t)
