@@ -174,10 +174,32 @@
       (+fun new/scope
         : (-> -- string-t obj-u dict-t)
         (lit/dict))
-
-
-
-
+      (+fun data-bind-dict/find
+        : (-> env-t, hypo-id : hypo-id-t
+           -- env-t (| false-t
+                       [obj-u true-t]))
+        dup .data-bind-dict hypo-id dict/find)
+      (+fun data-bind-dict/insert
+        : (-> env : env-t
+              hypo-id : hypo-id-t
+              obj : obj-u
+           -- env-t)
+        env.data-bind-dict hypo-id obj dict/insert
+        (. data-bind-dict)
+        env clone)
+      (+fun type-bind-dict/find
+        : (-> env-t, hypo-id : hypo-id-t
+           -- env-t (| false-t
+                       [obj-u true-t]))
+        dup .type-bind-dict hypo-id dict/find)
+      (+fun type-bind-dict/insert
+        : (-> env : env-t
+              hypo-id : hypo-id-t
+              obj : obj-u
+           -- env-t)
+        env.type-bind-dict hypo-id obj dict/insert
+        (. type-bind-dict)
+        env clone)
     (+union exp-u
       call-exp-t
       let-exp-t
@@ -561,6 +583,25 @@
       scope-stack/tos 1 eq-p bool/assert
       scope-stack/drop
       scope-stack/pop 0 eq-p bool/assert
+      drop)
+    (begin
+      new/env
+      "1" 1 data-bind-dict/insert
+      "2" 2 data-bind-dict/insert
+      "1" data-bind-dict/find bool/assert 1 eq-p bool/assert
+      "1" data-bind-dict/find bool/assert 1 eq-p bool/assert
+      "2" data-bind-dict/find bool/assert 2 eq-p bool/assert
+      "2" data-bind-dict/find bool/assert 2 eq-p bool/assert
+      drop)
+
+    (begin
+      new/env
+      "1" 1 type-bind-dict/insert
+      "2" 2 type-bind-dict/insert
+      "1" type-bind-dict/find bool/assert 1 eq-p bool/assert
+      "1" type-bind-dict/find bool/assert 1 eq-p bool/assert
+      "2" type-bind-dict/find bool/assert 2 eq-p bool/assert
+      "2" type-bind-dict/find bool/assert 2 eq-p bool/assert
       drop)
 
 
