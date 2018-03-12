@@ -3,6 +3,8 @@
 
 * [todo-stack]
 
+*** scope-t
+
 *** parse
 
 *** interface to cicada-script by macro
@@ -98,6 +100,12 @@
 
     #+begin_src cicada
     (+fun :)
+    #+end_src
+
+*** dummy (+alias)
+
+    #+begin_src cicada
+    (+macro +alias note)
     #+end_src
 
 *** (->) to (let)
@@ -1215,7 +1223,39 @@
 
 * check
 
+* pass
+
+* sexp
+
+*** sexp-u
+
+    #+begin_src cicada
+    (+alias sexp-u [string-t list-u])
+    #+end_src
+
 * parse
+
+*** parse/den
+
+*** parse/exp
+
+    #+begin_src cicada
+    (+fun parse/exp
+      : (-> sexp-u -- ))
+    #+end_src
+
+*** parse/exp-list
+
+* eval
+
+*** >< top-sexp/eval
+
+    #+begin_src cicada
+    (+fun top-sexp/eval
+      : (-> env-t, sexp : sexp-u -- env-t)
+      (case sexp
+        ))
+    #+end_src
 
 * test
 
