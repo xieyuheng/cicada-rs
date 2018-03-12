@@ -3,11 +3,15 @@
 
 * [todo-stack]
 
+*** parse
+
 *** interface to cicada-script by macro
 
-*** ante-exp-list/pick-up
-
 *** test exe
+
+*** fix exp-list/let-colon
+
+    - for binding not at tail
 
 * [todo-list]
 
@@ -426,12 +430,12 @@
 
       #+begin_src cicada
       (+fun current-scope/insert
-        : (-> string-t obj-u dict-t
+        : (-> env-t
               local-name : string-t
               obj : obj-u
-           -- string-t obj-u dict-t)
+           -- env-t)
       scope-stack/pop
-      name hypo-obj scope/insert
+      local-name obj scope/insert
       scope-stack/push)
       #+end_src
 
@@ -755,7 +759,7 @@
         : (-> env-t, den : fun-den-t -- env-t)
         new/scope scope-stack/push
         den.type-arrow-exp arrow-exp/extend-scope
-        den.type-arrow-exp.ante-exp-list ante-exp-list/pick-up
+        den.type-arrow-exp.ante-exp-list exp-list/let-colon
         den.body-exp-list new/scoping-frame frame-stack/push)
       #+end_src
 
@@ -767,12 +771,33 @@
         collect-one drop)
       #+end_src
 
-***** >< ante-exp-list/pick-up
+***** exp-list/let-colon
 
       #+begin_src cicada
-      (+fun ante-exp-list/pick-up
-        : (-> env-t, ante-exp-list : [exp-u list-u] -- env-t)
-        ><><><)
+      (+fun exp-list/let-colon
+        : (-> env : env-t
+              exp-list : [exp-u list-u]
+           -- env-t)
+        exp-list
+        {(let exp)
+         (or [exp colon-exp-p]
+             [exp colon-exp-p])}
+        list/filter
+        list/reverse
+        {env swap exp/let-colon} list/for-each
+        env)
+      #+end_src
+
+***** exp/let-colon
+
+      #+begin_src cicada
+      (+fun exp/let-colon
+        : (-> env-t
+              exp : exp-u
+           -- env-t)
+        data-stack/pop
+        exp.local-name swap
+        current-scope/insert)
       #+end_src
 
 ***** type-den/den-exe

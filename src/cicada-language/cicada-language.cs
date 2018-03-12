@@ -164,12 +164,12 @@
         (lit/dict local-name obj)
         dict-update)
       (+fun current-scope/insert
-        : (-> string-t obj-u dict-t
+        : (-> env-t
               local-name : string-t
               obj : obj-u
-           -- string-t obj-u dict-t)
+           -- env-t)
       scope-stack/pop
-      name hypo-obj scope/insert
+      local-name obj scope/insert
       scope-stack/push)
       (+fun new/scope
         : (-> -- string-t obj-u dict-t)
@@ -305,14 +305,30 @@
         : (-> env-t, den : fun-den-t -- env-t)
         new/scope scope-stack/push
         den.type-arrow-exp arrow-exp/extend-scope
-        den.type-arrow-exp.ante-exp-list ante-exp-list/pick-up
+        den.type-arrow-exp.ante-exp-list exp-list/let-colon
         den.body-exp-list new/scoping-frame frame-stack/push)
       (+fun arrow-exp/extend-scope
         : (-> env-t, arrow-exp-t -- env-t)
         collect-one drop)
-      (+fun ante-exp-list/pick-up
-        : (-> env-t, ante-exp-list : [exp-u list-u] -- env-t)
-        ><><><)
+      (+fun exp-list/let-colon
+        : (-> env : env-t
+              exp-list : [exp-u list-u]
+           -- env-t)
+        exp-list
+        {(let exp)
+         (or [exp colon-exp-p]
+             [exp colon-exp-p])}
+        list/filter
+        list/reverse
+        {env swap exp/let-colon} list/for-each
+        env)
+      (+fun exp/let-colon
+        : (-> env-t
+              exp : exp-u
+           -- env-t)
+        data-stack/pop
+        exp.local-name swap
+        current-scope/insert)
       (+fun type-den/den-exe
         : (-> env-t, den : type-den-t -- env-t)
         den.type-arrow-exp.ante-exp-list new/field-obj-dict
