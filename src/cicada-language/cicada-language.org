@@ -3,8 +3,6 @@
 
 * [todo-stack]
 
-*** scope-t
-
 *** parse
 
 *** interface to cicada-script by macro
@@ -151,10 +149,16 @@
       name-dict : [string-t den-u dict-t]
       data-stack : [obj-u list-u]
       frame-stack : [frame-u list-u]
-      scope-stack : [string-t obj-u dict-t list-u]
+      scope-stack : [scope-t list-u]
       goal-stack : [goal-t list-u]
       data-bind-dict : [hypo-id-t obj-u dict-t]
       type-bind-dict : [hypo-id-t obj-u dict-t])
+    #+end_src
+
+*** scope-t
+
+    #+begin_src cicada
+    (+alias scope-t [string-t obj-u dict-t])
     #+end_src
 
 *** new/env
@@ -382,7 +386,7 @@
       #+begin_src cicada
       (+fun scope-stack/push
         : (-> env : env-t
-              scope : [string-t obj-u dict-t]
+              scope : scope-t
            -- env-t)
         scope env.scope-stack cons-c
         (. scope-stack)
@@ -393,7 +397,7 @@
 
       #+begin_src cicada
       (+fun scope-stack/pop
-        : (-> env : env-t -- env-t [string-t obj-u dict-t])
+        : (-> env : env-t -- env-t scope-t)
         env.scope-stack.cdr
         (. scope-stack)
         env clone
@@ -412,7 +416,7 @@
 
       #+begin_src cicada
       (+fun scope-stack/tos
-        : (-> env-t -- env-t [string-t obj-u dict-t])
+        : (-> env-t -- env-t scope-t)
         dup .scope-stack.car)
       #+end_src
 
@@ -426,10 +430,10 @@
 
       #+begin_src cicada
       (+fun scope/insert
-        : (-> string-t obj-u dict-t
+        : (-> scope-t
               local-name : string-t
               obj : obj-u
-           -- string-t obj-u dict-t)
+           -- scope-t)
         (lit/dict local-name obj)
         dict-update)
       #+end_src
@@ -453,7 +457,7 @@
 
       #+begin_src cicada
       (+fun new/scope
-        : (-> -- string-t obj-u dict-t)
+        : (-> -- scope-t)
         (lit/dict))
       #+end_src
 
@@ -686,7 +690,7 @@
 
     #+begin_src cicada
     (+type closure-obj-t
-      scope : [string-t obj-u dict-t]
+      scope : scope-t
       body-exp-list : [exp-u list-u])
     #+end_src
 

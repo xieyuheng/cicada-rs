@@ -1,4 +1,5 @@
     (+fun :)
+    (+macro +alias note)
     (+macro -> (let body)
       body {'-- eq-p} list/ante
       {', eq-p bool/not} list/filter
@@ -22,10 +23,11 @@
       name-dict : [string-t den-u dict-t]
       data-stack : [obj-u list-u]
       frame-stack : [frame-u list-u]
-      scope-stack : [string-t obj-u dict-t list-u]
+      scope-stack : [scope-t list-u]
       goal-stack : [goal-t list-u]
       data-bind-dict : [hypo-id-t obj-u dict-t]
       type-bind-dict : [hypo-id-t obj-u dict-t])
+    (+alias scope-t [string-t obj-u dict-t])
     (+fun new/env
       : (-> -- env-t)
       (lit/dict)
@@ -138,13 +140,13 @@
         frame.body-exp-list frame.index list-ref)
       (+fun scope-stack/push
         : (-> env : env-t
-              scope : [string-t obj-u dict-t]
+              scope : scope-t
            -- env-t)
         scope env.scope-stack cons-c
         (. scope-stack)
         env clone)
       (+fun scope-stack/pop
-        : (-> env : env-t -- env-t [string-t obj-u dict-t])
+        : (-> env : env-t -- env-t scope-t)
         env.scope-stack.cdr
         (. scope-stack)
         env clone
@@ -153,14 +155,14 @@
         : (-> env-t -- env-t)
         scope-stack/pop drop)
       (+fun scope-stack/tos
-        : (-> env-t -- env-t [string-t obj-u dict-t])
+        : (-> env-t -- env-t scope-t)
         dup .scope-stack.car)
       (+fun scope/get dict/get)
       (+fun scope/insert
-        : (-> string-t obj-u dict-t
+        : (-> scope-t
               local-name : string-t
               obj : obj-u
-           -- string-t obj-u dict-t)
+           -- scope-t)
         (lit/dict local-name obj)
         dict-update)
       (+fun current-scope/insert
@@ -172,7 +174,7 @@
       local-name obj scope/insert
       scope-stack/push)
       (+fun new/scope
-        : (-> -- string-t obj-u dict-t)
+        : (-> -- scope-t)
         (lit/dict))
       (+fun data-bind-dict/find
         : (-> env-t, hypo-id : hypo-id-t
@@ -268,7 +270,7 @@
     (+type type-type-t
       level : number-t)
     (+type closure-obj-t
-      scope : [string-t obj-u dict-t]
+      scope : scope-t
       body-exp-list : [exp-u list-u])
     (+type arrow-type-t
       ante-type-list : [obj-u list-u]
@@ -539,6 +541,13 @@
         (closure-obj-t closure-obj/infer)
         ;; ><><><
         (obj-u type-infer)))
+    (+alias sexp-u [string-t list-u])
+    (+fun parse/exp
+      : (-> sexp-u -- ))
+    (+fun top-sexp/eval
+      : (-> env-t, sexp : sexp-u -- env-t)
+      (case sexp
+        ))
     (assert
       1 2
       : (-> num0 : number-t, num1 : number-t -- number-t)

@@ -1124,13 +1124,6 @@
         }
     );
     new_keyword (
-        "note",
-        function (env, sexp_list)
-        {
-            return [];
-        }
-    );
-    new_keyword (
         "quote",
         function (env, sexp_list)
         {

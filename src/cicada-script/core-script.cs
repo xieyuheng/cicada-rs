@@ -3,6 +3,8 @@
     (+fun over (let x y) x y x)
     (+fun tuck (let x y) y x y)
     (+fun swap (let x y) y x)
+    (+macro note drop
+      '(begin))
     (+fun ifte
       (let bool true-fn false-fn)
       (case bool
