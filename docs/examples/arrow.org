@@ -1,4 +1,4 @@
-#+title: function type
+#+title: arrow
 
 * [note]
 
@@ -9,9 +9,7 @@
 
     - note that, 'eq-p' is not its interface function.
 
-* old
-
-*** function space
+*** function space has no data-constructors
 
     - for an simple inductive-type,
       cover all the data-constructors,
@@ -58,7 +56,7 @@
 
          we apply it or compose it.
 
-*** higher type
+*** higher type also has no data-constructors
 
     - x -
       we can construct functions
@@ -94,13 +92,23 @@
       because we can implement 'apply' and 'compose'.
       can we handle equivalence in similar manner ?
       for we can implement unification.
-      instead of define <eq> in the language,
-      can we make <eq> built-in ?
+      instead of define eqv-t in the language,
+      can we make eqv-t built-in ?
 
     - x -
       a function of type (-> A -- B)
       has rich information in its function body,
-      but a element of type <eq> can only be 'refl'.
+      but a element of type eqv-t can only be eqv-c.
+
+    ------
+
+    - k -
+      yes, but the type of eqv-c is rich
+      and we can pull information out from type at runtime.
+
+    - x -
+      but the interface we defined for eqv-t seems just fine
+      maybe we should think about interface functions of chain-type (=>)
 
 *** equivalence between function body
 
@@ -113,6 +121,7 @@
       we can also prove two function bodys are the same.
 
     - the definition of equivalence of function :
+
       #+begin_src jojo
       (note
         (: f (-> A -- B))
