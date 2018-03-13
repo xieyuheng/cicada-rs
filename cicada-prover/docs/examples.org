@@ -1,0 +1,202 @@
+#+title: examples
+
+* [todo-stack]
+
+*** use number theory -- to test type-checker as prover
+
+*** alias
+
+    - (+def macro-ar = (-> sexp-u list-u -- sexp-u))
+      "-ar" for arrow
+
+    - how should we use postfix of words
+
+* [note]
+
+*** level of types
+
+    | 0 | object                          |
+    | 1 | type, union-type, quotient-type |
+    | 2 | type-class, type-tt             |
+
+* eqv
+
+*** eqv-t
+
+    #+begin_src cicada
+    (+type eqv-t
+      : (-> :t :t -- type-tt)
+      (-> -- :z :z eqv-t))
+    #+end_src
+
+*** eqv-apply
+
+    #+begin_src cicada
+    (+proof eqv-apply
+      : (-> :x :y eqv-t, fun : (-> :t1 -- :t2)
+         -- :x fun, :y fun eqv-t)
+      eqv-c)
+    #+end_src
+
+*** eqv-apply
+
+    #+begin_src cicada
+    (+proof eqv-apply
+      : (-> :x :y eqv-t, fun : (-> :t1 -- :t2)
+         -- :x fun, :y fun eqv-t)
+      eqv-c)
+    #+end_src
+
+*** eqv-swap
+
+    #+begin_src cicada
+    (+proof eqv-swap
+      : (-> :x :y eqv-t -- :y :x eqv-t)
+      eqv-c)
+    #+end_src
+
+*** eqv-compose
+
+    #+begin_src cicada
+    (+proof eqv-compose
+      : (-> :x :y eqv-t, :y :z eqv-t -- :x :z eqv-t)
+      eqv-c)
+    #+end_src
+
+* nat
+
+*** nat-is-even-u -- re-imp predicate as judgment
+
+    #+begin_src cicada
+    (+union nat-is-even-u : (-> nat-u -- type-tt)
+      (-> -- zero-c zero-is-even-t)
+      (-> prev : [:m nat-is-even-u]
+       -- :m succ-c succ-c even-plus-two-is-even-t))
+
+    (+proof two-is-even
+      : (-> -- zero-c succ-c succ-c nat-is-even-u)
+      zero-is-even-c
+      even-plus-two-is-even-c)
+    #+end_src
+
+*** nat-add-associative
+
+    #+begin_src cicada
+    (+proof nat-add-associative
+      : (-> [x y z] : nat-u
+         -- x y nat-add z nat-add, x y z nat-add nat-add eqv-t)
+      (case z
+        (zero-t eqv-c)
+        (succ-t x y z.prev recur {succ-c} eqv-apply)))
+    #+end_src
+
+*** nat-add-commutative
+
+    #+begin_src cicada
+    (+proof nat-add-commutative
+      : (-> [m n] : nat-u
+         -- m n nat-add, n m nat-add eqv-t)
+      (case n
+        (zero-t m nat-add-zero-commutative)
+        (succ-t m n.prev recur {succ-c} eqv-apply
+                n.prev m nat-add-succ-commutative eqv-compose)))
+
+    (+proof nat-add-zero-commutative
+      : (-> m : nat-u
+         -- m zero-c nat-add, zero-c m nat-add eqv-t)
+      (case m
+        (zero-t eqv-c)
+        (succ-t m.prev recur {succ-c} eqv-apply)))
+
+    (+proof nat-add-succ-commutative
+      : (-> [m n] : nat-u
+         -- m succ-c n nat-add, m n nat-add succ-c eqv-t)
+      (case n
+        (zero-t eqv-c)
+        (succ-t m n.prev recur {succ-c} eqv-apply)))
+    #+end_src
+
+* list
+
+*** list-length-u -- re-imp function as relation
+
+***** list-length-u
+
+      #+begin_src cicada
+      (+union list-length-u : (-> :t list-u nat-u -- type-tt)
+        (-> -- null-c zero-c null-length-t)
+        (-> cdr : [:l :n list-length-u]
+         -- :a :l cons-c :n succ-c cons-length-t))
+
+      (+union list-length-u
+        : (-> type :: type-tt
+              list : [type list-u]
+              length : nat-u
+           -- type-tt)
+        (-> -- null-c zero-c null-length-t)
+        (-> cdr : [list length list-length-u]
+         -- element :: type
+            element list cons-c
+            length succ-c cons-length-t))
+      #+end_src
+
+***** list-map-preserve-list-length
+
+      #+begin_src cicada
+      (+fun list-map-preserve-list-length
+        : (-> fun :: (-> :t1 -- :t2)
+              list-length-proof : [:l :n list-length-u]
+           -- :l {fun} map :n list-length-u)
+        (case list-length-proof
+          (null-length-t null-length-c)
+          (cons-length-t list-length-proof.cdr recur cons-length-c)))
+      #+end_src
+
+* vect
+
+*** vect-u
+
+    #+begin_src cicada
+    (+union vect-u
+      : (-> length : nat-u, type : type-tt -- type-tt)
+      null-vect-t < type vect-u
+      cons-vect-t < vect-u)
+
+    (+type null-vect-t
+      : (-> length : nat-u -- type-tt)
+      (-> -- zero-c null-vect-t))
+
+    (+type cons-vect-t
+      : (-> length : nat-u, type : type-tt -- type-tt)
+      (-> car : type
+          cdr : [length type vect-u]
+       -- length succ-c type cons-vect-t))
+    #+end_src
+
+*** vect-append
+
+    #+begin_src cicada
+    (+fun vect-append
+      : (-> [m n] :: nat-u
+            type :: type-tt
+            l0 : [m type vect-u]
+            l1 : [n type vect-u]
+         -- m n nat-add type vect-u)
+      (case l1
+        (vect-null-t l0)
+        (vect-cons-t l1.car l0 l1.cdr recur vect-cons-c)))
+    #+end_src
+
+*** vect-map
+
+    #+begin_src cicada
+    (+fun vect-map
+      : (-> n :: nat-u
+            [type1 type2] :: type-tt
+            l : [n type1 vect-u]
+            fun : (-> type1 -- type2)
+         -- n type2 vect-u)
+      (case l
+        (vect-null-t vect-null-c)
+        (vect-cons-t l.car fun l.cdr {fun} recur vect-cons-c)))
+    #+end_src

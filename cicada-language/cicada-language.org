@@ -23,7 +23,7 @@
 
 *** test exe
 
-*** fix exp-list/let-colon
+*** fix exp-list-let-colon
 
     - for binding not at tail
 
@@ -124,16 +124,16 @@
 
     #+begin_src cicada
     (+macro -> (let body)
-      body {'-- eq-p} list/ante
-      {', eq-p bool/not} list/filter
-      sexp/filter-colon (let new-body)
-      `(let (@ new-body list/spread)))
+      body {'-- eq-p} list-ante
+      {', eq-p bool-not} list-filter
+      sexp-filter-colon (let new-body)
+      `(let (@ new-body list-spread)))
     #+end_src
 
-*** sexp/filter-colon
+*** sexp-filter-colon
 
     #+begin_src cicada
-    (+fun sexp/filter-colon (let ante)
+    (+fun sexp-filter-colon (let ante)
       (case ante
         (null-t null-c)
         (cons-t
@@ -151,7 +151,7 @@
     (+macro +type (let body)
        body.car (let name)
        body.cdr (let rest)
-      `(+data (@ name) (@ rest sexp/filter-colon list/spread)))
+      `(+data (@ name) (@ rest sexp-filter-colon list-spread)))
     #+end_src
 
 * env
@@ -175,18 +175,18 @@
     (+alias scope-t [string-t obj-u dict-t])
     #+end_src
 
-*** new/env
+*** new-env
 
     #+begin_src cicada
-    (+fun new/env
+    (+fun new-env
       : (-> -- env-t)
-      (lit/dict)
-      (lit/list)
-      (lit/list)
-      (lit/list)
-      (lit/list)
-      (lit/dict)
-      (lit/dict)
+      (lit-dict)
+      (lit-list)
+      (lit-list)
+      (lit-list)
+      (lit-list)
+      (lit-dict)
+      (lit-dict)
       (. name-dict
          data-stack
          frame-stack
@@ -199,40 +199,40 @@
 
 *** name-dict
 
-***** name-dict/get
+***** name-dict-get
 
       #+begin_src cicada
-      (+fun name-dict/get
+      (+fun name-dict-get
         : (-> env-t, name : string-t -- env-t den-u)
-        dup .name-dict name dict/get)
+        dup .name-dict name dict-get)
       #+end_src
 
-***** name-dict/insert
+***** name-dict-insert
 
       #+begin_src cicada
-      (+fun name-dict/insert
+      (+fun name-dict-insert
         : (-> env : env-t, name : string-t, den : den-u -- env-t)
-        env.name-dict name den dict/insert
+        env.name-dict name den dict-insert
         (. name-dict)
         env clone)
       #+end_src
 
 *** data-stack
 
-***** data-stack/push
+***** data-stack-push
 
       #+begin_src cicada
-      (+fun data-stack/push
+      (+fun data-stack-push
         : (-> env : env-t, obj : obj-u -- env-t)
         obj env.data-stack cons-c
         (. data-stack)
         env clone)
       #+end_src
 
-***** data-stack/pop
+***** data-stack-pop
 
       #+begin_src cicada
-      (+fun data-stack/pop
+      (+fun data-stack-pop
         : (-> env : env-t -- env-t obj-u)
         env.data-stack.cdr
         (. data-stack)
@@ -240,68 +240,68 @@
         env.data-stack.car)
       #+end_src
 
-***** data-stack/drop
+***** data-stack-drop
 
       #+begin_src cicada
-      (+fun data-stack/drop
+      (+fun data-stack-drop
         : (-> env-t -- env-t)
-        data-stack/pop drop)
+        data-stack-pop drop)
       #+end_src
 
-***** data-stack/tos
+***** data-stack-tos
 
       #+begin_src cicada
-      (+fun data-stack/tos
+      (+fun data-stack-tos
         : (-> env-t -- env-t obj-u)
         dup .data-stack.car)
       #+end_src
 
-***** data-stack/n-pop
+***** data-stack-n-pop
 
       #+begin_src cicada
-      (+fun data-stack/n-pop
+      (+fun data-stack-n-pop
         : (-> env-t, number-t
            -- env-t, obj-u list-u)
-        null-c data-stack/n-pop-to-list)
+        null-c data-stack-n-pop-to-list)
 
-      (+fun data-stack/n-pop-to-list
+      (+fun data-stack-n-pop-to-list
         : (-> env-t, n : number-t, list : [obj-u list-u]
            -- env-t, obj-u list-u)
         (if [n 0 lteq-p]
           list
-          [data-stack/pop list cons-c
+          [data-stack-pop list cons-c
            n dec swap recur]))
       #+end_src
 
-***** data-stack/list-push
+***** data-stack-list-push
 
       #+begin_src cicada
-      (+fun data-stack/list-push
+      (+fun data-stack-list-push
         : (-> env-t, list : [obj-u list-u]
            -- env-t)
         (case list
           (null-t)
           (cons-t
-            list.car data-stack/push
+            list.car data-stack-push
             list.cdr recur)))
       #+end_src
 
 *** frame-stack
 
-***** frame-stack/push
+***** frame-stack-push
 
       #+begin_src cicada
-      (+fun frame-stack/push
+      (+fun frame-stack-push
         : (-> env : env-t, frame : frame-u -- env-t)
         frame env.frame-stack cons-c
         (. frame-stack)
         env clone)
       #+end_src
 
-***** frame-stack/pop
+***** frame-stack-pop
 
       #+begin_src cicada
-      (+fun frame-stack/pop
+      (+fun frame-stack-pop
         : (-> env : env-t -- env-t frame-u)
         env.frame-stack.cdr
         (. frame-stack)
@@ -309,18 +309,18 @@
         env.frame-stack.car)
       #+end_src
 
-***** frame-stack/drop
+***** frame-stack-drop
 
       #+begin_src cicada
-      (+fun frame-stack/drop
+      (+fun frame-stack-drop
         : (-> env-t -- env-t)
-        frame-stack/pop drop)
+        frame-stack-pop drop)
       #+end_src
 
-***** frame-stack/tos
+***** frame-stack-tos
 
       #+begin_src cicada
-      (+fun frame-stack/tos
+      (+fun frame-stack-tos
         : (-> env-t -- env-t frame-u)
         dup .frame-stack.car)
       #+end_src
@@ -343,10 +343,10 @@
         index : number-t)
       #+end_src
 
-***** new/scoping-frame
+***** new-scoping-frame
 
       #+begin_src cicada
-      (+fun new/scoping-frame
+      (+fun new-scoping-frame
         : (-> body-exp-list : [exp-u list-u] -- scoping-frame-t)
         body-exp-list 0
         (. body-exp-list index)
@@ -361,10 +361,10 @@
         index : number-t)
       #+end_src
 
-***** new/simple-frame
+***** new-simple-frame
 
       #+begin_src cicada
-      (+fun new/simple-frame
+      (+fun new-simple-frame
         : (-> body-exp-list : [exp-u list-u] -- simple-frame-t)
         body-exp-list 0
         (. body-exp-list index)
@@ -395,10 +395,10 @@
 
 *** scope-stack
 
-***** scope-stack/push
+***** scope-stack-push
 
       #+begin_src cicada
-      (+fun scope-stack/push
+      (+fun scope-stack-push
         : (-> env : env-t
               scope : scope-t
            -- env-t)
@@ -407,10 +407,10 @@
         env clone)
       #+end_src
 
-***** scope-stack/pop
+***** scope-stack-pop
 
       #+begin_src cicada
-      (+fun scope-stack/pop
+      (+fun scope-stack-pop
         : (-> env : env-t -- env-t scope-t)
         env.scope-stack.cdr
         (. scope-stack)
@@ -418,111 +418,111 @@
         env.scope-stack.car)
       #+end_src
 
-***** scope-stack/drop
+***** scope-stack-drop
 
       #+begin_src cicada
-      (+fun scope-stack/drop
+      (+fun scope-stack-drop
         : (-> env-t -- env-t)
-        scope-stack/pop drop)
+        scope-stack-pop drop)
       #+end_src
 
-***** scope-stack/tos
+***** scope-stack-tos
 
       #+begin_src cicada
-      (+fun scope-stack/tos
+      (+fun scope-stack-tos
         : (-> env-t -- env-t scope-t)
         dup .scope-stack.car)
       #+end_src
 
-***** scope/get
+***** scope-get
 
       #+begin_src cicada
-      (+fun scope/get dict/get)
+      (+fun scope-get dict-get)
       #+end_src
 
-***** scope/insert
+***** scope-insert
 
       #+begin_src cicada
-      (+fun scope/insert
+      (+fun scope-insert
         : (-> scope-t
               local-name : string-t
               obj : obj-u
            -- scope-t)
-        (lit/dict local-name obj)
+        (lit-dict local-name obj)
         dict-update)
       #+end_src
 
-***** current-scope/insert
+***** current-scope-insert
 
       #+begin_src cicada
-      (+fun current-scope/insert
+      (+fun current-scope-insert
         : (-> env-t
               local-name : string-t
               obj : obj-u
            -- env-t)
-      scope-stack/pop
-      local-name obj scope/insert
-      scope-stack/push)
+      scope-stack-pop
+      local-name obj scope-insert
+      scope-stack-push)
       #+end_src
 
 *** scope
 
-***** new/scope
+***** new-scope
 
       #+begin_src cicada
-      (+fun new/scope
+      (+fun new-scope
         : (-> -- scope-t)
-        (lit/dict))
+        (lit-dict))
       #+end_src
 
 *** >< goal-stack
 
 *** data-bind-dict
 
-***** data-bind-dict/find
+***** data-bind-dict-find
 
       #+begin_src cicada
-      (+fun data-bind-dict/find
+      (+fun data-bind-dict-find
         : (-> env-t, hypo-id : hypo-id-t
            -- env-t (| false-t
                        [obj-u true-t]))
-        dup .data-bind-dict hypo-id dict/find)
+        dup .data-bind-dict hypo-id dict-find)
       #+end_src
 
-***** data-bind-dict/insert
+***** data-bind-dict-insert
 
       #+begin_src cicada
-      (+fun data-bind-dict/insert
+      (+fun data-bind-dict-insert
         : (-> env : env-t
               hypo-id : hypo-id-t
               obj : obj-u
            -- env-t)
-        env.data-bind-dict hypo-id obj dict/insert
+        env.data-bind-dict hypo-id obj dict-insert
         (. data-bind-dict)
         env clone)
       #+end_src
 
 *** type-bind-dict
 
-***** type-bind-dict/find
+***** type-bind-dict-find
 
       #+begin_src cicada
-      (+fun type-bind-dict/find
+      (+fun type-bind-dict-find
         : (-> env-t, hypo-id : hypo-id-t
            -- env-t (| false-t
                        [obj-u true-t]))
-        dup .type-bind-dict hypo-id dict/find)
+        dup .type-bind-dict hypo-id dict-find)
       #+end_src
 
-***** type-bind-dict/insert
+***** type-bind-dict-insert
 
       #+begin_src cicada
-      (+fun type-bind-dict/insert
+      (+fun type-bind-dict-insert
         : (-> env : env-t
               hypo-id : hypo-id-t
               obj : obj-u
            -- env-t)
-        env.type-bind-dict hypo-id obj dict/insert
+        env.type-bind-dict hypo-id obj dict-insert
         (. type-bind-dict)
         env clone)
       #+end_src
@@ -745,24 +745,24 @@
     (+fun exe
       : (-> env-t exp-u -- env-t)
       (case dup
-        (call-exp-t call-exp/exe)
-        (let-exp-t let-exp/exe)
-        (closure-exp-t closure-exp/exe)
-        (arrow-exp-t arrow-exp/exe)
-        (apply-exp-t apply-exp/exe)
-        (case-exp-t case-exp/exe)
-        (construct-exp-t construct-exp/exe)
-        (field-exp-t field-exp/exe)
-        (colon-exp-t colon-exp/exe)
-        (double-colon-exp-t double-colon-exp/exe)))
+        (call-exp-t call-exp-exe)
+        (let-exp-t let-exp-exe)
+        (closure-exp-t closure-exp-exe)
+        (arrow-exp-t arrow-exp-exe)
+        (apply-exp-t apply-exp-exe)
+        (case-exp-t case-exp-exe)
+        (construct-exp-t construct-exp-exe)
+        (field-exp-t field-exp-exe)
+        (colon-exp-t colon-exp-exe)
+        (double-colon-exp-t double-colon-exp-exe)))
     #+end_src
 
-*** call-exp/exe
+*** call-exp-exe
 
     #+begin_src cicada
-    (+fun call-exp/exe
+    (+fun call-exp-exe
       : (-> env-t, exp : call-exp-t -- env-t)
-      exp.name name-dict/get den-exe)
+      exp.name name-dict-get den-exe)
     #+end_src
 
 *** den-exe
@@ -773,34 +773,34 @@
       (+fun den-exe
         : (-> env-t den-u -- env-t)
         (case dup
-          (fun-den-t fun-den/den-exe)
-          (type-den-t type-den/den-exe)
-          (union-den-t union-den/den-exe)))
+          (fun-den-t fun-den-den-exe)
+          (type-den-t type-den-den-exe)
+          (union-den-t union-den-den-exe)))
       #+end_src
 
-***** fun-den/den-exe
+***** fun-den-den-exe
 
       #+begin_src cicada
-      (+fun fun-den/den-exe
+      (+fun fun-den-den-exe
         : (-> env-t, den : fun-den-t -- env-t)
-        new/scope scope-stack/push
-        den.type-arrow-exp arrow-exp/extend-scope
-        den.type-arrow-exp.ante-exp-list exp-list/let-colon
-        den.body-exp-list new/scoping-frame frame-stack/push)
+        new-scope scope-stack-push
+        den.type-arrow-exp arrow-exp-extend-scope
+        den.type-arrow-exp.ante-exp-list exp-list-let-colon
+        den.body-exp-list new-scoping-frame frame-stack-push)
       #+end_src
 
-***** arrow-exp/extend-scope
+***** arrow-exp-extend-scope
 
       #+begin_src cicada
-      (+fun arrow-exp/extend-scope
+      (+fun arrow-exp-extend-scope
         : (-> env-t, arrow-exp-t -- env-t)
         collect-one drop)
       #+end_src
 
-***** exp-list/let-colon
+***** exp-list-let-colon
 
       #+begin_src cicada
-      (+fun exp-list/let-colon
+      (+fun exp-list-let-colon
         : (-> env : env-t
               exp-list : [exp-u list-u]
            -- env-t)
@@ -808,61 +808,61 @@
         {(let exp)
          (or [exp colon-exp-p]
              [exp colon-exp-p])}
-        list/filter
-        list/reverse
-        {env swap exp/let-colon} list/for-each
+        list-filter
+        list-reverse
+        {env swap exp-let-colon} list-for-each
         env)
       #+end_src
 
-***** exp/let-colon
+***** exp-let-colon
 
       #+begin_src cicada
-      (+fun exp/let-colon
+      (+fun exp-let-colon
         : (-> env-t
               exp : exp-u
            -- env-t)
-        data-stack/pop
+        data-stack-pop
         exp.local-name swap
-        current-scope/insert)
+        current-scope-insert)
       #+end_src
 
-***** type-den/den-exe
+***** type-den-den-exe
 
       #+begin_src cicada
-      (+fun type-den/den-exe
+      (+fun type-den-den-exe
         : (-> env-t, den : type-den-t -- env-t)
-        den.type-arrow-exp.ante-exp-list new/field-obj-dict
+        den.type-arrow-exp.ante-exp-list new-field-obj-dict
         den.type-name
         (. field-obj-dict type-name)
-        data-type-cr data-stack/push)
+        data-type-cr data-stack-push)
       #+end_src
 
-***** union-den/den-exe
+***** union-den-den-exe
 
       #+begin_src cicada
-      (+fun union-den/den-exe
+      (+fun union-den-den-exe
         : (-> env-t, den : union-den-t -- env-t)
-        den.type-arrow-exp.ante-exp-list new/field-obj-dict
+        den.type-arrow-exp.ante-exp-list new-field-obj-dict
         den.union-name
         (. field-obj-dict union-name)
-        union-type-cr data-stack/push)
+        union-type-cr data-stack-push)
       #+end_src
 
-***** new/field-obj-dict
+***** new-field-obj-dict
 
       #+begin_src cicada
-      (+fun new/field-obj-dict
+      (+fun new-field-obj-dict
         : (-> env-t
               ante-exp-list : [exp-u list-u]
            -- env-t, string-t obj-u dict-t)
-        new/dict ante-exp-list
-        ante-exp-list/merge-fields)
+        new-dict ante-exp-list
+        ante-exp-list-merge-fields)
       #+end_src
 
-***** ante-exp-list/merge-fields
+***** ante-exp-list-merge-fields
 
       #+begin_src cicada
-      (+fun ante-exp-list/merge-fields
+      (+fun ante-exp-list-merge-fields
         : (-> env-t
               field-obj-dict : [string-t obj-u dict-t]
               ante-exp-list : [exp-u list-u]
@@ -874,53 +874,53 @@
               (colon-exp-t
                 field-obj-dict
                 ante-exp-list.car.local-name
-                data-stack/pop dict/insert
+                data-stack-pop dict-insert
                 ante-exp-list.cdr recur)
               (else
                 field-obj-dict
                 ante-exp-list.cdr recur)))))
       #+end_src
 
-*** let-exp/exe
+*** let-exp-exe
 
     #+begin_src cicada
-    (+fun let-exp/exe
+    (+fun let-exp-exe
       : (-> env-t, exp : let-exp-t -- env-t)
       exp.local-name-list list-reverse
-      let-exp/exe/loop)
+      let-exp-exe-loop)
     #+end_src
 
-*** let-exp/exe/loop
+*** let-exp-exe-loop
 
     #+begin_src cicada
-    (+fun let-exp/exe/loop
+    (+fun let-exp-exe-loop
       : (-> env-t, local-name-list : [string-t list-u] -- env-t)
       (case local-name-list
         (null-t)
         (cons-t
-          data-stack/pop (let obj)
-          scope-stack/pop
-          local-name-list.car obj scope/insert
-          scope-stack/push
+          data-stack-pop (let obj)
+          scope-stack-pop
+          local-name-list.car obj scope-insert
+          scope-stack-push
           local-name-list.cdr recur)))
     #+end_src
 
-*** closure-exp/exe
+*** closure-exp-exe
 
     #+begin_src cicada
-    (+fun closure-exp/exe
+    (+fun closure-exp-exe
       : (-> env-t, exp : closure-exp-t -- env-t)
-      scope-stack/tos
+      scope-stack-tos
       exp.body-exp-list
       (. scope body-exp-list)
       closure-obj-cr
-      data-stack/push)
+      data-stack-push)
     #+end_src
 
-*** arrow-exp/exe
+*** arrow-exp-exe
 
     #+begin_src cicada
-    (+fun arrow-exp/exe
+    (+fun arrow-exp-exe
       : (-> env-t, exp : arrow-exp-t -- env-t)
       ;; calling collect-list
       ;;   might effect current scope
@@ -928,25 +928,25 @@
       exp.succ-exp-list collect-list (let succ-type-list)
       (. ante-type-list succ-type-list)
       arrow-type-cr
-      data-stack/push)
+      data-stack-push)
     #+end_src
 
-*** apply-exp/exe
+*** apply-exp-exe
 
     #+begin_src cicada
-    (+fun apply-exp/exe
+    (+fun apply-exp-exe
       : (-> env-t, exp : apply-exp-t -- env-t)
-      data-stack/pop (let obj)
+      data-stack-pop (let obj)
       (case obj
         (closure-obj-t
-          obj.scope scope-stack/push
-          obj.body-exp-list new/scoping-frame frame-stack/push)))
+          obj.scope scope-stack-push
+          obj.body-exp-list new-scoping-frame frame-stack-push)))
     #+end_src
 
-*** case-exp/exe
+*** case-exp-exe
 
     #+begin_src cicada
-    (+fun case-exp/exe
+    (+fun case-exp-exe
       : (-> env-t, exp : case-exp-t -- env-t)
       ;; calling collect-one
       ;;   might effect current scope
@@ -954,57 +954,57 @@
       (case obj
         (data-obj-t
           exp.closure-exp-dict
-          obj.data-type.type-name dict/get
-          closure-exp/exe
-          apply-exp/exe)))
+          obj.data-type.type-name dict-get
+          closure-exp-exe
+          apply-exp-exe)))
     #+end_src
 
-*** construct-exp/exe
+*** construct-exp-exe
 
     #+begin_src cicada
-    (+fun construct-exp/exe
+    (+fun construct-exp-exe
       : (-> env-t, exp : construct-exp-t -- env-t)
-      exp.type-name name-dict/get (let den)
-      den.type-arrow-exp arrow-exp/extend-scope
+      exp.type-name name-dict-get (let den)
+      den.type-arrow-exp arrow-exp-extend-scope
       den.cons-arrow-exp.succ-exp-list collect-one (let return-type)
-      den.cons-arrow-exp.ante-exp-list new/field-obj-dict
+      den.cons-arrow-exp.ante-exp-list new-field-obj-dict
       return-type
       (. field-obj-dict type)
-      data-obj-cr data-stack/push)
+      data-obj-cr data-stack-push)
     #+end_src
 
-*** field-exp/exe
+*** field-exp-exe
 
     #+begin_src cicada
-    (+fun field-exp/exe
+    (+fun field-exp-exe
       : (-> env-t, exp : field-exp-t -- env-t)
-      data-stack/pop (let obj)
+      data-stack-pop (let obj)
       (case obj
         (data-obj-t
           obj.field-obj-dict
-          exp.field-name dict/get)))
+          exp.field-name dict-get)))
     #+end_src
 
-*** colon-exp/exe
+*** colon-exp-exe
 
     #+begin_src cicada
-    (+fun colon-exp/exe
+    (+fun colon-exp-exe
       : (-> env-t, exp : colon-exp-t -- env-t)
       exp.type-exp-list collect-one (let type)
-      exp.local-name generate/hypo-id (let hypo-id)
+      exp.local-name generate-hypo-id (let hypo-id)
       hypo-id type-hypo-c
-      type type-hypo/insert
-      exp.local-name hypo-id data-hypo-c current-scope/insert
-      type data-stack/push)
+      type type-hypo-insert
+      exp.local-name hypo-id data-hypo-c current-scope-insert
+      type data-stack-push)
     #+end_src
 
-*** double-colon-exp/exe
+*** double-colon-exp-exe
 
     #+begin_src cicada
-    (+fun double-colon-exp/exe
+    (+fun double-colon-exp-exe
       : (-> env-t double-colon-exp-t -- env-t)
-      colon-exp/exe
-      data-stack/drop)
+      colon-exp-exe
+      data-stack-drop)
     #+end_src
 
 *** counter-t
@@ -1014,40 +1014,40 @@
       .number : number-t)
     #+end_src
 
-*** new/counter
+*** new-counter
 
     #+begin_src cicada
-    (+fun new/counter
+    (+fun new-counter
       : (-> -- counter-t)
       0 counter-c)
     #+end_src
 
-*** counter/inc
+*** counter-inc
 
     #+begin_src cicada
-    (+fun counter/inc
+    (+fun counter-inc
       : (-> counter-t --)
       swap .number!)
     #+end_src
 
-*** counter/number
+*** counter-number
 
     #+begin_src cicada
-    (+fun counter/number
+    (+fun counter-number
       : (-> counter-t -- number-t)
       .number)
     #+end_src
 
-*** generate/hypo-id
+*** generate-hypo-id
 
     #+begin_src cicada
-    (+var hypo-id/counter new/counter)
+    (+var hypo-id-counter new-counter)
 
-    (+fun generate/hypo-id
+    (+fun generate-hypo-id
       : (-> env-t, base-name : string-t
          -- env-t, hypo-id-t)
-      hypo-id/counter counter/number repr (let postfix)
-      hypo-id/counter counter/inc
+      hypo-id-counter counter-number repr (let postfix)
+      hypo-id-counter counter-inc
       base-name postfix string-append hypo-id-c)
     #+end_src
 
@@ -1074,22 +1074,22 @@
         run-one-step base recur))
     #+end_src
 
-*** exp-list/run
+*** exp-list-run
 
     #+begin_src cicada
-    (+fun exp-list/run
+    (+fun exp-list-run
       : (-> env-t, exp-list : [exp-u list-u] -- env-t)
       dup .frame-stack list-length (let base)
-      exp-list new/simple-frame frame-stack/push
+      exp-list new-simple-frame frame-stack-push
       base run-with-base)
     #+end_src
 
-*** exp/run
+*** exp-run
 
     #+begin_src cicada
-    (+fun exp/run
+    (+fun exp-run
       : (-> env-t, exp : exp-u -- env-t)
-      null-c cons-c exp-list/run)
+      null-c cons-c exp-list-run)
     #+end_src
 
 * collect-one
@@ -1101,9 +1101,9 @@
       : (-> env-t, exp-list : [exp-u list-u]
          -- env-t, obj-u list-u)
       dup .data-stack list-length (let old)
-      exp-list exp-list/run
+      exp-list exp-list-run
       dup .data-stack list-length (let new)
-      new old number-sub data-stack/n-pop)
+      new old number-sub data-stack-n-pop)
     #+end_src
 
 *** collect-one
@@ -1112,8 +1112,8 @@
     (+fun collect-one
       : (-> env-t, exp-list : [exp-u list-u]
          -- env-t, obj-u)
-      exp-list exp-list/run
-      data-stack/pop)
+      exp-list exp-list-run
+      data-stack-pop)
     #+end_src
 
 * cut
@@ -1124,24 +1124,24 @@
     (+fun cut
       : (-> env-t exp-u -- env-t)
       (case dup
-        (call-exp-t call-exp/cut)
-        (let-exp-t let-exp/cut)
-        (closure-exp-t closure-exp/cut)
-        (arrow-exp-t arrow-exp/cut)
-        (apply-exp-t apply-exp/cut)
-        (case-exp-t case-exp/cut)
-        (construct-exp-t construct-exp/cut)
-        (field-exp-t field-exp/cut)
-        (colon-exp-t colon-exp/cut)
-        (double-colon-exp-t double-colon-exp/cut)))
+        (call-exp-t call-exp-cut)
+        (let-exp-t let-exp-cut)
+        (closure-exp-t closure-exp-cut)
+        (arrow-exp-t arrow-exp-cut)
+        (apply-exp-t apply-exp-cut)
+        (case-exp-t case-exp-cut)
+        (construct-exp-t construct-exp-cut)
+        (field-exp-t field-exp-cut)
+        (colon-exp-t colon-exp-cut)
+        (double-colon-exp-t double-colon-exp-cut)))
     #+end_src
 
-*** call-exp/cut
+*** call-exp-cut
 
     #+begin_src cicada
-    (+fun call-exp/cut
+    (+fun call-exp-cut
       : (-> env-t, exp : call-exp-t -- env-t)
-      exp.name name-dict/get den-cut)
+      exp.name name-dict-get den-cut)
     #+end_src
 
 *** den-cut
@@ -1152,76 +1152,76 @@
       (+fun den-cut
         : (-> env-t den-u -- env-t)
         (case dup
-          (fun-den-t fun-den/den-cut)
-          (type-den-t type-den/den-cut)
-          (union-den-t union-den/den-cut)))
+          (fun-den-t fun-den-den-cut)
+          (type-den-t type-den-den-cut)
+          (union-den-t union-den-den-cut)))
       #+end_src
 
-***** fun-den/den-cut
+***** fun-den-den-cut
 
       #+begin_src cicada
-      (+fun fun-den/den-cut
+      (+fun fun-den-den-cut
         : (-> env-t, den : fun-den-t -- env-t)
-        den.type-arrow-exp arrow-exp/cut-apply)
+        den.type-arrow-exp arrow-exp-cut-apply)
       #+end_src
 
-***** arrow-exp/cut-apply
+***** arrow-exp-cut-apply
 
       #+begin_src cicada
-      (+fun arrow-exp/cut-apply
+      (+fun arrow-exp-cut-apply
         : (-> env-t, arrow-exp : arrow-exp-t -- env-t)
         ;; must create a new scope
         ;;   before creating an arrow-type
         ;; because creating an arrow-type
         ;;   might effect current scope
-        new/scope scope-stack/push
+        new-scope scope-stack-push
         arrow-exp collect-one (let arrow-type)
-        arrow-type.ante-type-list ante-type-list/unify
-        arrow-type.succ-type-list data-stack/list-push
-        scope-stack/drop)
+        arrow-type.ante-type-list ante-type-list-unify
+        arrow-type.succ-type-list data-stack-list-push
+        scope-stack-drop)
       #+end_src
 
-***** >< ante-type-list/unify
+***** >< ante-type-list-unify
 
       #+begin_src cicada
-      (+fun ante-type-list/unify
+      (+fun ante-type-list-unify
         : (-> env-t, ante-type-list : [obj-u list-u] -- env-t)
         )
       #+end_src
 
-***** ><><>< type-den/den-cut
+***** ><><>< type-den-den-cut
 
       #+begin_src cicada
-      (+fun type-den/den-cut
+      (+fun type-den-den-cut
         : (-> env-t, den : type-den-t -- env-t)
         )
       #+end_src
 
-***** ><><>< union-den/den-cut
+***** ><><>< union-den-den-cut
 
       #+begin_src cicada
-      (+fun union-den/den-cut
+      (+fun union-den-den-cut
         : (-> env-t, den : union-den-t -- env-t)
         )
       #+end_src
 
-*** let-exp/cut
+*** let-exp-cut
 
-*** closure-exp/cut
+*** closure-exp-cut
 
-*** arrow-exp/cut
+*** arrow-exp-cut
 
-*** apply-exp/cut
+*** apply-exp-cut
 
-*** case-exp/cut
+*** case-exp-cut
 
-*** construct-exp/cut
+*** construct-exp-cut
 
-*** field-exp/cut
+*** field-exp-cut
 
-*** colon-exp/cut
+*** colon-exp-cut
 
-*** double-colon-exp/cut
+*** double-colon-exp-cut
 
 * infer
 
@@ -1231,15 +1231,15 @@
     (+fun infer
       : (-> env-t obj-u -- obj-u env-t)
       (case dup
-        (data-obj-t data-obj/infer)
-        (closure-obj-t closure-obj/infer)
+        (data-obj-t data-obj-infer)
+        (closure-obj-t closure-obj-infer)
         ;; ><><><
         (obj-u type-infer)))
     #+end_src
 
-*** data-obj/infer
+*** data-obj-infer
 
-*** closure-obj/infer
+*** closure-obj-infer
 
 *** type-infer
 
@@ -1259,27 +1259,27 @@
 
 * eval
 
-*** top-sexp-list/eval
+*** top-sexp-list-eval
 
     #+begin_src cicada
-    (+fun top-sexp-list/eval
+    (+fun top-sexp-list-eval
       : (-> env-t, sexp-list : [sexp-u list-u] -- env-t)
       (case sexp-list
         (null-t)
         (cons-t
-          sexp-list.car top-sexp/eval
+          sexp-list.car top-sexp-eval
           sexp-list.cdr recur)))
     #+end_src
 
-*** top-sexp/eval
+*** top-sexp-eval
 
     #+begin_src cicada
-    (+fun top-sexp/eval
+    (+fun top-sexp-eval
       : (-> env-t, sexp : sexp-u -- env-t)
       (cond
-        [sexp sexp/den-p]
-        [sexp parse/den dup den->name swap name-dict/insert]
-        else [sexp parse/exp exp/run]))
+        [sexp sexp-den-p]
+        [sexp parse-den dup den->name swap name-dict-insert]
+        else [sexp parse-exp exp-run]))
     #+end_src
 
 *** den->name
@@ -1293,10 +1293,10 @@
         (union-den-t den.union-name)))
     #+end_src
 
-*** sexp/den-p
+*** sexp-den-p
 
     #+begin_src cicada
-    (+fun sexp/den-p
+    (+fun sexp-den-p
       : (-> sexp : sexp-u -- bool-u)
       (and [sexp string-p]
            (or [sexp.car '+fun]
@@ -1306,26 +1306,26 @@
 
 * parse
 
-*** >< parse/den
+*** >< parse-den
 
     #+begin_src cicada
-    (+fun parse/den
+    (+fun parse-den
       : (-> sexp-u -- den-u)
       )
     #+end_src
 
-*** >< parse/exp
+*** >< parse-exp
 
     #+begin_src cicada
-    (+fun parse/exp
+    (+fun parse-exp
       : (-> sexp-u -- exp-u)
       )
     #+end_src
 
-*** >< parse/exp-list
+*** >< parse-exp-list
 
     #+begin_src cicada
-    (+fun parse/exp-list
+    (+fun parse-exp-list
       : (-> [sexp-u list-u] -- exp-u)
       )
     #+end_src
@@ -1342,8 +1342,8 @@
     (+macro cicada-language
       (-> body : [sexp-u list-u] -- sexp-u)
       `(begin
-         new/env (quote (@ body))
-         top-sexp-list/eval))
+         new-env (quote (@ body))
+         top-sexp-list-eval))
     #+end_src
 
 * test
@@ -1362,13 +1362,13 @@
 
     #+begin_src cicada
     (begin
-      new/env
-      "1" 1 name-dict/insert
-      "2" 2 name-dict/insert
-      "1" name-dict/get 1 eq-p bool/assert
-      "1" name-dict/get 1 eq-p bool/assert
-      "2" name-dict/get 2 eq-p bool/assert
-      "2" name-dict/get 2 eq-p bool/assert
+      new-env
+      "1" 1 name-dict-insert
+      "2" 2 name-dict-insert
+      "1" name-dict-get 1 eq-p bool-assert
+      "1" name-dict-get 1 eq-p bool-assert
+      "2" name-dict-get 2 eq-p bool-assert
+      "2" name-dict-get 2 eq-p bool-assert
       drop)
     #+end_src
 
@@ -1376,37 +1376,37 @@
 
     #+begin_src cicada
     (begin
-      new/env
-      0 data-stack/push
-      1 data-stack/push
-      2 data-stack/push
-      3 data-stack/push
-      data-stack/pop 3 eq-p bool/assert
-      data-stack/pop 2 eq-p bool/assert
-      data-stack/tos 1 eq-p bool/assert
-      data-stack/tos 1 eq-p bool/assert
-      data-stack/tos 1 eq-p bool/assert
-      data-stack/drop
-      data-stack/pop 0 eq-p bool/assert
+      new-env
+      0 data-stack-push
+      1 data-stack-push
+      2 data-stack-push
+      3 data-stack-push
+      data-stack-pop 3 eq-p bool-assert
+      data-stack-pop 2 eq-p bool-assert
+      data-stack-tos 1 eq-p bool-assert
+      data-stack-tos 1 eq-p bool-assert
+      data-stack-tos 1 eq-p bool-assert
+      data-stack-drop
+      data-stack-pop 0 eq-p bool-assert
       drop)
 
     (begin
-      new/env
-      0 data-stack/push
-      1 data-stack/push
-      2 data-stack/push
-      3 data-stack/push
-      3 data-stack/n-pop
-      (lit/list 1 2 3) eq-p bool/assert
-      data-stack/pop 0 eq-p bool/assert
+      new-env
+      0 data-stack-push
+      1 data-stack-push
+      2 data-stack-push
+      3 data-stack-push
+      3 data-stack-n-pop
+      (lit-list 1 2 3) eq-p bool-assert
+      data-stack-pop 0 eq-p bool-assert
       drop)
 
     (begin
-      new/env
-      (lit/list 1 2 3) data-stack/list-push
-      data-stack/pop 3 eq-p bool/assert
-      data-stack/pop 2 eq-p bool/assert
-      data-stack/pop 1 eq-p bool/assert
+      new-env
+      (lit-list 1 2 3) data-stack-list-push
+      data-stack-pop 3 eq-p bool-assert
+      data-stack-pop 2 eq-p bool-assert
+      data-stack-pop 1 eq-p bool-assert
       drop)
     #+end_src
 
@@ -1418,18 +1418,18 @@
 
     #+begin_src cicada
     (begin
-      new/env
-      0 scope-stack/push
-      1 scope-stack/push
-      2 scope-stack/push
-      3 scope-stack/push
-      scope-stack/pop 3 eq-p bool/assert
-      scope-stack/pop 2 eq-p bool/assert
-      scope-stack/tos 1 eq-p bool/assert
-      scope-stack/tos 1 eq-p bool/assert
-      scope-stack/tos 1 eq-p bool/assert
-      scope-stack/drop
-      scope-stack/pop 0 eq-p bool/assert
+      new-env
+      0 scope-stack-push
+      1 scope-stack-push
+      2 scope-stack-push
+      3 scope-stack-push
+      scope-stack-pop 3 eq-p bool-assert
+      scope-stack-pop 2 eq-p bool-assert
+      scope-stack-tos 1 eq-p bool-assert
+      scope-stack-tos 1 eq-p bool-assert
+      scope-stack-tos 1 eq-p bool-assert
+      scope-stack-drop
+      scope-stack-pop 0 eq-p bool-assert
       drop)
     #+end_src
 
@@ -1439,23 +1439,23 @@
 
     #+begin_src cicada
     (begin
-      new/env
-      "1" 1 data-bind-dict/insert
-      "2" 2 data-bind-dict/insert
-      "1" data-bind-dict/find bool/assert 1 eq-p bool/assert
-      "1" data-bind-dict/find bool/assert 1 eq-p bool/assert
-      "2" data-bind-dict/find bool/assert 2 eq-p bool/assert
-      "2" data-bind-dict/find bool/assert 2 eq-p bool/assert
+      new-env
+      "1" 1 data-bind-dict-insert
+      "2" 2 data-bind-dict-insert
+      "1" data-bind-dict-find bool-assert 1 eq-p bool-assert
+      "1" data-bind-dict-find bool-assert 1 eq-p bool-assert
+      "2" data-bind-dict-find bool-assert 2 eq-p bool-assert
+      "2" data-bind-dict-find bool-assert 2 eq-p bool-assert
       drop)
 
     (begin
-      new/env
-      "1" 1 type-bind-dict/insert
-      "2" 2 type-bind-dict/insert
-      "1" type-bind-dict/find bool/assert 1 eq-p bool/assert
-      "1" type-bind-dict/find bool/assert 1 eq-p bool/assert
-      "2" type-bind-dict/find bool/assert 2 eq-p bool/assert
-      "2" type-bind-dict/find bool/assert 2 eq-p bool/assert
+      new-env
+      "1" 1 type-bind-dict-insert
+      "2" 2 type-bind-dict-insert
+      "1" type-bind-dict-find bool-assert 1 eq-p bool-assert
+      "1" type-bind-dict-find bool-assert 1 eq-p bool-assert
+      "2" type-bind-dict-find bool-assert 2 eq-p bool-assert
+      "2" type-bind-dict-find bool-assert 2 eq-p bool-assert
       drop)
     #+end_src
 
