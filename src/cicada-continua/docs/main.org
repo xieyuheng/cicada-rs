@@ -1,0 +1,85 @@
+#+title: main
+
+* [todo-stack]
+
+*** marks of 3-torus
+
+*** the boundary-rule of product-space
+
+*** the boundary-rule of quotient-space
+
+*** spaces described in detail syntax
+
+    - the building blocks that we can use
+      to form product-spaces, quotient-space and so on,
+      are spaces described in detail syntax
+
+*** natural syntax of product-space and quotient-space
+
+    - use product-space and quotient-space to describe
+      torus := glue the opposite edge of a square
+      3-torus := glue the opposite face of a cube
+
+* [note]
+
+*** chain
+
+    - we have higher data constructors
+      but no  higher type constructors
+      because type of higher data is chain
+      just like arrow, chain is a special form of type
+
+* 已有的語言之問題
+
+  - 已有的語言雖然能描述 AT 中的某些現象
+    但是所使用的語義並不經濟
+    描述簡單的現象時也需要複雜的語法
+
+* 定義空間
+
+  - 定義 type 時使用高階元素
+    是爲了能夠檢驗函數的連續性
+
+  - 引入 n + 1 階元素的條件是
+    聲明一個 n 階邊界
+    n 階鍊爲邊界的條件是
+    1. 邊界爲空
+    2. 可定向
+
+  - n 階鏈包含了粘合方式的信息
+    1. 對於一階鏈來說
+       就是 arrow 的複合
+    2. 對於二階鏈來說
+       明顯地說明符合方式 已經太過複雜了
+       需要 mark-language
+
+* product-space
+
+* quotient-space
+
+* 3-torus
+
+  #+begin_src cicada
+  (+type 3-torus-t : type-tt
+    (-> -- 3-torus-t))
+
+  (+space 3-torus-t
+    (1 b0 b1 b2 : (=> 3-torus-c -- 3-torus-c))
+    (2 c0 : (=> b0 b1 (- b0) (- b1))
+       c1 : (=> b0 b2 (- b0) (- b2))
+       c2 : (=> b1 b2 (- b1) (- b2)))
+    (3 d0 : (=> c0 c1 c2 c0 c1 c2)))
+
+  (+space 3-torus-t
+    (1 b0 b1 b2 : (=> 3-torus-c -- 3-torus-c))
+    (2 c0 : (=> b0 b1 b0 b1
+                ><><><
+                (~ #0#1 #1#0))
+       c1 : (=> b0 b2 b0 b2)
+       c2 : (=> b1 b2 b1 b2))
+    (3 d0 : (=> c0 c1 c2 c0 c1 c2)))
+  #+end_src
+
+* 邊界算子
+
+* 連續函數
