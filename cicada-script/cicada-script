@@ -1,18 +1,16 @@
 #!/usr/bin/env node
 
 const fs = require ("fs");
+const path = require ("path");
 const cicada = require ("./cicada-script.js");
 
-function repl ()
-{
-    eval_file_vect ([]);
-    return;
-}
+let cicada_dir = path.dirname (cicada.module.filename);
+let core_file = cicada_dir.concat ("/core-script.cs");
 
 function eval_file_vect (file_vect)
 {
     let script =
-        fs.readFileSync ("./core-script.cs")
+        fs.readFileSync (core_file)
         .toString ();
     for (let file of file_vect) {
         let file_script =
@@ -27,10 +25,7 @@ function eval_file_vect (file_vect)
 function main ()
 {
     let arg_vect = process.argv.slice (2);
-    if (arg_vect.length === 0)
-        repl ();
-    else
-        eval_file_vect (arg_vect);
+    eval_file_vect (arg_vect);
 }
 
 main ();

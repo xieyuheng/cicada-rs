@@ -2040,5 +2040,6 @@
         code_eval (env, code);
         return env;
     }
+
     module.exports.eval_script = eval_script;
-    // export eval_script;
+    module.exports.module = module;
