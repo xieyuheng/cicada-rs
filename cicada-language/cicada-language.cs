@@ -209,7 +209,6 @@
       arrow-exp-t
       apply-exp-t
       case-exp-t
-      construct-exp-t
       field-exp-t
       colon-exp-t
       double-colon-exp-t)
@@ -226,8 +225,6 @@
     (+type case-exp-t
       arg-exp-list : [exp-u list-u]
       closure-exp-dict : [string-t closure-exp-t dict-t])
-    (+type construct-exp-t
-      type-name : string-t)
     (+type field-exp-t
       field-name : string-t)
     (+type colon-exp-t
@@ -238,20 +235,24 @@
       type-exp-list : [exp-u list-u])
     (+union den-u
       fun-den-t
-      type-den-t
-      union-den-t)
+      data-cons-den-t
+      type-cons-den-t
+      union-cons-den-t)
     (+type fun-den-t
-      fun-name : string-t
+      name : string-t
       type-arrow-exp : arrow-exp-t
       body-exp-list : [exp-u list-u])
-    (+type type-den-t
-      type-name : string-t
+    (+type data-cons-den-t
+      name : string-t
+      cons-arrow-exp : arrow-exp-t
+      type-arrow-exp : arrow-exp-t)
+    (+type type-cons-den-t
+      name : string-t
+      type-arrow-exp : arrow-exp-t)
+    (+type union-cons-den-t
+      name : string-t
       type-arrow-exp : arrow-exp-t
-      cons-arrow-exp : arrow-exp-t)
-    (+type union-den-t
-      union-name : string-t
-      type-arrow-exp : arrow-exp-t
-      type-name-list : [string-t list-u])
+      sub-name-list : [string-t list-u])
     (+union obj-u
       data-obj-t data-type-t
       union-type-t
@@ -262,10 +263,10 @@
       data-type : data-type-t
       field-obj-dict : [string-t obj-u dict-t])
     (+type data-type-t
-      type-name : string-t
+      name : string-t
       field-obj-dict : [string-t obj-u dict-t])
     (+type union-type-t
-      union-name : string-t
+      name : string-t
       field-obj-dict : [string-t obj-u dict-t])
     (+type type-type-t
       level : number-t)
@@ -290,7 +291,6 @@
         (arrow-exp-t arrow-exp-exe)
         (apply-exp-t apply-exp-exe)
         (case-exp-t case-exp-exe)
-        (construct-exp-t construct-exp-exe)
         (field-exp-t field-exp-exe)
         (colon-exp-t colon-exp-exe)
         (double-colon-exp-t double-colon-exp-exe)))
@@ -300,18 +300,16 @@
       (+fun den-exe
         : (-> env-t den-u -- env-t)
         (case dup
-          (fun-den-t fun-den-den-exe)
-          (type-den-t type-den-den-exe)
-          (union-den-t union-den-den-exe)))
-      (+fun fun-den-den-exe
+          (fun-den-t fun-den-exe)
+          (data-cons-den-t data-cons-den-exe)
+          (type-cons-den-t type-cons-den-exe)
+          (union-cons-den-t union-cons-den-exe)))
+      (+fun fun-den-exe
         : (-> env-t, den : fun-den-t -- env-t)
         new-scope scope-stack-push
-        den.type-arrow-exp arrow-exp-extend-scope
+        den.type-arrow-exp collect-one drop
         den.type-arrow-exp.ante-exp-list exp-list-let-colon
         den.body-exp-list new-scoping-frame frame-stack-push)
-      (+fun arrow-exp-extend-scope
-        : (-> env-t, arrow-exp-t -- env-t)
-        collect-one drop)
       (+fun exp-list-let-colon
         : (-> env : env-t
               exp-list : [exp-u list-u]
@@ -331,17 +329,25 @@
         data-stack-pop
         exp.local-name swap
         current-scope-insert)
-      (+fun type-den-den-exe
-        : (-> env-t, den : type-den-t -- env-t)
+      (+fun data-cons-den-exe
+        : (-> env-t, den : data-cons-den-t -- env-t)
+        den.type-arrow-exp collect-one drop
+        den.cons-arrow-exp.succ-exp-list collect-one (let return-type)
+        den.cons-arrow-exp.ante-exp-list new-field-obj-dict
+        return-type
+        (. field-obj-dict type)
+        data-obj-cr data-stack-push)
+      (+fun type-cons-den-exe
+        : (-> env-t, den : type-cons-den-t -- env-t)
         den.type-arrow-exp.ante-exp-list new-field-obj-dict
-        den.type-name
-        (. field-obj-dict type-name)
+        den.name
+        (. field-obj-dict name)
         data-type-cr data-stack-push)
-      (+fun union-den-den-exe
-        : (-> env-t, den : union-den-t -- env-t)
+      (+fun union-cons-den-exe
+        : (-> env-t, den : union-cons-den-t -- env-t)
         den.type-arrow-exp.ante-exp-list new-field-obj-dict
-        den.union-name
-        (. field-obj-dict union-name)
+        den.name
+        (. field-obj-dict name)
         union-type-cr data-stack-push)
       (+fun new-field-obj-dict
         : (-> env-t
@@ -411,18 +417,9 @@
       (case obj
         (data-obj-t
           exp.closure-exp-dict
-          obj.data-type.type-name dict-get
+          obj.data-type.name dict-get
           closure-exp-exe
           apply-exp-exe)))
-    (+fun construct-exp-exe
-      : (-> env-t, exp : construct-exp-t -- env-t)
-      exp.type-name name-dict-get (let den)
-      den.type-arrow-exp arrow-exp-extend-scope
-      den.cons-arrow-exp.succ-exp-list collect-one (let return-type)
-      den.cons-arrow-exp.ante-exp-list new-field-obj-dict
-      return-type
-      (. field-obj-dict type)
-      data-obj-cr data-stack-push)
     (+fun field-exp-exe
       : (-> env-t, exp : field-exp-t -- env-t)
       data-stack-pop (let obj)
@@ -501,7 +498,6 @@
         (arrow-exp-t arrow-exp-cut)
         (apply-exp-t apply-exp-cut)
         (case-exp-t case-exp-cut)
-        (construct-exp-t construct-exp-cut)
         (field-exp-t field-exp-cut)
         (colon-exp-t colon-exp-cut)
         (double-colon-exp-t double-colon-exp-cut)))
@@ -511,10 +507,10 @@
       (+fun den-cut
         : (-> env-t den-u -- env-t)
         (case dup
-          (fun-den-t fun-den-den-cut)
-          (type-den-t type-den-den-cut)
-          (union-den-t union-den-den-cut)))
-      (+fun fun-den-den-cut
+          (fun-den-t fun-den-cut)
+          (type-cons-den-t type-cons-den-cut)
+          (union-cons-den-t union-cons-den-cut)))
+      (+fun fun-den-cut
         : (-> env-t, den : fun-den-t -- env-t)
         den.type-arrow-exp arrow-exp-cut-apply)
       (+fun arrow-exp-cut-apply
@@ -531,11 +527,11 @@
       (+fun ante-type-list-unify
         : (-> env-t, ante-type-list : [obj-u list-u] -- env-t)
         )
-      (+fun type-den-den-cut
-        : (-> env-t, den : type-den-t -- env-t)
+      (+fun type-cons-den-cut
+        : (-> env-t, den : type-cons-den-t -- env-t)
         )
-      (+fun union-den-den-cut
-        : (-> env-t, den : union-den-t -- env-t)
+      (+fun union-cons-den-cut
+        : (-> env-t, den : union-cons-den-t -- env-t)
         )
     (+fun infer
       : (-> env-t obj-u -- obj-u env-t)
@@ -556,14 +552,8 @@
       : (-> env-t, sexp : sexp-u -- env-t)
       (cond
         [sexp sexp-den-p]
-        [sexp parse-den dup den->name swap name-dict-insert]
+        [sexp parse-den dup .name swap name-dict-insert]
         else [sexp parse-exp exp-run]))
-    (+fun den->name
-      : (-> den : den-u -- string-t)
-      (case den
-        (fun-den-t den.fun-name)
-        (type-den-t den.type-name)
-        (union-den-t den.union-name)))
     (+fun sexp-den-p
       : (-> sexp : sexp-u -- bool-u)
       (and [sexp string-p]
