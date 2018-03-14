@@ -684,32 +684,43 @@
     (+fun parse-exp
       : (-> sexp : sexp-u -- exp-u)
       (if [sexp string-p]
-        [string-parse-exp]
+        [sexp string-parse-exp]
         [sexp.car (let head)
+         sexp.cdr (let body)
          (cond
            [head 'let eq-p]
-           []
+           [body {recur} list-map let-exp-c]
 
            [head 'closure eq-p]
-           []
+           [body {recur} list-map closure-exp-c]
 
            [head 'arrow eq-p]
-           []
+           [body list-spread
+            {recur} list-map swap
+            {recur} list-map swap
+            arrow-exp-c]
 
            [head 'case eq-p]
-           []
-
-           [head 'case eq-p]
-           []
+           [new-dict
+            body.cdr
+            {(let clause)
+             clause.cdr {recur} list-map closure-exp-c
+             clause.car swap dict-insert}
+            list-for-each
+            (lit-list body.car recur)
+            swap case-exp-c]
 
            [head ': eq-p]
-           []
+           [body.car recur
+            body.cdr {recur} list-map
+            colon-exp-c]
 
            [head ':: eq-p]
-           []
+           [body.car recur
+            body.cdr {recur} list-map
+            double-colon-exp-c]
 
-           else
-           [error])]))
+           else error)]))
     (+fun string-parse-exp
       : (-> string : string-u -- exp-u)
       (cond
@@ -740,9 +751,6 @@
     (+fun name-string-p
       : (-> string : string-u -- bool-u)
       string '. string-member-p not)
-    (+fun parse-exp-list
-      : (-> [sexp-u list-u] -- [exp-u list-u])
-       {parse-exp} list-map)
     (+fun top-sexp-list-eval
       : (-> env-t, sexp-list : [sexp-u list-u] -- env-t)
       (case sexp-list
@@ -888,5 +896,12 @@
             (zero-t n)
             (succ-t m n .prev nat-mul m nat-add))))
       eq-p)
+    (begin
+      '((case n
+          (zero-t n)
+          (succ-t m n.prev nat-mul m nat-add)))
+      sexp-list-pass
+      {parse-exp} list-map w nl
+      )
 
 

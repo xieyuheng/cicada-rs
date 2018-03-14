@@ -209,6 +209,8 @@
 
         else
         [string char cursor number-inc recur]))
+    (+fun decons
+      dup .car swap .cdr)
     (+union list-u
       null-t
       cons-t)
@@ -297,7 +299,8 @@
       (let list)
       (case list
         (null-t "")
-        (cons-t list.car repr
+        (cons-t
+          list.car repr
           (unless [list.cdr null-p]
             " " string-append
             list.cdr recur string-append))))
@@ -342,6 +345,25 @@
         (cons-t
           even-list.car even-list.cdr.car cons-c
           even-list.cdr.cdr recur cons-c)))
+    (+disp repr [dict-t]
+      .assoc-list (let assoc-list)
+      (case assoc-list
+        (null-t "(lit-dict)")
+        (cons-t
+          "(lit-dict "
+          assoc-list assoc-list-inner-repr string-append
+          ")" string-append)))
+    (+fun assoc-list-inner-repr
+      (let assoc-list)
+      (case assoc-list
+        (null-t "")
+        (cons-t
+          assoc-list.car decons
+          swap repr " " string-append
+          swap repr string-append
+          (unless [assoc-list.cdr null-p]
+            ", " string-append
+            assoc-list.cdr recur string-append))))
     (assert
       true-c false-c bool-and
       false-c eq-p)
@@ -551,6 +573,11 @@
       (assert
         "" {"*" string-append} 3 times
         "***" eq-p)
+    (begin
+      1 2 cons-c
+      decons
+      2 eq-p bool-assert
+      1 eq-p bool-assert)
       (assert
         mark 0 1 2 3 4 collect-list
         (lit-list 0 1 2 3 4)
@@ -662,4 +689,13 @@
     #note
     (begin
       zero-c succ-c p nl)
+
+    ;; #note
+    (begin
+      (lit-dict
+       1 "v1"
+       2 "v2"
+       3 "v3")
+      (let dict)
+      dict w nl)
 

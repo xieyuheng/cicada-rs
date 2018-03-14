@@ -1,10 +1,25 @@
       function print (x)
       {
-          string_print (repr (x));
+          if (string_p (x))
+              string_print (x);
+          else
+              string_print (repr (x));
       }
       function repr (x)
       {
-          return (x.toString ());
+          if (number_p (x))
+              return (x.toString ());
+          else if (string_p (x)) {
+              let repr_string = "";
+              repr_string = repr_string.concat ('"');
+              repr_string = repr_string.concat (x.toString ());
+              repr_string = repr_string.concat ('"');
+              return repr_string;
+          }
+          else if (x === undefined)
+              return "#<undefined>";
+          else
+              return (x.toString ());
       }
       function string_print (x)
       {
@@ -55,6 +70,11 @@
                   return true;
           }
           return false;
+      }
+      function vect_reverse (vect)
+      {
+          let new_vect = vect.slice ();
+          return new_vect.reverse ();
       }
       function dict_length (dict)
       {
@@ -1433,33 +1453,6 @@
               data_stack_push (env, "'");
           }
       );
-      function default_repr (env, obj)
-      {
-          if (obj instanceof data_t)
-              return data_repr (env, obj);
-          else
-              return repr (obj);
-      }
-      function data_repr (env, obj)
-      {
-          let prefix = data_name_prefix (obj.type_name);
-          let repr_string = prefix.concat ("-c");
-          let data_den = name_dict_get (env, obj.type_name);
-          for (let field_name of data_den.reversed_field_name_vect) {
-              let field_obj = obj.field_dict.get (field_name);
-              repr_string = repr_string.concat (" ");
-              repr_string = repr_string.concat (data_repr (env, field_obj));
-          }
-          return repr_string;
-      }
-      new_prim (
-          "default-repr",
-          function (env)
-          {
-              let obj = data_stack_pop (env);
-              data_stack_push (env, default_repr (env, obj));
-          }
-      );
       class null_t
       {
           constructor ()
@@ -1583,6 +1576,94 @@
           function (env)
           {
               error ();
+          }
+      );
+      function default_repr (env, obj)
+      {
+          if (obj instanceof data_t)
+              return data_repr (env, obj);
+          else if (list_p (obj))
+              return list_repr (env, obj);
+          else
+              return repr (obj);
+      }
+      function list_repr (env, list)
+      {
+          if (null_p (list))
+              return "(lit-list)";
+          else if (cons_p (list)) {
+              let repr_string = "(lit-list ";
+              repr_string = repr_string
+                  .concat (list_inner_repr (env, list));
+              repr_string = repr_string
+                  .concat (")");
+              return repr_string;
+          }
+          else {
+              console.log ("- list_repr fail");
+              console.log (list);
+              error ();
+          }
+      }
+
+      function list_inner_repr (env, list)
+      {
+          if (null_p (list))
+              return "";
+          else if (cons_p (list)) {
+              let repr_string = default_repr (env, list.car);
+              if (! (null_p (list.cdr))) {
+                  repr_string = repr_string
+                      .concat (" ");
+                  if (list_p (list.cdr)) {
+                      repr_string = repr_string
+                          .concat (list_inner_repr (env, list.cdr));
+                  }
+                  else {
+                      repr_string = repr_string
+                          .concat (default_repr (env, list.cdr));
+                  }
+              }
+              return repr_string;
+          }
+          else {
+              console.log ("- list_inner_repr fail");
+              console.log (list);
+              error ();
+          }
+      }
+      function data_repr (env, obj)
+      {
+          let repr_string = "";
+          let data_den = name_dict_get (env, obj.type_name);
+          let field_name_vect =
+              vect_reverse (data_den.reversed_field_name_vect);
+          for (let field_name of field_name_vect) {
+              let field_obj = obj.field_dict.get (field_name);
+              repr_string = repr_string
+                  .concat (default_repr (env, field_obj));
+              repr_string = repr_string
+                  .concat (" ");
+          }
+          let prefix = data_name_prefix (obj.type_name);
+          repr_string = repr_string
+              .concat (prefix.concat ("-c"));
+          return repr_string;
+      }
+      new_prim (
+          "default-repr",
+          function (env)
+          {
+              let obj = data_stack_pop (env);
+              data_stack_push (env, default_repr (env, obj));
+          }
+      );
+      new_prim (
+          "list-repr",
+          function (env)
+          {
+              let obj = data_stack_pop (env);
+              data_stack_push (env, list_repr (env, obj));
           }
       );
     function code_scan (string)

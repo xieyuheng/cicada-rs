@@ -5,8 +5,6 @@
 
 *** combinators from joy
 
-*** main
-
 * prolog
 
 * stack operation
@@ -530,6 +528,15 @@
         [string char cursor number-inc recur]))
     #+end_src
 
+* cons
+
+*** decons
+
+    #+begin_src cicada
+    (+fun decons
+      dup .car swap .cdr)
+    #+end_src
+
 * list
 
 *** list-u
@@ -708,7 +715,8 @@
       (let list)
       (case list
         (null-t "")
-        (cons-t list.car repr
+        (cons-t
+          list.car repr
           (unless [list.cdr null-p]
             " " string-append
             list.cdr recur string-append))))
@@ -805,6 +813,35 @@
         (cons-t
           even-list.car even-list.cdr.car cons-c
           even-list.cdr.cdr recur cons-c)))
+    #+end_src
+
+*** repr [dict-t]
+
+    #+begin_src cicada
+    (+disp repr [dict-t]
+      .assoc-list (let assoc-list)
+      (case assoc-list
+        (null-t "(lit-dict)")
+        (cons-t
+          "(lit-dict "
+          assoc-list assoc-list-inner-repr string-append
+          ")" string-append)))
+    #+end_src
+
+*** assoc-list-inner-repr
+
+    #+begin_src cicada
+    (+fun assoc-list-inner-repr
+      (let assoc-list)
+      (case assoc-list
+        (null-t "")
+        (cons-t
+          assoc-list.car decons
+          swap repr " " string-append
+          swap repr string-append
+          (unless [assoc-list.cdr null-p]
+            ", " string-append
+            assoc-list.cdr recur string-append))))
     #+end_src
 
 * test
@@ -1072,6 +1109,16 @@
         "***" eq-p)
       #+end_src
 
+*** cons
+
+    #+begin_src cicada
+    (begin
+      1 2 cons-c
+      decons
+      2 eq-p bool-assert
+      1 eq-p bool-assert)
+    #+end_src
+
 *** list
 
 ***** (lit-list)
@@ -1225,9 +1272,18 @@
     #note
     (begin
       zero-c succ-c p nl)
+
+    #note
+    (begin
+      (lit-dict
+       1 "v1"
+       2 "v2"
+       3 "v3")
+      (let dict)
+      dict w nl)
     #+end_src
 
-*** >< main
+*** main
 
     #+begin_src cicada
 
