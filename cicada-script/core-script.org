@@ -469,6 +469,14 @@
       1 swap string-slice)
     #+end_src
 
+*** string-last
+
+    #+begin_src cicada
+    (+fun string-last
+      dup string-length
+      dup number-dec swap string-slice)
+    #+end_src
+
 *** string-take
 
     #+begin_src cicada
@@ -904,6 +912,10 @@
     (assert
       "01234567" string-tail
       "1234567" eq-p)
+
+    (assert
+      "01234567" string-last
+      "7" eq-p)
 
     (assert
       "01234567" 3 string-take

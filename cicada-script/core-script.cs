@@ -178,6 +178,9 @@
     (+fun string-tail
       dup string-length
       1 swap string-slice)
+    (+fun string-last
+      dup string-length
+      dup number-dec swap string-slice)
     (+fun string-take
       (let string length)
       string 0 length string-slice)
@@ -422,6 +425,10 @@
     (assert
       "01234567" string-tail
       "1234567" eq-p)
+
+    (assert
+      "01234567" string-last
+      "7" eq-p)
 
     (assert
       "01234567" 3 string-take

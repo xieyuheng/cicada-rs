@@ -2,7 +2,7 @@
     (+macro +alias note)
     (+macro -> (let body)
       body {'-- eq-p} list-ante
-      {', eq-p bool-not} list-filter
+      {', eq-p not} list-filter
       sexp-filter-colon (let new-body)
       `(let (@ new-body list-spread)))
     (+fun sexp-filter-colon (let ante)
@@ -548,11 +548,12 @@
         (obj-u type-infer)))
     (+alias sexp-u (| string-t [sexp-u list-u]))
     (+fun sexp-list-pass
-      : (-> sexp-u list-u
-         -- sexp-u list-u)
+      : (-> sexp-u list-u -- sexp-u list-u)
       sexp-list-remove-infix-notation
       sexp-list-expand-multi-bind
-      {sexp-pass-for-arrow} list-map)
+      {sexp-pass-for-arrow} list-map
+      ;; {sexp-pass-for-recur} list-map
+      sexp-list-pass-to-break-dot-string)
     (+fun sexp-list-remove-infix-notation
       : (-> sexp-list : [sexp-u list-u] -- sexp-u list-u)
       (cond [sexp-list list-length 3 lt-p]
@@ -626,20 +627,105 @@
       (case sexp
         (cons-t
           (if [sexp.car '-> eq-p]
-            [sexp.cdr {'-- eq-p} list-split (let ante succ)
+            [sexp.cdr {'-- eq-p} list-split-to-two (let ante succ)
              `(arrow (@ ante {recur} list-map)
                      (@ succ.cdr {recur} list-map))]
             [sexp {recur} list-map]))
         (else sexp)))
+    (+fun sexp-pass-for-recur
+    )
+    (+fun sexp-list-pass-to-break-dot-string
+      : (-> sexp-list : [sexp-u list-u] -- sexp-u list-u)
+      (case sexp-list
+        (null-t null-c)
+        (cons-t
+          (cond
+            (and [sexp-list.car string-p]
+                 [sexp-list.car dot-string-p])
+            [sexp-list.car '. string-split-by-char (let name-list)
+             name-list.cdr {'. swap string-append} list-map
+             name-list.car swap cons-c
+             sexp-list.cdr recur
+             list-append]
+            else
+            [sexp-list.cdr recur
+             sexp-list.car sexp-pass-to-break-dot-string
+             swap cons-c]))))
+
+    (+fun sexp-pass-to-break-dot-string
+      : (-> sexp-u -- sexp-u)
+      dup cons-p (bool-when sexp-list-pass-to-break-dot-string))
+
+    (+fun dot-string-p
+      : (-> string : string-u -- bool-u)
+      (and [string string-head '. eq-p not]
+           [string string-last '. eq-p not]
+           [string '. string-member-p]))
     (+fun parse-den
       : (-> sexp-u -- den-u)
       )
     (+fun parse-exp
-      : (-> sexp-u -- exp-u)
-      )
+      : (-> sexp : sexp-u -- exp-u)
+      (if [sexp string-p]
+        [string-parse-exp]
+        [sexp.car (let head)
+         (cond
+           [head 'let eq-p]
+           []
+
+           [head 'closure eq-p]
+           []
+
+           [head 'arrow eq-p]
+           []
+
+           [head 'case eq-p]
+           []
+
+           [head 'case eq-p]
+           []
+
+           [head ': eq-p]
+           []
+
+           [head ':: eq-p]
+           []
+
+           else
+           [error])]))
+    (+fun string-parse-exp
+      : (-> string : string-u -- exp-u)
+      (cond
+        [string 'apply eq-p]
+        [apply-exp-c]
+
+        [string ', eq-p]
+        [comma-exp-c]
+
+        [string field-string-p]
+        [string field-string->field-name field-exp-c]
+
+        [string name-string-p]
+        [string call-exp-c]
+
+        else
+        [error]))
+
+
+    (+fun field-string-p
+      : (-> string-u -- bool-u)
+      string-head '. eq-p)
+
+    (+fun field-string->field-name
+      : (-> string-u -- string-u)
+      string-tail)
+
+    (+fun name-string-p
+      : (-> string : string-u -- bool-u)
+      string '. string-member-p not)
     (+fun parse-exp-list
       : (-> [sexp-u list-u] -- [exp-u list-u])
-      )
+       {parse-exp} list-map)
     (+fun top-sexp-list-eval
       : (-> env-t, sexp-list : [sexp-u list-u] -- env-t)
       (case sexp-list
@@ -750,18 +836,16 @@
       "2" type-bind-dict-find bool-assert 2 eq-p bool-assert
       "2" type-bind-dict-find bool-assert 2 eq-p bool-assert
       drop)
-    ;; sexp-list-remove-infix-notation
     (assert
-      '((+union nat-u :: type-tt
+      '((+union nat-u : type-tt
           (-> -- zero-t)
           (-> prev : nat-u -- succ-t)))
       sexp-list-pass
-      '((+union (:: nat-u type-tt)
+      '((+union (: nat-u type-tt)
           (arrow () (zero-t))
           (arrow ((: prev nat-u)) (succ-t))))
       eq-p)
 
-    ;; sexp-list-expand-multi-bind
     (assert
       '((+fun nat-add : (-> [m n] : nat-u -- nat-u)
           (case n
@@ -778,14 +862,14 @@
                         (nat-u)))
           (case n
             (zero-t m)
-            (succ-t m n.prev recur succ-c)))
+            (succ-t m n .prev recur succ-c)))
 
         (+fun (: nat-mul
                  (arrow ((: m nat-u) (: n nat-u))
                         (nat-u)))
           (case n
             (zero-t n)
-            (succ-t m n.prev recur m nat-add))))
+            (succ-t m n .prev recur m nat-add))))
       eq-p)
 
 
