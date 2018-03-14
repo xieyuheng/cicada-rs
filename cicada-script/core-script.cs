@@ -101,6 +101,8 @@
       (let x y)
       x y div
       x y mod)
+  (+gene not 1
+    error)
     (+gene gt-p 2
       error)
     (+gene lt-p 2
@@ -149,6 +151,8 @@
          ifte))
     (+disp repr [bool-u]
       (bool-if "true-c" "false-c"))
+    (+disp not [bool-u]
+      bool-not)
     (+disp gt-p [number-t number-t]
       number-gt-p)
     (+disp lt-p [number-t number-t]
@@ -167,6 +171,13 @@
       number-div)
     (+disp mod [number-t number-t]
       number-mod)
+    (+fun string-head)
+
+    (+fun string-tail)
+
+    (+fun string-member-p
+      )
+
     (+union list-u
       null-t
       cons-t)
@@ -314,6 +325,14 @@
 
     (assert
       true-c bool-not bool-not
+      true-c eq-p)
+
+    (assert
+      true-c not
+      false-c eq-p)
+
+    (assert
+      true-c not not
       true-c eq-p)
     (assert
       1 2 3 null-c cons-c cons-c cons-c

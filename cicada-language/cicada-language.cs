@@ -750,16 +750,18 @@
       "2" type-bind-dict-find bool-assert 2 eq-p bool-assert
       "2" type-bind-dict-find bool-assert 2 eq-p bool-assert
       drop)
+    ;; sexp-list-remove-infix-notation
     (assert
-      '((+union nat-u : type-tt
+      '((+union nat-u :: type-tt
           (-> -- zero-t)
           (-> prev : nat-u -- succ-t)))
       sexp-list-pass
-      '((+union (: nat-u type-tt)
+      '((+union (:: nat-u type-tt)
           (arrow () (zero-t))
           (arrow ((: prev nat-u)) (succ-t))))
       eq-p)
 
+    ;; sexp-list-expand-multi-bind
     (assert
       '((+fun nat-add : (-> [m n] : nat-u -- nat-u)
           (case n
@@ -770,7 +772,7 @@
           (case n
             (zero-t n)
             (succ-t m n.prev recur m nat-add))))
-      sexp-list-pass dup sexp-print nl
+      sexp-list-pass
       '((+fun (: nat-add
                  (arrow ((: m nat-u) (: n nat-u))
                         (nat-u)))
@@ -785,7 +787,5 @@
             (zero-t n)
             (succ-t m n.prev recur m nat-add))))
       eq-p)
-    ;; ((+fun (: nat-add (arrow ((: (begin m n) nat-u)) (nat-u))) (case n (zero-t m) (succ-t m n.prev recur succ-c)))
-    ;;  (+fun (: nat-mul (arrow ((: (begin m n) nat-u)) (nat-u))) (case n (zero-t n) (succ-t m n.prev recur m nat-add))))
 
 

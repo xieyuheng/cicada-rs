@@ -3,6 +3,12 @@
 
 * [todo-stack]
 
+*** sexp-pass-for-recur
+
+*** parse-exp
+
+*** parse-den
+
 *** den-define
 
 *** test exe
@@ -1258,7 +1264,9 @@
          -- sexp-u list-u)
       sexp-list-remove-infix-notation
       sexp-list-expand-multi-bind
-      {sexp-pass-for-arrow} list-map)
+      {sexp-pass-for-arrow} list-map
+      ;; {sexp-pass-for-recur} list-map
+      )
     #+end_src
 
 *** sexp-list-remove-infix-notation
@@ -1370,20 +1378,80 @@
       )
     #+end_src
 
-*** >< parse-exp
+*** parse-exp
 
     #+begin_src cicada
     (+fun parse-exp
-      : (-> sexp-u -- exp-u)
-      )
+      : (-> sexp : sexp-u -- exp-u)
+      (if [sexp string-p]
+        [string-parse-exp]
+        [sexp.car (let head)
+         (cond
+           [head 'let eq-p]
+           []
+
+           [head 'closure eq-p]
+           []
+
+           [head 'arrow eq-p]
+           []
+
+           [head 'case eq-p]
+           []
+
+           [head 'case eq-p]
+           []
+
+           [head ': eq-p]
+           []
+
+           [head ':: eq-p]
+           []
+
+           else
+           [error])]))
     #+end_src
 
-*** >< parse-exp-list
+*** string-parse-exp
+
+    #+begin_src cicada
+    (+fun string-parse-exp
+      : (-> string : string-u -- exp-u)
+      (cond
+        [string 'apply eq-p]
+        [apply-exp-c]
+
+        [string ', eq-p]
+        [comma-exp-c]
+
+        [string field-string-p]
+        [string field-string->field-name field-exp-c]
+
+        [string name-string-p]
+        [string call-exp-c]
+
+        else
+        [error]))
+
+    (+fun field-string-p
+      : (-> string : string-u -- bool-u)
+      )
+
+    (+fun field-string->field-name
+      : (-> string : string-u -- string-t)
+      )
+
+    (+fun name-string-p
+      : (-> string : string-u -- bool-u)
+      true-c)
+    #+end_src
+
+*** parse-exp-list
 
     #+begin_src cicada
     (+fun parse-exp-list
       : (-> [sexp-u list-u] -- [exp-u list-u])
-      )
+       {parse-exp} list-map)
     #+end_src
 
 * eval
@@ -1471,7 +1539,7 @@
       drop)
     #+end_src
 
-*** >< data-stack
+*** data-stack
 
     #+begin_src cicada
     (begin
@@ -1561,6 +1629,7 @@
 *** sexp-list-pass
 
     #+begin_src cicada
+    ;; sexp-list-remove-infix-notation
     (assert
       '((+union nat-u : type-tt
           (-> -- zero-t)
@@ -1571,6 +1640,7 @@
           (arrow ((: prev nat-u)) (succ-t))))
       eq-p)
 
+    ;; sexp-list-expand-multi-bind
     (assert
       '((+fun nat-add : (-> [m n] : nat-u -- nat-u)
           (case n
@@ -1581,7 +1651,7 @@
           (case n
             (zero-t n)
             (succ-t m n.prev recur m nat-add))))
-      sexp-list-pass dup sexp-print nl
+      sexp-list-pass
       '((+fun (: nat-add
                  (arrow ((: m nat-u) (: n nat-u))
                         (nat-u)))
