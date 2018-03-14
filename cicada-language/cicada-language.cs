@@ -896,11 +896,29 @@
             (zero-t n)
             (succ-t m n .prev nat-mul m nat-add))))
       eq-p)
-    (begin
+    (assert
       '((case n
           (zero-t n)
           (succ-t m n.prev nat-mul m nat-add)))
       sexp-list-pass
-      {parse-exp} list-map w nl)
+      {parse-exp} list-map
+      (lit-list
+       (lit-list "n" call-exp-c)
+       (lit-dict
+        "succ-t"
+        (lit-list
+         "m" call-exp-c
+         "n" call-exp-c
+         "prev" field-exp-c
+         "nat-mul" call-exp-c
+         "m" call-exp-c
+         "nat-add" call-exp-c)
+        closure-exp-c,
+        "zero-t"
+        (lit-list
+         "n" call-exp-c)
+        closure-exp-c)
+       case-exp-c)
+      eq-p)
 
 
