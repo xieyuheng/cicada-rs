@@ -53,15 +53,17 @@
            true-c
            [(@ body.cdr recur)])))
     (+macro cond (let body)
-      (if [body list-length 1 number-lteq-p]
-        `(begin
-           "- cond mismatch!" string-print nl
-           error)
-        [body.car (when [dup 'else eq-p] drop 'true-c) (let question)
-         body.cdr.car (let answer)
-         `(if (@ question)
-            (@ answer)
-            (@ body.cdr.cdr recur))]))
+      (case body
+        (null-t
+          `(begin
+             "- cond mismatch!" string-print nl
+             error))
+        (cons-t
+          body.car (when [dup 'else eq-p] drop 'true-c) (let question)
+          body.cdr.car (let answer)
+          `(if (@ question)
+             (@ answer)
+             (@ body.cdr.cdr recur)))))
     (+gene repr 1
       default-repr)
     (+disp repr [string-t]
@@ -171,13 +173,33 @@
       number-div)
     (+disp mod [number-t number-t]
       number-mod)
-    (+fun string-head)
-
-    (+fun string-tail)
-
+    (+fun string-head
+      0 string-ref)
+    (+fun string-tail
+      dup string-length
+      1 swap string-slice)
+    (+fun string-take
+      (let string length)
+      string 0 length string-slice)
+    (+fun string-drop
+      (let string length)
+      string length string string-length string-slice)
     (+fun string-member-p
-      )
+      (let string substring)
+      (cond
+        [string string-length
+         substring string-length lt-p]
+        false-c
 
+        []
+        []
+
+        else
+        [string string-tail substring recur]))
+    (+fun string-split-by-predicate
+      )
+    (+fun string-split-by-substring
+      )
     (+union list-u
       null-t
       cons-t)
@@ -386,6 +408,22 @@
     (assert
       123 number->string
       "123" eq-p)
+
+    (assert
+      "01234567" string-head
+      "0" eq-p)
+
+    (assert
+      "01234567" string-tail
+      "1234567" eq-p)
+
+    (assert
+      "01234567" 3 string-take
+      "012" eq-p)
+
+    (assert
+      "01234567" 3 string-drop
+      "34567" eq-p)
     (+union nat-u
       zero-t
       succ-t)

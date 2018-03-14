@@ -128,15 +128,17 @@
 
     #+begin_src cicada
     (+macro cond (let body)
-      (if [body list-length 1 number-lteq-p]
-        `(begin
-           "- cond mismatch!" string-print nl
-           error)
-        [body.car (when [dup 'else eq-p] drop 'true-c) (let question)
-         body.cdr.car (let answer)
-         `(if (@ question)
-            (@ answer)
-            (@ body.cdr.cdr recur))]))
+      (case body
+        (null-t
+          `(begin
+             "- cond mismatch!" string-print nl
+             error))
+        (cons-t
+          body.car (when [dup 'else eq-p] drop 'true-c) (let question)
+          body.cdr.car (let answer)
+          `(if (@ question)
+             (@ answer)
+             (@ body.cdr.cdr recur)))))
     #+end_src
 
 * common gene
@@ -454,14 +456,65 @@
 
 * string
 
-*** ><
+*** string-head
 
     #+begin_src cicada
-    (+fun string-head)
+    (+fun string-head
+      0 string-ref)
+    #+end_src
 
-    (+fun string-tail)
+*** string-tail
 
+    #+begin_src cicada
+    (+fun string-tail
+      dup string-length
+      1 swap string-slice)
+    #+end_src
+
+*** string-take
+
+    #+begin_src cicada
+    (+fun string-take
+      (let string length)
+      string 0 length string-slice)
+    #+end_src
+
+*** string-drop
+
+    #+begin_src cicada
+    (+fun string-drop
+      (let string length)
+      string length string string-length string-slice)
+    #+end_src
+
+*** string-member-p
+
+    #+begin_src cicada
     (+fun string-member-p
+      (let string substring)
+      (cond
+        [string string-length
+         substring string-length lt-p]
+        false-c
+
+        []
+        []
+
+        else
+        [string string-tail substring recur]))
+    #+end_src
+
+*** string-split-by-predicate
+
+    #+begin_src cicada
+    (+fun string-split-by-predicate
+      )
+    #+end_src
+
+*** string-split-by-substring
+
+    #+begin_src cicada
+    (+fun string-split-by-substring
       )
     #+end_src
 
@@ -744,7 +797,7 @@
 
 * test
 
-*** bool-u
+*** bool
 
     #+begin_src cicada
     (assert
@@ -780,7 +833,7 @@
       1 2 3 null-c cons-c cons-c cons-c eq-p)
     #+end_src
 
-*** number-t
+*** number
 
 ***** number-factorial
 
@@ -817,7 +870,7 @@
         120 eq-p)
       #+end_src
 
-*** string-t
+*** string
 
     #+begin_src cicada
     (assert
@@ -839,9 +892,25 @@
     (assert
       123 number->string
       "123" eq-p)
+
+    (assert
+      "01234567" string-head
+      "0" eq-p)
+
+    (assert
+      "01234567" string-tail
+      "1234567" eq-p)
+
+    (assert
+      "01234567" 3 string-take
+      "012" eq-p)
+
+    (assert
+      "01234567" 3 string-drop
+      "34567" eq-p)
     #+end_src
 
-*** nat-u
+*** nat
 
     #+begin_src cicada
     (+union nat-u
