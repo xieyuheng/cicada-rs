@@ -680,16 +680,17 @@
            [string '. string-member-p]))
       (+fun parse-den
         : (-> sexp : sexp-u -- den-u)
-        dup .car
+        sexp.car (let head)
+        sexp.cdr (let body)
         (cond
-          [dup '+fun eq-p] parse-fun-den
-          [dup '+type eq-p] parse-type-cons-den
-          [dup '+union eq-p] parse-union-cons-den
+          [head '+fun eq-p] [body parse-fun-den]
+          [head '+type eq-p] [body parse-type-cons-den]
+          [head '+union eq-p] [body parse-union-cons-den]
           else error))
       (+fun parse-fun-den
-        : (-> sexp : sexp-u -- den-u)
-        sexp.car parse-exp (let colon-exp)
-        sexp.cdr {parse-exp} list-map (let body-exp-list)
+        : (-> body : [sexp-u list-u] -- den-u)
+        body.car parse-exp (let colon-exp)
+        body.cdr {parse-exp} list-map (let body-exp-list)
         colon-exp.local-name (let name)
         colon-exp.type-exp-list.car (let type-exp)
         (case type-exp

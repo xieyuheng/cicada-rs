@@ -340,6 +340,8 @@
             exception_print (exception);
             scope_stack_print (env);
             frame_stack_print (env);
+            data_stack_print (env);
+            process.exit (64);
         }
     }
     function exception_print (exception)
@@ -362,6 +364,18 @@
         for (let scope of env.scope_stack) {
             scope.print (env);
         }
+        print ("\n");
+    }
+    function data_stack_print (env)
+    {
+        print ("  * ");
+        print (repr (env.data_stack.length));
+        print (" * --");
+        for (let obj of env.data_stack) {
+            print (" ");
+            obj_print (env, obj);
+        }
+        print (" -- ");
         print ("\n");
     }
     function closure_apply (env, closure)
@@ -2318,4 +2332,5 @@
     }
 
     module.exports.eval_script = eval_script;
+    module.exports.data_stack_print = data_stack_print;
     module.exports.module = module;
