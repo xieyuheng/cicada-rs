@@ -4,6 +4,11 @@
 
 * [note]
 
+*** (+type)
+
+    - type of data in data-field must be of type type-tt
+      thus, function can not be stored in data-field
+
 *** naming convention
 
     - type
@@ -86,7 +91,10 @@
 *** list-length
 
     #+begin_src cicada
-    (+fun list-length : (-> l : [:t list-u] -- nat-u)
+    (+fun list-length
+      : (-> type :: type-tt
+            l : [type list-u]
+         -- nat-u)
       (case l
         (null-t zero-c)
         (cons-t l.cdr recur succ-c)))
@@ -96,9 +104,10 @@
 
     #+begin_src cicada
     (+fun list-map
-      : (-> l : [:t1 list-u]
-            fun : (-> :t1 -- :t2)
-         -- :t2 list-u)
+      : (-> [t1 t2] :: type-tt
+            l : [t1 list-u]
+            fun : (-> t1 -- t2)
+         -- t2 list-u)
       (case l
         (null-t null-c)
         (cons-t l.car fun l.cdr {fun} recur cons-c)))
@@ -110,8 +119,12 @@
     ;; this function will not pass type check
     ;;   because we can not use car cdr on list-u
     ;;   we can only use them on cons-t
+    #note
     (+fun list-ref
-      : (-> l : [:t list-u], index : nat-u -- :t)
+      : (-> type :: type-tt
+            l : [type list-u]
+            index : nat-u
+         -- type)
       (case index
         (zero-t l.car)
         (succ-t l.cdr index.prev recur)))
@@ -121,8 +134,10 @@
 
     #+begin_src cicada
     (+fun list-remove-first
-      : (-> x : :t, l : [:t list-u]
-         -- :t list-u)
+      : (-> type :: type-tt
+            x : type
+            l : [type list-u]
+         -- type list-u)
       (case l
         (null-t null-c)
         (cons-t (case [l.car x eq-p]

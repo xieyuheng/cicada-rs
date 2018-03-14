@@ -3,9 +3,9 @@
 
 * [todo-stack]
 
-*** no construct-exp-t
+*** data-cons-den-t
 
-    - generate constructors
+*** no construct-exp-t -- generate constructors instead
 
 *** parse
 
@@ -613,8 +613,8 @@
     #+begin_src cicada
     (+union den-u
       fun-den-t
-      type-den-t
-      union-den-t)
+      type-cons-den-t
+      union-cons-den-t)
     #+end_src
 
 *** fun-den-t
@@ -626,19 +626,19 @@
       body-exp-list : [exp-u list-u])
     #+end_src
 
-*** type-den-t
+*** type-cons-den-t
 
     #+begin_src cicada
-    (+type type-den-t
+    (+type type-cons-den-t
       type-name : string-t
       type-arrow-exp : arrow-exp-t
       cons-arrow-exp : arrow-exp-t)
     #+end_src
 
-*** union-den-t
+*** union-cons-den-t
 
     #+begin_src cicada
-    (+type union-den-t
+    (+type union-cons-den-t
       union-name : string-t
       type-arrow-exp : arrow-exp-t
       type-name-list : [string-t list-u])
@@ -762,8 +762,8 @@
         : (-> env-t den-u -- env-t)
         (case dup
           (fun-den-t fun-den-den-exe)
-          (type-den-t type-den-den-exe)
-          (union-den-t union-den-den-exe)))
+          (type-cons-den-t type-den-den-exe)
+          (union-cons-den-t union-den-den-exe)))
       #+end_src
 
 ***** fun-den-den-exe
@@ -818,7 +818,7 @@
 
       #+begin_src cicada
       (+fun type-den-den-exe
-        : (-> env-t, den : type-den-t -- env-t)
+        : (-> env-t, den : type-cons-den-t -- env-t)
         den.type-arrow-exp.ante-exp-list new-field-obj-dict
         den.type-name
         (. field-obj-dict type-name)
@@ -829,7 +829,7 @@
 
       #+begin_src cicada
       (+fun union-den-den-exe
-        : (-> env-t, den : union-den-t -- env-t)
+        : (-> env-t, den : union-cons-den-t -- env-t)
         den.type-arrow-exp.ante-exp-list new-field-obj-dict
         den.union-name
         (. field-obj-dict union-name)
@@ -1141,8 +1141,8 @@
         : (-> env-t den-u -- env-t)
         (case dup
           (fun-den-t fun-den-den-cut)
-          (type-den-t type-den-den-cut)
-          (union-den-t union-den-den-cut)))
+          (type-cons-den-t type-den-den-cut)
+          (union-cons-den-t union-den-den-cut)))
       #+end_src
 
 ***** fun-den-den-cut
@@ -1181,7 +1181,7 @@
 
       #+begin_src cicada
       (+fun type-den-den-cut
-        : (-> env-t, den : type-den-t -- env-t)
+        : (-> env-t, den : type-cons-den-t -- env-t)
         )
       #+end_src
 
@@ -1189,7 +1189,7 @@
 
       #+begin_src cicada
       (+fun union-den-den-cut
-        : (-> env-t, den : union-den-t -- env-t)
+        : (-> env-t, den : union-cons-den-t -- env-t)
         )
       #+end_src
 
@@ -1277,8 +1277,8 @@
       : (-> den : den-u -- string-t)
       (case den
         (fun-den-t den.fun-name)
-        (type-den-t den.type-name)
-        (union-den-t den.union-name)))
+        (type-cons-den-t den.type-name)
+        (union-cons-den-t den.union-name)))
     #+end_src
 
 *** sexp-den-p

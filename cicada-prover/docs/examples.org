@@ -2,6 +2,8 @@
 
 * [todo-stack]
 
+*** no implicit :local
+
 *** use number theory -- to test type-checker as prover
 
 *** alias
@@ -159,15 +161,7 @@
     #+begin_src cicada
     (+union vect-u
       : (-> length : nat-u, type : type-tt -- type-tt)
-      null-vect-t < type vect-u
-      cons-vect-t < vect-u)
-
-    (+type null-vect-t
-      : (-> length : nat-u -- type-tt)
-      (-> -- zero-c null-vect-t))
-
-    (+type cons-vect-t
-      : (-> length : nat-u, type : type-tt -- type-tt)
+      (-> -- zero-c type null-vect-t)
       (-> car : type
           cdr : [length type vect-u]
        -- length succ-c type cons-vect-t))
