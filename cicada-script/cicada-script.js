@@ -1580,12 +1580,36 @@
       );
       function default_repr (env, obj)
       {
-          if (obj instanceof data_t)
+          if (disp_repr_p (env, obj))
+              return disp_repr (env, obj);
+          else if (obj instanceof data_t)
               return data_repr (env, obj);
           else if (list_p (obj))
               return list_repr (env, obj);
           else
               return repr (obj);
+      }
+      function disp_repr_p (env, obj)
+      {
+          let repr_disp_dict = get_repr_disp_dict (env);
+          let type_name = type_of (obj);
+          let fun_den = repr_disp_dict.find (env, [type_name]);
+          return (fun_den !== undefined);
+      }
+
+      function get_repr_disp_dict (env)
+      {
+          let gene_den = name_dict_get (env, "repr");
+          assert (gene_den instanceof gene_den_t);
+          return gene_den.disp_dict;
+      }
+      function disp_repr (env, obj)
+      {
+          let exp_vect = [new call_exp_t ("repr")];
+          data_stack_push (env, obj);
+          exp_vect_run (env, exp_vect);
+          let repr_string = data_stack_pop (env);
+          return repr_string;
       }
       function list_repr (env, list)
       {

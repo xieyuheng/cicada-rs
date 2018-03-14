@@ -901,7 +901,6 @@
           (zero-t n)
           (succ-t m n.prev nat-mul m nat-add)))
       sexp-list-pass
-      {parse-exp} list-map w nl
-      )
+      {parse-exp} list-map w nl)
 
 

@@ -690,12 +690,17 @@
     (begin
       zero-c succ-c p nl)
 
-    ;; #note
+    #note
     (begin
-      (lit-dict
-       1 "v1"
-       2 "v2"
-       3 "v3")
+      (lit-list
+       (lit-list
+        (lit-dict
+         1 "v1"
+         2 (lit-dict
+            1 "v1"
+            2 "v2"
+            3 "v3")
+         3 "v3")))
       (let dict)
       dict w nl)
 
