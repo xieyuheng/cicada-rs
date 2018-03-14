@@ -574,7 +574,7 @@
           (if [sexp.car '-> eq-p]
             [sexp.cdr {'-- eq-p} list-split (let ante succ)
              `(arrow (@ ante {recur} list-map)
-                     (@ succ {recur} list-map))]
+                     (@ succ.cdr {recur} list-map))]
             [sexp {recur} list-map]))
         (else sexp)))
     (+fun parse-den
@@ -696,5 +696,14 @@
       "2" type-bind-dict-find bool-assert 2 eq-p bool-assert
       "2" type-bind-dict-find bool-assert 2 eq-p bool-assert
       drop)
+    (assert
+      '((+union nat-u : type-tt
+          (-> -- zero-t)
+          (-> prev : nat-u -- succ-t)))
+      sexp-list-pass
+      '((+union (: nat-u type-tt)
+          (arrow () (zero-t))
+          (arrow ((: prev nat-u)) (succ-t))))
+      eq-p)
 
 

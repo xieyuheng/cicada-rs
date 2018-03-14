@@ -3,9 +3,7 @@
 
 * [todo-stack]
 
-*** test pass
-
-*** comma-exp-t
+*** sexp-list-expand-multi-binding
 
 *** den-define
 
@@ -529,7 +527,8 @@
       case-exp-t
       field-exp-t
       colon-exp-t
-      double-colon-exp-t)
+      double-colon-exp-t
+      comma-exp-t)
     #+end_src
 
 *** call-exp-t
@@ -596,6 +595,12 @@
     (+type double-colon-exp-t
       local-name : string-t
       type-exp-list : [exp-u list-u])
+    #+end_src
+
+*** comma-exp-t
+
+    #+begin_src cicada
+    (+type comma-exp-t)
     #+end_src
 
 * den
@@ -742,7 +747,8 @@
         (case-exp-t case-exp-exe)
         (field-exp-t field-exp-exe)
         (colon-exp-t colon-exp-exe)
-        (double-colon-exp-t double-colon-exp-exe)))
+        (double-colon-exp-t double-colon-exp-exe)
+        (comma-exp-t comma-exp-exe)))
     #+end_src
 
 *** call-exp-exe
@@ -1031,6 +1037,14 @@
       base-name postfix string-append hypo-id-c)
     #+end_src
 
+*** comma-exp-exe
+
+    #+begin_src cicada
+    (+fun comma-exp-exe
+      : (-> env-t comma-exp-t -- env-t)
+      drop)
+    #+end_src
+
 * run
 
 *** run-one-step
@@ -1281,6 +1295,15 @@
       dup cons-p (bool-when sexp-list-remove-infix-notation))
     #+end_src
 
+*** sexp-list-expand-multi-binding
+
+    - (: [m n] nat-u) => (: n nat-u) (: n nat-u)
+
+    #+begin_src cicada
+    (+fun sexp-list-expand-multi-binding
+      )
+    #+end_src
+
 *** sexp-pass-for-arrow
 
     - (-> ... -- ...) => (arrow (...) (...))
@@ -1293,7 +1316,7 @@
           (if [sexp.car '-> eq-p]
             [sexp.cdr {'-- eq-p} list-split (let ante succ)
              `(arrow (@ ante {recur} list-map)
-                     (@ succ {recur} list-map))]
+                     (@ succ.cdr {recur} list-map))]
             [sexp {recur} list-map]))
         (else sexp)))
     #+end_src
@@ -1494,6 +1517,20 @@
       "2" type-bind-dict-find bool-assert 2 eq-p bool-assert
       "2" type-bind-dict-find bool-assert 2 eq-p bool-assert
       drop)
+    #+end_src
+
+*** sexp-list-pass
+
+    #+begin_src cicada
+    (assert
+      '((+union nat-u : type-tt
+          (-> -- zero-t)
+          (-> prev : nat-u -- succ-t)))
+      sexp-list-pass
+      '((+union (: nat-u type-tt)
+          (arrow () (zero-t))
+          (arrow ((: prev nat-u)) (succ-t))))
+      eq-p)
     #+end_src
 
 * epilog
