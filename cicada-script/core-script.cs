@@ -186,18 +186,12 @@
       string length string string-length string-slice)
     (+fun string-member-p
       (let string substring)
+      string string-length (let length)
+      substring string-length (let sublength)
       (cond
-        [string string-length
-         substring string-length lt-p]
-        false-c
-
-        []
-        []
-
-        else
-        [string string-tail substring recur]))
-    (+fun string-split-by-predicate
-      )
+        [length sublength lt-p] false-c
+        [string sublength string-take substring eq-p] true-c
+        else [string string-tail substring recur]))
     (+fun string-split-by-substring
       )
     (+union list-u
@@ -240,7 +234,7 @@
       (cond [list null-p] null-c
             [list.car pred] list
             else [list.cdr {pred} recur]))
-    (+fun list-split (let list pred) ;; -- ante succ
+    (+fun list-split-to-two (let list pred) ;; -- ante succ
       (cond [list null-p] [null-c null-c]
             [list.car pred] [null-c list]
             else [list.car
@@ -424,6 +418,18 @@
     (assert
       "01234567" 3 string-drop
       "34567" eq-p)
+
+    (assert
+      "01234567" "34567" string-member-p)
+
+    (assert
+      "01234567" "012" string-member-p)
+
+    (assert
+      "01234567" "34567*" string-member-p bool-not)
+
+    (assert
+      "01234567" "*012" string-member-p bool-not)
     (+union nat-u
       zero-t
       succ-t)
@@ -539,7 +545,7 @@
 
       (assert
         (lit-list 0 1 2 3 4 5 6 7 8 9)
-        {5 gteq-p} list-split
+        {5 gteq-p} list-split-to-two
         swap (lit-list 0 1 2 3 4) eq-p
         swap (lit-list 5 6 7 8 9) eq-p
         bool-and)

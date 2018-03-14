@@ -492,23 +492,12 @@
     #+begin_src cicada
     (+fun string-member-p
       (let string substring)
+      string string-length (let length)
+      substring string-length (let sublength)
       (cond
-        [string string-length
-         substring string-length lt-p]
-        false-c
-
-        []
-        []
-
-        else
-        [string string-tail substring recur]))
-    #+end_src
-
-*** string-split-by-predicate
-
-    #+begin_src cicada
-    (+fun string-split-by-predicate
-      )
+        [length sublength lt-p] false-c
+        [string sublength string-take substring eq-p] true-c
+        else [string string-tail substring recur]))
     #+end_src
 
 *** string-split-by-substring
@@ -610,10 +599,10 @@
             else [list.cdr {pred} recur]))
     #+end_src
 
-*** list-split
+*** list-split-to-two
 
     #+begin_src jojo
-    (+fun list-split (let list pred) ;; -- ante succ
+    (+fun list-split-to-two (let list pred) ;; -- ante succ
       (cond [list null-p] [null-c null-c]
             [list.car pred] [null-c list]
             else [list.car
@@ -908,6 +897,18 @@
     (assert
       "01234567" 3 string-drop
       "34567" eq-p)
+
+    (assert
+      "01234567" "34567" string-member-p)
+
+    (assert
+      "01234567" "012" string-member-p)
+
+    (assert
+      "01234567" "34567*" string-member-p bool-not)
+
+    (assert
+      "01234567" "*012" string-member-p bool-not)
     #+end_src
 
 *** nat
@@ -1061,7 +1062,7 @@
         eq-p)
       #+end_src
 
-***** list-split
+***** list-split-to-two
 
       #+begin_src cicada
       (assert
@@ -1072,7 +1073,7 @@
 
       (assert
         (lit-list 0 1 2 3 4 5 6 7 8 9)
-        {5 gteq-p} list-split
+        {5 gteq-p} list-split-to-two
         swap (lit-list 0 1 2 3 4) eq-p
         swap (lit-list 5 6 7 8 9) eq-p
         bool-and)
