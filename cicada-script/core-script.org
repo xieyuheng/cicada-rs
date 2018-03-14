@@ -3,8 +3,6 @@
 
 * [todo-stack]
 
-*** more about string
-
 *** combinators from joy
 
 *** main
@@ -492,19 +490,36 @@
     #+begin_src cicada
     (+fun string-member-p
       (let string substring)
-      string string-length (let length)
-      substring string-length (let sublength)
+      substring string-length (let length)
       (cond
-        [length sublength lt-p] false-c
-        [string sublength string-take substring eq-p] true-c
+        [string string-length length lt-p] false-c
+        [string length string-take substring eq-p] true-c
         else [string string-tail substring recur]))
     #+end_src
 
-*** string-split-by-substring
+*** string-split-by-char
 
     #+begin_src cicada
-    (+fun string-split-by-substring
-      )
+    (+fun string-split-by-char
+      0 string-split-by-char-with-cursor)
+    #+end_src
+
+*** string-split-by-char-with-cursor
+
+    #+begin_src cicada
+    (+fun string-split-by-char-with-cursor
+      (let string char cursor)
+      (cond
+        [string string-length cursor lteq-p]
+        [string null-c cons-c]
+
+        [string cursor string-ref char eq-p]
+        [string cursor string-take
+         string cursor string-drop string-tail char 0 recur
+         cons-c]
+
+        else
+        [string char cursor number-inc recur]))
     #+end_src
 
 * list
@@ -909,6 +924,21 @@
 
     (assert
       "01234567" "*012" string-member-p bool-not)
+
+    (assert
+      "0123.4567" "." string-split-by-char
+      (lit-list "0123" "4567")
+      eq-p)
+
+    (assert
+      "..0123..4567.." "." string-split-by-char
+      (lit-list "" "" "0123" "" "4567" "" "")
+      eq-p)
+
+    (assert
+      "0.1.2.3.4.5.6.7" "." string-split-by-char
+      '(0 1 2 3 4 5 6 7)
+      eq-p)
     #+end_src
 
 *** nat
