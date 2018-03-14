@@ -549,11 +549,30 @@
     (+alias sexp-u (| string-t [sexp-u list-u]))
     (+fun sexp-list-pass
       : (-> sexp-u list-u -- sexp-u list-u)
+      ;; the order matters
+      {sexp-pass-for-recur} list-map
       sexp-list-remove-infix-notation
       sexp-list-expand-multi-bind
       {sexp-pass-for-arrow} list-map
-      ;; {sexp-pass-for-recur} list-map
       sexp-list-pass-to-break-dot-string)
+    (+fun sexp-pass-for-recur
+      : (-> sexp : sexp-u -- sexp-u)
+      (if (and [sexp cons-p]
+               [sexp.car '+fun eq-p])
+        [sexp.cdr.car (let name)
+         sexp.cdr.cdr (let body)
+         (lit-list sexp.car name)
+         body name sexp-substitute-recur
+         list-append]
+        sexp))
+
+    (+fun sexp-substitute-recur
+      : (-> sexp : sexp-u, name : string-t -- sexp-u)
+      (cond
+        (and [sexp string-p] [sexp "recur" eq-p]) name
+        [sexp cons-p] [sexp.car name recur
+                       sexp.cdr name recur cons-c]
+        else sexp))
     (+fun sexp-list-remove-infix-notation
       : (-> sexp-list : [sexp-u list-u] -- sexp-u list-u)
       (cond [sexp-list list-length 3 lt-p]
@@ -632,8 +651,6 @@
                      (@ succ.cdr {recur} list-map))]
             [sexp {recur} list-map]))
         (else sexp)))
-    (+fun sexp-pass-for-recur
-    )
     (+fun sexp-list-pass-to-break-dot-string
       : (-> sexp-list : [sexp-u list-u] -- sexp-u list-u)
       (case sexp-list
@@ -862,14 +879,14 @@
                         (nat-u)))
           (case n
             (zero-t m)
-            (succ-t m n .prev recur succ-c)))
+            (succ-t m n .prev nat-add succ-c)))
 
         (+fun (: nat-mul
                  (arrow ((: m nat-u) (: n nat-u))
                         (nat-u)))
           (case n
             (zero-t n)
-            (succ-t m n .prev recur m nat-add))))
+            (succ-t m n .prev nat-mul m nat-add))))
       eq-p)
 
 
