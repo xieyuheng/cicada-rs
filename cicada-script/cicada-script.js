@@ -91,8 +91,7 @@
       function error ()
       {
           print ("\n");
-          print ("\n");
-          throw new Error('fatal error!');
+          throw new Error("cicada-script-error");
       }
     class env_t
     {
@@ -185,6 +184,12 @@
               this.length = exp_vect.length;
               this.index = 0;
           }
+
+          print ()
+          {
+              print ("  * ");
+              frame_print (this);
+          }
       }
       class simple_frame_t
       {
@@ -194,6 +199,25 @@
               this.length = exp_vect.length;
               this.index = 0;
           }
+
+          print ()
+          {
+              print ("  + ");
+              frame_print (this);
+          }
+      }
+      function frame_print (frame)
+      {
+          let counter = 0;
+          while (counter < frame.length) {
+              let exp = frame.exp_vect[counter];
+              if (counter === frame.index)
+                  print ("<$ ");
+              exp.print ();
+              print (" ");
+              counter = counter +1;
+          }
+          print ("\n");
       }
       function frame_end_p (frame)
       {
@@ -251,6 +275,34 @@
               }
               return scope;
           }
+
+          print (env)
+          {
+              let length = dict_length (this.dict);
+              print ("  - ");
+              print (repr (length));
+              print ("\n");
+              for (let [name, obj] of this.dict) {
+                  print ("    ");
+                  print (name);
+                  print (" = ");
+                  obj_print (env, obj);
+                  print ("\n");
+              }
+          }
+      }
+      function obj_print (env, obj)
+      {
+          if (obj instanceof closure_t)
+              closure_print (env, obj);
+          else
+              print (default_repr (env, obj));
+      }
+      function closure_print (env, closure)
+      {
+          print ("{");
+          exp_vect_print (closure.exp_vect);
+          print ("}");
       }
     function run_one_step (env)
     {
@@ -278,10 +330,39 @@
     }
     function exp_vect_run (env, exp_vect)
     {
-        let base = frame_stack_length (env);
-        let frame = new simple_frame_t (exp_vect);
-        frame_stack_push (env, frame);
-        run_with_base (env, base);
+        try {
+            let base = frame_stack_length (env);
+            let frame = new simple_frame_t (exp_vect);
+            frame_stack_push (env, frame);
+            run_with_base (env, base);
+        }
+        catch (exception) {
+            exception_print (exception);
+            scope_stack_print (env);
+            frame_stack_print (env);
+        }
+    }
+    function exception_print (exception)
+    {
+        print ("- exception : \n");
+        console.log (exception);
+        print ("\n");
+    }
+    function frame_stack_print (env)
+    {
+        print ("- frame_stack : \n");
+        for (let frame of env.frame_stack) {
+            frame.print ();
+        }
+        print ("\n");
+    }
+    function scope_stack_print (env)
+    {
+        print ("- scope_stack : \n");
+        for (let scope of env.scope_stack) {
+            scope.print (env);
+        }
+        print ("\n");
     }
     function closure_apply (env, closure)
     {
@@ -342,6 +423,11 @@
                 den.den_exe (env);
             }
         }
+
+        print ()
+        {
+            print (this.name);
+        }
     }
     class let_exp_t
     {
@@ -359,6 +445,16 @@
                 scope.set (name, obj);
             }
         }
+
+        print ()
+        {
+            print ("(let");
+            for (let name of this.name_vect) {
+                print (" ");
+                print (name);
+            }
+            print (")");
+        }
     }
     class closure_exp_t
     {
@@ -375,6 +471,13 @@
                     scope.clone ());
             data_stack_push (env, closure);
         }
+
+        print ()
+        {
+            print ("{");
+            exp_vect_print (this.exp_vect);
+            print ("}");
+        }
     }
     class apply_exp_t
     {
@@ -387,6 +490,11 @@
             frame_stack_push (env, frame);
             scope_stack_push (env, closure.scope);
         }
+
+        print ()
+        {
+            print ("apply");
+        }
     }
     class case_exp_t
     {
@@ -394,6 +502,7 @@
         {
             this.arg_exp_vect = arg_exp_vect;
             this.case_clause_dict = case_clause_dict;
+            // type_name to exp_vect
         }
 
         exe (env, scope)
@@ -426,22 +535,32 @@
                 }
             }
         }
+
+        print ()
+        {
+            print ("(case [");
+            exp_vect_print (this.arg_exp_vect)
+            print ("]");
+            for (let [type_name, exp_vect] of this.case_clause_dict) {
+                print (" (");
+                print (type_name);
+                print (" ")
+                exp_vect_print (exp_vect);
+                print (")");
+            }
+            print (")");
+        }
     }
-    class case_clause_dict_t
+    function exp_vect_print (exp_vect)
     {
-        constructor ()
-        {
-            this.dict = new Map ();
-        }
-
-        get (type_name)
-        {
-            return this.dict.get (type_name);
-        }
-
-        set (type_name, exp_vect)
-        {
-            this.dict.set (type_name, exp_vect);
+        if (exp_vect.length === 0)
+            return;
+        let head_exp = exp_vect[0];
+        let tail_exp = exp_vect.slice (1, exp_vect.length);
+        head_exp.print ();
+        for (let exp of tail_exp) {
+            print (" ");
+            exp.print ();
         }
     }
     class field_exp_t
@@ -464,6 +583,12 @@
             else
                 data_stack_push (env, obj);
         }
+
+        print ()
+        {
+           print (".");
+           print (this.field_name);
+        }
     }
     class set_field_exp_t
     {
@@ -480,6 +605,13 @@
                 data.field_dict.set (this.field_name, obj);
             else
                 data[this.field_name] = obj;
+        }
+
+        print ()
+        {
+           print (".");
+           print (this.field_name);
+           print ("!");
         }
     }
     class dot_exp_t
@@ -498,6 +630,18 @@
                 field_dict.set (field_name, obj)
             }
             data_stack_push (env, field_dict);
+        }
+
+        print ()
+        {
+            print ("(.");
+            let field_name_vect =
+                vect_reverse (this.reversed_field_name_vect);
+            for (let field_name of field_name_vect) {
+                print (" ");
+                print (field_name);
+            }
+            print (")");
         }
     }
     class clone_exp_t
@@ -525,6 +669,11 @@
                     new_field_dict);
             data_stack_push (env, new_data);
         }
+
+        print ()
+        {
+            print ("clone");
+        }
     }
     class lit_exp_t
     {
@@ -536,6 +685,11 @@
         exe (env, scope)
         {
             data_stack_push (env, this.obj);
+        }
+
+        print ()
+        {
+            print (repr (this.obj));
         }
     }
     class eq_p_exp_t
@@ -553,6 +707,11 @@
                 data_stack_push (env, false);
             }
         }
+
+        print ()
+        {
+            print ("eq-p");
+        }
     }
     class mark_exp_t
     {
@@ -561,6 +720,11 @@
         exe (env, scope)
         {
             data_stack_push (env, new marker_t ());
+        }
+
+        print ()
+        {
+            print ("mark");
         }
     }
     class collect_list_exp_t
@@ -578,6 +742,11 @@
                     vect.unshift (obj);
             }
             data_stack_push (env, vect_to_list (vect));
+        }
+
+        print ()
+        {
+            print ("collect-list");
         }
     }
     class fun_den_t
@@ -783,8 +952,10 @@
     }
     function type_of (x)
     {
+        if (x === undefined)
+            return "#<undefined-t>";
         let type_name = x.type_name;
-        if (type_name)
+        if (type_name !== undefined)
             return type_name
         else if (string_p (x))
             return "string-t";
@@ -1120,7 +1291,7 @@
         "case",
         function (env, sexp_list)
         {
-            let case_clause_dict = new case_clause_dict_t ();
+            let case_clause_dict = new Map ();
             let arg_exp_vect = sexp_compile (env, sexp_list.car);
             let rest_vect = list_to_vect (sexp_list.cdr);
             for (let sexp of rest_vect) {
@@ -1611,6 +1782,24 @@
           let repr_string = data_stack_pop (env);
           return repr_string;
       }
+      function data_repr (env, obj)
+      {
+          let repr_string = "";
+          let data_den = name_dict_get (env, obj.type_name);
+          let field_name_vect =
+              vect_reverse (data_den.reversed_field_name_vect);
+          for (let field_name of field_name_vect) {
+              let field_obj = obj.field_dict.get (field_name);
+              repr_string = repr_string
+                  .concat (default_repr (env, field_obj));
+              repr_string = repr_string
+                  .concat (" ");
+          }
+          let prefix = data_name_prefix (obj.type_name);
+          repr_string = repr_string
+              .concat (prefix.concat ("-c"));
+          return repr_string;
+      }
       function list_repr (env, list)
       {
           if (null_p (list))
@@ -1655,24 +1844,6 @@
               console.log (list);
               error ();
           }
-      }
-      function data_repr (env, obj)
-      {
-          let repr_string = "";
-          let data_den = name_dict_get (env, obj.type_name);
-          let field_name_vect =
-              vect_reverse (data_den.reversed_field_name_vect);
-          for (let field_name of field_name_vect) {
-              let field_obj = obj.field_dict.get (field_name);
-              repr_string = repr_string
-                  .concat (default_repr (env, field_obj));
-              repr_string = repr_string
-                  .concat (" ");
-          }
-          let prefix = data_name_prefix (obj.type_name);
-          repr_string = repr_string
-              .concat (prefix.concat ("-c"));
-          return repr_string;
       }
       new_prim (
           "default-repr",

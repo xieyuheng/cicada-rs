@@ -678,9 +678,31 @@
       (and [string string-head '. eq-p not]
            [string string-last '. eq-p not]
            [string '. string-member-p]))
-    (+fun parse-den
-      : (-> sexp-u -- den-u)
-      )
+      (+fun parse-den
+        : (-> sexp : sexp-u -- den-u)
+        dup .car
+        (cond
+          [dup '+fun eq-p] parse-fun-den
+          [dup '+type eq-p] parse-type-cons-den
+          [dup '+union eq-p] parse-union-cons-den
+          else error))
+      (+fun parse-fun-den
+        : (-> sexp : sexp-u -- den-u)
+        sexp.car parse-exp (let colon-exp)
+        sexp.cdr {parse-exp} list-map (let body-exp-list)
+        colon-exp.local-name (let name)
+        colon-exp.type-exp-list.car (let type-exp)
+        (case type-exp
+          (arrow-exp-t type-exp)
+          (else (lit-list) (lit-list type-exp) arrow-exp-c))
+        (let type-arrow-exp)
+        name type-arrow-exp body-exp-list fun-den-c)
+      (+fun parse-type-cons-den
+        : (-> sexp : sexp-u -- den-u)
+        )
+      (+fun parse-union-cons-den
+        : (-> sexp : sexp-u -- den-u)
+        )
     (+fun parse-exp
       : (-> sexp : sexp-u -- exp-u)
       (if [sexp string-p]
@@ -920,5 +942,22 @@
         closure-exp-c)
        case-exp-c)
       eq-p)
+    (begin
+      '((+fun nat-add : (-> [m n] : nat-u -- nat-u)
+          (case n
+            (zero-t m)
+            (succ-t m n.prev recur succ-c)))
+
+        (+fun nat-mul : (-> [m n] : nat-u -- nat-u)
+          (case n
+            (zero-t n)
+            (succ-t m n.prev recur m nat-add)))
+
+        (+fun nat-factorial : (-> n : nat-u -- nat-u)
+          (case n
+            (zero-t n succ-c)
+            (succ-t n.prev recur n nat-mul))))
+      sexp-list-pass
+      {parse-den} list-map)
 
 

@@ -388,6 +388,8 @@
       true-c not not
       true-c eq-p)
     (assert
+      1 dup number-add 2 eq-p)
+    (assert
       1 2 3 null-c cons-c cons-c cons-c
       1 2 3 null-c cons-c cons-c cons-c eq-p)
       (+fun number-factorial-case
