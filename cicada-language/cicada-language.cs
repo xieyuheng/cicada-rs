@@ -540,7 +540,52 @@
         (closure-obj-t closure-obj-infer)
         ;; ><><><
         (obj-u type-infer)))
-    (+alias sexp-u (| string-t [string-t list-u]))
+    (+alias sexp-u (| string-t [sexp-u list-u]))
+    (+fun sexp-list-pass
+      : (-> sexp-u list-u
+         -- sexp-u list-u)
+      sexp-list-remove-infix-notation
+      {sexp-pass-for-arrow} list-map)
+    (+fun sexp-list-remove-infix-notation
+      : (-> sexp-list : [sexp-u list-u] -- sexp-u list-u)
+      (cond [sexp-list list-length 3 lt-p]
+            [sexp-list {sexp-remove-infix-notation} list-map]
+
+            (or [sexp-list.cdr.car ': eq-p]
+                [sexp-list.cdr.car ':: eq-p])
+            [sexp-list.cdr.cdr.cdr recur
+             (lit-list
+              sexp-list.cdr.car
+              sexp-list.car sexp-remove-infix-notation
+              sexp-list.cdr.cdr.car sexp-remove-infix-notation)
+             swap cons-c]
+
+            else
+            [sexp-list.cdr recur
+             sexp-list.car sexp-remove-infix-notation
+             swap cons-c]))
+    (+fun sexp-remove-infix-notation
+      : (-> sexp-u -- sexp-u)
+      dup cons-p (bool-when sexp-list-remove-infix-notation))
+    (+fun sexp-pass-for-arrow
+      : (-> sexp : sexp-u -- sexp-u)
+      (case sexp
+        (cons-t
+          (if [sexp.car '-> eq-p]
+            [sexp.cdr {'-- eq-p} list-split (let ante succ)
+             `(arrow (@ ante {recur} list-map)
+                     (@ succ {recur} list-map))]
+            [sexp {recur} list-map]))
+        (else sexp)))
+    (+fun parse-den
+      : (-> sexp-u -- den-u)
+      )
+    (+fun parse-exp
+      : (-> sexp-u -- exp-u)
+      )
+    (+fun parse-exp-list
+      : (-> [sexp-u list-u] -- [exp-u list-u])
+      )
     (+fun top-sexp-list-eval
       : (-> env-t, sexp-list : [sexp-u list-u] -- env-t)
       (case sexp-list
@@ -552,29 +597,24 @@
       : (-> env-t, sexp : sexp-u -- env-t)
       (cond
         [sexp sexp-den-p]
-        [sexp parse-den dup .name swap name-dict-insert]
+        [sexp parse-den den-define]
         else [sexp parse-exp exp-run]))
+    (+fun den-define
+      : (-> env-t den-u -- env-t)
+      ;; ><><><
+      ;; generate more dens
+      dup .name swap name-dict-insert)
     (+fun sexp-den-p
       : (-> sexp : sexp-u -- bool-u)
       (and [sexp string-p]
            (or [sexp.car '+fun]
                [sexp.car '+type]
                [sexp.car '+union])))
-    (+fun parse-den
-      : (-> sexp-u -- den-u)
-      )
-    (+fun parse-exp
-      : (-> sexp-u -- exp-u)
-      )
-    (+fun parse-exp-list
-      : (-> [sexp-u list-u] -- exp-u)
-      )
-    (+macro cl cicada-language)
-
     (+macro cicada-language
       (-> body : [sexp-u list-u] -- sexp-u)
       `(begin
          new-env (quote (@ body))
+         sexp-list-pass
          top-sexp-list-eval))
     (assert
       1 2

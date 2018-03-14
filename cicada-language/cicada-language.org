@@ -3,7 +3,11 @@
 
 * [todo-stack]
 
-*** parse
+*** test pass
+
+*** comma-exp-t
+
+*** den-define
 
 *** test exe
 
@@ -1229,43 +1233,69 @@
 *** sexp-u
 
     #+begin_src cicada
-    (+alias sexp-u (| string-t [string-t list-u]))
+    (+alias sexp-u (| string-t [sexp-u list-u]))
     #+end_src
 
-* eval
+* pass
 
-*** top-sexp-list-eval
+*** sexp-list-pass
 
     #+begin_src cicada
-    (+fun top-sexp-list-eval
-      : (-> env-t, sexp-list : [sexp-u list-u] -- env-t)
-      (case sexp-list
-        (null-t)
+    (+fun sexp-list-pass
+      : (-> sexp-u list-u
+         -- sexp-u list-u)
+      sexp-list-remove-infix-notation
+      {sexp-pass-for-arrow} list-map)
+    #+end_src
+
+*** sexp-list-remove-infix-notation
+
+    - <sexp> : <sexp> => (: <sexp> <sexp>)
+
+    #+begin_src cicada
+    (+fun sexp-list-remove-infix-notation
+      : (-> sexp-list : [sexp-u list-u] -- sexp-u list-u)
+      (cond [sexp-list list-length 3 lt-p]
+            [sexp-list {sexp-remove-infix-notation} list-map]
+
+            (or [sexp-list.cdr.car ': eq-p]
+                [sexp-list.cdr.car ':: eq-p])
+            [sexp-list.cdr.cdr.cdr recur
+             (lit-list
+              sexp-list.cdr.car
+              sexp-list.car sexp-remove-infix-notation
+              sexp-list.cdr.cdr.car sexp-remove-infix-notation)
+             swap cons-c]
+
+            else
+            [sexp-list.cdr recur
+             sexp-list.car sexp-remove-infix-notation
+             swap cons-c]))
+    #+end_src
+
+*** sexp-remove-infix-notation
+
+    #+begin_src cicada
+    (+fun sexp-remove-infix-notation
+      : (-> sexp-u -- sexp-u)
+      dup cons-p (bool-when sexp-list-remove-infix-notation))
+    #+end_src
+
+*** sexp-pass-for-arrow
+
+    - (-> ... -- ...) => (arrow (...) (...))
+
+    #+begin_src cicada
+    (+fun sexp-pass-for-arrow
+      : (-> sexp : sexp-u -- sexp-u)
+      (case sexp
         (cons-t
-          sexp-list.car top-sexp-eval
-          sexp-list.cdr recur)))
-    #+end_src
-
-*** top-sexp-eval
-
-    #+begin_src cicada
-    (+fun top-sexp-eval
-      : (-> env-t, sexp : sexp-u -- env-t)
-      (cond
-        [sexp sexp-den-p]
-        [sexp parse-den dup .name swap name-dict-insert]
-        else [sexp parse-exp exp-run]))
-    #+end_src
-
-*** sexp-den-p
-
-    #+begin_src cicada
-    (+fun sexp-den-p
-      : (-> sexp : sexp-u -- bool-u)
-      (and [sexp string-p]
-           (or [sexp.car '+fun]
-               [sexp.car '+type]
-               [sexp.car '+union])))
+          (if [sexp.car '-> eq-p]
+            [sexp.cdr {'-- eq-p} list-split (let ante succ)
+             `(arrow (@ ante {recur} list-map)
+                     (@ succ {recur} list-map))]
+            [sexp {recur} list-map]))
+        (else sexp)))
     #+end_src
 
 * parse
@@ -1290,23 +1320,66 @@
 
     #+begin_src cicada
     (+fun parse-exp-list
-      : (-> [sexp-u list-u] -- exp-u)
+      : (-> [sexp-u list-u] -- [exp-u list-u])
       )
     #+end_src
 
-* >< pass
+* eval
+
+*** top-sexp-list-eval
+
+    #+begin_src cicada
+    (+fun top-sexp-list-eval
+      : (-> env-t, sexp-list : [sexp-u list-u] -- env-t)
+      (case sexp-list
+        (null-t)
+        (cons-t
+          sexp-list.car top-sexp-eval
+          sexp-list.cdr recur)))
+    #+end_src
+
+*** top-sexp-eval
+
+    #+begin_src cicada
+    (+fun top-sexp-eval
+      : (-> env-t, sexp : sexp-u -- env-t)
+      (cond
+        [sexp sexp-den-p]
+        [sexp parse-den den-define]
+        else [sexp parse-exp exp-run]))
+    #+end_src
+
+*** >< den-define
+
+    #+begin_src cicada
+    (+fun den-define
+      : (-> env-t den-u -- env-t)
+      ;; ><><><
+      ;; generate more dens
+      dup .name swap name-dict-insert)
+    #+end_src
+
+*** sexp-den-p
+
+    #+begin_src cicada
+    (+fun sexp-den-p
+      : (-> sexp : sexp-u -- bool-u)
+      (and [sexp string-p]
+           (or [sexp.car '+fun]
+               [sexp.car '+type]
+               [sexp.car '+union])))
+    #+end_src
 
 * interface
 
-*** (cicada-language) a.k.a. (cl)
+*** (cicada-language)
 
     #+begin_src cicada
-    (+macro cl cicada-language)
-
     (+macro cicada-language
       (-> body : [sexp-u list-u] -- sexp-u)
       `(begin
          new-env (quote (@ body))
+         sexp-list-pass
          top-sexp-list-eval))
     #+end_src
 
