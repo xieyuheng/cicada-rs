@@ -211,7 +211,8 @@
       case-exp-t
       field-exp-t
       colon-exp-t
-      double-colon-exp-t)
+      double-colon-exp-t
+      comma-exp-t)
     (+type call-exp-t
       name : string-t)
     (+type let-exp-t
@@ -233,6 +234,7 @@
     (+type double-colon-exp-t
       local-name : string-t
       type-exp-list : [exp-u list-u])
+    (+type comma-exp-t)
     (+union den-u
       fun-den-t
       data-cons-den-t
@@ -293,7 +295,8 @@
         (case-exp-t case-exp-exe)
         (field-exp-t field-exp-exe)
         (colon-exp-t colon-exp-exe)
-        (double-colon-exp-t double-colon-exp-exe)))
+        (double-colon-exp-t double-colon-exp-exe)
+        (comma-exp-t comma-exp-exe)))
     (+fun call-exp-exe
       : (-> env-t, exp : call-exp-t -- env-t)
       exp.name name-dict-get den-exe)
@@ -458,6 +461,9 @@
       hypo-id-counter counter-number repr (let postfix)
       hypo-id-counter counter-inc
       base-name postfix string-append hypo-id-c)
+    (+fun comma-exp-exe
+      : (-> env-t comma-exp-t -- env-t)
+      drop)
     (+fun run-one-step
       : (-> env-t -- env-t)
       (if top-frame-finished-p
@@ -545,6 +551,7 @@
       : (-> sexp-u list-u
          -- sexp-u list-u)
       sexp-list-remove-infix-notation
+      sexp-list-expand-multi-bind
       {sexp-pass-for-arrow} list-map)
     (+fun sexp-list-remove-infix-notation
       : (-> sexp-list : [sexp-u list-u] -- sexp-u list-u)
@@ -564,9 +571,56 @@
             [sexp-list.cdr recur
              sexp-list.car sexp-remove-infix-notation
              swap cons-c]))
+
     (+fun sexp-remove-infix-notation
       : (-> sexp-u -- sexp-u)
       dup cons-p (bool-when sexp-list-remove-infix-notation))
+    (+fun sexp-list-expand-multi-bind
+      : (-> sexp-list : [sexp-u list-u] -- sexp-u list-u)
+      (case sexp-list
+        (null-t null-c)
+        (cons-t
+          (cond
+            [sexp-list.car multi-bind-colon-sexp-p]
+            [sexp-list.car colon-sexp-head (let head)
+             sexp-list.car colon-sexp-type (let type)
+             sexp-list.car colon-sexp-multi-bind-list
+             {(let name) `((@ head name type))} list-map
+             sexp-list.cdr recur
+             list-append]
+            else
+            [sexp-list.cdr recur
+             sexp-list.car sexp-expand-multi-bind
+             swap cons-c]))))
+
+    (+fun sexp-expand-multi-bind
+      : (-> sexp-u -- sexp-u)
+      dup cons-p (bool-when sexp-list-expand-multi-bind))
+
+    (+fun colon-sexp-p
+      : (-> sexp : sexp-u -- bool-u)
+      (and [sexp cons-p]
+           (or [sexp.car ': eq-p]
+               [sexp.car ':: eq-p])))
+
+    (+fun multi-bind-colon-sexp-p
+      : (-> sexp : sexp-u -- bool-u)
+      (and [sexp colon-sexp-p]
+           [sexp.cdr.car cons-p]
+           [sexp.cdr.car.car 'begin eq-p]))
+
+    (+fun colon-sexp-multi-bind-list
+      : (-> sexp : sexp-u -- string-t list-u)
+      sexp.cdr.car
+      .cdr)
+
+    (+fun colon-sexp-head
+      : (-> sexp : sexp-u -- sexp-u)
+      sexp.car)
+
+    (+fun colon-sexp-type
+      : (-> sexp : sexp-u -- sexp-u)
+      sexp.cdr.cdr.car)
     (+fun sexp-pass-for-arrow
       : (-> sexp : sexp-u -- sexp-u)
       (case sexp
@@ -705,5 +759,33 @@
           (arrow () (zero-t))
           (arrow ((: prev nat-u)) (succ-t))))
       eq-p)
+
+    (assert
+      '((+fun nat-add : (-> [m n] : nat-u -- nat-u)
+          (case n
+            (zero-t m)
+            (succ-t m n.prev recur succ-c)))
+
+        (+fun nat-mul : (-> [m n] : nat-u -- nat-u)
+          (case n
+            (zero-t n)
+            (succ-t m n.prev recur m nat-add))))
+      sexp-list-pass dup sexp-print nl
+      '((+fun (: nat-add
+                 (arrow ((: m nat-u) (: n nat-u))
+                        (nat-u)))
+          (case n
+            (zero-t m)
+            (succ-t m n.prev recur succ-c)))
+
+        (+fun (: nat-mul
+                 (arrow ((: m nat-u) (: n nat-u))
+                        (nat-u)))
+          (case n
+            (zero-t n)
+            (succ-t m n.prev recur m nat-add))))
+      eq-p)
+    ;; ((+fun (: nat-add (arrow ((: (begin m n) nat-u)) (nat-u))) (case n (zero-t m) (succ-t m n.prev recur succ-c)))
+    ;;  (+fun (: nat-mul (arrow ((: (begin m n) nat-u)) (nat-u))) (case n (zero-t n) (succ-t m n.prev recur m nat-add))))
 
 

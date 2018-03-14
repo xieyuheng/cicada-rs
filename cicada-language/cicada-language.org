@@ -3,8 +3,6 @@
 
 * [todo-stack]
 
-*** sexp-list-expand-multi-binding
-
 *** den-define
 
 *** test exe
@@ -1259,6 +1257,7 @@
       : (-> sexp-u list-u
          -- sexp-u list-u)
       sexp-list-remove-infix-notation
+      sexp-list-expand-multi-bind
       {sexp-pass-for-arrow} list-map)
     #+end_src
 
@@ -1285,23 +1284,63 @@
             [sexp-list.cdr recur
              sexp-list.car sexp-remove-infix-notation
              swap cons-c]))
-    #+end_src
 
-*** sexp-remove-infix-notation
-
-    #+begin_src cicada
     (+fun sexp-remove-infix-notation
       : (-> sexp-u -- sexp-u)
       dup cons-p (bool-when sexp-list-remove-infix-notation))
     #+end_src
 
-*** sexp-list-expand-multi-binding
+*** sexp-list-expand-multi-bind
 
     - (: [m n] nat-u) => (: n nat-u) (: n nat-u)
 
     #+begin_src cicada
-    (+fun sexp-list-expand-multi-binding
-      )
+    (+fun sexp-list-expand-multi-bind
+      : (-> sexp-list : [sexp-u list-u] -- sexp-u list-u)
+      (case sexp-list
+        (null-t null-c)
+        (cons-t
+          (cond
+            [sexp-list.car multi-bind-colon-sexp-p]
+            [sexp-list.car colon-sexp-head (let head)
+             sexp-list.car colon-sexp-type (let type)
+             sexp-list.car colon-sexp-multi-bind-list
+             {(let name) `((@ head name type))} list-map
+             sexp-list.cdr recur
+             list-append]
+            else
+            [sexp-list.cdr recur
+             sexp-list.car sexp-expand-multi-bind
+             swap cons-c]))))
+
+    (+fun sexp-expand-multi-bind
+      : (-> sexp-u -- sexp-u)
+      dup cons-p (bool-when sexp-list-expand-multi-bind))
+
+    (+fun colon-sexp-p
+      : (-> sexp : sexp-u -- bool-u)
+      (and [sexp cons-p]
+           (or [sexp.car ': eq-p]
+               [sexp.car ':: eq-p])))
+
+    (+fun multi-bind-colon-sexp-p
+      : (-> sexp : sexp-u -- bool-u)
+      (and [sexp colon-sexp-p]
+           [sexp.cdr.car cons-p]
+           [sexp.cdr.car.car 'begin eq-p]))
+
+    (+fun colon-sexp-multi-bind-list
+      : (-> sexp : sexp-u -- string-t list-u)
+      sexp.cdr.car
+      .cdr)
+
+    (+fun colon-sexp-head
+      : (-> sexp : sexp-u -- sexp-u)
+      sexp.car)
+
+    (+fun colon-sexp-type
+      : (-> sexp : sexp-u -- sexp-u)
+      sexp.cdr.cdr.car)
     #+end_src
 
 *** sexp-pass-for-arrow
@@ -1530,6 +1569,32 @@
       '((+union (: nat-u type-tt)
           (arrow () (zero-t))
           (arrow ((: prev nat-u)) (succ-t))))
+      eq-p)
+
+    (assert
+      '((+fun nat-add : (-> [m n] : nat-u -- nat-u)
+          (case n
+            (zero-t m)
+            (succ-t m n.prev recur succ-c)))
+
+        (+fun nat-mul : (-> [m n] : nat-u -- nat-u)
+          (case n
+            (zero-t n)
+            (succ-t m n.prev recur m nat-add))))
+      sexp-list-pass dup sexp-print nl
+      '((+fun (: nat-add
+                 (arrow ((: m nat-u) (: n nat-u))
+                        (nat-u)))
+          (case n
+            (zero-t m)
+            (succ-t m n.prev recur succ-c)))
+
+        (+fun (: nat-mul
+                 (arrow ((: m nat-u) (: n nat-u))
+                        (nat-u)))
+          (case n
+            (zero-t n)
+            (succ-t m n.prev recur m nat-add))))
       eq-p)
     #+end_src
 
