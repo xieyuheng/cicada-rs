@@ -182,7 +182,7 @@
       {
           return env.frame_stack.length;
       }
-      class scoping_frame_t
+      class frame_t
       {
           constructor (exp_vect)
           {
@@ -193,42 +193,24 @@
 
           print (env)
           {
-              frame_print (env, this);
-          }
-      }
-      class simple_frame_t
-      {
-          constructor (exp_vect)
-          {
-              this.exp_vect = exp_vect;
-              this.length = exp_vect.length;
-              this.index = 0;
-          }
-
-          print (env)
-          {
-              frame_print (env, this);
-          }
-      }
-      function frame_print (env, frame)
-      {
-          print ("    ");
-          let counter = 0;
-          while (counter < frame.length) {
-              let exp = frame.exp_vect[counter];
-              if (counter === frame.index) {
-                  print ("\n    ");
-                  print ("--> ");
-                  exp.print (env);
-                  print (" ");
+              print ("    ");
+              let counter = 0;
+              while (counter < this.length) {
+                  let exp = this.exp_vect[counter];
+                  if (counter === this.index) {
+                      print ("\n    ");
+                      print ("--> ");
+                      exp.print (env);
+                      print (" ");
+                  }
+                  else {
+                      exp.print (env);
+                      print (" ");
+                  }
+                  counter = counter +1;
               }
-              else {
-                  exp.print (env);
-                  print (" ");
-              }
-              counter = counter +1;
+              print ("\n");
           }
-          print ("\n");
       }
       function frame_end_p (frame)
       {
@@ -316,8 +298,7 @@
         let frame = frame_stack_tos (env);
         if (frame_end_p (frame)) {
             frame_stack_drop (env);
-            if (frame instanceof scoping_frame_t)
-                scope_stack_drop (env);
+            scope_stack_drop (env);
             return;
         }
         let scope = scope_stack_tos (env);
@@ -325,8 +306,7 @@
         if (frame_end_p (frame)) {
             // proper tail call
             frame_stack_drop (env);
-            if (frame instanceof scoping_frame_t)
-                scope_stack_drop (env);
+            scope_stack_drop (env);
         }
         exp.exe (env, scope);
     }
@@ -339,7 +319,7 @@
     {
         try {
             let base = frame_stack_length (env);
-            let frame = new scoping_frame_t (exp_vect);
+            let frame = new frame_t (exp_vect);
             let scope = new scope_t ();
             scope_stack_push (env, scope);
             frame_stack_push (env, frame);
@@ -373,18 +353,9 @@
         let length = env.frame_stack.length;
         while (counter < length) {
             let frame = env.frame_stack[counter];
-            if (frame instanceof scoping_frame_t) {
-                print ("  #");
-                print (repr (counter +1));
-                print ("\n");
-            }
-            else if (frame instanceof simple_frame_t) {
-                print ("  +");
-                print ("\n");
-            }
-            else {
-                error ();
-            }
+            print ("  #");
+            print (repr (counter +1));
+            print ("\n");
             frame.print (env);
             counter = counter +1;
         }
@@ -431,7 +402,7 @@
     }
     function closure_apply (env, closure)
     {
-        let frame = new scoping_frame_t (closure.exp_vect);
+        let frame = new frame_t (closure.exp_vect);
         frame_stack_push (env, frame);
         scope_stack_push (env, closure.scope);
     }
@@ -551,7 +522,7 @@
         exe (env, scope)
         {
             let closure = data_stack_pop (env);
-            let frame = new scoping_frame_t (closure.exp_vect);
+            let frame = new frame_t (closure.exp_vect);
             frame_stack_push (env, frame);
             scope_stack_push (env, closure.scope);
         }
@@ -826,7 +797,7 @@
 
         den_exe (env)
         {
-            let frame = new scoping_frame_t (this.exp_vect);
+            let frame = new frame_t (this.exp_vect);
             let scope = new scope_t ();
             scope_stack_push (env, scope);
             frame_stack_push (env, frame);
@@ -2378,8 +2349,6 @@
     {
         assert (string_p (code));
         let env = new env_t ();
-        // let top_level_scope = new scope_t ();
-        // scope_stack_push (env, top_level_scope);
         env_merge (env, the_prim_dict);
         code_eval (env, code);
         return env;
