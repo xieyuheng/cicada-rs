@@ -3,8 +3,6 @@
 
 * [todo-stack]
 
-*** parse-den
-
 *** den-define
 
 *** test exe
@@ -629,8 +627,8 @@
     #+begin_src cicada
     (+type data-cons-den-t
       name : string-t
-      cons-arrow-exp : arrow-exp-t
-      type-arrow-exp : arrow-exp-t)
+      type-arrow-exp : arrow-exp-t
+      cons-arrow-exp : arrow-exp-t)
     #+end_src
 
 *** type-cons-den-t
@@ -638,7 +636,8 @@
     #+begin_src cicada
     (+type type-cons-den-t
       name : string-t
-      type-arrow-exp : arrow-exp-t)
+      type-arrow-exp : arrow-exp-t
+      cons-arrow-exp : arrow-exp-t)
     #+end_src
 
 *** union-cons-den-t
@@ -1457,16 +1456,32 @@
 
       #+begin_src cicada
       (+fun parse-type-cons-den
-        : (-> sexp : sexp-u -- den-u)
-        )
+        : (-> body : [sexp-u list-u] -- den-u)
+        body.car parse-exp (let colon-exp)
+        body.cdr {parse-exp} list-map .car (let cons-arrow-exp)
+        colon-exp.local-name (let name)
+        colon-exp.type-exp-list.car (let type-exp)
+        (case type-exp
+          (arrow-exp-t type-exp)
+          (else (lit-list) (lit-list type-exp) arrow-exp-c))
+        (let type-arrow-exp)
+        name type-arrow-exp cons-arrow-exp type-cons-den-c)
       #+end_src
 
 ***** parse-union-cons-den
 
       #+begin_src cicada
       (+fun parse-union-cons-den
-        : (-> sexp : sexp-u -- den-u)
-        )
+        : (-> body : [sexp-u list-u] -- den-u)
+        body.car parse-exp (let colon-exp)
+        body.cdr (let sub-name-list)
+        colon-exp.local-name (let name)
+        colon-exp.type-exp-list.car (let type-exp)
+        (case type-exp
+          (arrow-exp-t type-exp)
+          (else (lit-list) (lit-list type-exp) arrow-exp-c))
+        (let type-arrow-exp)
+        name type-arrow-exp sub-name-list union-cons-den-c)
       #+end_src
 
 *** parse-exp
