@@ -570,9 +570,9 @@
     #+begin_src cicada
     (+fun list-ref
       (let l index)
-      (case index
-        (zero-t l.car)
-        (succ-t l.cdr index.prev recur)))
+      (if [index 0 eq-p]
+        [l.car]
+        [l.cdr index.prev recur]))
     #+end_src
 
 *** list-append
@@ -750,12 +750,6 @@
       null-c dict-c)
     #+end_src
 
-*** dict-get
-
-    #+begin_src cicada
-    (+fun dict-get dict-find bool-assert)
-    #+end_src
-
 *** dict-find
 
     #+begin_src cicada
@@ -765,6 +759,21 @@
       ;;      [ false-t]
       dict.assoc-list
       key assoc-list-find)
+    #+end_src
+
+*** dict-get
+
+    #+begin_src cicada
+    (+fun dict-get
+      (let dict key)
+      ;; -- | [ value true-t]
+      ;;      [ false-t]
+      dict key dict-find
+      (bool-unless
+        "- dict-get fail" p nl
+        "  key : " p key p nl
+        "  dict : " p dict p nl
+        error))
     #+end_src
 
 *** assoc-list-find
@@ -902,6 +911,12 @@
     #+end_src
 
 *** number
+
+***** dec
+
+      #+begin_src cicada
+      (assert 2 dec 1 eq-p)
+      #+end_src
 
 ***** number-factorial
 

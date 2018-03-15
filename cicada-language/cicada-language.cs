@@ -311,7 +311,7 @@
       (+fun fun-den-exe
         : (-> env-t, den : fun-den-t -- env-t)
         new-scope scope-stack-push
-        den.type-arrow-exp collect-one drop
+        den.type-arrow-exp exp-collect-one drop
         den.type-arrow-exp.ante-exp-list exp-list-let-colon
         den.body-exp-list new-scoping-frame frame-stack-push)
       (+fun exp-list-let-colon
@@ -335,8 +335,8 @@
         current-scope-insert)
       (+fun data-cons-den-exe
         : (-> env-t, den : data-cons-den-t -- env-t)
-        den.type-arrow-exp collect-one drop
-        den.cons-arrow-exp.succ-exp-list collect-one (let return-type)
+        den.type-arrow-exp exp-collect-one drop
+        den.cons-arrow-exp.succ-exp-list exp-list-collect-one (let return-type)
         den.cons-arrow-exp.ante-exp-list new-field-obj-dict
         return-type
         (. field-obj-dict type)
@@ -399,10 +399,10 @@
       data-stack-push)
     (+fun arrow-exp-exe
       : (-> env-t, exp : arrow-exp-t -- env-t)
-      ;; calling collect-list
+      ;; calling collect-many
       ;;   might effect current scope
-      exp.ante-exp-list collect-list (let ante-type-list)
-      exp.succ-exp-list collect-list (let succ-type-list)
+      exp.ante-exp-list exp-list-collect-many (let ante-type-list)
+      exp.succ-exp-list exp-list-collect-many (let succ-type-list)
       (. ante-type-list succ-type-list)
       arrow-type-cr
       data-stack-push)
@@ -417,7 +417,7 @@
       : (-> env-t, exp : case-exp-t -- env-t)
       ;; calling collect-one
       ;;   might effect current scope
-      exp.arg-exp-list collect-one (let obj)
+      exp.arg-exp-list exp-list-collect-one (let obj)
       (case obj
         (data-obj-t
           exp.closure-exp-dict
@@ -433,7 +433,7 @@
           exp.field-name dict-get)))
     (+fun colon-exp-exe
       : (-> env-t, exp : colon-exp-t -- env-t)
-      exp.type-exp-list collect-one (let type)
+      exp.type-exp-list exp-list-collect-one (let type)
       exp.local-name generate-hypo-id (let hypo-id)
       hypo-id type-hypo-c
       type type-hypo-insert
@@ -484,17 +484,22 @@
     (+fun exp-run
       : (-> env-t, exp-u -- env-t)
       null-c cons-c exp-list-run)
-    (+fun collect-list
+    (+fun exp-list-collect-many
       : (-> env-t, exp-list : [exp-u list-u]
          -- env-t, obj-u list-u)
       dup .data-stack list-length (let old)
       exp-list exp-list-run
       dup .data-stack list-length (let new)
       new old number-sub data-stack-n-pop)
-    (+fun collect-one
+    (+fun exp-list-collect-one
       : (-> env-t, exp-list : [exp-u list-u]
          -- env-t, obj-u)
       exp-list exp-list-run
+      data-stack-pop)
+    (+fun exp-collect-one
+      : (-> env-t, exp : exp-u
+         -- env-t, obj-u)
+      exp null-c cons-c exp-list-run
       data-stack-pop)
     (+fun cut
       : (-> env-t exp-u -- env-t)
@@ -527,7 +532,7 @@
         ;; because creating an arrow-type
         ;;   might effect current scope
         new-scope scope-stack-push
-        arrow-exp collect-one (let arrow-type)
+        arrow-exp exp-collect-one (let arrow-type)
         arrow-type.ante-type-list ante-type-list-unify
         arrow-type.succ-type-list data-stack-list-push
         scope-stack-drop)
@@ -692,7 +697,7 @@
         : (-> body : [sexp-u list-u] -- den-u)
         body.car parse-exp (let colon-exp)
         body.cdr {parse-exp} list-map (let body-exp-list)
-        colon-exp.local-name (let name)
+        colon-exp.local-name.name (let name)
         colon-exp.type-exp-list.car (let type-exp)
         (case type-exp
           (arrow-exp-t type-exp)
@@ -703,7 +708,7 @@
         : (-> body : [sexp-u list-u] -- den-u)
         body.car parse-exp (let colon-exp)
         body.cdr {parse-exp} list-map .car (let cons-arrow-exp)
-        colon-exp.local-name (let name)
+        colon-exp.local-name.name (let name)
         colon-exp.type-exp-list.car (let type-exp)
         (case type-exp
           (arrow-exp-t type-exp)
@@ -714,7 +719,7 @@
         : (-> body : [sexp-u list-u] -- den-u)
         body.car parse-exp (let colon-exp)
         body.cdr (let sub-name-list)
-        colon-exp.local-name (let name)
+        colon-exp.local-name.name (let name)
         colon-exp.type-exp-list.car (let type-exp)
         (case type-exp
           (arrow-exp-t type-exp)
@@ -810,6 +815,9 @@
         (fun-den-t den.name den name-dict-insert)
         (type-cons-den-t den.name den name-dict-insert
           den.name
+          dup string-length dec dec
+          0 swap string-slice
+          "-c" string-append
           den.type-arrow-exp
           den.cons-arrow-exp
           data-cons-den-c
@@ -992,6 +1000,6 @@
         (-> -- true-t))
       (+type false-t : type-tt
         (-> -- false-t))
-      true-c
-      )
+        true-c
+        )
 

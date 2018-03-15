@@ -134,7 +134,13 @@
       }
       function data_stack_pop (env)
       {
-          return env.data_stack.pop ();
+          if (env.data_stack.length === 0) {
+              print ("- data_stack_pop\n")
+              print ("  stack underflow\n")
+              error ();
+          }
+          else
+              return env.data_stack.pop ();
       }
       function data_stack_tos (env)
       {

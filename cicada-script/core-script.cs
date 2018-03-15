@@ -222,9 +222,9 @@
         [list.cdr recur number-inc]))
     (+fun list-ref
       (let l index)
-      (case index
-        (zero-t l.car)
-        (succ-t l.cdr index.prev recur)))
+      (if [index 0 eq-p]
+        [l.car]
+        [l.cdr index.prev recur]))
     (+fun list-append (let ante succ)
       (case ante
         (null-t succ)
@@ -313,13 +313,22 @@
       assoc-list)
     (+fun new-dict
       null-c dict-c)
-    (+fun dict-get dict-find bool-assert)
     (+fun dict-find
       (let dict key)
       ;; -- | [ value true-t]
       ;;      [ false-t]
       dict.assoc-list
       key assoc-list-find)
+    (+fun dict-get
+      (let dict key)
+      ;; -- | [ value true-t]
+      ;;      [ false-t]
+      dict key dict-find
+      (bool-unless
+        "- dict-get fail" p nl
+        "  key : " p key p nl
+        "  dict : " p dict p nl
+        error))
     (+fun assoc-list-find
       (let assoc-list key)
       ;; -- | [ value true-t]
@@ -397,6 +406,7 @@
     (assert
       1 2 3 null-c cons-c cons-c cons-c
       1 2 3 null-c cons-c cons-c cons-c eq-p)
+      (assert 2 dec 1 eq-p)
       (+fun number-factorial-case
         (let n)
         (case [n 0 eq-p]
