@@ -279,7 +279,7 @@
           print (env)
           {
               let length = dict_length (this.dict);
-              print ("  - ");
+              print ("  * ");
               print (repr (length));
               print ("\n");
               for (let [name, obj] of this.dict) {
@@ -337,21 +337,20 @@
             run_with_base (env, base);
         }
         catch (exception) {
-            exception_print (exception);
             scope_stack_print (env);
             frame_stack_print (env);
             data_stack_print (env);
+            exception_print (exception);
             process.exit (64);
         }
     }
-    function exception_print (exception)
-    {
-        print ("- exception : \n");
-        console.log (exception);
-        print ("\n");
-    }
     function frame_stack_print (env)
     {
+        if (env.frame_stack.length === 0) {
+            print ("- frame_stack is empty\n");
+            print ("\n");
+            return;
+        }
         print ("- frame_stack : \n");
         for (let frame of env.frame_stack) {
             frame.print ();
@@ -360,6 +359,11 @@
     }
     function scope_stack_print (env)
     {
+        if (env.scope_stack.length === 0) {
+            print ("- scope_stack is empty\n");
+            print ("\n");
+            return;
+        }
         print ("- scope_stack : \n");
         for (let scope of env.scope_stack) {
             scope.print (env);
@@ -376,6 +380,13 @@
             obj_print (env, obj);
         }
         print (" -- ");
+        print ("\n");
+        print ("\n");
+    }
+    function exception_print (exception)
+    {
+        print ("- exception : \n");
+        console.log (exception);
         print ("\n");
     }
     function closure_apply (env, closure)
