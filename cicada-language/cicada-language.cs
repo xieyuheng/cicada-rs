@@ -246,11 +246,12 @@
       body-exp-list : [exp-u list-u])
     (+type data-cons-den-t
       name : string-t
-      cons-arrow-exp : arrow-exp-t
-      type-arrow-exp : arrow-exp-t)
+      type-arrow-exp : arrow-exp-t
+      cons-arrow-exp : arrow-exp-t)
     (+type type-cons-den-t
       name : string-t
-      type-arrow-exp : arrow-exp-t)
+      type-arrow-exp : arrow-exp-t
+      cons-arrow-exp : arrow-exp-t)
     (+type union-cons-den-t
       name : string-t
       type-arrow-exp : arrow-exp-t
@@ -481,7 +482,7 @@
       exp-list new-simple-frame frame-stack-push
       base run-with-base)
     (+fun exp-run
-      : (-> env-t, exp : exp-u -- env-t)
+      : (-> env-t, exp-u -- env-t)
       null-c cons-c exp-list-run)
     (+fun collect-list
       : (-> env-t, exp-list : [exp-u list-u]
@@ -699,11 +700,27 @@
         (let type-arrow-exp)
         name type-arrow-exp body-exp-list fun-den-c)
       (+fun parse-type-cons-den
-        : (-> sexp : sexp-u -- den-u)
-        )
+        : (-> body : [sexp-u list-u] -- den-u)
+        body.car parse-exp (let colon-exp)
+        body.cdr {parse-exp} list-map .car (let cons-arrow-exp)
+        colon-exp.local-name (let name)
+        colon-exp.type-exp-list.car (let type-exp)
+        (case type-exp
+          (arrow-exp-t type-exp)
+          (else (lit-list) (lit-list type-exp) arrow-exp-c))
+        (let type-arrow-exp)
+        name type-arrow-exp cons-arrow-exp type-cons-den-c)
       (+fun parse-union-cons-den
-        : (-> sexp : sexp-u -- den-u)
-        )
+        : (-> body : [sexp-u list-u] -- den-u)
+        body.car parse-exp (let colon-exp)
+        body.cdr (let sub-name-list)
+        colon-exp.local-name (let name)
+        colon-exp.type-exp-list.car (let type-exp)
+        (case type-exp
+          (arrow-exp-t type-exp)
+          (else (lit-list) (lit-list type-exp) arrow-exp-c))
+        (let type-arrow-exp)
+        name type-arrow-exp sub-name-list union-cons-den-c)
     (+fun parse-exp
       : (-> sexp : sexp-u -- exp-u)
       (if [sexp string-p]
@@ -788,16 +805,22 @@
         [sexp parse-den den-define]
         else [sexp parse-exp exp-run]))
     (+fun den-define
-      : (-> env-t den-u -- env-t)
-      ;; ><><><
-      ;; generate more dens
-      dup .name swap name-dict-insert)
+      : (-> env-t, den : den-u -- env-t)
+      (case den
+        (fun-den-t den.name den name-dict-insert)
+        (type-cons-den-t den.name den name-dict-insert
+          den.name
+          den.type-arrow-exp
+          den.cons-arrow-exp
+          data-cons-den-c
+          dup .name swap name-dict-insert)
+        (union-cons-den-t den.name den name-dict-insert)))
     (+fun sexp-den-p
       : (-> sexp : sexp-u -- bool-u)
-      (and [sexp string-p]
-           (or [sexp.car '+fun]
-               [sexp.car '+type]
-               [sexp.car '+union])))
+      (and [sexp cons-p]
+           (or [sexp.car '+fun eq-p]
+               [sexp.car '+type eq-p]
+               [sexp.car '+union eq-p])))
     (+macro cicada-language
       (-> body : [sexp-u list-u] -- sexp-u)
       `(begin
@@ -943,6 +966,7 @@
         closure-exp-c)
        case-exp-c)
       eq-p)
+    #note
     (begin
       '((+fun nat-add : (-> [m n] : nat-u -- nat-u)
           (case n
@@ -960,5 +984,14 @@
             (succ-t n.prev recur n nat-mul))))
       sexp-list-pass
       {parse-den} list-map)
-
+    (cicada-language
+      (+union bool-u : type-tt
+        true-t
+        false-t)
+      (+type true-t : type-tt
+        (-> -- true-t))
+      (+type false-t : type-tt
+        (-> -- false-t))
+      true-c
+      )
 

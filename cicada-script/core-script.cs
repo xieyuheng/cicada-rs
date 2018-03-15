@@ -220,6 +220,11 @@
       (if [list null-p]
         0
         [list.cdr recur number-inc]))
+    (+fun list-ref
+      (let l index)
+      (case index
+        (zero-t l.car)
+        (succ-t l.cdr index.prev recur)))
     (+fun list-append (let ante succ)
       (case ante
         (null-t succ)

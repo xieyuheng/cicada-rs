@@ -185,10 +185,10 @@
               this.index = 0;
           }
 
-          print ()
+          print (env)
           {
               print ("  * ");
-              frame_print (this);
+              frame_print (env, this);
           }
       }
       class simple_frame_t
@@ -200,20 +200,20 @@
               this.index = 0;
           }
 
-          print ()
+          print (env)
           {
               print ("  + ");
-              frame_print (this);
+              frame_print (env, this);
           }
       }
-      function frame_print (frame)
+      function frame_print (env, frame)
       {
           let counter = 0;
           while (counter < frame.length) {
               let exp = frame.exp_vect[counter];
               if (counter === frame.index)
                   print ("<$ ");
-              exp.print ();
+              exp.print (env);
               print (" ");
               counter = counter +1;
           }
@@ -301,7 +301,7 @@
       function closure_print (env, closure)
       {
           print ("{");
-          exp_vect_print (closure.exp_vect);
+          exp_vect_print (env, closure.exp_vect);
           print ("}");
       }
     function run_one_step (env)
@@ -337,10 +337,18 @@
             run_with_base (env, base);
         }
         catch (exception) {
+            exception_print (exception);
             scope_stack_print (env);
             frame_stack_print (env);
             data_stack_print (env);
-            exception_print (exception);
+            print ("- an error occur when running exp_vect : \n");
+            print ("  * ");
+            exp_vect_print (env, exp_vect);
+            print ("\n");
+            print ("\n");
+            print ("- see reports above ^\n");
+            print ("  don't panic, good luck!\n");
+            print ("\n");
             process.exit (64);
         }
     }
@@ -353,7 +361,7 @@
         }
         print ("- frame_stack : \n");
         for (let frame of env.frame_stack) {
-            frame.print ();
+            frame.print (env);
         }
         print ("\n");
     }
@@ -449,7 +457,7 @@
             }
         }
 
-        print ()
+        print (env)
         {
             print (this.name);
         }
@@ -471,7 +479,7 @@
             }
         }
 
-        print ()
+        print (env)
         {
             print ("(let");
             for (let name of this.name_vect) {
@@ -497,10 +505,10 @@
             data_stack_push (env, closure);
         }
 
-        print ()
+        print (env)
         {
             print ("{");
-            exp_vect_print (this.exp_vect);
+            exp_vect_print (env, this.exp_vect);
             print ("}");
         }
     }
@@ -516,7 +524,7 @@
             scope_stack_push (env, closure.scope);
         }
 
-        print ()
+        print (env)
         {
             print ("apply");
         }
@@ -555,37 +563,40 @@
                     closure_apply (env, closure);
                 }
                 else {
-                    print ("- case mismatch!\n");
+                    print ("- case mismatch\n");
+                    print ("  ");
+                    this.print (env);
+                    print ("\n");
                     error ();
                 }
             }
         }
 
-        print ()
+        print (env)
         {
             print ("(case [");
-            exp_vect_print (this.arg_exp_vect)
+            exp_vect_print (env, this.arg_exp_vect)
             print ("]");
             for (let [type_name, exp_vect] of this.case_clause_dict) {
                 print (" (");
                 print (type_name);
                 print (" ")
-                exp_vect_print (exp_vect);
+                exp_vect_print (env, exp_vect);
                 print (")");
             }
             print (")");
         }
     }
-    function exp_vect_print (exp_vect)
+    function exp_vect_print (env, exp_vect)
     {
         if (exp_vect.length === 0)
             return;
         let head_exp = exp_vect[0];
         let tail_exp = exp_vect.slice (1, exp_vect.length);
-        head_exp.print ();
+        head_exp.print (env);
         for (let exp of tail_exp) {
             print (" ");
-            exp.print ();
+            exp.print (env);
         }
     }
     class field_exp_t
@@ -609,7 +620,7 @@
                 data_stack_push (env, obj);
         }
 
-        print ()
+        print (env)
         {
            print (".");
            print (this.field_name);
@@ -632,7 +643,7 @@
                 data[this.field_name] = obj;
         }
 
-        print ()
+        print (env)
         {
            print (".");
            print (this.field_name);
@@ -657,7 +668,7 @@
             data_stack_push (env, field_dict);
         }
 
-        print ()
+        print (env)
         {
             print ("(.");
             let field_name_vect =
@@ -695,7 +706,7 @@
             data_stack_push (env, new_data);
         }
 
-        print ()
+        print (env)
         {
             print ("clone");
         }
@@ -712,9 +723,9 @@
             data_stack_push (env, this.obj);
         }
 
-        print ()
+        print (env)
         {
-            print (repr (this.obj));
+            print (default_repr (env, this.obj));
         }
     }
     class eq_p_exp_t
@@ -733,7 +744,7 @@
             }
         }
 
-        print ()
+        print (env)
         {
             print ("eq-p");
         }
@@ -747,7 +758,7 @@
             data_stack_push (env, new marker_t ());
         }
 
-        print ()
+        print (env)
         {
             print ("mark");
         }
@@ -769,7 +780,7 @@
             data_stack_push (env, vect_to_list (vect));
         }
 
-        print ()
+        print (env)
         {
             print ("collect-list");
         }

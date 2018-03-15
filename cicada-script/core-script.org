@@ -565,6 +565,16 @@
         [list.cdr recur number-inc]))
     #+end_src
 
+*** list-ref
+
+    #+begin_src cicada
+    (+fun list-ref
+      (let l index)
+      (case index
+        (zero-t l.car)
+        (succ-t l.cdr index.prev recur)))
+    #+end_src
+
 *** list-append
 
     #+begin_src jojo

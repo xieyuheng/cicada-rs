@@ -3,7 +3,9 @@
 
 * [todo-stack]
 
-*** test exe
+*** repr [env-t]
+
+*** exe
 
 *** fix exp-list-let-colon
 
@@ -1079,7 +1081,7 @@
 
     #+begin_src cicada
     (+fun exp-run
-      : (-> env-t, exp : exp-u -- env-t)
+      : (-> env-t, exp-u -- env-t)
       null-c cons-c exp-list-run)
     #+end_src
 
@@ -1608,10 +1610,10 @@
     #+begin_src cicada
     (+fun sexp-den-p
       : (-> sexp : sexp-u -- bool-u)
-      (and [sexp string-p]
-           (or [sexp.car '+fun]
-               [sexp.car '+type]
-               [sexp.car '+union])))
+      (and [sexp cons-p]
+           (or [sexp.car '+fun eq-p]
+               [sexp.car '+type eq-p]
+               [sexp.car '+union eq-p])))
     #+end_src
 
 * interface
@@ -1812,6 +1814,7 @@
 *** parse-den
 
     #+begin_src cicada
+    #note
     (begin
       '((+fun nat-add : (-> [m n] : nat-u -- nat-u)
           (case n
@@ -1836,7 +1839,16 @@
 *** play
 
     #+begin_src cicada
-
+    (cicada-language
+      (+union bool-u : type-tt
+        true-t
+        false-t)
+      (+type true-t : type-tt
+        (-> -- true-t))
+      (+type false-t : type-tt
+        (-> -- false-t))
+      true-c
+      )
     #+end_src
 
 *** main
