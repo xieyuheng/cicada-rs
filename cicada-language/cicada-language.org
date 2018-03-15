@@ -3,8 +3,6 @@
 
 * [todo-stack]
 
-*** den-define
-
 *** test exe
 
 *** fix exp-list-let-colon
@@ -1589,14 +1587,20 @@
         else [sexp parse-exp exp-run]))
     #+end_src
 
-*** >< den-define
+*** den-define
 
     #+begin_src cicada
     (+fun den-define
-      : (-> env-t den-u -- env-t)
-      ;; ><><><
-      ;; generate more dens
-      dup .name swap name-dict-insert)
+      : (-> env-t, den : den-u -- env-t)
+      (case den
+        (fun-den-t den.name den name-dict-insert)
+        (type-cons-den-t den.name den name-dict-insert
+          den.name
+          den.type-arrow-exp
+          den.cons-arrow-exp
+          data-cons-den-c
+          dup .name swap name-dict-insert)
+        (union-cons-den-t den.name den name-dict-insert)))
     #+end_src
 
 *** sexp-den-p
