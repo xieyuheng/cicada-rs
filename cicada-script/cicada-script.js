@@ -339,7 +339,9 @@
     {
         try {
             let base = frame_stack_length (env);
-            let frame = new simple_frame_t (exp_vect);
+            let frame = new scoping_frame_t (exp_vect);
+            let scope = new scope_t ();
+            scope_stack_push (env, scope);
             frame_stack_push (env, frame);
             run_with_base (env, base);
         }
@@ -826,8 +828,8 @@
         {
             let frame = new scoping_frame_t (this.exp_vect);
             let scope = new scope_t ();
-            frame_stack_push (env, frame);
             scope_stack_push (env, scope);
+            frame_stack_push (env, frame);
         }
     }
     class var_den_t
@@ -949,7 +951,7 @@
 
         den_exe (env)
         {
-            exp_vect_run (env, this.exp_vect)
+            exp_vect_run (env, this.exp_vect);
         }
     }
     class prim_den_t
@@ -2376,8 +2378,8 @@
     {
         assert (string_p (code));
         let env = new env_t ();
-        let top_level_scope = new scope_t ();
-        scope_stack_push (env, top_level_scope);
+        // let top_level_scope = new scope_t ();
+        // scope_stack_push (env, top_level_scope);
         env_merge (env, the_prim_dict);
         code_eval (env, code);
         return env;
