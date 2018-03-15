@@ -193,7 +193,6 @@
 
           print (env)
           {
-              print ("  * ");
               frame_print (env, this);
           }
       }
@@ -208,19 +207,25 @@
 
           print (env)
           {
-              print ("  + ");
               frame_print (env, this);
           }
       }
       function frame_print (env, frame)
       {
+          print ("    ");
           let counter = 0;
           while (counter < frame.length) {
               let exp = frame.exp_vect[counter];
-              if (counter === frame.index)
-                  print ("<$ ");
-              exp.print (env);
-              print (" ");
+              if (counter === frame.index) {
+                  print ("\n    ");
+                  print ("--> ");
+                  exp.print (env);
+                  print (" ");
+              }
+              else {
+                  exp.print (env);
+                  print (" ");
+              }
               counter = counter +1;
           }
           print ("\n");
@@ -284,10 +289,6 @@
 
           print (env)
           {
-              let length = dict_length (this.dict);
-              print ("  * ");
-              print (repr (length));
-              print ("\n");
               for (let [name, obj] of this.dict) {
                   print ("    ");
                   print (name);
@@ -348,7 +349,7 @@
             frame_stack_print (env);
             data_stack_print (env);
             print ("- an error occur when running exp_vect : \n");
-            print ("  * ");
+            print ("  ");
             exp_vect_print (env, exp_vect);
             print ("\n");
             print ("\n");
@@ -366,8 +367,24 @@
             return;
         }
         print ("- frame_stack : \n");
-        for (let frame of env.frame_stack) {
+        let counter = 0;
+        let length = env.frame_stack.length;
+        while (counter < length) {
+            let frame = env.frame_stack[counter];
+            if (frame instanceof scoping_frame_t) {
+                print ("  #");
+                print (repr (counter +1));
+                print ("\n");
+            }
+            else if (frame instanceof simple_frame_t) {
+                print ("  +");
+                print ("\n");
+            }
+            else {
+                error ();
+            }
             frame.print (env);
+            counter = counter +1;
         }
         print ("\n");
     }
@@ -379,8 +396,15 @@
             return;
         }
         print ("- scope_stack : \n");
-        for (let scope of env.scope_stack) {
+        let counter = 0;
+        let length = env.scope_stack.length;
+        while (counter < length) {
+            let scope = env.scope_stack[counter];
+            print ("  #");
+            print (repr (counter));
+            print ("\n");
             scope.print (env);
+            counter = counter +1;
         }
         print ("\n");
     }
