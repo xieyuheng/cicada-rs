@@ -444,12 +444,13 @@
       colon-exp-exe
       data-stack-drop)
     (+type counter-t
-      .number : number-t)
+      number : number-t)
     (+fun new-counter
       : (-> -- counter-t)
       0 counter-c)
     (+fun counter-inc
       : (-> counter-t --)
+      dup .number inc
       swap .number!)
     (+fun counter-number
       : (-> counter-t -- number-t)

@@ -3,8 +3,6 @@
 
 * [todo-stack]
 
-*** report data_stack vertically
-
 *** [maybe] step
 
 *** [bug] (quote recur) is not handled well
@@ -637,7 +635,7 @@
         while (counter < length) {
             let frame = env.frame_stack[counter];
             print ("  #");
-            print (repr (counter +1));
+            print (repr (counter));
             print ("\n");
             frame.print (env);
             counter = counter +1;
@@ -676,15 +674,14 @@
     #+begin_src js
     function data_stack_print (env)
     {
-        print ("  * ");
+        print ("- data_stack : * ");
         print (repr (env.data_stack.length));
-        print (" * --");
+        print (" *\n");
         for (let obj of env.data_stack) {
-            print (" ");
+            print ("  ");
             obj_print (env, obj);
+            print ("\n");
         }
-        print (" -- ");
-        print ("\n");
         print ("\n");
     }
     #+end_src
@@ -2651,6 +2648,18 @@
           }
       );
       #+end_src
+
+*** *the-stack*
+
+    #+begin_src js
+    new_prim (
+        "print-the-stack",
+        function (env)
+        {
+            data_stack_print (env);
+        }
+    );
+    #+end_src
 
 *** *system*
 

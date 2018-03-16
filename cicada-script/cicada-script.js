@@ -354,7 +354,7 @@
         while (counter < length) {
             let frame = env.frame_stack[counter];
             print ("  #");
-            print (repr (counter +1));
+            print (repr (counter));
             print ("\n");
             frame.print (env);
             counter = counter +1;
@@ -383,15 +383,14 @@
     }
     function data_stack_print (env)
     {
-        print ("  * ");
+        print ("- data_stack : * ");
         print (repr (env.data_stack.length));
-        print (" * --");
+        print (" *\n");
         for (let obj of env.data_stack) {
-            print (" ");
+            print ("  ");
             obj_print (env, obj);
+            print ("\n");
         }
-        print (" -- ");
-        print ("\n");
         print ("\n");
     }
     function exception_print (exception)
@@ -1781,6 +1780,13 @@
               sexp_list_print (sexp_list);
           }
       );
+    new_prim (
+        "print-the-stack",
+        function (env)
+        {
+            data_stack_print (env);
+        }
+    );
       new_prim (
           "error",
           function (env)
