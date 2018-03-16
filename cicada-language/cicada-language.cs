@@ -202,6 +202,23 @@
         env.type-bind-dict hypo-id obj dict-insert
         (. type-bind-dict)
         env clone)
+    (+disp p [env-t]
+      (let env)
+      "- name-dict : " p nl
+      "  " p env.name-dict p nl
+      "- data-stack : " p nl
+      "  " p env.data-stack p nl
+      "- frame-stack : " p nl
+      "  " p env.frame-stack p nl
+      "- scope-stack : " p nl
+      "  " p env.scope-stack p nl
+      "- goal-stack : " p nl
+      "  " p env.goal-stack p nl
+      "- data-bind-dict : " p nl
+      "  " p env.data-bind-dict p nl
+      "- type-bind-dict : " p nl
+      "  " p env.type-bind-dict p nl
+      nl)
     (+union exp-u
       call-exp-t
       let-exp-t
@@ -1001,6 +1018,7 @@
         (-> -- true-t))
       (+type false-t : type-tt
         (-> -- false-t))
-      true-c
+      ;; true-c
       )
-
+    p nl
+    print-the-stack

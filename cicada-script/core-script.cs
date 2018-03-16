@@ -367,6 +367,8 @@
           "(lit-dict "
           assoc-list assoc-list-inner-repr string-append
           ")" string-append)))
+    (+disp p [dict-t]
+      w)
     (+fun assoc-list-inner-repr
       (let assoc-list)
       (case assoc-list

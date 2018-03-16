@@ -7,8 +7,6 @@
 
     - type-tt-exp-t
 
-*** repr [env-t]
-
 *** exe
 
 *** fix exp-list-let-colon
@@ -514,6 +512,28 @@
         (. type-bind-dict)
         env clone)
       #+end_src
+
+*** p [env-t]
+
+    #+begin_src cicada
+    (+disp p [env-t]
+      (let env)
+      "- name-dict : " p nl
+      "  " p env.name-dict p nl
+      "- data-stack : " p nl
+      "  " p env.data-stack p nl
+      "- frame-stack : " p nl
+      "  " p env.frame-stack p nl
+      "- scope-stack : " p nl
+      "  " p env.scope-stack p nl
+      "- goal-stack : " p nl
+      "  " p env.goal-stack p nl
+      "- data-bind-dict : " p nl
+      "  " p env.data-bind-dict p nl
+      "- type-bind-dict : " p nl
+      "  " p env.type-bind-dict p nl
+      nl)
+    #+end_src
 
 * exp
 
@@ -1865,12 +1885,13 @@
         (-> -- true-t))
       (+type false-t : type-tt
         (-> -- false-t))
-      true-c
+      ;; true-c
       )
+    p nl
     #+end_src
 
 *** main
 
     #+begin_src cicada
-
+    print-the-stack
     #+end_src
