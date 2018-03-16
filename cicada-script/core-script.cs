@@ -720,4 +720,4 @@
          3 "v3")))
       (let dict)
       dict w nl)
-    1 2 3 print-the-stack
+

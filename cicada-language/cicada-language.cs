@@ -1001,6 +1001,6 @@
         (-> -- true-t))
       (+type false-t : type-tt
         (-> -- false-t))
-        true-c
-        )
+      true-c
+      )
 
