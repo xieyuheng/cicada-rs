@@ -736,6 +736,25 @@
             list.cdr recur string-append))))
     #+end_src
 
+*** p [list-u]
+
+    #+begin_src cicada
+    (+disp p [list-u]
+      "(" p
+      list-inner-print
+      ")" p)
+
+    (+fun list-inner-print
+      (let list)
+      (case list
+        (null-t)
+        (cons-t
+          list.car p
+          (unless [list.cdr null-p]
+            " " p
+            list.cdr recur))))
+    #+end_src
+
 * dict
 
 *** dict-t
@@ -1302,9 +1321,7 @@
     (assert 'ok true-c (bool-unless 'ugh) 'ok eq-p)
     #+end_src
 
-* epilog
-
-*** play
+*** print
 
     #+begin_src cicada
     #note
@@ -1329,6 +1346,18 @@
          3 "v3")))
       (let dict)
       dict w nl)
+
+    #note
+    (begin
+      '(1 2 3) p nl)
+    #+end_src
+
+* epilog
+
+*** play
+
+    #+begin_src cicada
+
     #+end_src
 
 *** main

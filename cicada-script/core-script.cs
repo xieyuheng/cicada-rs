@@ -309,6 +309,20 @@
           (unless [list.cdr null-p]
             " " string-append
             list.cdr recur string-append))))
+    (+disp p [list-u]
+      "(" p
+      list-inner-print
+      ")" p)
+
+    (+fun list-inner-print
+      (let list)
+      (case list
+        (null-t)
+        (cons-t
+          list.car p
+          (unless [list.cdr null-p]
+            " " p
+            list.cdr recur))))
     (+data dict-t
       assoc-list)
     (+fun new-dict
@@ -722,4 +736,9 @@
          3 "v3")))
       (let dict)
       dict w nl)
+
+    #note
+    (begin
+      '(1 2 3) p nl)
+
 

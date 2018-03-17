@@ -1038,7 +1038,7 @@
       true-c
       false-c
       true-t
-      bool-u
-      )
+      bool-u)
+
     p nl
     print-the-stack
