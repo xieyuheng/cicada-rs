@@ -409,8 +409,10 @@
           (case assoc-list.cdr
             (null-t)
             (cons-t
-              ", " p nl
+              ", " p
               assoc-list.cdr recur)))))
+    (+fun dict-for-each (let dict fun)
+      dict.assoc-list {decons fun} list-for-each)
     (assert
       true-c false-c bool-and
       false-c eq-p)
@@ -698,31 +700,38 @@
         null-c {list-append} list-foldl
         (lit-list 7 8 9, 4 5 6, 1 2 3)
         eq-p)
-    (begin
-      new-dict
-      1 "v1" dict-insert (let dict)
-      dict 1 dict-find bool-assert
-      "v1" eq-p bool-assert)
+      (begin
+        new-dict
+        1 "v1" dict-insert (let dict)
+        dict 1 dict-find bool-assert
+        "v1" eq-p bool-assert)
 
-    (begin
-      (lit-dict
-        1 "v1"
-        2 "v2"
-        3 "v3")
-      (let dict)
-      dict 1 dict-find bool-assert "v1" eq-p bool-assert
-      dict 2 dict-find bool-assert "v2" eq-p bool-assert
-      dict 3 dict-find bool-assert "v3" eq-p bool-assert)
-
-    (begin
-      new-dict
-      1 "v1" dict-insert
-      2 "v2" dict-insert
-      3 "v3" dict-insert
-      (let dict)
-      dict 1 dict-get "v1" eq-p bool-assert
-      dict 2 dict-get "v2" eq-p bool-assert
-      dict 3 dict-get "v3" eq-p bool-assert)
+      (begin
+        new-dict
+        1 "v1" dict-insert
+        2 "v2" dict-insert
+        3 "v3" dict-insert
+        (let dict)
+        dict 1 dict-get "v1" eq-p bool-assert
+        dict 2 dict-get "v2" eq-p bool-assert
+        dict 3 dict-get "v3" eq-p bool-assert)
+      (begin
+        (lit-dict
+         1 "v1"
+         2 "v2"
+         3 "v3")
+        (let dict)
+        dict 1 dict-find bool-assert "v1" eq-p bool-assert
+        dict 2 dict-find bool-assert "v2" eq-p bool-assert
+        dict 3 dict-find bool-assert "v3" eq-p bool-assert)
+      #note
+      (begin
+        (lit-dict
+         1 "v1"
+         2 "v2"
+         3 "v3")
+        {(let key value) key p " " p value p nl}
+        dict-for-each)
     (assert true-c (bool-if 1 2) 1 eq-p)
     (assert false-c (bool-if 1 2) 2 eq-p)
 

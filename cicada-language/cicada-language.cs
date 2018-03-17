@@ -203,22 +203,52 @@
         (. type-bind-dict)
         env clone)
     (+disp p [env-t]
-      (let env)
-      "- name-dict : " p nl
-      "  " p env.name-dict p nl
-      "- data-stack : " p nl
-      "  " p env.data-stack p nl
-      "- frame-stack : " p nl
-      "  " p env.frame-stack p nl
-      "- scope-stack : " p nl
-      "  " p env.scope-stack p nl
-      "- goal-stack : " p nl
-      "  " p env.goal-stack p nl
-      "- data-bind-dict : " p nl
-      "  " p env.data-bind-dict p nl
-      "- type-bind-dict : " p nl
-      "  " p env.type-bind-dict p nl
+      name-dict-print
+      ;; goal-stack-print
+      ;; data-bind-dict-print
+      ;; type-bind-dict-print
+      scope-stack-print
+      frame-stack-print
+      data-stack-print
       nl)
+    (+fun name-dict-print
+      : (-> env-t -- env-t)
+      "- name-dict : " p nl
+      dup .name-dict
+      {(let key den)
+       "  " p key p " = " p den p nl}
+      dict-for-each
+      nl)
+    (+fun data-stack-print
+      : (-> env-t -- env-t)
+      "- data-stack : " p nl
+      dup .data-stack
+      {"  " p p nl}
+      list-for-each
+      nl)
+    (+fun frame-stack-print
+      : (-> env-t -- env-t)
+      "- frame-stack : " p nl
+      dup .frame-stack
+      {"  " p p nl}
+      list-for-each
+      nl)
+    (+fun scope-stack-print
+      : (-> env-t -- env-t)
+      "- scope-stack : " p nl
+      dup .scope-stack
+      {"  " p p nl}
+      list-for-each
+      nl)
+    (+fun goal-stack-print
+      : (-> env-t -- env-t)
+      )
+    (+fun data-bind-dict-print
+      : (-> env-t -- env-t)
+      )
+    (+fun type-bind-dict-print
+      : (-> env-t -- env-t)
+      )
     (+union exp-u
       call-exp-t
       let-exp-t

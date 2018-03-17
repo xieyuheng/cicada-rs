@@ -913,6 +913,13 @@
               assoc-list.cdr recur)))))
     #+end_src
 
+*** dict-for-each
+
+    #+begin_src cicada
+    (+fun dict-for-each (let dict fun)
+      dict.assoc-list {decons fun} list-for-each)
+    #+end_src
+
 * test
 
 *** bool
@@ -1300,33 +1307,52 @@
 
 *** dict
 
-    #+begin_src cicada
-    (begin
-      new-dict
-      1 "v1" dict-insert (let dict)
-      dict 1 dict-find bool-assert
-      "v1" eq-p bool-assert)
+***** dict-insert & dict-find
 
-    (begin
-      (lit-dict
-        1 "v1"
-        2 "v2"
-        3 "v3")
-      (let dict)
-      dict 1 dict-find bool-assert "v1" eq-p bool-assert
-      dict 2 dict-find bool-assert "v2" eq-p bool-assert
-      dict 3 dict-find bool-assert "v3" eq-p bool-assert)
+      #+begin_src cicada
+      (begin
+        new-dict
+        1 "v1" dict-insert (let dict)
+        dict 1 dict-find bool-assert
+        "v1" eq-p bool-assert)
 
-    (begin
-      new-dict
-      1 "v1" dict-insert
-      2 "v2" dict-insert
-      3 "v3" dict-insert
-      (let dict)
-      dict 1 dict-get "v1" eq-p bool-assert
-      dict 2 dict-get "v2" eq-p bool-assert
-      dict 3 dict-get "v3" eq-p bool-assert)
-    #+end_src
+      (begin
+        new-dict
+        1 "v1" dict-insert
+        2 "v2" dict-insert
+        3 "v3" dict-insert
+        (let dict)
+        dict 1 dict-get "v1" eq-p bool-assert
+        dict 2 dict-get "v2" eq-p bool-assert
+        dict 3 dict-get "v3" eq-p bool-assert)
+      #+end_src
+
+***** (lit-dict)
+
+      #+begin_src cicada
+      (begin
+        (lit-dict
+         1 "v1"
+         2 "v2"
+         3 "v3")
+        (let dict)
+        dict 1 dict-find bool-assert "v1" eq-p bool-assert
+        dict 2 dict-find bool-assert "v2" eq-p bool-assert
+        dict 3 dict-find bool-assert "v3" eq-p bool-assert)
+      #+end_src
+
+***** dict-for-each
+
+      #+begin_src cicada
+      #note
+      (begin
+        (lit-dict
+         1 "v1"
+         2 "v2"
+         3 "v3")
+        {(let key value) key p " " p value p nl}
+        dict-for-each)
+      #+end_src
 
 *** bool-if & bool-when & bool-unless
 
