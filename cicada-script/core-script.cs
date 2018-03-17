@@ -310,9 +310,9 @@
             " " string-append
             list.cdr recur string-append))))
     (+disp p [list-u]
-      "(" p
+      "[" p
       list-inner-print
-      ")" p)
+      "]" p)
 
     (+fun list-inner-print
       (let list)
@@ -320,9 +320,12 @@
         (null-t)
         (cons-t
           list.car p
-          (unless [list.cdr null-p]
-            " " p
-            list.cdr recur))))
+          (case list.cdr
+            (null-t)
+            (cons-t
+              " " p list.cdr recur)
+            (else
+              " . " p list.cdr p)))))
     (+data dict-t
       assoc-list)
     (+fun new-dict
@@ -381,8 +384,6 @@
           "(lit-dict "
           assoc-list assoc-list-inner-repr string-append
           ")" string-append)))
-    (+disp p [dict-t]
-      w)
     (+fun assoc-list-inner-repr
       (let assoc-list)
       (case assoc-list
@@ -394,6 +395,22 @@
           (unless [assoc-list.cdr null-p]
             ", " string-append
             assoc-list.cdr recur string-append))))
+    (+disp p [dict-t]
+      "[" p
+      .assoc-list assoc-list-inner-print
+      "]" p)
+    (+fun assoc-list-inner-print
+      (let assoc-list)
+      (case assoc-list
+        (null-t)
+        (cons-t
+          assoc-list.car.car p " = " p
+          assoc-list.car.cdr p
+          (case assoc-list.cdr
+            (null-t)
+            (cons-t
+              ", " p nl
+              assoc-list.cdr recur)))))
     (assert
       true-c false-c bool-and
       false-c eq-p)
