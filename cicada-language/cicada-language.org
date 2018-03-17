@@ -3,6 +3,8 @@
 
 * [todo-stack]
 
+*** env-print
+
 *** exe
 
 *** fix exp-list-let-colon
@@ -508,93 +510,6 @@
         (. type-bind-dict)
         env clone)
       #+end_src
-
-*** p [env-t]
-
-    #+begin_src cicada
-    (+disp p [env-t]
-      name-dict-print
-      ;; goal-stack-print
-      ;; data-bind-dict-print
-      ;; type-bind-dict-print
-      scope-stack-print
-      frame-stack-print
-      data-stack-print
-      nl)
-    #+end_src
-
-*** name-dict-print
-
-    #+begin_src cicada
-    (+fun name-dict-print
-      : (-> env-t -- env-t)
-      "- name-dict : " p nl
-      dup .name-dict
-      {(let key den)
-       "  " p key p " = " p den p nl}
-      dict-for-each
-      nl)
-    #+end_src
-
-*** data-stack-print
-
-    #+begin_src cicada
-    (+fun data-stack-print
-      : (-> env-t -- env-t)
-      "- data-stack : " p nl
-      dup .data-stack
-      {"  " p p nl}
-      list-for-each
-      nl)
-    #+end_src
-
-*** frame-stack-print
-
-    #+begin_src cicada
-    (+fun frame-stack-print
-      : (-> env-t -- env-t)
-      "- frame-stack : " p nl
-      dup .frame-stack
-      {"  " p p nl}
-      list-for-each
-      nl)
-    #+end_src
-
-*** scope-stack-print
-
-    #+begin_src cicada
-    (+fun scope-stack-print
-      : (-> env-t -- env-t)
-      "- scope-stack : " p nl
-      dup .scope-stack
-      {"  " p p nl}
-      list-for-each
-      nl)
-    #+end_src
-
-*** >< goal-stack-print
-
-    #+begin_src cicada
-    (+fun goal-stack-print
-      : (-> env-t -- env-t)
-      )
-    #+end_src
-
-*** >< data-bind-dict-print
-
-    #+begin_src cicada
-    (+fun data-bind-dict-print
-      : (-> env-t -- env-t)
-      )
-    #+end_src
-
-*** >< type-bind-dict-print
-
-    #+begin_src cicada
-    (+fun type-bind-dict-print
-      : (-> env-t -- env-t)
-      )
-    #+end_src
 
 * exp
 
@@ -1755,6 +1670,144 @@
          top-sexp-list-eval))
     #+end_src
 
+*** env-print
+
+***** env-print
+
+      #+begin_src cicada
+      (+fun env-print
+        : (-> env-t -- env-t)
+        name-dict-print
+        ;; goal-stack-print
+        ;; data-bind-dict-print
+        ;; type-bind-dict-print
+        scope-stack-print
+        frame-stack-print
+        data-stack-print
+        nl)
+      #+end_src
+
+***** name-dict-print
+
+      #+begin_src cicada
+      (+fun name-dict-print
+        : (-> env-t -- env-t)
+        "- name-dict : " p nl
+        dup .name-dict
+        {(let key den)
+         "  " p key p " = " p den p nl}
+        dict-for-each
+        nl)
+      #+end_src
+
+***** data-stack-print
+
+      #+begin_src cicada
+      (+fun data-stack-print
+        : (-> env-t -- env-t)
+        "- data-stack : " p nl
+        "- data-stack : " p nl
+        dup .data-stack
+        {"  " p p nl}
+        list-for-each
+        nl)
+      #+end_src
+
+***** frame-stack-print
+
+      #+begin_src cicada
+      (+fun frame-stack-print
+        : (-> env-t -- env-t)
+        "- frame-stack : " p nl
+        dup .frame-stack
+        {"  " p p nl}
+        list-for-each
+        nl)
+      #+end_src
+
+***** scope-stack-print
+
+      #+begin_src cicada
+      (+fun scope-stack-print
+        : (-> env-t -- env-t)
+        "- scope-stack : " p nl
+        dup .scope-stack
+        {"  " p p nl}
+        list-for-each
+        nl)
+      #+end_src
+
+***** >< goal-stack-print
+
+      #+begin_src cicada
+      (+fun goal-stack-print
+        : (-> env-t -- env-t)
+        )
+      #+end_src
+
+***** >< data-bind-dict-print
+
+      #+begin_src cicada
+      (+fun data-bind-dict-print
+        : (-> env-t -- env-t)
+        )
+      #+end_src
+
+***** >< type-bind-dict-print
+
+      #+begin_src cicada
+      (+fun type-bind-dict-print
+        : (-> env-t -- env-t)
+        )
+      #+end_src
+
+*** obj-print
+
+    #+begin_src cicada
+    (+fun obj-print
+      : (-> env-t, obj : obj-u -- env-t)
+      (case obj
+        (data-obj-t
+          obj.field-obj-dict p " " p
+          obj.data-type.name
+          dup string-length 2 sub string-take p "-c" p
+          " : " p
+          obj.data-type p)
+        (data-type-t
+          obj.field-obj-dict p " " p obj.name p)
+        (union-type-t
+          obj.field-obj-dict p " " p obj.name p)
+        (type-type-t
+          (if [obj.level 1 eq-p]
+            ["type-tt" p]
+            ["type-<" p obj.level p ">" p]))
+        (closure-obj-t obj w)
+        (arrow-type-t obj w)
+        (data-hypo-t obj w)
+        (type-hypo-t obj w)))
+
+    (+fun field-obj-dict-print
+      {(let field-name obj)
+       field-name p " = " p obj p}
+      dict-for-each)
+    #+end_src
+
+*** exp-print
+
+    #+begin_src cicada
+    (+fun exp-print
+      : (-> env-t, exp : exp-u -- env-t)
+      )
+    #+end_src
+
+*** den-print
+
+    #+begin_src cicada
+    (+fun den-print
+      : (-> env-t, den : den-u -- env-t)
+      )
+    #+end_src
+
 * test
 
 *** (->)
@@ -1976,13 +2029,16 @@
       true-c
       false-c
       true-t
-      bool-u)
+      bool-u
+      type-tt)
 
     p nl
+
+    print-the-stack
     #+end_src
 
 *** main
 
     #+begin_src cicada
-    print-the-stack
+
     #+end_src

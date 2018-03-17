@@ -210,6 +210,7 @@
       scope-stack-print
       frame-stack-print
       data-stack-print
+      drop
       nl)
     (+fun name-dict-print
       : (-> env-t -- env-t)
@@ -221,6 +222,7 @@
       nl)
     (+fun data-stack-print
       : (-> env-t -- env-t)
+      "- data-stack : " p nl
       "- data-stack : " p nl
       dup .data-stack
       {"  " p p nl}
@@ -900,6 +902,34 @@
          new-env (quote (@ body))
          sexp-list-pass
          top-sexp-list-eval))
+    (+disp p [obj-u]
+      (let obj)
+      (case obj
+        (data-obj-t
+          obj.field-obj-dict p " " p
+          obj.data-type.name
+          dup string-length 2 sub string-take p "-c" p
+          " : " p
+          obj.data-type p)
+        (data-type-t
+          obj.field-obj-dict p " " p obj.name p)
+        (union-type-t
+          obj.field-obj-dict p " " p obj.name p)
+        (type-type-t
+          (if [obj.level 1 eq-p]
+            ["type-tt" p]
+            ["type-<" p obj.level p ">" p]))
+        (closure-obj-t obj w)
+        (arrow-type-t obj w)
+        (data-hypo-t obj w)
+        (type-hypo-t obj w)))
+
+    (+fun field-obj-dict-print
+      {(let field-name obj)
+       field-name p " = " p obj p}
+      dict-for-each)
+
+
     (assert
       1 2
       : (-> num0 : number-t, num1 : number-t -- number-t)
@@ -1068,7 +1098,10 @@
       true-c
       false-c
       true-t
-      bool-u)
+      bool-u
+      type-tt)
 
     p nl
+
     print-the-stack
+
