@@ -403,8 +403,8 @@
               while (counter < this.length) {
                   let exp = this.exp_vect[counter];
                   if (counter === this.index) {
+                      print ("<--");
                       print ("\n    ");
-                      print ("--> ");
                       exp.print (env);
                       print (" ");
                   }
@@ -2824,6 +2824,21 @@
       );
       #+end_src
 
+*** *misc*
+    
+***** debug-print
+
+      #+begin_src js
+      new_prim (
+          "debug-print",
+          function (env)
+          {
+              let obj = data_stack_pop (env);
+              console.log (obj);
+          }
+      );
+      #+end_src
+    
 * scan
 
 *** code_scan -- string to string_vect

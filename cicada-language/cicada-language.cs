@@ -229,7 +229,8 @@
       field-exp-t
       colon-exp-t
       double-colon-exp-t
-      comma-exp-t)
+      comma-exp-t
+      type-tt-exp-t)
     (+type call-exp-t
       name : string-t)
     (+type let-exp-t
@@ -252,6 +253,7 @@
       local-name : string-t
       type-exp-list : [exp-u list-u])
     (+type comma-exp-t)
+    (+type type-tt-exp-t)
     (+union den-u
       fun-den-t
       data-cons-den-t
@@ -314,7 +316,8 @@
         (field-exp-t field-exp-exe)
         (colon-exp-t colon-exp-exe)
         (double-colon-exp-t double-colon-exp-exe)
-        (comma-exp-t comma-exp-exe)))
+        (comma-exp-t comma-exp-exe)
+        (type-tt-exp-t type-tt-exp-exe)))
     (+fun call-exp-exe
       : (-> env-t, exp : call-exp-t -- env-t)
       exp.name name-dict-get den-exe)
@@ -353,23 +356,28 @@
       (+fun data-cons-den-exe
         : (-> env-t, den : data-cons-den-t -- env-t)
         den.type-arrow-exp exp-collect-one drop
-        den.cons-arrow-exp.succ-exp-list exp-list-collect-one (let return-type)
+        den.cons-arrow-exp.succ-exp-list
+        exp-list-collect-one
+        (let data-type)
         den.cons-arrow-exp.ante-exp-list new-field-obj-dict
-        return-type
-        (. field-obj-dict type)
-        data-obj-cr data-stack-push)
+        data-type
+        (. field-obj-dict data-type)
+        data-obj-cr
+        data-stack-push)
       (+fun type-cons-den-exe
         : (-> env-t, den : type-cons-den-t -- env-t)
         den.type-arrow-exp.ante-exp-list new-field-obj-dict
         den.name
         (. field-obj-dict name)
-        data-type-cr data-stack-push)
+        data-type-cr
+        data-stack-push)
       (+fun union-cons-den-exe
         : (-> env-t, den : union-cons-den-t -- env-t)
         den.type-arrow-exp.ante-exp-list new-field-obj-dict
         den.name
         (. field-obj-dict name)
-        union-type-cr data-stack-push)
+        union-type-cr
+        data-stack-push)
       (+fun new-field-obj-dict
         : (-> env-t
               ante-exp-list : [exp-u list-u]
@@ -382,13 +390,14 @@
               ante-exp-list : [exp-u list-u]
            -- env-t, string-t obj-u dict-t)
         (case ante-exp-list
-          (null-t)
+          (null-t field-obj-dict)
           (cons-t
             (case ante-exp-list.car
               (colon-exp-t
+                data-stack-pop (let obj)
                 field-obj-dict
                 ante-exp-list.car.local-name
-                data-stack-pop dict-insert
+                obj dict-insert
                 ante-exp-list.cdr recur)
               (else
                 field-obj-dict
@@ -420,8 +429,8 @@
       ;;   might effect current scope
       exp.ante-exp-list exp-list-collect-many (let ante-type-list)
       exp.succ-exp-list exp-list-collect-many (let succ-type-list)
-      (. ante-type-list succ-type-list)
-      arrow-type-cr
+      ante-type-list succ-type-list
+      arrow-type-c
       data-stack-push)
     (+fun apply-exp-exe
       : (-> env-t, exp : apply-exp-t -- env-t)
@@ -483,6 +492,11 @@
     (+fun comma-exp-exe
       : (-> env-t comma-exp-t -- env-t)
       drop)
+    (+fun type-tt-exp-exe
+      : (-> env-t type-tt-exp-t -- env-t)
+      drop
+      1 type-type-c
+      data-stack-push)
     (+fun run-one-step
       : (-> env-t -- env-t)
       (if top-frame-finished-p
@@ -790,6 +804,9 @@
         [string 'apply eq-p]
         [apply-exp-c]
 
+        [string 'type-tt eq-p]
+        [type-tt-exp-c]
+
         [string ', eq-p]
         [comma-exp-c]
 
@@ -1018,7 +1035,10 @@
         (-> -- true-t))
       (+type false-t : type-tt
         (-> -- false-t))
-      ;; true-c
+      true-c
+      false-c
+      true-t
+      bool-u
       )
     p nl
     print-the-stack

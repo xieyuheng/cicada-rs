@@ -198,8 +198,8 @@
               while (counter < this.length) {
                   let exp = this.exp_vect[counter];
                   if (counter === this.index) {
+                      print ("<--");
                       print ("\n    ");
-                      print ("--> ");
                       exp.print (env);
                       print (" ");
                   }
@@ -1904,6 +1904,14 @@
           {
               let obj = data_stack_pop (env);
               data_stack_push (env, list_repr (env, obj));
+          }
+      );
+      new_prim (
+          "debug-print",
+          function (env)
+          {
+              let obj = data_stack_pop (env);
+              console.log (obj);
           }
       );
     function code_scan (string)

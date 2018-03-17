@@ -3,10 +3,6 @@
 
 * [todo-stack]
 
-*** handle type-tt
-
-    - type-tt-exp-t
-
 *** exe
 
 *** fix exp-list-let-colon
@@ -550,7 +546,8 @@
       field-exp-t
       colon-exp-t
       double-colon-exp-t
-      comma-exp-t)
+      comma-exp-t
+      type-tt-exp-t)
     #+end_src
 
 *** call-exp-t
@@ -623,6 +620,12 @@
 
     #+begin_src cicada
     (+type comma-exp-t)
+    #+end_src
+
+*** type-tt-exp-t
+
+    #+begin_src cicada
+    (+type type-tt-exp-t)
     #+end_src
 
 * den
@@ -771,7 +774,8 @@
         (field-exp-t field-exp-exe)
         (colon-exp-t colon-exp-exe)
         (double-colon-exp-t double-colon-exp-exe)
-        (comma-exp-t comma-exp-exe)))
+        (comma-exp-t comma-exp-exe)
+        (type-tt-exp-t type-tt-exp-exe)))
     #+end_src
 
 *** call-exp-exe
@@ -842,11 +846,14 @@
       (+fun data-cons-den-exe
         : (-> env-t, den : data-cons-den-t -- env-t)
         den.type-arrow-exp exp-collect-one drop
-        den.cons-arrow-exp.succ-exp-list exp-list-collect-one (let return-type)
+        den.cons-arrow-exp.succ-exp-list
+        exp-list-collect-one
+        (let data-type)
         den.cons-arrow-exp.ante-exp-list new-field-obj-dict
-        return-type
-        (. field-obj-dict type)
-        data-obj-cr data-stack-push)
+        data-type
+        (. field-obj-dict data-type)
+        data-obj-cr
+        data-stack-push)
       #+end_src
 
 ***** type-cons-den-exe
@@ -857,7 +864,8 @@
         den.type-arrow-exp.ante-exp-list new-field-obj-dict
         den.name
         (. field-obj-dict name)
-        data-type-cr data-stack-push)
+        data-type-cr
+        data-stack-push)
       #+end_src
 
 ***** union-cons-den-exe
@@ -868,7 +876,8 @@
         den.type-arrow-exp.ante-exp-list new-field-obj-dict
         den.name
         (. field-obj-dict name)
-        union-type-cr data-stack-push)
+        union-type-cr
+        data-stack-push)
       #+end_src
 
 ***** new-field-obj-dict
@@ -891,13 +900,14 @@
               ante-exp-list : [exp-u list-u]
            -- env-t, string-t obj-u dict-t)
         (case ante-exp-list
-          (null-t)
+          (null-t field-obj-dict)
           (cons-t
             (case ante-exp-list.car
               (colon-exp-t
+                data-stack-pop (let obj)
                 field-obj-dict
                 ante-exp-list.car.local-name
-                data-stack-pop dict-insert
+                obj dict-insert
                 ante-exp-list.cdr recur)
               (else
                 field-obj-dict
@@ -949,8 +959,8 @@
       ;;   might effect current scope
       exp.ante-exp-list exp-list-collect-many (let ante-type-list)
       exp.succ-exp-list exp-list-collect-many (let succ-type-list)
-      (. ante-type-list succ-type-list)
-      arrow-type-cr
+      ante-type-list succ-type-list
+      arrow-type-c
       data-stack-push)
     #+end_src
 
@@ -1069,6 +1079,16 @@
       drop)
     #+end_src
 
+*** type-tt-exp-exe
+
+    #+begin_src cicada
+    (+fun type-tt-exp-exe
+      : (-> env-t type-tt-exp-t -- env-t)
+      drop
+      1 type-type-c
+      data-stack-push)
+    #+end_src
+
 * run
 
 *** run-one-step
@@ -1110,7 +1130,7 @@
       null-c cons-c exp-list-run)
     #+end_src
 
-* collect-one
+* collect
 
 *** exp-list-collect-many
 
@@ -1573,6 +1593,9 @@
         [string 'apply eq-p]
         [apply-exp-c]
 
+        [string 'type-tt eq-p]
+        [type-tt-exp-c]
+
         [string ', eq-p]
         [comma-exp-c]
 
@@ -1885,8 +1908,10 @@
         (-> -- true-t))
       (+type false-t : type-tt
         (-> -- false-t))
-      ;; true-c
-      )
+      true-c
+      false-c
+      true-t
+      bool-u)
     p nl
     #+end_src
 
