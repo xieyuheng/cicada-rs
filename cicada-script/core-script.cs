@@ -328,6 +328,10 @@
               " . " p list.cdr p)))))
     (+data dict-t
       assoc-list)
+    (+fun dict-length
+      .assoc-list list-length)
+    (+fun dict-empty-p
+      dict-length 0 eq-p)
     (+fun new-dict
       null-c dict-c)
     (+fun dict-find

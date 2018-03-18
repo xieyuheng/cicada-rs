@@ -160,18 +160,18 @@
       (+fun scope-get dict-get)
       (+fun scope-insert
         : (-> scope-t
-              local-name : string-t
+              name : string-t
               obj : obj-u
            -- scope-t)
-        (lit-dict local-name obj)
+        (lit-dict name obj)
         dict-update)
       (+fun current-scope-insert
         : (-> env-t
-              local-name : string-t
+              name : string-t
               obj : obj-u
            -- env-t)
       scope-stack-pop
-      local-name obj scope-insert
+      name obj scope-insert
       scope-stack-push)
       (+fun new-scope
         : (-> -- scope-t)
@@ -202,55 +202,6 @@
         env.type-bind-dict hypo-id obj dict-insert
         (. type-bind-dict)
         env clone)
-    (+disp p [env-t]
-      name-dict-print
-      ;; goal-stack-print
-      ;; data-bind-dict-print
-      ;; type-bind-dict-print
-      scope-stack-print
-      frame-stack-print
-      data-stack-print
-      drop
-      nl)
-    (+fun name-dict-print
-      : (-> env-t -- env-t)
-      "- name-dict : " p nl
-      dup .name-dict
-      {(let key den)
-       "  " p key p " = " p den p nl}
-      dict-for-each
-      nl)
-    (+fun data-stack-print
-      : (-> env-t -- env-t)
-      "- data-stack : " p nl
-      "- data-stack : " p nl
-      dup .data-stack
-      {"  " p p nl}
-      list-for-each
-      nl)
-    (+fun frame-stack-print
-      : (-> env-t -- env-t)
-      "- frame-stack : " p nl
-      dup .frame-stack
-      {"  " p p nl}
-      list-for-each
-      nl)
-    (+fun scope-stack-print
-      : (-> env-t -- env-t)
-      "- scope-stack : " p nl
-      dup .scope-stack
-      {"  " p p nl}
-      list-for-each
-      nl)
-    (+fun goal-stack-print
-      : (-> env-t -- env-t)
-      )
-    (+fun data-bind-dict-print
-      : (-> env-t -- env-t)
-      )
-    (+fun type-bind-dict-print
-      : (-> env-t -- env-t)
-      )
     (+union exp-u
       call-exp-t
       let-exp-t
@@ -266,7 +217,7 @@
     (+type call-exp-t
       name : string-t)
     (+type let-exp-t
-      local-name-list : [string-t list-u])
+      name-list : [string-t list-u])
     (+type closure-exp-t
       body-exp-list : [exp-u list-u])
     (+type arrow-exp-t
@@ -279,10 +230,10 @@
     (+type field-exp-t
       field-name : string-t)
     (+type colon-exp-t
-      local-name : string-t
+      name : string-t
       type-exp-list : [exp-u list-u])
     (+type double-colon-exp-t
-      local-name : string-t
+      name : string-t
       type-exp-list : [exp-u list-u])
     (+type comma-exp-t)
     (+type type-tt-exp-t)
@@ -383,7 +334,7 @@
               exp : exp-u
            -- env-t)
         data-stack-pop
-        exp.local-name swap
+        exp.name swap
         current-scope-insert)
       (+fun data-cons-den-exe
         : (-> env-t, den : data-cons-den-t -- env-t)
@@ -428,7 +379,7 @@
               (colon-exp-t
                 data-stack-pop (let obj)
                 field-obj-dict
-                ante-exp-list.car.local-name
+                ante-exp-list.car.name
                 obj dict-insert
                 ante-exp-list.cdr recur)
               (else
@@ -436,18 +387,18 @@
                 ante-exp-list.cdr recur)))))
     (+fun let-exp-exe
       : (-> env-t, exp : let-exp-t -- env-t)
-      exp.local-name-list list-reverse
+      exp.name-list list-reverse
       let-exp-exe-loop)
     (+fun let-exp-exe-loop
-      : (-> env-t, local-name-list : [string-t list-u] -- env-t)
-      (case local-name-list
+      : (-> env-t, name-list : [string-t list-u] -- env-t)
+      (case name-list
         (null-t)
         (cons-t
           data-stack-pop (let obj)
           scope-stack-pop
-          local-name-list.car obj scope-insert
+          name-list.car obj scope-insert
           scope-stack-push
-          local-name-list.cdr recur)))
+          name-list.cdr recur)))
     (+fun closure-exp-exe
       : (-> env-t, exp : closure-exp-t -- env-t)
       scope-stack-tos
@@ -492,10 +443,10 @@
     (+fun colon-exp-exe
       : (-> env-t, exp : colon-exp-t -- env-t)
       exp.type-exp-list exp-list-collect-one (let type)
-      exp.local-name generate-hypo-id (let hypo-id)
+      exp.name generate-hypo-id (let hypo-id)
       hypo-id type-hypo-c
       type type-hypo-insert
-      exp.local-name hypo-id data-hypo-c current-scope-insert
+      exp.name hypo-id data-hypo-c current-scope-insert
       type data-stack-push)
     (+fun double-colon-exp-exe
       : (-> env-t double-colon-exp-t -- env-t)
@@ -527,7 +478,7 @@
     (+fun type-tt-exp-exe
       : (-> env-t type-tt-exp-t -- env-t)
       drop
-      1 type-type-c
+      2 type-type-c
       data-stack-push)
     (+fun run-one-step
       : (-> env-t -- env-t)
@@ -761,7 +712,7 @@
         : (-> body : [sexp-u list-u] -- den-u)
         body.car parse-exp (let colon-exp)
         body.cdr {parse-exp} list-map (let body-exp-list)
-        colon-exp.local-name.name (let name)
+        colon-exp.name (let name)
         colon-exp.type-exp-list.car (let type-exp)
         (case type-exp
           (arrow-exp-t type-exp)
@@ -772,7 +723,7 @@
         : (-> body : [sexp-u list-u] -- den-u)
         body.car parse-exp (let colon-exp)
         body.cdr {parse-exp} list-map .car (let cons-arrow-exp)
-        colon-exp.local-name.name (let name)
+        colon-exp.name (let name)
         colon-exp.type-exp-list.car (let type-exp)
         (case type-exp
           (arrow-exp-t type-exp)
@@ -783,7 +734,7 @@
         : (-> body : [sexp-u list-u] -- den-u)
         body.car parse-exp (let colon-exp)
         body.cdr (let sub-name-list)
-        colon-exp.local-name.name (let name)
+        colon-exp.name (let name)
         colon-exp.type-exp-list.car (let type-exp)
         (case type-exp
           (arrow-exp-t type-exp)
@@ -820,12 +771,12 @@
             swap case-exp-c]
 
            [head ': eq-p]
-           [body.car recur
+           [body.car
             body.cdr {recur} list-map
             colon-exp-c]
 
            [head ':: eq-p]
-           [body.car recur
+           [body.car
             body.cdr {recur} list-map
             double-colon-exp-c]
 
@@ -902,34 +853,176 @@
          new-env (quote (@ body))
          sexp-list-pass
          top-sexp-list-eval))
-    (+disp p [obj-u]
-      (let obj)
-      (case obj
-        (data-obj-t
-          obj.field-obj-dict p " " p
-          obj.data-type.name
-          dup string-length 2 sub string-take p "-c" p
-          " : " p
-          obj.data-type p)
-        (data-type-t
-          obj.field-obj-dict p " " p obj.name p)
-        (union-type-t
-          obj.field-obj-dict p " " p obj.name p)
-        (type-type-t
-          (if [obj.level 1 eq-p]
-            ["type-tt" p]
-            ["type-<" p obj.level p ">" p]))
-        (closure-obj-t obj w)
-        (arrow-type-t obj w)
-        (data-hypo-t obj w)
-        (type-hypo-t obj w)))
-
-    (+fun field-obj-dict-print
-      {(let field-name obj)
-       field-name p " = " p obj p}
-      dict-for-each)
-
-
+      (+fun env-print
+        : (-> env-t -- env-t)
+        name-dict-print
+        ;; goal-stack-print
+        ;; data-bind-dict-print
+        ;; type-bind-dict-print
+        scope-stack-print
+        frame-stack-print
+        data-stack-print)
+      (+fun name-dict-print
+        : (-> env-t -- env-t)
+        "- name-dict : " p nl
+        dup .name-dict
+        {(let key den)
+         "  " p den den-print nl}
+        dict-for-each
+        nl)
+      (+fun data-stack-print
+        : (-> env-t -- env-t)
+        "- data-stack : " p nl
+        dup .data-stack
+        {"  " p obj-print nl}
+        list-for-each
+        nl)
+      (+fun frame-stack-print
+        : (-> env-t -- env-t)
+        "- frame-stack : " p nl
+        dup .frame-stack
+        {"  " p p nl}
+        list-for-each
+        nl)
+      (+fun scope-stack-print
+        : (-> env-t -- env-t)
+        "- scope-stack : " p nl
+        dup .scope-stack
+        {"  " p p nl}
+        list-for-each
+        nl)
+      (+fun goal-stack-print
+        : (-> env-t -- env-t)
+        )
+      (+fun data-bind-dict-print
+        : (-> env-t -- env-t)
+        )
+      (+fun type-bind-dict-print
+        : (-> env-t -- env-t)
+        )
+      (+fun obj-print
+        : (-> env-t, obj : obj-u -- env-t)
+        (case obj
+          (data-obj-t
+            obj.field-obj-dict obj.data-type.name
+            dup string-length 2 sub string-take
+            "-c" string-append
+            cons-print)
+          (data-type-t
+            obj.field-obj-dict obj.name cons-print)
+          (union-type-t
+            obj.field-obj-dict obj.name cons-print)
+          (type-type-t
+            (cond [obj.level 2 eq-p] ["type-tt" p]
+                  [obj.level 3 eq-p] ["type-ttt" p]
+                  [else] ["type-<" p obj.level p ">" p]))
+          (closure-obj-t obj p)
+          (arrow-type-t obj p)
+          (data-hypo-t obj p)
+          (type-hypo-t obj p)))
+      (+fun cons-print
+        : (-> env-t
+              dict : [string-t obj-u dict-t]
+              name : string-t
+           -- env-t)
+        (unless [dict dict-empty-p]
+          name name-dict-get cons-den->field-name-list
+          {dict swap dict-get obj-print " " p}
+          list-for-each)
+        name p)
+      (+fun cons-den->field-name-list
+        : (-> cons-den : den-u -- string-t list-u)
+        (case cons-den
+          (data-cons-den-t
+            cons-den.cons-arrow-exp.ante-exp-list
+            exp-list->field-name-list)
+          (type-cons-den-t
+            cons-den.type-arrow-exp.ante-exp-list
+            exp-list->field-name-list)
+          (union-cons-den-t
+            cons-den.type-arrow-exp.ante-exp-list
+            exp-list->field-name-list)))
+      (+fun exp-list->field-name-list
+        : (-> exp-list : [exp-u list-u] -- string-t list-u)
+        (case exp-list
+          (null-t null-c)
+          (cons-t
+            (case exp-list.car
+              (colon-exp-t
+                exp-list.car.name
+                exp-list.cdr recur
+                cons-c)
+              (else
+                exp-list.cdr recur)))))
+      (+fun den-print
+        : (-> env-t, den : den-u -- env-t)
+        (case den
+          (fun-den-t
+            "+fun " p den.name p nl
+            den.type-arrow-exp type-arrow-exp-print-for-den
+            "   " p den.body-exp-list
+            exp-list-print nl)
+          (data-cons-den-t
+            "+data-cons " p den.name p nl
+            den.cons-arrow-exp type-arrow-exp-print-for-den)
+          (type-cons-den-t
+            "+type-cons " p den.name p nl
+            den.type-arrow-exp type-arrow-exp-print-for-den)
+          (union-cons-den-t
+            "+union-cons " p den.name p nl
+            den.type-arrow-exp type-arrow-exp-print-for-den)))
+      (+fun type-arrow-exp-print-for-den
+        : (-> type-arrow-exp : arrow-exp-t --)
+        "   : -> " p
+        type-arrow-exp.ante-exp-list
+        exp-list-print
+        nl
+        "     -- " p
+        type-arrow-exp.succ-exp-list
+        exp-list-print
+        nl)
+    (+fun exp-print
+      : (-> exp : exp-u --)
+      (case exp
+        (call-exp-t
+          exp.name p)
+        (let-exp-t
+          exp.name-list p)
+        ;; (closure-exp-t)
+        ;; (arrow-exp-t)
+        (apply-exp-t
+          "apply" p)
+        (case-exp-t
+          "case " p exp.arg-exp-list exp-list-print nl
+          exp.closure-exp-dict
+          {(let name closure-exp)
+           "    " p name p " " p
+           closure-exp.body-exp-list exp-list-print nl}
+          dict-for-each)
+        (field-exp-t
+          "." p exp.field-name p)
+        (colon-exp-t
+          "(: " p exp.name p " " p
+          exp.type-exp-list exp-list-print ")" p)
+        (double-colon-exp-t
+          "(:: " p exp.name p " " p
+          exp.type-exp-list exp-list-print ")" p)
+        (comma-exp-t
+          "," p)
+        (type-tt-exp-t
+          "type-tt" p)
+        (else exp p)))
+    (+fun exp-list-print
+      : (-> exp-list : [exp-u list-u] --)
+      (case exp-list
+        (null-t)
+        (cons-t
+          (case exp-list.cdr
+            (null-t
+              exp-list.car exp-print)
+            (cons-t
+              exp-list.car exp-print " " p
+              exp-list.cdr recur)))))
     (assert
       1 2
       : (-> num0 : number-t, num1 : number-t -- number-t)
@@ -1088,20 +1181,51 @@
       sexp-list-pass
       {parse-den} list-map)
     (cicada-language
+
       (+union bool-u : type-tt
         true-t
         false-t)
+
       (+type true-t : type-tt
         (-> -- true-t))
+
       (+type false-t : type-tt
         (-> -- false-t))
+
       true-c
       false-c
       true-t
       bool-u
-      type-tt)
+      type-tt
 
-    p nl
+      (+union nat-u : type-tt
+        zero-t
+        succ-t)
 
+      (+type zero-t : type-tt
+        (-> -- zero-t))
+
+      (+type succ-t : type-tt
+        (-> prev : nat-u -- succ-t))
+
+      (+fun nat-add : (-> [m n] : nat-u -- nat-u)
+        (case n
+          (zero-t m)
+          (succ-t m n.prev recur succ-c)))
+
+      (+fun nat-mul : (-> [m n] : nat-u -- nat-u)
+        (case n
+          (zero-t n)
+          (succ-t m n.prev recur m nat-add)))
+
+      (+fun nat-factorial : (-> n : nat-u -- nat-u)
+        (case n
+          (zero-t n succ-c)
+          (succ-t n.prev recur n nat-mul)))
+
+      zero-c succ-c)
+
+    env-print
+    drop nl
     print-the-stack
 
