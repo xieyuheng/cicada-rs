@@ -296,6 +296,7 @@
     function run_one_step (env)
     {
         let frame = frame_stack_tos (env);
+        // handle empty frame for empty closure
         if (frame_end_p (frame)) {
             frame_stack_drop (env);
             scope_stack_drop (env);
@@ -303,8 +304,8 @@
         }
         let scope = scope_stack_tos (env);
         let exp = frame_next_exp (frame);
+        // proper tail call
         if (frame_end_p (frame)) {
-            // proper tail call
             frame_stack_drop (env);
             scope_stack_drop (env);
         }

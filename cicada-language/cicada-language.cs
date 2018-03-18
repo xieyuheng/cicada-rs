@@ -27,7 +27,6 @@
       goal-stack : [goal-t list-u]
       data-bind-dict : [hypo-id-t obj-u dict-t]
       type-bind-dict : [hypo-id-t obj-u dict-t])
-    (+alias scope-t [string-t obj-u dict-t])
     (+fun new-env
       : (-> -- env-t)
       (lit-dict)
@@ -45,6 +44,10 @@
          data-bind-dict
          type-bind-dict)
       env-cr)
+      (+fun name-dict-find
+        : (-> env-t, name : string-t
+           -- env-t (| den-u true-t, false-t))
+        dup .name-dict name dict-find)
       (+fun name-dict-get
         : (-> env-t, name : string-t -- env-t den-u)
         dup .name-dict name dict-get)
@@ -133,7 +136,7 @@
       (+fun top-frame-next-exp
         : (-> env-t -- env-t exp-u)
         frame-stack-pop (let frame)
-        frame.index number-inc
+        frame.index inc
         (. index)
         frame clone
         frame-stack-push
@@ -157,29 +160,55 @@
       (+fun scope-stack-tos
         : (-> env-t -- env-t scope-t)
         dup .scope-stack.car)
-      (+fun scope-get dict-get)
+      (+fun scope-stack-empty-p
+        : (-> env-t -- env-t bool-u)
+        dup .scope-stack null-p)
+      (+alias scope-t [string-t obj-u dict-t])
+      (+fun new-scope
+        : (-> -- scope-t)
+        (lit-dict))
+      (+fun scope-get
+        : (-> scope-t
+              string-t
+           -- obj-u)
+        dict-get)
+      (+fun current-scope-get
+        : (-> env-t
+              name : string-t
+           -- env-t
+              obj-u)
+        scope-stack-tos name scope-get)
+      (+fun scope-find
+        : (-> scope-t
+              string-t
+           -- (| obj-u true-t, false-t))
+        dict-find)
+      (+fun current-scope-find
+        : (-> env-t
+              name : string-t
+           -- env-t
+              (| obj-u true-t, false-t))
+        (if scope-stack-empty-p
+          [false-c]
+          [scope-stack-tos
+           name scope-find]))
       (+fun scope-insert
         : (-> scope-t
               name : string-t
               obj : obj-u
            -- scope-t)
-        (lit-dict name obj)
-        dict-update)
+        name obj dict-insert)
       (+fun current-scope-insert
         : (-> env-t
               name : string-t
               obj : obj-u
            -- env-t)
-      scope-stack-pop
-      name obj scope-insert
-      scope-stack-push)
-      (+fun new-scope
-        : (-> -- scope-t)
-        (lit-dict))
+        scope-stack-pop
+        name obj scope-insert
+        scope-stack-push)
       (+fun data-bind-dict-find
         : (-> env-t, hypo-id : hypo-id-t
-           -- env-t (| false-t
-                       [obj-u true-t]))
+           -- env-t (| obj-u true-t, false-t))
         dup .data-bind-dict hypo-id dict-find)
       (+fun data-bind-dict-insert
         : (-> env : env-t
@@ -191,8 +220,7 @@
         env clone)
       (+fun type-bind-dict-find
         : (-> env-t, hypo-id : hypo-id-t
-           -- env-t (| false-t
-                       [obj-u true-t]))
+           -- env-t (| obj-u true-t, false-t))
         dup .type-bind-dict hypo-id dict-find)
       (+fun type-bind-dict-insert
         : (-> env : env-t
@@ -303,7 +331,19 @@
         (type-tt-exp-t type-tt-exp-exe)))
     (+fun call-exp-exe
       : (-> env-t, exp : call-exp-t -- env-t)
-      exp.name name-dict-get den-exe)
+      (if [exp.name current-scope-find]
+        (begin
+          (case dup
+            (data-hypo-t
+              .id data-bind-dict-find bool-assert
+              data-stack-push)
+           (else
+             data-stack-push)))
+        (if [exp.name name-dict-find]
+          [den-exe]
+          ["- call-exp-exe fail" p nl
+           "  unknown name : " p exp.name p nl
+           error])))
       (+fun den-exe
         : (-> env-t den-u -- env-t)
         (case dup
@@ -315,27 +355,23 @@
         : (-> env-t, den : fun-den-t -- env-t)
         new-scope scope-stack-push
         den.type-arrow-exp exp-collect-one drop
-        den.type-arrow-exp.ante-exp-list exp-list-let-colon
+        den.type-arrow-exp.ante-exp-list exp-list-bind-colon
         den.body-exp-list new-scoping-frame frame-stack-push)
-      (+fun exp-list-let-colon
-        : (-> env : env-t
+      (+fun exp-list-bind-colon
+        : (-> env-t
               exp-list : [exp-u list-u]
            -- env-t)
         exp-list
-        {(let exp)
-         (or [exp colon-exp-p]
-             [exp colon-exp-p])}
-        list-filter
+        {colon-exp-p} list-filter
         list-reverse
-        {env swap exp-let-colon} list-for-each
-        env)
-      (+fun exp-let-colon
+        {exp-bind-colon} list-for-each)
+      (+fun exp-bind-colon
         : (-> env-t
               exp : exp-u
            -- env-t)
-        data-stack-pop
-        exp.name swap
-        current-scope-insert)
+        exp.name current-scope-get (let data-hypo)
+        data-stack-pop data-hypo.id
+        swap data-bind-dict-insert)
       (+fun data-cons-den-exe
         : (-> env-t, den : data-cons-den-t -- env-t)
         den.type-arrow-exp exp-collect-one drop
@@ -417,6 +453,9 @@
       data-stack-push)
     (+fun apply-exp-exe
       : (-> env-t, exp : apply-exp-t -- env-t)
+      apply-exp-ins)
+    (+fun apply-exp-ins
+      : (-> env-t -- env-t)
       data-stack-pop (let obj)
       (case obj
         (closure-obj-t
@@ -427,25 +466,27 @@
       ;; calling collect-one
       ;;   might effect current scope
       exp.arg-exp-list exp-list-collect-one (let obj)
+      ;; "- case-exp-exe" p nl
+      ;; "  obj : " p obj p nl
       (case obj
         (data-obj-t
           exp.closure-exp-dict
           obj.data-type.name dict-get
           closure-exp-exe
-          apply-exp-exe)))
+          apply-exp-ins)))
     (+fun field-exp-exe
       : (-> env-t, exp : field-exp-t -- env-t)
       data-stack-pop (let obj)
       (case obj
         (data-obj-t
           obj.field-obj-dict
-          exp.field-name dict-get)))
+          exp.field-name dict-get
+          data-stack-push)))
     (+fun colon-exp-exe
       : (-> env-t, exp : colon-exp-t -- env-t)
       exp.type-exp-list exp-list-collect-one (let type)
       exp.name generate-hypo-id (let hypo-id)
-      hypo-id type-hypo-c
-      type type-hypo-insert
+      hypo-id type type-bind-dict-insert
       exp.name hypo-id data-hypo-c current-scope-insert
       type data-stack-push)
     (+fun double-colon-exp-exe
@@ -505,7 +546,7 @@
       dup .data-stack list-length (let old)
       exp-list exp-list-run
       dup .data-stack list-length (let new)
-      new old number-sub data-stack-n-pop)
+      new old sub data-stack-n-pop)
     (+fun exp-list-collect-one
       : (-> env-t, exp-list : [exp-u list-u]
          -- env-t, obj-u)
@@ -567,7 +608,7 @@
         (closure-obj-t closure-obj-infer)
         ;; ><><><
         (obj-u type-infer)))
-    (+alias sexp-u (| string-t [sexp-u list-u]))
+    (+alias sexp-u (| string-t, sexp-u list-u))
     (+fun sexp-list-pass
       : (-> sexp-u list-u -- sexp-u list-u)
       ;; the order matters
@@ -856,9 +897,9 @@
       (+fun env-print
         : (-> env-t -- env-t)
         name-dict-print
-        ;; goal-stack-print
-        ;; data-bind-dict-print
-        ;; type-bind-dict-print
+        goal-stack-print
+        data-bind-dict-print
+        type-bind-dict-print
         scope-stack-print
         frame-stack-print
         data-stack-print)
@@ -873,7 +914,7 @@
       (+fun data-stack-print
         : (-> env-t -- env-t)
         "- data-stack : " p nl
-        dup .data-stack
+        dup .data-stack list-reverse
         {"  " p obj-print nl}
         list-for-each
         nl)
@@ -893,13 +934,15 @@
         nl)
       (+fun goal-stack-print
         : (-> env-t -- env-t)
-        )
+        "- goal-stack : " p nl)
       (+fun data-bind-dict-print
         : (-> env-t -- env-t)
-        )
+        "- data-bind-dict : " p nl
+        dup .data-bind-dict p nl)
       (+fun type-bind-dict-print
         : (-> env-t -- env-t)
-        )
+        "- type-bind-dict : " p nl
+        dup .type-bind-dict p nl)
       (+fun obj-print
         : (-> env-t, obj : obj-u -- env-t)
         (case obj
@@ -988,8 +1031,12 @@
           exp.name p)
         (let-exp-t
           exp.name-list p)
-        ;; (closure-exp-t)
-        ;; (arrow-exp-t)
+        (closure-exp-t
+          ;; ><><><
+          exp p)
+        (arrow-exp-t
+          ;; ><><><
+          exp p)
         (apply-exp-t
           "apply" p)
         (case-exp-t
@@ -1007,8 +1054,7 @@
         (double-colon-exp-t
           "(:: " p exp.name p " " p
           exp.type-exp-list exp-list-print ")" p)
-        (comma-exp-t
-          "," p)
+        (comma-exp-t)
         (type-tt-exp-t
           "type-tt" p)
         (else exp p)))
@@ -1086,12 +1132,12 @@
       drop)
     (begin
       new-env
-      "1" 1 data-bind-dict-insert
-      "2" 2 data-bind-dict-insert
-      "1" data-bind-dict-find bool-assert 1 eq-p bool-assert
-      "1" data-bind-dict-find bool-assert 1 eq-p bool-assert
-      "2" data-bind-dict-find bool-assert 2 eq-p bool-assert
-      "2" data-bind-dict-find bool-assert 2 eq-p bool-assert
+      (lit-dict '1 '0) 1 data-bind-dict-insert
+      (lit-dict '2 '0) 2 data-bind-dict-insert
+      (lit-dict '1 '0) data-bind-dict-find bool-assert 1 eq-p bool-assert
+      (lit-dict '1 '0) data-bind-dict-find bool-assert 1 eq-p bool-assert
+      (lit-dict '2 '0) data-bind-dict-find bool-assert 2 eq-p bool-assert
+      (lit-dict '2 '0) data-bind-dict-find bool-assert 2 eq-p bool-assert
       drop)
 
     (begin
@@ -1192,11 +1238,11 @@
       (+type false-t : type-tt
         (-> -- false-t))
 
-      true-c
-      false-c
-      true-t
-      bool-u
-      type-tt
+      ;; true-c
+      ;; false-c
+      ;; true-t
+      ;; bool-u
+      ;; type-tt
 
       (+union nat-u : type-tt
         zero-t
@@ -1223,7 +1269,12 @@
           (zero-t n succ-c)
           (succ-t n.prev recur n nat-mul)))
 
-      zero-c succ-c)
+      zero-c succ-c succ-c succ-c
+      zero-c succ-c succ-c succ-c nat-add
+      zero-c succ-c succ-c
+      zero-c succ-c succ-c nat-mul
+      zero-c succ-c succ-c succ-c succ-c nat-factorial
+      )
 
     env-print
     drop nl

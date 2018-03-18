@@ -3,6 +3,8 @@
 
 * [todo-stack]
 
+*** dict-update
+
 * [todo-list]
 
 *** combinators from joy
@@ -355,7 +357,7 @@
          ifte))
     #+end_src
 
-*** bool-when & bool-unless
+*** bool-when & bool-when-not
 
     #+begin_src cicada
     (+macro bool-when
@@ -365,7 +367,7 @@
          {}
          ifte))
 
-    (+macro bool-unless
+    (+macro bool-when-not
       (let body)
       `(begin
          {}
@@ -569,10 +571,10 @@
 
     #+begin_src cicada
     (+fun list-ref
-      (let l index)
+      (let list index)
       (if [index 0 eq-p]
-        [l.car]
-        [l.cdr index.prev recur]))
+        [list.car]
+        [list.cdr index dec recur]))
     #+end_src
 
 *** list-append
@@ -756,7 +758,7 @@
               " . " p list.cdr p)))))
     #+end_src
 
-.* dict
+* dict
 
 *** dict-t
 
@@ -805,7 +807,7 @@
       ;; -- | [ value true-t]
       ;;      [ false-t]
       dict key dict-find
-      (bool-unless
+      (bool-when-not
         "- dict-get fail" p nl
         "  key : " p key p nl
         "  dict : " p dict p nl
@@ -845,6 +847,8 @@
       (let assoc-list key value)
       key value cons-c assoc-list cons-c)
     #+end_src
+
+*** >< dict-update
 
 *** (lit-dict)
 
@@ -1368,7 +1372,7 @@
         dict-for-each)
       #+end_src
 
-*** bool-if & bool-when & bool-unless
+*** bool-if & bool-when & bool-when-not
 
     #+begin_src cicada
     (assert true-c (bool-if 1 2) 1 eq-p)
@@ -1377,8 +1381,8 @@
     (assert true-c (bool-when 'ok) 'ok eq-p)
     (assert 'ok false-c (bool-when 'ugh) 'ok eq-p)
 
-    (assert false-c (bool-unless 'ok) 'ok eq-p)
-    (assert 'ok true-c (bool-unless 'ugh) 'ok eq-p)
+    (assert false-c (bool-when-not 'ok) 'ok eq-p)
+    (assert 'ok true-c (bool-when-not 'ugh) 'ok eq-p)
     #+end_src
 
 *** print

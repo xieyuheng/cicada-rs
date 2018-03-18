@@ -145,7 +145,7 @@
          {}
          ifte))
 
-    (+macro bool-unless
+    (+macro bool-when-not
       (let body)
       `(begin
          {}
@@ -221,10 +221,10 @@
         0
         [list.cdr recur number-inc]))
     (+fun list-ref
-      (let l index)
+      (let list index)
       (if [index 0 eq-p]
-        [l.car]
-        [l.cdr index.prev recur]))
+        [list.car]
+        [list.cdr index dec recur]))
     (+fun list-append (let ante succ)
       (case ante
         (null-t succ)
@@ -345,7 +345,7 @@
       ;; -- | [ value true-t]
       ;;      [ false-t]
       dict key dict-find
-      (bool-unless
+      (bool-when-not
         "- dict-get fail" p nl
         "  key : " p key p nl
         "  dict : " p dict p nl
@@ -742,8 +742,8 @@
     (assert true-c (bool-when 'ok) 'ok eq-p)
     (assert 'ok false-c (bool-when 'ugh) 'ok eq-p)
 
-    (assert false-c (bool-unless 'ok) 'ok eq-p)
-    (assert 'ok true-c (bool-unless 'ugh) 'ok eq-p)
+    (assert false-c (bool-when-not 'ok) 'ok eq-p)
+    (assert 'ok true-c (bool-when-not 'ugh) 'ok eq-p)
     #note
     (begin
       '(a b c) w nl

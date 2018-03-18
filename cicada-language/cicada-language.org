@@ -3,11 +3,15 @@
 
 * [todo-stack]
 
+*** call-exp-exe de-ref data-hypo
+
+*** test exe
+
 *** env-print really use indent
 
-*** exe
+*** (+union) handled inline (+type)
 
-*** fix exp-list-let-colon
+*** fix exp-list-bind-colon
 
     - for binding not at tail
 
@@ -153,12 +157,6 @@
       type-bind-dict : [hypo-id-t obj-u dict-t])
     #+end_src
 
-*** scope-t
-
-    #+begin_src cicada
-    (+alias scope-t [string-t obj-u dict-t])
-    #+end_src
-
 *** new-env
 
     #+begin_src cicada
@@ -182,6 +180,15 @@
     #+end_src
 
 *** name-dict
+
+***** name-dict-find
+
+      #+begin_src cicada
+      (+fun name-dict-find
+        : (-> env-t, name : string-t
+           -- env-t (| den-u true-t, false-t))
+        dup .name-dict name dict-find)
+      #+end_src
 
 ***** name-dict-get
 
@@ -370,7 +377,7 @@
       (+fun top-frame-next-exp
         : (-> env-t -- env-t exp-u)
         frame-stack-pop (let frame)
-        frame.index number-inc
+        frame.index inc
         (. index)
         frame clone
         frame-stack-push
@@ -418,10 +425,73 @@
         dup .scope-stack.car)
       #+end_src
 
+***** scope-stack-empty-p
+
+      #+begin_src cicada
+      (+fun scope-stack-empty-p
+        : (-> env-t -- env-t bool-u)
+        dup .scope-stack null-p)
+      #+end_src
+
+*** scope
+
+***** scope-t
+
+      #+begin_src cicada
+      (+alias scope-t [string-t obj-u dict-t])
+      #+end_src
+
+***** new-scope
+
+      #+begin_src cicada
+      (+fun new-scope
+        : (-> -- scope-t)
+        (lit-dict))
+      #+end_src
+
 ***** scope-get
 
       #+begin_src cicada
-      (+fun scope-get dict-get)
+      (+fun scope-get
+        : (-> scope-t
+              string-t
+           -- obj-u)
+        dict-get)
+      #+end_src
+
+***** current-scope-get
+
+      #+begin_src cicada
+      (+fun current-scope-get
+        : (-> env-t
+              name : string-t
+           -- env-t
+              obj-u)
+        scope-stack-tos name scope-get)
+      #+end_src
+
+***** scope-find
+
+      #+begin_src cicada
+      (+fun scope-find
+        : (-> scope-t
+              string-t
+           -- (| obj-u true-t, false-t))
+        dict-find)
+      #+end_src
+
+***** current-scope-find
+
+      #+begin_src cicada
+      (+fun current-scope-find
+        : (-> env-t
+              name : string-t
+           -- env-t
+              (| obj-u true-t, false-t))
+        (if scope-stack-empty-p
+          [false-c]
+          [scope-stack-tos
+           name scope-find]))
       #+end_src
 
 ***** scope-insert
@@ -432,8 +502,7 @@
               name : string-t
               obj : obj-u
            -- scope-t)
-        (lit-dict name obj)
-        dict-update)
+        name obj dict-insert)
       #+end_src
 
 ***** current-scope-insert
@@ -444,19 +513,9 @@
               name : string-t
               obj : obj-u
            -- env-t)
-      scope-stack-pop
-      name obj scope-insert
-      scope-stack-push)
-      #+end_src
-
-*** scope
-
-***** new-scope
-
-      #+begin_src cicada
-      (+fun new-scope
-        : (-> -- scope-t)
-        (lit-dict))
+        scope-stack-pop
+        name obj scope-insert
+        scope-stack-push)
       #+end_src
 
 *** >< goal-stack
@@ -468,8 +527,7 @@
       #+begin_src cicada
       (+fun data-bind-dict-find
         : (-> env-t, hypo-id : hypo-id-t
-           -- env-t (| false-t
-                       [obj-u true-t]))
+           -- env-t (| obj-u true-t, false-t))
         dup .data-bind-dict hypo-id dict-find)
       #+end_src
 
@@ -493,8 +551,7 @@
       #+begin_src cicada
       (+fun type-bind-dict-find
         : (-> env-t, hypo-id : hypo-id-t
-           -- env-t (| false-t
-                       [obj-u true-t]))
+           -- env-t (| obj-u true-t, false-t))
         dup .type-bind-dict hypo-id dict-find)
       #+end_src
 
@@ -763,7 +820,19 @@
     #+begin_src cicada
     (+fun call-exp-exe
       : (-> env-t, exp : call-exp-t -- env-t)
-      exp.name name-dict-get den-exe)
+      (if [exp.name current-scope-find]
+        (begin
+          (case dup
+            (data-hypo-t
+              .id data-bind-dict-find bool-assert
+              data-stack-push)
+           (else
+             data-stack-push)))
+        (if [exp.name name-dict-find]
+          [den-exe]
+          ["- call-exp-exe fail" p nl
+           "  unknown name : " p exp.name p nl
+           error])))
     #+end_src
 
 *** den-exe
@@ -787,37 +856,33 @@
         : (-> env-t, den : fun-den-t -- env-t)
         new-scope scope-stack-push
         den.type-arrow-exp exp-collect-one drop
-        den.type-arrow-exp.ante-exp-list exp-list-let-colon
+        den.type-arrow-exp.ante-exp-list exp-list-bind-colon
         den.body-exp-list new-scoping-frame frame-stack-push)
       #+end_src
 
-***** exp-list-let-colon
+***** exp-list-bind-colon
 
       #+begin_src cicada
-      (+fun exp-list-let-colon
-        : (-> env : env-t
+      (+fun exp-list-bind-colon
+        : (-> env-t
               exp-list : [exp-u list-u]
            -- env-t)
         exp-list
-        {(let exp)
-         (or [exp colon-exp-p]
-             [exp colon-exp-p])}
-        list-filter
+        {colon-exp-p} list-filter
         list-reverse
-        {env swap exp-let-colon} list-for-each
-        env)
+        {exp-bind-colon} list-for-each)
       #+end_src
 
-***** exp-let-colon
+***** exp-bind-colon
 
       #+begin_src cicada
-      (+fun exp-let-colon
+      (+fun exp-bind-colon
         : (-> env-t
               exp : exp-u
            -- env-t)
-        data-stack-pop
-        exp.name swap
-        current-scope-insert)
+        exp.name current-scope-get (let data-hypo)
+        data-stack-pop data-hypo.id
+        swap data-bind-dict-insert)
       #+end_src
 
 ***** data-cons-den-exe
@@ -949,6 +1014,14 @@
     #+begin_src cicada
     (+fun apply-exp-exe
       : (-> env-t, exp : apply-exp-t -- env-t)
+      apply-exp-ins)
+    #+end_src
+
+*** apply-exp-ins
+
+    #+begin_src cicada
+    (+fun apply-exp-ins
+      : (-> env-t -- env-t)
       data-stack-pop (let obj)
       (case obj
         (closure-obj-t
@@ -964,12 +1037,14 @@
       ;; calling collect-one
       ;;   might effect current scope
       exp.arg-exp-list exp-list-collect-one (let obj)
+      ;; "- case-exp-exe" p nl
+      ;; "  obj : " p obj p nl
       (case obj
         (data-obj-t
           exp.closure-exp-dict
           obj.data-type.name dict-get
           closure-exp-exe
-          apply-exp-exe)))
+          apply-exp-ins)))
     #+end_src
 
 *** field-exp-exe
@@ -981,7 +1056,8 @@
       (case obj
         (data-obj-t
           obj.field-obj-dict
-          exp.field-name dict-get)))
+          exp.field-name dict-get
+          data-stack-push)))
     #+end_src
 
 *** colon-exp-exe
@@ -991,8 +1067,7 @@
       : (-> env-t, exp : colon-exp-t -- env-t)
       exp.type-exp-list exp-list-collect-one (let type)
       exp.name generate-hypo-id (let hypo-id)
-      hypo-id type-hypo-c
-      type type-hypo-insert
+      hypo-id type type-bind-dict-insert
       exp.name hypo-id data-hypo-c current-scope-insert
       type data-stack-push)
     #+end_src
@@ -1121,7 +1196,7 @@
       dup .data-stack list-length (let old)
       exp-list exp-list-run
       dup .data-stack list-length (let new)
-      new old number-sub data-stack-n-pop)
+      new old sub data-stack-n-pop)
     #+end_src
 
 *** exp-list-collect-one
@@ -1281,7 +1356,7 @@
 *** sexp-u
 
     #+begin_src cicada
-    (+alias sexp-u (| string-t [sexp-u list-u]))
+    (+alias sexp-u (| string-t, sexp-u list-u))
     #+end_src
 
 * pass
@@ -1678,9 +1753,9 @@
       (+fun env-print
         : (-> env-t -- env-t)
         name-dict-print
-        ;; goal-stack-print
-        ;; data-bind-dict-print
-        ;; type-bind-dict-print
+        goal-stack-print
+        data-bind-dict-print
+        type-bind-dict-print
         scope-stack-print
         frame-stack-print
         data-stack-print)
@@ -1705,7 +1780,7 @@
       (+fun data-stack-print
         : (-> env-t -- env-t)
         "- data-stack : " p nl
-        dup .data-stack
+        dup .data-stack list-reverse
         {"  " p obj-print nl}
         list-for-each
         nl)
@@ -1740,23 +1815,25 @@
       #+begin_src cicada
       (+fun goal-stack-print
         : (-> env-t -- env-t)
-        )
+        "- goal-stack : " p nl)
       #+end_src
 
-***** >< data-bind-dict-print
+***** data-bind-dict-print
 
       #+begin_src cicada
       (+fun data-bind-dict-print
         : (-> env-t -- env-t)
-        )
+        "- data-bind-dict : " p nl
+        dup .data-bind-dict p nl)
       #+end_src
 
-***** >< type-bind-dict-print
+***** type-bind-dict-print
 
       #+begin_src cicada
       (+fun type-bind-dict-print
         : (-> env-t -- env-t)
-        )
+        "- type-bind-dict : " p nl
+        dup .type-bind-dict p nl)
       #+end_src
 
 *** obj-print
@@ -1884,8 +1961,12 @@
           exp.name p)
         (let-exp-t
           exp.name-list p)
-        ;; (closure-exp-t)
-        ;; (arrow-exp-t)
+        (closure-exp-t
+          ;; ><><><
+          exp p)
+        (arrow-exp-t
+          ;; ><><><
+          exp p)
         (apply-exp-t
           "apply" p)
         (case-exp-t
@@ -1903,8 +1984,7 @@
         (double-colon-exp-t
           "(:: " p exp.name p " " p
           exp.type-exp-list exp-list-print ")" p)
-        (comma-exp-t
-          "," p)
+        (comma-exp-t)
         (type-tt-exp-t
           "type-tt" p)
         (else exp p)))
@@ -2020,12 +2100,12 @@
     #+begin_src cicada
     (begin
       new-env
-      "1" 1 data-bind-dict-insert
-      "2" 2 data-bind-dict-insert
-      "1" data-bind-dict-find bool-assert 1 eq-p bool-assert
-      "1" data-bind-dict-find bool-assert 1 eq-p bool-assert
-      "2" data-bind-dict-find bool-assert 2 eq-p bool-assert
-      "2" data-bind-dict-find bool-assert 2 eq-p bool-assert
+      (lit-dict '1 '0) 1 data-bind-dict-insert
+      (lit-dict '2 '0) 2 data-bind-dict-insert
+      (lit-dict '1 '0) data-bind-dict-find bool-assert 1 eq-p bool-assert
+      (lit-dict '1 '0) data-bind-dict-find bool-assert 1 eq-p bool-assert
+      (lit-dict '2 '0) data-bind-dict-find bool-assert 2 eq-p bool-assert
+      (lit-dict '2 '0) data-bind-dict-find bool-assert 2 eq-p bool-assert
       drop)
 
     (begin
@@ -2148,11 +2228,11 @@
       (+type false-t : type-tt
         (-> -- false-t))
 
-      true-c
-      false-c
-      true-t
-      bool-u
-      type-tt
+      ;; true-c
+      ;; false-c
+      ;; true-t
+      ;; bool-u
+      ;; type-tt
 
       (+union nat-u : type-tt
         zero-t
@@ -2179,7 +2259,12 @@
           (zero-t n succ-c)
           (succ-t n.prev recur n nat-mul)))
 
-      zero-c succ-c)
+      zero-c succ-c succ-c succ-c
+      zero-c succ-c succ-c succ-c nat-add
+      zero-c succ-c succ-c
+      zero-c succ-c succ-c nat-mul
+      zero-c succ-c succ-c succ-c succ-c nat-factorial
+      )
 
     env-print
     drop nl
