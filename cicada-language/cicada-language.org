@@ -3,9 +3,27 @@
 
 * [todo-stack]
 
-*** need GC on two bind-dict s
+*** ><
 
-*** call-exp-exe de-ref data-hypo
+    - x -
+      we need a theory of scope
+      note that
+      1. during cut, an arrow can be applied separately
+      2. during exe, an arrow can be applied with the body
+
+    - k -
+      we might drop the use of hypo in cicada-language
+
+      because cicada-prover will be a different implementation
+      based on logic programming language tech
+
+      at least,
+      we must be clear about the difference
+      between cicada-language and cicada-prover
+
+*** note about why we need hypo proxy
+
+*** need GC on two bind-dict s
 
 *** env-print really use indent
 
@@ -1782,8 +1800,8 @@
         : (-> env-t -- env-t)
         name-dict-print
         goal-stack-print
-        data-bind-dict-print
-        type-bind-dict-print
+        ;; data-bind-dict-print
+        ;; type-bind-dict-print
         scope-stack-print
         frame-stack-print
         data-stack-print)
@@ -1843,7 +1861,8 @@
       #+begin_src cicada
       (+fun goal-stack-print
         : (-> env-t -- env-t)
-        "- goal-stack : " p nl)
+        ;; "- goal-stack : " p nl
+        )
       #+end_src
 
 ***** data-bind-dict-print
@@ -1852,7 +1871,12 @@
       (+fun data-bind-dict-print
         : (-> env-t -- env-t)
         "- data-bind-dict : " p nl
-        dup .data-bind-dict p nl)
+        dup .data-bind-dict
+        {(let hypo-id obj)
+         "  " p hypo-id.string p
+         " = " p obj obj-print nl}
+        dict-for-each
+        nl)
       #+end_src
 
 ***** type-bind-dict-print
@@ -1861,7 +1885,12 @@
       (+fun type-bind-dict-print
         : (-> env-t -- env-t)
         "- type-bind-dict : " p nl
-        dup .type-bind-dict p nl)
+        dup .type-bind-dict
+        {(let hypo-id obj)
+         "  " p hypo-id.string p
+         " = " p obj obj-print nl}
+        dict-for-each
+        nl)
       #+end_src
 
 *** obj-print
@@ -2292,6 +2321,20 @@
       zero-c succ-c succ-c succ-c
       zero-c succ-c succ-c nat-mul
       zero-c succ-c succ-c succ-c nat-factorial
+
+    ;;   (+union list-u : (-> type : type-tt -- type-tt)
+    ;;     null-t
+    ;;     cons-t)
+
+      (+type null-t : (-> type : type-tt -- type-tt)
+        (-> -- type null-t))
+
+    ;;   (+type cons-t : (-> type : type-tt -- type-tt)
+    ;;     (-> car : type
+    ;;         cdr : [type cons-t]
+    ;;         -- type cons-t))
+
+      null-c
       )
 
     env-print

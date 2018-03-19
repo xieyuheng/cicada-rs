@@ -914,8 +914,8 @@
         : (-> env-t -- env-t)
         name-dict-print
         goal-stack-print
-        data-bind-dict-print
-        type-bind-dict-print
+        ;; data-bind-dict-print
+        ;; type-bind-dict-print
         scope-stack-print
         frame-stack-print
         data-stack-print)
@@ -950,15 +950,26 @@
         nl)
       (+fun goal-stack-print
         : (-> env-t -- env-t)
-        "- goal-stack : " p nl)
+        ;; "- goal-stack : " p nl
+        )
       (+fun data-bind-dict-print
         : (-> env-t -- env-t)
         "- data-bind-dict : " p nl
-        dup .data-bind-dict p nl)
+        dup .data-bind-dict
+        {(let hypo-id obj)
+         "  " p hypo-id.string p
+         " = " p obj obj-print nl}
+        dict-for-each
+        nl)
       (+fun type-bind-dict-print
         : (-> env-t -- env-t)
         "- type-bind-dict : " p nl
-        dup .type-bind-dict p nl)
+        dup .type-bind-dict
+        {(let hypo-id obj)
+         "  " p hypo-id.string p
+         " = " p obj obj-print nl}
+        dict-for-each
+        nl)
       (+fun obj-print
         : (-> env-t, obj : obj-u -- env-t)
         (case obj
@@ -1290,6 +1301,20 @@
       zero-c succ-c succ-c succ-c
       zero-c succ-c succ-c nat-mul
       zero-c succ-c succ-c succ-c nat-factorial
+
+    ;;   (+union list-u : (-> type : type-tt -- type-tt)
+    ;;     null-t
+    ;;     cons-t)
+
+      (+type null-t : (-> type : type-tt -- type-tt)
+        (-> -- type null-t))
+
+    ;;   (+type cons-t : (-> type : type-tt -- type-tt)
+    ;;     (-> car : type
+    ;;         cdr : [type cons-t]
+    ;;         -- type cons-t))
+
+      null-c
       )
 
     env-print
