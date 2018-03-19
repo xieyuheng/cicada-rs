@@ -3,9 +3,9 @@
 
 * [todo-stack]
 
-*** call-exp-exe de-ref data-hypo
+*** need GC on two bind-dict s
 
-*** test exe
+*** call-exp-exe de-ref data-hypo
 
 *** env-print really use indent
 
@@ -14,6 +14,8 @@
 *** fix exp-list-bind-colon
 
     - for binding not at tail
+
+*** test exe
 
 * [todo-list]
 
@@ -27,8 +29,6 @@
       [note that only var can be bound to]
 
     - what is its interface ?
-
-*** need gc on proxies
 
 * [note]
 
@@ -568,6 +568,34 @@
         env clone)
       #+end_src
 
+*** hypo-bind-dict
+
+***** hypo-bind-dict-find
+
+      #+begin_src cicada
+      (+fun hypo-bind-dict-find
+        : (-> env-t
+              hypo : (| data-hypo-t, type-hypo-t)
+           -- env-t
+              (| obj-u true-t, false-t))
+        (case hypo
+          (data-hypo-t hypo.id data-bind-dict-find)
+          (type-hypo-t hypo.id type-bind-dict-find)))
+      #+end_src
+
+***** hypo-bind-dict-insert
+
+      #+begin_src cicada
+      (+fun hypo-bind-dict-insert
+        : (-> env-t
+              hypo : (| data-hypo-t, type-hypo-t)
+              obj : obj-u
+           -- env-t)
+        (case hypo
+          (data-hypo-t hypo.id obj data-bind-dict-insert)
+          (type-hypo-t hypo.id obj type-bind-dict-insert)))
+      #+end_src
+
 * exp
 
 *** exp-u
@@ -821,13 +849,13 @@
     (+fun call-exp-exe
       : (-> env-t, exp : call-exp-t -- env-t)
       (if [exp.name current-scope-find]
-        (begin
-          (case dup
-            (data-hypo-t
-              .id data-bind-dict-find bool-assert
-              data-stack-push)
-           (else
-             data-stack-push)))
+        (begin (let obj)
+          (if (or [obj data-hypo-p]
+                  [obj type-hypo-p])
+            (if [obj hypo-bind-dict-find]
+              [data-stack-push]
+              [obj data-stack-push])
+            [obj data-stack-push]))
         (if [exp.name name-dict-find]
           [den-exe]
           ["- call-exp-exe fail" p nl
@@ -881,8 +909,8 @@
               exp : exp-u
            -- env-t)
         exp.name current-scope-get (let data-hypo)
-        data-stack-pop data-hypo.id
-        swap data-bind-dict-insert)
+        data-stack-pop data-hypo
+        swap hypo-bind-dict-insert)
       #+end_src
 
 ***** data-cons-den-exe
@@ -2261,9 +2289,9 @@
 
       zero-c succ-c succ-c succ-c
       zero-c succ-c succ-c succ-c nat-add
-      zero-c succ-c succ-c
+      zero-c succ-c succ-c succ-c
       zero-c succ-c succ-c nat-mul
-      zero-c succ-c succ-c succ-c succ-c nat-factorial
+      zero-c succ-c succ-c succ-c nat-factorial
       )
 
     env-print

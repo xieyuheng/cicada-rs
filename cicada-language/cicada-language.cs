@@ -230,6 +230,22 @@
         env.type-bind-dict hypo-id obj dict-insert
         (. type-bind-dict)
         env clone)
+      (+fun hypo-bind-dict-find
+        : (-> env-t
+              hypo : (| data-hypo-t, type-hypo-t)
+           -- env-t
+              (| obj-u true-t, false-t))
+        (case hypo
+          (data-hypo-t hypo.id data-bind-dict-find)
+          (type-hypo-t hypo.id type-bind-dict-find)))
+      (+fun hypo-bind-dict-insert
+        : (-> env-t
+              hypo : (| data-hypo-t, type-hypo-t)
+              obj : obj-u
+           -- env-t)
+        (case hypo
+          (data-hypo-t hypo.id obj data-bind-dict-insert)
+          (type-hypo-t hypo.id obj type-bind-dict-insert)))
     (+union exp-u
       call-exp-t
       let-exp-t
@@ -332,13 +348,13 @@
     (+fun call-exp-exe
       : (-> env-t, exp : call-exp-t -- env-t)
       (if [exp.name current-scope-find]
-        (begin
-          (case dup
-            (data-hypo-t
-              .id data-bind-dict-find bool-assert
-              data-stack-push)
-           (else
-             data-stack-push)))
+        (begin (let obj)
+          (if (or [obj data-hypo-p]
+                  [obj type-hypo-p])
+            (if [obj hypo-bind-dict-find]
+              [data-stack-push]
+              [obj data-stack-push])
+            [obj data-stack-push]))
         (if [exp.name name-dict-find]
           [den-exe]
           ["- call-exp-exe fail" p nl
@@ -370,8 +386,8 @@
               exp : exp-u
            -- env-t)
         exp.name current-scope-get (let data-hypo)
-        data-stack-pop data-hypo.id
-        swap data-bind-dict-insert)
+        data-stack-pop data-hypo
+        swap hypo-bind-dict-insert)
       (+fun data-cons-den-exe
         : (-> env-t, den : data-cons-den-t -- env-t)
         den.type-arrow-exp exp-collect-one drop
@@ -1271,9 +1287,9 @@
 
       zero-c succ-c succ-c succ-c
       zero-c succ-c succ-c succ-c nat-add
-      zero-c succ-c succ-c
+      zero-c succ-c succ-c succ-c
       zero-c succ-c succ-c nat-mul
-      zero-c succ-c succ-c succ-c succ-c nat-factorial
+      zero-c succ-c succ-c succ-c nat-factorial
       )
 
     env-print
