@@ -1,4 +1,4 @@
-#+title: examples
+#+title: simple
 
 * [todo-stack]
 
@@ -93,24 +93,37 @@
     #+begin_src cicada
     (+fun list-length
       : (-> type :: type-tt
-            l : [type list-u]
+            list : [type list-u]
          -- nat-u)
-      (case l
+      (case list
         (null-t zero-c)
-        (cons-t l.cdr recur succ-c)))
+        (cons-t list.cdr recur succ-c)))
+    #+end_src
+
+*** list-append
+
+    #+begin_src cicada
+    (+fun list-append
+      : (-> type :: type-tt
+            list : [type list-u]
+            list2 : [type list-u]
+         -- type list-u)
+      (case list2
+        (null-t list)
+        (cons-t list2.car list list2.cdr recur cons-c)))
     #+end_src
 
 *** list-map
 
     #+begin_src cicada
     (+fun list-map
-      : (-> [t1 t2] :: type-tt
-            l : [t1 list-u]
-            fun : (-> t1 -- t2)
-         -- t2 list-u)
-      (case l
-        (null-t null-c)
-        (cons-t l.car fun l.cdr {fun} recur cons-c)))
+      : (-> [type type2] :: type-tt
+            list : [type list-u]
+            fun : (-> type -- type2)
+         -- type2 list-u)
+      (case list
+        (null-t list)
+        (cons-t list.car fun list.cdr {fun} recur cons-c)))
     #+end_src
 
 *** list-ref -- will not pass type check
@@ -122,12 +135,12 @@
     #note
     (+fun list-ref
       : (-> type :: type-tt
-            l : [type list-u]
+            list : [type list-u]
             index : nat-u
          -- type)
       (case index
-        (zero-t l.car)
-        (succ-t l.cdr index.prev recur)))
+        (zero-t list.car)
+        (succ-t list.cdr index.prev recur)))
     #+end_src
 
 *** list-remove-first
@@ -136,11 +149,11 @@
     (+fun list-remove-first
       : (-> type :: type-tt
             x : type
-            l : [type list-u]
+            list : [type list-u]
          -- type list-u)
-      (case l
-        (null-t null-c)
-        (cons-t (case [l.car x eq-p]
-                   (true-t  l.cdr)
-                   (false-t l.car l.cdr x recur cons)))))
+      (case list
+        (null-t list)
+        (cons-t (case [list.car x eq-p]
+                   (true-t  list.cdr)
+                   (false-t list.car list.cdr x recur cons)))))
     #+end_src
