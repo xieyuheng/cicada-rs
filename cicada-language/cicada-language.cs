@@ -1,3 +1,7 @@
+      #note
+      (+proof _
+        : (-> -- nat-u null-t)
+        null-c)
     (+fun :)
     (+macro +alias note)
     (+macro -> (let body)
