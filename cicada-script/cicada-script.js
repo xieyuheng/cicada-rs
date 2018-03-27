@@ -1416,6 +1416,28 @@
           }
       );
       new_prim (
+          "true-p",
+          function (env)
+          {
+              let obj = data_stack_pop (env);
+              if (obj === true)
+                  data_stack_push (env, true);
+              else
+                  data_stack_push (env, false);
+          }
+      );
+      new_prim (
+          "false-p",
+          function (env)
+          {
+              let obj = data_stack_pop (env);
+              if (obj === false)
+                  data_stack_push (env, true);
+              else
+                  data_stack_push (env, false);
+          }
+      );
+      new_prim (
           "bool-and",
           function (env)
           {

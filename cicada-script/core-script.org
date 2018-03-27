@@ -793,8 +793,8 @@
     #+begin_src cicada
     (+fun dict-find
       (let dict key)
-      ;; -- | [ value true-t]
-      ;;      [ false-t]
+      ;; -- | value true-t
+      ;;      false-t
       dict.assoc-list
       key assoc-list-find)
     #+end_src
@@ -804,8 +804,8 @@
     #+begin_src cicada
     (+fun dict-get
       (let dict key)
-      ;; -- | [ value true-t]
-      ;;      [ false-t]
+      ;; -- | value true-t
+      ;;      false-t
       dict key dict-find
       (bool-when-not
         "- dict-get fail" p nl
@@ -819,8 +819,8 @@
     #+begin_src cicada
     (+fun assoc-list-find
       (let assoc-list key)
-      ;; -- | [ value true-t]
-      ;;      [ false-t]
+      ;; -- | value true-t
+      ;;      false-t
       (case assoc-list
         (null-t false-c)
         (cons-t

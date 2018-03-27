@@ -336,14 +336,14 @@
       null-c dict-c)
     (+fun dict-find
       (let dict key)
-      ;; -- | [ value true-t]
-      ;;      [ false-t]
+      ;; -- | value true-t
+      ;;      false-t
       dict.assoc-list
       key assoc-list-find)
     (+fun dict-get
       (let dict key)
-      ;; -- | [ value true-t]
-      ;;      [ false-t]
+      ;; -- | value true-t
+      ;;      false-t
       dict key dict-find
       (bool-when-not
         "- dict-get fail" p nl
@@ -352,8 +352,8 @@
         error))
     (+fun assoc-list-find
       (let assoc-list key)
-      ;; -- | [ value true-t]
-      ;;      [ false-t]
+      ;; -- | value true-t
+      ;;      false-t
       (case assoc-list
         (null-t false-c)
         (cons-t
