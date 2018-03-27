@@ -108,7 +108,7 @@
              false-c)))
   #+end_src
 
-* >< state
+* state
 
   #+begin_src cicada
   (+type state-t
@@ -116,47 +116,91 @@
     id-counter : number-t)
   #+end_src
 
-* >< stream
+* stream
 
   #+begin_src cicada
-  #note
-  stream-t
+  (+alias stream-u list-u)
 
   (+fun unit
-    : (-> state-t -- state-t stream-t)
-    ><><><)
+    : (-> state-t -- state-t stream-u)
+    null-c cons-c)
 
   (+fun mzero
-    : (-> state-t -- state-t stream-t)
-    ><><><)
+    : (-> -- state-t stream-u)
+    null-c)
   #+end_src
 
-* >< goal
+* goal
 
   #+begin_src cicada
-  (+alias goal-t (-> state-t -- state-t stream-t))
+  (+alias goal-t (-> state-t -- state-t stream-u))
 
   (+fun ==
-    : (-> term-u, term-u -- goal-t)
-    ><><><)
+    : (-> u : term-u
+          v : term-u
+       -- goal-t)
+    {(let state)
+     state.substitution u v unify (let substitution)
+     (if [substitution false-p]
+       mzero
+       [substitution
+        (. substitution)
+        state clone
+        unit])})
 
   (+fun call/fresh
-    : (-> (-> var-t -- goal-t) -- goal-t)
-    ><><><)
-
-  (+fun conj
-    : (-> goal-t, goal-t -- goal-t)
-    ><><><)
+    : (-> fun : (-> var-t -- goal-t) -- goal-t)
+    {(let state)
+     state.id-counter (let id)
+     id inc (. id-counter) state clone
+     id var-c fun
+     apply})
 
   (+fun disj
-    : (-> goal-t, goal-t -- goal-t)
-    ><><><)
+    : (-> goal1 : goal-t
+          goal2 : goal-t
+       -- goal-t)
+    {(let state)
+     state goal1
+     state goal2
+     mplus})
 
   (+fun mplus
-    : (-> --))
+    : (-> stream1 : [state-t stream-u]
+          stream2 : [state-t stream-u]
+       -- state-t stream-u)
+    (cond [stream1 null-p] stream2
+          ;; ><><><
+          else [stream1.car
+                stream1.cdr stream2 recur
+                cons-c]))
+
+  (note
+    (define (mplus $1 $2)
+      (cond [(null? $1) $2]
+            [(procedure? $1) (lambda () (mplus $2 ($1)))]
+            [else (cons (car $1) (mplus (cdr $1) $2))])))
+
+  (+fun conj
+    : (-> goal1 : goal-t
+          goal2 : goal-t
+       -- goal-t)
+    {goal1 {goal2} bind})
 
   (+fun bind
-    : (-> --))
+    : (-> stream : [state-t stream-u]
+          goal : goal-t
+       -- state-t stream-u)
+    (cond [stream null-p] mzero
+          else [stream.car goal
+                stream.cdr {goal} recur
+                mplus]))
+
+  (note
+    (define (bind $ g)
+      (cond [(null? $) mzero]
+            [(procedure? $) (lambda () (bind ($) g))]
+            [else (mplus (g (car $)) (bind (cdr $) g))])))
   #+end_src
 
 * test
@@ -187,6 +231,46 @@
       unify
       empty-substitution 0 var-c 'c s-ext
       eq-p bool-assert)
+    #+end_src
+
+*** goal
+
+    #+begin_src cicada
+    ;; (define empty-state ' (() . 0))
+    ;; ((call/fresh (λ (q) ( ≡ q 5))) empty-state)
+    ;;   ((((#(0) . 5)) . 1))
+
+    (+fun empty-state
+      : (-> -- state-t)
+      empty-substitution
+      0
+      state-c)
+
+    empty-state
+    {5 ==} call/fresh
+    apply
+    p nl
+
+    ;; (define a-and-b
+    ;;   (conj
+    ;;    (call/fresh ( λ (a) ( ≡ a 7)))
+    ;;    (call/fresh ( λ (b) (disj ( ≡ b 5) ( ≡ b 6))))))
+    ;; (a-and-b empty-state)
+    ;;   ((((#(1) . 5) (#(0) . 7)) . 2)
+    ;;    (((#(1) . 6) (#(0) . 7)) . 2))
+
+    (+fun a-and-b
+      {7 ==} call/fresh
+      {(let b)
+       b 5 ==
+       b 6 ==
+       disj} call/fresh
+      conj)
+
+    empty-state
+    a-and-b
+    apply
+    p nl
     #+end_src
 
 * epilog
