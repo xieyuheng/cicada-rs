@@ -40,7 +40,9 @@
     dict-insert)
 
   (+fun walk
-    : (-> term : term-u, substitution : substitution-t -- term-u)
+    : (-> term : term-u
+          substitution : substitution-t
+       -- term-u)
     (case term
       (var-t
         (if [substitution term dict-find]
@@ -137,6 +139,7 @@
           goal : goal-t
        -- state-t stream-u)
     (cond [stream null-p] mzero
+          ;; ><><><
           else [stream.car goal
                 stream.cdr {goal} recur
                 mplus]))
@@ -169,9 +172,28 @@
       unify
       empty-substitution 0 var-c 'c s-ext
       eq-p bool-assert)
-    ;; (define empty-state ' (() . 0))
-    ;; ((call/fresh (λ (q) ( ≡ q 5))) empty-state)
-    ;;   ((((#(0) . 5)) . 1))
+
+    (begin
+      empty-substitution
+      `((a b c) (a b c) (a b (@ 0 var-c)))
+      `((a b c) (a b c) (a b c))
+      unify
+      empty-substitution 0 var-c 'c s-ext
+      eq-p bool-assert)
+
+    (begin
+      empty-substitution
+      `(a b (@ 0 var-c))
+      `(a b c)
+      unify
+      empty-substitution 0 var-c 'c s-ext
+      eq-p bool-assert)
+    (note
+      (define empty-state ' (() . 0))
+
+      ((call/fresh (λ (q) (== q 5))) empty-state)
+
+      ((((#(0) . 5)) . 1)))
 
     (+fun empty-state
       : (-> -- state-t)
@@ -184,20 +206,20 @@
     apply
     p nl
 
-    ;; (define a-and-b
-    ;;   (conj
-    ;;    (call/fresh ( λ (a) ( ≡ a 7)))
-    ;;    (call/fresh ( λ (b) (disj ( ≡ b 5) ( ≡ b 6))))))
-    ;; (a-and-b empty-state)
-    ;;   ((((#(1) . 5) (#(0) . 7)) . 2)
-    ;;    (((#(1) . 6) (#(0) . 7)) . 2))
+    (note
+      (define a-and-b
+        (conj
+         (call/fresh (λ (a) (== a 7)))
+         (call/fresh (λ (b) (disj (== b 5) (== b 6))))))
+
+      (a-and-b empty-state)
+
+      ((((#(1) . 5) (#(0) . 7)) . 2)
+       (((#(1) . 6) (#(0) . 7)) . 2)))
 
     (+fun a-and-b
       {7 ==} call/fresh
-      {(let b)
-       b 5 ==
-       b 6 ==
-       disj} call/fresh
+      {(let b)  b 5 ==  b 6 ==  disj} call/fresh
       conj)
 
     empty-state
