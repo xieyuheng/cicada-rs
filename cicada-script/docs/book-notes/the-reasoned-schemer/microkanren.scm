@@ -3,11 +3,8 @@
 (define (var=? x1 x2) (= (vector-ref x1 0) (vector-ref x2 0)))
 
 (define (walk u s)
-  (let ([pr (and (var? u)
-                 (assp (lambda (v) (var=? u v)) s))])
-    (if pr
-      (walk (cdr pr) s)
-      u)))
+  (let ([pr (and (var? u) (assp (lambda (v) (var=? u v)) s))])
+    (if pr (walk (cdr pr) s) u)))
 
 (define (ext-s x v s) (cons (cons x v) s))
 
