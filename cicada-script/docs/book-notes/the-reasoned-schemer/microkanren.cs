@@ -66,6 +66,11 @@
     (+type state-t
       substitution : substitution-t
       id-counter : number-t)
+    (+fun empty-state
+      : (-> -- state-t)
+      empty-substitution
+      0
+      state-c)
     (+alias stream-u list-u)
     (+fun unit
       : (-> state-t -- state-t stream-u)
@@ -97,45 +102,38 @@
       : (-> goal1 : goal-t
             goal2 : goal-t
          -- goal-t)
-      {(let state)
-       state goal1
-       state goal2
-       mplus})
+      {(let state)  state goal1  state goal2  mplus})
     (+fun conj
       : (-> goal1 : goal-t
             goal2 : goal-t
          -- goal-t)
       {goal1 {goal2} bind})
+    ;; just like append of list
+
+    ;; append is an implementation for finite relations
+    ;;   if the invocation of either of the two goals
+    ;;   on the state results in an infinite stream,
+    ;;   the invocation of disj will not complete.
+
     (+fun mplus
       : (-> stream1 : [state-t stream-u]
             stream2 : [state-t stream-u]
          -- state-t stream-u)
       (cond [stream1 null-p] stream2
-            ;; ><><><
             else [stream1.car
                   stream1.cdr stream2 recur
                   cons-c]))
+    ;; just like append-map of list
+    ;;   though with its arguments reversed.
 
-    (note
-      (define (mplus $1 $2)
-        (cond [(null? $1) $2]
-              [(procedure? $1) (lambda () (mplus $2 ($1)))]
-              [else (cons (car $1) (mplus (cdr $1) $2))])))
     (+fun bind
       : (-> stream : [state-t stream-u]
             goal : goal-t
          -- state-t stream-u)
       (cond [stream null-p] mzero
-            ;; ><><><
             else [stream.car goal
                   stream.cdr {goal} recur
                   mplus]))
-
-    (note
-      (define (bind $ g)
-        (cond [(null? $) mzero]
-              [(procedure? $) (lambda () (bind ($) g))]
-              [else (mplus (g (car $)) (bind (cdr $) g))])))
     (begin
       empty-substitution
       '(a b c)
@@ -175,42 +173,39 @@
       unify
       empty-substitution 0 var-c 'c s-ext
       eq-p bool-assert)
-    (note
-      (define empty-state ' (() . 0))
+      (assert
+        empty-state
+        {5 ==} call/fresh
+        apply
+        (lit-list
+         (lit-dict 0 var-c 5) 1 state-c)
+        eq-p)
 
-      ((call/fresh (λ (q) (== q 5))) empty-state)
+      (assert
+        empty-state
+        '(5 5 5) '(5 5 5) ==
+        apply
+        (lit-list
+         (lit-dict) 0 state-c)
+        eq-p)
 
-      ((((#(0) . 5)) . 1)))
+      (assert
+        empty-state
+        6 5 ==
+        apply
+        (lit-list)
+        eq-p)
+      (+fun a-and-b
+        {7 ==} call/fresh
+        {(let b)  b 5 ==  b 6 ==  disj} call/fresh
+        conj)
 
-    (+fun empty-state
-      : (-> -- state-t)
-      empty-substitution
-      0
-      state-c)
-
-    empty-state
-    {5 ==} call/fresh
-    apply
-    p nl
-
-    (note
-      (define a-and-b
-        (conj
-         (call/fresh (λ (a) (== a 7)))
-         (call/fresh (λ (b) (disj (== b 5) (== b 6))))))
-
-      (a-and-b empty-state)
-
-      ((((#(1) . 5) (#(0) . 7)) . 2)
-       (((#(1) . 6) (#(0) . 7)) . 2)))
-
-    (+fun a-and-b
-      {7 ==} call/fresh
-      {(let b)  b 5 ==  b 6 ==  disj} call/fresh
-      conj)
-
-    empty-state
-    a-and-b
-    apply
-    p nl
+      (assert
+        empty-state
+        a-and-b
+        apply
+        (lit-list
+         (lit-dict 1 var-c 5, 0 var-c 7) 2 state-c
+         (lit-dict 1 var-c 6, 0 var-c 7) 2 state-c)
+        eq-p)
 

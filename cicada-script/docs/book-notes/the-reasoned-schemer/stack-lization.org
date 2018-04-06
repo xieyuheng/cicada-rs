@@ -1,7 +1,15 @@
-#+property: tangle microkanren.cs
-#+title: microkanren
+#+property: tangle stack-lization.cs
+#+title: stack-lization
 
 * [todo-stack]
+
+*** stack-lization
+
+    - x -
+      設想我們 cicada-prover 的實現方式
+      看看 disp & conj 所代表的 goal 這個代數結構
+      如何反應在我們的實現框架內
+      關於 judgment and inference rule
 
 *** recover minikanren
 
@@ -97,7 +105,7 @@
       爲什麼會有這種感覺呢 ?
 
     - k -
-      ><
+      也許是因爲還有 call/fresh 之類的函數吧
 
 * prolog
 
@@ -517,6 +525,25 @@
       (+fun a-and-b
         {7 ==} call/fresh
         {(let b)  b 5 ==  b 6 ==  disj} call/fresh
+        conj)
+
+
+      ;; to use @
+      ;;   we must construct goal in env
+      ;;   but what is the relation between env and state ?
+      ;; first we try to put a data-stack in state
+      ;;   to simplify call/fresh
+      (+fun a-and-b
+        @ 7 ==
+        @ (let b)  b 5 ==  b 6 ==  disj
+        conj)
+
+      (+fun a-and-b
+        @ 7 ==
+        @ (let b)
+        b 5 ==
+        b 6 ==
+        disj
         conj)
 
       (assert
