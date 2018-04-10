@@ -340,23 +340,22 @@
 *** list-append-u
 
     #+begin_src cicada
-    ;; append([], List2, List2).
-    ;; append([Head1|Tail1], List2, [Head1|Tail2]):-
-    ;;   append(Tail1, List2, Tail2).
+    ;; append([], SUCC, SUCC).
+    ;; append([CAR|CDR], SUCC, [CAR|RESULT_CDR]):-
+    ;;   append(CDR, SUCC, RESULT_CDR).
 
     (+union list-append-u
       : (-> type :: type-tt
-            list : [type list-u]
-            list2 : [type list-u]
-            out : [type list-u]
+            ante : type list-u
+            succ : type list-u
+            result : type list-u
          -- type-tt)
-      (-> -- null-c list2 list2 null-append-t)
-      (-> tail :: type list-u
-          out-tail :: type list-u
-          head :: type
-          prev : tail list2 out-tail list-append-u
-       -- head tail cons-c, list2
-          head out-tail cons-c cons-append-t))
+      (-> -- null-c succ succ null-append-t)
+      (-> car :: type
+          cdr :: type list-u
+          result-cdr :: type list-u
+          prev : cdr succ result-cdr list-append-u
+       -- car cdr cons-c, succ, car result-cdr cons-c cons-append-t))
     #+end_src
 
 * vect

@@ -32,10 +32,11 @@
 
   #+begin_src cicada
   (+class functor-tc < (-> type-tt -- type-tt)
-    map : (-> functor-t :: functor-tc
-              :t1 functor-t
-              (-> :t1 -- :t2)
-           -- :t2 functor-t))
+    map
+    : (-> functor-t :: functor-tc
+          t1 :: type-tt
+          t2 :: type-tt
+          t1 functor-t, (-> t1 -- t2), -- t2 functor-t))
   #+end_src
 
 * list-u : functor-tc
@@ -43,9 +44,11 @@
   #+begin_src cicada
   (+imp list-u : functor-tc
     (+fun map
-      : (-> :l : [:t1 list-u]
-            fun : (-> :t1 -- :t2)
-         -- :t2 list-u)
+      : (-> t1 :: type-tt
+            t2 :: type-tt
+            l : [t1 list-u]
+            fun : (-> t1 -- t2)
+         -- t2 list-u)
       (case l
         (null-t null-c)
         (cons-t l.car fun l.cdr {fun} recur cons-c))))
@@ -55,12 +58,15 @@
 
   #+begin_src cicada
   (+class monad-tc < (-> type-tt -- type-tt)
-    return : (-> monad-t :: monad-tc
-                 :t -- :t monad-t)
-    bind : (-> monad-t :: monad-tc
-               :t1 monad-t
-               (-> :t1 -- :t2 monad-t)
-            -- :t2 monad-t))
+    return
+    : (-> monad-t :: monad-tc
+          t :: type-tt
+          t -- t monad-t)
+    bind
+    : (-> monad-t :: monad-tc
+          t1 :: type-tt
+          t2 :: type-tt
+          t1 monad-t, (-> t1 -- t2 monad-t) -- t2 monad-t))
   #+end_src
 
 * maybe
@@ -68,9 +74,9 @@
 *** maybe-u
 
     #+begin_src cicada
-    (+union maybe-u : (-> type-tt -- type-tt)
-      (-> -- :t none-t)
-      (-> value : :t -- :t just-t))
+    (+union maybe-u : (-> type : type-tt -- type-tt)
+      (-> -- type none-t)
+      (-> value : type -- type just-t))
     #+end_src
 
 *** maybe-u : monad-tc
@@ -140,7 +146,7 @@
 
     #+begin_src cicada
     (+fun tree-zip
-      : () )
+      : ())
     #+end_src
 
 *** tree-numbering
