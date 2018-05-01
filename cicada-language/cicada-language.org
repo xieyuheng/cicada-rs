@@ -3,9 +3,26 @@
 
 * [todo-stack]
 
-*** how unification are implemented in minikanren ?
+*** re-design the whole imp for multiple-world-semantic
 
-    - can we re-use the implementation of unification of minikanren ?
+*** sum-type-t back
+
+    - x -
+      after simplified the implementation this much
+      we can bring sum-type-t back to the imp
+      to make the semantic of cut and type-check more clear
+
+    ------
+
+    - x -
+      to handle sum-type-t properly
+      we need multiple-world-semantic
+      we must not only passing env-t
+      but passing
+      - env-t list-u -- for finite sum-type-t
+      - env-t stream-u -- for infinite sum-type-t
+
+*** a syntax to call [null-c] with explicit type argument
 
 *** no hypo
 
@@ -38,16 +55,6 @@
       we should examine the following which uses cut :
       1. top level type check
       2. infer of closure
-
-*** >< sum-type-t back
-
-    - x -
-      after simplified the implementation this much
-      we can bring sum-type-t back to the imp
-      to make the semantic of cut and type-check more clear
-
-    - k -
-      ><
 
 *** env-print really use indent
 
@@ -2346,19 +2353,19 @@
       zero-c succ-c succ-c nat-mul
       zero-c succ-c succ-c succ-c nat-factorial
 
-    ;;   (+union list-u : (-> type : type-tt -- type-tt)
-    ;;     null-t
-    ;;     cons-t)
+      ;;   (+union list-u : (-> type : type-tt -- type-tt)
+      ;;     null-t
+      ;;     cons-t)
 
       (+type null-t : (-> type : type-tt -- type-tt)
         (-> -- type null-t))
 
-    ;;   (+type cons-t : (-> type : type-tt -- type-tt)
-    ;;     (-> car : type
-    ;;         cdr : [type cons-t]
-    ;;         -- type cons-t))
+      ;;   (+type cons-t : (-> type : type-tt -- type-tt)
+      ;;     (-> car : type
+      ;;         cdr : [type cons-t]
+      ;;         -- type cons-t))
 
-      null-c
+      ;; null-c
       )
 
     env-print

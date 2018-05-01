@@ -1306,19 +1306,19 @@
       zero-c succ-c succ-c nat-mul
       zero-c succ-c succ-c succ-c nat-factorial
 
-    ;;   (+union list-u : (-> type : type-tt -- type-tt)
-    ;;     null-t
-    ;;     cons-t)
+      ;;   (+union list-u : (-> type : type-tt -- type-tt)
+      ;;     null-t
+      ;;     cons-t)
 
       (+type null-t : (-> type : type-tt -- type-tt)
         (-> -- type null-t))
 
-    ;;   (+type cons-t : (-> type : type-tt -- type-tt)
-    ;;     (-> car : type
-    ;;         cdr : [type cons-t]
-    ;;         -- type cons-t))
+      ;;   (+type cons-t : (-> type : type-tt -- type-tt)
+      ;;     (-> car : type
+      ;;         cdr : [type cons-t]
+      ;;         -- type cons-t))
 
-      null-c
+      ;; null-c
       )
 
     env-print
