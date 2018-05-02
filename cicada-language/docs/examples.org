@@ -356,6 +356,70 @@
           result-cdr :: type list-u
           prev : cdr succ result-cdr list-append-u
        -- car cdr cons-c, succ, car result-cdr cons-c cons-append-t))
+
+    (+union list-append-u
+      : (-> type :: type-tt
+            ante : type list-u
+            succ : type list-u
+            result : type list-u
+         -- type-tt)
+      null-append-t
+      cons-append-t)
+
+    (+type null-append-t
+      : (-> type :: type-tt
+            ante : type list-u
+            succ : type list-u
+            result : type list-u
+         -- type-tt)
+      (-> -- null-c succ succ null-append-t))
+
+    (+type cons-append-t
+      : (-> type :: type-tt
+            ante : type list-u
+            succ : type list-u
+            result : type list-u
+         -- type-tt)
+      (-> car :: type
+          cdr :: type list-u
+          result-cdr :: type list-u
+          prev : cdr succ result-cdr list-append-u
+       -- car cdr cons-c, succ, car result-cdr cons-c cons-append-t))
+    #+end_src
+
+*** ><
+
+    #+begin_src cicada
+    (+type cons-append-t
+      : (-> type :: type-tt
+            ante : type list-u
+            succ : type list-u
+            result : type list-u
+         -- type-tt)
+      (-> car :: type
+          cdr :: type list-u
+          result-cdr :: type list-u
+          prev : cdr succ result-cdr list-append-u
+       -- car cdr cons-c, succ, car result-cdr cons-c cons-append-t))
+
+    (note for [ante succ result cons-append-c]
+      0 hypo-id-c data-hypo-c (quote type) local-let
+      (quote type) local-get to-type
+      type-tt
+      unify
+      ><><><
+      (@data-type-t
+        (name "cons-append-t")
+        (field-obj-dict
+         (@ (type (quote type) local-get)
+            (ante (quote ante) local-get)
+            (succ (quote succ) local-get)
+            (result (quote result) local-get))))
+      (let data-type)
+      (@data-obj-t
+        (data-type data-type)
+        (field-obj-dict
+         (@ (prev (quote prev) local-get)))))
     #+end_src
 
 * vect

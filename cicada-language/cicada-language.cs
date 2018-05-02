@@ -1,15 +1,11 @@
-      #note
-      (+proof _
-        : (-> -- nat-u null-t)
-        null-c)
     (+fun :)
     (+macro +alias note)
     (+macro -> (let body)
       body {'-- eq-p} list-ante
       {', eq-p not} list-filter
-      sexp-filter-colon (let new-body)
+      sexp-remove-colon (let new-body)
       `(let (@ new-body list-spread)))
-    (+fun sexp-filter-colon (let ante)
+    (+fun sexp-remove-colon (let ante)
       (case ante
         (null-t null-c)
         (cons-t
@@ -22,7 +18,7 @@
     (+macro +type (let body)
        body.car (let name)
        body.cdr (let rest)
-      `(+data (@ name) (@ rest sexp-filter-colon list-spread)))
+      `(+data (@ name) (@ rest sexp-remove-colon list-spread)))
     (+type env-t
       name-dict : [string-t den-u dict-t]
       data-stack : [obj-u list-u]
@@ -250,6 +246,8 @@
         (case hypo
           (data-hypo-t hypo.id obj data-bind-dict-insert)
           (type-hypo-t hypo.id obj type-bind-dict-insert)))
+    (+type multi-env-t
+       env-list : env-t list-u)
     (+union exp-u
       call-exp-t
       let-exp-t
@@ -260,6 +258,7 @@
       field-exp-t
       colon-exp-t
       double-colon-exp-t
+      begin-exp-t
       comma-exp-t
       type-tt-exp-t)
     (+type call-exp-t
@@ -283,6 +282,8 @@
     (+type double-colon-exp-t
       name : string-t
       type-exp-list : [exp-u list-u])
+    (+type begin-exp-t
+      body : [exp-u list-u])
     (+type comma-exp-t)
     (+type type-tt-exp-t)
     (+union den-u
@@ -348,6 +349,7 @@
         (colon-exp-t colon-exp-exe)
         (double-colon-exp-t double-colon-exp-exe)
         (comma-exp-t comma-exp-exe)
+        (begin-exp-t begin-exp-exe)
         (type-tt-exp-t type-tt-exp-exe)))
     (+fun call-exp-exe
       : (-> env-t, exp : call-exp-t -- env-t)
@@ -410,6 +412,68 @@
         (. field-obj-dict name)
         data-type-cr
         data-stack-push)
+      (note
+        zero-c null-c cons-c
+
+        (note for [zero-c]
+          (local-scope
+            (@data-type-t
+              (name "zero-t")
+              (field-obj-dict (@)))
+            (let data-type)
+            (@data-obj-t
+              (data-type data-type)
+              (field-obj-dict (@)))
+            (let zero)))
+
+        (note for [null-c]
+          (local-scope
+            0 hypo-id-c data-hypo-c (quote type) local-let
+            (quote type) local-get to-type
+            type-tt
+            unify
+            (@data-type-t
+              (name "null-t")
+              (field-obj-dict (@ (type (quote type) local-get))))
+            (let data-type)
+            (@data-obj-t
+              (data-type data-type)
+              (field-obj-dict (@)))
+            (let null)))
+
+        (note for [zero null cons-c]
+          (local-scope
+            1 hypo-id-c data-hypo-c (quote type) local-let
+            (quote type) local-get to-type
+            type-tt
+            unify
+            (@data-type-t
+              (name "cons-t")
+              (field-obj-dict (@ (type (quote type) local-get))))
+            (let data-type)
+            2 hypo-id-c data-hypo-c (quote car) local-let
+            (quote car) local-get to-type
+            (quote type) local-get
+            unify
+            3 hypo-id-c data-hypo-c (quote cdr) local-let
+            (quote cdr) local-get to-type
+            (local-scope
+              4 hypo-id-c data-type-c (quote type) local-let
+              (quote type) local-get to-type
+              unify
+              (@union-type-t
+                (name "list-u")
+                (field-obj-dict (@ (type (quote type) local-get)))))
+            tuck field-unify
+            unify
+            (@data-obj-t
+              (data-type data-type)
+              (field-obj-dict
+               (@ (car (quote car) local-get)
+                  (cdr (quote cdr) local-get))))
+            (let cons)))
+
+        (note gc on hypo should be started at the end of every -c))
       (+fun union-cons-den-exe
         : (-> env-t, den : union-cons-den-t -- env-t)
         den.type-arrow-exp.ante-exp-list new-field-obj-dict
@@ -445,6 +509,7 @@
       : (-> env-t, exp : let-exp-t -- env-t)
       exp.name-list list-reverse
       let-exp-exe-loop)
+
     (+fun let-exp-exe-loop
       : (-> env-t, name-list : [string-t list-u] -- env-t)
       (case name-list
@@ -533,6 +598,17 @@
       hypo-id-counter counter-number repr (let postfix)
       hypo-id-counter counter-inc
       base-name postfix string-append hypo-id-c)
+    (+fun begin-exp-exe
+      : (-> env-t, exp : begin-exp-t -- env-t)
+      exp.body begin-exp-exe-loop)
+
+    (+fun begin-exp-exe-loop
+      : (-> env-t, exp-list : [exp-u list-u] -- env-t)
+      (case exp-list
+        (null-t)
+        (cons-t
+          exp-list.car exp
+          exp-list.cdr recur)))
     (+fun comma-exp-exe
       : (-> env-t comma-exp-t -- env-t)
       drop)
@@ -541,6 +617,7 @@
       drop
       2 type-type-c
       data-stack-push)
+
     (+fun run-one-step
       : (-> env-t -- env-t)
       (if top-frame-finished-p
@@ -621,6 +698,7 @@
       (+fun union-cons-den-cut
         : (-> env-t, den : union-cons-den-t -- env-t)
         )
+
     (+fun infer
       : (-> env-t obj-u -- obj-u env-t)
       (case dup
@@ -830,6 +908,10 @@
             list-for-each
             (lit-list body.car recur)
             swap case-exp-c]
+
+           [head 'begin eq-p]
+           [body {recur} list-map
+            begin-exp-c]
 
            [head ': eq-p]
            [body.car
@@ -1257,71 +1339,72 @@
             (succ-t n.prev recur n nat-mul))))
       sexp-list-pass
       {parse-den} list-map)
-    (cicada-language
+    (begin
+      (cicada-language
+       (+union bool-u : type-tt
+         true-t
+         false-t)
 
-      (+union bool-u : type-tt
-        true-t
-        false-t)
+       (+type true-t : type-tt
+         (-> -- true-t))
 
-      (+type true-t : type-tt
-        (-> -- true-t))
+       (+type false-t : type-tt
+         (-> -- false-t))
 
-      (+type false-t : type-tt
-        (-> -- false-t))
+       ;; true-c
+       ;; false-c
+       ;; true-t
+       ;; bool-u
+       ;; type-tt
 
-      ;; true-c
-      ;; false-c
-      ;; true-t
-      ;; bool-u
-      ;; type-tt
+       (+union nat-u : type-tt
+         zero-t
+         succ-t)
 
-      (+union nat-u : type-tt
-        zero-t
-        succ-t)
+       (+type zero-t : type-tt
+         (-> -- zero-t))
 
-      (+type zero-t : type-tt
-        (-> -- zero-t))
+       (+type succ-t : type-tt
+         (-> prev : nat-u -- succ-t))
 
-      (+type succ-t : type-tt
-        (-> prev : nat-u -- succ-t))
+       (+fun nat-add : (-> [m n] : nat-u -- nat-u)
+         (case n
+           (zero-t m)
+           (succ-t m n.prev recur succ-c)))
 
-      (+fun nat-add : (-> [m n] : nat-u -- nat-u)
-        (case n
-          (zero-t m)
-          (succ-t m n.prev recur succ-c)))
+       (+fun nat-mul : (-> [m n] : nat-u -- nat-u)
+         (case n
+           (zero-t n)
+           (succ-t m n.prev recur m nat-add)))
 
-      (+fun nat-mul : (-> [m n] : nat-u -- nat-u)
-        (case n
-          (zero-t n)
-          (succ-t m n.prev recur m nat-add)))
+       (+fun nat-factorial : (-> n : nat-u -- nat-u)
+         (case n
+           (zero-t n succ-c)
+           (succ-t n.prev recur n nat-mul)))
 
-      (+fun nat-factorial : (-> n : nat-u -- nat-u)
-        (case n
-          (zero-t n succ-c)
-          (succ-t n.prev recur n nat-mul)))
+       zero-c succ-c succ-c succ-c
+       zero-c succ-c succ-c succ-c nat-add
+       zero-c succ-c succ-c succ-c
+       zero-c succ-c succ-c nat-mul
+       zero-c succ-c succ-c succ-c nat-factorial
 
-      zero-c succ-c succ-c succ-c
-      zero-c succ-c succ-c succ-c nat-add
-      zero-c succ-c succ-c succ-c
-      zero-c succ-c succ-c nat-mul
-      zero-c succ-c succ-c succ-c nat-factorial
+       (+union list-u : (-> type : type-tt -- type-tt)
+         null-t
+         cons-t)
 
-      ;;   (+union list-u : (-> type : type-tt -- type-tt)
-      ;;     null-t
-      ;;     cons-t)
+       (+type null-t : (-> type : type-tt -- type-tt)
+         (-> -- type null-t))
 
-      (+type null-t : (-> type : type-tt -- type-tt)
-        (-> -- type null-t))
+       (+type cons-t : (-> type : type-tt -- type-tt)
+         (-> car : type
+             cdr : [type list-u]
+          -- type cons-t))
 
-      ;;   (+type cons-t : (-> type : type-tt -- type-tt)
-      ;;     (-> car : type
-      ;;         cdr : [type cons-t]
-      ;;         -- type cons-t))
+       ;; null-c
+       nat-u null-t
+       nat-u list-u)
 
-      ;; null-c
-      )
-
-    env-print
-    drop nl
-    print-the-stack
+      env-print
+      drop nl
+      print-the-stack)
 
