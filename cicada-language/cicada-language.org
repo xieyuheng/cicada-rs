@@ -3,7 +3,21 @@
 
 * [todo-stack]
 
-*** recall the design
+*** drop new-field-obj-dict & ante-exp-list-merge-fields
+
+*** obj-unify & field-unify
+
+    - unify should return how it fail.
+      with the help of goal-stack ?
+
+*** gc for hypo, on each -c
+
+*** in cicada-script
+
+    - (@) -> (~)
+    - fix (cond)
+    - (@) as (lit-dict)
+    - (@<type-name>) as lit-data
 
 *** a syntax to call [null-c] with explicit type argument
 
@@ -36,8 +50,6 @@
       we should examine the following which uses cut :
       1. top level type check
       2. infer of closure
-
-*** gc for hypo
 
 *** re-design the whole imp for multiple-world-semantic
 
@@ -1032,7 +1044,7 @@
             0 hypo-id-c data-hypo-c (quote type) local-let
             (quote type) local-get to-type
             type-tt
-            unify
+            obj-unify
             (@data-type-t
               (name "null-t")
               (field-obj-dict (@ (type (quote type) local-get))))
@@ -1047,7 +1059,7 @@
             1 hypo-id-c data-hypo-c (quote type) local-let
             (quote type) local-get to-type
             type-tt
-            unify
+            obj-unify
             (@data-type-t
               (name "cons-t")
               (field-obj-dict (@ (type (quote type) local-get))))
@@ -1055,18 +1067,18 @@
             2 hypo-id-c data-hypo-c (quote car) local-let
             (quote car) local-get to-type
             (quote type) local-get
-            unify
+            obj-unify
             3 hypo-id-c data-hypo-c (quote cdr) local-let
             (quote cdr) local-get to-type
             (local-scope
               4 hypo-id-c data-type-c (quote type) local-let
               (quote type) local-get to-type
-              unify
+              obj-unify
               (@union-type-t
                 (name "list-u")
                 (field-obj-dict (@ (type (quote type) local-get)))))
             tuck field-unify
-            unify
+            obj-unify
             (@data-obj-t
               (data-type data-type)
               (field-obj-dict
@@ -2484,9 +2496,12 @@
              cdr : [type list-u]
           -- type cons-t))
 
-       ;; null-c
-       nat-u null-t
-       nat-u list-u)
+        nat-u null-t
+        nat-u cons-t
+        nat-u list-u
+
+        ;; null-c
+        )
 
       env-print
       drop nl

@@ -1400,9 +1400,10 @@
              cdr : [type list-u]
           -- type cons-t))
 
-       ;; null-c
-       nat-u null-t
-       nat-u list-u)
+        ;; null-c
+        nat-u null-t
+        nat-u cons-t
+        nat-u list-u)
 
       env-print
       drop nl
