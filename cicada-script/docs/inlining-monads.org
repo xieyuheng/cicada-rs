@@ -156,12 +156,20 @@
 *** tree-zip -- maybe monad
 
     #+begin_src jojo :tangle no
-    (+jojo return-maybe just)
+    (+fun return-maybe just)
 
-    (+jojo bind-maybe :f! :m!
-      (case :m
-        <nothing> nothing
-        <just> [:m .v :f apply]))
+    (+fun bind-maybe
+      : (-> type :: type-tt
+            m : [type maybe-u]
+            f : (-> type -- type maybe-u)
+         -- type maybe-u)
+      (case m
+        (nothing-t nothing-c)
+        (just-t m.v f)))
+
+    (+fun maybe-m
+      {return-maybe}
+      {bind-maybe})
 
     (+jojo tree-zip :t1! :t2!
       (note (-> :<t> <tree> :<t> <tree> -- [:<t> <tree> <maybe>]))
@@ -174,6 +182,22 @@
               bind-maybe}
              bind-maybe]
             else nothing))
+
+    (+fun tree-zip
+      : (-> type :: type-tt
+            t1 : type tree-u
+            t2 : type tree-u
+         -- [type tree-u maybe-u])
+      (case [t1 t2]
+        ([leaf-t leaf-t]
+         (do maybe-m
+           [t1.v t2.v cons-c leaf-c]))
+        ([note-t note-t]
+         (do maybe-m
+           l = [t1.l t2.l tree-zip]
+           r = [t1.r t2.r tree-zip]
+           [l r node-c]))
+        (else nothing-c)))
     #+end_src
 
 *** [test] tree-zip -- maybe

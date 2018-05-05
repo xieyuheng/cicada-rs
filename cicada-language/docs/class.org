@@ -32,11 +32,11 @@
 
   #+begin_src cicada
   (+class functor-tc < (-> type-tt -- type-tt)
-    map
-    : (-> functor-t :: functor-tc
-          t1 :: type-tt
-          t2 :: type-tt
-          t1 functor-t, (-> t1 -- t2), -- t2 functor-t))
+    (+interface map
+      : (-> functor-t :: functor-tc
+            t1 :: type-tt
+            t2 :: type-tt
+            t1 functor-t, (-> t1 -- t2), -- t2 functor-t)))
   #+end_src
 
 * list-u : functor-tc
@@ -58,15 +58,15 @@
 
   #+begin_src cicada
   (+class monad-tc < (-> type-tt -- type-tt)
-    return
-    : (-> monad-t :: monad-tc
-          t :: type-tt
-          t -- t monad-t)
-    bind
-    : (-> monad-t :: monad-tc
-          t1 :: type-tt
-          t2 :: type-tt
-          t1 monad-t, (-> t1 -- t2 monad-t) -- t2 monad-t))
+    (+interface return
+      : (-> monad-t :: monad-tc
+            t :: type-tt
+            t -- t monad-t))
+    (+interface bind
+      : (-> monad-t :: monad-tc
+            t1 :: type-tt
+            t2 :: type-tt
+            t1 monad-t, (-> t1 -- t2 monad-t) -- t2 monad-t)))
   #+end_src
 
 * maybe

@@ -187,6 +187,15 @@
               zero-c succ-c succ-c succ-c lit-exp-c
               plus-exp-c))
 
+      (+fun exp
+        : (-> -- context nat-type-c exp-u)
+        (@if-exp-t
+          (a zero-c succ-c var-exp-c)
+          (b zero-c var-exp-c)
+          (c zero-c var-exp-c
+             zero-c succ-c succ-c succ-c lit-exp-c
+             plus-exp-c)))
+
       (assert
         env exp eval
         zero-c succ-c succ-c succ-c
