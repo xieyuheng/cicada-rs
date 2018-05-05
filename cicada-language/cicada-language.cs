@@ -394,29 +394,106 @@
         exp.name current-scope-get (let data-hypo)
         data-stack-pop data-hypo
         swap hypo-bind-dict-insert)
-      (+fun data-cons-den-exe
-        : (-> env-t, den : data-cons-den-t -- env-t)
-        den.type-arrow-exp exp-collect-one drop
-        den.cons-arrow-exp.succ-exp-list
-        exp-list-collect-one
-        (let data-type)
-        den.cons-arrow-exp.ante-exp-list new-field-obj-dict
-        data-type
-        (. field-obj-dict data-type)
-        data-obj-cr
-        data-stack-push)
       (+fun type-cons-den-exe
         : (-> env-t, den : type-cons-den-t -- env-t)
-        den.type-arrow-exp.ante-exp-list new-field-obj-dict
+        new-scope scope-stack-push
+        den.type-arrow-exp.ante-exp-list
+        {bind-exp-in-ante} list-map
+        den.type-arrow-exp.ante-exp-list
+        ante-exp-list->field-obj-dict
         den.name
         (. field-obj-dict name)
         data-type-cr
-        data-stack-push)
+        field-unify
+        data-stack-push
+        scope-stack-drop)
+      (+fun union-cons-den-exe
+        : (-> env-t, den : union-cons-den-t -- env-t)
+        new-scope scope-stack-push
+        den.type-arrow-exp.ante-exp-list
+        {bind-exp-in-ante} list-map
+        den.type-arrow-exp.ante-exp-list
+        ante-exp-list->field-obj-dict
+        den.name
+        (. field-obj-dict name)
+        union-type-cr
+        field-unify
+        data-stack-push
+        scope-stack-drop)
+      (+fun data-cons-den-exe
+        : (-> env-t, den : data-cons-den-t -- env-t)
+        new-scope scope-stack-push
+        den.type-arrow-exp.ante-exp-list
+        {bind-exp-in-ante} list-map
+        den.type-arrow-exp.ante-exp-list
+        ante-exp-list->field-obj-dict
+        den.name cons-name->type-name
+        (. field-obj-dict name)
+        data-type-cr
+        (let data-type)
+        den.cons-arrow-exp.ante-exp-list
+        {bind-exp-in-ante} list-map
+        den.cons-arrow-exp.ante-exp-list
+        ante-exp-list->field-obj-dict
+        data-type
+        (. field-obj-dict data-type)
+        data-obj-cr
+        field-unify
+        data-stack-push
+        scope-stack-drop)
+      (+fun cons-name->type-name
+        : (-> string-t -- string-t)
+        dup string-length number-dec
+        string-take
+        "t" string-append)
+      (+fun ante-exp-list->field-obj-dict
+        : (-> env-t, exp-u list-u
+           -- env-t, string-t obj-u dict-t)
+        (lit-dict)
+        {(let exp dict)
+         (case exp
+           (colon-exp-t
+             exp.name local-get (let obj)
+             dict exp.name obj dict-insert)
+           (else dict))}
+        list-foldr)
+      (+fun bind-exp-in-ante
+        : (-> env-t, exp : exp-u -- env-t)
+        (case exp
+          (colon-exp-t
+            exp.type-exp-list exp-list-collect-one
+            exp.name bind-obj-to-name)
+          (double-colon-exp-t
+            exp.type-exp-list exp-list-collect-one
+            exp.name bind-obj-to-name)
+          (else)))
+      (+fun bind-obj-to-name
+        : (-> env-t, obj : obj-u, name : string-t -- env-t)
+        new-hypo-id data-hypo-c name local-let
+        name local-get infer obj obj-unify)
+      (+fun obj-unify
+        : (-> env-t, x : obj-u, y : obj-u -- env-t)
+        )
+      (+fun new-hypo-id
+        : (-> env-t -- env-t, hypo-id-t)
+        )
+      (+fun infer
+        : (-> env-t -- env-t)
+        )
+      (+fun local-let
+        : (-> env-t, obj-u, string-t -- env-t)
+        swap current-scope-insert)
+      (+fun local-get
+        : (-> env-t, string-t -- env-t, obj-u)
+        current-scope-get)
+      (+fun field-unify
+        : (-> env-t, obj-u -- env-t, obj-u)
+        )
       (note
         zero-c null-c cons-c
 
         (note for [zero-c]
-          (local-scope
+          (with-local-scope
             (@data-type-t
               (name "zero-t")
               (field-obj-dict (@)))
@@ -427,11 +504,11 @@
             (let zero)))
 
         (note for [null-c]
-          (local-scope
+          (with-local-scope
             0 hypo-id-c data-hypo-c (quote type) local-let
-            (quote type) local-get to-type
+            (quote type) local-get infer
             type-tt
-            unify
+            obj-unify
             (@data-type-t
               (name "null-t")
               (field-obj-dict (@ (type (quote type) local-get))))
@@ -442,30 +519,30 @@
             (let null)))
 
         (note for [zero null cons-c]
-          (local-scope
+          (with-local-scope
             1 hypo-id-c data-hypo-c (quote type) local-let
-            (quote type) local-get to-type
+            (quote type) local-get infer
             type-tt
-            unify
+            obj-unify
             (@data-type-t
               (name "cons-t")
               (field-obj-dict (@ (type (quote type) local-get))))
             (let data-type)
             2 hypo-id-c data-hypo-c (quote car) local-let
-            (quote car) local-get to-type
+            (quote car) local-get infer
             (quote type) local-get
-            unify
+            obj-unify
             3 hypo-id-c data-hypo-c (quote cdr) local-let
-            (quote cdr) local-get to-type
-            (local-scope
+            (quote cdr) local-get infer
+            (with-local-scope
               4 hypo-id-c data-type-c (quote type) local-let
-              (quote type) local-get to-type
-              unify
+              (quote type) local-get infer
+              obj-unify
               (@union-type-t
                 (name "list-u")
                 (field-obj-dict (@ (type (quote type) local-get)))))
-            tuck field-unify
-            unify
+            field-unify
+            obj-unify
             (@data-obj-t
               (data-type data-type)
               (field-obj-dict
@@ -474,37 +551,6 @@
             (let cons)))
 
         (note gc on hypo should be started at the end of every -c))
-      (+fun union-cons-den-exe
-        : (-> env-t, den : union-cons-den-t -- env-t)
-        den.type-arrow-exp.ante-exp-list new-field-obj-dict
-        den.name
-        (. field-obj-dict name)
-        union-type-cr
-        data-stack-push)
-      (+fun new-field-obj-dict
-        : (-> env-t
-              ante-exp-list : [exp-u list-u]
-           -- env-t, string-t obj-u dict-t)
-        new-dict ante-exp-list
-        ante-exp-list-merge-fields)
-      (+fun ante-exp-list-merge-fields
-        : (-> env-t
-              field-obj-dict : [string-t obj-u dict-t]
-              ante-exp-list : [exp-u list-u]
-           -- env-t, string-t obj-u dict-t)
-        (case ante-exp-list
-          (null-t field-obj-dict)
-          (cons-t
-            (case ante-exp-list.car
-              (colon-exp-t
-                data-stack-pop (let obj)
-                field-obj-dict
-                ante-exp-list.car.name
-                obj dict-insert
-                ante-exp-list.cdr recur)
-              (else
-                field-obj-dict
-                ante-exp-list.cdr recur)))))
     (+fun let-exp-exe
       : (-> env-t, exp : let-exp-t -- env-t)
       exp.name-list list-reverse
@@ -1340,7 +1386,9 @@
       sexp-list-pass
       {parse-den} list-map)
     (begin
+
       (cicada-language
+
        (+union bool-u : type-tt
          true-t
          false-t)
@@ -1400,10 +1448,12 @@
              cdr : [type list-u]
           -- type cons-t))
 
-        ;; null-c
         nat-u null-t
         nat-u cons-t
-        nat-u list-u)
+        nat-u list-u
+
+        ;; null-c
+        )
 
       env-print
       drop nl

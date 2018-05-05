@@ -3,12 +3,24 @@
 
 * [todo-stack]
 
-*** drop new-field-obj-dict & ante-exp-list-merge-fields
+*** should not use [exp-collect-one drop]
 
 *** obj-unify & field-unify
 
-    - unify should return how it fail.
+    - x -
+      unify should return how it fail.
+
+    - k -
       with the help of goal-stack ?
+
+    - x -
+      maybe not
+      unify can return error info
+      and every function which call unify
+      should check the return value
+
+    - k -
+      but this is just like the explicit control of frame-stack
 
 *** gc for hypo, on each -c
 
@@ -19,17 +31,56 @@
     - (@) as (lit-dict)
     - (@<type-name>) as lit-data
 
+*** printer handle begin-exp-t
+
 *** a syntax to call [null-c] with explicit type argument
+
+*** simple typed language
+
+    - in a simple typed language
+      there will be no function application involved
+      during type or data construction
+      because there are not function call in types
+
+    - we can push scope-stack to use local variables
+
+    - but even if we need function application later
+      we can achieve it by pushing frame-stack
+
+    ------
+
+    - x -
+      function application might be handled similarly
+
+    - k -
+      what do you mean by "similarly" ?
+
+    - x -
+      for type and data constructor application
+      the new idea we used is to create a pre-obj
+      and then use field-unify
+      for function application
+      we can first create trunk [or trunks]
+      against logic variables
+      and then use argument-unify
 
 *** no hypo
 
-    - when creating a value of type [type null-t]
+    - x -
+      when creating a value of type [type null-t]
       by [null-c]
       one must provide the type explicitly
 
-    - use one scope for value
+    - k -
+      we still can use hypo
+      this will make calling [null-c] simple
+
+      we just need to be careful
+
+      use one scope for value
       one scope for type
 
+      during cut
       after the unification of ante
       when we about to enter the succ
 
@@ -37,10 +88,9 @@
       for each bind in the scope of type
       it is also bound to a value
 
-      - x -
-        otherwise the type check will be not sound
-        for example :
-        ><><><
+      otherwise the type check will be not sound
+      for example :
+      ><><><
 
 *** id-counter in env-t
 
@@ -994,32 +1044,164 @@
         swap hypo-bind-dict-insert)
       #+end_src
 
-***** data-cons-den-exe
-
-      #+begin_src cicada
-      (+fun data-cons-den-exe
-        : (-> env-t, den : data-cons-den-t -- env-t)
-        den.type-arrow-exp exp-collect-one drop
-        den.cons-arrow-exp.succ-exp-list
-        exp-list-collect-one
-        (let data-type)
-        den.cons-arrow-exp.ante-exp-list new-field-obj-dict
-        data-type
-        (. field-obj-dict data-type)
-        data-obj-cr
-        data-stack-push)
-      #+end_src
-
 ***** type-cons-den-exe
 
       #+begin_src cicada
       (+fun type-cons-den-exe
         : (-> env-t, den : type-cons-den-t -- env-t)
-        den.type-arrow-exp.ante-exp-list new-field-obj-dict
+        new-scope scope-stack-push
+        den.type-arrow-exp.ante-exp-list
+        {bind-exp-in-ante} list-map
+        den.type-arrow-exp.ante-exp-list
+        ante-exp-list->field-obj-dict
         den.name
         (. field-obj-dict name)
         data-type-cr
-        data-stack-push)
+        field-unify
+        data-stack-push
+        scope-stack-drop)
+      #+end_src
+
+***** union-cons-den-exe
+
+      #+begin_src cicada
+      (+fun union-cons-den-exe
+        : (-> env-t, den : union-cons-den-t -- env-t)
+        new-scope scope-stack-push
+        den.type-arrow-exp.ante-exp-list
+        {bind-exp-in-ante} list-map
+        den.type-arrow-exp.ante-exp-list
+        ante-exp-list->field-obj-dict
+        den.name
+        (. field-obj-dict name)
+        union-type-cr
+        field-unify
+        data-stack-push
+        scope-stack-drop)
+      #+end_src
+
+***** data-cons-den-exe
+
+      #+begin_src cicada
+      (+fun data-cons-den-exe
+        : (-> env-t, den : data-cons-den-t -- env-t)
+        new-scope scope-stack-push
+        den.type-arrow-exp.ante-exp-list
+        {bind-exp-in-ante} list-map
+        den.type-arrow-exp.ante-exp-list
+        ante-exp-list->field-obj-dict
+        den.name cons-name->type-name
+        (. field-obj-dict name)
+        data-type-cr
+        (let data-type)
+        den.cons-arrow-exp.ante-exp-list
+        {bind-exp-in-ante} list-map
+        den.cons-arrow-exp.ante-exp-list
+        ante-exp-list->field-obj-dict
+        data-type
+        (. field-obj-dict data-type)
+        data-obj-cr
+        field-unify
+        data-stack-push
+        scope-stack-drop)
+      #+end_src
+
+***** cons-name->type-name
+
+      #+begin_src cicada
+      (+fun cons-name->type-name
+        : (-> string-t -- string-t)
+        dup string-length number-dec
+        string-take
+        "t" string-append)
+      #+end_src
+
+***** ante-exp-list->field-obj-dict
+
+      #+begin_src cicada
+      (+fun ante-exp-list->field-obj-dict
+        : (-> env-t, exp-u list-u
+           -- env-t, string-t obj-u dict-t)
+        (lit-dict)
+        {(let exp dict)
+         (case exp
+           (colon-exp-t
+             exp.name local-get (let obj)
+             dict exp.name obj dict-insert)
+           (else dict))}
+        list-foldr)
+      #+end_src
+
+***** bind-exp-in-ante
+
+      #+begin_src cicada
+      (+fun bind-exp-in-ante
+        : (-> env-t, exp : exp-u -- env-t)
+        (case exp
+          (colon-exp-t
+            exp.type-exp-list exp-list-collect-one
+            exp.name bind-obj-to-name)
+          (double-colon-exp-t
+            exp.type-exp-list exp-list-collect-one
+            exp.name bind-obj-to-name)
+          (else)))
+      #+end_src
+
+***** bind-obj-to-name
+
+      #+begin_src cicada
+      (+fun bind-obj-to-name
+        : (-> env-t, obj : obj-u, name : string-t -- env-t)
+        new-hypo-id data-hypo-c name local-let
+        name local-get infer obj obj-unify)
+      #+end_src
+
+***** >< obj-unify
+
+      #+begin_src cicada
+      (+fun obj-unify
+        : (-> env-t, x : obj-u, y : obj-u -- env-t)
+        )
+      #+end_src
+
+***** >< new-hypo-id
+
+      #+begin_src cicada
+      (+fun new-hypo-id
+        : (-> env-t -- env-t, hypo-id-t)
+        )
+      #+end_src
+
+***** >< infer
+
+      #+begin_src cicada
+      (+fun infer
+        : (-> env-t -- env-t)
+        )
+      #+end_src
+
+***** local-let
+
+      #+begin_src cicada
+      (+fun local-let
+        : (-> env-t, obj-u, string-t -- env-t)
+        swap current-scope-insert)
+      #+end_src
+
+***** local-get
+
+      #+begin_src cicada
+      (+fun local-get
+        : (-> env-t, string-t -- env-t, obj-u)
+        current-scope-get)
+      #+end_src
+
+***** >< field-unify
+
+      #+begin_src cicada
+      (+fun field-unify
+        : (-> env-t, obj-u -- env-t, obj-u)
+        )
       #+end_src
 
 ***** [note] [zero-c null-c cons-c] by hand
@@ -1029,7 +1211,7 @@
         zero-c null-c cons-c
 
         (note for [zero-c]
-          (local-scope
+          (with-local-scope
             (@data-type-t
               (name "zero-t")
               (field-obj-dict (@)))
@@ -1040,9 +1222,9 @@
             (let zero)))
 
         (note for [null-c]
-          (local-scope
+          (with-local-scope
             0 hypo-id-c data-hypo-c (quote type) local-let
-            (quote type) local-get to-type
+            (quote type) local-get infer
             type-tt
             obj-unify
             (@data-type-t
@@ -1055,9 +1237,9 @@
             (let null)))
 
         (note for [zero null cons-c]
-          (local-scope
+          (with-local-scope
             1 hypo-id-c data-hypo-c (quote type) local-let
-            (quote type) local-get to-type
+            (quote type) local-get infer
             type-tt
             obj-unify
             (@data-type-t
@@ -1065,19 +1247,19 @@
               (field-obj-dict (@ (type (quote type) local-get))))
             (let data-type)
             2 hypo-id-c data-hypo-c (quote car) local-let
-            (quote car) local-get to-type
+            (quote car) local-get infer
             (quote type) local-get
             obj-unify
             3 hypo-id-c data-hypo-c (quote cdr) local-let
-            (quote cdr) local-get to-type
-            (local-scope
+            (quote cdr) local-get infer
+            (with-local-scope
               4 hypo-id-c data-type-c (quote type) local-let
-              (quote type) local-get to-type
+              (quote type) local-get infer
               obj-unify
               (@union-type-t
                 (name "list-u")
                 (field-obj-dict (@ (type (quote type) local-get)))))
-            tuck field-unify
+            field-unify
             obj-unify
             (@data-obj-t
               (data-type data-type)
@@ -1087,52 +1269,6 @@
             (let cons)))
 
         (note gc on hypo should be started at the end of every -c))
-      #+end_src
-
-***** union-cons-den-exe
-
-      #+begin_src cicada
-      (+fun union-cons-den-exe
-        : (-> env-t, den : union-cons-den-t -- env-t)
-        den.type-arrow-exp.ante-exp-list new-field-obj-dict
-        den.name
-        (. field-obj-dict name)
-        union-type-cr
-        data-stack-push)
-      #+end_src
-
-***** new-field-obj-dict
-
-      #+begin_src cicada
-      (+fun new-field-obj-dict
-        : (-> env-t
-              ante-exp-list : [exp-u list-u]
-           -- env-t, string-t obj-u dict-t)
-        new-dict ante-exp-list
-        ante-exp-list-merge-fields)
-      #+end_src
-
-***** ante-exp-list-merge-fields
-
-      #+begin_src cicada
-      (+fun ante-exp-list-merge-fields
-        : (-> env-t
-              field-obj-dict : [string-t obj-u dict-t]
-              ante-exp-list : [exp-u list-u]
-           -- env-t, string-t obj-u dict-t)
-        (case ante-exp-list
-          (null-t field-obj-dict)
-          (cons-t
-            (case ante-exp-list.car
-              (colon-exp-t
-                data-stack-pop (let obj)
-                field-obj-dict
-                ante-exp-list.car.name
-                obj dict-insert
-                ante-exp-list.cdr recur)
-              (else
-                field-obj-dict
-                ante-exp-list.cdr recur)))))
       #+end_src
 
 *** let-exp-exe
@@ -2436,7 +2572,9 @@
 
     #+begin_src cicada
     (begin
+
       (cicada-language
+
        (+union bool-u : type-tt
          true-t
          false-t)
