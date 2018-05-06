@@ -3,41 +3,19 @@
 
 * [todo-stack]
 
+*** obj-unify & field-unify, by dynamic monad
+
+    - only direct caller of unify
+      handles failed unification
+
+    - failed unification
+      will not be passed upward
+
 *** should not use [exp-collect-one drop]
 
 *** id-counter in env-t
 
     - new-hypo-id
-
-*** obj-unify & field-unify
-
-    - x -
-      unify should return how it fail.
-
-    - k -
-      with the help of goal-stack ?
-
-    - x -
-      maybe not
-      unify can return error info
-      and every function which call unify
-      should check the return value
-
-    - k -
-      but this is just like the explicit control of frame-stack
-
-    ------
-
-    - pieter -
-      While you may feel compelled to tell the caller //why//
-      nothing happened ("timeout error!"),
-      this is like talking to strangers about your private life.
-      It's what you don't say that lets people respect you.
-
-    - x -
-      we should return a simple value to let the caller know
-      the unification failed
-      and let the caller do the report
 
 *** gc for hypo, on each -c
 
@@ -314,7 +292,7 @@
       #+begin_src cicada
       (+fun name-dict-find
         : (-> env-t, name : string-t
-           -- env-t (| den-u true-t, false-t))
+           -- env-t (+ den-u true-t | false-t))
         dup .name-dict name dict-find)
       #+end_src
 
@@ -604,7 +582,7 @@
       (+fun scope-find
         : (-> scope-t
               string-t
-           -- (| obj-u true-t, false-t))
+           -- (+ obj-u true-t | false-t))
         dict-find)
       #+end_src
 
@@ -615,7 +593,7 @@
         : (-> env-t
               name : string-t
            -- env-t
-              (| obj-u true-t, false-t))
+              (+ obj-u true-t | false-t))
         (if scope-stack-empty-p
           [false-c]
           [scope-stack-tos
@@ -655,7 +633,7 @@
       #+begin_src cicada
       (+fun data-bind-dict-find
         : (-> env-t, hypo-id : hypo-id-t
-           -- env-t (| obj-u true-t, false-t))
+           -- env-t (+ obj-u true-t | false-t))
         dup .data-bind-dict hypo-id dict-find)
       #+end_src
 
@@ -679,7 +657,7 @@
       #+begin_src cicada
       (+fun type-bind-dict-find
         : (-> env-t, hypo-id : hypo-id-t
-           -- env-t (| obj-u true-t, false-t))
+           -- env-t (+ obj-u true-t | false-t))
         dup .type-bind-dict hypo-id dict-find)
       #+end_src
 
@@ -703,9 +681,9 @@
       #+begin_src cicada
       (+fun hypo-bind-dict-find
         : (-> env-t
-              hypo : (| data-hypo-t, type-hypo-t)
+              hypo : (+ data-hypo-t | type-hypo-t)
            -- env-t
-              (| obj-u true-t, false-t))
+              (+ obj-u true-t | false-t))
         (case hypo
           (data-hypo-t hypo.id data-bind-dict-find)
           (type-hypo-t hypo.id type-bind-dict-find)))
@@ -716,7 +694,7 @@
       #+begin_src cicada
       (+fun hypo-bind-dict-insert
         : (-> env-t
-              hypo : (| data-hypo-t, type-hypo-t)
+              hypo : (+ data-hypo-t | type-hypo-t)
               obj : obj-u
            -- env-t)
         (case hypo
@@ -1162,21 +1140,71 @@
           (else)))
       #+end_src
 
-***** bind-obj-to-name
+***** >< bind-obj-to-name
 
       #+begin_src cicada
       (+fun bind-obj-to-name
-        : (-> env-t, obj : obj-u, name : string-t -- env-t)
+        : (-> env-t
+              obj : obj-u
+              name : string-t
+              -- env-t)
         new-hypo-id data-hypo-c name local-let
-        name local-get infer obj obj-unify)
+        name local-get infer obj
+        ><><><
+        (unless obj-unify
+          "- bind-obj-to-name fail to unify" p nl
+          error))
       #+end_src
 
 ***** >< obj-unify
 
       #+begin_src cicada
       (+fun obj-unify
-        : (-> env-t, x : obj-u, y : obj-u -- env-t)
-        )
+        : (-> env-t
+              x : obj-u
+              y : obj-u
+           -- env-t maybe-u)
+        (case x
+          (data-obj-t
+            (case y
+              (data-obj-t
+                (do (maybe-bind
+                     maybe-return)
+                  (bind x.data-type
+                        y.data-type
+                        recur)
+                  (bind x.field-obj-dict
+                        y.field-obj-dict
+                        field-obj-dict-unify)))
+              (else )))
+          (data-type-t
+            (case y
+              (data-type-t)
+              (else )))
+          (union-type-t
+            (case y
+              (union-type-t)
+              (else )))
+          (type-type-t
+            (case y
+              (type-type-t)
+              (else )))
+          (closure-obj-t
+            (case y
+              (closure-obj-t)
+              (else )))
+          (arrow-type-t
+            (case y
+              (arrow-type-t)
+              (else )))
+          (data-hypo-t
+            (case y
+              (data-hypo-t)
+              (else )))
+          (type-hypo-t
+            (case y
+              (data-hypo-t)
+              (else )))))
       #+end_src
 
 ***** >< new-hypo-id
@@ -1215,7 +1243,8 @@
 
       #+begin_src cicada
       (+fun field-unify
-        : (-> env-t, obj-u -- env-t, obj-u)
+        : (-> env-t, obj-u
+           -- env-t, obj-u, bool-u)
         )
       #+end_src
 
@@ -1711,7 +1740,7 @@
 *** sexp-u
 
     #+begin_src cicada
-    (+alias sexp-u (| string-t, sexp-u list-u))
+    (+alias sexp-u (+ string-t | sexp-u list-u))
     #+end_src
 
 * pass

@@ -155,7 +155,7 @@
 
 *** tree-zip -- maybe monad
 
-    #+begin_src jojo :tangle no
+    #+begin_src cicada
     (+fun return-maybe just)
 
     (+fun bind-maybe
@@ -183,6 +183,57 @@
              bind-maybe]
             else nothing))
 
+    (+jojo tree-zip :t1! :t2!
+      (note (-> :<t> <tree> :<t> <tree> -- [:<t> <tree> <maybe>]))
+      (cond [:t1 leaf? :t2 leaf? and]
+            [:t1 .v :t2 .v cons leaf return-maybe]
+            [:t1 node? :t2 node? and]
+            [:t1 .l :t2 .l tree-zip
+             {:l! :t1 .r :t2 .r tree-zip
+              {:r! :l :r node
+               return-maybe}
+              bind-maybe}
+             bind-maybe]
+            else nothing))
+
+    [:t1 .l :t2 .l tree-zip
+     {:l! :t1 .r :t2 .r tree-zip
+      {:r! :l :r node
+       return-maybe}
+      bind-maybe}
+     bind-maybe]
+
+    [t1 .l t2 .l recur
+     {(let l) t1 .r t2 .r recur
+      {(let r) l r node-c
+       return-maybe}
+      bind-maybe}
+     bind-maybe]
+
+    (do (maybe-bind
+         maybe-return)
+      (> l < t1 .l t2 .l recur)
+      (> r < t1 .r t2 .r recur)
+      (return l r node-c))
+
+    (do (maybe-bind
+         maybe-return)
+      (< x.data-type
+         y.data-type
+         recur)
+      (< x.field-obj-dict
+         y.field-obj-dict
+         field-obj-dict-unify))
+
+    [t1 .l t2 .l recur
+     {[(let l)]
+      [t1 .r t2 .r recur
+       {[(let r)]
+        [l r node-c
+         return-maybe]}
+       bind-maybe]}
+     bind-maybe]
+
     (+fun tree-zip
       : (-> type :: type-tt
             t1 : type tree-u
@@ -193,10 +244,12 @@
          (do maybe-m
            [t1.v t2.v cons-c leaf-c]))
         ([note-t note-t]
-         (do maybe-m
-           l = [t1.l t2.l tree-zip]
-           r = [t1.r t2.r tree-zip]
-           [l r node-c]))
+         t1 .l t2 .l recur {(let l)
+         t1 .r t2 .r recur {(let r)
+         l r node-c
+         return-maybe}
+         bind-maybe}
+         bind-maybe)
         (else nothing-c)))
     #+end_src
 
