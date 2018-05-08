@@ -46,7 +46,7 @@
       env-cr)
       (+fun name-dict-find
         : (-> env-t, name : string-t
-           -- env-t (| den-u true-t, false-t))
+           -- env-t (+ den-u true-t | false-t))
         dup .name-dict name dict-find)
       (+fun name-dict-get
         : (-> env-t, name : string-t -- env-t den-u)
@@ -181,13 +181,13 @@
       (+fun scope-find
         : (-> scope-t
               string-t
-           -- (| obj-u true-t, false-t))
+           -- (+ obj-u true-t | false-t))
         dict-find)
       (+fun current-scope-find
         : (-> env-t
               name : string-t
            -- env-t
-              (| obj-u true-t, false-t))
+              (+ obj-u true-t | false-t))
         (if scope-stack-empty-p
           [false-c]
           [scope-stack-tos
@@ -208,7 +208,7 @@
         scope-stack-push)
       (+fun data-bind-dict-find
         : (-> env-t, hypo-id : hypo-id-t
-           -- env-t (| obj-u true-t, false-t))
+           -- env-t (+ obj-u true-t | false-t))
         dup .data-bind-dict hypo-id dict-find)
       (+fun data-bind-dict-insert
         : (-> env : env-t
@@ -220,7 +220,7 @@
         env clone)
       (+fun type-bind-dict-find
         : (-> env-t, hypo-id : hypo-id-t
-           -- env-t (| obj-u true-t, false-t))
+           -- env-t (+ obj-u true-t | false-t))
         dup .type-bind-dict hypo-id dict-find)
       (+fun type-bind-dict-insert
         : (-> env : env-t
@@ -232,15 +232,15 @@
         env clone)
       (+fun hypo-bind-dict-find
         : (-> env-t
-              hypo : (| data-hypo-t, type-hypo-t)
+              hypo : (+ data-hypo-t | type-hypo-t)
            -- env-t
-              (| obj-u true-t, false-t))
+              (+ obj-u true-t | false-t))
         (case hypo
           (data-hypo-t hypo.id data-bind-dict-find)
           (type-hypo-t hypo.id type-bind-dict-find)))
       (+fun hypo-bind-dict-insert
         : (-> env-t
-              hypo : (| data-hypo-t, type-hypo-t)
+              hypo : (+ data-hypo-t | type-hypo-t)
               obj : obj-u
            -- env-t)
         (case hypo
@@ -468,12 +468,62 @@
             exp.name bind-obj-to-name)
           (else)))
       (+fun bind-obj-to-name
-        : (-> env-t, obj : obj-u, name : string-t -- env-t)
+        : (-> env-t
+              obj : obj-u
+              name : string-t
+              -- env-t)
         new-hypo-id data-hypo-c name local-let
-        name local-get infer obj obj-unify)
+        name local-get infer obj
+        ><><><
+        (unless obj-unify
+          "- bind-obj-to-name fail to unify" p nl
+          error))
       (+fun obj-unify
-        : (-> env-t, x : obj-u, y : obj-u -- env-t)
-        )
+        : (-> env-t
+              x : obj-u
+              y : obj-u
+           -- env-t maybe-u)
+        (case x
+          (data-obj-t
+            (case y
+              (data-obj-t
+                (do (maybe-bind
+                     maybe-return)
+                  (bind x.data-type
+                        y.data-type
+                        recur)
+                  (bind x.field-obj-dict
+                        y.field-obj-dict
+                        field-obj-dict-unify)))
+              (else )))
+          (data-type-t
+            (case y
+              (data-type-t)
+              (else )))
+          (union-type-t
+            (case y
+              (union-type-t)
+              (else )))
+          (type-type-t
+            (case y
+              (type-type-t)
+              (else )))
+          (closure-obj-t
+            (case y
+              (closure-obj-t)
+              (else )))
+          (arrow-type-t
+            (case y
+              (arrow-type-t)
+              (else )))
+          (data-hypo-t
+            (case y
+              (data-hypo-t)
+              (else )))
+          (type-hypo-t
+            (case y
+              (data-hypo-t)
+              (else )))))
       (+fun new-hypo-id
         : (-> env-t -- env-t, hypo-id-t)
         )
@@ -487,7 +537,8 @@
         : (-> env-t, string-t -- env-t, obj-u)
         current-scope-get)
       (+fun field-unify
-        : (-> env-t, obj-u -- env-t, obj-u)
+        : (-> env-t, obj-u
+           -- env-t, obj-u, bool-u)
         )
       (note
         zero-c null-c cons-c
@@ -752,7 +803,7 @@
         (closure-obj-t closure-obj-infer)
         ;; ><><><
         (obj-u type-infer)))
-    (+alias sexp-u (| string-t, sexp-u list-u))
+    (+alias sexp-u (+ string-t | sexp-u list-u))
     (+fun sexp-list-pass
       : (-> sexp-u list-u -- sexp-u list-u)
       ;; the order matters
