@@ -1,0 +1,66 @@
+#+title: todo
+
+* [todo-stack]
+
+* [note]
+
+*** quotient-type
+
+    - nat-q vs nat-u
+
+*** as prover
+
+    - number theory -- by nat-u
+
+*** net
+
+    - different versions of echo server
+      as a framework to test different concurrent method
+
+    - built-in & standard-lib
+      - socket
+      - select -- for non blocking socket
+
+* [discuss] 關於實現方式
+
+  - x -
+    關於 cicada-language 的實現方式
+    我目前的計劃是 :
+    1. 用 idris 寫 cicada-language 的類型檢查器
+    2. 然後用 cicada-language 重新寫 cicada-language 的類型檢查器
+
+    但是在 (2) 這一步我不想真的寫編譯器
+    所以我計劃先實現一個語法和語義類似的動態語言
+    只是用來運行 cicada-language 的代碼
+    而不做類型檢查
+    這個語言的解釋器應該更容易實現
+
+    所需要的特點如下 :
+    1. 這個語言嵌入在靜態類型語言中
+       並且儘量做的實用
+    2. 不是簡單的使用 type tag
+       而是在運行時帶上所有的類型信息
+       並且可以在運行時 使用到 type 中的所有信息
+    3. 帶有 logic object
+       即類型確定但是值還沒有確定的 object
+    4. 每次函數作用
+       type arrow 中的 ante 都被用來與棧中的元素做 unification
+       或者說每個函數的類型也是一次作用
+       只不過是作用於 object 的 type field
+
+  - k -
+    後面的這個 (4) 之作用是什麼呢 ?
+    你可能是想要達到真正 cicada-language 的解釋器的語義
+    但是在 cicada-language 新的實現計劃中
+    這種伴隨函數作用的 unification 已經被捨棄了
+    每個 hypo 的類型都必須是已知的
+
+  - x -
+    我們所遇到的問題
+    可能正是來源於我們所設想的實現方式太過底層了
+    這種底層的具體語義 限制了我們處理類型檢查的方式
+
+    設想沒有這些底層的語義
+    類型檢查器就並非
+    "一個在運行時 其數據帶有全部類型信息的解釋器"
+    那麼我們處理類型檢查的方式可能就非常靈活了
