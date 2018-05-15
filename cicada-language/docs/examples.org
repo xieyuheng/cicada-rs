@@ -350,12 +350,12 @@
             succ : type list-u
             result : type list-u
          -- type-tt)
-      (-> -- null-c succ succ null-append-t)
+      (-> -- null-c succ succ zero-append-t)
       (-> car :: type
           cdr :: type list-u
           result-cdr :: type list-u
           prev : cdr succ result-cdr list-append-u
-       -- car cdr cons-c, succ, car result-cdr cons-c cons-append-t))
+       -- car cdr cons-c, succ, car result-cdr cons-c succ-append-t))
 
     (+union list-append-u
       : (-> type :: type-tt
@@ -363,18 +363,18 @@
             succ : type list-u
             result : type list-u
          -- type-tt)
-      null-append-t
-      cons-append-t)
+      zero-append-t
+      succ-append-t)
 
-    (+type null-append-t
+    (+type zero-append-t
       : (-> type :: type-tt
             ante : type list-u
             succ : type list-u
             result : type list-u
          -- type-tt)
-      (-> -- null-c succ succ null-append-t))
+      (-> -- null-c succ succ zero-append-t))
 
-    (+type cons-append-t
+    (+type succ-append-t
       : (-> type :: type-tt
             ante : type list-u
             succ : type list-u
@@ -384,13 +384,13 @@
           cdr :: type list-u
           result-cdr :: type list-u
           prev : cdr succ result-cdr list-append-u
-       -- car cdr cons-c, succ, car result-cdr cons-c cons-append-t))
+       -- car cdr cons-c, succ, car result-cdr cons-c succ-append-t))
     #+end_src
 
 *** ><
 
     #+begin_src cicada
-    (+type cons-append-t
+    (+type succ-append-t
       : (-> type :: type-tt
             ante : type list-u
             succ : type list-u
@@ -400,16 +400,16 @@
           cdr :: type list-u
           result-cdr :: type list-u
           prev : cdr succ result-cdr list-append-u
-       -- car cdr cons-c, succ, car result-cdr cons-c cons-append-t))
+       -- car cdr cons-c, succ, car result-cdr cons-c succ-append-t))
 
-    (note for [ante succ result cons-append-c]
+    (note for [ante succ result succ-append-c]
       0 hypo-id-c data-hypo-c (quote type) local-let
       (quote type) local-get to-type
       type-tt
       unify
       ><><><
       (@data-type-t
-        (name "cons-append-t")
+        (name "succ-append-t")
         (field-obj-dict
          (@ (type (quote type) local-get)
             (ante (quote ante) local-get)
