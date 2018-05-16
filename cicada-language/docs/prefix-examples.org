@@ -1,0 +1,697 @@
+#+title: prefix examples
+
+* [todo-stack]
+
+*** use number theory -- to test type-checker as prover
+
+*** alias
+
+    - (+def macro-ar = (-> sexp-u list-u -- sexp-u))
+      "-ar" for arrow
+
+    - how should we use postfix of words
+
+* [note]
+
+*** (+type)
+
+    - type of data in data-field must be of type type-tt
+      thus, function can not be stored in data-field
+
+*** naming convention
+
+    - type
+
+      | -t  | type constructor          |
+      | -u  | union-type constructor    |
+      | -q  | quotient-type constructor |
+      | -tc | type-class                |
+      | -tt | type of type              |
+
+    - function
+
+      | -p  | predicate        |
+      | -c  | data constructor |
+      | -cr | create           |
+
+*** level of types
+
+    | 0 | object                          |
+    | 1 | type, union-type, quotient-type |
+    | 2 | type-class, type-tt             |
+
+* bool
+
+*** bool-u
+
+    #+begin_src cicada
+    (+union bool-u : type-tt
+      (-> -- true-t)
+      (-> -- false-t))
+    #+end_src
+
+* nat
+
+*** nat-u
+
+    #+begin_src cicada
+    (+union nat-u : type-tt
+      (-> -- zero-t)
+      (-> prev : nat-u -- succ-t))
+
+    @@@
+    (+fun nat-add : (-> [m n] : nat-u -- nat-u)
+      (case n
+        (zero-t m)
+        (succ-t (succ-c (recur m n.prev)))))
+
+    (+fun nat-mul : (-> [m n] : nat-u -- nat-u)
+      (case n
+        (zero-t n)
+        (succ-t m n.prev recur m nat-add)))
+
+    @@@
+    (+fun nat-mul : (-> [m n] : nat-u -- nat-u)
+      (case n
+        (zero-t n)
+        (succ-t (nat-add (recur m n.prev) m))))
+
+    (+fun nat-factorial : (-> n : nat-u -- nat-u)
+      (case n
+        (zero-t n succ-c)
+        (succ-t n.prev recur n nat-mul)))
+
+    @@@
+    (+fun nat-factorial : (-> n : nat-u -- nat-u)
+      (case n
+        (zero-t (succ-c n))
+        (succ-t (nat-mul (recur n.prev) n))))
+    #+end_src
+
+* list
+
+*** list-u
+
+    #+begin_src cicada
+    (+union list-u : (-> type : type-tt -- type-tt)
+      (-> -- type null-t)
+      (-> car : type
+          cdr : [type list-u]
+       -- type cons-t))
+
+    (+union list-u : (-> type : type-tt -- type-tt)
+      (-> -- (null-t type))
+      (-> car : type
+          cdr : (list-u type)
+       -- (cons-t type)))
+    #+end_src
+
+*** list-u -- not inline
+
+    #+begin_src cicada
+    (+union list-u : (-> type : type-tt -- type-tt)
+      null-t
+      cons-t)
+
+    (+type null-t : (-> type : type-tt -- type-tt)
+      (-> -- type null-t))
+
+    (+type cons-t : (-> type : type-tt -- type-tt)
+      (-> car : type
+          cdr : [type cons-t]
+       -- type cons-t))
+    #+end_src
+
+*** list-length
+
+    #+begin_src cicada
+    (+fun list-length
+      : (-> type :: type-tt
+            list : [type list-u]
+         -- nat-u)
+      (case list
+        (null-t zero-c)
+        (cons-t list.cdr recur succ-c)))
+
+    (+fun list-length
+      : (-> type :: type-tt
+            list : (list-u type)
+         -- nat-u)
+      (case list
+        (null-t zero-c)
+        (cons-t (succ-c (recur list.cdr)))))
+    #+end_src
+
+*** list-append
+
+    #+begin_src cicada
+    (+fun list-append
+      : (-> type :: type-tt
+            list : [type list-u]
+            list2 : [type list-u]
+         -- type list-u)
+      (case list2
+        (null-t list)
+        (cons-t list2.car list list2.cdr recur cons-c)))
+    #+end_src
+
+*** list-map
+
+    #+begin_src cicada
+    (+fun list-map
+      : (-> [type type2] :: type-tt
+            list : [type list-u]
+            fun : (-> type -- type2)
+         -- type2 list-u)
+      (case list
+        (null-t list)
+        (cons-t list.car fun list.cdr {fun} recur cons-c)))
+    #+end_src
+
+*** list-ref -- will not pass type check
+
+    #+begin_src cicada
+    ;; this function will not pass type check
+    ;;   because we can not use car cdr on list-u
+    ;;   we can only use them on cons-t
+    #note
+    (+fun list-ref
+      : (-> type :: type-tt
+            list : [type list-u]
+            index : nat-u
+         -- type)
+      (case index
+        (zero-t list.car)
+        (succ-t list.cdr index.prev recur)))
+    #+end_src
+
+*** list-remove-first
+
+    #+begin_src cicada
+    (+fun list-remove-first
+      : (-> type :: type-tt
+            x : type
+            list : [type list-u]
+         -- type list-u)
+      (case list
+        (null-t list)
+        (cons-t (case [list.car x eq-p]
+                   (true-t  list.cdr)
+                   (false-t list.car list.cdr x recur cons-c)))))
+    #+end_src
+
+* eqv
+
+*** eqv-t
+
+    #+begin_src cicada
+    (+type eqv-t
+      : (-> type :: type-tt
+            [lhs rhs] : type
+         -- type-tt)
+      (-> value :: type
+       -- value value eqv-t))
+    #+end_src
+
+*** eqv-apply
+
+    #+begin_src cicada
+    (+proof eqv-apply
+      : (-> [type type2] :: type-tt
+            [x y] :: type
+            x y eqv-t
+            fun : (-> type -- type2)
+         -- x fun y fun eqv-t)
+      eqv-c)
+    #+end_src
+
+*** eqv-swap
+
+    #+begin_src cicada
+    (+proof eqv-swap
+      : (-> type :: type-tt
+            [x y] :: type
+            x y eqv-t
+         -- y x eqv-t)
+      eqv-c)
+    #+end_src
+
+*** eqv-compose
+
+    #+begin_src cicada
+    (+proof eqv-compose
+      : (-> type :: type-tt
+            [x y z] :: type
+            x y eqv-t
+            y z eqv-t
+         -- x z eqv-t)
+      eqv-c)
+    #+end_src
+
+* nat
+
+*** nat-is-even-u -- re-imp predicate as judgment
+
+    - nat-is-even-p : (-> nat-u -- bool-u)
+    - nat-is-even-u : (-> nat-u -- type-tt)
+
+    #+begin_src cicada
+    (+union nat-is-even-u : (-> n : nat-u -- type-tt)
+      (-> -- zero-c zero-is-even-t)
+      (-> m :: nat-u
+          prev : [m nat-is-even-u]
+       -- m succ-c succ-c even-plus-two-is-even-t))
+
+    (+proof two-is-even
+      : (-> -- zero-c succ-c succ-c nat-is-even-u)
+      zero-is-even-c
+      even-plus-two-is-even-c)
+    #+end_src
+
+*** nat-add-associative
+
+    #+begin_src cicada
+    (+proof nat-add-associative
+      : (-> [x y z] : nat-u
+         -- x y nat-add z nat-add
+            x y z nat-add nat-add eqv-t)
+      (case z
+        (zero-t eqv-c)
+        (succ-t x y z.prev recur {succ-c} eqv-apply)))
+    #+end_src
+
+*** nat-add-commutative
+
+    #+begin_src cicada
+    (+proof nat-add-commutative
+      : (-> [m n] : nat-u
+         -- m n nat-add
+            n m nat-add eqv-t)
+      (case n
+        (zero-t m nat-add-zero-commutative)
+        (succ-t m n.prev recur {succ-c} eqv-apply
+                n.prev m nat-add-succ-commutative eqv-compose)))
+
+    (+proof nat-add-zero-commutative
+      : (-> m : nat-u
+         -- m zero-c nat-add
+            zero-c m nat-add eqv-t)
+      (case m
+        (zero-t eqv-c)
+        (succ-t m.prev recur {succ-c} eqv-apply)))
+
+    (+proof nat-add-succ-commutative
+      : (-> [m n] : nat-u
+         -- m succ-c n nat-add
+            m n nat-add succ-c eqv-t)
+      (case n
+        (zero-t eqv-c)
+        (succ-t m n.prev recur {succ-c} eqv-apply)))
+    #+end_src
+
+* list
+
+*** list-length-u -- re-imp function as relation
+
+    #+begin_src cicada
+    (note
+      list-length
+      : (-> type :: type-tt
+            list : [type list-u]
+         -- length : nat-u)
+
+      list-length-u
+      : (-> type :: type-tt
+            list : [type list-u]
+            length : nat-u
+         -- type-tt))
+
+    (+union list-length-u
+      : (-> type :: type-tt
+            list : [type list-u]
+            length : nat-u
+         -- type-tt)
+      (-> -- null-c zero-c null-length-t)
+      (-> cdr : [list length list-length-u]
+       -- element :: type
+          element list cons-c
+          length succ-c cons-length-t))
+
+    ;; the name of the argument of cons-length-c
+    ;;   should not be cdr ?
+
+    ;; how should we use -o ?
+    ;;   should it be different from -u ?
+    ;;   not that there are also -t, -q, ... ?
+
+    ;; maybe we should use unified -t for all of them !
+
+    ;; what is the logic programming interface of the type system ?
+    #+end_src
+
+*** list-map-preserve-list-length
+
+    #+begin_src cicada
+    (+fun list-map-preserve-list-length
+      : (-> type :: type-tt
+            fun :: (-> type -- type2)
+            list :: [type list-u]
+            n :: nat-u
+            list-length-proof : [list n list-length-u]
+         -- list {fun} map n list-length-u)
+      (case list-length-proof
+        (null-length-t list-length-proof)
+        (cons-length-t list-length-proof.cdr recur cons-length-c)))
+    #+end_src
+
+*** list-append-u
+
+    #+begin_src cicada
+    ;; append([], SUCC, SUCC).
+    ;; append([CAR|CDR], SUCC, [CAR|RESULT_CDR]):-
+    ;;   append(CDR, SUCC, RESULT_CDR).
+
+    (+union list-append-u
+      : (-> type :: type-tt
+            ante : type list-u
+            succ : type list-u
+            result : type list-u
+         -- type-tt)
+      (-> -- null-c succ succ zero-append-t)
+      (-> car :: type
+          cdr :: type list-u
+          result-cdr :: type list-u
+          prev : cdr succ result-cdr list-append-u
+       -- car cdr cons-c, succ, car result-cdr cons-c succ-append-t))
+
+    (+union list-append-u
+      : (-> type :: type-tt
+            ante : type list-u
+            succ : type list-u
+            result : type list-u
+         -- type-tt)
+      zero-append-t
+      succ-append-t)
+
+    (+type zero-append-t
+      : (-> type :: type-tt
+            ante : type list-u
+            succ : type list-u
+            result : type list-u
+         -- type-tt)
+      (-> -- null-c succ succ zero-append-t))
+
+    (+type succ-append-t
+      : (-> type :: type-tt
+            ante : type list-u
+            succ : type list-u
+            result : type list-u
+         -- type-tt)
+      (-> car :: type
+          cdr :: type list-u
+          result-cdr :: type list-u
+          prev : cdr succ result-cdr list-append-u
+       -- car cdr cons-c, succ, car result-cdr cons-c succ-append-t))
+    #+end_src
+
+*** ><
+
+    #+begin_src cicada
+    (+type succ-append-t
+      : (-> type :: type-tt
+            ante : type list-u
+            succ : type list-u
+            result : type list-u
+         -- type-tt)
+      (-> car :: type
+          cdr :: type list-u
+          result-cdr :: type list-u
+          prev : cdr succ result-cdr list-append-u
+       -- car cdr cons-c, succ, car result-cdr cons-c succ-append-t))
+
+    (note for [ante succ result succ-append-c]
+      0 hypo-id-c data-hypo-c (quote type) local-let
+      (quote type) local-get to-type
+      type-tt
+      unify
+      ><><><
+      (@data-type-t
+        (name "succ-append-t")
+        (field-obj-dict
+         (@ (type (quote type) local-get)
+            (ante (quote ante) local-get)
+            (succ (quote succ) local-get)
+            (result (quote result) local-get))))
+      (let data-type)
+      (@data-obj-t
+        (data-type data-type)
+        (field-obj-dict
+         (@ (prev (quote prev) local-get)))))
+    #+end_src
+
+* vect
+
+*** vect-u
+
+    #+begin_src cicada
+    (+union vect-u
+      : (-> length : nat-u
+            type : type-tt
+         -- type-tt)
+      (-> -- zero-c type null-vect-t)
+      (-> car : type
+          cdr : [length type vect-u]
+       -- length succ-c type cons-vect-t))
+    #+end_src
+
+*** vect-append
+
+    #+begin_src cicada
+    (+fun vect-append
+      : (-> [m n] :: nat-u
+            type :: type-tt
+            list : [m type vect-u]
+            list2 : [n type vect-u]
+         -- m n nat-add type vect-u)
+      (case list2
+        (null-vect-t list)
+        (cons-vect-t list2.car list list2.cdr recur cons-vect-c)))
+    #+end_src
+
+*** vect-map
+
+    #+begin_src cicada
+    (+fun vect-map
+      : (-> n :: nat-u
+            [type type2] :: type-tt
+            list : [n type vect-u]
+            fun : (-> type -- type2)
+         -- n type2 vect-u)
+      (case list
+        (null-vect-t list)
+        (cons-vect-t list.car fun list.cdr {fun} recur cons-vect-c)))
+    #+end_src
+
+* >< type-check details
+
+*** add-zero-commutative
+
+    #+begin_src cicada
+    (match m succ-c)
+    (= m m.prev succ-c)
+
+    (type-computed
+
+     [m.prev]
+     [recur {succ-c} eq-apply]
+
+     [m.prev zero-c add
+      zero-c m.prev add eq-t]
+     [{succ-c} eq-apply]
+
+     [m.prev zero-c add succ-c
+      zero-c m.prev add succ-c eq-t]
+
+     [m.prev add succ-c
+      zero-c m.prev add succ-c eq-t])
+
+    (type-asserted
+
+     [m zero-c add
+      zero-c m add eq-t]
+
+     [m.prev succ-c zero-c add
+      zero-c m.prev succ-c add eq-t]
+
+     [m.prev succ-c add
+      zero-c m.prev succ-c add eq-t]
+
+     [m.prev add succ-c
+      zero-c m.prev succ-c add eq-t]
+
+     [m.prev add succ-c
+      zero-c m.prev add succ-c eq-t])
+    #+end_src
+
+*** add-commutative
+
+    #+begin_src cicada
+    (match n succ-c)
+    (= n n.prev succ-c)
+
+    (type-computed
+
+     [m n.prev]
+     [recur {succ-c} eq-apply
+      n.prev m add-succ-commutative eq-swap eq-compose]
+
+     [m n.prev add
+      n.prev m add eq-t]
+     [{succ} eq-apply
+      n.prev m add-succ-commutative eq-swap eq-compose]
+
+     [m n.prev add succ-c
+      n.prev m add succ-c eq-t]
+     [n.prev m add-succ-commutative eq-swap eq-compose]
+
+     [m n.prev add succ-c
+      n.prev m add succ-c eq-t
+      n.prev succ-c m add
+      n.prev m add succ-c eq-t]
+     [eq-swap eq-compose]
+
+     [m n.prev add succ-c
+      n.prev m add succ-c eq-t
+      n.prev m add succ-c
+      n.prev succ-c m add eq-t]
+     [eq-compose]
+
+     [m n.prev add succ-c
+      n.prev succ-c m add eq-t])
+
+    (type-asserted
+
+     [m n add
+      n m add eq-t]
+
+     [m n.prev succ-c add
+      n.prev succ-c m add eq-t]
+
+     [m n.prev add succ-c
+      n.prev succ-c m add eq-t])
+    #+end_src
+
+*** map-has-length
+
+    #+begin_src cicada
+    (: has-length l n has-length-t)
+
+    (match has-length cons-has-length)
+      (= has-length has-length.cdr cons-has-length)
+        (: has-length.cdr [l#0 n#0 has-length-t])
+      (: has-length [a#0 l#0 cons n#0 succ-c has-length-t])
+        (= l a#0 l#0 cons)
+        (= n n#0 succ)
+
+    (type-computed
+
+     [has-length.cdr recur cons-has-length]
+
+     [l#0 n#0 has-length-t]
+     [recur cons-has-length]
+
+     [l#0 fun#0 map n#0 has-length-t]
+     [cons-has-length]
+
+     [a#1 l#0 fun#0 map cons n#0 succ-c has-length-t])
+
+    (type-asserted
+
+     [l fun map n has-length-t]
+
+     [a#0 l#0 cons fun map n#0 succ-c has-length-t]
+
+     [a#0 @fun l#0 fun map cons n#0 succ-c has-length-t])
+    #+end_src
+
+*** vect-append
+
+    #+begin_src cicada
+    (: :l0 [:m :t vect-u])
+    (: :l1 [:n :t vect-u])
+
+    (match :l1 cons)
+      (= :l1 :l1.car :l1.cdr cons)
+        (: :l1.cdr [:n#0 :t#0 vect-u])
+        (: :l1.car :t#0)
+      (: :l1 [:n#0 succ :t#0 vect-u])
+        (= :n :n#0 succ)
+        (= :t :t#0)
+
+    (type-computed:
+
+     [:l1.car :l0 :l1.cdr recur cons]
+
+     [:m :t vect-u :n :t vect-u]
+     ><><>< the order of cons
+     [recur :l1.car cons]
+
+     [:m :t vect-u :n#0 :t#0 vect-u]
+     [recur :l1.car cons]
+
+     [:m :n#0 add :t#0 vect-u]
+     [:l1.car cons]
+
+     [:m :n#0 add :t#0 vect-u :t#0]
+     [cons]
+
+     [:m :n#0 add succ :t#0 vect-u])
+
+    (type-asserted:
+
+     [:m :n add :t vect-u]
+
+     [:m :n#0 succ add :t#0 vect-u]
+
+     [:m :n#0 add succ :t#0 vect-u])
+    #+end_src
+
+*** vect-map
+
+    #+begin_src cicada
+    (: :l [:n :t1 vect-u])
+    (: :f (-> :t1 :t2))
+
+    (match :l cons)
+      (= :l :l.car :l.cdr cons)
+        (: :l.cdr [:n#0 :t#0 vect-u])
+        (: :l.car :t#0)
+      (: :l [:n#0 succ :t#0 vect-u])
+        (= :n :n#0 succ)
+        (= :t1 :t#0)
+
+    (type-computed:
+
+     ><><>< the order of cons
+     [:l.cdr :f recur :l.car :f apply cons]
+
+     [:n#0 :t#0 vect-u (-> :t1 :t2)]
+     [recur :l.car :f apply cons]
+
+     [:n#0 :t2 vect-u]
+     [:l.car :f apply cons]
+
+     [:n#0 :t2 vect-u :t#0]
+     [:f apply cons]
+
+     [:n#0 :t2 vect-u :t2]
+     [cons]
+
+     [:n#0 succ :t2 vect-u])
+
+    (type-asserted:
+
+     [:n :t2 vect-u]
+
+     [:n#0 succ :t2 vect-u])
+    #+end_src
