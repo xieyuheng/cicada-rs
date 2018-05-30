@@ -1,29 +1,31 @@
 module Cicada
 
 import Dict
+import State
 
 data Exp : Type where
   CallExp
     : (name : String) -> Exp
   LetExp
-    : (name_list : List String) -> Exp
+    : (nameList : List String) -> Exp
   ClosureExp
     : (body : List Exp) -> Exp
   ArrowExp
-    : (ante : List Exp) -> (succ : List Exp) -> Exp
+    : (ante : List Exp) ->
+      (succ : List Exp) -> Exp
   ApplyExp
     : Exp
   CaseExp
-    : (arg_list :  List Exp) ->
-      (closure_dict : Dict String Exp) -> Exp
+    : (argList :  List Exp) ->
+      (closureLict : Dict String Exp) -> Exp
   FieldExp
     : (name : String) -> Exp
   ColonExp
     : (name : String) ->
-      (type_list : List Exp) -> Exp
+      (typeList : List Exp) -> Exp
   DoubleColonExp
     : (name : String) ->
-      (type_list : List Exp) -> Exp
+      (typeList : List Exp) -> Exp
   BeginExp
     : (body : List Exp) -> Exp
   CommaExp
@@ -34,20 +36,20 @@ data Exp : Type where
 data Den : Type where
   FunDen
     : (name : String) ->
-      (type_arrow : Exp) ->
+      (typeArrow : Exp) ->
       (body : List Exp) -> Den
   DataConsDen
     : (name : String) ->
-      (type_arrow : Exp) ->
-      (cons_arrow : Exp) -> Den
+      (typeArrow : Exp) ->
+      (consArrow : Exp) -> Den
   TypeConsDen
     : (name : String) ->
-      (type_arrow : Exp) ->
-      (cons_arrow : Exp) -> Den
+      (typeArrow : Exp) ->
+      (consArrow : Exp) -> Den
   UnionConsDen
     : (name : String) ->
-      (type_arrow : Exp) ->
-      (sub_name_list : List String) -> Den
+      (typeArrow : Exp) ->
+      (subNameList : List String) -> Den
 
 record HypoId where
   constructor MkHypoId
@@ -56,13 +58,13 @@ record HypoId where
 data Obj : Type where
   DataObj
     : (type : Obj) ->
-      (field_dict : Dict String Obj) -> Obj
+      (fieldDict : Dict String Obj) -> Obj
   DataType
     : (name : String) ->
-      (field_dict : Dict String Obj) -> Obj
+      (fieldDict : Dict String Obj) -> Obj
   UnionType
     : (name : String) ->
-      (field_dict : Dict String Obj) -> Obj
+      (fieldDict : Dict String Obj) -> Obj
   TypeType
     : (level : Nat) -> Obj
   ClosureObj
@@ -91,7 +93,16 @@ record Env where
   dataBindDict : Dict HypoId Obj
   typeBindDict : Dict HypoId Obj
 
-exe : Env -> Exp -> Env
-exe env (CallExp name) = env
-exe env (LetExp name_list) = env
-exe env (CommaExp) = env
+exe : (exp : Exp) -> State Env a
+exe (CallExp name) = ?exe_rhs_1
+exe (LetExp nameList) = ?exe_rhs_2
+exe (ClosureExp body) = ?exe_rhs_3
+exe (ArrowExp ante succ) = ?exe_rhs_4
+exe ApplyExp = ?exe_rhs_5
+exe (CaseExp argList closureLict) = ?exe_rhs_6
+exe (FieldExp name) = ?exe_rhs_7
+exe (ColonExp name typeList) = ?exe_rhs_8
+exe (DoubleColonExp name typeList) = ?exe_rhs_9
+exe (BeginExp body) = ?exe_rhs_10
+exe CommaExp = ?exe_rhs_11
+exe TypeTTExp = ?exe_rhs_12
