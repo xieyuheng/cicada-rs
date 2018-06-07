@@ -1,0 +1,34 @@
+#+title: category
+
+* category
+
+  #+begin_src cicada
+  (+class category-tc
+    < (* object-t : type-tt
+         arrow-t : (-> object-t object-t -- type-tt))
+    (+sig identity
+      : (-> a : object-t
+         -- a a arrow-t))
+    (+sig compose
+      : (-> a b arrow-t
+            b c arrow-t
+         -- a c arrow-t))
+    (+sig identity-left
+      : (-> f : a b arrow-t
+         -- a identity f compose, f eqv-t))
+    (+sig identity-right
+      : (-> f : a b arrow-t
+         -- f b identity compose, f eqv-t))
+    (+sig compose-associative
+      : (-> f : a b arrow-t
+            g : b c arrow-t
+            h : c d arrow-t
+         -- f g h compose compose
+            f g compose h compose eqv-t)))
+
+  (+imp (* nat-u nat-order-u) : category-tc
+    (+fun identity
+      : )
+    (+fun compose
+      : ))
+  #+end_src

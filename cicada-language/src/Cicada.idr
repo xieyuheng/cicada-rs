@@ -71,7 +71,8 @@ data Obj : Type where
     : (scope : Dict String Obj) ->
       (body : List Exp) -> Obj
   ArrowType
-    : (ante : List Obj) -> (succ : List Obj) -> Obj
+    : (ante : List Obj) ->
+      (succ : List Obj) -> Obj
   DataHypo
     : HypoId -> Obj
   TypeHypo
@@ -93,10 +94,13 @@ record Env where
   dataBindDict : Dict HypoId Obj
   typeBindDict : Dict HypoId Obj
 
-exe : (exp : Exp) -> State Env a
-exe (CallExp name) = ?exe_rhs_1
-exe (LetExp nameList) = ?exe_rhs_2
-exe (ClosureExp body) = ?exe_rhs_3
+exe : (exp : Exp) -> State Env ()
+exe (CallExp name) = do
+  ?exe_rhs_1
+exe (LetExp nameList) = do
+  ?exe_rhs_2
+exe (ClosureExp body) = do
+  ?exe_rhs_3
 exe (ArrowExp ante succ) = ?exe_rhs_4
 exe ApplyExp = ?exe_rhs_5
 exe (CaseExp argList closureLict) = ?exe_rhs_6
