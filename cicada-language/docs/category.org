@@ -1,32 +1,110 @@
 #+title: category
 
-* category
+* [todo-stack]
+
+*** about first-classness
+
+    - x -
+      if we implement category as type-class [or interface]
+      to implement product of category
+      we need to be able to treat type-class as first-class
+      because a product take two categories and return a new category
+
+    - k -
+      how about functor ?
+
+    - x -
+      while functor is different
+      it is not a category constructor
+      but a structure preserving map between existing categories
+
+*** functor type-class in haskell
+
+    - in haskell the category under consideration
+      is tye category of types
+      where types are objects
+      functions are morphisms
+
+    - the functor type-class in haskell
+      is a endo-functor from this category to itself
+
+      thus a functor instance in haskell
+      is a type constructor of type (-> type -- type)
+
+      thus the functor type-class in haskell
+      is limited in the sense of functor
+      because type constructor in haskell
+      is limited in the sense of function of type (-> type -- type)
+
+*** type name postfix
+
+    - give up detailed type name postfix
+      because for structured function type and product type
+      type name postfix is not enough
+
+    - type name postfix
+      is only used to distinguish level of types
+
+*** stack as a category constructor
+
+    - stack as product built-in the language
+      - take swap as an example  (a, b) => (b, a)
+      - also the assoc law (a, (b, c)) => ((a,  b), c)
+
+    - maybe we still need to define stack as a category constructor
+
+*** subtype relation as order relation for algebraic data type
+
+    - for example :
+      a < a + b
+      a < a * 2
+
+*** universe
+
+    - type-tt = 1 universe
+      type-tt : 2 universe
+      type-tt : 2 universe
+
+    - nat-t : 1 universe
+      (* nat-t nat-t) : 1 universe
+      (+ nat-t | nat-t) : 1 universe
+      (-> nat-t -- nat-t) : 1 universe
+
+    - 1 universe : 2 universe
+
+    - how about the order relation for those universes ?
+
+* category-ct
 
   #+begin_src cicada
-  (+class category-tc
+  (+class category-ct
     < (* object-t : type-tt
          arrow-t : (-> object-t object-t -- type-tt))
     (+sig identity
-      : (-> a : object-t
+      : (-> object-t % a
          -- a a arrow-t))
     (+sig compose
       : (-> a b arrow-t
             b c arrow-t
          -- a c arrow-t))
     (+sig identity-left
-      : (-> f : a b arrow-t
+      : (-> a b arrow-t % f
          -- a identity f compose, f eqv-t))
     (+sig identity-right
-      : (-> f : a b arrow-t
+      : (-> a b arrow-t % f
          -- f b identity compose, f eqv-t))
     (+sig compose-associative
-      : (-> f : a b arrow-t
-            g : b c arrow-t
-            h : c d arrow-t
+      : (-> a b arrow-t % f
+            b c arrow-t % g
+            c d arrow-t % h
          -- f g h compose compose
             f g compose h compose eqv-t)))
+  #+end_src
 
-  (+imp (* nat-u nat-order-u) : category-tc
+* category-ct % (* nat-t nat-order-t)
+
+  #+begin_src cicada
+  (+imp category-ct % (* nat-t nat-order-t)
     (+fun identity
       : )
     (+fun compose
