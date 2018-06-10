@@ -4,8 +4,8 @@
 
 *** standard homomorphism
 
-    - we need to be able to say nat-u < int-q
-      a standard homomorphism from nat-u to int-q
+    - we need to be able to say nat-t < int-q
+      a standard homomorphism from nat-t to int-q
 
 *** abstract quotient-type
 
@@ -35,10 +35,10 @@
 
   #+begin_src cicada
   (+quotient int-q : type-tt
-    (-> left : nat-u
-        right : nat-u
+    (-> left : nat-t
+        right : nat-t
      -- int-q)
-    (+fun eq-p : (-> [x y] : int-q -- bool-u)
+    (+fun eq-p : (-> [x y] : int-q -- bool-t)
       x.left x.right sub
       y.left y.right sub
       eq-p))
@@ -48,10 +48,10 @@
     ;; eq-p will be its only interface function.
 
     (+trait type-tc < type-tt
-      eq-p : (-> [x y] : type-tc -- bool-u))
+      eq-p : (-> [x y] : type-tc -- bool-t))
 
     (+impl int-q : type-tc
-      (+fun eq-p : (-> [x y] : int-q -- bool-u)
+      (+fun eq-p : (-> [x y] : int-q -- bool-t)
         x.left x.right sub
         y.left y.right sub
         eq-p)))
@@ -64,7 +64,7 @@
     (-> up : int-q
         down : int-q
      -- fraction-q)
-    (+fun eq-p : (-> [x y] : fraction-q -- bool-u)
+    (+fun eq-p : (-> [x y] : fraction-q -- bool-t)
       x.up y.down mul
       y.up x.down mul
       eq-p))

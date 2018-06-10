@@ -4,13 +4,6 @@
 
 *** use number theory -- to test type-checker as prover
 
-*** alias
-
-    - (+def macro-ar = (-> sexp-u list-u -- sexp-u))
-      "-ar" for arrow
-
-    - how should we use postfix of words
-
 * [note]
 
 *** (+type)
@@ -23,9 +16,9 @@
     - type
 
       | -t  | type constructor          |
-      | -u  | union-type constructor    |
-      | -q  | quotient-type constructor |
-      | -tc | type-class                |
+      |     | union-type constructor    |
+      |     | quotient-type constructor |
+      | -ct | class-type                |
       | -tt | type of type              |
 
     - function
@@ -42,34 +35,34 @@
 
 * bool
 
-*** bool-u
+*** bool-t
 
     #+begin_src cicada
-    (+union bool-u : type-tt
+    (+union bool-t : type-tt
       (-> -- true-t)
       (-> -- false-t))
     #+end_src
 
 * nat
 
-*** nat-u
+*** nat-t
 
     #+begin_src cicada
-    (+union nat-u : type-tt
+    (+union nat-t : type-tt
       (-> -- zero-t)
-      (-> prev : nat-u -- succ-t))
+      (-> prev : nat-t -- succ-t))
 
-    (+fun nat-add : (-> [m n] : nat-u -- nat-u)
+    (+fun nat-add : (-> [m n] : nat-t -- nat-t)
       (case n
         (zero-t m)
         (succ-t m n.prev recur succ-c)))
 
-    (+fun nat-mul : (-> [m n] : nat-u -- nat-u)
+    (+fun nat-mul : (-> [m n] : nat-t -- nat-t)
       (case n
         (zero-t n)
         (succ-t m n.prev recur m nat-add)))
 
-    (+fun nat-factorial : (-> n : nat-u -- nat-u)
+    (+fun nat-factorial : (-> n : nat-t -- nat-t)
       (case n
         (zero-t n succ-c)
         (succ-t n.prev recur n nat-mul)))
@@ -77,20 +70,20 @@
 
 * list
 
-*** list-u
+*** list-t
 
     #+begin_src cicada
-    (+union list-u : (-> type : type-tt -- type-tt)
+    (+union list-t : (-> type : type-tt -- type-tt)
       (-> -- type null-t)
       (-> car : type
-          cdr : [type list-u]
+          cdr : [type list-t]
        -- type cons-t))
     #+end_src
 
-*** list-u -- not inline
+*** list-t -- not inline
 
     #+begin_src cicada
-    (+union list-u : (-> type : type-tt -- type-tt)
+    (+union list-t : (-> type : type-tt -- type-tt)
       null-t
       cons-t)
 
@@ -108,8 +101,8 @@
     #+begin_src cicada
     (+fun list-length
       : (-> type :: type-tt
-            list : [type list-u]
-         -- nat-u)
+            list : [type list-t]
+         -- nat-t)
       (case list
         (null-t zero-c)
         (cons-t list.cdr recur succ-c)))
@@ -120,9 +113,9 @@
     #+begin_src cicada
     (+fun list-append
       : (-> type :: type-tt
-            list : [type list-u]
-            list2 : [type list-u]
-         -- type list-u)
+            list : [type list-t]
+            list2 : [type list-t]
+         -- type list-t)
       (case list2
         (null-t list)
         (cons-t list2.car list list2.cdr recur cons-c)))
@@ -133,9 +126,9 @@
     #+begin_src cicada
     (+fun list-map
       : (-> [type type2] :: type-tt
-            list : [type list-u]
+            list : [type list-t]
             fun : (-> type -- type2)
-         -- type2 list-u)
+         -- type2 list-t)
       (case list
         (null-t list)
         (cons-t list.car fun list.cdr {fun} recur cons-c)))
@@ -145,13 +138,13 @@
 
     #+begin_src cicada
     ;; this function will not pass type check
-    ;;   because we can not use car cdr on list-u
+    ;;   because we can not use car cdr on list-t
     ;;   we can only use them on cons-t
     #note
     (+fun list-ref
       : (-> type :: type-tt
-            list : [type list-u]
-            index : nat-u
+            list : [type list-t]
+            index : nat-t
          -- type)
       (case index
         (zero-t list.car)
@@ -164,8 +157,8 @@
     (+fun list-remove-first
       : (-> type :: type-tt
             x : type
-            list : [type list-u]
-         -- type list-u)
+            list : [type list-t]
+         -- type list-t)
       (case list
         (null-t list)
         (cons-t (case [list.car x eq-p]
@@ -223,20 +216,20 @@
 
 * nat
 
-*** nat-is-even-u -- re-imp predicate as judgment
+*** nat-is-even-t -- re-imp predicate as judgment
 
-    - nat-is-even-p : (-> nat-u -- bool-u)
-    - nat-is-even-u : (-> nat-u -- type-tt)
+    - nat-is-even-p : (-> nat-t -- bool-t)
+    - nat-is-even-t : (-> nat-t -- type-tt)
 
     #+begin_src cicada
-    (+union nat-is-even-u : (-> n : nat-u -- type-tt)
+    (+union nat-is-even-t : (-> n : nat-t -- type-tt)
       (-> -- zero-c zero-is-even-t)
-      (-> m :: nat-u
-          prev : [m nat-is-even-u]
+      (-> m :: nat-t
+          prev : [m nat-is-even-t]
        -- m succ-c succ-c even-plus-two-is-even-t))
 
     (+proof two-is-even
-      : (-> -- zero-c succ-c succ-c nat-is-even-u)
+      : (-> -- zero-c succ-c succ-c nat-is-even-t)
       zero-is-even-c
       even-plus-two-is-even-c)
     #+end_src
@@ -245,7 +238,7 @@
 
     #+begin_src cicada
     (+proof nat-add-associative
-      : (-> [x y z] : nat-u
+      : (-> [x y z] : nat-t
          -- x y nat-add z nat-add
             x y z nat-add nat-add eqv-t)
       (case z
@@ -257,7 +250,7 @@
 
     #+begin_src cicada
     (+proof nat-add-commutative
-      : (-> [m n] : nat-u
+      : (-> [m n] : nat-t
          -- m n nat-add
             n m nat-add eqv-t)
       (case n
@@ -266,7 +259,7 @@
                 n.prev m nat-add-succ-commutative eqv-compose)))
 
     (+proof nat-add-zero-commutative
-      : (-> m : nat-u
+      : (-> m : nat-t
          -- m zero-c nat-add
             zero-c m nat-add eqv-t)
       (case m
@@ -274,7 +267,7 @@
         (succ-t m.prev recur {succ-c} eqv-apply)))
 
     (+proof nat-add-succ-commutative
-      : (-> [m n] : nat-u
+      : (-> [m n] : nat-t
          -- m succ-c n nat-add
             m n nat-add succ-c eqv-t)
       (case n
@@ -284,28 +277,28 @@
 
 * list
 
-*** list-length-u -- re-imp function as relation
+*** list-length-t -- re-imp function as relation
 
     #+begin_src cicada
     (note
       list-length
       : (-> type :: type-tt
-            list : [type list-u]
-         -- length : nat-u)
+            list : [type list-t]
+         -- length : nat-t)
 
-      list-length-u
+      list-length-t
       : (-> type :: type-tt
-            list : [type list-u]
-            length : nat-u
+            list : [type list-t]
+            length : nat-t
          -- type-tt))
 
-    (+union list-length-u
+    (+union list-length-t
       : (-> type :: type-tt
-            list : [type list-u]
-            length : nat-u
+            list : [type list-t]
+            length : nat-t
          -- type-tt)
       (-> -- null-c zero-c null-length-t)
-      (-> cdr : [list length list-length-u]
+      (-> cdr : [list length list-length-t]
        -- element :: type
           element list cons-c
           length succ-c cons-length-t))
@@ -314,7 +307,7 @@
     ;;   should not be cdr ?
 
     ;; how should we use -o ?
-    ;;   should it be different from -u ?
+    ;;   should it be different from -t ?
     ;;   not that there are also -t, -q, ... ?
 
     ;; maybe we should use unified -t for all of them !
@@ -328,62 +321,62 @@
     (+fun list-map-preserve-list-length
       : (-> type :: type-tt
             fun :: (-> type -- type2)
-            list :: [type list-u]
-            n :: nat-u
-            list-length-proof : [list n list-length-u]
-         -- list {fun} map n list-length-u)
+            list :: [type list-t]
+            n :: nat-t
+            list-length-proof : [list n list-length-t]
+         -- list {fun} map n list-length-t)
       (case list-length-proof
         (null-length-t list-length-proof)
         (cons-length-t list-length-proof.cdr recur cons-length-c)))
     #+end_src
 
-*** list-append-u
+*** list-append-t
 
     #+begin_src cicada
     ;; append([], SUCC, SUCC).
     ;; append([CAR|CDR], SUCC, [CAR|RESULT_CDR]):-
     ;;   append(CDR, SUCC, RESULT_CDR).
 
-    (+union list-append-u
+    (+union list-append-t
       : (-> type :: type-tt
-            ante : type list-u
-            succ : type list-u
-            result : type list-u
+            ante : type list-t
+            succ : type list-t
+            result : type list-t
          -- type-tt)
       (-> -- null-c succ succ zero-append-t)
       (-> car :: type
-          cdr :: type list-u
-          result-cdr :: type list-u
-          prev : cdr succ result-cdr list-append-u
+          cdr :: type list-t
+          result-cdr :: type list-t
+          prev : cdr succ result-cdr list-append-t
        -- car cdr cons-c, succ, car result-cdr cons-c succ-append-t))
 
-    (+union list-append-u
+    (+union list-append-t
       : (-> type :: type-tt
-            ante : type list-u
-            succ : type list-u
-            result : type list-u
+            ante : type list-t
+            succ : type list-t
+            result : type list-t
          -- type-tt)
       zero-append-t
       succ-append-t)
 
     (+type zero-append-t
       : (-> type :: type-tt
-            ante : type list-u
-            succ : type list-u
-            result : type list-u
+            ante : type list-t
+            succ : type list-t
+            result : type list-t
          -- type-tt)
       (-> -- null-c succ succ zero-append-t))
 
     (+type succ-append-t
       : (-> type :: type-tt
-            ante : type list-u
-            succ : type list-u
-            result : type list-u
+            ante : type list-t
+            succ : type list-t
+            result : type list-t
          -- type-tt)
       (-> car :: type
-          cdr :: type list-u
-          result-cdr :: type list-u
-          prev : cdr succ result-cdr list-append-u
+          cdr :: type list-t
+          result-cdr :: type list-t
+          prev : cdr succ result-cdr list-append-t
        -- car cdr cons-c, succ, car result-cdr cons-c succ-append-t))
     #+end_src
 
@@ -392,14 +385,14 @@
     #+begin_src cicada
     (+type succ-append-t
       : (-> type :: type-tt
-            ante : type list-u
-            succ : type list-u
-            result : type list-u
+            ante : type list-t
+            succ : type list-t
+            result : type list-t
          -- type-tt)
       (-> car :: type
-          cdr :: type list-u
-          result-cdr :: type list-u
-          prev : cdr succ result-cdr list-append-u
+          cdr :: type list-t
+          result-cdr :: type list-t
+          prev : cdr succ result-cdr list-append-t
        -- car cdr cons-c, succ, car result-cdr cons-c succ-append-t))
 
     (note for [ante succ result succ-append-c]
@@ -424,16 +417,16 @@
 
 * vect
 
-*** vect-u
+*** vect-t
 
     #+begin_src cicada
-    (+union vect-u
-      : (-> length : nat-u
+    (+union vect-t
+      : (-> length : nat-t
             type : type-tt
          -- type-tt)
       (-> -- zero-c type null-vect-t)
       (-> car : type
-          cdr : [length type vect-u]
+          cdr : [length type vect-t]
        -- length succ-c type cons-vect-t))
     #+end_src
 
@@ -441,11 +434,11 @@
 
     #+begin_src cicada
     (+fun vect-append
-      : (-> [m n] :: nat-u
+      : (-> [m n] :: nat-t
             type :: type-tt
-            list : [m type vect-u]
-            list2 : [n type vect-u]
-         -- m n nat-add type vect-u)
+            list : [m type vect-t]
+            list2 : [n type vect-t]
+         -- m n nat-add type vect-t)
       (case list2
         (null-vect-t list)
         (cons-vect-t list2.car list list2.cdr recur cons-vect-c)))
@@ -455,11 +448,11 @@
 
     #+begin_src cicada
     (+fun vect-map
-      : (-> n :: nat-u
+      : (-> n :: nat-t
             [type type2] :: type-tt
-            list : [n type vect-u]
+            list : [n type vect-t]
             fun : (-> type -- type2)
-         -- n type2 vect-u)
+         -- n type2 vect-t)
       (case list
         (null-vect-t list)
         (cons-vect-t list.car fun list.cdr {fun} recur cons-vect-c)))
@@ -590,14 +583,14 @@
 *** vect-append
 
     #+begin_src cicada
-    (: :l0 [:m :t vect-u])
-    (: :l1 [:n :t vect-u])
+    (: :l0 [:m :t vect-t])
+    (: :l1 [:n :t vect-t])
 
     (match :l1 cons)
       (= :l1 :l1.car :l1.cdr cons)
-        (: :l1.cdr [:n#0 :t#0 vect-u])
+        (: :l1.cdr [:n#0 :t#0 vect-t])
         (: :l1.car :t#0)
-      (: :l1 [:n#0 succ :t#0 vect-u])
+      (: :l1 [:n#0 succ :t#0 vect-t])
         (= :n :n#0 succ)
         (= :t :t#0)
 
@@ -605,41 +598,41 @@
 
      [:l1.car :l0 :l1.cdr recur cons]
 
-     [:m :t vect-u :n :t vect-u]
+     [:m :t vect-t :n :t vect-t]
      ><><>< the order of cons
      [recur :l1.car cons]
 
-     [:m :t vect-u :n#0 :t#0 vect-u]
+     [:m :t vect-t :n#0 :t#0 vect-t]
      [recur :l1.car cons]
 
-     [:m :n#0 add :t#0 vect-u]
+     [:m :n#0 add :t#0 vect-t]
      [:l1.car cons]
 
-     [:m :n#0 add :t#0 vect-u :t#0]
+     [:m :n#0 add :t#0 vect-t :t#0]
      [cons]
 
-     [:m :n#0 add succ :t#0 vect-u])
+     [:m :n#0 add succ :t#0 vect-t])
 
     (type-asserted:
 
-     [:m :n add :t vect-u]
+     [:m :n add :t vect-t]
 
-     [:m :n#0 succ add :t#0 vect-u]
+     [:m :n#0 succ add :t#0 vect-t]
 
-     [:m :n#0 add succ :t#0 vect-u])
+     [:m :n#0 add succ :t#0 vect-t])
     #+end_src
 
 *** vect-map
 
     #+begin_src cicada
-    (: :l [:n :t1 vect-u])
+    (: :l [:n :t1 vect-t])
     (: :f (-> :t1 :t2))
 
     (match :l cons)
       (= :l :l.car :l.cdr cons)
-        (: :l.cdr [:n#0 :t#0 vect-u])
+        (: :l.cdr [:n#0 :t#0 vect-t])
         (: :l.car :t#0)
-      (: :l [:n#0 succ :t#0 vect-u])
+      (: :l [:n#0 succ :t#0 vect-t])
         (= :n :n#0 succ)
         (= :t1 :t#0)
 
@@ -648,23 +641,23 @@
      ><><>< the order of cons
      [:l.cdr :f recur :l.car :f apply cons]
 
-     [:n#0 :t#0 vect-u (-> :t1 :t2)]
+     [:n#0 :t#0 vect-t (-> :t1 :t2)]
      [recur :l.car :f apply cons]
 
-     [:n#0 :t2 vect-u]
+     [:n#0 :t2 vect-t]
      [:l.car :f apply cons]
 
-     [:n#0 :t2 vect-u :t#0]
+     [:n#0 :t2 vect-t :t#0]
      [:f apply cons]
 
-     [:n#0 :t2 vect-u :t2]
+     [:n#0 :t2 vect-t :t2]
      [cons]
 
-     [:n#0 succ :t2 vect-u])
+     [:n#0 succ :t2 vect-t])
 
     (type-asserted:
 
-     [:n :t2 vect-u]
+     [:n :t2 vect-t]
 
-     [:n#0 succ :t2 vect-u])
+     [:n#0 succ :t2 vect-t])
     #+end_src

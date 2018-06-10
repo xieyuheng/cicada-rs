@@ -39,16 +39,16 @@
             t1 functor-t, (-> t1 -- t2), -- t2 functor-t)))
   #+end_src
 
-* list-u : functor-tc
+* list-t : functor-tc
 
   #+begin_src cicada
-  (+imp list-u : functor-tc
+  (+imp list-t : functor-tc
     (+fun map
       : (-> t1 :: type-tt
             t2 :: type-tt
-            l : [t1 list-u]
+            l : [t1 list-t]
             fun : (-> t1 -- t2)
-         -- t2 list-u)
+         -- t2 list-t)
       (case l
         (null-t null-c)
         (cons-t l.car fun l.cdr {fun} recur cons-c))))
@@ -71,24 +71,24 @@
 
 * maybe
 
-*** maybe-u
+*** maybe-t
 
     #+begin_src cicada
-    (+union maybe-u : (-> type : type-tt -- type-tt)
+    (+union maybe-t : (-> type : type-tt -- type-tt)
       (-> -- type none-t)
       (-> value : type -- type just-t))
     #+end_src
 
-*** maybe-u : monad-tc
+*** maybe-t : monad-tc
 
     #+begin_src cicada
-    (+imp maybe-u : monad-tc
-      (+fun return : (-> value : :t -- :t maybe-u)
+    (+imp maybe-t : monad-tc
+      (+fun return : (-> value : :t -- :t maybe-t)
         value just-c)
       (+fun bind
-        : (-> maybe : [:t1 maybe-u]
-              fun : (-> :t1 -- :t2 maybe-u)
-           -- :t2 maybe-u)
+        : (-> maybe : [:t1 maybe-t]
+              fun : (-> :t1 -- :t2 maybe-t)
+           -- :t2 maybe-t)
         (case maybe
           (none-t none-c)
           (just-t :m.value fun))))
@@ -119,22 +119,22 @@
 
 * tree
 
-*** tree-u
+*** tree-t
 
     #+begin_src cicada
-    (+union tree-u : (-> type-tt -- type-tt)
+    (+union tree-t : (-> type-tt -- type-tt)
       (-> value : :t -- :t leaf-t)
       (-> left : :t.right : :t -- :t node-t))
     #+end_src
 
-*** tree-u : functor-tc
+*** tree-t : functor-tc
 
     #+begin_src cicada
-    (+imp tree-u : functor-tc
+    (+imp tree-t : functor-tc
       (+fun map
-        : (-> tree : [:t1 tree-u]
+        : (-> tree : [:t1 tree-t]
               fun : (-> :t1 -- :t2)
-           -- :t2 tree-u)
+           -- :t2 tree-t)
         (case tree
           (leaf-t tree.value fun leaf-c)
           (node-t
@@ -153,8 +153,8 @@
 
     #+begin_src cicada
     (+fun tree-numbering
-      : (-> nat-u tree : [:t tree-u]
-         -- nat-u nat-u tree-u)
+      : (-> nat-t tree : [:t tree-t]
+         -- nat-t nat-t tree-t)
       (case tree
         (leaf-t dup inc swap leaf-c)
         (node-t
@@ -167,9 +167,9 @@
 
     #+begin_src cicada
     (+fun tree-numbering-curry
-      : (-> tree : [:t tree-u]
-         -- (-> nat-u
-             -- nat-u tree-u))
+      : (-> tree : [:t tree-t]
+         -- (-> nat-t
+             -- nat-t tree-t))
       (case tree
         (leaf-t {dup inc swap leaf-c})
         (node-t {tree.left recur apply (let left)
@@ -181,8 +181,8 @@
 
     #+begin_src cicada
     (+fun tree-numbering-state
-      : (-> tree : [:t tree-u]
-         -- nat-u tree-u state-t)
+      : (-> tree : [:t tree-t]
+         -- nat-t tree-t state-t)
       (case tree
         (leaf-t {dup inc swap leaf} state-c)
         (node-t (do

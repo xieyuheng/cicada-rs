@@ -20,31 +20,31 @@
 
       #+begin_src cicada
       node-t : (-> name-t -- type-tt)
-      path-u : (-> name-t, name-t -- type-tt)
-      node-t < [dup path-u]
+      path-t : (-> name-t, name-t -- type-tt)
+      node-t < [dup path-t]
 
-      (+union path-u : (-> begin : name-t, ending : name-t -- type-tt)
+      (+union path-t : (-> begin : name-t, ending : name-t -- type-tt)
         node-t
         edge-t
         composed-path-t)
 
-      string-t < sexp-u
-      [string-t list-u] < sexp-u
+      string-t < sexp-t
+      [string-t list-t] < sexp-t
 
-      (+union sexp-u
+      (+union sexp-t
         string-t
-        [string-t list-u])
+        [string-t list-t])
       #+end_src
 
     - but an union can not have more information than its subtype
 
       #+begin_src cicada
       null-t : type-tt
-      list-u : (-> type : type-tt -- type-tt)
-      null-t < [type list-u]
+      list-t : (-> type : type-tt -- type-tt)
+      null-t < [type list-t]
       ;; the line above is invalid
-      ;;   because the information of type in list-u
-      ;;   is not in list-u's subtype null-t
+      ;;   because the information of type in list-t
+      ;;   is not in list-t's subtype null-t
       #+end_src
 
     - we need the following information from (+union)
@@ -67,7 +67,7 @@
 
       #+begin_src cicada
       (| false-t
-         [obj-u true-t])
+         [obj-t true-t])
       #+end_src
 
     - different subtypes of a sumtype
