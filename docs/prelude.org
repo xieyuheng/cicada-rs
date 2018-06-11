@@ -1,8 +1,96 @@
-#+title: examples
+#+title: prelude
 
 * [todo-stack]
 
+*** no implicit :local
+
+*** zip example
+
+*** syntax for inheritance
+
 *** use number theory -- to test type-checker as prover
+
+*** trans idris-category to cicada
+
+*** use cicada to write opless notes
+
+    - we need a syntax for (do)
+
+*** ML like module system -- [in org-mode ?]
+
+*** about first-classness
+
+    - x -
+      if we implement category as type-class [or interface]
+      to implement product of category
+      we need to be able to treat type-class as first-class
+      because a product take two categories and return a new category
+
+    - k -
+      how about functor ?
+
+    - x -
+      while functor is different
+      it is not a category constructor
+      but a structure preserving map between existing categories
+
+*** functor type-class in haskell
+
+    - in haskell the category under consideration
+      is tye category of types
+      where types are objects
+      functions are morphisms
+
+    - the functor type-class in haskell
+      is a endo-functor from this category to itself
+
+      thus a functor instance in haskell
+      is a type constructor of type (-> type -- type)
+
+      thus the functor type-class in haskell
+      is limited in the sense of functor
+      because type constructor in haskell
+      is limited in the sense of function of type (-> type -- type)
+
+    - endo functors are containers
+
+*** type name postfix
+
+    - give up detailed type name postfix
+      because for structured function type and product type
+      type name postfix is not enough
+
+    - type name postfix
+      is only used to distinguish level of types
+
+*** stack as a category constructor
+
+    - stack as product built-in the language
+      - take swap as an example  (a, b) => (b, a)
+      - also the assoc law (a, (b, c)) => ((a,  b), c)
+
+    - maybe we still need to define stack as a category constructor
+
+*** subtype relation as order relation for algebraic data type
+
+    - for example :
+      a < a + b
+      a < a * 2
+
+*** universe
+
+    - type-tt = 1 universe
+      type-tt : 2 universe
+      type-tt : 2 universe
+
+    - nat-t : 1 universe
+      (* nat-t nat-t) : 1 universe
+      (+ nat-t | nat-t) : 1 universe
+      (-> nat-t -- nat-t) : 1 universe
+
+    - 1 universe : 2 universe
+
+    - how about the order relation for those universes ?
 
 * [note]
 
@@ -32,6 +120,95 @@
     | 0 | object                          |
     | 1 | type, union-type, quotient-type |
     | 2 | type-class, type-tt             |
+
+*** object as type
+
+    - object are just like type
+      just without sumtype
+      only product type
+
+*** syntax for unnamed record type
+
+*** subtype relation between classes
+
+    - c1 < c2
+      if c1 is more special then c2
+      if c1 has more interface functions than c2
+
+*** overload add to different types
+
+    - we can also define something like
+      (+class add-ct < (-> type-tt type-tt -- type-tt))
+      to add number to array
+
+*** unification
+
+***** what to unify ?
+
+      - in cicada
+        <term> := <type-term>, <union-term>, <data-term>
+        --- (data <hypo>), (type <hypo>)
+        --- <trunk>
+        <type-term>  := (<type-constructor> <term> ...)
+        <union-term> := (<union-constructor> <term> ...)
+        <data-term>  := (<data-constructor> <term> ...)
+        <trunk> := function application to be reduced
+
+        data-bind-dict -- <hypo> to data <term>
+        type-bind-dict -- <hypo> to type <term>
+
+        <trunk> will be formed,
+        when among arguments of a function application
+        there is a <hypo> that is not bound to data
+        or there is a non-reduce-able <trunk>
+
+      - in logic
+        <term> := <predicate-term>, <var>, <constant>
+        <predicate-term> := (<predicate-symbol> <term> ...)
+
+***** feature structures
+
+      - <var> with two fields type and data,
+        can be viewed as feature structures
+        in unification theory
+
+*** vector vs list
+
+    - vector and list have the same data-constructor shape
+
+    - it is *not* true that
+      every function can be defined for vector
+      can also be defined for list
+
+      - for example zip can be defined for vector of same length
+
+      - when defining zip for vector
+        more informations in type
+        can help to rule out some not meaningful cases
+
+      list -> list
+      vector -> vector
+      can *not* be composed to
+      list -> vector
+
+    - it is true that
+      every function can be defined for list
+      can also be defined for vector
+
+      - by dropping the length information
+
+      vector -> vector
+      list -> list
+      can be composed
+      vector -> list
+
+    - vector can be viewed as subtype of list
+      we can assert so
+      and use this subtype relation to reuse functions
+
+      - in some case [when namings are so different]
+        we also need to assert relation between
+        fields of type and data-constructors
 
 * bool
 
@@ -80,28 +257,11 @@
        -- type cons-t))
     #+end_src
 
-*** list-t -- not inline
-
-    #+begin_src cicada
-    (+union list-t : (-> type : type-tt -- type-tt)
-      null-t
-      cons-t)
-
-    (+type null-t : (-> type : type-tt -- type-tt)
-      (-> -- type null-t))
-
-    (+type cons-t : (-> type : type-tt -- type-tt)
-      (-> car : type
-          cdr : [type cons-t]
-       -- type cons-t))
-    #+end_src
-
 *** list-length
 
     #+begin_src cicada
     (+fun list-length
-      : (-> type :: type-tt
-            list : [type list-t]
+      : (-> list : [type list-t]
          -- nat-t)
       (case list
         (null-t zero-c)
@@ -112,8 +272,7 @@
 
     #+begin_src cicada
     (+fun list-append
-      : (-> type :: type-tt
-            list : [type list-t]
+      : (-> list : [type list-t]
             list2 : [type list-t]
          -- type list-t)
       (case list2
@@ -125,8 +284,7 @@
 
     #+begin_src cicada
     (+fun list-map
-      : (-> [type type2] :: type-tt
-            list : [type list-t]
+      : (-> list : [type list-t]
             fun : (-> type -- type2)
          -- type2 list-t)
       (case list
@@ -142,8 +300,7 @@
     ;;   we can only use them on cons-t
     #note
     (+fun list-ref
-      : (-> type :: type-tt
-            list : [type list-t]
+      : (-> list : [type list-t]
             index : nat-t
          -- type)
       (case index
@@ -155,8 +312,7 @@
 
     #+begin_src cicada
     (+fun list-remove-first
-      : (-> type :: type-tt
-            x : type
+      : (-> x : type
             list : [type list-t]
          -- type list-t)
       (case list
@@ -660,4 +816,287 @@
      [:n :t2 vect-t]
 
      [:n#0 succ :t2 vect-t])
+    #+end_src
+
+* category
+
+*** category-ct
+
+    - -ct is always a subtype of record type
+
+    - in (+type)
+      we define named record type
+      we also need syntax for unnamed record type
+
+    #+begin_src cicada
+    (+class category-ct
+      < (@ object-t : type-tt
+           arrow-t : (-> object-t object-t -- type-tt)
+           arrow-eq-t : (-> a b arrow-t a b arrow-t -- type-tt))
+      (+sig identity
+        : (-> object-t % a
+           -- a a arrow-t))
+      (+sig compose
+        : (-> a b arrow-t
+              b c arrow-t
+           -- a c arrow-t))
+      (+sig identity-left
+        : (-> a b arrow-t % f
+           -- a identity f compose, f arrow-eq-t))
+      (+sig identity-right
+        : (-> a b arrow-t % f
+           -- f b identity compose, f arrow-eq-t))
+      (+sig compose-associative
+        : (-> a b arrow-t % f
+              b c arrow-t % g
+              c d arrow-t % h
+           -- f g h compose compose
+              f g compose h compose arrow-eq-t)))
+    #+end_src
+
+*** category-ct % (* nat-t nat-order-t)
+
+    #+begin_src cicada
+    (+imp category-ct
+      % (@ object-t = nat-t
+           arrow-t = nat-order-t
+           arrow-eq-t = ><><><)
+      (+fun identity
+        : )
+      (+fun compose
+        : ))
+    #+end_src
+
+* functor-ct
+
+  #+begin_src cicada
+  (+class functor-ct < (-> type-tt -- type-tt)
+    (+sig map
+      : (-> functor-t :: functor-ct
+            t1 :: type-tt
+            t2 :: type-tt
+            t1 functor-t, (-> t1 -- t2), -- t2 functor-t)))
+  #+end_src
+
+* list-t : functor-ct
+
+  #+begin_src cicada
+  (+imp list-t : functor-ct
+    (+fun map
+      : (-> t1 :: type-tt
+            t2 :: type-tt
+            l : [t1 list-t]
+            fun : (-> t1 -- t2)
+         -- t2 list-t)
+      (case l
+        (null-t null-c)
+        (cons-t l.car fun l.cdr {fun} recur cons-c))))
+  #+end_src
+
+* monad-ct
+
+  #+begin_src cicada
+  (+class monad-ct < (-> type-tt -- type-tt)
+    (+sig return
+      : (-> monad-t :: monad-ct
+            t :: type-tt
+            t -- t monad-t))
+    (+sig bind
+      : (-> monad-t :: monad-ct
+            t1 :: type-tt
+            t2 :: type-tt
+            t1 monad-t, (-> t1 -- t2 monad-t) -- t2 monad-t)))
+  #+end_src
+
+* maybe
+
+*** maybe-t
+
+    #+begin_src cicada
+    (+union maybe-t : (-> type : type-tt -- type-tt)
+      (-> -- type none-t)
+      (-> value : type -- type just-t))
+    #+end_src
+
+*** maybe-t : monad-ct
+
+    #+begin_src cicada
+    (+imp maybe-t : monad-ct
+      (+fun return : (-> value : :t -- :t maybe-t)
+        value just-c)
+      (+fun bind
+        : (-> maybe : [:t1 maybe-t]
+              fun : (-> :t1 -- :t2 maybe-t)
+           -- :t2 maybe-t)
+        (case maybe
+          (none-t none-c)
+          (just-t :m.value fun))))
+    #+end_src
+
+* state
+
+*** state-t
+
+    #+begin_src cicada
+    (+type state-t : (-> type-tt type-tt -- type-tt)
+      (-> fun : (-> :s-t -- :s-t :v-t)
+       -- :s-t :v-t state-t))
+    #+end_src
+
+*** {:v-t state-t} : monad-ct
+
+    #+begin_src cicada
+    (+imp {:v-t state-t} : monad-ct
+      (+fun return : (-> value : :v-t -- :s-t :v-t state-t)
+        {value} state-c)
+      (+fun bind
+        : (-> state : [:s-t :v1-t state-t]
+              fun : (-> :v1-t -- :s-t :v2-t state-t)
+           -- :s-t :v2-t state-t)
+        {state.fun fun .fun apply} state-c))
+    #+end_src
+
+* tree
+
+*** tree-t
+
+    #+begin_src cicada
+    (+union tree-t : (-> type-tt -- type-tt)
+      (-> value : :t -- :t leaf-t)
+      (-> left : :t.right : :t -- :t node-t))
+    #+end_src
+
+*** tree-t : functor-ct
+
+    #+begin_src cicada
+    (+imp tree-t : functor-ct
+      (+fun map
+        : (-> tree : [:t1 tree-t]
+              fun : (-> :t1 -- :t2)
+           -- :t2 tree-t)
+        (case tree
+          (leaf-t tree.value fun leaf-c)
+          (node-t
+            tree.left {fun} recur
+            tree.right {fun} recur node-c))))
+    #+end_src
+
+*** tree-zip
+
+    #+begin_src cicada
+    (+fun tree-zip
+      : ())
+    #+end_src
+
+*** tree-numbering
+
+    #+begin_src cicada
+    (+fun tree-numbering
+      : (-> nat-t tree : [:t tree-t]
+         -- nat-t nat-t tree-t)
+      (case tree
+        (leaf-t dup inc swap leaf-c)
+        (node-t
+          tree.left recur (let left)
+          tree.right recur (let right)
+          left right node-c)))
+    #+end_src
+
+*** tree-numbering-curry
+
+    #+begin_src cicada
+    (+fun tree-numbering-curry
+      : (-> tree : [:t tree-t]
+         -- (-> nat-t
+             -- nat-t tree-t))
+      (case tree
+        (leaf-t {dup inc swap leaf-c})
+        (node-t {tree.left recur apply (let left)
+                 tree.right recur apply (let right)
+                 left right node-c})))
+    #+end_src
+
+*** tree-numbering-state
+
+    #+begin_src cicada
+    (+fun tree-numbering-state
+      : (-> tree : [:t tree-t]
+         -- nat-t tree-t state-t)
+      (case tree
+        (leaf-t {dup inc swap leaf} state-c)
+        (node-t (do
+                  left = [tree.left recur]
+                  right = [tree.right recur]
+                  [left right node-c]))))
+    #+end_src
+
+*** [note] macro expansion of (do)
+
+    #+begin_src cicada
+    (do
+      left = [tree.left recur]
+      right = [tree.right recur]
+      [left right node])
+
+    ;; =expand-to=>
+
+    (begin
+      [tree.left recur]
+      {(let left)
+       [tree.right recur]
+       {(let right)
+        [left right node]
+        return}
+       bind}
+      bind)
+    #+end_src
+
+* list processing
+
+*** list-t
+
+    #+begin_src cicada
+    (+union list-t : (-> type : type-tt -- type-tt)
+      (-> -- type null-t)
+      (-> car : type
+          cdr : type list-t
+       -- type cons-t))
+    #+end_src
+
+*** append-o
+
+    #+begin_src cicada
+    (+relation append-o
+      : )
+    #+end_src
+
+* number theory
+
+*** int-q
+
+    #+begin_src cicada
+
+    #+end_src
+
+*** mod-t
+
+    #+begin_src cicada
+    (+union mod-t
+      : (->
+         -- )
+      (-> ))
+    #+end_src
+
+*** gcd-t
+
+    #+begin_src cicada
+    (+union gcd-t
+      : (-> x : int-q
+            y : int-q
+            d : int-q
+         -- type-tt)
+      (-> -- x zero-c x zero-gcd-t)
+      (-> gcd : x y d gcd-t
+          mod : x y z mod-t
+       -- y z d mod-gcd-t))
     #+end_src
