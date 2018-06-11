@@ -2,6 +2,8 @@
 
 * [todo-stack]
 
+*** notes about (:) (%) (<) (>)
+
 *** no implicit :local
 
 *** zip example
@@ -228,17 +230,29 @@
     (+union nat-t : type-tt
       (-> -- zero-t)
       (-> prev : nat-t -- succ-t))
+    #+end_src
 
+*** nat-add
+
+    #+begin_src cicada
     (+fun nat-add : (-> [m n] : nat-t -- nat-t)
       (case n
         (zero-t m)
         (succ-t m n.prev recur succ-c)))
+    #+end_src
 
+*** nat-mul
+
+    #+begin_src cicada
     (+fun nat-mul : (-> [m n] : nat-t -- nat-t)
       (case n
         (zero-t n)
         (succ-t m n.prev recur m nat-add)))
+    #+end_src
 
+*** nat-factorial
+
+    #+begin_src cicada
     (+fun nat-factorial : (-> n : nat-t -- nat-t)
       (case n
         (zero-t n succ-c)
@@ -253,7 +267,7 @@
     (+union list-t : (-> type : type-tt -- type-tt)
       (-> -- type null-t)
       (-> car : type
-          cdr : [type list-t]
+          cdr : type list-t
        -- type cons-t))
     #+end_src
 
@@ -261,7 +275,7 @@
 
     #+begin_src cicada
     (+fun list-length
-      : (-> list : [type list-t]
+      : (-> list : type list-t
          -- nat-t)
       (case list
         (null-t zero-c)
@@ -272,8 +286,8 @@
 
     #+begin_src cicada
     (+fun list-append
-      : (-> list : [type list-t]
-            list2 : [type list-t]
+      : (-> list : type list-t
+            list2 : type list-t
          -- type list-t)
       (case list2
         (null-t list)
@@ -284,7 +298,7 @@
 
     #+begin_src cicada
     (+fun list-map
-      : (-> list : [type list-t]
+      : (-> list : type list-t
             fun : (-> type -- type2)
          -- type2 list-t)
       (case list
@@ -300,7 +314,7 @@
     ;;   we can only use them on cons-t
     #note
     (+fun list-ref
-      : (-> list : [type list-t]
+      : (-> list : type list-t
             index : nat-t
          -- type)
       (case index
@@ -313,7 +327,7 @@
     #+begin_src cicada
     (+fun list-remove-first
       : (-> x : type
-            list : [type list-t]
+            list : type list-t
          -- type list-t)
       (case list
         (null-t list)
@@ -381,7 +395,7 @@
     (+union nat-is-even-t : (-> n : nat-t -- type-tt)
       (-> -- zero-c zero-is-even-t)
       (-> m :: nat-t
-          prev : [m nat-is-even-t]
+          prev : m nat-is-even-t
        -- m succ-c succ-c even-plus-two-is-even-t))
 
     (+proof two-is-even
@@ -439,22 +453,22 @@
     (note
       list-length
       : (-> type :: type-tt
-            list : [type list-t]
+            list : type list-t
          -- length : nat-t)
 
       list-length-t
       : (-> type :: type-tt
-            list : [type list-t]
+            list : type list-t
             length : nat-t
          -- type-tt))
 
     (+union list-length-t
       : (-> type :: type-tt
-            list : [type list-t]
+            list : type list-t
             length : nat-t
          -- type-tt)
       (-> -- null-c zero-c null-length-t)
-      (-> cdr : [list length list-length-t]
+      (-> cdr : list length list-length-t
        -- element :: type
           element list cons-c
           length succ-c cons-length-t))
@@ -477,9 +491,9 @@
     (+fun list-map-preserve-list-length
       : (-> type :: type-tt
             fun :: (-> type -- type2)
-            list :: [type list-t]
+            list :: type list-t
             n :: nat-t
-            list-length-proof : [list n list-length-t]
+            list-length-proof : list n list-length-t
          -- list {fun} map n list-length-t)
       (case list-length-proof
         (null-length-t list-length-proof)
@@ -582,7 +596,7 @@
          -- type-tt)
       (-> -- zero-c type null-vect-t)
       (-> car : type
-          cdr : [length type vect-t]
+          cdr : length type vect-t
        -- length succ-c type cons-vect-t))
     #+end_src
 
@@ -592,8 +606,8 @@
     (+fun vect-append
       : (-> [m n] :: nat-t
             type :: type-tt
-            list : [m type vect-t]
-            list2 : [n type vect-t]
+            list : m type vect-t
+            list2 : n type vect-t
          -- m n nat-add type vect-t)
       (case list2
         (null-vect-t list)
@@ -606,7 +620,7 @@
     (+fun vect-map
       : (-> n :: nat-t
             [type type2] :: type-tt
-            list : [n type vect-t]
+            list : n type vect-t
             fun : (-> type -- type2)
          -- n type2 vect-t)
       (case list
@@ -885,7 +899,7 @@
     (+fun map
       : (-> t1 :: type-tt
             t2 :: type-tt
-            l : [t1 list-t]
+            l : t1 list-t
             fun : (-> t1 -- t2)
          -- t2 list-t)
       (case l
@@ -925,7 +939,7 @@
       (+fun return : (-> value : :t -- :t maybe-t)
         value just-c)
       (+fun bind
-        : (-> maybe : [:t1 maybe-t]
+        : (-> maybe : :t1 maybe-t
               fun : (-> :t1 -- :t2 maybe-t)
            -- :t2 maybe-t)
         (case maybe
@@ -950,7 +964,7 @@
       (+fun return : (-> value : :v-t -- :s-t :v-t state-t)
         {value} state-c)
       (+fun bind
-        : (-> state : [:s-t :v1-t state-t]
+        : (-> state : :s-t :v1-t state-t
               fun : (-> :v1-t -- :s-t :v2-t state-t)
            -- :s-t :v2-t state-t)
         {state.fun fun .fun apply} state-c))
@@ -971,7 +985,7 @@
     #+begin_src cicada
     (+imp tree-t : functor-ct
       (+fun map
-        : (-> tree : [:t1 tree-t]
+        : (-> tree : :t1 tree-t
               fun : (-> :t1 -- :t2)
            -- :t2 tree-t)
         (case tree
@@ -992,7 +1006,7 @@
 
     #+begin_src cicada
     (+fun tree-numbering
-      : (-> nat-t tree : [:t tree-t]
+      : (-> nat-t tree : :t tree-t
          -- nat-t nat-t tree-t)
       (case tree
         (leaf-t dup inc swap leaf-c)
@@ -1006,7 +1020,7 @@
 
     #+begin_src cicada
     (+fun tree-numbering-curry
-      : (-> tree : [:t tree-t]
+      : (-> tree : :t tree-t
          -- (-> nat-t
              -- nat-t tree-t))
       (case tree
@@ -1020,7 +1034,7 @@
 
     #+begin_src cicada
     (+fun tree-numbering-state
-      : (-> tree : [:t tree-t]
+      : (-> tree : :t tree-t
          -- nat-t tree-t state-t)
       (case tree
         (leaf-t {dup inc swap leaf} state-c)
