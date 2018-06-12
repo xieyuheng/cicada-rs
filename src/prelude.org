@@ -2,18 +2,15 @@
 
 * [todo-stack]
 
-*** fix old examples about (+class)
+*** we need a syntax for (do)
 
-    - no implicit :local
-    - zip example
-    - syntax for inheritance
-    - we need a syntax for (do)
+*** tree example
+
+*** zip example
 
 *** find a way to implement universal construction
 
-*** Iso -- as a interface
-
-*** what is the logic programming interface of the type system ?
+*** iso-t -- as a (+class)
 
 *** use number theory -- to test type-checker as prover
 
@@ -92,6 +89,8 @@
     - 1 universe : 2 universe
 
     - how about the order relation for those universes ?
+
+*** what is the logic programming interface of the type system ?
 
 * [note]
 
@@ -673,13 +672,10 @@
         n succ-c dup nat-lteq-reflexive)
       #+end_src
 
-***** category-ct : (@ nat-t nat-lteq-t eqv-t)
+***** category-ct % (@ nat-t nat-lteq-t eqv-t)
 
       #+begin_src cicada
-      (+instance category-ct
-        % (@ object-t = nat-t
-             arrow-t = nat-lteq-t
-             arrow-eqv-t = eqv-t)
+      (+instance category-ct % (@ nat-t nat-lteq-t eqv-t)
         (+imp identity nat-lteq-reflexive)
         (+imp compose  nat-lteq-transitive)
         (+imp identity-left
@@ -748,32 +744,64 @@
 
 * >< vector-space
 
+* >< category-ct %  (@ type-tt morphism-t fun-eqv-t)
+
+*** >< morphism-t
+
+    #+begin_src cicada
+    (+type morphism-t
+      )
+    #+end_src
+
+*** >< fun-eqv-t
+
+    #+begin_src cicada
+    (+fun fun-eqv-t
+      : )
+    #+end_src
+
+*** >< category-ct % (@ type-tt morphism-t fun-eqv-t)
+
+    #+begin_src cicada
+    (+instance category-ct % (@ type-tt morphism-t fun-eqv-t)
+      )
+    #+end_src
+
 * functor
 
 *** functor-ct
 
     #+begin_src cicada
-    (+class functor-ct < (-> type-tt -- type-tt)
+    (+class functor-ct
+      < (@ fun-t : (-> type-tt -- type-tt))
       (+sig map
-        : (-> functor-t :: functor-ct
-              t1 functor-t
+        : (-> t1 fun-t
               (-> t1 -- t2)
-           -- t2 functor-t)))
+           -- t2 fun-t)))
     #+end_src
 
-*** list-t : functor-ct
+*** functor-ct % (@ list-t)
 
     #+begin_src cicada
-    (+instance list-t : functor-ct
-      (+fun map
-        : (-> t1 :: type-tt
-              t2 :: type-tt
-              l : t1 list-t
-              fun : (-> t1 -- t2)
-           -- t2 list-t)
+    (+instance functor-ct % (@ list-t)
+      (+imp map
+        (let l fun)
         (case l
           (null-t null-c)
           (cons-t l.car fun l.cdr {fun} recur cons-c))))
+    #+end_src
+
+* applicative
+
+*** >< applicative-ct
+
+    #+begin_src cicada
+    (+class applicative-ct
+      < functor-ct
+      < (@ fun-t : (-> type-tt -- type-tt))
+      (+sig ><><><)
+      (+sig pure
+        : (-> t -- t fun-t)))
     #+end_src
 
 * monad
@@ -781,16 +809,13 @@
 *** monad-ct
 
     #+begin_src cicada
-    (+class monad-ct < (-> type-tt -- type-tt)
-      (+sig return
-        : (-> monad-t :: monad-ct
-              t :: type-tt
-              t -- t monad-t))
+    (+class monad-ct
+      < applicative-ct
+      < (@ fun-t : (-> type-tt -- type-tt))
       (+sig bind
-        : (-> monad-t :: monad-ct
-              t1 :: type-tt
-              t2 :: type-tt
-              t1 monad-t, (-> t1 -- t2 monad-t) -- t2 monad-t)))
+        : (-> t1 fun-t
+              (-> t1 -- t2 fun-t)
+           -- t2 fun-t)))
     #+end_src
 
 * maybe
@@ -803,19 +828,16 @@
       (-> value : type -- type just-t))
     #+end_src
 
-*** maybe-t : monad-ct
+*** monad-ct % (@ maybe-t)
 
     #+begin_src cicada
-    (+instance maybe-t : monad-ct
-      (+fun return : (-> value : :t -- :t maybe-t)
-        value just-c)
-      (+fun bind
-        : (-> maybe : :t1 maybe-t
-              fun : (-> :t1 -- :t2 maybe-t)
-           -- :t2 maybe-t)
+    (+instance monad-ct % (@ maybe-t)
+      (+imp pure just-c)
+      (+imp bind
+        (let maybe fun)
         (case maybe
           (none-t none-c)
-          (just-t :m.value fun))))
+          (just-t maybe.value fun))))
     #+end_src
 
 * state
@@ -823,25 +845,26 @@
 *** state-t
 
     #+begin_src cicada
-    (+type state-t : (-> type-tt type-tt -- type-tt)
-      (-> fun : (-> :s-t -- :s-t :v-t)
-       -- :s-t :v-t state-t))
+    (+fun state-t
+      : (-> type-tt % type
+            type-tt % value-t
+         -- type-tt)
+      (-> type -- type value-t))
     #+end_src
 
-*** {:v-t state-t} : monad-ct
+*** monad-ct % (@ {value-t state-t})
 
     #+begin_src cicada
-    (+instance {:v-t state-t} : monad-ct
-      (+fun return : (-> value : :v-t -- :s-t :v-t state-t)
-        {value} state-c)
-      (+fun bind
-        : (-> state : :s-t :v1-t state-t
-              fun : (-> :v1-t -- :s-t :v2-t state-t)
-           -- :s-t :v2-t state-t)
-        {state.fun fun .fun apply} state-c))
+    (+instance monad-ct % (@ {value-t state-t})
+      (+imp pure
+        (let value)
+        {value})
+      (+imp bind
+        (let state fun)
+        {state fun apply}))
     #+end_src
 
-* tree
+* >< tree
 
 *** tree-t
 
@@ -931,7 +954,7 @@
        [tree.right recur]
        {(let right)
         [left right node]
-        return}
+        pure}
        bind}
       bind)
     #+end_src
