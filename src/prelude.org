@@ -700,38 +700,40 @@
              f.prev g.prev h.prev recur {succ-lteq-c} eqv-apply))))
       #+end_src
 
-*** >< arrow-inverse
+*** arrow-inverse-t
 
     #+begin_src cicada
-    (+fun arrow-inverse
+    (+fun arrow-inverse-t
       : (-> category-ct %% (@ object-t arrow-t arrow-eqv-t)
-            f : a b arrow-t
-            g : b a arrow-t
-         -- )
-      )
-
-    ;; export
-    ;; Inverse
-    ;;   : (Category object arrow) =>
-    ;;     (f : arrow a b) ->
-    ;;     (g : arrow b a) -> Type
-    ;; Inverse {a} {b} f g = (?x = ?y)
-
-    ;; export
-    ;; Inverse
-    ;;   : (Category object arrow) =>
-    ;;     (f : arrow a b) ->
-    ;;     (g : arrow b a) ->
-    ;;     (compose f g) = (identity a)
+            a b arrow-t % f
+            b a arrow-t % g
+         -- type-tt)
+      f g compose a identity arrow-eqv-t
+      g f compose b identity arrow-eqv-t)
     #+end_src
 
-* >< groupoid
+* >< product
+
+*** ><
+
+    #+begin_src cicada
+
+    #+end_src
+
+* groupoid
 
 *** groupoid-ct
 
     #+begin_src cicada
     (+class groupoid-ct
-      )
+      < category-ct
+      < (@ object-t : type-tt
+           arrow-t : (-> object-t object-t -- type-tt)
+           arrow-eqv-t : (-> a b arrow-t a b arrow-t -- type-tt))
+      (+sig inverse
+        : (-> a b arrow-t % f
+           -- b a arrow-t % g
+              f g arrow-inverse-t)))
     #+end_src
 
 * >< group
