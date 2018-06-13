@@ -2,13 +2,25 @@
 
 * [todo-stack]
 
+*** learn more about monad
+
+*** fix the relations between functor-ct applicative-ct monad-ct
+
+*** syntax for renaming fields of record type
+
+    - to use convention naming for group and so on
+
+*** natural-transformation is a level up map
+
+    - the definition of natural-transformation
+      maps object to arrow
+      and arrow to square
+
 *** we need a syntax for (do)
 
 *** tree example
 
 *** zip example
-
-*** find a way to implement universal construction
 
 *** iso-t -- as a (+class)
 
@@ -775,9 +787,9 @@
     (+class functor-ct
       < (@ fun-t : (-> type-tt -- type-tt))
       (+sig map
-        : (-> t1 fun-t
-              (-> t1 -- t2)
-           -- t2 fun-t)))
+        : (-> a fun-t
+              (-> a -- b)
+           -- b fun-t)))
     #+end_src
 
 *** functor-ct % (@ list-t)
@@ -813,9 +825,20 @@
       < applicative-ct
       < (@ fun-t : (-> type-tt -- type-tt))
       (+sig bind
-        : (-> t1 fun-t
-              (-> t1 -- t2 fun-t)
-           -- t2 fun-t)))
+        : (-> a fun-t
+              (-> a -- b fun-t)
+           -- b fun-t)))
+    #+end_src
+
+*** monad-compose
+
+    #+begin_src cicada
+    (+fun monad-compose
+      : (-> monad-ct %% (@ fun-t)
+            (-> a -- b fun-t) % f
+            (-> b -- c fun-t) % g
+         -- (-> a -- c fun-t))
+      {f {g} bind})
     #+end_src
 
 * maybe
