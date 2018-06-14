@@ -2,6 +2,10 @@
 
 * [todo-stack]
 
+*** we also need a macro for arrow compose
+
+    - (++)
+
 *** learn more about monad
 
 *** fix the relations between functor-ct applicative-ct monad-ct
@@ -27,22 +31,6 @@
 *** use number theory -- to test type-checker as prover
 
 *** ML like module system -- [in org-mode ?]
-
-*** about first-classness
-
-    - x -
-      if we implement category as type-class [or interface]
-      to implement product of category
-      we need to be able to treat type-class as first-class
-      because a product take two categories and return a new category
-
-    - k -
-      how about functor ?
-
-    - x -
-      while functor is different
-      it is not a category constructor
-      but a structure preserving map between existing categories
 
 *** functor type-class in haskell
 
@@ -159,12 +147,6 @@
     - c1 < c2
       if c1 is more special then c2
       if c1 has more interface functions than c2
-
-*** overload add to different types
-
-    - we can also define something like
-      (+class add-ct < (-> type-tt type-tt -- type-tt))
-      to add number to array
 
 *** unification
 
@@ -720,7 +702,61 @@
       g f compose b identity arrow-eqv-t)
     #+end_src
 
-* >< product
+* product
+
+*** arrow-unique-t
+
+    #+begin_src cicada
+    (+fun arrow-unique-t
+      : (-> category-ct %% (@ object-t arrow-t arrow-eqv-t)
+            a b arrow-t % f
+            (-> a b arrow-t -- type-tt) % theorem
+         -- type-tt)
+      (* f theorem
+         (-> a b arrow-t % g
+             g theorem
+          -- f g arrow-eqv-t)))
+    #+end_src
+
+*** category-product-t
+
+    #+begin_src cicada
+    (+fun category-product-t
+      : (-> category-ct %% (@ object-t arrow-t arrow-eqv-t)
+            object-t % a
+            object-t % b
+            object-t % p
+            p a arrow-t % fst
+            p b arrow-t % snd
+         -- type-tt)
+      (-> object-t % q
+          q a arrow-t % fst~
+          q b arrow-t % snd~
+       -- q p arrow-t % m
+          {(let m)
+           (* fst~, m fst compose arrow-eqv-t
+              snd~, m snd compose arrow-eqv-t)}
+          m swap arrow-unique-t))
+    #+end_src
+
+*** product-closed-ct
+
+    #+begin_src cicada
+    (+class product-closed-ct
+      < category-ct
+      < (@ object-t : type-tt
+           arrow-t : (-> object-t object-t -- type-tt)
+           arrow-eqv-t : (-> a b arrow-t a b arrow-t -- type-tt))
+      (+sig product
+        : (-> object-t % a
+              object-t % b
+           -- object-t % p
+              p a arrow-t % fst
+              p b arrow-t % snd
+              a b p fst snd category-product-t)))
+    #+end_src
+
+* >< limit
 
 *** ><
 
