@@ -2,13 +2,15 @@
 
 * [todo-stack]
 
+*** we need a syntax for (do)
+
+*** zip example
+
+*** tree example
+
 *** we also need a macro for arrow compose
 
     - (++)
-
-*** learn more about monad
-
-*** fix the relations between functor-ct applicative-ct monad-ct
 
 *** syntax for renaming fields of record type
 
@@ -19,12 +21,6 @@
     - the definition of natural-transformation
       maps object to arrow
       and arrow to square
-
-*** we need a syntax for (do)
-
-*** tree example
-
-*** zip example
 
 *** iso-t -- as a (+class)
 
@@ -51,6 +47,10 @@
       is limited in the sense of function of type (-> type -- type)
 
     - endo functors are containers
+
+*** a functor might as well be called a natural-construction
+
+    - thus the name of natural-transformation make sense
 
 *** type name postfix
 
@@ -718,10 +718,10 @@
           -- f g arrow-eqv-t)))
     #+end_src
 
-*** category-product-t
+*** object-product-t
 
     #+begin_src cicada
-    (+fun category-product-t
+    (+fun object-product-t
       : (-> category-ct %% (@ object-t arrow-t arrow-eqv-t)
             object-t % a
             object-t % b
@@ -739,6 +739,25 @@
           m swap arrow-unique-t))
     #+end_src
 
+*** >< object-product-t -- (unique)
+
+    #+begin_src cicada
+    (+fun object-product-t
+      : (-> category-ct %% (@ object-t arrow-t arrow-eqv-t)
+            object-t % a
+            object-t % b
+            object-t % p
+            p a arrow-t % fst
+            p b arrow-t % snd
+         -- type-tt)
+      (-> object-t % q
+          q a arrow-t % fst~
+          q b arrow-t % snd~
+       -- (unique m : q p arrow-t
+            fst~, m fst compose arrow-eqv-t
+            snd~, m snd compose arrow-eqv-t)))
+    #+end_src
+
 *** product-closed-ct
 
     #+begin_src cicada
@@ -753,7 +772,14 @@
            -- object-t % p
               p a arrow-t % fst
               p b arrow-t % snd
-              a b p fst snd category-product-t)))
+              a b p fst snd object-product-t)))
+    #+end_src
+
+*** >< category-product-ct -- first class (+class)
+
+    #+begin_src cicada
+    (+class category-product-ct
+      )
     #+end_src
 
 * >< limit
@@ -839,27 +865,16 @@
           (cons-t l.car fun l.cdr {fun} recur cons-c))))
     #+end_src
 
-* applicative
-
-*** >< applicative-ct
-
-    #+begin_src cicada
-    (+class applicative-ct
-      < functor-ct
-      < (@ fun-t : (-> type-tt -- type-tt))
-      (+sig ><><><)
-      (+sig pure
-        : (-> t -- t fun-t)))
-    #+end_src
-
 * monad
 
 *** monad-ct
 
     #+begin_src cicada
     (+class monad-ct
-      < applicative-ct
+      < functor-ct
       < (@ fun-t : (-> type-tt -- type-tt))
+      (+sig pure
+        : (-> t -- t fun-t))
       (+sig bind
         : (-> a fun-t
               (-> a -- b fun-t)
