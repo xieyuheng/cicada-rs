@@ -2,95 +2,63 @@
 
 * [todo-stack]
 
+*** type-tt as a category
 
+***** problem
 
-*** zip example
+      - how to view type-tt as a category ?
+        and formalize its feature in the language itself.
 
-*** tree example
+      - x -
+        by doing so
+        I hope to clarify the meaning of stack and arrow in cicada
 
-*** we also need a macro for arrow compose
+      - k - 
 
-    - (++)
+***** stack as a category constructor
 
-*** syntax for renaming fields of record type
+      - stack as product built-in the language
+        - take swap as an example  (a, b) => (b, a)
+        - also the assoc law (a, (b, c)) => ((a,  b), c)
 
-    - to use convention naming for group and so on
+      - maybe we still need to define stack as a category constructor
 
-*** natural-transformation is a level up map
+***** iso-t -- as a (+class)
 
-    - the definition of natural-transformation
-      maps object to arrow
-      and arrow to square
+***** universe
 
-*** iso-t -- as a (+class)
+      - type-tt = 1 universe
+        type-tt : 2 universe
+        type-tt : 2 universe
 
-*** use number theory -- to test type-checker as prover
+      - nat-t : 1 universe
+        (* nat-t nat-t) : 1 universe
+        (+ nat-t | nat-t) : 1 universe
+        (-> nat-t -- nat-t) : 1 universe
 
-*** ML like module system -- [in org-mode ?]
+      - 1 universe : 2 universe
 
-*** functor type-class in haskell
+      - how about the order relation for those universes ?
 
-    - in haskell the category under consideration
-      is tye category of types
-      where types are objects
-      functions are morphisms
+*** test
 
-    - the functor type-class in haskell
-      is a endo-functor from this category to itself
+***** use number theory -- to test type-checker as prover
 
-      thus a functor instance in haskell
-      is a type constructor of type (-> type -- type)
+*** syntax
 
-      thus the functor type-class in haskell
-      is limited in the sense of functor
-      because type constructor in haskell
-      is limited in the sense of function of type (-> type -- type)
+***** syntax for renaming fields of record type
 
-    - endo functors are containers
+      - to use convention naming for group and so on
 
-*** a functor might as well be called a natural-construction
+***** what is the logic programming interface of the type system ?
 
-    - thus the name of natural-transformation make sense
+*** algebraic-data-type
 
-*** type name postfix
+***** subtype relation as order relation for algebraic data type
 
-    - give up detailed type name postfix
-      because for structured function type and product type
-      type name postfix is not enough
-
-    - type name postfix
-      is only used to distinguish level of types
-
-*** stack as a category constructor
-
-    - stack as product built-in the language
-      - take swap as an example  (a, b) => (b, a)
-      - also the assoc law (a, (b, c)) => ((a,  b), c)
-
-    - maybe we still need to define stack as a category constructor
-
-*** subtype relation as order relation for algebraic data type
-
-    - for example :
-      a < a + b
-      a < a * 2
-
-*** universe
-
-    - type-tt = 1 universe
-      type-tt : 2 universe
-      type-tt : 2 universe
-
-    - nat-t : 1 universe
-      (* nat-t nat-t) : 1 universe
-      (+ nat-t | nat-t) : 1 universe
-      (-> nat-t -- nat-t) : 1 universe
-
-    - 1 universe : 2 universe
-
-    - how about the order relation for those universes ?
-
-*** what is the logic programming interface of the type system ?
+      - for example :
+        a < a + b
+        a < a * 2
 
 * [note]
 
@@ -112,7 +80,14 @@
     - while in (+type)
       we define named record type
 
-*** naming convention
+*** type name postfix
+
+    - give up detailed type name postfix
+      because for structured function type and product type
+      type name postfix is not enough
+
+    - type name postfix
+      is only used to distinguish level of types
 
     - type
 
@@ -140,13 +115,45 @@
       just without sumtype
       only product type
 
-*** syntax for unnamed record type
-
 *** subtype relation between classes
 
     - c1 < c2
       if c1 is more special then c2
       if c1 has more interface functions than c2
+
+*** functor
+
+***** functor type-class in haskell
+
+      - in haskell the category under consideration
+        is the category of types
+        where types are objects
+        functions are morphisms
+
+      - the functor type-class in haskell
+        is a endo-functor from this category to itself
+
+        thus a functor instance in haskell
+        is a type constructor of type (-> type -- type)
+
+        thus the functor type-class in haskell
+        is limited in the sense of functor
+        because type constructor in haskell
+        is limited in the sense of function of type (-> type -- type)
+
+      - endo-functors are containers
+
+***** a functor might as well be called a natural-construction
+
+      - thus the name of natural-transformation make sense
+
+*** natural-transformation
+
+***** natural-transformation is a level up map
+
+      - the definition of natural-transformation
+        maps object to arrow
+        and arrow to square
 
 *** unification
 
@@ -895,11 +902,14 @@
       {f {g} bind})
     #+end_src
 
-*** >< monad-flatten
+*** monad-flatten
 
     #+begin_src cicada
     (+fun monad-flatten
-      )
+      : (-> monad-ct %% (@ fun-t)
+            a fun-t fun-t
+         -- a fun-t)
+      {} bind)
     #+end_src
 
 *** monad-ct % (@ list-t)
@@ -1009,18 +1019,18 @@
         ([leaf-t leaf-t]
          tree-a.value tree-b.value prod leaf-c pure)
         ([branch-t branch-t]
-         (do tree-a.left tree-b.left recur (<- left)
-             tree-a.right tree-b.right recur (<- right)
+         (do tree-a.left tree-b.left recur >- left
+             tree-a.right tree-b.right recur >- right
              left right branch-c pure))
         (else none-c)))
     #+end_src
 
-*** >< tree-numbering
+*** tree-numbering-with-nat
 
     #+begin_src cicada
-    (+fun tree-numbering
-      : (-> nat-t tree : :t tree-t
-         -- nat-t nat-t tree-t)
+    (+fun tree-numbering-with-nat
+      : (-> nat-t, t tree-t % tree
+         -- nat-t, nat-t tree-t)
       (case tree
         (leaf-t dup inc swap leaf-c)
         (branch-t
@@ -1029,31 +1039,17 @@
           left right branch-c)))
     #+end_src
 
-*** >< tree-numbering-curry
+*** tree-numbering
 
     #+begin_src cicada
-    (+fun tree-numbering-curry
-      : (-> tree : :t tree-t
-         -- (-> nat-t
-             -- nat-t tree-t))
-      (case tree
-        (leaf-t {dup inc swap leaf-c})
-        (branch-t {tree.left recur apply (let left)
-                 tree.right recur apply (let right)
-                 left right branch-c})))
-    #+end_src
-
-*** >< tree-numbering-state
-
-    #+begin_src cicada
-    (+fun tree-numbering-state
-      : (-> tree : :t tree-t
+    (+fun tree-numbering
+      : (-> t tree-t % tree
          -- nat-t tree-t state-t)
       (case tree
-        (leaf-t {dup inc swap leaf} state-c)
+        (leaf-t {dup inc swap leaf-c})
         (branch-t
-          (do tree.left recur (<- left)
-              tree.right recur (<- right)
+          (do tree.left recur >- left
+              tree.right recur >- right
               left right branch-c))))
     #+end_src
 
