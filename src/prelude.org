@@ -13,15 +13,68 @@
         by doing so
         I hope to clarify the meaning of stack and arrow in cicada
 
-      - k - 
+      - k -
+        maybe we can say
+        the syntax is optimized for function-completion object-product
 
-***** stack as a category constructor
+      - x -
+        if so,
+        we must get rid of explicit (* a b)
+        by eqv it with [a b]
 
-      - stack as product built-in the language
-        - take swap as an example  (a, b) => (b, a)
-        - also the assoc law (a, (b, c)) => ((a,  b), c)
+      - k -
+        this means "stack as product built-in the language"
 
-      - maybe we still need to define stack as a category constructor
+      - x -
+        by emphasizing this
+        our aim will be really distinguishable
+        namely
+        design the syntax
+        so that it is easier to express composition
+
+      - k -
+        can we say we are constructing a functor here ?
+
+      - x -
+        yes
+        our stack functor will make more arrows composable
+        and our arrows can be composed in ways like :
+
+        f : (-> t1 t2 -- t3 t4)
+        g : (-> t t3 t4 -- t6 t7)
+        h : (-> t t1 t2 -- t6 t7)
+        t t1 t2 -- f
+        t t3 t4 -- g
+        t6 t7
+
+        f : (-> t1 t2 -- t t3 t4)
+        g : (-> t3 t4 -- t6 t7)
+        h : (-> t t1 t2 -- t t6 t7)
+        t1 t2 -- f
+        t t3 t4 -- g
+        t t6 t7
+
+        ------
+
+        f : (t1, t2) -> (t3, t4)
+        g : (t, t3, t4) -> (t6, t7)
+        h : (t, t1, t2) -> (t6, t7)
+
+        f (t, t1, t2) = (t, t3, t4)
+        g (t, t3, t4) = (t6, t7)
+
+        f : (t1, t2) -> (t, t3, t4)
+        g : (t3, t4) -> (t6, t7)
+        h : (t, t1, t2) -> (t, t6, t7)
+
+        f (t1, t2) = (t, t3, t4)
+        g (t, t3, t4) = (t, t6, t7)
+
+***** ><><>< stack as product built-in the language
+
+      - take swap as an example  (a, b) => (b, a)
+
+      - also the assoc law (a, (b, c)) => ((a,  b), c)
 
 ***** iso-t -- as a (+class)
 
@@ -613,90 +666,6 @@
               f g compose h compose arrow-eqv-t)))
     #+end_src
 
-*** (@ nat-t nat-lteq-t eqv-t) : category-ct
-
-***** nat-lteq-t
-
-      #+begin_src cicada
-      (+type nat-lteq-t
-        : (-> [l r] : nat-t -- type-tt)
-        (-> -- zero-c r zero-lteq-t)
-        (-> prev : l r nat-lteq-t
-         -- l succ-c r succ-c succ-lteq-t))
-      #+end_src
-
-***** nat-non-negative
-
-      #+begin_src cicada
-      (+fun nat-non-negative
-        : (-> n : nat-t -- zero-c n nat-lteq-t)
-        zero-lteq-c)
-      #+end_src
-
-***** nat-lteq-reflexive
-
-      #+begin_src cicada
-      (+fun nat-lteq-reflexive
-        : (-> n : nat-t -- n n nat-lteq-t)
-        (case n
-          (zero-t zero-lteq-c)
-          (succ-t n.prev recur succ-lteq-c)))
-      #+end_src
-
-***** nat-lteq-transitive
-
-      #+begin_src cicada
-      (+fun nat-lteq-transitive
-        : (-> a b nat-lteq-t % x
-              b c nat-lteq-t % y
-           -- a c nat-lteq-t)
-        (case x
-          (zero-lteq-t zero-lteq-c)
-          (succ-lteq-t x.prev y.prev recur succ-lteq-c)))
-      #+end_src
-
-***** nat-lt-t
-
-      #+begin_src cicada
-      (+fun nat-lt-t
-        : (-> [l r] : nat-t -- type-tt)
-        l succ-c r nat-lteq-t)
-      #+end_src
-
-***** nat-archimedean-property
-
-      #+begin_src cicada
-      (+type nat-archimedean-property
-        : (-> n : nat-t
-           -- m : nat-t
-              n m nat-lt-t)
-        n succ-c dup nat-lteq-reflexive)
-      #+end_src
-
-***** category-ct % (@ nat-t nat-lteq-t eqv-t)
-
-      #+begin_src cicada
-      (+instance category-ct % (@ nat-t nat-lteq-t eqv-t)
-        (+imp identity nat-lteq-reflexive)
-        (+imp compose  nat-lteq-transitive)
-        (+imp identity-left
-          (let x)
-          (case x
-            (zero-lteq-t eqv-c)
-            (succ-lteq-t x.prev recur {succ-lteq-c} eqv-apply)))
-        (+imp identity-righ
-          (let x)
-          (case x
-            (zero-lteq-t eqv-c)
-            (succ-lteq-t x.prev recur {succ-lteq-c} eqv-apply)))
-        (+imp compose-associative
-          (let f g h)
-          (case [f g h]
-            ([zero-lteq-t _ _] eqv-c)
-            ([succ-lteq-t succ-lteq-t succ-lteq-t]
-             f.prev g.prev h.prev recur {succ-lteq-c} eqv-apply))))
-      #+end_src
-
 *** arrow-inverse-t
 
     #+begin_src cicada
@@ -707,6 +676,90 @@
          -- type-tt)
       f g compose a identity arrow-eqv-t
       g f compose b identity arrow-eqv-t)
+    #+end_src
+
+* nat-lteq-t
+
+*** nat-lteq-t
+
+    #+begin_src cicada
+    (+type nat-lteq-t
+      : (-> [l r] : nat-t -- type-tt)
+      (-> -- zero-c r zero-lteq-t)
+      (-> prev : l r nat-lteq-t
+       -- l succ-c r succ-c succ-lteq-t))
+    #+end_src
+
+*** nat-non-negative
+
+    #+begin_src cicada
+    (+fun nat-non-negative
+      : (-> n : nat-t -- zero-c n nat-lteq-t)
+      zero-lteq-c)
+    #+end_src
+
+*** nat-lteq-reflexive
+
+    #+begin_src cicada
+    (+fun nat-lteq-reflexive
+      : (-> n : nat-t -- n n nat-lteq-t)
+      (case n
+        (zero-t zero-lteq-c)
+        (succ-t n.prev recur succ-lteq-c)))
+    #+end_src
+
+*** nat-lteq-transitive
+
+    #+begin_src cicada
+    (+fun nat-lteq-transitive
+      : (-> a b nat-lteq-t % x
+            b c nat-lteq-t % y
+         -- a c nat-lteq-t)
+      (case x
+        (zero-lteq-t zero-lteq-c)
+        (succ-lteq-t x.prev y.prev recur succ-lteq-c)))
+    #+end_src
+
+*** nat-lt-t
+
+    #+begin_src cicada
+    (+fun nat-lt-t
+      : (-> [l r] : nat-t -- type-tt)
+      l succ-c r nat-lteq-t)
+    #+end_src
+
+*** nat-archimedean-property
+
+    #+begin_src cicada
+    (+type nat-archimedean-property
+      : (-> n : nat-t
+         -- m : nat-t
+            n m nat-lt-t)
+      n succ-c dup nat-lteq-reflexive)
+    #+end_src
+
+*** category-ct % (@ nat-t nat-lteq-t eqv-t)
+
+    #+begin_src cicada
+    (+instance category-ct % (@ nat-t nat-lteq-t eqv-t)
+      (+imp identity nat-lteq-reflexive)
+      (+imp compose  nat-lteq-transitive)
+      (+imp identity-left
+        (let x)
+        (case x
+          (zero-lteq-t eqv-c)
+          (succ-lteq-t x.prev recur {succ-lteq-c} eqv-apply)))
+      (+imp identity-righ
+        (let x)
+        (case x
+          (zero-lteq-t eqv-c)
+          (succ-lteq-t x.prev recur {succ-lteq-c} eqv-apply)))
+      (+imp compose-associative
+        (let f g h)
+        (case [f g h]
+          ([zero-lteq-t _ _] eqv-c)
+          ([succ-lteq-t succ-lteq-t succ-lteq-t]
+           f.prev g.prev h.prev recur {succ-lteq-c} eqv-apply))))
     #+end_src
 
 * product
@@ -825,27 +878,42 @@
 
 * >< vector-space
 
-* >< category-ct %  (@ type-tt morphism-t fun-eqv-t)
+* >< morphism
 
-*** >< morphism-t
+*** morphism-t
 
-    #+begin_src cicada
-    (+type morphism-t
-      )
-    #+end_src
-
-*** >< fun-eqv-t
+    - x -
+      it seems fun-eqv-t must be built-in
+      because `succ` and `ante` are not limited to `type-tt`
 
     #+begin_src cicada
-    (+fun fun-eqv-t
-      : )
+    (+fun morphism-t
+      : (-> [succ ante] : type-tt -- type-tt)
+      (-> succ -- ante))
     #+end_src
 
-*** >< category-ct % (@ type-tt morphism-t fun-eqv-t)
+*** fun-eqv-t
+
+    - x -
+      it seems fun-eqv-t must be built-in
+      because `f` and `g` are not limited to `(-> a -- b)`
+
+    #+begin_src cicada
+    (+type fun-eqv-t
+      : (-> [lhs rhs] : (-> a -- b) -- type-tt)
+      (-> (-> x : a -- x lhs x rhs eqv-t)
+       -- {lhs} {rhs} fun-eqv-t))
+    #+end_src
+
+*** category-ct % (@ type-tt morphism-t fun-eqv-t)
 
     #+begin_src cicada
     (+instance category-ct % (@ type-tt morphism-t fun-eqv-t)
-      )
+      (+imp identity )
+      (+imp compose  )
+      (+imp identity-left )
+      (+imp identity-righ )
+      (+imp compose-associative ))
     #+end_src
 
 * functor
@@ -1019,8 +1087,8 @@
         ([leaf-t leaf-t]
          tree-a.value tree-b.value prod leaf-c pure)
         ([branch-t branch-t]
-         (do tree-a.left tree-b.left recur >- left
-             tree-a.right tree-b.right recur >- right
+         (do tree-a.left tree-b.left recur (>- left)
+             tree-a.right tree-b.right recur (>- right)
              left right branch-c pure))
         (else none-c)))
     #+end_src
@@ -1048,18 +1116,20 @@
       (case tree
         (leaf-t {dup inc swap leaf-c})
         (branch-t
-          (do tree.left recur >- left
-              tree.right recur >- right
+          (do tree.left recur (>- left)
+              tree.right recur (>- right)
               left right branch-c))))
     #+end_src
 
-* number theory
+* int
 
 *** int-t
 
     #+begin_src cicada
 
     #+end_src
+
+* number theory
 
 *** mod-t
 
@@ -1082,4 +1152,68 @@
       (-> gcd : x y d gcd-t
           mod : x y z mod-t
        -- y z d mod-gcd-t))
+    #+end_src
+
+* >< dependent-category
+
+*** dependent-category-ct
+
+    #+begin_src cicada
+    (+class dependent-category-ct
+      (@ object-t : type-tt
+         arrow-t : (-> object-t object-t -- type-tt))
+
+      object-eqv-t : (-> object-t object-t -- type-tt)
+
+      arrow-eqv-t : (-> a b arrow-t a b arrow-t -- type-tt)
+
+      substitution-t : monoid-ct
+
+      substitute
+      : (-> object-t substitution-t -- object-t)
+
+      unification
+      : (-> a : object-t
+            b : object-t
+         -- c : object-t
+            s : substitution-t
+            a s substitute c object-eqv-t
+            b s substitute c object-eqv-t)
+
+      identity
+      : (-> a : object-t
+         -- a a arrow-t)
+
+      cut
+      : (-> a b arrow-t
+            c d arrow-t
+         -- a b c unifier substitute
+            d b c unifier substitute
+            arrow-t)
+
+      identity-left
+      : (->
+         -- )
+
+      identity-right
+      : (->
+         -- )
+
+      cut-associative
+      : (->
+         -- ))
+
+    (+fun unifier
+      : (-> dependent-category-ct %% (@ object-t arrow-t)
+            object-t
+            object-t
+         -- substitution-t)
+      unification drop drop swap drop)
+
+    (+fun unify
+      : (-> dependent-category-ct %% (@ object-t arrow-t)
+            object-t
+            object-t
+         -- object-t)
+      unification drop drop drop)
     #+end_src
