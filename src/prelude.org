@@ -2,11 +2,19 @@
 
 * [todo-stack]
 
-*** type-tt as a category
+*** finish the syntax change
+
+*** convention about function arguments
+
+    - x -
+      which argument to (case) ?
+      take `nat-add` as a example
+
+*** type-t as a category
 
 ***** problem
 
-      - how to view type-tt as a category ?
+      - how to view type-t as a category ?
         and formalize its feature in the language itself.
 
       - x -
@@ -80,9 +88,8 @@
 
 ***** universe
 
-      - type-tt = 1 universe
-        type-tt : 2 universe
-        type-tt : 2 universe
+      - type-t = 1 universe
+        type-t : 2 universe
 
       - nat-t : 1 universe
         (* nat-t nat-t) : 1 universe
@@ -123,7 +130,7 @@
 
 *** (+type)
 
-    - type of data in data-field must be of type type-tt
+    - type of data in data-field must be of type type-t
       thus, function can not be stored in data-field
 
 *** -ct is always a subtype of record type
@@ -133,34 +140,11 @@
     - while in (+type)
       we define named record type
 
-*** type name postfix
-
-    - give up detailed type name postfix
-      because for structured function type and product type
-      type name postfix is not enough
-
-    - type name postfix
-      is only used to distinguish level of types
-
-    - type
-
-      | -t  | type constructor          |
-      |     | union-type constructor    |
-      |     | quotient-type constructor |
-      | -ct | class-type                |
-      | -tt | type of type              |
-
-    - function
-
-      | -p  | predicate        |
-      | -c  | data constructor |
-      | -cr | create           |
-
 *** level of types
 
     | 0 | object                          |
     | 1 | type, union-type, quotient-type |
-    | 2 | type-class, type-tt             |
+    | 2 | type-class, type-t              |
 
 *** object as type
 
@@ -282,9 +266,11 @@
 *** bool-t
 
     #+begin_src cicada
-    (+type bool-t : type-tt
-      (-> -- true-t)
-      (-> -- false-t))
+    (: bool-t type-t)
+    (= bool-t
+       (type
+         (-> -- true-t)
+         (-> -- false-t)))
     #+end_src
 
 * nat
@@ -292,36 +278,44 @@
 *** nat-t
 
     #+begin_src cicada
-    (+type nat-t : type-tt
-      (-> -- zero-t)
-      (-> prev : nat-t -- succ-t))
+    (: nat-t type-t)
+    (= nat-t
+       (type
+         (-> -- zero-t)
+         (-> prev : nat-t -- succ-t)))
     #+end_src
 
 *** nat-add
 
     #+begin_src cicada
-    (+fun nat-add : (-> [m n] : nat-t -- nat-t)
-      (case n
-        (zero-t m)
-        (succ-t m n.prev recur succ-c)))
+    (: nat-add (-> nat-t nat-t -- nat-t))
+    (= nat-add
+       (let m n)
+       (case n
+         (zero-t m)
+         (succ-t m n.prev recur succ-c)))
     #+end_src
 
 *** nat-mul
 
     #+begin_src cicada
-    (+fun nat-mul : (-> [m n] : nat-t -- nat-t)
-      (case n
-        (zero-t n)
-        (succ-t m n.prev recur m nat-add)))
+    (: nat-mul (-> nat-t nat-t -- nat-t))
+    (= nat-mul
+       (let m n)
+       (case n
+         (zero-t n)
+         (succ-t m n.prev recur m nat-add)))
     #+end_src
 
 *** nat-factorial
 
     #+begin_src cicada
-    (+fun nat-factorial : (-> n : nat-t -- nat-t)
-      (case n
-        (zero-t n succ-c)
-        (succ-t n.prev recur n nat-mul)))
+    (: nat-factorial (-> nat-t -- nat-t))
+    (= nat-factorial
+       (let n)
+       (case n
+         (zero-t n succ-c)
+         (succ-t n.prev recur n nat-mul)))
     #+end_src
 
 * list
@@ -329,58 +323,66 @@
 *** list-t
 
     #+begin_src cicada
-    (+type list-t : (-> type : type-tt -- type-tt)
-      (-> -- type null-t)
-      (-> car : type
-          cdr : type list-t
-       -- type cons-t))
+    (: list-t (-> type-t -- type-t))
+    (= list-t
+       (type (@ type : type-t)
+         (-> -- type null-t)
+         (-> car : type
+             cdr : type list-t
+          -- type cons-t)))
     #+end_src
 
 *** list-length
 
     #+begin_src cicada
-    (+fun list-length
-      : (-> type list-t % list
-         -- nat-t)
-      (case list
-        (null-t zero-c)
-        (cons-t list.cdr recur succ-c)))
+    (: list-length (-> type list-t -- nat-t))
+    (= list-length
+       (let list)
+       (case list
+         (null-t zero-c)
+         (cons-t list.cdr recur succ-c)))
     #+end_src
 
 *** list-append
 
     #+begin_src cicada
-    (+fun list-append
-      : (-> type list-t % list
-            type list-t % list2
-         -- type list-t)
-      (case list2
-        (null-t list)
-        (cons-t list2.car list list2.cdr recur cons-c)))
+    (: list-append
+       (-> type list-t
+           type list-t
+        -- type list-t))
+    (= list-append
+       (let ante succ)
+       (case succ
+         (null-t ante)
+         (cons-t succ.car ante succ.cdr recur cons-c)))
     #+end_src
 
 *** list-map
 
     #+begin_src cicada
-    (+fun list-map
-      : (-> list : type list-t
-            fun : (-> type -- type2)
-         -- type2 list-t)
-      (case list
-        (null-t list)
-        (cons-t list.car fun list.cdr {fun} recur cons-c)))
+    (: list-map
+       (-> a list-t
+           (-> a -- b)
+        -- b list-t))
+    (= list-map
+       (let list fun)
+       (case list
+         (null-t list)
+         (cons-t list.car fun list.cdr {fun} recur cons-c)))
     #+end_src
 
 *** list-remove-first
 
     #+begin_src cicada
-    (+fun list-remove-first
-      : (-> x : type
-            list : type list-t
-         -- type list-t)
-      (case list
-        (null-t list)
-        (cons-t (case [list.car x eq-p]
+    (: list-remove-first
+       (-> type
+           type list-t
+        -- type list-t))
+    (= list-remove-first
+       (let x list)
+       (case list
+         (null-t list)
+         (cons-t (case [list.car x eq-p]
                    (true-t  list.cdr)
                    (false-t list.car list.cdr x recur cons-c)))))
     #+end_src
@@ -390,47 +392,49 @@
 *** eqv-t
 
     #+begin_src cicada
-    (+type eqv-t
-      : (-> type :: type-tt
-            [lhs rhs] : type
-         -- type-tt)
-      (-> value :: type
-       -- value value eqv-t))
+    (: eqv-t
+       (-> type :: type-t
+           type
+        -- type-t))
+    (= eqv-t
+       (type
+         (-> value :: type
+          -- value value eqv-t)))
     #+end_src
 
 *** eqv-apply
 
     #+begin_src cicada
-    (+proof eqv-apply
-      : (-> [type type2] :: type-tt
-            [x y] :: type
-            x y eqv-t
-            fun : (-> type -- type2)
-         -- x fun y fun eqv-t)
-      eqv-c)
+    (: eqv-apply
+       (-> [a b] :: type-t
+           [x y] :: a
+           x y eqv-t
+           fun : (-> a -- b)
+        -- x fun y fun eqv-t))
+    (= eqv-apply eqv-c)
     #+end_src
 
 *** eqv-swap
 
     #+begin_src cicada
-    (+proof eqv-swap
-      : (-> type :: type-tt
-            [x y] :: type
-            x y eqv-t
-         -- y x eqv-t)
-      eqv-c)
+    (: eqv-swap
+       (-> type :: type-t
+           [x y] :: type
+           x y eqv-t
+        -- y x eqv-t))
+    (= eqv-swap eqv-c)
     #+end_src
 
 *** eqv-compose
 
     #+begin_src cicada
-    (+proof eqv-compose
-      : (-> type :: type-tt
-            [x y z] :: type
-            x y eqv-t
-            y z eqv-t
-         -- x z eqv-t)
-      eqv-c)
+    (: eqv-compose
+       (-> type :: type-t
+           [x y z] :: type
+           x y eqv-t
+           y z eqv-t
+        -- x z eqv-t))
+    (= eqv-compose eqv-c)
     #+end_src
 
 * nat
@@ -440,57 +444,74 @@
 *** nat-even-t -- re-imp predicate as judgment
 
     #+begin_src cicada
-    (+type nat-even-t : (-> n : nat-t -- type-tt)
-      (-> -- zero-c zero-even-t)
-      (-> m :: nat-t
-          prev : m nat-even-t
-       -- m succ-c succ-c even-plus-two-even-t))
+    (: nat-even-t (-> nat-t -- type-t))
+    (= nat-even-t
+       (type
+         (-> -- zero-c zero-even-t)
+         (-> m :: nat-t
+             prev : m nat-even-t
+          -- m succ-c succ-c even-plus-two-even-t)))
 
-    (+proof two-even
-      : (-> -- zero-c succ-c succ-c nat-even-t)
-      zero-even-c
-      even-plus-two-even-c)
+    (: two-even (-> -- zero-c succ-c succ-c nat-even-t))
+    (= two-even zero-even-c even-plus-two-even-c)
     #+end_src
 
 *** nat-add-associative
 
     #+begin_src cicada
-    (+proof nat-add-associative
-      : (-> [x y z] : nat-t
-         -- x y nat-add z nat-add
-            x y z nat-add nat-add eqv-t)
-      (case z
-        (zero-t eqv-c)
-        (succ-t x y z.prev recur {succ-c} eqv-apply)))
+    (: nat-add-associative
+       (-> [x y z] : nat-t
+        -- x y nat-add z nat-add
+           x y z nat-add nat-add eqv-t))
+    (= nat-add-associative
+       (let x y z)
+       (case z
+         (zero-t eqv-c)
+         (succ-t x y z.prev recur {succ-c} eqv-apply)))
     #+end_src
 
 *** nat-add-commutative
 
     #+begin_src cicada
-    (+proof nat-add-commutative
-      : (-> [m n] : nat-t
-         -- m n nat-add
-            n m nat-add eqv-t)
-      (case n
-        (zero-t m nat-add-zero-commutative)
-        (succ-t m n.prev recur {succ-c} eqv-apply
-                n.prev m nat-add-succ-commutative eqv-compose)))
+    (: nat-add-commutative
+       (-> [m n] : nat-t
+        -- m n nat-add
+           n m nat-add eqv-t))
+    (= nat-add-commutative
+       (let m n)
+       (case n
+         (zero-t m nat-add-zero-commutative)
+         (succ-t
+           m n.prev recur {succ-c} eqv-apply
+           n.prev m nat-add-succ-commutative eqv-compose)))
+    #+end_src
 
-    (+proof nat-add-zero-commutative
-      : (-> m : nat-t
-         -- m zero-c nat-add
-            zero-c m nat-add eqv-t)
-      (case m
-        (zero-t eqv-c)
-        (succ-t m.prev recur {succ-c} eqv-apply)))
+*** nat-add-zero-commutative
 
-    (+proof nat-add-succ-commutative
-      : (-> [m n] : nat-t
-         -- m succ-c n nat-add
-            m n nat-add succ-c eqv-t)
-      (case n
-        (zero-t eqv-c)
-        (succ-t m n.prev recur {succ-c} eqv-apply)))
+    #+begin_src cicada
+    (: nat-add-zero-commutative
+       (-> m : nat-t
+        -- m zero-c nat-add
+           zero-c m nat-add eqv-t))
+    (= nat-add-zero-commutative
+       (let m)
+       (case m
+         (zero-t eqv-c)
+         (succ-t m.prev recur {succ-c} eqv-apply)))
+    #+end_src
+
+*** nat-add-succ-commutative
+
+    #+begin_src cicada
+    (: nat-add-succ-commutative
+       (-> [m n] : nat-t
+        -- m succ-c n nat-add
+           m n nat-add succ-c eqv-t))
+    (= nat-add-succ-commutative
+       (let m n)
+       (case n
+         (zero-t eqv-c)
+         (succ-t m n.prev recur {succ-c} eqv-apply)))
     #+end_src
 
 * list
@@ -505,37 +526,34 @@
       (: list-length-t
          (-> list : type list-t
              length : nat-t
-          -- type-tt)))
+          -- type-t)))
 
-    ;; this type is like nat-t
-    ;; thus
-    ;;   the name of the argument of cons-length-c
-    ;;   should not be cdr ?
-
-    (+type list-length-t
-      : (-> list : type list-t
-            length : nat-t
-         -- type-tt)
-      (-> -- null-c zero-c null-length-t)
-      (-> cdr : list length list-length-t
-       -- element :: type
-          element list cons-c
-          length succ-c cons-length-t))
+    (: list-length-t (-> type list-t, nat-t -- type-t))
+    (= list-length-t
+       (type (@ list : type list-t
+                length : nat-t)
+         (-> -- null-c zero-c zero-length-t)
+         (-> prev : list length list-length-t
+             -- element :: type
+             element list cons-c
+             length succ-c succ-length-t)))
     #+end_src
 
 *** list-map-preserve-list-length
 
     #+begin_src cicada
-    (+fun list-map-preserve-list-length
-      : (-> type :: type-tt
-            fun :: (-> type -- type2)
-            list :: type list-t
-            n :: nat-t
-            list-length-proof : list n list-length-t
-         -- list {fun} map n list-length-t)
-      (case list-length-proof
-        (null-length-t list-length-proof)
-        (cons-length-t list-length-proof.cdr recur cons-length-c)))
+    (: list-map-preserve-list-length
+       (-> [a b] :: type-t
+           fun :: (-> a -- b)
+           list :: a list-t
+           n :: nat-t
+           list n list-length-t
+        -- list {fun} list-map n list-length-t))
+    (= list-map-preserve-list-length
+       (let h)
+       (case h
+         (zero-length-t h)
+         (succ-length-t h.prev recur succ-length-c)))
     #+end_src
 
 *** list-append-t
@@ -546,37 +564,24 @@
     ;;   append([Car | Cdr], Succ, [Car | ResultCdr]):-
     ;;     append(Cdr, Succ, ResultCdr).
 
-    (+type list-append-t
-      : (-> ante : type list-t
-            succ : type list-t
-            result : type list-t
-         -- type-tt)
-      (-> -- null-c succ succ zero-append-t)
-      (-> car :: type
-          cdr :: type list-t
-          result-cdr :: type list-t
-          prev : cdr succ result-cdr list-append-t
-       -- car cdr cons-c, succ, car result-cdr cons-c succ-append-t))
+    (: list-append-t (-> type list-t type list-t type list-t -- type-t))
+    (= list-append-t
+       (type (@ [ante succ result] : type list-t)
+         (-> -- null-c succ succ zero-append-t)
+         (-> car :: type
+             cdr :: type list-t
+             result-cdr :: type list-t
+             prev : cdr succ result-cdr list-append-t
+          -- car cdr cons-c, succ, car result-cdr cons-c succ-append-t)))
     #+end_src
 
 *** [semantic] succ-append-t
 
     #+begin_src cicada
-    (+type succ-append-t
-      : (-> ante : type list-t
-            succ : type list-t
-            result : type list-t
-         -- type-tt)
-      (-> car :: type
-          cdr :: type list-t
-          result-cdr :: type list-t
-          prev : cdr succ result-cdr list-append-t
-       -- car cdr cons-c, succ, car result-cdr cons-c succ-append-t))
-
     (note for [ante succ result succ-append-c]
       0 hypo-id-c data-hypo-c (quote type) local-let
       (quote type) local-get to-type
-      type-tt
+      type-t
       unify
       ><><><
       (@data-type-t
@@ -598,42 +603,39 @@
 *** vect-t
 
     #+begin_src cicada
-    (+type vect-t
-      : (-> length : nat-t
-            type : type-tt
-         -- type-tt)
-      (-> -- zero-c type null-vect-t)
-      (-> car : type
-          cdr : length type vect-t
-       -- length succ-c type cons-vect-t))
+    (: vect-t (-> nat-t type-t -- type-t))
+    (= vect-t
+       (type (@ length : nat-t
+                type : type-t)
+         (-> -- zero-c type null-vect-t)
+         (-> car : type
+             cdr : length type vect-t
+             -- length succ-c type cons-vect-t)))
     #+end_src
 
 *** vect-append
 
     #+begin_src cicada
-    (+fun vect-append
-      : (-> [m n] :: nat-t
-            type :: type-tt
-            list : m type vect-t
-            list2 : n type vect-t
-         -- m n nat-add type vect-t)
-      (case list2
-        (null-vect-t list)
-        (cons-vect-t list2.car list list2.cdr recur cons-vect-c)))
+    (: vect-append
+       (-> m t vect-t
+           n t vect-t
+        -- m n nat-add t vect-t))
+    (= vect-append
+       (let x y)
+       (case y
+         (null-vect-t x)
+         (cons-vect-t y.car x y.cdr recur cons-vect-c)))
     #+end_src
 
 *** vect-map
 
     #+begin_src cicada
-    (+fun vect-map
-      : (-> n :: nat-t
-            [type type2] :: type-tt
-            list : n type vect-t
-            fun : (-> type -- type2)
-         -- n type2 vect-t)
-      (case list
-        (null-vect-t list)
-        (cons-vect-t list.car fun list.cdr {fun} recur cons-vect-c)))
+    (: vect-map (-> n a vect-t (-> a -- b) -- n b vect-t))
+    (= vect-map
+       (let list fun)
+       (case list
+         (null-vect-t list)
+         (cons-vect-t list.car fun list.cdr {fun} recur cons-vect-c)))
     #+end_src
 
 * category
@@ -641,41 +643,73 @@
 *** category-ct
 
     #+begin_src cicada
-    (+class category-ct
-      < (@ object-t : type-tt
-           arrow-t : (-> object-t object-t -- type-tt)
-           arrow-eqv-t : (-> a b arrow-t a b arrow-t -- type-tt))
-      (+sig identity
-        : (-> object-t % a
-           -- a a arrow-t))
-      (+sig compose
-        : (-> a b arrow-t
-              b c arrow-t
-           -- a c arrow-t))
-      (+sig identity-left
-        : (-> a b arrow-t % f
-           -- a identity f compose, f arrow-eqv-t))
-      (+sig identity-right
-        : (-> a b arrow-t % f
-           -- f b identity compose, f arrow-eqv-t))
-      (+sig compose-associative
-        : (-> a b arrow-t % f
-              b c arrow-t % g
-              c d arrow-t % h
-           -- f g h compose compose
-              f g compose h compose arrow-eqv-t)))
+    (: category-ct class-t)
+    (= category-ct
+       (class
+         (: object-t type-t)
+         (: arrow-t (-> object-t object-t -- type-t))
+         (: arrow-eqv-t (-> a b arrow-t a b arrow-t -- type-t))
+         (: identity
+            (-> object-t % a
+             -- a a arrow-t))
+         (: compose
+            (-> a b arrow-t
+                b c arrow-t
+             -- a c arrow-t))
+         (: identity-left
+            (-> a b arrow-t % f
+             -- a identity f compose, f arrow-eqv-t))
+         (: identity-right
+            (-> a b arrow-t % f
+             -- f b identity compose, f arrow-eqv-t))
+         (: compose-associative
+            (-> a b arrow-t % f
+                b c arrow-t % g
+                c d arrow-t % h
+             -- f g h compose compose
+                f g compose h compose arrow-eqv-t))))
+    #+end_src
+
+*** category-ct -- indentation
+
+    #+begin_src cicada
+    category-ct = class
+      object-t : type-t
+      arrow-t : -> object-t object-t -- type-t
+      arrow-eqv-t : -> a b arrow-t a b arrow-t -- type-t
+      identity :
+        -> object-t % a
+        -- a a arrow-t
+      compose :
+        -> a b arrow-t
+           b c arrow-t
+        -- a c arrow-t
+      identity-left :
+        -> a b arrow-t % f
+        -- a identity f compose, f arrow-eqv-t
+      identity-right :
+        -> a b arrow-t % f
+        -- f b identity compose, f arrow-eqv-t
+      compose-associative :
+        -> a b arrow-t % f
+           b c arrow-t % g
+           c d arrow-t % h
+        -- f g h compose compose
+           f g compose h compose arrow-eqv-t
     #+end_src
 
 *** arrow-inverse-t
 
     #+begin_src cicada
-    (+fun arrow-inverse-t
-      : (-> category-ct %% (@ object-t arrow-t arrow-eqv-t)
-            a b arrow-t % f
-            b a arrow-t % g
-         -- type-tt)
-      f g compose a identity arrow-eqv-t
-      g f compose b identity arrow-eqv-t)
+    (: arrow-inverse-t
+       (-> cat :: category-ct
+           a b cat.arrow-t
+           b a cat.arrow-t
+        -- type-t))
+    (= arrow-inverse-t
+       (let f g)
+       f g compose a identity arrow-eqv-t
+       g f compose b identity arrow-eqv-t)
     #+end_src
 
 * nat-lteq-t
@@ -684,7 +718,7 @@
 
     #+begin_src cicada
     (+type nat-lteq-t
-      : (-> [l r] : nat-t -- type-tt)
+      : (-> [l r] : nat-t -- type-t)
       (-> -- zero-c r zero-lteq-t)
       (-> prev : l r nat-lteq-t
        -- l succ-c r succ-c succ-lteq-t))
@@ -724,7 +758,7 @@
 
     #+begin_src cicada
     (+fun nat-lt-t
-      : (-> [l r] : nat-t -- type-tt)
+      : (-> [l r] : nat-t -- type-t)
       l succ-c r nat-lteq-t)
     #+end_src
 
@@ -770,8 +804,8 @@
     (+fun arrow-unique-t
       : (-> category-ct %% (@ object-t arrow-t arrow-eqv-t)
             a b arrow-t % f
-            (-> a b arrow-t -- type-tt) % theorem
-         -- type-tt)
+            (-> a b arrow-t -- type-t) % theorem
+         -- type-t)
       (* f theorem
          (-> a b arrow-t % g
              g theorem
@@ -788,7 +822,7 @@
             object-t % p
             p a arrow-t % fst
             p b arrow-t % snd
-         -- type-tt)
+         -- type-t)
       (-> object-t % q
           q a arrow-t % fst~
           q b arrow-t % snd~
@@ -809,7 +843,7 @@
             object-t % p
             p a arrow-t % fst
             p b arrow-t % snd
-         -- type-tt)
+         -- type-t)
       (-> object-t % q
           q a arrow-t % fst~
           q b arrow-t % snd~
@@ -823,9 +857,9 @@
     #+begin_src cicada
     (+class product-closed-ct
       < category-ct
-      < (@ object-t : type-tt
-           arrow-t : (-> object-t object-t -- type-tt)
-           arrow-eqv-t : (-> a b arrow-t a b arrow-t -- type-tt))
+      < (@ object-t : type-t
+           arrow-t : (-> object-t object-t -- type-t)
+           arrow-eqv-t : (-> a b arrow-t a b arrow-t -- type-t))
       (+sig product
         : (-> object-t % a
               object-t % b
@@ -857,9 +891,9 @@
     #+begin_src cicada
     (+class groupoid-ct
       < category-ct
-      < (@ object-t : type-tt
-           arrow-t : (-> object-t object-t -- type-tt)
-           arrow-eqv-t : (-> a b arrow-t a b arrow-t -- type-tt))
+      < (@ object-t : type-t
+           arrow-t : (-> object-t object-t -- type-t)
+           arrow-eqv-t : (-> a b arrow-t a b arrow-t -- type-t))
       (+sig inverse
         : (-> a b arrow-t % f
            -- b a arrow-t % g
@@ -884,11 +918,11 @@
 
     - x -
       it seems fun-eqv-t must be built-in
-      because `succ` and `ante` are not limited to `type-tt`
+      because `succ` and `ante` are not limited to `type-t`
 
     #+begin_src cicada
     (+fun morphism-t
-      : (-> [succ ante] : type-tt -- type-tt)
+      : (-> [succ ante] : type-t -- type-t)
       (-> succ -- ante))
     #+end_src
 
@@ -900,15 +934,15 @@
 
     #+begin_src cicada
     (+type fun-eqv-t
-      : (-> [lhs rhs] : (-> a -- b) -- type-tt)
+      : (-> [lhs rhs] : (-> a -- b) -- type-t)
       (-> (-> x : a -- x lhs x rhs eqv-t)
        -- {lhs} {rhs} fun-eqv-t))
     #+end_src
 
-*** category-ct % (@ type-tt morphism-t fun-eqv-t)
+*** category-ct % (@ type-t morphism-t fun-eqv-t)
 
     #+begin_src cicada
-    (+instance category-ct % (@ type-tt morphism-t fun-eqv-t)
+    (+instance category-ct % (@ type-t morphism-t fun-eqv-t)
       (+imp identity )
       (+imp compose  )
       (+imp identity-left )
@@ -922,7 +956,7 @@
 
     #+begin_src cicada
     (+class functor-ct
-      < (@ fun-t : (-> type-tt -- type-tt))
+      < (@ fun-t : (-> type-t -- type-t))
       (+sig map
         : (-> a fun-t
               (-> a -- b)
@@ -950,7 +984,7 @@
     #+begin_src cicada
     (+class monad-ct
       < functor-ct
-      < (@ fun-t : (-> type-tt -- type-tt))
+      < (@ fun-t : (-> type-t -- type-t))
       (+sig pure
         : (-> t -- t fun-t))
       (+sig bind
@@ -1000,7 +1034,7 @@
 *** maybe-t
 
     #+begin_src cicada
-    (+type maybe-t : (-> type : type-tt -- type-tt)
+    (+type maybe-t : (-> type : type-t -- type-t)
       (-> -- type none-t)
       (-> value : type -- type just-t))
     #+end_src
@@ -1034,9 +1068,9 @@
 
     #+begin_src cicada
     (+fun state-t
-      : (-> type-tt % type
-            type-tt % value-t
-         -- type-tt)
+      : (-> type-t % type
+            type-t % value-t
+         -- type-t)
       (-> type -- type value-t))
     #+end_src
 
@@ -1057,7 +1091,7 @@
 *** tree-t
 
     #+begin_src cicada
-    (+type tree-t : (-> type-tt -- type-tt)
+    (+type tree-t : (-> type-t -- type-t)
       (-> t % value -- t leaf-t)
       (-> t tree-t % [left right]
        -- t branch-t))
@@ -1147,11 +1181,104 @@
       : (-> x : int-t
             y : int-t
             d : int-t
-         -- type-tt)
+         -- type-t)
       (-> -- x zero-c x zero-gcd-t)
       (-> gcd : x y d gcd-t
           mod : x y z mod-t
        -- y z d mod-gcd-t))
+    #+end_src
+
+* >< category-ct
+
+*** category-ct
+
+    #+begin_src cicada
+    (+class category-ct
+      (: object-t type-t)
+      (: arrow-t (-> object-t object-t -- type-t))
+      (: arrow-eqv-t (-> a b arrow-t a b arrow-t -- type-t))
+      (: identity
+         (-> object-t % a
+          -- a a arrow-t))
+      (: compose
+         (-> a b arrow-t
+             b c arrow-t
+          -- a c arrow-t))
+      (: identity-left
+         (-> a b arrow-t % f
+          -- a identity f compose, f arrow-eqv-t))
+      (: identity-right
+         (-> a b arrow-t % f
+          -- f b identity compose, f arrow-eqv-t))
+      (: compose-associative
+         (-> a b arrow-t % f
+             b c arrow-t % g
+             c d arrow-t % h
+          -- f g h compose compose
+             f g compose h compose arrow-eqv-t)))
+    #+end_src
+
+*** category-ct % (@ nat-t nat-lteq-t eqv-t)
+
+    #+begin_src cicada
+    (+class category-ct
+      (: object-t type-t)
+      (: arrow-t (-> object-t object-t -- type-t))
+      (: arrow-eqv-t (-> a b arrow-t a b arrow-t -- type-t))
+      (: identity
+         (-> object-t % a
+          -- a a arrow-t))
+      (: compose
+         (-> a b arrow-t
+             b c arrow-t
+          -- a c arrow-t))
+      (: identity-left
+         (-> a b arrow-t % f
+          -- a identity f compose, f arrow-eqv-t))
+      (: identity-right
+         (-> a b arrow-t % f
+          -- f b identity compose, f arrow-eqv-t))
+      (: compose-associative
+         (-> a b arrow-t % f
+             b c arrow-t % g
+             c d arrow-t % h
+          -- f g h compose compose
+             f g compose h compose arrow-eqv-t)))
+
+    (+instance category-ct
+      (= object-t nat-t)
+      (= arrow-t nat-lteq-t)
+      (= arrow-eqv-t eqv-t)
+      (= identity nat-lteq-reflexive)
+      (= compose  nat-lteq-transitive)
+      (= identity-left
+         (let x)
+         (case x
+           (zero-lteq-t eqv-c)
+           (succ-lteq-t x.prev recur {succ-lteq-c} eqv-apply)))
+      (= identity-righ
+         (let x)
+         (case x
+           (zero-lteq-t eqv-c)
+           (succ-lteq-t x.prev recur {succ-lteq-c} eqv-apply)))
+      (= compose-associative
+         (let f g h)
+         (case [f g h]
+           ([zero-lteq-t _ _] eqv-c)
+           ([succ-lteq-t succ-lteq-t succ-lteq-t]
+            f.prev g.prev h.prev recur {succ-lteq-c} eqv-apply))))
+    #+end_src
+
+*** arrow-inverse-t
+
+    #+begin_src cicada
+    (+fun arrow-inverse-t
+      : (-> (with category-ct)
+            a b arrow-t % f
+            b a arrow-t % g
+         -- type-t)
+      f g compose a identity arrow-eqv-t
+      g f compose b identity arrow-eqv-t)
     #+end_src
 
 * >< dependent-category
@@ -1160,60 +1287,88 @@
 
     #+begin_src cicada
     (+class dependent-category-ct
-      (@ object-t : type-tt
-         arrow-t : (-> object-t object-t -- type-tt))
+      (: object-t type-t)
+      (: object-eqv-t (-> object-t object-t -- type-t))
+      (: arrow-t (-> object-t object-t -- type-t))
+      (: arrow-eqv-t (-> a b arrow-t a b arrow-t -- type-t))
+      (: substitution-t monoid-ct)
+      (: substitute
+         (-> object-t substitution-t -- object-t))
+      (: unification
+         (-> a : object-t
+             b : object-t
+          -- c : object-t
+             s : substitution-t
+             a s substitute c object-eqv-t
+             b s substitute c object-eqv-t))
+      (: identity
+         (-> a : object-t
+          -- a a arrow-t))
+      (: cut
+         (-> a b arrow-t
+             c d arrow-t
+          -- a b c unifier substitute
+             d b c unifier substitute
+             arrow-t))
+      (: identity-left
+         (->
+          -- ))
+      (: identity-right
+         (->
+          -- ))
+      (: cut-associative
+         (->
+          -- )))
+    #+end_src
 
-      object-eqv-t : (-> object-t object-t -- type-tt)
+*** unifier
 
-      arrow-eqv-t : (-> a b arrow-t a b arrow-t -- type-tt)
-
-      substitution-t : monoid-ct
-
-      substitute
-      : (-> object-t substitution-t -- object-t)
-
-      unification
-      : (-> a : object-t
-            b : object-t
-         -- c : object-t
-            s : substitution-t
-            a s substitute c object-eqv-t
-            b s substitute c object-eqv-t)
-
-      identity
-      : (-> a : object-t
-         -- a a arrow-t)
-
-      cut
-      : (-> a b arrow-t
-            c d arrow-t
-         -- a b c unifier substitute
-            d b c unifier substitute
-            arrow-t)
-
-      identity-left
-      : (->
-         -- )
-
-      identity-right
-      : (->
-         -- )
-
-      cut-associative
-      : (->
-         -- ))
-
+    #+begin_src cicada
     (+fun unifier
-      : (-> dependent-category-ct %% (@ object-t arrow-t)
+      : (-> (with dependent-category-ct)
             object-t
             object-t
          -- substitution-t)
       unification drop drop swap drop)
+    #+end_src
 
+*** unify
+
+    #+begin_src cicada
     (+fun unify
-      : (-> dependent-category-ct %% (@ object-t arrow-t)
+      : (-> (with dependent-category-ct)
             object-t
             object-t
          -- object-t)
       unification drop drop drop)
     #+end_src
+
+* >< about (+class)
+
+  - x -
+    what belong to argument of the constructor ?
+    what belong to interface function ?
+
+    it seems
+    we pick up some fields as key fields
+    from the dependent record
+    the record is the real thing
+
+  - k -
+    I think it basicly says
+    type class is not the right way to implement
+    abstract mathematical structure
+
+    type class can only take one argument
+
+    type class can not be viewed as subtype of type-t
+
+    the argument must occur in generaic function
+
+  - x -
+    we need to learn haskell really well
+    we use it to write interpreter instead of compiler
+    but how should we model mathematical structure ?
+
+  - k -
+    thinking about agde module system ?
