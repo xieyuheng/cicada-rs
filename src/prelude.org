@@ -136,8 +136,6 @@
     - type of data in data-field must be of type type-t
       thus, function can not be stored in data-field
 
-*** -ct is always a subtype of record type
-
 *** (@) -- syntax for unnamed record type
 
     - while in (+type)
@@ -643,11 +641,11 @@
 
 * category
 
-*** category-ct
+*** category-s
 
     #+begin_src cicada
-    (: category-ct class-t)
-    (= category-ct
+    (: category-s class-t)
+    (= category-s
        (class
          (: object-t type-t)
          (: arrow-t (-> object-t object-t -- type-t))
@@ -673,24 +671,24 @@
                 f g compose h compose arrow-eqv-t))))
     #+end_src
 
-*** category-ct.arrow-inverse-t
+*** category-s.arrow-inverse-t
 
     #+begin_src cicada
-    (: category-ct.arrow-inverse-t
+    (: category-s.arrow-inverse-t
        (-> a b self.arrow-t
            b a self.arrow-t
         -- type-t))
-    (= category-ct.arrow-inverse-t
+    (= category-s.arrow-inverse-t
        (let cat)
        (let f g)
        f g compose a identity self.arrow-eqv-t
        g f compose b identity self.arrow-eqv-t)
     #+end_src
 
-*** category-ct -- indentation
+*** category-s -- indentation
 
     #+begin_src cicada
-    category-ct = class
+    category-s = class
       object-t : type-t
       arrow-t : -> object-t object-t -- type-t
       arrow-eqv-t : -> a b arrow-t a b arrow-t -- type-t
@@ -783,7 +781,7 @@
 *** nat-order-cat
 
     #+begin_src cicada
-    (: nat-order-cat category-ct)
+    (: nat-order-cat category-s)
     (= nat-order-cat
        (instance
          (= identity nat-lteq-reflexive)
@@ -808,14 +806,14 @@
 
 * product
 
-*** category-ctarrow-unique-t
+*** category-sarrow-unique-t
 
     #+begin_src cicada
-    (: category-ct.arrow-unique-t
+    (: category-s.arrow-unique-t
        (-> a b self.arrow-t
            (-> a b self.arrow-t -- type-t)
         -- type-t))
-    (= category-ct.arrow-unique-t
+    (= category-s.arrow-unique-t
        (let f theorem)
        f theorem
        (-> a b self.arrow-t % g
@@ -823,17 +821,17 @@
         -- f g self.arrow-eqv-t))
     #+end_src
 
-*** category-ct.object-product-t
+*** category-s.object-product-t
 
     #+begin_src cicada
-    (: category-ct.object-product-t
+    (: category-s.object-product-t
        (-> self.object-t % a
            self.object-t % b
            self.object-t % p
            p a self.arrow-t % fst
            p b self.arrow-t % snd
         -- type-t))
-    (= category-ct.object-product-t
+    (= category-s.object-product-t
        (let a b p fst snd)
        (-> self.object-t % q
            q a self.arrow-t % fst~
@@ -845,12 +843,12 @@
            m swap self.arrow-unique-t))
     #+end_src
 
-*** product-closed-ct
+*** product-closed-s
 
     #+begin_src cicada
-    (: product-closed-ct class-t)
-    (= product-closed-ct
-       (class (< category-ct)
+    (: product-closed-s class-t)
+    (= product-closed-s
+       (class (< category-s)
          (: product
             (-> object-t % a
                 object-t % b
@@ -860,10 +858,10 @@
                 a b p fst snd object-product-t))))
     #+end_src
 
-*** >< category-product-ct -- first class class
+*** >< category-product-s -- first class class
 
     #+begin_src cicada
-    (: category-product-ct
+    (: category-product-s
        )
     #+end_src
 
@@ -877,13 +875,13 @@
 
 * groupoid
 
-*** groupoid-ct
+*** groupoid-s
 
     #+begin_src cicada
-    (: groupoid-ct class-t)
-    (= groupoid-ct
+    (: groupoid-s class-t)
+    (= groupoid-s
        (class
-         (< category-ct)
+         (< category-s)
          (: inverse
             (-> a b arrow-t % f
              -- b a arrow-t % g
@@ -938,7 +936,7 @@
 *** >< type-cat
 
     #+begin_src cicada
-    (: type-cat category-ct)
+    (: type-cat category-s)
     (= type-cat
        (instance
          (= identity )
@@ -950,11 +948,11 @@
 
 * functor
 
-*** functor-ct
+*** functor-s
 
     #+begin_src cicada
-    (: functor-ct class-t)
-    (= functor-ct
+    (: functor-s class-t)
+    (= functor-s
        (class
          (: fun-t (-> type-t -- type-t))
          (: map (-> a fun-t, (-> a -- b) -- b fun-t))))
@@ -963,7 +961,7 @@
 *** list-functor
 
     #+begin_src cicada
-    (: list-functor functor-ct)
+    (: list-functor functor-s)
     (= list-functor
        (instance
          (= fun-t list-t)
@@ -979,42 +977,42 @@
 
 * monad
 
-*** monad-ct
+*** monad-s
 
     #+begin_src cicada
-    (: monad-ct class-t)
-    (= monad-ct
+    (: monad-s class-t)
+    (= monad-s
        (class
-         (< functor-ct)
+         (< functor-s)
          (: pure (-> t -- t fun-t))
          (: bind (-> a fun-t, (-> a -- b fun-t) -- b fun-t))))
     #+end_src
 
-*** monad-ct.compose
+*** monad-s.compose
 
     #+begin_src cicada
-    (: monad-ct.compose
+    (: monad-s.compose
        (-> (-> a -- b self.fun-t)
            (-> b -- c self.fun-t)
         -- (-> a -- c self.fun-t)))
-    (= monad-ct.compose
+    (= monad-s.compose
        (let f g)
        {f {g} self.bind})
     #+end_src
 
-*** monad-ct.flatten
+*** monad-s.flatten
 
     #+begin_src cicada
-    (: monad-ct.flatten
+    (: monad-s.flatten
        (-> a self.fun-t self.fun-t
         -- a self.fun-t))
-    (= monad-ct.flatten {} self.bind)
+    (= monad-s.flatten {} self.bind)
     #+end_src
 
 *** list-monad
 
     #+begin_src cicada
-    (: list-monad monad-ct)
+    (: list-monad monad-s)
     (= list-monad
        (instance
          (= pure null-c cons-c)
@@ -1043,7 +1041,7 @@
 *** maybe-functor
 
     #+begin_src cicada
-    (: maybe-functor functor-ct)
+    (: maybe-functor functor-s)
     (= maybe-functor
        (instance
          (= fun-t maybe-t)
@@ -1057,7 +1055,7 @@
 *** maybe-monad
 
     #+begin_src cicada
-    (: maybe-monad monad-ct)
+    (: maybe-monad monad-s)
     (= maybe-monad
        (= pure just-c)
        (= bind
@@ -1081,7 +1079,7 @@
 *** state-monad
 
     #+begin_src cicada
-    (: state-monad (-> type-t -- monad-ct))
+    (: state-monad (-> type-t -- monad-s))
     (= state-monad
        (let s)
        (instance
@@ -1117,7 +1115,7 @@
 *** tree-functor
 
     #+begin_src cicada
-    (: tree-functor functor-ct)
+    (: tree-functor functor-s)
     (= tree-functor
        (instance
          (= fun-t tree-t)
@@ -1205,17 +1203,17 @@
 
 * >< dependent-category
 
-*** dependent-category-ct
+*** dependent-category-s
 
     #+begin_src cicada
-    (: dependent-category-ct class-t)
-    (= dependent-category-ct
+    (: dependent-category-s class-t)
+    (= dependent-category-s
        (class
          (: object-t type-t)
          (: object-eqv-t (-> object-t object-t -- type-t))
          (: arrow-t (-> object-t object-t -- type-t))
          (: arrow-eqv-t (-> a b arrow-t a b arrow-t -- type-t))
-         (: substitution-t monoid-ct)
+         (: substitution-t monoid-s)
          (: substitute
             (-> object-t substitution-t -- object-t))
          (: unification
