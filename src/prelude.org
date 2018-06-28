@@ -2,22 +2,38 @@
 
 * [todo-stack]
 
-*** dependent-category-s
+*** formalize mathematical structures
 
-***** topos theory
+***** category-theory
 
-***** use pullback and pushout
+      - x -
+        at least in cicada
+        we can formalize category-theory now !
+
+***** other important mathematical structures
+
+***** dependent-category-theory
+
+      - use pullback and pushout
+
+***** topos-theory
 
 *** syntax
 
 ***** what is the logic programming interface of the type system ?
 
-***** a suger for `self.`
+***** a suger for `this.`
 
       - x -
         we should learn some ruby !
 
-*** convention about function arguments
+***** re-gain generic-ness of type-class
+
+      - by maintain a map from type constructor to class
+
+***** new (do) notation
+
+*** naming convention about function arguments
 
     - x -
       which argument to (case) ?
@@ -639,14 +655,14 @@
 
     #+begin_src cicada
     (: category-s.arrow-inverse-t
-       (-> a b self.arrow-t
-           b a self.arrow-t
+       (-> a b this.arrow-t
+           b a this.arrow-t
         -- type-t))
     (= category-s.arrow-inverse-t
        (let cat)
        (let f g)
-       f g compose a identity self.arrow-eqv-t
-       g f compose b identity self.arrow-eqv-t)
+       f g compose a identity this.arrow-eqv-t
+       g f compose b identity this.arrow-eqv-t)
     #+end_src
 
 *** category-s -- indentation
@@ -774,37 +790,37 @@
 
     #+begin_src cicada
     (: category-s.arrow-unique-t
-       (-> a b self.arrow-t
-           (-> a b self.arrow-t -- type-t)
+       (-> a b this.arrow-t
+           (-> a b this.arrow-t -- type-t)
         -- type-t))
     (= category-s.arrow-unique-t
        (let f theorem)
        f theorem
-       (-> a b self.arrow-t % g
+       (-> a b this.arrow-t % g
            g theorem
-        -- f g self.arrow-eqv-t))
+        -- f g this.arrow-eqv-t))
     #+end_src
 
 *** category-s.object-product-t
 
     #+begin_src cicada
     (: category-s.object-product-t
-       (-> self.object-t % a
-           self.object-t % b
-           self.object-t % p
-           p a self.arrow-t % fst
-           p b self.arrow-t % snd
+       (-> this.object-t % a
+           this.object-t % b
+           this.object-t % p
+           p a this.arrow-t % fst
+           p b this.arrow-t % snd
         -- type-t))
     (= category-s.object-product-t
        (let a b p fst snd)
-       (-> self.object-t % q
-           q a self.arrow-t % fst~
-           q b self.arrow-t % snd~
-        -- q p self.arrow-t % m
+       (-> this.object-t % q
+           q a this.arrow-t % fst~
+           q b this.arrow-t % snd~
+        -- q p this.arrow-t % m
            {(let m)
-            fst~, m fst compose self.arrow-eqv-t
-            snd~, m snd compose self.arrow-eqv-t}
-           m swap self.arrow-unique-t))
+            fst~, m fst compose this.arrow-eqv-t
+            snd~, m snd compose this.arrow-eqv-t}
+           m swap this.arrow-unique-t))
     #+end_src
 
 *** product-closed-s
@@ -956,21 +972,21 @@
 
     #+begin_src cicada
     (: monad-s.compose
-       (-> (-> a -- b self.fun-t)
-           (-> b -- c self.fun-t)
-        -- (-> a -- c self.fun-t)))
+       (-> (-> a -- b this.fun-t)
+           (-> b -- c this.fun-t)
+        -- (-> a -- c this.fun-t)))
     (= monad-s.compose
        (let f g)
-       {f {g} self.bind})
+       {f {g} this.bind})
     #+end_src
 
 *** monad-s.flatten
 
     #+begin_src cicada
     (: monad-s.flatten
-       (-> a self.fun-t self.fun-t
-        -- a self.fun-t))
-    (= monad-s.flatten {} self.bind)
+       (-> a this.fun-t this.fun-t
+        -- a this.fun-t))
+    (= monad-s.flatten {} this.bind)
     #+end_src
 
 *** list-monad
