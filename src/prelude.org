@@ -10,6 +10,9 @@
         at least in cicada
         we can formalize category-theory now !
 
+      - k -
+        we'd better view this as a programming task !
+
 ***** other important mathematical structures
 
 ***** dependent-category-theory
@@ -36,55 +39,15 @@
 
 *** type-t as a category-s and dependent-category-s
 
-***** problem
-
-      - how to view type-t as a category ?
-        and formalize its semantics in the language itself.
-
-      - x -
-        by doing so
-        I hope to clarify the meaning of stack and arrow in cicada
-
-      - k -
-        maybe we can say
-        the syntax is optimized for function-completion object-product
-
-      - x -
-        if so,
-        we must get rid of explicit (* a b)
-        by eqv it with [a b]
-
-      - k -
-        this means "stack as product built-in the language"
-
-      - x -
-        by emphasizing this
-        our aim will be really distinguishable
-        namely
-        design the syntax
-        so that it is easier to express composition
-
-***** ><><>< stack as product built-in the language
-
-      - take swap as an example  (a, b) => (b, a)
-
-      - also the assoc law (a, (b, c)) => ((a,  b), c)
-
-***** iso-t -- as a class
-
 ***** universe
 
-      - type-t = 1 universe
-        type-t : 2 universe
+      - type-t = type-t
+        type-t : type-t2
 
       - nat-t : 1 universe
-        (* nat-t nat-t) : 1 universe
-        (+ nat-t | nat-t) : 1 universe
-        (-> nat-t -- nat-t) : 1 universe
-
-      - 1 universe : 2 universe
-
-      - how about the order relation for those universes ?
+        (* nat-t nat-t) : type-t
+        (+ nat-t | nat-t) : type-t
+        (-> nat-t -- nat-t) : type-t
 
 *** test
 
@@ -99,6 +62,12 @@
         a < a * 2
 
 * [note]
+
+*** (*)
+
+    - `ante` and `succ` in (-> ante -- succ) are all implicit tuples
+
+    - (*) explicit nested tuple
 
 *** (:) (%)
 
@@ -137,11 +106,6 @@
 *** functor
 
 ***** functor type-class in haskell
-
-      - in haskell the category under consideration
-        is the category of types
-        where types are objects
-        functions are morphisms
 
       - the functor type-class in haskell
         is a endo-functor from this category to itself
@@ -368,10 +332,7 @@
 *** eqv-t
 
     #+begin_src cicada
-    eqv-t :
-      -> t :: type-t
-         t
-      -- type-t
+    eqv-t : -> t -- type-t
     eqv-t = type
       -> value :: t
       -- value value eqv-t
@@ -381,8 +342,7 @@
 
     #+begin_src cicada
     eqv-apply :
-      -> [a b] :: type-t
-         [x y] :: a
+      -> [x y] :: a
          x y eqv-t
          fun : -> a -- b
       -- x fun y fun eqv-t
@@ -395,8 +355,7 @@
 
     #+begin_src cicada
     eqv-swap :
-      -> t :: type-t
-         [x y] :: t
+      -> [x y] :: t
          x y eqv-t
       -- y x eqv-t
     eqv-swap = lambda
@@ -408,8 +367,7 @@
 
     #+begin_src cicada
     eqv-compose :
-      -> t :: type-t
-         [x y z] :: t
+      -> [x y z] :: t
          x y eqv-t
          y z eqv-t
       -- x z eqv-t
@@ -523,8 +481,7 @@
 
     #+begin_src cicada
     list-map-preserve-list-length :
-      -> [a b] :: type-t
-         fun :: -> a -- b
+      -> fun :: -> a -- b
          list :: a list-t
          n :: nat-t
          list n list-length-t
@@ -663,7 +620,74 @@
       g f compose b identity this.arrow-eqv-t
     #+end_src
 
-* nat-lteq-t
+*** category-s.arrow-unique-t
+
+    #+begin_src cicada
+    category-s.arrow-unique-t :
+      -> a b this.arrow-t
+         -> a b this.arrow-t -- type-t
+      -- type-t
+    category-s.arrow-unique-t = lambda
+      let f theorem in
+      f theorem
+      -> a b this.arrow-t % g
+         g theorem
+      -- f g this.arrow-eqv-t
+    #+end_src
+
+*** category-s.object-product-t
+
+    #+begin_src cicada
+    category-s.object-product-t :
+      -> this.object-t % a
+         this.object-t % b
+         this.object-t % p
+         p a this.arrow-t % fst
+         p b this.arrow-t % snd
+      -- type-t
+    category-s.object-product-t = lambda
+      let a b p fst snd in
+      -> this.object-t % q
+         q a this.arrow-t % fst~
+         q b this.arrow-t % snd~
+      -- q p this.arrow-t % m
+         lambda let m in
+           fst~, m fst compose this.arrow-eqv-t
+           snd~, m snd compose this.arrow-eqv-t
+         m swap this.arrow-unique-t
+    #+end_src
+
+*** product-closed-s
+
+    #+begin_src cicada
+    product-closed-s <: category-s
+    product-closed-s = class
+      product :
+        -> object-t % a
+           object-t % b
+        -- object-t % p
+           p a arrow-t % fst
+           p b arrow-t % snd
+           a b p fst snd object-product-t
+    #+end_src
+
+*** >< category-product-s -- first class class
+
+    #+begin_src cicada
+    category-product-s : -> category-s category-s -- category-s
+    category-product-s = lambda
+      let c d in instance
+      object-t = lambda (* c.object-t d.object-t)
+      arrow-t = lambda
+      arrow-eqv-t = lambda
+      identity = lambda
+      compose = lambda
+      identity-left = lambda
+      identity-right = lambda
+      compose-associative = lambda
+    #+end_src
+
+* nat-order-cat
 
 *** nat-lteq-t
 
@@ -733,81 +757,28 @@
     #+begin_src cicada
     nat-order-cat : category-s
     nat-order-cat = instance
-      instance
-        identity = lambda nat-lteq-reflexive
-        compose  = lambda nat-lteq-transitive
-        identity-left = lambda
-          let x in
-          case x
-            zero-lteq-t eqv-c
-            succ-lteq-t x.prev recur {succ-lteq-c} eqv-apply
-        identity-righ = lambda
-          let x in
-          case x
-            zero-lteq-t eqv-c
-            succ-lteq-t x.prev recur {succ-lteq-c} eqv-apply
-        compose-associative = lambda
-          let f g h in
-          case [f g h]
-            [zero-lteq-t _ _] eqv-c
-            [succ-lteq-t succ-lteq-t succ-lteq-t]
-              f.prev g.prev h.prev recur {succ-lteq-c} eqv-apply
+      object-t = lambda nat-t
+      arrow-t = lambda nat-lteq-t
+      arrow-eqv-t = lambda eqv-t
+      identity = lambda nat-lteq-reflexive
+      compose  = lambda nat-lteq-transitive
+      identity-left = lambda
+        let x in
+        case x
+          zero-lteq-t eqv-c
+          succ-lteq-t x.prev recur {succ-lteq-c} eqv-apply
+      identity-righ = lambda
+        let x in
+        case x
+          zero-lteq-t eqv-c
+          succ-lteq-t x.prev recur {succ-lteq-c} eqv-apply
+      compose-associative = lambda
+        let f g h in
+        case [f g h]
+          [zero-lteq-t _ _] eqv-c
+          [succ-lteq-t succ-lteq-t succ-lteq-t]
+            f.prev g.prev h.prev recur {succ-lteq-c} eqv-apply
     #+end_src
-
-* product
-
-*** category-sarrow-unique-t
-
-    #+begin_src cicada
-    category-s.arrow-unique-t :
-      -> a b this.arrow-t
-         -> a b this.arrow-t -- type-t
-      -- type-t
-    category-s.arrow-unique-t = lambda
-      let f theorem in
-      f theorem
-      -> a b this.arrow-t % g
-         g theorem
-      -- f g this.arrow-eqv-t
-    #+end_src
-
-*** category-s.object-product-t
-
-    #+begin_src cicada
-    category-s.object-product-t :
-      -> this.object-t % a
-         this.object-t % b
-         this.object-t % p
-         p a this.arrow-t % fst
-         p b this.arrow-t % snd
-      -- type-t
-    category-s.object-product-t = lambda
-      let a b p fst snd in
-      -> this.object-t % q
-         q a this.arrow-t % fst~
-         q b this.arrow-t % snd~
-      -- q p this.arrow-t % m
-         lambda let m in
-           fst~, m fst compose this.arrow-eqv-t
-           snd~, m snd compose this.arrow-eqv-t
-         m swap this.arrow-unique-t
-    #+end_src
-
-*** product-closed-s
-
-    #+begin_src cicada
-    product-closed-s <: category-s
-    product-closed-s = class
-      product :
-        -> object-t % a
-           object-t % b
-        -- object-t % p
-           p a arrow-t % fst
-           p b arrow-t % snd
-           a b p fst snd object-product-t
-    #+end_src
-
-*** >< category-product-s -- first class class
 
 * >< limit
 
@@ -836,49 +807,65 @@
 
 * >< vector-space
 
-* >< morphism
+* type-cat
 
-*** ><><>< morphism-t
-
-    - x -
-      it seems fun-eqv-t must be built-in
-      because `succ` and `ante` are not limited to `type-t`
+*** type-arrow-t
 
     #+begin_src cicada
-    morphism-t : -> type-t type-t -- type-t
-    morphism-t = lambda
+    type-arrow-t : -> type-t type-t -- type-t
+    type-arrow-t = lambda
       let succ ante in
-      -> succ -- ante
+      ~> succ -- ante
     #+end_src
 
 *** fun-eqv-t
 
-    - x -
-      it seems fun-eqv-t must be built-in
-      because `f` and `g` are not limited to `(-> a -- b)`
-
     #+begin_src cicada
     fun-eqv-t :
-      -> [a b] :: type-t
-         -> a -- b
-         -> a -- b
+      -> ~> a -- b
+         ~> a -- b
       -- type-t
     fun-eqv-t = type
-      @ [lhs rhs] : -> a -- b
-      -> (-> x : a -- x lhs x rhs eqv-t)
-      -- {lhs} {rhs} fun-eqv-t
+      @ [lhs rhs] : ~> a -- b
+      -> theorem : (-> x : a -- x lhs apply x rhs apply eqv-t)
+      -- lhs rhs fun-eqv-t
     #+end_src
 
-*** >< type-cat
+*** type-cat
 
     #+begin_src cicada
     type-cat : category-s
     type-cat = instance
-      identity =
-      compose =
-      identity-left =
-      identity-righ =
-      compose-associative =
+      object-t = type-t
+      arrow-t = type-arrow-t
+      arrow-eqv-t = fun-eqv-t
+      identity : -> type-t % a -- (~> a -- a)
+      identity = lambda
+        let x in nop
+      compose :
+        -> (~> a -- b)
+           (~> b -- c)
+        -- (~> a -- c)
+      compose = lambda
+        let f g in {f apply g apply}
+      identity-left :
+        -> (~> a -- b) % f
+        -- {nop apply f apply} {f apply} fun-eqv-t
+      identity-left = lambda
+        eqv-c fun-eqv-c
+      identity-right :
+        -> (~> a -- b) % f
+        -- {f apply nop apply} {f apply} fun-eqv-t
+      identity-right = lambda
+        eqv-c fun-eqv-c
+      compose-associative :
+        -> (~> a -- b) % f
+           (~> b -- c) % g
+           (~> c -- d) % h
+        -- {f apply {g apply h apply} apply}
+           {{f apply g apply} apply h apply} fun-eqv-t
+      compose-associative = lambda
+        eqv-c fun-eqv-c
     #+end_src
 
 * functor
@@ -1010,22 +997,21 @@
     #+begin_src cicada
     state-monad : -> type-t -- monad-s
     state-monad = lambda
-      let s in
-      instance
-        fun-t = lambda {s state-t}
-        map : -> a s state-t, (-> a -- b)
-              -- b s state-t
-        map : -> (-> s -- s a), (-> a -- b)
-              -- (-> s -- s b)
-        map = lambda
-          let state fun in
-          {state fun}
-        pure = lambda
-          let value in
-          {value}
-        bind = lambda
-          let state fun in
-          {state fun apply}
+      let s in instance
+      fun-t = lambda {s state-t}
+      map : -> a s state-t, (-> a -- b)
+            -- b s state-t
+      map : -> (-> s -- s a), (-> a -- b)
+            -- (-> s -- s b)
+      map = lambda
+        let state fun in
+        {state fun}
+      pure = lambda
+        let value in
+        {value}
+      bind = lambda
+        let state fun in
+        {state fun apply}
     #+end_src
 
 * tree
