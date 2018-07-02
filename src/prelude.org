@@ -2,6 +2,8 @@
 
 * [todo-stack]
 
+*** graph-s vs category-s
+
 *** category-theory
 
 *** natural-transformation
@@ -97,6 +99,25 @@
     - [nat-t nat-t] : type-t
       [nat-t nat-t] : [type-t type-t]
 
+* void
+
+*** void-t
+
+    #+begin_src cicada
+    void-t : type-t
+    void-t = type
+    #+end_src
+
+* unit
+
+*** unit-t
+
+    #+begin_src cicada
+    unit-t : type-t
+    unit-t = type
+      -- -> unit-t
+    #+end_src
+
 * bool
 
 *** bool-t
@@ -160,6 +181,7 @@
     list-t : -- type-t -> type-t
     list-t = type
       @ t : type-t
+
       null-c :
         -- -> t null-t
       cons-c :
@@ -489,8 +511,7 @@
     #+begin_src cicada
     category-s : class-t
     category-s = class
-      object-t :
-        type-t
+      object-t : type-t
 
       arrow-t :
         -- object-t object-t
@@ -529,51 +550,51 @@
 
     #+begin_src cicada
     category-s.arrow-inverse-t :
-      -- a b this.arrow-t
-         b a this.arrow-t
+      -- a b arrow-t
+         b a arrow-t
       -> type-t
     category-s.arrow-inverse-t = lambda
       let cat in
       let f g in
-      f g compose a identity this.arrow-eqv-t
-      g f compose b identity this.arrow-eqv-t
+      f g compose a identity arrow-eqv-t
+      g f compose b identity arrow-eqv-t
     #+end_src
 
 *** category-s.arrow-unique-t
 
     #+begin_src cicada
     category-s.arrow-unique-t :
-      -- a b this.arrow-t
-         -- a b this.arrow-t -> type-t
+      -- a b arrow-t
+         -- a b arrow-t -> type-t
       -> type-t
     category-s.arrow-unique-t = lambda
       let f theorem in
       f theorem
-      -- a b this.arrow-t % g
+      -- a b arrow-t % g
          g theorem
-      -> f g this.arrow-eqv-t
+      -> f g arrow-eqv-t
     #+end_src
 
 *** category-s.object-product-t
 
     #+begin_src cicada
     category-s.object-product-t :
-      -- this.object-t % a
-         this.object-t % b
-         this.object-t % p
-         p a this.arrow-t % fst
-         p b this.arrow-t % snd
+      -- object-t % a
+         object-t % b
+         object-t % p
+         p a arrow-t % fst
+         p b arrow-t % snd
       -> type-t
     category-s.object-product-t = lambda
       let a b p fst snd in
-      -- this.object-t % q
-         q a this.arrow-t % fst~
-         q b this.arrow-t % snd~
-      -> q p this.arrow-t % m
+      -- object-t % q
+         q a arrow-t % fst-
+         q b arrow-t % snd-
+      -> q p arrow-t % m
          lambda let m in
-           fst~, m fst compose this.arrow-eqv-t
-           snd~, m snd compose this.arrow-eqv-t
-         m swap this.arrow-unique-t
+           fst-, m fst compose arrow-eqv-t
+           snd-, m snd compose arrow-eqv-t
+         m swap arrow-unique-t
     #+end_src
 
 *** product-closed-s
@@ -722,6 +743,169 @@
            f.2 g.2 h.2 #2.compose-associative)
     #+end_src
 
+* void-cat
+
+*** void-arrow-t
+
+    #+begin_src cicada
+    void-arrow-t : -- void-t void-t -> type-t
+    void-arrow-t = type
+      void-arrow-c :
+        -- -> a b void-arrow-t
+    #+end_src
+
+*** void-arrow-eqv-t
+
+    #+begin_src cicada
+    void-arrow-eqv-t :
+      -- a b void-arrow-t
+         a b void-arrow-t
+      -> type-t
+    void-arrow-eqv-t = type
+      void-arrow-eqv-c :
+        -- -> lhs rhs void-arrow-eqv-t
+    #+end_src
+
+*** void-cat
+
+    #+begin_src cicada
+    void-cat : category-s
+    void-cat = instance
+      object-t = lambda void-t
+      arrow-t = lambda void-arrow-t
+      arrow-eqv-t = lambda void-arrow-eqv-t
+
+      identity :
+        -- void-t % a
+        -> a a void-arrow-t
+      identity = lambda
+        drop void-arrow-c
+
+      compose = lambda
+        drop drop void-arrow-c
+
+      identity-left :
+        -- a b void-arrow-t % f
+        -> void-arrow-c f void-arrow-eqv-t
+      identity-left = lambda
+        drop void-arrow-eqv-c
+
+      identity-right :
+        -- a b void-arrow-t % f
+        -> void-arrow-c f void-arrow-eqv-t
+      identity-right = lambda
+        drop void-arrow-eqv-c
+
+      compose-associative :
+        -- a b void-arrow-t % f
+           b c void-arrow-t % g
+           c d void-arrow-t % h
+        -> void-arrow-eqv-c void-arrow-eqv-c void-arrow-eqv-t
+      compose-associative = lambda
+        drop drop drop void-arrow-eqv-c
+    #+end_src
+
+* graph-s
+
+*** graph-s
+
+    #+begin_src cicada
+    graph-s : class-t
+    graph-s = class
+      node-t : type-t
+      edge-t : -- node-t node-t -> type-t
+    #+end_src
+
+*** graph-s.path-t
+
+    #+begin_src cicada
+    graph-s.path-t :
+      -- node-t
+         node-t
+      -> type-t
+    graph-s.path-t = type
+      @ [start end] : node-t
+
+      -- node-t % node
+      -> node node node-path-t
+
+      -- a b edge-t % edge
+      -> a b edge-path-t
+
+      -- a b path-t % first
+         b c path-t % next
+      -> a c link-path-t
+    #+end_src
+
+*** >< graph-s.path-eqv-t
+
+    #+begin_src cicada
+    graph-s.path-eqv-t :
+      -- a b path-t
+         a b path-t
+      -> type-t
+    graph-s.path-eqv-t = type
+      @ [lhs rhs] : a b path-t
+
+      -- a b path-t % p
+      -> p p refl-path-eqv-t
+
+      -- a b path-t % p
+      -> a node-path-c p link-path-c
+         p node-left-path-eqv-t
+
+      -- a b path-t % p
+      -> p b node-path-c link-path-c
+         p node-rifht-path-eqv-t
+
+      ><><><
+    #+end_src
+
+* free-graph-cat-s
+
+*** >< free-graph-cat-s
+
+    #+begin_src cicada
+    free-graph-cat-s : -- graph-s -> category-s
+    free-graph-cat-s = lambda
+      let graph in instance
+      object-t = lambda graph.node-t
+      arrow-t = lambda graph.path-t
+      arrow-eqv-t = lambda graph.path-eqv-t
+
+      identity :
+        -- graph.node-t % a
+        -> a a graph.path-t
+      identity = lambda
+        let a in
+        a graph.node-path-c
+
+      compose = lambda graph.link-path-c
+
+      identity-left :
+        -- a b graph.path-t % f
+        -> a graph.node-path-c f graph.link-path-c
+           f graph.path-eqv-t
+      identity-left = lambda graph.node-left-path-eqv-c
+
+      identity-right :
+        -- a b graph.path-t % f
+        -> f b graph.node-path-c graph.link-path-c
+           f graph.path-eqv-t
+      identity-right = lambda graph.node-rifht-path-eqv-c
+
+      compose-associative :
+        -- a b graph.path-t % f
+           b c graph.path-t % g
+           c d graph.path-t % h
+        -> f g h graph.link-path-c graph.link-path-c
+           f g graph.link-path-c h graph.link-path-c
+           graph.path-eqv-t
+      compose-associative = lambda
+        let f g h in
+        ><><><
+    #+end_src
+
 * nat-order-cat
 
 *** nat-lteq-t
@@ -820,8 +1004,6 @@
             f.prev g.prev h.prev recur {succ-lteq-c} eqv-apply
     #+end_src
 
-* >< limit
-
 * groupoid
 
 *** groupoid-s
@@ -835,11 +1017,17 @@
            f g arrow-inverse-t
     #+end_src
 
+* >< monoid
+
+*** >< monoid-s
+
+    #+begin_src cicada
+
+    #+end_src
+
 * >< group
 
 * >< abelian-group
-
-* >< monoid
 
 * >< ring
 
@@ -915,6 +1103,8 @@
         {drop eqv-c} fun-eqv-c
     #+end_src
 
+* >< limit
+
 * functor
 
 *** functor-s
@@ -959,21 +1149,21 @@
 
     #+begin_src cicada
     monad-s.compose :
-      -- (-- a -> b this.fun-t)
-         (-- b -> c this.fun-t)
-      -> (-- a -> c this.fun-t)
+      -- (-- a -> b fun-t)
+         (-- b -> c fun-t)
+      -> (-- a -> c fun-t)
     monad-s.compose = lambda
       let f g in
-      {f {g} this.bind}
+      {f {g} bind}
     #+end_src
 
 *** monad-s.flatten
 
     #+begin_src cicada
     monad-s.flatten :
-      -- a this.fun-t this.fun-t
-      -> a this.fun-t
-    monad-s.flatten = lambda {} this.bind
+      -- a fun-t fun-t
+      -> a fun-t
+    monad-s.flatten = lambda {} bind
     #+end_src
 
 *** list-monad
