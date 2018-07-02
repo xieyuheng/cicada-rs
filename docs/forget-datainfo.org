@@ -1,0 +1,37 @@
+* vector vs list
+
+  - vector and list have the same data-constructor shape
+
+  - it is *not* true that
+    every function can be defined for vector
+    can also be defined for list
+
+    - for example zip can be defined for vector of same length
+
+    - when defining zip for vector
+      more informations in type
+      can help to rule out some not meaningful cases
+
+    list -> list
+    vector -> vector
+    can *not* be composed to
+    list -> vector
+
+  - it is true that
+    every function can be defined for list
+    can also be defined for vector
+
+    - by dropping the length information
+
+    vector -> vector
+    list -> list
+    can be composed
+    vector -> list
+
+  - vector can be viewed as subtype of list
+    we can assert so
+    and use this subtype relation to reuse functions
+
+    - in some case [when namings are so different]
+      we also need to assert relation between
+      fields of type and data-constructors

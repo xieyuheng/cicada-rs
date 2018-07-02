@@ -2,34 +2,31 @@
 
 * [todo-stack]
 
-*** formalize mathematical structures
+*** category-theory
 
-***** category-theory
+*** natural-transformation
 
-      - x -
-        at least in cicada
-        we can formalize category-theory now !
+    - natural-transformation is a level up map.
 
-      - k -
-        we'd better view this as a programming task !
+      the definition of natural-transformation
+      maps object to arrow,
+      and arrow to square.
 
-***** other important mathematical structures
+*** dependent-category-theory
 
-***** dependent-category-theory
+    - use pullback and pushout
 
-      - use pullback and pushout
+*** topos-theory
 
-***** topos-theory
+*** logic programming
 
-*** syntax
+    - what is the logic programming interface of the type system ?
 
-***** what is the logic programming interface of the type system ?
+*** re-gain generic-ness of type-class
 
-***** re-gain generic-ness of type-class
+    - by maintain a map from type constructor to class
 
-      - by maintain a map from type constructor to class
-
-***** new (do) notation
+*** new (do) notation
 
 *** naming convention about function arguments
 
@@ -37,40 +34,17 @@
       which argument to (case) ?
       take `nat-add` as a example
 
-*** type-t as a category-s and dependent-category-s
+*** use number theory -- to test type-checker as prover
 
-***** universe
+*** subtype relation in type-t
 
-      - type-t = type-t
-        type-t : type-t2
+    - subtype relation as order relation for algebraic data type
 
-      - nat-t : 1 universe
-        (* nat-t nat-t) : type-t
-        (+ nat-t | nat-t) : type-t
-        (-- nat-t -> nat-t) : type-t
-
-      - [nat-t nat-t] : type-t
-        [nat-t nat-t] : [type-t type-t]
-
-*** test
-
-***** use number theory -- to test type-checker as prover
-
-*** algebraic-data-type
-
-***** subtype relation as order relation for algebraic data type
-
-      - for example :
-        a < a + b
-        a < a * 2
+    - for example :
+      a < a + b
+      a < a * 2
 
 * [note]
-
-*** (*)
-
-    - `ante` and `succ` in (-- ante -> succ) are all implicit tuples
-
-    - (*) explicit nested tuple
 
 *** (:) (%)
 
@@ -83,126 +57,45 @@
     - type of data in data-field must be of type type-t
       thus, function can not be stored in data-field
 
-*** (@) -- syntax for unnamed record type
+*** (@)
+
+    - syntax for unnamed record type
 
     - while in (type)
       we define named record type
 
-*** level of types
+*** (*)
 
-    | 0 | object                          |
-    | 1 | type, union-type, quotient-type |
-    | 2 | class-t, type-t                 |
+    - `ante` and `succ` in (-- ante -> succ) are all implicit tuples
 
-*** object as type
+    - (*) explicit nested tuple
 
-    - object are just like type
-      just without sumtype
-      only product type
+*** (<:)
 
-*** subtype relation between classes
+    - subtype relation between classes
 
-    - c1 < c2
+    - c1 <: c2
       if c1 is more special then c2
       if c1 has more interface functions than c2
 
-*** functor
+*** level of types
 
-***** functor type-class in haskell
+    | 0 | object              |
+    | 1 | type, quotient-type |
+    | 2 | class-t, type-t     |
 
-      - the functor type-class in haskell
-        is a endo-functor from this category to itself
+    - object are just like type.
+      just without sumtype, only product type.
 
-        thus a functor instance in haskell
-        is a type constructor of type (-- type -> type)
+    - type-t : type-t2
 
-        thus the functor type-class in haskell
-        is limited in the sense of functor
-        because type constructor in haskell
-        is limited in the sense of function of type (-- type -> type)
+    - nat-t : type-t
+      (* nat-t nat-t) : type-t
+      (+ nat-t | nat-t) : type-t
+      (-- nat-t -> nat-t) : type-t
 
-      - endo-functors are containers
-
-***** a functor might as well be called a natural-construction
-
-      - thus the name of natural-transformation make sense
-
-*** natural-transformation
-
-***** natural-transformation is a level up map
-
-      - the definition of natural-transformation
-        maps object to arrow
-        and arrow to square
-
-*** unification
-
-***** what to unify ?
-
-      - in cicada
-        <term> := <type-term>, <union-term>, <data-term>
-        --- (data <hypo>), (type <hypo>)
-        --- <trunk>
-        <type-term>  := (<type-constructor> <term> ...)
-        <union-term> := (<union-constructor> <term> ...)
-        <data-term>  := (<data-constructor> <term> ...)
-        <trunk> := function application to be reduced
-
-        data-bind-dict -- <hypo> to data <term>
-        type-bind-dict -- <hypo> to type <term>
-
-        <trunk> will be formed,
-        when among arguments of a function application
-        there is a <hypo> that is not bound to data
-        or there is a non-reduce-able <trunk>
-
-      - in logic
-        <term> := <predicate-term>, <var>, <constant>
-        <predicate-term> := (<predicate-symbol> <term> ...)
-
-***** feature structures
-
-      - <var> with two fields type and data,
-        can be viewed as feature structures
-        in unification theory
-
-*** vector vs list
-
-    - vector and list have the same data-constructor shape
-
-    - it is *not* true that
-      every function can be defined for vector
-      can also be defined for list
-
-      - for example zip can be defined for vector of same length
-
-      - when defining zip for vector
-        more informations in type
-        can help to rule out some not meaningful cases
-
-      list -> list
-      vector -> vector
-      can *not* be composed to
-      list -> vector
-
-    - it is true that
-      every function can be defined for list
-      can also be defined for vector
-
-      - by dropping the length information
-
-      vector -> vector
-      list -> list
-      can be composed
-      vector -> list
-
-    - vector can be viewed as subtype of list
-      we can assert so
-      and use this subtype relation to reuse functions
-
-      - in some case [when namings are so different]
-        we also need to assert relation between
-        fields of type and data-constructors
+    - [nat-t nat-t] : type-t
+      [nat-t nat-t] : [type-t type-t]
 
 * bool
 
@@ -381,9 +274,20 @@
 
 * nat
 
-*** >< nat-even-p
+*** nat-even-p
 
-*** nat-even-t -- re-imp predicate as judgment
+    #+begin_src cicada
+    nat-even-p : -- nat-t -> bool-t
+    nat-even-p = lambda
+      let x in
+      case x
+        zero-t true-c
+        succ-t case x.prev
+          zero-t false-c
+          succ-t x.prev.prev recur
+    #+end_src
+
+*** nat-even-t
 
     #+begin_src cicada
     nat-even-t : -- nat-t -> type-t
@@ -1016,6 +920,8 @@
 *** functor-s
 
     #+begin_src cicada
+    note
+      endo-functor of type-cat
     functor-s : class-t
     functor-s = class
       fun-t : -- type-t -> type-t
