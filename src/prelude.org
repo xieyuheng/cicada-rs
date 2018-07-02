@@ -49,6 +49,9 @@
         (+ nat-t | nat-t) : type-t
         (-- nat-t -> nat-t) : type-t
 
+      - [nat-t nat-t] : type-t
+        [nat-t nat-t] : [type-t type-t]
+
 *** test
 
 ***** use number theory -- to test type-checker as prover
@@ -582,22 +585,34 @@
     #+begin_src cicada
     category-s : class-t
     category-s = class
-      object-t : type-t
-      arrow-t : -- object-t object-t -> type-t
-      arrow-eqv-t : -- a b arrow-t a b arrow-t -> type-t
+      object-t :
+        type-t
+
+      arrow-t :
+        -- object-t object-t
+        -> type-t
+
+      arrow-eqv-t :
+        -- a b arrow-t a b arrow-t
+        -> type-t
+
       identity :
         -- object-t % a
         -> a a arrow-t
+
       compose :
         -- a b arrow-t
            b c arrow-t
         -> a c arrow-t
+
       identity-left :
         -- a b arrow-t % f
         -> a identity f compose, f arrow-eqv-t
+
       identity-right :
         -- a b arrow-t % f
         -> f b identity compose, f arrow-eqv-t
+
       compose-associative :
         -- a b arrow-t % f
            b c arrow-t % g
@@ -671,20 +686,136 @@
            a b p fst snd object-product-t
     #+end_src
 
-*** >< category-product-s -- first class class
+*** category-product-s
 
     #+begin_src cicada
     category-product-s : -- category-s category-s -> category-s
     category-product-s = lambda
-      let c d in instance
-      object-t = lambda (* c.object-t d.object-t)
+      let #1 #2 in instance
+
+      object-t = lambda (* #1.object-t #2.object-t)
+
+      arrow-t :
+        -- (* #1.object-t #2.object-t)
+           (* #1.object-t #2.object-t)
+        -> type-t
       arrow-t = lambda
+        let succ ante in
+        (* succ.1 ante.1 #1.arrow-t
+           succ.2 ante.2 #2.arrow-t)
+
+      arrow-eqv-t :
+        -- (* a.1 b.1 #1.arrow-t
+              a.2 b.2 #2.arrow-t)
+           (* a.1 b.1 #1.arrow-t
+              a.2 b.2 #2.arrow-t)
+        -> type-t
       arrow-eqv-t = lambda
+        let lhs rhs in
+        (* lhs.1 rhs.1 #1.arrow-eqv-t
+           lhs.2 rhs.2 #2.arrow-eqv-t)
+
+      identity :
+        -- (* #1.object-t #2.object-t) % a
+        -> (* a.1 a.1 #1.arrow-t
+              a.2 a.2 #2.arrow-t)
       identity = lambda
+        let a in
+        (* a.1 #1.identity
+           a.2 #2.identity)
+
+      compose :
+        -- (* a.1 b.1 #1.arrow-t
+              a.2 b.2 #2.arrow-t)
+           (* b.1 c.1 #1.arrow-t
+              b.2 c.2 #2.arrow-t)
+        -> (* a.1 c.1 #1.arrow-t
+              a.2 c.2 #2.arrow-t)
       compose = lambda
+        let f g in
+        (* f.1 g.1 #1.compose
+           f.2 g.2 #2.compose)
+
+      identity-left :
+        -- (* a.1 b.1 #1.arrow-t
+              a.2 b.2 #2.arrow-t) % f
+        -> (* a.1 #1.identity f.1 #1.compose f.1 #1.arrow-eqv-t
+              a.2 #2.identity f.2 #2.compose f.2 #2.arrow-eqv-t)
       identity-left = lambda
+        let f in
+        (* f.1 #1.identity-left
+           f.2 #2.identity-left)
+
+      identity-right :
+        -- (* a.1 b.1 #1.arrow-t
+              a.2 b.2 #2.arrow-t) % f
+        -> (* f.1 b.1 #1.identity #1.compose f.1 #1.arrow-eqv-t
+              f.2 b.2 #2.identity #2.compose f.2 #2.arrow-eqv-t)
       identity-right = lambda
+        let f in
+        (* f.1 #1.identity-right
+           f.2 #2.identity-right)
+
+      compose-associative :
+        -- (* a.1 b.1 #1.arrow-t
+              a.2 b.2 #2.arrow-t) % f
+           (* b.1 c.1 #1.arrow-t
+              b.2 c.2 #2.arrow-t) % g
+           (* c.1 d.1 #1.arrow-t
+              c.2 d.2 #2.arrow-t) % h
+        -> (* f.1 g.1 h.1 #1.compose #1.compose
+              f.1 g.1 h.1 #1.compose #1.compose #1.arrow-eqv-t
+              f.2 g.2 #2.compose h.2 #2.compose
+              f.2 g.2 #2.compose h.2 #2.compose #2.arrow-eqv-t)
       compose-associative = lambda
+        let f g h in
+        (* f.1 g.1 h.1 #1.compose-associative
+           f.2 g.2 h.2 #2.compose-associative)
+    #+end_src
+
+*** category-product-s -- without type
+
+    #+begin_src cicada
+    category-product-s : -- category-s category-s -> category-s
+    category-product-s = lambda
+      let #1 #2 in instance
+
+      object-t = lambda (* #1.object-t #2.object-t)
+
+      arrow-t = lambda
+        let succ ante in
+        (* succ.1 ante.1 #1.arrow-t
+           succ.2 ante.2 #2.arrow-t)
+
+      arrow-eqv-t = lambda
+        let lhs rhs in
+        (* lhs.1 rhs.1 #1.arrow-eqv-t
+           lhs.2 rhs.2 #2.arrow-eqv-t)
+
+      identity = lambda
+        let a in
+        (* a.1 #1.identity
+           a.2 #2.identity)
+
+      compose = lambda
+        let f g in
+        (* f.1 g.1 #1.compose
+           f.2 g.2 #2.compose)
+
+      identity-left = lambda
+        let f in
+        (* f.1 #1.identity-left
+           f.2 #2.identity-left)
+
+      identity-right = lambda
+        let f in
+        (* f.1 #1.identity-right
+           f.2 #2.identity-right)
+
+      compose-associative = lambda
+        let f g h in
+        (* f.1 g.1 h.1 #1.compose-associative
+           f.2 g.2 h.2 #2.compose-associative)
     #+end_src
 
 * nat-order-cat
@@ -760,18 +891,23 @@
       object-t = lambda nat-t
       arrow-t = lambda nat-lteq-t
       arrow-eqv-t = lambda eqv-t
+
       identity = lambda nat-lteq-reflexive
+
       compose  = lambda nat-lteq-transitive
+
       identity-left = lambda
         let x in
         case x
           zero-lteq-t eqv-c
           succ-lteq-t x.prev recur {succ-lteq-c} eqv-apply
+
       identity-righ = lambda
         let x in
         case x
           zero-lteq-t eqv-c
           succ-lteq-t x.prev recur {succ-lteq-c} eqv-apply
+
       compose-associative = lambda
         let f g h in
         case [f g h]
@@ -836,7 +972,7 @@
     #+begin_src cicada
     type-cat : category-s
     type-cat = instance
-      object-t = lambda type-t
+      object-t = lambda type-t ;; but type-t is not of type type-t
       arrow-t = lambda type-arrow-t
       arrow-eqv-t = lambda fun-eqv-t
 
