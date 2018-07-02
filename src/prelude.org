@@ -2,6 +2,8 @@
 
 * [todo-stack]
 
+*** swap `--` and `->`
+
 *** formalize mathematical structures
 
 ***** category-theory
@@ -815,18 +817,18 @@
     type-arrow-t : -> type-t type-t -- type-t
     type-arrow-t = lambda
       let succ ante in
-      ~> succ -- ante
+      lazy -> succ -- ante
     #+end_src
 
 *** fun-eqv-t
 
     #+begin_src cicada
     fun-eqv-t :
-      -> ~> a -- b
-         ~> a -- b
+      -> (lazy -> a -- b)
+         (lazy -> a -- b)
       -- type-t
     fun-eqv-t = type
-      @ [lhs rhs] : ~> a -- b
+      @ [lhs rhs] : a b (lazy -> a -- b)
       -> theorem : (-> x : a -- x lhs apply x rhs apply eqv-t)
       -- lhs rhs fun-eqv-t
     #+end_src
@@ -836,36 +838,43 @@
     #+begin_src cicada
     type-cat : category-s
     type-cat = instance
-      object-t = type-t
-      arrow-t = type-arrow-t
-      arrow-eqv-t = fun-eqv-t
-      identity : -> type-t % a -- (~> a -- a)
+      object-t = lambda type-t
+      arrow-t = lambda type-arrow-t
+      arrow-eqv-t = lambda fun-eqv-t
+
+      identity :
+        -> type-t % a
+        -- (lazy -> a -- a)
       identity = lambda
-        let x in nop
+        let x in {}
+
       compose :
-        -> (~> a -- b)
-           (~> b -- c)
-        -- (~> a -- c)
+        -> (lazy -> a -- b)
+           (lazy -> b -- c)
+        -- (lazy -> a -- c)
       compose = lambda
         let f g in {f apply g apply}
+
       identity-left :
-        -> (~> a -- b) % f
-        -- {nop apply f apply} {f apply} fun-eqv-t
+        -> (lazy -> a -- b) % f
+        -- {{} apply f apply}, f fun-eqv-t
       identity-left = lambda
-        eqv-c fun-eqv-c
+        {drop eqv-c} fun-eqv-c
+
       identity-right :
-        -> (~> a -- b) % f
-        -- {f apply nop apply} {f apply} fun-eqv-t
+        -> (lazy -> a -- b) % f
+        -- {f apply {} apply}, f fun-eqv-t
       identity-right = lambda
-        eqv-c fun-eqv-c
+        {drop eqv-c} fun-eqv-c
+
       compose-associative :
-        -> (~> a -- b) % f
-           (~> b -- c) % g
-           (~> c -- d) % h
+        -> (lazy -> a -- b) % f
+           (lazy -> b -- c) % g
+           (lazy -> c -- d) % h
         -- {f apply {g apply h apply} apply}
            {{f apply g apply} apply h apply} fun-eqv-t
       compose-associative = lambda
-        eqv-c fun-eqv-c
+        {drop eqv-c} fun-eqv-c
     #+end_src
 
 * functor
