@@ -423,10 +423,10 @@
 *** list-append-t
 
     #+begin_src cicada
-    ;; in prolog :
-    ;;   append([], Succ, Succ).
-    ;;   append([Car | Cdr], Succ, [Car | ResultCdr]):-
-    ;;     append(Cdr, Succ, ResultCdr).
+    note in prolog, we will have :
+      append([], Succ, Succ).
+      append([Car | Cdr], Succ, [Car | ResultCdr]):-
+        append(Cdr, Succ, ResultCdr).
 
     list-append-t : -- t list-t t list-t t list-t -> type-t
     list-append-t = type
@@ -437,29 +437,6 @@
          result-cdr :: t list-t
          prev : cdr succ result-cdr list-append-t
       -> car cdr cons-c, succ, car result-cdr cons-c succ-append-t
-    #+end_src
-
-*** [semantic] succ-append-t
-
-    #+begin_src cicada
-    note for [ante succ result succ-append-c]
-      0 hypo-id-c data-hypo-c (quote type) local-let
-      (quote type) local-get to-type
-      type-t
-      unify
-      ><><><
-      (@data-type-t
-        (name "succ-append-t")
-        (field-obj-dict
-         (@ (type (quote type) local-get)
-            (ante (quote ante) local-get)
-            (succ (quote succ) local-get)
-            (result (quote result) local-get))))
-      (let data-type)
-      (@data-obj-t
-        (data-type data-type)
-        (field-obj-dict
-         (@ (prev (quote prev) local-get))))
     #+end_src
 
 * vect
@@ -509,15 +486,15 @@
     #+begin_src cicada
     category-s : class-t
     category-s = class
-      object-t : type-t
+      object-t : type-t*
 
       arrow-t :
         -- object-t object-t
-        -> type-t
+        -> type-t*
 
       arrow-eqv-t :
         -- a b arrow-t a b arrow-t
-        -> type-t
+        -> type-t*
 
       identity :
         -- object-t % a
@@ -1337,13 +1314,9 @@
              left right branch-c
     #+end_src
 
-* >< int
+* int
 
-*** int-t
-
-    #+begin_src cicada
-
-    #+end_src
+*** >< int-t
 
 *** >< mod-t
 
@@ -1359,7 +1332,7 @@
       -> y z d mod-gcd-t
     #+end_src
 
-* >< dependent-category
+* ><>< dependent-category
 
 *** dependent-category-s
 
