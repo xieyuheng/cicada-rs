@@ -2,8 +2,6 @@
 
 * [todo-stack]
 
-*** graph-s vs category-s
-
 *** category-theory
 
 *** natural-transformation
@@ -810,6 +808,10 @@
 *** graph-s
 
     #+begin_src cicada
+    note
+      different between graph and category is that,
+      composing [linking] two edges does not give you edge but path.
+
     graph-s : class-t
     graph-s = class
       node-t : type-t
@@ -837,7 +839,7 @@
       -> a c link-path-t
     #+end_src
 
-*** >< graph-s.path-eqv-t
+*** graph-s.path-eqv-t
 
     #+begin_src cicada
     graph-s.path-eqv-t :
@@ -856,54 +858,57 @@
 
       -- a b path-t % p
       -> p b node-path-c link-path-c
-         p node-rifht-path-eqv-t
+         p node-right-path-eqv-t
 
-      ><><><
+      -- a b path-t % p
+         b c path-t % q
+         c d path-t % r
+      -> p q r link-path-c link-path-c
+         p q link-path-c r link-path-c associative-path-eqv-t
     #+end_src
 
 * free-graph-cat-s
 
-*** >< free-graph-cat-s
+*** free-graph-cat-s
 
     #+begin_src cicada
     free-graph-cat-s : -- graph-s -> category-s
     free-graph-cat-s = lambda
       let graph in instance
-      object-t = lambda graph.node-t
-      arrow-t = lambda graph.path-t
-      arrow-eqv-t = lambda graph.path-eqv-t
+      open-up graph
+
+      object-t = lambda node-t
+      arrow-t = lambda path-t
+      arrow-eqv-t = lambda path-eqv-t
 
       identity :
-        -- graph.node-t % a
-        -> a a graph.path-t
+        -- node-t % a
+        -> a a path-t
       identity = lambda
         let a in
-        a graph.node-path-c
+        a node-path-c
 
-      compose = lambda graph.link-path-c
+      compose = lambda link-path-c
 
       identity-left :
-        -- a b graph.path-t % f
-        -> a graph.node-path-c f graph.link-path-c
-           f graph.path-eqv-t
-      identity-left = lambda graph.node-left-path-eqv-c
+        -- a b path-t % f
+        -> a node-path-c f link-path-c
+           f path-eqv-t
+      identity-left = lambda node-left-path-eqv-c
 
       identity-right :
-        -- a b graph.path-t % f
-        -> f b graph.node-path-c graph.link-path-c
-           f graph.path-eqv-t
-      identity-right = lambda graph.node-rifht-path-eqv-c
+        -- a b path-t % f
+        -> f b node-path-c link-path-c
+           f path-eqv-t
+      identity-right = lambda node-right-path-eqv-c
 
       compose-associative :
-        -- a b graph.path-t % f
-           b c graph.path-t % g
-           c d graph.path-t % h
-        -> f g h graph.link-path-c graph.link-path-c
-           f g graph.link-path-c h graph.link-path-c
-           graph.path-eqv-t
-      compose-associative = lambda
-        let f g h in
-        ><><><
+        -- a b path-t % f
+           b c path-t % g
+           c d path-t % h
+        -> f g h link-path-c link-path-c
+           f g link-path-c h link-path-c path-eqv-t
+      compose-associative = lambda associative-path-eqv-c
     #+end_src
 
 * nat-order-cat
