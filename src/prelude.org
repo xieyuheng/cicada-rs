@@ -529,7 +529,6 @@
          b a arrow-t
       -> type-t
     category-s.arrow-inverse-t = lambda
-      let cat in
       let f g in
       f g compose a identity arrow-eqv-t
       g f compose b identity arrow-eqv-t
@@ -586,11 +585,11 @@
            a b p fst snd object-product-t
     #+end_src
 
-*** category-product-s
+*** category-product
 
     #+begin_src cicada
-    category-product-s : -- category-s category-s -> category-s
-    category-product-s = lambda
+    category-product : -- category-s category-s -> category-s
+    category-product = lambda
       let #1 #2 in instance
 
       object-t = lambda (* #1.object-t #2.object-t)
@@ -673,11 +672,11 @@
            f.2 g.2 h.2 #2.compose-associative)
     #+end_src
 
-*** category-product-s -- without type
+*** category-product -- without type
 
     #+begin_src cicada
-    category-product-s : -- category-s category-s -> category-s
-    category-product-s = lambda
+    category-product : -- category-s category-s -> category-s
+    category-product = lambda
       let #1 #2 in instance
 
       object-t = lambda (* #1.object-t #2.object-t)
@@ -844,16 +843,13 @@
          p q link-path-c r link-path-c associative-path-eqv-t
     #+end_src
 
-* free-graph-cat-s
+* graph-s.as-free-cat
 
-*** free-graph-cat-s
+*** graph-s.as-free-cat
 
     #+begin_src cicada
-    free-graph-cat-s : -- graph-s -> category-s
-    free-graph-cat-s = lambda
-      let graph in instance
-      open-up graph
-
+    graph-s.as-free-cat : category-s
+    graph-s.as-free-cat = instance
       object-t = lambda node-t
       arrow-t = lambda path-t
       arrow-eqv-t = lambda path-eqv-t
@@ -999,13 +995,107 @@
            f g arrow-inverse-t
     #+end_src
 
-* >< monoid
+* order
 
-*** >< monoid-s
+*** preorder
+
+***** preorder-s
+
+      #+begin_src cicada
+      note
+        preorder is a thin category
+        with at most one morphism from an object to another.
+
+      preorder-s : class-t
+      preorder-s = class
+        element-t : type-t
+
+        pre-t :
+          -- element-t element-t
+          -> type-t
+
+        pre-reflexive :
+          -- element-t % a
+          -> a a pre-t
+
+        pre-transitive :
+          -- a b pre-t
+             b c pre-t
+          -> a c pre-t
+      #+end_src
+
+***** preorder-s.as-cat
+
+      #+begin_src cicada
+      note
+        to view a preorder as a category
+        we simple view all arrow of the same type as eqv
+
+      preorder-s.as-cat : category-s
+      preorder-s.as-cat = instance
+        object-t = element-t
+
+        arrow-t = lambda pre-t
+
+        arrow-eqv-t = lambda
+          drop drop unit-t
+
+        identity = lambda pre-reflexive
+
+        compose = lambda pre-transitive
+
+        identity-left = lambda
+          drop unit-c
+
+        identity-right = lambda
+          drop unit-c
+
+        compose-associative = lambda
+          drop drop drop unit-c
+      #+end_src
+
+*** partial-order
+
+***** partial-order-s
+
+      #+begin_src cicada
+      partial-order-s <: preorder-s
+      partial-order-s = class
+        element-eqv-t :
+          -- element-t
+             element-t
+          -> type-t
+        pre-anti-symmetric :
+          -- a b pre-t
+             b a pre-t
+          -> a b eqv-t
+      #+end_src
+
+*** eqv-relation
+
+***** eqv-relation-s
+
+      #+begin_src cicada
+      eqv-relation-s <: preorder-s
+      eqv-relation-s = class
+        pre-symmetric :
+          -- a b pre-t
+          -> b a pre-t
+      #+end_src
+
+* total-order
+
+*** total-order-s
 
     #+begin_src cicada
-
+    total-order-s <: partial-order-s
+    total-order-s = class
+      pre-connex :
+        -- [a b] : element-t
+        -> (+ a b pre-t | b a pre-t)
     #+end_src
+
+* >< monoid
 
 * >< group
 
@@ -1016,6 +1106,8 @@
 * >< field
 
 * >< vector-space
+
+* >< limit
 
 * type-cat
 
@@ -1084,8 +1176,6 @@
       compose-associative = lambda
         {drop eqv-c} fun-eqv-c
     #+end_src
-
-* >< limit
 
 * functor
 
