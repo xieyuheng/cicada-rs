@@ -2,6 +2,9 @@
 
 * [todo-stack]
 
+*** nat-total-order
+
+
 *** category-theory
 
 *** natural-transformation
@@ -505,11 +508,11 @@
            b c arrow-t
         -> a c arrow-t
 
-      identity-left :
+      identity-neutral-left :
         -- a b arrow-t % f
         -> a identity f compose, f arrow-eqv-t
 
-      identity-right :
+      identity-neutral-right :
         -- a b arrow-t % f
         -> f b identity compose, f arrow-eqv-t
 
@@ -635,25 +638,25 @@
         (* f.1 g.1 #1.compose
            f.2 g.2 #2.compose)
 
-      identity-left :
+      identity-neutral-left :
         -- (* a.1 b.1 #1.arrow-t
               a.2 b.2 #2.arrow-t) % f
         -> (* a.1 #1.identity f.1 #1.compose f.1 #1.arrow-eqv-t
               a.2 #2.identity f.2 #2.compose f.2 #2.arrow-eqv-t)
-      identity-left = lambda
+      identity-neutral-left = lambda
         let f in
-        (* f.1 #1.identity-left
-           f.2 #2.identity-left)
+        (* f.1 #1.identity-neutral-left
+           f.2 #2.identity-neutral-left)
 
-      identity-right :
+      identity-neutral-right :
         -- (* a.1 b.1 #1.arrow-t
               a.2 b.2 #2.arrow-t) % f
         -> (* f.1 b.1 #1.identity #1.compose f.1 #1.arrow-eqv-t
               f.2 b.2 #2.identity #2.compose f.2 #2.arrow-eqv-t)
-      identity-right = lambda
+      identity-neutral-right = lambda
         let f in
-        (* f.1 #1.identity-right
-           f.2 #2.identity-right)
+        (* f.1 #1.identity-neutral-right
+           f.2 #2.identity-neutral-right)
 
       compose-associative :
         -- (* a.1 b.1 #1.arrow-t
@@ -701,15 +704,15 @@
         (* f.1 g.1 #1.compose
            f.2 g.2 #2.compose)
 
-      identity-left = lambda
+      identity-neutral-left = lambda
         let f in
-        (* f.1 #1.identity-left
-           f.2 #2.identity-left)
+        (* f.1 #1.identity-neutral-left
+           f.2 #2.identity-neutral-left)
 
-      identity-right = lambda
+      identity-neutral-right = lambda
         let f in
-        (* f.1 #1.identity-right
-           f.2 #2.identity-right)
+        (* f.1 #1.identity-neutral-right
+           f.2 #2.identity-neutral-right)
 
       compose-associative = lambda
         let f g h in
@@ -758,16 +761,16 @@
       compose = lambda
         drop drop void-arrow-c
 
-      identity-left :
+      identity-neutral-left :
         -- a b void-arrow-t % f
         -> void-arrow-c f void-arrow-eqv-t
-      identity-left = lambda
+      identity-neutral-left = lambda
         drop void-arrow-eqv-c
 
-      identity-right :
+      identity-neutral-right :
         -- a b void-arrow-t % f
         -> void-arrow-c f void-arrow-eqv-t
-      identity-right = lambda
+      identity-neutral-right = lambda
         drop void-arrow-eqv-c
 
       compose-associative :
@@ -843,8 +846,6 @@
          p q link-path-c r link-path-c associative-path-eqv-t
     #+end_src
 
-* graph-s.as-free-cat
-
 *** graph-s.as-free-cat
 
     #+begin_src cicada
@@ -863,17 +864,17 @@
 
       compose = lambda link-path-c
 
-      identity-left :
+      identity-neutral-left :
         -- a b path-t % f
         -> a node-path-c f link-path-c
            f path-eqv-t
-      identity-left = lambda node-left-path-eqv-c
+      identity-neutral-left = lambda node-left-path-eqv-c
 
-      identity-right :
+      identity-neutral-right :
         -- a b path-t % f
         -> f b node-path-c link-path-c
            f path-eqv-t
-      identity-right = lambda node-right-path-eqv-c
+      identity-neutral-right = lambda node-right-path-eqv-c
 
       compose-associative :
         -- a b path-t % f
@@ -962,7 +963,7 @@
 
       compose  = lambda nat-lteq-transitive
 
-      identity-left = lambda
+      identity-neutral-left = lambda
         let x in
         case x
           zero-lteq-t eqv-c
@@ -1044,10 +1045,10 @@
 
         compose = lambda pre-transitive
 
-        identity-left = lambda
+        identity-neutral-left = lambda
           drop unit-c
 
-        identity-right = lambda
+        identity-neutral-right = lambda
           drop unit-c
 
         compose-associative = lambda
@@ -1068,7 +1069,7 @@
         pre-anti-symmetric :
           -- a b pre-t
              b a pre-t
-          -> a b eqv-t
+          -> a b element-eqv-t
       #+end_src
 
 *** eqv-relation
@@ -1083,19 +1084,69 @@
           -> b a pre-t
       #+end_src
 
-* total-order
+*** total-order
 
-*** total-order-s
+***** total-order-s
+
+      #+begin_src cicada
+      total-order-s <: partial-order-s
+      total-order-s = class
+        pre-connex :
+          -- [a b] : element-t
+          -> (+ a b pre-t | b a pre-t)
+      #+end_src
+
+* >< nat-total-order
+
+* monoid
+
+*** monoid-s
 
     #+begin_src cicada
-    total-order-s <: partial-order-s
-    total-order-s = class
-      pre-connex :
-        -- [a b] : element-t
-        -> (+ a b pre-t | b a pre-t)
+    monoid-s : class-t
+    monoid-s = class
+      element-t : type-t
+
+      element-eqv-t :
+        -- element-t element-t
+        -> type-t
+
+      unit : element-t
+
+      product :
+        -- element-t element-t
+        -> element-t
+
+      unit-neutral-left :
+        -- a : element-t
+        -> a unit product, a element-eqv-t
+
+      unit-neutral-right :
+        -- a : element-t
+        -> unit a product, a element-eqv-t
+
+      product-associative :
+        -- a : element-t
+           b : element-t
+           c : element-t
+        -> a b c product product
+           a b product c product element-eqv-t
     #+end_src
 
-* >< monoid
+*** monoid-s.as-cat
+
+    #+begin_src cicada
+    monoid-s.as-cat : category-s
+    monoid-s.as-cat = instance
+      object-t = lambda unit-t
+      arrow-t = lambda drop drop element-t
+      arrow-eqv-t = lambda element-eqv-t
+      identity = lambda drop unit
+      compose = lambda product
+      identity-neutral-left = lambda unit-neutral-left
+      identity-neutral-right = lambda unit-neutral-right
+      compose-associative = lambda product-associative
+    #+end_src
 
 * >< group
 
@@ -1155,16 +1206,16 @@
       compose = lambda
         let f g in {f apply g apply}
 
-      identity-left :
+      identity-neutral-left :
         -- (lazy -- a -> b) % f
         -> {{} apply f apply}, f fun-eqv-t
-      identity-left = lambda
+      identity-neutral-left = lambda
         {drop eqv-c} fun-eqv-c
 
-      identity-right :
+      identity-neutral-right :
         -- (lazy -- a -> b) % f
         -> {f apply {} apply}, f fun-eqv-t
-      identity-right = lambda
+      identity-neutral-right = lambda
         {drop eqv-c} fun-eqv-c
 
       compose-associative :
@@ -1451,10 +1502,10 @@
         -> a b c unifier substitute
            d b c unifier substitute
            arrow-t
-      identity-left :
+      identity-neutral-left :
         --
         ->
-      identity-right :
+      identity-neutral-right :
         --
         ->
       cut-associative :
