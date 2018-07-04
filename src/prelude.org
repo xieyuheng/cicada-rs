@@ -525,27 +525,27 @@
            f g compose h compose arrow-eqv-t
     #+end_src
 
-*** category-s.arrow-inverse-t
+*** category.arrow-inverse-t
 
     #+begin_src cicada
-    category-s.arrow-inverse-t :
+    category.arrow-inverse-t :
       -- a b arrow-t
          b a arrow-t
       -> type-t
-    category-s.arrow-inverse-t = lambda
+    category.arrow-inverse-t = lambda
       let f g in
       f g compose a identity arrow-eqv-t
       g f compose b identity arrow-eqv-t
     #+end_src
 
-*** category-s.arrow-unique-t
+*** category.arrow-unique-t
 
     #+begin_src cicada
-    category-s.arrow-unique-t :
+    category.arrow-unique-t :
       -- a b arrow-t
          -- a b arrow-t -> type-t
       -> type-t
-    category-s.arrow-unique-t = lambda
+    category.arrow-unique-t = lambda
       let f theorem in
       f theorem
       -- a b arrow-t % g
@@ -553,17 +553,17 @@
       -> f g arrow-eqv-t
     #+end_src
 
-*** category-s.object-product-t
+*** category.object-product-t
 
     #+begin_src cicada
-    category-s.object-product-t :
+    category.object-product-t :
       -- object-t % a
          object-t % b
          object-t % p
          p a arrow-t % fst
          p b arrow-t % snd
       -> type-t
-    category-s.object-product-t = lambda
+    category.object-product-t = lambda
       let a b p fst snd in
       -- object-t % q
          q a arrow-t % fst-
@@ -798,14 +798,14 @@
       edge-t : -- node-t node-t -> type-t
     #+end_src
 
-*** graph-s.path-t
+*** graph.path-t
 
     #+begin_src cicada
-    graph-s.path-t :
+    graph.path-t :
       -- node-t
          node-t
       -> type-t
-    graph-s.path-t = type
+    graph.path-t = type
       @ [start end] : node-t
 
       -- node-t % node
@@ -819,14 +819,14 @@
       -> a c link-path-t
     #+end_src
 
-*** graph-s.path-eqv-t
+*** graph.path-eqv-t
 
     #+begin_src cicada
-    graph-s.path-eqv-t :
+    graph.path-eqv-t :
       -- a b path-t
          a b path-t
       -> type-t
-    graph-s.path-eqv-t = type
+    graph.path-eqv-t = type
       @ [lhs rhs] : a b path-t
 
       -- a b path-t % p
@@ -847,11 +847,11 @@
          p q link-path-c r link-path-c associative-path-eqv-t
     #+end_src
 
-*** graph-s.as-free-cat
+*** graph.as-free-cat
 
     #+begin_src cicada
-    graph-s.as-free-cat : category-s
-    graph-s.as-free-cat = category-@
+    graph.as-free-cat : category-s
+    graph.as-free-cat = category-@
       object-t = lambda node-t
       arrow-t = lambda path-t
       arrow-eqv-t = lambda path-eqv-t
@@ -1026,15 +1026,15 @@
           -> a c pre-t
       #+end_src
 
-***** preorder-s.as-cat
+***** preorder.as-cat
 
       #+begin_src cicada
       note
         to view a preorder as a category
         we simple view all arrow of the same type as eqv
 
-      preorder-s.as-cat : category-s
-      preorder-s.as-cat = category-@
+      preorder.as-cat : category-s
+      preorder.as-cat = category-@
         object-t = element-t
 
         arrow-t = lambda pre-t
@@ -1134,11 +1134,11 @@
            a b product c product element-eqv-t
     #+end_src
 
-*** monoid-s.as-cat
+*** monoid.as-cat
 
     #+begin_src cicada
-    monoid-s.as-cat : category-s
-    monoid-s.as-cat = category-@
+    monoid.as-cat : category-s
+    monoid.as-cat = category-@
       object-t = lambda unit-t
       arrow-t = lambda drop drop element-t
       arrow-eqv-t = lambda element-eqv-t
@@ -1269,25 +1269,25 @@
       bind : -- a fun-t, (-- a -> b fun-t) -> b fun-t
     #+end_src
 
-*** monad-s.compose
+*** monad.compose
 
     #+begin_src cicada
-    monad-s.compose :
+    monad.compose :
       -- (-- a -> b fun-t)
          (-- b -> c fun-t)
       -> (-- a -> c fun-t)
-    monad-s.compose = lambda
+    monad.compose = lambda
       let f g in
       {f {g} bind}
     #+end_src
 
-*** monad-s.flatten
+*** monad.flatten
 
     #+begin_src cicada
-    monad-s.flatten :
+    monad.flatten :
       -- a fun-t fun-t
       -> a fun-t
-    monad-s.flatten = lambda {} bind
+    monad.flatten = lambda {} bind
     #+end_src
 
 *** list-monad
