@@ -4,6 +4,7 @@
 
 *** nat-total-order
 
+*** monad as cat
 
 *** category-theory
 
@@ -593,7 +594,7 @@
     #+begin_src cicada
     category-product : -- category-s category-s -> category-s
     category-product = lambda
-      let #1 #2 in instance
+      let #1 #2 in category-@
 
       object-t = lambda (* #1.object-t #2.object-t)
 
@@ -680,7 +681,7 @@
     #+begin_src cicada
     category-product : -- category-s category-s -> category-s
     category-product = lambda
-      let #1 #2 in instance
+      let #1 #2 in category-@
 
       object-t = lambda (* #1.object-t #2.object-t)
 
@@ -747,7 +748,7 @@
 
     #+begin_src cicada
     void-cat : category-s
-    void-cat = instance
+    void-cat = category-@
       object-t = lambda void-t
       arrow-t = lambda void-arrow-t
       arrow-eqv-t = lambda void-arrow-eqv-t
@@ -850,7 +851,7 @@
 
     #+begin_src cicada
     graph-s.as-free-cat : category-s
-    graph-s.as-free-cat = instance
+    graph-s.as-free-cat = category-@
       object-t = lambda node-t
       arrow-t = lambda path-t
       arrow-eqv-t = lambda path-eqv-t
@@ -954,7 +955,7 @@
 
     #+begin_src cicada
     nat-order-cat : category-s
-    nat-order-cat = instance
+    nat-order-cat = category-@
       object-t = lambda nat-t
       arrow-t = lambda nat-lteq-t
       arrow-eqv-t = lambda eqv-t
@@ -1033,7 +1034,7 @@
         we simple view all arrow of the same type as eqv
 
       preorder-s.as-cat : category-s
-      preorder-s.as-cat = instance
+      preorder-s.as-cat = category-@
         object-t = element-t
 
         arrow-t = lambda pre-t
@@ -1137,7 +1138,7 @@
 
     #+begin_src cicada
     monoid-s.as-cat : category-s
-    monoid-s.as-cat = instance
+    monoid-s.as-cat = category-@
       object-t = lambda unit-t
       arrow-t = lambda drop drop element-t
       arrow-eqv-t = lambda element-eqv-t
@@ -1188,7 +1189,7 @@
 
     #+begin_src cicada
     type-cat : category-s
-    type-cat = instance
+    type-cat = category-@
       object-t = lambda type-t ;; but type-t is not of type type-t
       arrow-t = lambda type-arrow-t
       arrow-eqv-t = lambda fun-eqv-t
@@ -1245,7 +1246,7 @@
 
     #+begin_src cicada
     list-functor : functor-s
-    list-functor = instance
+    list-functor = functor-@
       fun-t = lambda list-t
       map = lambda
         let list fun in
@@ -1293,7 +1294,7 @@
 
     #+begin_src cicada
     list-monad : monad-s
-    list-monad = instance
+    list-monad = monad-@
       pure = lambda null-c cons-c
       bind = lambda
         let list fun in
@@ -1321,7 +1322,7 @@
 
     #+begin_src cicada
     maybe-functor : functor-s
-    maybe-functor = instance
+    maybe-functor = functor-@
       fun-t = lambda maybe-t
       map = lambda
         let maybe fun in
@@ -1334,7 +1335,7 @@
 
     #+begin_src cicada
     maybe-monad : monad-s
-    maybe-monad = instance
+    maybe-monad = monad-@
       pure = lambda just-c
       bind = lambda
         let maybe fun in
@@ -1359,7 +1360,7 @@
     #+begin_src cicada
     state-monad : -- type-t -> monad-s
     state-monad = lambda
-      let s in instance
+      let s in monad-@
       fun-t = lambda {s state-t}
       map : -- a s state-t, (-- a -> b)
             -> b s state-t
@@ -1393,7 +1394,7 @@
 
     #+begin_src cicada
     tree-functor : functor-s
-    tree-functor = instance
+    tree-functor = functor-@
       fun-t = lambda tree-t
       map = lambda
         let tree fun in
