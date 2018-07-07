@@ -117,7 +117,8 @@
     #+begin_src cicada
     unit-t : type-t
     unit-t = type
-      -- -> unit-t
+      unit-c :
+        -- -> unit-t
     #+end_src
 
 * bool
@@ -127,8 +128,10 @@
     #+begin_src cicada
     bool-t : type-t
     bool-t = type
-      -- -> true-t
-      -- -> false-t
+      true-c :
+        -- -> true-t
+      false-c :
+        -- -> false-t
     #+end_src
 
 * nat
@@ -138,8 +141,10 @@
     #+begin_src cicada
     nat-t : type-t
     nat-t = type
-      -- -> zero-t
-      -- prev : nat-t -> succ-t
+      zero-c :
+        -- -> zero-t
+      succ-c :
+        -- prev : nat-t -> succ-t
     #+end_src
 
 *** nat-add
@@ -158,7 +163,7 @@
     #+begin_src cicada
     nat-mul : -- nat-t nat-t -> nat-t
     nat-mul = lambda
-      let m n
+      let m n in
       case n
         zero-t n
         succ-t m n.prev recur m nat-add
@@ -171,7 +176,7 @@
     nat-factorial = lambda
       let n in
       case n
-        zero-t n succ-c
+        zero-t zero-c succ-c
         succ-t n.prev recur n nat-mul
     #+end_src
 
@@ -183,7 +188,6 @@
     list-t : -- type-t -> type-t
     list-t = type
       @ t : type-t
-
       null-c :
         -- -> t null-t
       cons-c :
@@ -225,7 +229,7 @@
          -- a -> b
       -> b list-t
     list-map = lambda
-      let list fun
+      let list fun in
       case list
         null-t list
         cons-t list.car fun list.cdr {fun} recur cons-c
@@ -254,8 +258,9 @@
     #+begin_src cicada
     eqv-t : -- t -> type-t
     eqv-t = type
-      -- value :: t
-      -> value value eqv-t
+      eqv-c :
+        -- value :: t
+        -> value value eqv-t
     #+end_src
 
 *** eqv-apply
@@ -316,10 +321,12 @@
     #+begin_src cicada
     nat-even-t : -- nat-t -> type-t
     nat-even-t = type
-      -- -> zero-c zero-even-t
-      -- m :: nat-t
-         prev : m nat-even-t
-      -> m succ-c succ-c even-plus-two-even-t
+      zero-even-c :
+        -- -> zero-c zero-even-t
+      even-plus-two-even-c :
+        -- m :: nat-t
+           prev : m nat-even-t
+        -> m succ-c succ-c even-plus-two-even-t
 
     two-even : -- -> zero-c succ-c succ-c nat-even-t
     two-even = lambda zero-even-c even-plus-two-even-c
@@ -401,11 +408,13 @@
     list-length-t = type
       @ list : t list-t
         length : nat-t
-      -- -> null-c zero-c zero-length-t
-      -- prev : list length list-length-t
-      -> element :: t
-         element list cons-c
-         length succ-c succ-length-t
+      zero-length-c :
+        -- -> null-c zero-c zero-length-t
+      succ-length-c :
+        -- prev : list length list-length-t
+        -> element :: t
+           element list cons-c
+           length succ-c succ-length-t
     #+end_src
 
 *** list-map-preserve-list-length
@@ -435,12 +444,14 @@
     list-append-t : -- t list-t t list-t t list-t -> type-t
     list-append-t = type
       @ [ante succ result] : t list-t
-      -- -> null-c succ succ zero-append-t
-      -- car :: t
-         cdr :: t list-t
-         result-cdr :: t list-t
-         prev : cdr succ result-cdr list-append-t
-      -> car cdr cons-c, succ, car result-cdr cons-c succ-append-t
+      zero-append-c :
+        -- -> null-c succ succ zero-append-t
+      succ-append-c :
+        -- car :: t
+           cdr :: t list-t
+           result-cdr :: t list-t
+           prev : cdr succ result-cdr list-append-t
+        -> car cdr cons-c, succ, car result-cdr cons-c succ-append-t
     #+end_src
 
 * vect
@@ -452,10 +463,12 @@
     vect-t = type
       @ length : nat-t
         t : type-t
-      -- -> zero-c t null-vect-t
-      -- car : t
-         cdr : length t vect-t
-      -> length succ-c t cons-vect-t
+      null-vect-c :
+        -- -> zero-c t null-vect-t
+      cons-vect-c :
+        -- car : t
+           cdr : length t vect-t
+        -> length succ-c t cons-vect-t
     #+end_src
 
 *** vect-append
@@ -807,16 +820,16 @@
       -> type-t
     graph.path-t = type
       @ [start end] : node-t
-
-      -- node-t % node
-      -> node node node-path-t
-
-      -- a b edge-t % edge
-      -> a b edge-path-t
-
-      -- a b path-t % first
-         b c path-t % next
-      -> a c link-path-t
+      node-path-c :
+        -- node-t % node
+        -> node node node-path-t
+      edge-path-c :
+        -- a b edge-t % edge
+        -> a b edge-path-t
+      link-path-c :
+        -- a b path-t % first
+           b c path-t % next
+        -> a c link-path-t
     #+end_src
 
 *** graph.path-eqv-t
@@ -828,23 +841,23 @@
       -> type-t
     graph.path-eqv-t = type
       @ [lhs rhs] : a b path-t
-
-      -- a b path-t % p
-      -> p p refl-path-eqv-t
-
-      -- a b path-t % p
-      -> a node-path-c p link-path-c
-         p node-left-path-eqv-t
-
-      -- a b path-t % p
-      -> p b node-path-c link-path-c
-         p node-right-path-eqv-t
-
-      -- a b path-t % p
-         b c path-t % q
-         c d path-t % r
-      -> p q r link-path-c link-path-c
-         p q link-path-c r link-path-c associative-path-eqv-t
+      refl-path-eqv-c :
+        -- a b path-t % p
+        -> p p refl-path-eqv-t
+      node-left-path-eqv-c :
+        -- a b path-t % p
+        -> a node-path-c p link-path-c
+           p node-left-path-eqv-t
+      node-right-path-eqv-c :
+        -- a b path-t % p
+        -> p b node-path-c link-path-c
+           p node-right-path-eqv-t
+      associative-path-eqv-c :
+        -- a b path-t % p
+           b c path-t % q
+           c d path-t % r
+        -> p q r link-path-c link-path-c
+           p q link-path-c r link-path-c associative-path-eqv-t
     #+end_src
 
 *** graph.as-free-cat
@@ -894,9 +907,11 @@
     nat-lteq-t : -- nat-t nat-t -> type-t
     nat-lteq-t = type
       @ [l r] : nat-t
-      -- -> zero-c r zero-lteq-t
-      -- prev : l r nat-lteq-t
-      -> l succ-c r succ-c succ-lteq-t
+      zero-lteq-c :
+        -- -> zero-c r zero-lteq-t
+      succ-lteq-c :
+        -- prev : l r nat-lteq-t
+        -> l succ-c r succ-c succ-lteq-t
     #+end_src
 
 *** nat-non-negative
@@ -1180,9 +1195,10 @@
          (lazy -- a -> b)
       -> type-t
     fun-eqv-t = type
-      @ [lhs rhs] : a b (lazy -- a -> b)
-      -- theorem : (-- x : a -> x lhs apply x rhs apply eqv-t)
-      -> lhs rhs fun-eqv-t
+      @ [lhs rhs] : (lazy -- a -> b)
+      fun-eqv-c :
+        -- theorem : (-- x : a -> x lhs apply x rhs apply eqv-t)
+        -> lhs rhs fun-eqv-t
     #+end_src
 
 *** type-cat
@@ -1314,8 +1330,10 @@
     maybe-t : -- type-t -> type-t
     maybe-t = type
       @ t : type-t
-      -- -> t none-t
-      -- value : t -> t just-t
+      none-c :
+        -- -> t none-t
+      just-c :
+        -- value : t -> t just-t
     #+end_src
 
 *** maybe-functor
@@ -1385,9 +1403,11 @@
     tree-t : -- type-t -> type-t
     tree-t = type
       @ t : type-t
-      -- t % value -> t leaf-t
-      -- t tree-t % [left right]
-      -> t branch-t
+      leaf-c :
+        -- t % value -> t leaf-t
+      branch-c :
+        -- t tree-t % [left right]
+        -> t branch-t
     #+end_src
 
 *** tree-functor
@@ -1468,10 +1488,12 @@
     gcd-t : -- int-t int-t int-t -> type-t
     gcd-t = type
       @ [x y d] : int-t
-      -- -> x zero-c x zero-gcd-t
-      -- gcd : x y d gcd-t
-         mod : x y z mod-t
-      -> y z d mod-gcd-t
+      zero-gcd-c :
+        -- -> x zero-c x zero-gcd-t
+      mod-gcd-c :
+        -- gcd : x y d gcd-t
+           mod : x y z mod-t
+        -> y z d mod-gcd-t
     #+end_src
 
 * ><>< dependent-category
