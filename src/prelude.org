@@ -65,7 +65,7 @@
 
     - syntax for unnamed record type
 
-    - while in (type)
+    - while in (data)
       we define named record type
 
 *** (*)
@@ -107,7 +107,7 @@
 
     #+begin_src cicada
     void-t : type-t
-    void-t = type
+    void-t = union
     #+end_src
 
 * unit
@@ -116,7 +116,7 @@
 
     #+begin_src cicada
     unit-t : type-t
-    unit-t = type
+    unit-t = data
       unit-c :
         -- -> unit-t
     #+end_src
@@ -127,7 +127,7 @@
 
     #+begin_src cicada
     bool-t : type-t
-    bool-t = type
+    bool-t = union
       true-c :
         -- -> true-t
       false-c :
@@ -140,7 +140,7 @@
 
     #+begin_src cicada
     nat-t : type-t
-    nat-t = type
+    nat-t = union
       zero-c :
         -- -> zero-t
       succ-c :
@@ -186,7 +186,7 @@
 
     #+begin_src cicada
     list-t : -- type-t -> type-t
-    list-t = type
+    list-t = union
       @ t : type-t
       null-c :
         -- -> t null-t
@@ -256,11 +256,11 @@
 *** eqv-t
 
     #+begin_src cicada
-    eqv-t : -- t -> type-t
-    eqv-t = type
+    eqv-t : -- t t -> type-t
+    eqv-t = data
+      @ [lhs rhs] : t
       eqv-c :
-        -- value :: t
-        -> value value eqv-t
+        -- -> v v eqv-t
     #+end_src
 
 *** eqv-apply
@@ -320,12 +320,12 @@
 
     #+begin_src cicada
     nat-even-t : -- nat-t -> type-t
-    nat-even-t = type
+    nat-even-t = union
+      @ nat : nat-t
       zero-even-c :
         -- -> zero-c zero-even-t
       even-plus-two-even-c :
-        -- m :: nat-t
-           prev : m nat-even-t
+        -- prev : m nat-even-t
         -> m succ-c succ-c even-plus-two-even-t
 
     two-even : -- -> zero-c succ-c succ-c nat-even-t
@@ -405,7 +405,7 @@
         -> type-t
 
     list-length-t : -- t list-t, nat-t -> type-t
-    list-length-t = type
+    list-length-t = union
       @ list : t list-t
         length : nat-t
       zero-length-c :
@@ -442,7 +442,7 @@
         append(Cdr, Succ, ResultCdr).
 
     list-append-t : -- t list-t t list-t t list-t -> type-t
-    list-append-t = type
+    list-append-t = union
       @ [ante succ result] : t list-t
       zero-append-c :
         -- -> null-c succ succ zero-append-t
@@ -460,7 +460,7 @@
 
     #+begin_src cicada
     vect-t : -- nat-t type-t -> type-t
-    vect-t = type
+    vect-t = union
       @ length : nat-t
         t : type-t
       null-vect-c :
@@ -740,9 +740,10 @@
 
     #+begin_src cicada
     void-arrow-t : -- void-t void-t -> type-t
-    void-arrow-t = type
+    void-arrow-t = data
+      @ [ante succ] : void-t
       void-arrow-c :
-        -- -> a b void-arrow-t
+        -- -> ante succ void-arrow-t
     #+end_src
 
 *** void-arrow-eqv-t
@@ -752,7 +753,8 @@
       -- a b void-arrow-t
          a b void-arrow-t
       -> type-t
-    void-arrow-eqv-t = type
+    void-arrow-eqv-t = data
+      @ [lhs rhs] : a b void-arrow-t
       void-arrow-eqv-c :
         -- -> lhs rhs void-arrow-eqv-t
     #+end_src
@@ -814,11 +816,8 @@
 *** graph.path-t
 
     #+begin_src cicada
-    graph.path-t :
-      -- node-t
-         node-t
-      -> type-t
-    graph.path-t = type
+    graph.path-t : -- node-t node-t -> type-t
+    graph.path-t = union
       @ [start end] : node-t
       node-path-c :
         -- node-t % node
@@ -835,11 +834,8 @@
 *** graph.path-eqv-t
 
     #+begin_src cicada
-    graph.path-eqv-t :
-      -- a b path-t
-         a b path-t
-      -> type-t
-    graph.path-eqv-t = type
+    graph.path-eqv-t : -- a b path-t, a b path-t -> type-t
+    graph.path-eqv-t = union
       @ [lhs rhs] : a b path-t
       refl-path-eqv-c :
         -- a b path-t % p
@@ -905,7 +901,7 @@
 
     #+begin_src cicada
     nat-lteq-t : -- nat-t nat-t -> type-t
-    nat-lteq-t = type
+    nat-lteq-t = union
       @ [l r] : nat-t
       zero-lteq-c :
         -- -> zero-c r zero-lteq-t
@@ -1194,7 +1190,7 @@
       -- (lazy -- a -> b)
          (lazy -- a -> b)
       -> type-t
-    fun-eqv-t = type
+    fun-eqv-t = data
       @ [lhs rhs] : (lazy -- a -> b)
       fun-eqv-c :
         -- theorem : (-- x : a -> x lhs apply x rhs apply eqv-t)
@@ -1328,7 +1324,7 @@
 
     #+begin_src cicada
     maybe-t : -- type-t -> type-t
-    maybe-t = type
+    maybe-t = union
       @ t : type-t
       none-c :
         -- -> t none-t
@@ -1401,7 +1397,7 @@
 
     #+begin_src cicada
     tree-t : -- type-t -> type-t
-    tree-t = type
+    tree-t = union
       @ t : type-t
       leaf-c :
         -- t % value -> t leaf-t
@@ -1486,7 +1482,7 @@
 
     #+begin_src cicada
     gcd-t : -- int-t int-t int-t -> type-t
-    gcd-t = type
+    gcd-t = union
       @ [x y d] : int-t
       zero-gcd-c :
         -- -> x zero-c x zero-gcd-t
