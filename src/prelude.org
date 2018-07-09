@@ -1,8 +1,26 @@
 #+title: prelude
 
+* [bug]
+
+*** arrow-eqv-t -- amend `arrow-eqv-relation` for all `category-@`
+
+    - arrow-eqv-t must be an eqv-relation-s
+      for all hom-set [a b arrow-t]
+
 * [todo-stack]
 
-*** category.initial-object-t
+*** should type-cat be called set-cat ?
+
+    - x -
+      should type-cat be called set-cat ?
+      and type-t should be called set-t
+      just like in agda
+
+    - k -
+      this name changing might be much more necessary
+      when we need to define representable functor
+
+*** representable-functor
 
 *** class-cat
 
@@ -126,6 +144,13 @@
     unit-t = data
       unit-c :
         -- -> unit-t
+    #+end_src
+
+*** unit
+
+    #+begin_src cicada
+    unit : -- a -> unit-t
+    unit = lambda drop unit-c
     #+end_src
 
 * bool
@@ -503,6 +528,76 @@
         cons-vect-t list.car fun list.cdr {fun} recur cons-vect-c
     #+end_src
 
+* order
+
+*** preorder
+
+***** preorder-s
+
+      #+begin_src cicada
+      note
+        preorder is a thin category
+        with at most one morphism from an object to another.
+
+      preorder-s : class-t
+      preorder-s = class
+        element-t : type-t
+
+        pre-t :
+          -- element-t element-t
+          -> type-t
+
+        pre-reflexive :
+          -- element-t % a
+          -> a a pre-t
+
+        pre-transitive :
+          -- a b pre-t
+             b c pre-t
+          -> a c pre-t
+      #+end_src
+
+*** partial-order
+
+***** partial-order-s
+
+      #+begin_src cicada
+      partial-order-s <: preorder-s
+      partial-order-s = class
+        element-eqv-t :
+          -- element-t
+             element-t
+          -> type-t
+        pre-anti-symmetric :
+          -- a b pre-t
+             b a pre-t
+          -> a b element-eqv-t
+      #+end_src
+
+*** eqv-relation
+
+***** eqv-relation-s
+
+      #+begin_src cicada
+      eqv-relation-s <: preorder-s
+      eqv-relation-s = class
+        pre-symmetric :
+          -- a b pre-t
+          -> b a pre-t
+      #+end_src
+
+*** total-order
+
+***** total-order-s
+
+      #+begin_src cicada
+      total-order-s <: partial-order-s
+      total-order-s = class
+        pre-connex :
+          -- [a b] : element-t
+          -> (+ a b pre-t | b a pre-t)
+      #+end_src
+
 * category
 
 *** category-s
@@ -543,6 +638,12 @@
            c d arrow-t % h
         -> f g h compose compose
            f g compose h compose arrow-eqv-t
+
+      arrow-eqv-relation :
+        -- [a b] :: object-t
+        -> eqv-relation-s %
+           (@ element-t = a b arrow-t
+              pre-t = lambda arrow-eqv-t)
     #+end_src
 
 *** category.arrow-inverse-t
@@ -787,6 +888,88 @@
         let f g h in
         (* f.1 g.1 h.1 #1.compose-associative
            f.2 g.2 h.2 #2.compose-associative)
+    #+end_src
+
+*** opposite-category-t
+
+*** category.opposite
+
+    #+begin_src cicada
+    category.opposite : category-s
+    category.opposite = category-@
+      object-t = lambda this.object-t
+
+      arrow-t :
+        -- object-t object-t
+        -> type-t*
+      arrow-t = lambda swap this.arrow-t
+
+      arrow-eqv-t :
+        -- b a this.arrow-t b a this.arrow-t
+        -> type-t*
+      arrow-eqv-t = lambda this.arrow-eqv-t
+
+      identity :
+        -- object-t % a
+        -> a a arrow-t
+      identity = lambda this.identity
+
+      compose :
+        -- b a this.arrow-t
+           c b this.arrow-t
+        -> c a this.arrow-t
+      compose = lambda swap this.compose
+
+      identity-neutral-left :
+        -- b a this.arrow-t % f
+        -> f a identity this.compose, f arrow-eqv-t
+      identity-neutral-left = lambda this.identity-neutral-right
+
+      identity-neutral-right :
+        -- b a this.arrow-t % f
+        -> b identity f this.compose, f arrow-eqv-t
+      identity-neutral-right = lambda this.identity-neutral-left
+
+      compose-associative :
+        -- b a this.arrow-t % f
+           c b this.arrow-t % g
+           d c this.arrow-t % h
+        -> h g this.compose f this.compose
+           h g f this.compose this.compose arrow-eqv-t
+      compose-associative = lambda
+        let f g h in
+        h g f this.compose-associative
+        this.arrow-eqv-relation.pre-symmetric
+    #+end_src
+
+*** preorder.as-cat
+
+    #+begin_src cicada
+    note
+      to view a preorder as a category
+      we simple view all arrow of the same type as eqv
+
+    preorder.as-cat : category-s
+    preorder.as-cat = category-@
+      object-t = element-t
+
+      arrow-t = lambda pre-t
+
+      arrow-eqv-t = lambda
+        drop drop unit-t
+
+      identity = lambda pre-reflexive
+
+      compose = lambda pre-transitive
+
+      identity-neutral-left = lambda
+        drop unit-c
+
+      identity-neutral-right = lambda
+        drop unit-c
+
+      compose-associative = lambda
+        drop drop drop unit-c
     #+end_src
 
 * void-cat
@@ -1062,106 +1245,6 @@
         -> b a arrow-t % g
            f g arrow-inverse-t
     #+end_src
-
-* order
-
-*** preorder
-
-***** preorder-s
-
-      #+begin_src cicada
-      note
-        preorder is a thin category
-        with at most one morphism from an object to another.
-
-      preorder-s : class-t
-      preorder-s = class
-        element-t : type-t
-
-        pre-t :
-          -- element-t element-t
-          -> type-t
-
-        pre-reflexive :
-          -- element-t % a
-          -> a a pre-t
-
-        pre-transitive :
-          -- a b pre-t
-             b c pre-t
-          -> a c pre-t
-      #+end_src
-
-***** preorder.as-cat
-
-      #+begin_src cicada
-      note
-        to view a preorder as a category
-        we simple view all arrow of the same type as eqv
-
-      preorder.as-cat : category-s
-      preorder.as-cat = category-@
-        object-t = element-t
-
-        arrow-t = lambda pre-t
-
-        arrow-eqv-t = lambda
-          drop drop unit-t
-
-        identity = lambda pre-reflexive
-
-        compose = lambda pre-transitive
-
-        identity-neutral-left = lambda
-          drop unit-c
-
-        identity-neutral-right = lambda
-          drop unit-c
-
-        compose-associative = lambda
-          drop drop drop unit-c
-      #+end_src
-
-*** partial-order
-
-***** partial-order-s
-
-      #+begin_src cicada
-      partial-order-s <: preorder-s
-      partial-order-s = class
-        element-eqv-t :
-          -- element-t
-             element-t
-          -> type-t
-        pre-anti-symmetric :
-          -- a b pre-t
-             b a pre-t
-          -> a b element-eqv-t
-      #+end_src
-
-*** eqv-relation
-
-***** eqv-relation-s
-
-      #+begin_src cicada
-      eqv-relation-s <: preorder-s
-      eqv-relation-s = class
-        pre-symmetric :
-          -- a b pre-t
-          -> b a pre-t
-      #+end_src
-
-*** total-order
-
-***** total-order-s
-
-      #+begin_src cicada
-      total-order-s <: partial-order-s
-      total-order-s = class
-        pre-connex :
-          -- [a b] : element-t
-          -> (+ a b pre-t | b a pre-t)
-      #+end_src
 
 * >< nat-total-order
 
