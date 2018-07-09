@@ -2,6 +2,10 @@
 
 * [todo-stack]
 
+*** category.initial-object-t
+
+*** class-cat
+
 *** nat-total-order
 
 *** monad as cat
@@ -92,14 +96,11 @@
       just without sumtype, only product type.
 
     - type-t : type-t2
-
-    - nat-t : type-t
+      nat-t : type-t
       (* nat-t nat-t) : type-t
+      [nat-t nat-t] : [type-t type-t]
       (+ nat-t | nat-t) : type-t
       (-- nat-t -> nat-t) : type-t
-
-    - [nat-t nat-t] : type-t
-      [nat-t nat-t] : [type-t type-t]
 
 * void
 
@@ -108,6 +109,12 @@
     #+begin_src cicada
     void-t : type-t
     void-t = union
+    #+end_src
+
+*** absurd
+
+    #+begin_src cicada
+    absurd : -- void-t -> t
     #+end_src
 
 * unit
@@ -560,46 +567,94 @@
       -> type-t
     category.arrow-unique-t = lambda
       let f theorem in
-      f theorem
-      -- a b arrow-t % g
-         g theorem
-      -> f g arrow-eqv-t
+      (* f theorem
+         (-- a b arrow-t % g
+             g theorem
+          -> f g arrow-eqv-t))
     #+end_src
 
-*** category.object-product-t
+*** (unique ... under ...)
 
     #+begin_src cicada
-    category.object-product-t :
+    unique [$x : $t] under $eqv-t = macro
+      (-- y : $t -> $x y $eqv-t)
+    #+end_src
+
+*** (unique ... under ... such-that ...)
+
+    #+begin_src cicada
+    unique [$x : $t] under $eqv-t such-that $theorem  = macro
+      (* $x $theorem
+         (-- y : $t
+             y $theorem
+          -> $x y $eqv-t))
+    #+end_src
+
+*** category.iso-object-t
+
+    #+begin_src cicada
+    category.iso-object-t : -- object-t object-t -> type-t
+    category.iso-object-t = lambda
+      let a b in
+      * a b arrow-t % f
+        b a arrow-t % g
+        f g compose a identity arrow-eqv-t
+        g f compose b identity arrow-eqv-t
+    #+end_src
+
+*** category.product-object-t
+
+    #+begin_src cicada
+    category.product-object-t :
       -- object-t % a
          object-t % b
          object-t % p
-         p a arrow-t % fst
-         p b arrow-t % snd
+         p a arrow-t % pa
+         p b arrow-t % pb
       -> type-t
-    category.object-product-t = lambda
-      let a b p fst snd in
+    category.product-object-t = lambda
+      let a b p pa pb in
       -- object-t % q
-         q a arrow-t % fst-
-         q b arrow-t % snd-
-      -> q p arrow-t % m
-         lambda let m in
-           fst-, m fst compose arrow-eqv-t
-           snd-, m snd compose arrow-eqv-t
-         m swap arrow-unique-t
+         q a arrow-t % qa
+         q b arrow-t % qb
+      -> unique q p arrow-t % m
+         under arrow-eqv-t such-that
+           * qa, m pa compose arrow-eqv-t
+             qb, m pb compose arrow-eqv-t
     #+end_src
 
-*** product-closed-s
+*** category.initial-object-t
 
     #+begin_src cicada
-    product-closed-s <: category-s
-    product-closed-s = class
+    category.initial-object-t : -- object-t -> type-t
+    category.initial-object-t = lambda
+      let a in
+      -- object-t % b
+      -> unique a b arrow-t % f under arrow-eqv-t
+    #+end_src
+
+*** category.terminal-object-t
+
+    #+begin_src cicada
+    category.terminal-object-t : -- object-t -- type-t
+    category.terminal-object-t = lambda
+      let a in
+      -- object-t % b
+      -> unique b a arrow-t % f under arrow-eqv-t
+    #+end_src
+
+*** product-closed-category-s
+
+    #+begin_src cicada
+    product-closed-category-s <: category-s
+    product-closed-category-s = class
       product :
         -- object-t % a
            object-t % b
         -> object-t % p
-           p a arrow-t % fst
-           p b arrow-t % snd
-           a b p fst snd object-product-t
+           p a arrow-t % pa
+           p b arrow-t % pb
+           a b p pa pb product-object-t
     #+end_src
 
 *** category-product
@@ -1174,6 +1229,11 @@
 
 * type-cat
 
+*** [note]
+
+    - this construction is not yet powerful enough
+      to model the semantic of cicada.
+
 *** type-arrow-t
 
     #+begin_src cicada
@@ -1186,10 +1246,7 @@
 *** fun-eqv-t
 
     #+begin_src cicada
-    fun-eqv-t :
-      -- (lazy -- a -> b)
-         (lazy -- a -> b)
-      -> type-t
+    fun-eqv-t : -- (lazy -- a -> b) (lazy -- a -> b) -> type-t
     fun-eqv-t = data
       @ [lhs rhs] : (lazy -- a -> b)
       fun-eqv-c :
@@ -1202,7 +1259,7 @@
     #+begin_src cicada
     type-cat : category-s
     type-cat = category-@
-      object-t = lambda type-t ;; but type-t is not of type type-t
+      object-t = lambda type-t
       arrow-t = lambda type-arrow-t
       arrow-eqv-t = lambda fun-eqv-t
 
