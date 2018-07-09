@@ -9,22 +9,21 @@
 
 * [todo-stack]
 
+*** can function not be stored in data-field ?
+
+*** set-cat
+
+    - surjective
+
+    - injective
+
+    - bijective
+
 *** prove iso for universal-construction
 
     - a universal-construction is unique up to unique isomorphism
 
     - unique thus eqv
-
-*** should type-cat be called set-cat ?
-
-    - x -
-      should type-cat be called set-cat ?
-      and type-t should be called set-t
-      just like in agda
-
-    - k -
-      this name changing might be much more necessary
-      when we need to define representable functor
 
 *** representable-functor
 
@@ -54,7 +53,7 @@
 
     - what is the logic programming interface of the type system ?
 
-*** re-gain generic-ness of type-class
+*** re-gain implicit generic-ness of type-class
 
     - by maintain a map from type constructor to class
 
@@ -68,9 +67,11 @@
 
 *** use number theory -- to test type-checker as prover
 
-*** subtype relation in type-t
+*** sub-type or sub-set ?
 
-    - subtype relation as order relation for algebraic data type
+    - relation in set-t
+
+    - sub-type relation as order relation for algebraic data type
 
     - for example :
       a < a + b
@@ -84,11 +85,6 @@
       [in cicada, eqv-c and eqv-t]
       should these form types too ?
 
-*** (type)
-
-    - type of data in data-field must be of type type-t
-      thus, function can not be stored in data-field
-
 *** (@)
 
     - syntax for unnamed record type
@@ -96,43 +92,51 @@
     - while in (data)
       we define named record type
 
+*** (union)
+
+*** (sum)
+
+    - disjoin-union
+
+    - sum-type
+
 *** (*)
 
     - `ante` and `succ` in (-- ante -> succ) are all implicit tuples
 
     - (*) explicit nested tuple
 
+*** level
+
+    | 0 | object              |
+    | 1 | type, quotient-type |
+    | 2 | class-t, set-t      |
+
+    - object are just like type.
+      just without sum-type, only product type.
+
+    - set-t : set-t2
+      nat-t : set-t
+      (* nat-t nat-t) : set-t
+      [nat-t nat-t] : [set-t set-t]
+      (union nat-t, nat-t list-t) : set-t
+      (-- nat-t -> nat-t) : set-t
+
 *** (<:)
 
-    - subtype relation between classes
+    - sub-type relation between classes
 
     - c1 <: c2
       if c1 is more special then c2
       if c1 has more interface functions than c2
-
-*** level of types
-
-    | 0 | object              |
-    | 1 | type, quotient-type |
-    | 2 | class-t, type-t     |
-
-    - object are just like type.
-      just without sumtype, only product type.
-
-    - type-t : type-t2
-      nat-t : type-t
-      (* nat-t nat-t) : type-t
-      [nat-t nat-t] : [type-t type-t]
-      (+ nat-t | nat-t) : type-t
-      (-- nat-t -> nat-t) : type-t
 
 * void
 
 *** void-t
 
     #+begin_src cicada
-    void-t : type-t
-    void-t = union
+    void-t : set-t
+    void-t = sum
     #+end_src
 
 *** absurd
@@ -146,7 +150,7 @@
 *** unit-t
 
     #+begin_src cicada
-    unit-t : type-t
+    unit-t : set-t
     unit-t = data
       unit-c :
         -- -> unit-t
@@ -164,8 +168,8 @@
 *** bool-t
 
     #+begin_src cicada
-    bool-t : type-t
-    bool-t = union
+    bool-t : set-t
+    bool-t = sum
       true-c :
         -- -> true-t
       false-c :
@@ -177,8 +181,8 @@
 *** nat-t
 
     #+begin_src cicada
-    nat-t : type-t
-    nat-t = union
+    nat-t : set-t
+    nat-t = sum
       zero-c :
         -- -> zero-t
       succ-c :
@@ -223,9 +227,9 @@
 *** list-t
 
     #+begin_src cicada
-    list-t : -- type-t -> type-t
-    list-t = union
-      @ t : type-t
+    list-t : -- set-t -> set-t
+    list-t = sum
+      @ t : set-t
       null-c :
         -- -> t null-t
       cons-c :
@@ -294,7 +298,7 @@
 *** eqv-t
 
     #+begin_src cicada
-    eqv-t : -- t t -> type-t
+    eqv-t : -- t t -> set-t
     eqv-t = data
       @ [lhs rhs] : t
       eqv-c :
@@ -357,8 +361,8 @@
 *** nat-even-t
 
     #+begin_src cicada
-    nat-even-t : -- nat-t -> type-t
-    nat-even-t = union
+    nat-even-t : -- nat-t -> set-t
+    nat-even-t = sum
       @ nat : nat-t
       zero-even-c :
         -- -> zero-c zero-even-t
@@ -440,10 +444,10 @@
       list-length-t :
         -- list : t list-t
            length : nat-t
-        -> type-t
+        -> set-t
 
-    list-length-t : -- t list-t, nat-t -> type-t
-    list-length-t = union
+    list-length-t : -- t list-t, nat-t -> set-t
+    list-length-t = sum
       @ list : t list-t
         length : nat-t
       zero-length-c :
@@ -479,8 +483,8 @@
       append([Car | Cdr], Succ, [Car | ResultCdr]):-
         append(Cdr, Succ, ResultCdr).
 
-    list-append-t : -- t list-t t list-t t list-t -> type-t
-    list-append-t = union
+    list-append-t : -- t list-t t list-t t list-t -> set-t
+    list-append-t = sum
       @ [ante succ result] : t list-t
       zero-append-c :
         -- -> null-c succ succ zero-append-t
@@ -497,10 +501,10 @@
 *** vect-t
 
     #+begin_src cicada
-    vect-t : -- nat-t type-t -> type-t
-    vect-t = union
+    vect-t : -- nat-t set-t -> set-t
+    vect-t = sum
       @ length : nat-t
-        t : type-t
+        t : set-t
       null-vect-c :
         -- -> zero-c t null-vect-t
       cons-vect-c :
@@ -547,11 +551,11 @@
 
       preorder-s : class-t
       preorder-s = class
-        element-t : type-t
+        element-t : set-t
 
         pre-t :
           -- element-t element-t
-          -> type-t
+          -> set-t
 
         pre-reflexive :
           -- element-t % a
@@ -573,7 +577,7 @@
         element-eqv-t :
           -- element-t
              element-t
-          -> type-t
+          -> set-t
         pre-anti-symmetric :
           -- a b pre-t
              b a pre-t
@@ -601,7 +605,7 @@
       total-order-s = class
         pre-connex :
           -- [a b] : element-t
-          -> (+ a b pre-t | b a pre-t)
+          -> (union a b pre-t b a pre-t)
       #+end_src
 
 * category
@@ -611,15 +615,15 @@
     #+begin_src cicada
     category-s : class-t
     category-s = class
-      object-t : type-t*
+      object-t : set-t*
 
       arrow-t :
         -- object-t object-t
-        -> type-t*
+        -> set-t*
 
       arrow-eqv-t :
         -- a b arrow-t a b arrow-t
-        -> type-t*
+        -> set-t*
 
       identity :
         -- object-t % a
@@ -658,11 +662,11 @@
     category.arrow-inverse-t :
       -- a b arrow-t
          b a arrow-t
-      -> type-t
+      -> set-t
     category.arrow-inverse-t = lambda
       let f g in
-      f g compose a identity arrow-eqv-t
-      g f compose b identity arrow-eqv-t
+      * f g compose a identity arrow-eqv-t
+        g f compose b identity arrow-eqv-t
     #+end_src
 
 *** category.arrow-unique-t
@@ -670,8 +674,8 @@
     #+begin_src cicada
     category.arrow-unique-t :
       -- a b arrow-t
-         -- a b arrow-t -> type-t
-      -> type-t
+         -- a b arrow-t -> set-t
+      -> set-t
     category.arrow-unique-t = lambda
       let f theorem in
       (* f theorem
@@ -700,7 +704,7 @@
 *** category.iso-object-t
 
     #+begin_src cicada
-    category.iso-object-t : -- object-t object-t -> type-t
+    category.iso-object-t : -- object-t object-t -> set-t
     category.iso-object-t = lambda
       let a b in
       * a b arrow-t % f
@@ -718,7 +722,7 @@
          object-t % p
          p a arrow-t % pa
          p b arrow-t % pb
-      -> type-t
+      -> set-t
     category.product-object-t = lambda
       let a b p pa pb in
       -- object-t % q
@@ -739,7 +743,7 @@
          object-t % p
          a p arrow-t % ap
          b p arrow-t % bp
-      -> type-t
+      -> set-t
     category.product-object-t = lambda
       let a b p ap bp in
       -- object-t % q
@@ -754,7 +758,7 @@
 *** category.initial-object-t
 
     #+begin_src cicada
-    category.initial-object-t : -- object-t -> type-t
+    category.initial-object-t : -- object-t -> set-t
     category.initial-object-t = lambda
       let a in
       -- object-t % b
@@ -764,7 +768,7 @@
 *** category.terminal-object-t
 
     #+begin_src cicada
-    category.terminal-object-t : -- object-t -- type-t
+    category.terminal-object-t : -- object-t -- set-t
     category.terminal-object-t = lambda
       let a in
       -- object-t % b
@@ -797,7 +801,7 @@
       arrow-t :
         -- (* #1.object-t #2.object-t)
            (* #1.object-t #2.object-t)
-        -> type-t
+        -> set-t
       arrow-t = lambda
         let succ ante in
         (* succ.1 ante.1 #1.arrow-t
@@ -808,7 +812,7 @@
               a.2 b.2 #2.arrow-t)
            (* a.1 b.1 #1.arrow-t
               a.2 b.2 #2.arrow-t)
-        -> type-t
+        -> set-t
       arrow-eqv-t = lambda
         let lhs rhs in
         (* lhs.1 rhs.1 #1.arrow-eqv-t
@@ -928,12 +932,12 @@
 
       arrow-t :
         -- object-t object-t
-        -> type-t*
+        -> set-t*
       arrow-t = lambda swap this.arrow-t
 
       arrow-eqv-t :
         -- b a this.arrow-t b a this.arrow-t
-        -> type-t*
+        -> set-t*
       arrow-eqv-t = lambda this.arrow-eqv-t
 
       identity :
@@ -1004,7 +1008,7 @@
 *** void-arrow-t
 
     #+begin_src cicada
-    void-arrow-t : -- void-t void-t -> type-t
+    void-arrow-t : -- void-t void-t -> set-t
     void-arrow-t = data
       @ [ante succ] : void-t
       void-arrow-c :
@@ -1017,7 +1021,7 @@
     void-arrow-eqv-t :
       -- a b void-arrow-t
          a b void-arrow-t
-      -> type-t
+      -> set-t
     void-arrow-eqv-t = data
       @ [lhs rhs] : a b void-arrow-t
       void-arrow-eqv-c :
@@ -1074,15 +1078,15 @@
 
     graph-s : class-t
     graph-s = class
-      node-t : type-t
-      edge-t : -- node-t node-t -> type-t
+      node-t : set-t
+      edge-t : -- node-t node-t -> set-t
     #+end_src
 
 *** graph.path-t
 
     #+begin_src cicada
-    graph.path-t : -- node-t node-t -> type-t
-    graph.path-t = union
+    graph.path-t : -- node-t node-t -> set-t
+    graph.path-t = sum
       @ [start end] : node-t
       node-path-c :
         -- node-t % node
@@ -1099,8 +1103,8 @@
 *** graph.path-eqv-t
 
     #+begin_src cicada
-    graph.path-eqv-t : -- a b path-t, a b path-t -> type-t
-    graph.path-eqv-t = union
+    graph.path-eqv-t : -- a b path-t, a b path-t -> set-t
+    graph.path-eqv-t = sum
       @ [lhs rhs] : a b path-t
       refl-path-eqv-c :
         -- a b path-t % p
@@ -1165,8 +1169,8 @@
 *** nat-lteq-t
 
     #+begin_src cicada
-    nat-lteq-t : -- nat-t nat-t -> type-t
-    nat-lteq-t = union
+    nat-lteq-t : -- nat-t nat-t -> set-t
+    nat-lteq-t = sum
       @ [l r] : nat-t
       zero-lteq-c :
         -- -> zero-c r zero-lteq-t
@@ -1210,7 +1214,7 @@
 *** nat-lt-t
 
     #+begin_src cicada
-    nat-lt-t : -- nat-t nat-t -> type-t
+    nat-lt-t : -- nat-t nat-t -> set-t
     nat-lt-t = lambda
       let l r in
       l succ-c r nat-lteq-t
@@ -1282,11 +1286,11 @@
     #+begin_src cicada
     monoid-s : class-t
     monoid-s = class
-      element-t : type-t
+      element-t : set-t
 
       element-eqv-t :
         -- element-t element-t
-        -> type-t
+        -> set-t
 
       unit : element-t
 
@@ -1337,18 +1341,18 @@
 
 * >< limit
 
-* type-cat
+* set-cat
 
 *** [note]
 
     - this construction is not yet powerful enough
       to model the semantic of cicada.
 
-*** type-arrow-t
+*** fun-arrow-t
 
     #+begin_src cicada
-    type-arrow-t : -- type-t type-t -> type-t
-    type-arrow-t = lambda
+    fun-arrow-t : -- set-t set-t -> set-t
+    fun-arrow-t = lambda
       let succ ante in
       lazy -- succ -> ante
     #+end_src
@@ -1356,7 +1360,7 @@
 *** fun-eqv-t
 
     #+begin_src cicada
-    fun-eqv-t : -- (lazy -- a -> b) (lazy -- a -> b) -> type-t
+    fun-eqv-t : -- (lazy -- a -> b) (lazy -- a -> b) -> set-t
     fun-eqv-t = data
       @ [lhs rhs] : (lazy -- a -> b)
       fun-eqv-c :
@@ -1364,17 +1368,17 @@
         -> lhs rhs fun-eqv-t
     #+end_src
 
-*** type-cat
+*** set-cat
 
     #+begin_src cicada
-    type-cat : category-s
-    type-cat = category-@
-      object-t = lambda type-t
-      arrow-t = lambda type-arrow-t
+    set-cat : category-s
+    set-cat = category-@
+      object-t = lambda set-t
+      arrow-t = lambda fun-arrow-t
       arrow-eqv-t = lambda fun-eqv-t
 
       identity :
-        -- type-t % a
+        -- set-t % a
         -> (lazy -- a -> a)
       identity = lambda
         let x in {}
@@ -1414,10 +1418,11 @@
 
     #+begin_src cicada
     note
-      endo-functor of type-cat
+      endo-functor of set-cat
+
     functor-s : class-t
     functor-s = class
-      fun-t : -- type-t -> type-t
+      fun-t : -- set-t -> set-t
       map : -- a fun-t, (-- a -> b) -> b fun-t
     #+end_src
 
@@ -1490,9 +1495,9 @@
 *** maybe-t
 
     #+begin_src cicada
-    maybe-t : -- type-t -> type-t
-    maybe-t = union
-      @ t : type-t
+    maybe-t : -- set-t -> set-t
+    maybe-t = sum
+      @ t : set-t
       none-c :
         -- -> t none-t
       just-c :
@@ -1530,7 +1535,7 @@
 *** state-t
 
     #+begin_src cicada
-    state-t : -- type-t type-t -> type-t
+    state-t : -- set-t set-t -> set-t
     state-t = lambda
       let a s in
       -- s -> s a
@@ -1539,7 +1544,7 @@
 *** state-monad
 
     #+begin_src cicada
-    state-monad : -- type-t -> monad-s
+    state-monad : -- set-t -> monad-s
     state-monad = lambda
       let s in monad-@
       fun-t = lambda {s state-t}
@@ -1563,9 +1568,9 @@
 *** tree-t
 
     #+begin_src cicada
-    tree-t : -- type-t -> type-t
-    tree-t = union
-      @ t : type-t
+    tree-t : -- set-t -> set-t
+    tree-t = sum
+      @ t : set-t
       leaf-c :
         -- t % value -> t leaf-t
       branch-c :
@@ -1648,8 +1653,8 @@
 *** gcd-t
 
     #+begin_src cicada
-    gcd-t : -- int-t int-t int-t -> type-t
-    gcd-t = union
+    gcd-t : -- int-t int-t int-t -> set-t
+    gcd-t = sum
       @ [x y d] : int-t
       zero-gcd-c :
         -- -> x zero-c x zero-gcd-t
@@ -1666,10 +1671,10 @@
     #+begin_src cicada
     dependent-category-s : class-t
     dependent-category-s = class
-      object-t : type-t
-      object-eqv-t : -- object-t object-t -> type-t
-      arrow-t : -- object-t object-t -> type-t
-      arrow-eqv-t : -- a b arrow-t a b arrow-t -> type-t
+      object-t : set-t
+      object-eqv-t : -- object-t object-t -> set-t
+      arrow-t : -- object-t object-t -> set-t
+      arrow-eqv-t : -- a b arrow-t a b arrow-t -> set-t
       substitution-t : monoid-s
       substitute : -- object-t substitution-t -> object-t
       unification :
