@@ -1,13 +1,11 @@
 #+title: prelude
 
-* [bug]
+* [todo-stack]
 
 *** arrow-eqv-t -- amend `arrow-eqv-relation` for all `category-@`
 
     - arrow-eqv-t must be an eqv-relation-s
       for all hom-set [a b arrow-t]
-
-* [todo-stack]
 
 *** can function not be stored in data-field ?
 
@@ -33,15 +31,13 @@
 
 *** monad as cat
 
-*** category-theory
+*** natural-transformation
 
-***** natural-transformation
+    - natural-transformation is a level up map.
 
-      - natural-transformation is a level up map.
-
-        the definition of natural-transformation
-        maps object to arrow,
-        and arrow to square.
+      the definition of natural-transformation
+      maps object to arrow,
+      and arrow to square.
 
 *** dependent-category-theory
 
@@ -61,70 +57,199 @@
 
 *** use number theory -- to test type-checker as prover
 
-*** sub-type or sub-set ?
+*** sub-set relation in set-t
 
-    - relation in set-t
+    - maybe use (<) as syntax
 
-    - sub-type relation as order relation for algebraic data type
+*** algebraic structure
 
-    - for example :
+    - (*) and (sum) in set-t
+      provide two commutative monoidal structures -- semi-ring-s
+      for we can’t define subtraction of types.
+      -- a.k.a rig-s, ring without negative.
+
+    - order relation for algebraic data type
+
+      for example :
       a < a + b
       a < a * 2
+
+      this can be viewed as a functor from set-t to rational-t
+
+    ------
+
+    - x -
+      can we extend the algebraic structure to dependent type ?
+
+    - k -
+      we will need to extend the algebraic structure to object
+
+    - x -
+      object are just like type.
+      just without sum-type, only product-type.
 
 * [note]
 
 *** (:) (%)
 
-    - just like `=` in some language can form type
+    - x -
+      just like `=` in some language can form type
       [in cicada, eqv-c and eqv-t]
       should these form types too ?
 
+    - k -
+      I do not think so
+
+*** (*)
+
+    - literal tuple-type -- (* <type> ...)
+
+    - inhabit by literal tuple -- (* <data> ...)
+
+*** []
+
+    - syntax for values on stack
+
+    - type on stack [<type> ...]
+
+    - inhabit by data on stack [<data> ...]
+
 *** (@)
 
-    - syntax for unnamed record type
+    - product-type with named fields
+
+    - literal record-type -- (@ <field> : <type> ...)
+
+    - inhabited by literal record-data (@ <field> = <data> ...)
 
 *** (union)
 
     - union of set theory
 
+    - literal union-type -- (union <type> ...)
+
+    - we do not have literal union-data,
+      the union-type is inhabited by [<data> : <type>] and so on
+
+*** (data)
+
+    - data-type
+
+    - named record-type
+
+    - it names a type-constructor for the data-type,
+      whose return type is set-t
+
+    - it also names a data-constructor,
+      whose return type is constructed by the type-constructor.
+
+    - to inhabit a data-type constructed by type-constructor,
+      we call its data-constructor.
+
+      - <name>-c -- call the data-constructor
+        with ordered arguments on stack
+
+      - <name>-cr -- call the data-constructor
+        with one record-data on the top of stack
+
+      - (<name>-@ <field> = <data> ...) -- literal syntax
+        in which the order of <data> does not matter
+
 *** (sum)
 
-    - also known as -- tagged-union, disjoin-union, sum-type
+    - sum-type
 
-*** (*)
+    - named data-type list
 
-    - `ante` and `succ` in (-- ante -> succ) are all implicit tuples
+    - type-constructor of each data-type have the same type
 
-    - (*) explicit nested tuple
+    - it also names a type-constructor for the sum-type,
+      which has the same type as the data-type's type-constructor
 
-*** level
+    - since it always create new data-type list,
+      it can be viewed as disjoin-union,
+      because data-types in the list are disjoin.
 
-    | 0 | data, object                                   |
-    | 1 | data-type, sum-type, union-type, quotient-type |
-    | 2 | class-t, set-t                                 |
+*** (class)
 
-    - set-t : set-t2
-      nat-t : set-t
-      (* nat-t nat-t) : set-t
-      [nat-t nat-t] : [set-t set-t]
-      (union nat-t, nat-t list-t) : set-t
-      (-- nat-t -> nat-t) : set-t
+    - class-type
 
-    - object are just like type.
-      just without sum-type, only product type.
+    - named record-type just like data-type
+
+    - but unlike data-type,
+      it can only names a class-constructor with zero arity.
+
+      thus the class-constructor
+      is only act as a name of the class-type.
+
+    - to inhabit a class-type,
+      we can only use the literal syntax
+      (<name>-@ <field> = <data> ...) -- instance object of the class
+
+    - also a class-type can inherit other class-types,
+      bringing in the sub-class relation between class-types
 
 *** (<:)
 
-    - sub-type relation between classes
+    - sub-class relation between class-types
 
-    - c1 <: c2
-      if c1 is more special then c2
-      if c1 has more interface functions than c2
+    - [c1 <: c2] means c1 inherit c2 's fields,
+      thus c1 is more special then c2,
+      because c1 has more interface functions than c2.
 
-*** top of stack as main argument
+    - whatever object inhabits c1 also inhabits c2.
 
-    - take `nat-add` as a example,
-      we (case) over the argument at the top of the stack.
+*** data-type vs class-type
+
+***** low-level vs high-level
+
+      - data-type's fields' types are often other data-types.
+
+      - class-type's fields' types are often set-t or arrow-type,
+        i.e. of higher levels.
+
+***** implicit vs explicit
+
+      - data-type's type-constructor can take arguments,
+        the informations in the arguments,
+        can be viewed as implicit
+        to the data constructed by its data-constructor.
+
+      - class-type's class-constructor can not take arguments,
+        all the informations
+        are explicitly stored in its instance object.
+
+*** level of universe
+
+***** >< accumulative or not ?
+
+***** level table
+
+      | 0 | data, object              |
+      |---+---------------------------|
+      | 1 | data-type, sum-type       |
+      |   | union-type, quotient-type |
+      |   | record-type, tuple-type   |
+      |---+---------------------------|
+      | 2 | class-t, set-t            |
+
+***** level examples
+
+      | 0                     | 1                   | 2               |
+      |-----------------------+---------------------+-----------------|
+      | nat-t                 | set-t               | set-t2          |
+      | (* nat-t nat-t)       | set-t               | set-t2          |
+      | [nat-t nat-t]         | [set-t set-t]       | [set-t2 set-t2] |
+      | (union nat-t, bool-t) | set-t               | set-t2          |
+      | (-- nat-t -> nat-t)   | set-t               | set-t2          |
+      | list-t                | (-- set-t -> set-t) | set-t2          |
+
+*** conventions
+
+***** top of stack as main argument
+
+      - take `nat-add` as a example,
+        we (case) over the argument at the top of the stack.
 
 * void
 
@@ -674,10 +799,10 @@
       -> set-t
     category.arrow-unique-t = lambda
       let f theorem in
-      (* f theorem
-         (-- a b arrow-t % g
-             g theorem
-          -> f g arrow-eqv-t))
+      * f theorem
+        -- a b arrow-t % g
+           g theorem
+        -> f g arrow-eqv-t
     #+end_src
 
 *** (unique ... under ...)
@@ -691,10 +816,10 @@
 
     #+begin_src cicada
     unique [$x : $t] under $eqv-t such-that $theorem  = macro
-      (* $x $theorem
-         (-- y : $t
-             y $theorem
-          -> $x y $eqv-t))
+      * $x $theorem
+        -- y : $t
+           y $theorem
+        -> $x y $eqv-t
     #+end_src
 
 *** category.iso-object-t
@@ -1344,11 +1469,11 @@
     - this construction is not yet powerful enough
       to model the semantic of cicada.
 
-*** fun-arrow-t
+*** set-arrow-t
 
     #+begin_src cicada
-    fun-arrow-t : -- set-t set-t -> set-t
-    fun-arrow-t = lambda
+    set-arrow-t : -- set-t set-t -> set-t
+    set-arrow-t = lambda
       let succ ante in
       lazy -- succ -> ante
     #+end_src
@@ -1370,7 +1495,7 @@
     set-cat : category-s
     set-cat = category-@
       object-t = lambda set-t
-      arrow-t = lambda fun-arrow-t
+      arrow-t = lambda set-arrow-t
       arrow-eqv-t = lambda fun-eqv-t
 
       identity :
@@ -1406,6 +1531,34 @@
            {{f apply g apply} apply h apply} fun-eqv-t
       compose-associative = lambda
         {drop eqv-c} fun-eqv-c
+    #+end_src
+
+* class-cat
+
+*** [note]
+
+    - since (class) is used to model mathematical structure,
+      this class-cat is big category.
+
+*** class-arrow-t
+
+    #+begin_src cicada
+    class-arrow-t : -- class-t class-t -> class-t
+    class-arrow-t = lambda
+      let succ ante in
+      lazy -- succ -> ante
+    #+end_src
+
+*** ><
+
+*** class-cat
+
+    #+begin_src cicada
+    class-cat : category-s
+    class-cat = category-@
+      object-t = lambda class-t
+      arrow-t = lambda class-arrow-t
+      arrow-eqv-t = lambda
     #+end_src
 
 * functor
