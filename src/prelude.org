@@ -9,6 +9,12 @@
 
 * [todo-stack]
 
+*** prove iso for universal-construction
+
+    - a universal-construction is unique up to unique isomorphism
+
+    - unique thus eqv
+
 *** should type-cat be called set-cat ?
 
     - x -
@@ -718,10 +724,31 @@
       -- object-t % q
          q a arrow-t % qa
          q b arrow-t % qb
-      -> unique q p arrow-t % m
+      -> unique q p arrow-t % qp
          under arrow-eqv-t such-that
-           * qa, m pa compose arrow-eqv-t
-             qb, m pb compose arrow-eqv-t
+           * qa, qp pa compose arrow-eqv-t
+             qb, qp pb compose arrow-eqv-t
+    #+end_src
+
+*** category.coproduct-object-t
+
+    #+begin_src cicada
+    category.coproduct-object-t :
+      -- object-t % a
+         object-t % b
+         object-t % p
+         a p arrow-t % ap
+         b p arrow-t % bp
+      -> type-t
+    category.product-object-t = lambda
+      let a b p ap bp in
+      -- object-t % q
+         a q arrow-t % aq
+         a q arrow-t % bq
+      -> unique p q arrow-t % pq
+         under arrow-eqv-t such-that
+           * aq, ap pq compose arrow-eqv-t
+             bq, bp pq compose arrow-eqv-t
     #+end_src
 
 *** category.initial-object-t
