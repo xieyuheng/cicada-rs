@@ -376,15 +376,14 @@
     #+begin_src cicada
     unit-s : set-t
     unit-s = data
-      unit-c :
-        -- -> unit-s
+      unit-c : unit-s
     #+end_src
 
 *** unit
 
     #+begin_src cicada
     unit : -- a -> unit-s
-    unit = lambda drop unit-c
+    (unit a) = unit-c
     #+end_src
 
 * bool
@@ -394,10 +393,8 @@
     #+begin_src cicada
     bool-s : set-t
     bool-s = sum
-      true-c :
-        -- -> true-s
-      false-c :
-        -- -> false-s
+      true-c : true-s
+      false-c : false-s
     #+end_src
 
 * nat
@@ -407,10 +404,8 @@
     #+begin_src cicada
     nat-s : set-t
     nat-s = sum
-      zero-c :
-        -- -> zero-s
-      succ-c :
-        -- prev : nat-s -> succ-s
+      zero-c : zero-s
+      succ-c : -- prev : nat-s -> succ-s
     #+end_src
 
 *** nat-add
@@ -451,8 +446,7 @@
     list-s : -- set-t -> set-t
     list-s = sum
       @ t : set-t
-      null-c :
-        -- -> (null-s t)
+      null-c : (null-s t)
       cons-c :
         -- car : t
            cdr : (list-s t)
@@ -518,8 +512,7 @@
     eqv-s : -- t t -> set-t
     eqv-s = data
       @ [lhs rhs] : t
-      eqv-c :
-        -- -> (eqv-s v v)
+      eqv-c : (eqv-s v v)
     #+end_src
 
 *** eqv-apply
@@ -574,13 +567,12 @@
     nat-even-s : -- nat-s -> set-t
     nat-even-s = sum
       @ nat : nat-s
-      zero-even-c :
-        -- -> (zero-even-s zero-c)
+      zero-even-c : (zero-even-s zero-c)
       even-plus-two-even-c :
         -- prev : (nat-even-s m)
         -> (even-plus-two-even-s (succ-c (succ-c m)))
 
-    two-even : -- -> (nat-even-s (succ-c (succ-c zero-c)))
+    two-even : (nat-even-s (succ-c (succ-c zero-c)))
     two-even = lambda (even-plus-two-even-c zero-even-c)
     #+end_src
 
@@ -661,8 +653,7 @@
     list-length-s = sum
       @ list : (list-s t)
         length : nat-s
-      zero-length-c :
-        -- -> (zero-length-s null-c zero-c)
+      zero-length-c : (zero-length-s null-c zero-c)
       succ-length-c :
         -- prev : (list-length-s list length)
         -> element :: t
@@ -696,8 +687,7 @@
     list-append-s : -- (list-s t) (list-s t) (list-s t) -> set-t
     list-append-s = sum
       @ [ante succ result] : (list-s t)
-      zero-append-c :
-        -- -> (zero-append-s null-c succ succ)
+      zero-append-c : (zero-append-s null-c succ succ)
       succ-append-c :
         -- car :: t
            cdr :: (list-s t)
@@ -717,8 +707,7 @@
     vect-s = sum
       @ length : nat-s
         t : set-t
-      null-vect-c :
-        -- -> (null-vect-s zero-c t)
+      null-vect-c : (null-vect-s zero-c t)
       cons-vect-c :
         -- car : t
            cdr : (vect-s length t)
@@ -1100,8 +1089,7 @@
     void-arrow-s : -- void-s void-s -> set-t
     void-arrow-s = data
       @ [ante succ] : void-s
-      void-arrow-c :
-        -- -> (void-arrow-s ante succ)
+      void-arrow-c : (void-arrow-s ante succ)
     #+end_src
 
 *** void-arrow-eqv-s
@@ -1113,8 +1101,7 @@
       -> set-t
     void-arrow-eqv-s = data
       @ [lhs rhs] : (void-arrow-s a b)
-      void-arrow-eqv-c :
-        -- -> (void-arrow-eqv-s lhs rhs)
+      void-arrow-eqv-c : (void-arrow-eqv-s lhs rhs)
     #+end_src
 
 *** void-category
@@ -1260,8 +1247,7 @@
     nat-lteq-s : -- nat-s nat-s -> set-t
     nat-lteq-s = sum
       @ [l r] : nat-s
-      zero-lteq-c :
-        -- -> (zero-lteq-s zero-c r)
+      zero-lteq-c : (zero-lteq-s zero-c r)
       succ-lteq-c :
         -- prev : (nat-lteq-s l r)
         -> (succ-lteq-s (succ-c l) (succ-c r))
@@ -1525,8 +1511,7 @@
     maybe-s : -- set-t -> set-t
     maybe-s = sum
       @ t : set-t
-      none-c :
-        -- -> (none-s t)
+      none-c : (none-s t)
       just-c :
         -- value : t -> (just-s t)
     #+end_src
@@ -1655,8 +1640,7 @@
     gcd-s : -- int-s int-s int-s -> set-t
     gcd-s = sum
       @ [x y d] : int-s
-      zero-gcd-c :
-        -- -> (zero-gcd-s x zero-c x)
+      zero-gcd-c : (zero-gcd-s x zero-c x)
       mod-gcd-c :
         -- gcd : (gcd-s x y d)
            mod : (mod-s x y z)
