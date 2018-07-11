@@ -1,6 +1,10 @@
 #+html_head: <link rel="stylesheet" href="css/org-page.css"/>
 #+title: prelude
-
+* not to much lambda
+* fix argument order -- map, add, append
+* fix state
+* fix multi-return-value
+* fix the use of `-&`
 * [todo-stack]
 
 *** category-category
@@ -316,13 +320,6 @@
       | (-- nat-s -> nat-s)   | set-t               | set-tt          |
       | list-s                | (-- set-t -> set-s) | set-tt          |
 
-*** conventions
-
-***** top of stack as main argument
-
-      - take `nat-add` as a example,
-        we (case) over the argument at the top of the stack.
-
 *** implicit-ness
 
 ***** builtin level polymorphism
@@ -420,33 +417,30 @@
 
     #+begin_src cicada
     nat-add : -- nat-s nat-s -> nat-s
-    nat-add = lambda
-      let m n in
+    nat-add = lambda [m n]
       case n
         zero-s m
-        succ-s m n.prev recur succ-c
+        succ-s (succ-c (recur m n.prev))
     #+end_src
 
 *** nat-mul
 
     #+begin_src cicada
     nat-mul : -- nat-s nat-s -> nat-s
-    nat-mul = lambda
-      let m n in
+    nat-mul = lambda [m n]
       case n
         zero-s n
-        succ-s m n.prev recur m nat-add
+        succ-s (nat-add (recur m n.prev) m)
     #+end_src
 
 *** nat-factorial
 
     #+begin_src cicada
     nat-factorial : -- nat-s -> nat-s
-    nat-factorial = lambda
-      let n in
+    nat-factorial = lambda [n]
       case n
-        zero-s zero-c succ-c
-        succ-s n.prev recur n nat-mul
+        zero-s (succ-c zero-c)
+        succ-s (nat-mul (recur n.prev) n)
     #+end_src
 
 * list
@@ -458,50 +452,47 @@
     list-s = sum
       @ t : set-t
       null-c :
-        -- -> t null-s
+        -- -> (null-s t)
       cons-c :
         -- car : t
-           cdr : t list-s
-        -> t cons-s
+           cdr : (list-s t)
+        -> (cons-s t)
     #+end_src
 
 *** list-length
 
     #+begin_src cicada
-    list-length : -- t list-s -> nat-s
-    list-length = lambda
-      let list in
+    list-length : -- (list-s t) -> nat-s
+    list-length = lambda [list]
       case list
         null-s zero-c
-        cons-s list.cdr recur succ-c
+        cons-s (succ-c (recur list.cdr))
     #+end_src
 
 *** list-append
 
     #+begin_src cicada
     list-append :
-      -- t list-s
-         t list-s
-      -> t list-s
-    list-append = lambda
-      let ante succ in
+      -- (list-s t)
+         (list-s t)
+      -> (list-s t)
+    list-append = lambda [ante succ]
       case succ
         null-s ante
-        cons-s succ.car ante succ.cdr recur cons-c
+        cons-s (cons-c succ.car (recur ante succ.cdr))
     #+end_src
 
 *** list-map
 
     #+begin_src cicada
     list-map :
-      -- a list-s
+      -- (list-s a)
          -- a -> b
-      -> b list-s
-    list-map = lambda
-      let list fun in
+      -> (list-s b)
+    list-map = lambda [list fun]
       case list
         null-s list
-        cons-s list.car fun list.cdr {fun} recur cons-c
+        cons-s (cons-c (fun list.car) (recur list.cdr fun))
     #+end_src
 
 *** list-remove-first
@@ -509,15 +500,14 @@
     #+begin_src cicada
     list-remove-first :
       -- t
-         t list-s
-      -> t list-s
-    list-remove-first = lambda
-      let x list in
+         (list-s t)
+      -> (list-s t)
+    list-remove-first = lambda [x list]
       case list
         null-s list
-        cons-s case [list.car x eq-p]
+        cons-s case (eq-p list.car x)
           true-s list.cdr
-          false-s list.car list.cdr x recur cons-c
+          false-s (cons-c list.car (recur list.cdr x))
     #+end_src
 
 * eqv
@@ -529,7 +519,7 @@
     eqv-s = data
       @ [lhs rhs] : t
       eqv-c :
-        -- -> v v eqv-s
+        -- -> (eqv-s v v)
     #+end_src
 
 *** eqv-apply
@@ -537,12 +527,10 @@
     #+begin_src cicada
     eqv-apply :
       -- [x y] :: a
-         x y eqv-s
+         (eqv-s x y)
          fun : -- a -> b
-      -> x fun y fun eqv-s
-    eqv-apply = lambda
-      let v fun in
-      eqv-c
+      -> (eqv-s (fun x) (fun y))
+    eqv-apply = lambda [v fun] eqv-c
     #+end_src
 
 *** eqv-swap
@@ -550,11 +538,9 @@
     #+begin_src cicada
     eqv-swap :
       -- [x y] :: t
-         x y eqv-s
-      -> y x eqv-s
-    eqv-swap = lambda
-      let v in
-      eqv-c
+         (eqv-s x y)
+      -> (eqv-s y x)
+    eqv-swap = lambda [v] eqv-c
     #+end_src
 
 *** eqv-compose
@@ -562,12 +548,10 @@
     #+begin_src cicada
     eqv-compose :
       -- [x y z] :: t
-         x y eqv-s
-         y z eqv-s
-      -> x z eqv-s
-    eqv-compose = lambda
-      let v u in
-      eqv-c
+         (eqv-s x y)
+         (eqv-s y z)
+      -> (eqv-s x z)
+    eqv-compose = lambda [v u] eqv-c
     #+end_src
 
 * nat
@@ -576,13 +560,12 @@
 
     #+begin_src cicada
     nat-even-p : -- nat-s -> bool-s
-    nat-even-p = lambda
-      let x in
+    nat-even-p = lambda [x]
       case x
         zero-s true-c
         succ-s case x.prev
           zero-s false-c
-          succ-s x.prev.prev recur
+          succ-s (recur x.prev.prev)
     #+end_src
 
 *** nat-even-s
@@ -592,13 +575,13 @@
     nat-even-s = sum
       @ nat : nat-s
       zero-even-c :
-        -- -> zero-c zero-even-s
+        -- -> (zero-even-s zero-c)
       even-plus-two-even-c :
-        -- prev : m nat-even-s
-        -> m succ-c succ-c even-plus-two-even-s
+        -- prev : (nat-even-s m)
+        -> (even-plus-two-even-s (succ-c (succ-c m)))
 
-    two-even : -- -> zero-c succ-c succ-c nat-even-s
-    two-even = lambda zero-even-c even-plus-two-even-c
+    two-even : -- -> (nat-even-s (succ-c (succ-c zero-c)))
+    two-even = lambda (even-plus-two-even-c zero-even-c)
     #+end_src
 
 *** nat-add-associative
@@ -606,13 +589,13 @@
     #+begin_src cicada
     nat-add-associative :
       -- [x y z] : nat-s
-      -> x y nat-add z nat-add
-         x y z nat-add nat-add eqv-s
-    nat-add-associative = lambda
-      let x y z in
+      -> (eqv-s
+           (nat-add (nat-add x y) z)
+           (nat-add x (nat-add y z)))
+    nat-add-associative = lambda [x y z]
       case z
         zero-s eqv-c
-        succ-s x y z.prev recur {succ-c} eqv-apply
+        succ-s (eqv-apply (recur x y z.prev) succ-c)
     #+end_src
 
 *** nat-add-commutative
@@ -620,15 +603,16 @@
     #+begin_src cicada
     nat-add-commutative :
       -- [m n] : nat-s
-      -> m n nat-add
-         n m nat-add eqv-s
-    nat-add-commutative = lambda
-      let m n in
+      -> (eqv-s
+           (nat-add m n)
+           (nat-add n m))
+    nat-add-commutative = lambda [m n]
       case n
-        zero-s m nat-add-zero-commutative
+        zero-s (nat-add-zero-commutative m)
         succ-s
-          m n.prev recur {succ-c} eqv-apply
-          n.prev m nat-add-succ-commutative eqv-compose
+          (eqv-compose
+            (eqv-apply (recur m n.prev) succ-c)
+            (nat-add-succ-commutative n.prev m))
     #+end_src
 
 *** nat-add-zero-commutative
@@ -636,13 +620,13 @@
     #+begin_src cicada
     nat-add-zero-commutative :
       -- m : nat-s
-      -> m zero-c nat-add
-         zero-c m nat-add eqv-s
-    nat-add-zero-commutative = lambda
-      let m in
+      -> (eqv-s
+           (nat-add m zero-c)
+           (nat-add zero-c m))
+    nat-add-zero-commutative = lambda [m]
       case m
         zero-s eqv-c
-        succ-s m.prev recur {succ-c} eqv-apply
+        succ-s (eqv-apply (recur m.prev) succ-c)
     #+end_src
 
 *** nat-add-succ-commutative
@@ -650,13 +634,13 @@
     #+begin_src cicada
     nat-add-succ-commutative :
       -- [m n] : nat-s
-      -> m succ-c n nat-add
-         m n nat-add succ-c eqv-s
-    nat-add-succ-commutative = lambda
-      let m n in
+      -> (eqv-s
+           (nat-add (succ-c m) n)
+           (succ-c (nat-add m n)))
+    nat-add-succ-commutative = lambda [m n]
       case n
         zero-s eqv-c
-        succ-s m n.prev recur {succ-c} eqv-apply
+        succ-s (eqv-apply (recur m n.prev) succ-c)
     #+end_src
 
 * list
@@ -666,24 +650,24 @@
     #+begin_src cicada
     note
       list-length :
-        -- list : t list-s
+        -- list : (list-s t)
         -> length : nat-s
       list-length-s :
-        -- list : t list-s
+        -- list : (list-s t)
            length : nat-s
         -> set-t
 
-    list-length-s : -- t list-t, nat-s -> set-t
+    list-length-s : -- (list-t t) nat-s -> set-t
     list-length-s = sum
-      @ list : t list-s
+      @ list : (list-s t)
         length : nat-s
       zero-length-c :
-        -- -> null-c zero-c zero-length-s
+        -- -> (zero-length-s null-c zero-c)
       succ-length-c :
-        -- prev : list length list-length-s
+        -- prev : (list-length-s list length)
         -> element :: t
-           element list cons-c
-           length succ-c succ-length-s
+           (cons-c element list)
+           (succ-length-s (succ-c length))
     #+end_src
 
 *** list-map-preserve-list-length
@@ -691,15 +675,14 @@
     #+begin_src cicada
     list-map-preserve-list-length :
       -- fun :: -- a -> b
-         list :: a list-s
+         list :: (list-s a)
          n :: nat-s
-         list n list-length-s
-      -> list {fun} list-map n list-length-s
-    list-map-preserve-list-length = lambda
-      let h in
+         (list-length-s list n)
+      -> (list-length-s (list-map list fun) n)
+    list-map-preserve-list-length = lambda [h]
       case h
         zero-length-s h
-        succ-length-s h.prev recur succ-length-c
+        succ-length-s (succ-length-c (recur h.prev))
     #+end_src
 
 *** list-append-s
@@ -710,17 +693,19 @@
       append([Car | Cdr], Succ, [Car | ResultCdr]):-
         append(Cdr, Succ, ResultCdr).
 
-    list-append-s : -- t list-s t list-s t list-s -> set-t
+    list-append-s : -- (list-s t) (list-s t) (list-s t) -> set-t
     list-append-s = sum
-      @ [ante succ result] : t list-s
+      @ [ante succ result] : (list-s t)
       zero-append-c :
-        -- -> null-c succ succ zero-append-s
+        -- -> (zero-append-s null-c succ succ)
       succ-append-c :
         -- car :: t
-           cdr :: t list-s
-           result-cdr :: t list-s
-           prev : cdr succ result-cdr list-append-s
-        -> car cdr cons-c, succ, car result-cdr cons-c succ-append-s
+           cdr :: (list-s t)
+           result-cdr :: (list-s t)
+           prev : (list-append-s cdr succ result-cdr)
+        -> (succ-append-s
+             (cons-c car cdr) succ
+             (cons-c car result-cdr))
     #+end_src
 
 * vect
@@ -733,36 +718,34 @@
       @ length : nat-s
         t : set-t
       null-vect-c :
-        -- -> zero-c t null-vect-s
+        -- -> (null-vect-s zero-c t)
       cons-vect-c :
         -- car : t
-           cdr : length t vect-s
-        -> length succ-c t cons-vect-s
+           cdr : (vect-s length t)
+        -> (cons-vect-s (succ-c length) t)
     #+end_src
 
 *** vect-append
 
     #+begin_src cicada
     vect-append :
-      -- m t vect-s
-         n t vect-s
-      -> m n nat-add t vect-s
-    vect-append = lambda
-      let x y in
+      -- (vect-s m t)
+         (vect-s n t)
+      -> (vect-s (nat-add m n) t)
+    vect-append = lambda [x y]
       case y
         null-vect-s x
-        cons-vect-s y.car x y.cdr recur cons-vect-c
+        cons-vect-s (cons-vect-c (recur y.car x y.cdr))
     #+end_src
 
 *** vect-map
 
     #+begin_src cicada
-    vect-map : -- n a vect-s (-- a -> b) -> n b vect-s
-    vect-map = lambda
-      let list fun in
+    vect-map : -- (vect-s n a) (-- a -> b) -> (vect-s n b)
+    vect-map = lambda [list fun]
       case list
         null-vect-s list
-        cons-vect-s list.car fun list.cdr {fun} recur cons-vect-c
+        cons-vect-s (cons-vect-c (fun list.car) (recur list.cdr fun))
     #+end_src
 
 * order
@@ -786,12 +769,12 @@
 
         pre-reflexive :
           -- element-s % a
-          -> a a pre-s
+          -> (pre-s a a)
 
         pre-transitive :
-          -- a b pre-s
-             b c pre-s
-          -> a c pre-s
+          -- (pre-s a b)
+             (pre-s b c)
+          -> (pre-s a c)
       #+end_src
 
 *** partial-order
@@ -806,9 +789,9 @@
              element-s
           -> set-t
         pre-anti-symmetric :
-          -- a b pre-s
-             b a pre-s
-          -> a b element-eqv-s
+          -- (pre-s a b)
+             (pre-s b a)
+          -> (element-eqv-s a b)
       #+end_src
 
 *** eqv-relation
@@ -819,8 +802,8 @@
       eqv-relation-t <: preorder-t
       eqv-relation-t = class
         pre-symmetric :
-          -- a b pre-s
-          -> b a pre-s
+          -- (pre-s a b)
+          -> (pre-s b a)
       #+end_src
 
 *** total-order
@@ -832,7 +815,7 @@
       total-order-t = class
         pre-connex :
           -- [a b] : element-s
-          -> (union a b pre-s b a pre-s)
+          -> (union (pre-s a b) (pre-s b a))
       #+end_src
 
 * unique
@@ -841,7 +824,7 @@
 
     #+begin_src cicada
     unique [$x : $t] under $eqv-s = macro
-      (-- y : $t -> $x y $eqv-s)
+      (-- y : $t -> ($eqv-s $x y))
     #+end_src
 
 *** (unique ... under ... such-that ...)
@@ -851,7 +834,7 @@
       * $x $theorem
         -- y : $t
            y $theorem
-        -> $x y $eqv-s
+        -> ($eqv-s $x y)
     #+end_src
 
 * category
@@ -863,32 +846,33 @@
     category-t = class
       object-s : set-t
       arrow-s : -- object-s object-s -> set-t
-      arrow-eqv-s : -- a b arrow-s a b arrow-s -> set-t
+      arrow-eqv-s : -- (arrow-s a b) (arrow-s a b) -> set-t
 
-      identity : -- object-s % a -> a a arrow-s
+      identity : -- object-s % a -> (arrow-s a a)
 
-      compose : -- a b arrow-s b c arrow-s -> a c arrow-s
+      compose : -- (arrow-s a b) (arrow-s b c) -> (arrow-s a c)
 
       identity-neutral-left :
-        -- a b arrow-s % f
-        -> a identity f compose, f arrow-eqv-s
+        -- (arrow-s a b) % f
+        -> (arrow-eqv-s (compose (identity a) f) f)
 
       identity-neutral-right :
-        -- a b arrow-s % f
-        -> f b identity compose, f arrow-eqv-s
+        -- (arrow-s a b) % f
+        -> (arrow-eqv-s (compose f (identity b)) f)
 
       compose-associative :
-        -- a b arrow-s % f
-           b c arrow-s % g
-           c d arrow-s % h
-        -> f g h compose compose
-           f g compose h compose arrow-eqv-s
+        -- (arrow-s a b) % f
+           (arrow-s b c) % g
+           (arrow-s c d) % h
+        -> (arrow-eqv-s
+             (compose f (compose g h))
+             (compose (compose f g) h))
 
       arrow-eqv-relation :
         -- [a b] :: object-s
-        -> eqv-relation-&
-             element-s = a b arrow-s
-             pre-s = lambda arrow-eqv-s
+        -> (eqv-relation-&
+             element-s = (arrow-s a b)
+             pre-s = lambda arrow-eqv-s)
     #+end_src
 
 *** basic relation
@@ -897,25 +881,23 @@
 
       #+begin_src cicada
       category.arrow-inverse-s :
-        -- a b arrow-s
-           b a arrow-s
+        -- (arrow-s a b)
+           (arrow-s b a)
         -> set-t
-      category.arrow-inverse-s = lambda
-        let f g in
-        * f g compose a identity arrow-eqv-s
-          g f compose b identity arrow-eqv-s
+      category.arrow-inverse-s = lambda [f g]
+        * (arrow-eqv-s (compose f g) (identity a))
+          (arrow-eqv-s (compose g f) (identity b))
       #+end_src
 
 ***** category.isomorphic-object-s
 
       #+begin_src cicada
       category.isomorphic-object-s : -- object-s object-s -> set-t
-      category.isomorphic-object-s = lambda
-        let a b in
-        * a b arrow-s % f
-          b a arrow-s % g
-          f g compose a identity arrow-eqv-s
-          g f compose b identity arrow-eqv-s
+      category.isomorphic-object-s = lambda [a b]
+        * (arrow-s a b) % f
+          (arrow-s b a) % g
+          (arrow-eqv-s (compose f g) (identity a))
+          (arrow-eqv-s (compose g f) (identity b))
       #+end_src
 
 *** universal construction
@@ -927,18 +909,17 @@
         -- object-s % a
            object-s % b
            object-s % p
-           p a arrow-s % pa
-           p b arrow-s % pb
+           (arrow-s p a) % pa
+           (arrow-s p b) % pb
         -> set-t
-      category.product-object-s = lambda
-        let a b p pa pb in
+      category.product-object-s = lambda [a b p pa pb]
         -- object-s % q
-           q a arrow-s % qa
-           q b arrow-s % qb
-        -> unique q p arrow-s % qp
+           (arrow-s q a) % qa
+           (arrow-s q b) % qb
+        -> unique (arrow-s q p) % qp
            under arrow-eqv-s such-that
-             * qa, qp pa compose arrow-eqv-s
-               qb, qp pb compose arrow-eqv-s
+             * (arrow-eqv-s qa (compose qp pa))
+               (arrow-eqv-s qb (compose qp pb))
       #+end_src
 
 ***** category.coproduct-object-s
@@ -948,38 +929,35 @@
         -- object-s % a
            object-s % b
            object-s % p
-           a p arrow-s % ap
-           b p arrow-s % bp
+           (arrow-s a p) % ap
+           (arrow-s b p) % bp
         -> set-t
-      category.product-object-s = lambda
-        let a b p ap bp in
+      category.product-object-s = lambda [a b p ap bp]
         -- object-s % q
-           a q arrow-s % aq
-           a q arrow-s % bq
-        -> unique p q arrow-s % pq
+           (arrow-s a q) % aq
+           (arrow-s a q) % bq
+        -> unique (arrow-s p q) % pq
            under arrow-eqv-s such-that
-             * aq, ap pq compose arrow-eqv-s
-               bq, bp pq compose arrow-eqv-s
+             * (arrow-eqv-s aq (compose ap pq))
+               (arrow-eqv-s bq (compose bp pq))
       #+end_src
 
 ***** category.initial-object-s
 
       #+begin_src cicada
       category.initial-object-s : -- object-s -> set-t
-      category.initial-object-s = lambda
-        let a in
+      category.initial-object-s = lambda [a]
         -- object-s % b
-        -> unique a b arrow-s % f under arrow-eqv-s
+        -> unique (arrow-s a b) % f under arrow-eqv-s
       #+end_src
 
 ***** category.terminal-object-s
 
       #+begin_src cicada
       category.terminal-object-s : -- object-s -- set-t
-      category.terminal-object-s = lambda
-        let a in
+      category.terminal-object-s = lambda [a]
         -- object-s % b
-        -> unique b a arrow-s % f under arrow-eqv-s
+        -> unique (arrow-s b a) % f under arrow-eqv-s
       #+end_src
 
 *** other structure as category
@@ -997,21 +975,17 @@
 
         arrow-s = lambda pre-s
 
-        arrow-eqv-s = lambda
-          drop drop unit-s
+        arrow-eqv-s = lambda [_ _] unit-s
 
         identity = lambda pre-reflexive
 
         compose = lambda pre-transitive
 
-        identity-neutral-left = lambda
-          drop unit-c
+        identity-neutral-left = lambda [_] unit-c
 
-        identity-neutral-right = lambda
-          drop unit-c
+        identity-neutral-right = lambda [_] unit-c
 
-        compose-associative = lambda
-          drop drop drop unit-c
+        compose-associative = lambda [_ _ _] unit-c
       #+end_src
 
 *** build new category from old category
@@ -1021,49 +995,49 @@
       #+begin_src cicada
       category.opposite : category-t
       category.opposite = category-@
-        object-s = lambda this.object-s
+        object-s = this.object-s
 
         arrow-s :
           -- object-s object-s
           -> set-t
-        arrow-s = lambda swap this.arrow-s
+        arrow-s = lambda [a b] (this.arrow-s b a)
 
         arrow-eqv-s :
-          -- b a this.arrow-s b a this.arrow-s
+          -- (this.arrow-s b a) (this.arrow-s b a)
           -> set-t
         arrow-eqv-s = lambda this.arrow-eqv-s
 
         identity :
           -- object-s % a
-          -> a a arrow-s
+          -> (arrow-s a a)
         identity = lambda this.identity
 
         compose :
-          -- b a this.arrow-s
-             c b this.arrow-s
-          -> c a this.arrow-s
-        compose = lambda swap this.compose
+          -- (this.arrow-s b a)
+             (this.arrow-s c b)
+          -> (this.arrow-s c a)
+        compose = lambda [f g] (this.compose g f)
 
         identity-neutral-left :
-          -- b a this.arrow-s % f
-          -> f a identity this.compose, f arrow-eqv-s
+          -- (this.arrow-s b a) % f
+          -> (arrow-eqv-s (this.compose f (identity a)) f)
         identity-neutral-left = lambda this.identity-neutral-right
 
         identity-neutral-right :
-          -- b a this.arrow-s % f
-          -> b identity f this.compose, f arrow-eqv-s
+          -- (this.arrow-s b a) % f
+          -> (arrow-eqv-s (this.compose (identity b) f) f)
         identity-neutral-right = lambda this.identity-neutral-left
 
         compose-associative :
-          -- b a this.arrow-s % f
-             c b this.arrow-s % g
-             d c this.arrow-s % h
-          -> h g this.compose f this.compose
-             h g f this.compose this.compose arrow-eqv-s
-        compose-associative = lambda
-          let f g h in
-          h g f this.compose-associative
-          this.arrow-eqv-relation.pre-symmetric
+          -- (this.arrow-s b a) % f
+             (this.arrow-s c b) % g
+             (this.arrow-s d c) % h
+          -> (arrow-eqv-s
+               (this.compose (this.compose h g) f)
+               (this.compose h (this.compose g f)))
+        compose-associative = lambda [f g h]
+          (this.arrow-eqv-relation.pre-symmetric
+            (this.compose-associative h g f))
       #+end_src
 
 ***** category-product
@@ -1075,40 +1049,33 @@
 
         object-s = lambda * #1.object-s #2.object-s
 
-        arrow-s = lambda
-          let a b in
-          * a.1 b.1 #1.arrow-s
-            a.2 b.2 #2.arrow-s
+        arrow-s = lambda [a b]
+          * (#1.arrow-s a.1 b.1)
+            (#2.arrow-s a.2 b.2)
 
-        arrow-eqv-s = lambda
-          let lhs rhs in
-          * lhs.1 rhs.1 #1.arrow-eqv-s
-            lhs.2 rhs.2 #2.arrow-eqv-s
+        arrow-eqv-s = lambda [lhs rhs]
+          * (#1.arrow-eqv-s lhs.1 rhs.1)
+            (#2.arrow-eqv-s lhs.2 rhs.2)
 
-        identity = lambda
-          let a in
-          * a.1 #1.identity
-            a.2 #2.identity
+        identity = lambda [a]
+          * (#1.identity a.1)
+            (#2.identity a.2)
 
-        compose = lambda
-          let f g in
-          * f.1 g.1 #1.compose
-            f.2 g.2 #2.compose
+        compose = lambda [f g]
+          * (#1.compose f.1 g.1)
+            (#2.compose f.2 g.2)
 
-        identity-neutral-left = lambda
-          let f in
-          * f.1 #1.identity-neutral-left
-            f.2 #2.identity-neutral-left
+        identity-neutral-left = lambda [f]
+          * (#1.identity-neutral-left f.1)
+            (#2.identity-neutral-left f.2)
 
-        identity-neutral-right = lambda
-          let f in
-          * f.1 #1.identity-neutral-right
-            f.2 #2.identity-neutral-right
+        identity-neutral-right = lambda [f]
+          * (#1.identity-neutral-right f.1)
+            (#2.identity-neutral-right f.2)
 
-        compose-associative = lambda
-          let f g h in
-          * f.1 g.1 h.1 #1.compose-associative
-            f.2 g.2 h.2 #2.compose-associative
+        compose-associative = lambda [f g h]
+          * (#1.compose-associative f.1 g.1 h.1)
+            (#2.compose-associative f.2 g.2 h.2)
       #+end_src
 
 * product-closed-category-t
@@ -1120,9 +1087,9 @@
       -- object-s % a
          object-s % b
       -> object-s % p
-         p a arrow-s % pa
-         p b arrow-s % pb
-         a b p pa pb product-object-s
+         (arrow-s p a) % pa
+         (arrow-s p b) % pb
+         (product-object-s a b p pa pb)
   #+end_src
 
 * void-category
@@ -1134,20 +1101,20 @@
     void-arrow-s = data
       @ [ante succ] : void-s
       void-arrow-c :
-        -- -> ante succ void-arrow-s
+        -- -> (void-arrow-s ante succ)
     #+end_src
 
 *** void-arrow-eqv-s
 
     #+begin_src cicada
     void-arrow-eqv-s :
-      -- a b void-arrow-s
-         a b void-arrow-s
+      -- (void-arrow-s a b)
+         (void-arrow-s a b)
       -> set-t
     void-arrow-eqv-s = data
-      @ [lhs rhs] : a b void-arrow-s
+      @ [lhs rhs] : (void-arrow-s a b)
       void-arrow-eqv-c :
-        -- -> lhs rhs void-arrow-eqv-s
+        -- -> (void-arrow-eqv-s lhs rhs)
     #+end_src
 
 *** void-category
@@ -1161,32 +1128,27 @@
 
       identity :
         -- void-s % a
-        -> a a void-arrow-s
-      identity = lambda
-        drop void-arrow-c
+        -> (void-arrow-s a a)
+      identity = lambda [_] void-arrow-c
 
-      compose = lambda
-        drop drop void-arrow-c
+      compose = lambda [_ _] void-arrow-c
 
       identity-neutral-left :
-        -- a b void-arrow-s % f
-        -> void-arrow-c f void-arrow-eqv-s
-      identity-neutral-left = lambda
-        drop void-arrow-eqv-c
+        -- (void-arrow-s a b) % f
+        -> (void-arrow-eqv-s void-arrow-c f)
+      identity-neutral-left = lambda [_] void-arrow-eqv-c
 
       identity-neutral-right :
-        -- a b void-arrow-s % f
-        -> void-arrow-c f void-arrow-eqv-s
-      identity-neutral-right = lambda
-        drop void-arrow-eqv-c
+        -- (void-arrow-s a b) % f
+        -> (void-arrow-eqv-s void-arrow-c f)
+      identity-neutral-right = lambda [_] void-arrow-eqv-c
 
       compose-associative :
-        -- a b void-arrow-s % f
-           b c void-arrow-s % g
-           c d void-arrow-s % h
-        -> void-arrow-eqv-c void-arrow-eqv-c void-arrow-eqv-s
-      compose-associative = lambda
-        drop drop drop void-arrow-eqv-c
+        -- (void-arrow-s a b) % f
+           (void-arrow-s b c) % g
+           (void-arrow-s c d) % h
+        -> (void-arrow-eqv-s void-arrow-eqv-c void-arrow-eqv-c)
+      compose-associative = lambda [_ _ _] void-arrow-eqv-c
     #+end_src
 
 * graph-t
@@ -1212,39 +1174,42 @@
       @ [start end] : node-s
       node-path-c :
         -- node-s % node
-        -> node node node-path-s
+        -> (node-path-s node node)
       edge-path-c :
-        -- a b edge-s % edge
-        -> a b edge-path-s
+        -- (edge-s a b) % edge
+        -> (edge-path-s a b)
       link-path-c :
-        -- a b path-s % first
-           b c path-s % next
-        -> a c link-path-s
+        -- (path-s a b) % first
+           (path-s b c) % next
+        -> (link-path-s a c)
     #+end_src
 
 *** graph.path-eqv-s
 
     #+begin_src cicada
-    graph.path-eqv-s : -- a b path-t, a b path-s -> set-t
+    graph.path-eqv-s : -- (path-t a b) (path-s a b) -> set-t
     graph.path-eqv-s = sum
-      @ [lhs rhs] : a b path-s
+      @ [lhs rhs] : (path-s a b)
       refl-path-eqv-c :
-        -- a b path-s % p
-        -> p p refl-path-eqv-s
+        -- (path-s a b) % p
+        -> (refl-path-eqv-s p p)
       node-left-path-eqv-c :
-        -- a b path-s % p
-        -> a node-path-c p link-path-c
-           p node-left-path-eqv-s
+        -- (path-s a b) % p
+        -> (node-left-path-eqv-s
+             (link-path-c (node-path-c a) p)
+             p)
       node-right-path-eqv-c :
-        -- a b path-s % p
-        -> p b node-path-c link-path-c
-           p node-right-path-eqv-s
+        -- (path-s a b) % p
+        -> (node-right-path-eqv-s
+             (link-path-c p (node-path-c b)))
+             p
       associative-path-eqv-c :
-        -- a b path-s % p
-           b c path-s % q
-           c d path-s % r
-        -> p q r link-path-c link-path-c
-           p q link-path-c r link-path-c associative-path-eqv-s
+        -- (path-s a b) % p
+           (path-s b c) % q
+           (path-s c d) % r
+        -> (associative-path-eqv-s
+             (link-path-c p (link-path-c q r)))
+             (link-path-c (link-path-c p q) r)
     #+end_src
 
 *** graph.as-free-category
@@ -1258,31 +1223,32 @@
 
       identity :
         -- node-s % a
-        -> a a path-s
-      identity = lambda
-        let a in
-        a node-path-c
+        -> (path-s a a)
+      identity = lambda node-path-c
 
       compose = lambda link-path-c
 
       identity-neutral-left :
-        -- a b path-s % f
-        -> a node-path-c f link-path-c
-           f path-eqv-s
+        -- (path-s a b) % f
+        -> (path-eqv-s
+             (link-path-c (node-path-c a) f)
+             f)
       identity-neutral-left = lambda node-left-path-eqv-c
 
       identity-neutral-right :
-        -- a b path-s % f
-        -> f b node-path-c link-path-c
-           f path-eqv-s
+        -- (path-s a b) % f
+        -> (path-eqv-s
+             (link-path-c f (node-path-c b))
+             f)
       identity-neutral-right = lambda node-right-path-eqv-c
 
       compose-associative :
-        -- a b path-s % f
-           b c path-s % g
-           c d path-s % h
-        -> f g h link-path-c link-path-c
-           f g link-path-c h link-path-c path-eqv-s
+        -- (path-s a b) % f
+           (path-s b c) % g
+           (path-s c d) % h
+        -> (path-eqv-s
+             (link-path-c f (link-path-c g h))
+             (link-path-c (link-path-c f g) h))
       compose-associative = lambda associative-path-eqv-c
     #+end_src
 
@@ -1295,51 +1261,48 @@
     nat-lteq-s = sum
       @ [l r] : nat-s
       zero-lteq-c :
-        -- -> zero-c r zero-lteq-s
+        -- -> (zero-lteq-s zero-c r)
       succ-lteq-c :
-        -- prev : l r nat-lteq-s
-        -> l succ-c r succ-c succ-lteq-s
+        -- prev : (nat-lteq-s l r)
+        -> (succ-lteq-s (succ-c l) (succ-c r))
     #+end_src
 
 *** nat-non-negative
 
     #+begin_src cicada
-    nat-non-negative : -- n : nat-s -> zero-c n nat-lteq-s
+    nat-non-negative : -- n : nat-s -> (nat-lteq-s zero-c n)
     nat-non-negative = lambda zero-lteq-c
     #+end_src
 
 *** nat-lteq-reflexive
 
     #+begin_src cicada
-    nat-lteq-reflexive : -- n : nat-s -> n n nat-lteq-s
-    nat-lteq-reflexive = lambda
-      let n in
+    nat-lteq-reflexive : -- n : nat-s -> (nat-lteq-s n n)
+    nat-lteq-reflexive = lambda [n]
       case n
         zero-s zero-lteq-c
-        succ-s n.prev recur succ-lteq-c
+        succ-s (succ-lteq-c (recur n.prev))
     #+end_src
 
 *** nat-lteq-transitive
 
     #+begin_src cicada
     nat-lteq-transitive :
-      -- a b nat-lteq-s
-         b c nat-lteq-s
-      -> a c nat-lteq-s
-    nat-lteq-transitive = lambda
-      let x y in
+      -- (nat-lteq-s a b)
+         (nat-lteq-s b c)
+      -> (nat-lteq-s a c)
+    nat-lteq-transitive = lambda [x y]
       case x
         zero-lteq-s zero-lteq-c
-        succ-lteq-s x.prev y.prev recur succ-lteq-c
+        succ-lteq-s (succ-lteq-c (recur x.prev y.prev))
     #+end_src
 
 *** nat-lt-s
 
     #+begin_src cicada
     nat-lt-s : -- nat-s nat-s -> set-t
-    nat-lt-s = lambda
-      let l r in
-      l succ-c r nat-lteq-s
+    nat-lt-s = lambda [l r]
+      (nat-lteq-s (succ-c l) r)
     #+end_src
 
 *** nat-archimedean-property
@@ -1347,10 +1310,10 @@
     #+begin_src cicada
     nat-archimedean-property :
       -- x : nat-s
-      -> y : nat-s
-         x y nat-lt-s
-    nat-archimedean-property = lambda
-      succ-c dup nat-lteq-reflexive
+      -> (* y : nat-s
+            (nat-lt-s x y))
+    nat-archimedean-property = lambda [x]
+      (* (succ-c x) (nat-lteq-reflexive (succ-c x)))
     #+end_src
 
 *** nat-order-category
@@ -1366,24 +1329,21 @@
 
       compose  = lambda nat-lteq-transitive
 
-      identity-neutral-left = lambda
-        let x in
+      identity-neutral-left = lambda [x]
         case x
           zero-lteq-s eqv-c
-          succ-lteq-s x.prev recur {succ-lteq-c} eqv-apply
+          succ-lteq-s (eqv-apply (recur x.prev) succ-lteq-c)
 
-      identity-righ = lambda
-        let x in
+      identity-righ = lambda [x]
         case x
           zero-lteq-s eqv-c
-          succ-lteq-s x.prev recur {succ-lteq-c} eqv-apply
+          succ-lteq-s (eqv-apply (recur x.prev) succ-lteq-c)
 
-      compose-associative = lambda
-        let f g h in
+      compose-associative = lambda [f g h]
         case [f g h]
           [zero-lteq-s _ _] eqv-c
           [succ-lteq-s succ-lteq-s succ-lteq-s]
-            f.prev g.prev h.prev recur {succ-lteq-c} eqv-apply
+            (eqv-apply (recur f.prev g.prev h.prev) succ-lteq-c)
     #+end_src
 
 * groupoid
@@ -1394,9 +1354,9 @@
     groupoid-t <: category-t
     groupoid-t = class
       inverse :
-        -- a b arrow-s % f
-        -> b a arrow-s % g
-           f g arrow-inverse-s
+        -- (arrow-s a b) % f
+        -> (arrow-s b a) % g
+           (arrow-inverse-s f g)
     #+end_src
 
 * >< nat-total-order
@@ -1422,18 +1382,19 @@
 
       unit-neutral-left :
         -- a : element-s
-        -> a unit product, a element-eqv-s
+        -> (element-eqv-s (product a unit) a)
 
       unit-neutral-right :
         -- a : element-s
-        -> unit a product, a element-eqv-s
+        -> (element-eqv-s (product unit a) a)
 
       product-associative :
         -- a : element-s
            b : element-s
            c : element-s
-        -> a b c product product
-           a b product c product element-eqv-s
+        -> (element-eqv-s
+             (product a (product b c))
+             (product (product a b) c))
     #+end_src
 
 *** monoid.as-category
@@ -1442,9 +1403,9 @@
     monoid.as-category : category-t
     monoid.as-category = category-@
       object-s = lambda unit-s
-      arrow-s = lambda drop drop element-s
+      arrow-s = lambda [_ _] element-s
       arrow-eqv-s = lambda element-eqv-s
-      identity = lambda drop unit
+      identity = lambda [_] unit
       compose = lambda product
       identity-neutral-left = lambda unit-neutral-left
       identity-neutral-right = lambda unit-neutral-right
@@ -1474,7 +1435,7 @@
     functor-t : class-tt
     functor-t = class
       fun-s : -- set-t -> set-t
-      map : -- a fun-t, (-- a -> b) -> b fun-s
+      map : -- (fun-t a) (-- a -> b) -> (fun-s b)
     #+end_src
 
 *** list-functor
@@ -1483,14 +1444,11 @@
     list-functor : functor-t
     list-functor = functor-@
       fun-s = lambda list-s
-      map = lambda
-        let list fun in
+      map = lambda [list fun]
         case list
           null-s null-c
           cons-s
-            list.car fun
-            list.cdr {fun} recur
-            cons-c
+            (cons-c (fun list.car) (recur list.cdr fun))
     #+end_src
 
 * const
@@ -1500,8 +1458,8 @@
     #+begin_src cicada
     const-s : -- set-t set-t -> set-t
     const-s = data
-      @ [a c] : set-t
-      const-c : -- value : c -> a c const-s
+      @ [c a] : set-t
+      const-c : -- value : c -> (const-s c a)
     #+end_src
 
 *** const-functor
@@ -1510,10 +1468,10 @@
     const-functor : -- set-t -> functor-t
     const-functor = lambda
       let c in functor-@
-      fun-s = lambda {c const-s}
+      fun-s = lambda (const-s c)
 
-      map : -- a c const-t, (-- a -> b) -> b c const-s
-      map = lambda drop
+      map : -- (const-s c a) (-- a -> b) -> (const-s c b)
+      map = lambda [_]
     #+end_src
 
 * monad
@@ -1523,29 +1481,28 @@
     #+begin_src cicada
     monad-t <: functor-t
     monad-t = class
-      pure : -- t -> t fun-s
-      bind : -- a fun-t, (-- a -> b fun-s) -> b fun-s
+      pure : -- t -> (fun-s t)
+      bind : -- (fun-s a) (-- a -> (fun-s b)) -> (fun-s b)
     #+end_src
 
 *** monad.compose
 
     #+begin_src cicada
     monad.compose :
-      -- (-- a -> b fun-s)
-         (-- b -> c fun-s)
-      -> (-- a -> c fun-s)
-    monad.compose = lambda
-      let f g in
-      {f {g} bind}
+      -- (-- a -> (fun-s b))
+         (-- b -> (fun-s c))
+      -> (-- a -> (fun-s c))
+    monad.compose = lambda [f g]
+      (lambda [a] (bind (f a) g))
     #+end_src
 
 *** monad.flatten
 
     #+begin_src cicada
     monad.flatten :
-      -- a fun-s fun-s
-      -> a fun-s
-    monad.flatten = lambda {} bind
+      -- (fun-s (fun-s a))
+      -> (fun-s a)
+    monad.flatten = lambda [m] (bind m (lambda))
     #+end_src
 
 *** list-monad
@@ -1553,15 +1510,11 @@
     #+begin_src cicada
     list-monad : monad-t
     list-monad = monad-@
-      pure = lambda null-c cons-c
-      bind = lambda
-        let list fun in
+      pure = lambda [x] (cons-c x null-c)
+      bind = lambda [list fun]
         case list
           null-s null-c
-          cons-s
-            list.car fun
-            list.cdr {fun} recur
-            list-append
+          cons-s (list-append (fun list.car) (recur list.cdr fun))
     #+end_src
 
 * maybe
@@ -1573,9 +1526,9 @@
     maybe-s = sum
       @ t : set-t
       none-c :
-        -- -> t none-s
+        -- -> (none-s t)
       just-c :
-        -- value : t -> t just-s
+        -- value : t -> (just-s t)
     #+end_src
 
 *** maybe-functor
@@ -1584,11 +1537,10 @@
     maybe-functor : functor-t
     maybe-functor = functor-@
       fun-s = lambda maybe-s
-      map = lambda
-        let maybe fun in
+      map = lambda [maybe fun]
         case maybe
           none-s none-c
-          just-s maybe.value fun just-c
+          just-s (just-c (fun maybe.value))
     #+end_src
 
 *** maybe-monad
@@ -1597,11 +1549,10 @@
     maybe-monad : monad-t
     maybe-monad = monad-@
       pure = lambda just-c
-      bind = lambda
-        let maybe fun in
+      bind = lambda [maybe fun]
         case maybe
           none-s none-c
-          just-s maybe.value fun
+          just-s (fun maybe.value)
     #+end_src
 
 * state
@@ -1610,31 +1561,23 @@
 
     #+begin_src cicada
     state-s : -- set-t set-t -> set-t
-    state-s = lambda
-      let a s in
-      -- s -> s a
+    state-s = lambda [s a] -- s -> (* s a)
     #+end_src
 
 *** state-monad
 
     #+begin_src cicada
     state-monad : -- set-t -> monad-t
-    state-monad = lambda
-      let s in monad-@
-      fun-s = lambda {s state-s}
-      map : -- a s state-t, (-- a -> b)
-            -> b s state-s
-      map : -- (-- s -> s a), (-- a -> b)
-            -> (-- s -> s b)
-      map = lambda
-        let state fun in
-        {state fun}
-      pure = lambda
-        let value in
-        {value}
-      bind = lambda
-        let state fun in
-        {state fun apply}
+    state-monad = lambda [s] monad-@
+      fun-s = lambda (state-s s)
+      map : -- (state-s a s) (-- a -> b)
+            -> (state-s b s)
+      map : -- (-- s -> (* s a)) (-- a -> b)
+            -> (-- s -> (* s b))
+      map = lambda [state fun]
+        (lambda [s] (fun (state s)))
+      pure = lambda [value] {value}
+      bind = lambda [state fun] {state fun apply}
     #+end_src
 
 * tree
@@ -1646,10 +1589,10 @@
     tree-s = sum
       @ t : set-t
       leaf-c :
-        -- t % value -> t leaf-s
+        -- t % value -> (leaf-s t)
       branch-c :
-        -- t tree-s % [left right]
-        -> t branch-s
+        -- (tree-s t) % [left right]
+        -> (branch-s t)
     #+end_src
 
 *** tree-functor
@@ -1658,64 +1601,46 @@
     tree-functor : functor-t
     tree-functor = functor-@
       fun-s = lambda tree-s
-      map = lambda
-        let tree fun in
+      map = lambda [tree fun]
         case tree
-          leaf-s tree.value fun leaf-c
+          leaf-s (leaf-c (fun tree.value))
           branch-s
-            tree.left {fun} recur
-            tree.right {fun} recur branch-c
+            (branch-c
+              (recur tree.left fun)
+              (recur tree.right fun))
     #+end_src
 
 *** tree-zip
 
     #+begin_src cicada
     tree-zip :
-      -- a tree-s
-         b tree-s
-      -> (* a b) tree-s maybe-s
-    tree-zip = lambda
-      let x y in
+      -- (tree-s a)
+         (tree-s b)
+      -> (maybe-s (tree-s (* a b)))
+    tree-zip = lambda [x y]
       case [x y]
         [leaf-s leaf-s]
-          x.value y.value prod leaf-c pure
+          (pure (leaf-c (* x.value y.value)))
         [branch-s branch-s]
-          do x.left y.left recur >- left
-             x.right y.right recur >- right
-             left right branch-c pure
+          do left <- (recur x.left y.left)
+             right <- (recur x.right y.right)
+             (pure (branch-c left right))
         else none-c
-    #+end_src
-
-*** tree-numbering-with-nat
-
-    #+begin_src cicada
-    tree-numbering-with-nat :
-      -- nat-t, t tree-s
-      -> nat-t, nat-s tree-s
-    tree-numbering-with-nat = lambda
-      let tree in
-      case tree
-        leaf-s dup inc swap leaf-c
-        branch-s
-          tree.left recur let left in
-          tree.right recur let right in
-          left right branch-c
     #+end_src
 
 *** tree-numbering
 
     #+begin_src cicada
     tree-numbering :
-      -- t tree-s
-      -> nat-s tree-s state-s
-    tree-numbering = lambda
-      let tree in
+      -- (tree-s t)
+      -> (state-s (tree-s nat-s))
+    tree-numbering = lambda [tree]
       case tree
         leaf-s {dup inc swap leaf-c}
         branch-s
-          do tree.left recur >- left
-             tree.right recur >- right
-             left right branch-c
+          do left <- (recur tree.left)
+             right <- (recur tree.right)
+             (branch-c left right)
     #+end_src
 
 * int
@@ -1731,11 +1656,11 @@
     gcd-s = sum
       @ [x y d] : int-s
       zero-gcd-c :
-        -- -> x zero-c x zero-gcd-s
+        -- -> (zero-gcd-s x zero-c x)
       mod-gcd-c :
-        -- gcd : x y d gcd-s
-           mod : x y z mod-s
-        -> y z d mod-gcd-s
+        -- gcd : (gcd-s x y d)
+           mod : (mod-s x y z)
+        -> (mod-gcd-s y z d)
     #+end_src
 
 * set-category
@@ -1761,7 +1686,7 @@
 
       morphism-eqv :
         -- x : a
-        -> x lhs.morphism x rhs.morphism eqv-s
+        -> (eqv-s (lhs.morphism x) (rhs.morphism x))
     #+end_src
 
 *** set-category
@@ -1773,59 +1698,57 @@
       object-t = set-t
 
       arrow-t : -- set-t set-t -> class-tt
-      arrow-t = lambda
-        let a b in
+      arrow-t = lambda [a b]
         set-morphism-& a b
 
       arrow-eqv-t :
         -- set-morphism-& a b
            set-morphism-& a b
         -> class-tt
-      arrow-eqv-t = lambda
-        let lhs rhs in
+      arrow-eqv-t = lambda [lhs rhs]
         set-morphism-eqv-& lhs rhs
 
       identity :
         -- set-t % a
         -> set-morphism-& a a
-      identity = lambda drop set-morphism-@
+      identity = lambda [_] set-morphism-@
         morphism = lambda
 
       compose :
         -- set-morphism-& a b
            set-morphism-& b c
         -> set-morphism-& a c
-      compose = lambda let f g in set-morphism-@
+      compose = lambda [f g] set-morphism-@
         morphism = lambda f.morphism g.morphism
 
       identity-neutral-left :
         -- f : set-morphism-& a b
-        -> set-morphism-eqv-& f b identity compose, f
-      identity-neutral-left = lambda let f in set-morphism-eqv-@
+        -> set-morphism-eqv-& (compose f (identity b)) f
+      identity-neutral-left = lambda [f] set-morphism-eqv-@
         lhs : set-morphism-& a b
-        lhs = f b identity compose
+        lhs = (compose f (identity b))
         rhs : set-morphism-& a b
         rhs = f
         morphism-eqv :
           -- x : a
-          -> x f.morphism x f.morphism eqv-s
-        morphism-eqv = lambda let x in eqv-c
+          -> (eqv-s (f.morphism x) (f.morphism x))
+        morphism-eqv = lambda [x] eqv-c
 
       identity-neutral-right :
         -- f : set-morphism-& a b
-        -> set-morphism-eqv-& a identity f compose, f
-      identity-neutral-right = lambda let f in set-morphism-eqv-@
-        morphism-eqv = lambda drop eqv-c
+        -> set-morphism-eqv-& (compose (identity a) f) f
+      identity-neutral-right = lambda [f] set-morphism-eqv-@
+        morphism-eqv = lambda [_] eqv-c
 
       compose-associative :
         -- f : set-morphism-& a b
            g : set-morphism-& b c
            h : set-morphism-& c d
         -> set-morphism-eqv-&
-             lhs = f g h compose compose
-             rhs = f g compose h compose
-      compose-associative = lambda let f g h in set-morphism-eqv-@
-        morphism-eqv = lambda drop eqv-c
+             lhs = (compose f (compose g h))
+             rhs = (compose (compose f g) h)
+      compose-associative = lambda [f g h] set-morphism-eqv-@
+        morphism-eqv = lambda [_] eqv-c
     #+end_src
 
 *** set-category -- without type
@@ -1835,28 +1758,26 @@
     set-category = category-@
       object-t = set-t
 
-      arrow-t = lambda
-        let a b in
+      arrow-t = lambda [a b]
         set-morphism-& a b
 
-      arrow-eqv-t = lambda
-        let lhs rhs in
+      arrow-eqv-t = lambda [lhs rhs]
         set-morphism-eqv-& lhs rhs
 
-      identity = lambda drop set-morphism-@
+      identity = lambda [_] set-morphism-@
         morphism = lambda
 
-      compose = lambda let f g in set-morphism-@
+      compose = lambda [f g] set-morphism-@
         morphism = lambda f.morphism g.morphism
 
-      identity-neutral-left = lambda drop set-morphism-eqv-@
-        morphism-eqv = lambda drop eqv-c
+      identity-neutral-left = lambda [_] set-morphism-eqv-@
+        morphism-eqv = lambda [_] eqv-c
 
-      identity-neutral-right = lambda drop set-morphism-eqv-@
-        morphism-eqv = lambda drop eqv-c
+      identity-neutral-right = lambda [_] set-morphism-eqv-@
+        morphism-eqv = lambda [_] eqv-c
 
-      compose-associative = lambda drop drop drop set-morphism-eqv-@
-        morphism-eqv = lambda drop eqv-c
+      compose-associative = lambda [_ _ _] set-morphism-eqv-@
+        morphism-eqv = lambda [_] eqv-c
     #+end_src
 
 * preorder-category
@@ -1872,8 +1793,8 @@
       morphism : -- ante.element-s -> succ.element-s
 
       morphism-respect-pre-relation :
-        -- x y ante.pre-s
-        -> x morphism y morphism succ.pre-s
+        -- (ante.pre-s x y)
+        -> (succ.pre-s (morphism x) (morphism y))
     #+end_src
 
 *** preorder-morphism-eqv-t
@@ -1886,7 +1807,7 @@
 
       morphism-eqv :
         -- x : a.element-s
-        -> x lhs.morphism x rhs.morphism eqv-s
+        -> (eqv-s (lhs.morphism x) (rhs.morphism x))
     #+end_src
 
 *** preorder-category
@@ -1898,22 +1819,20 @@
       object-t = preorder-t
 
       arrow-t : -- preorder-t preorder-t -> class-tt
-      arrow-t = lambda
-        let a b in
+      arrow-t = lambda [a b]
         preorder-morphism-& a b
 
       arrow-eqv-t :
         -- preorder-morphism-& a b
            preorder-morphism-& a b
         -> class-tt
-      arrow-eqv-t = lambda
-        let lhs rhs in
+      arrow-eqv-t = lambda [lhs rhs]
         preorder-morphism-eqv-& lhs rhs
 
       identity :
         -- preorder-t % a
         -> preorder-morphism-& a a
-      identity = lambda drop preorder-morphism-@
+      identity = lambda [_] preorder-morphism-@
         morphism = lambda
         morphism-respect-pre-relation = lambda
 
@@ -1921,20 +1840,20 @@
         -- preorder-morphism-& a b
            preorder-morphism-& b c
         -> preorder-morphism-& a c
-      compose = lambda let f g in preorder-morphism-@
+      compose = lambda [f g] preorder-morphism-@
         morphism = lambda f.morphism g.morphism
         morphism-respect-pre-relation = lambda
           f.morphism-respect-pre-relation
           g.morphism-respect-pre-relation
 
-      identity-neutral-left = lambda let f in preorder-morphism-eqv-@
-        morphism-eqv = lambda let x in eqv-c
+      identity-neutral-left = lambda [f] preorder-morphism-eqv-@
+        morphism-eqv = lambda [x] eqv-c
 
-      identity-neutral-right = lambda let f in preorder-morphism-eqv-@
-        morphism-eqv = lambda drop eqv-c
+      identity-neutral-right = lambda [f] preorder-morphism-eqv-@
+        morphism-eqv = lambda [_] eqv-c
 
-      compose-associative = lambda let f g h in preorder-morphism-eqv-@
-        morphism-eqv = lambda drop eqv-c
+      compose-associative = lambda [f g h] preorder-morphism-eqv-@
+        morphism-eqv = lambda [_] eqv-c
     #+end_src
 
 * category-category
@@ -1958,21 +1877,22 @@
         -> succ.object-t
 
       arrow-map :
-        -- a b ante.arrow-t
-        -> a object-map b object-map succ.arrow-t
+        -- (ante.arrow-t a b)
+        -> (succ.arrow-t (object-map a) (object-map b))
 
       arrow-map-respect-compose :
-        -- a b ante.arrow-t % f
-           b c ante.arrow-t % g
-        -> f g ante.compose arrow-map
-           f arrow-map g arrow-map succ.compose
-           succ.arrow-eqv-t
+        -- (ante.arrow-t a b) % f
+           (ante.arrow-t b c) % g
+        -> (succ.arrow-eqv-t
+             (arrow-map (ante.compose f g))
+             (succ.compose (arrow-map f) (arrow-map g)))
+
 
       arrow-map-respect-identity :
         -- a : ante.object-t
-        -> a object-map succ.identity
-           a ante.identity arrow-map
-           succ.arrow-eqv-t
+        -> (succ.arrow-eqv-t
+             (succ.identity (object-map a))
+             (arrow-map (ante.identity a)))
     #+end_src
 
 *** category-morphism-eqv-tt
@@ -1998,16 +1918,14 @@
       arrow-tt :
         -- category-tt category-tt
         -> class-ttt
-      arrow-tt = lambda
-        let a b in
+      arrow-tt = lambda [a b]
         category-morphism-&& a b
 
       arrow-eqv-tt :
         -- category-morphism-&& a b
            category-morphism-&& a b
         -> class-ttt
-      arrow-eqv-tt = lambda
-        let lhs rhs in
+      arrow-eqv-tt = lambda [lhs rhs]
         category-morphism-eqv-&& lhs rhs
 
       ><><><
