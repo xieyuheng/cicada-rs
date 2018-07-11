@@ -1,12 +1,18 @@
+#+html_head: <link rel="stylesheet" href="css/org-page.css"/>
 #+title: prelude
 
 * [todo-stack]
+
+*** arrow-eqv-s -- amend `arrow-eqv-relation` for all `category-@`
+
+    - arrow-eqv-s must be an eqv-relation-t
+      for all hom-set [a b arrow-s]
 
 *** natural-iso
 
     - eqv-relation between functors
 
-*** class-cat
+*** class-category
 
     - use natural-transformation to implement arrow-eqv-s of category
 
@@ -25,14 +31,9 @@
       maps object to arrow,
       and arrow to square.
 
-*** arrow-eqv-s -- amend `arrow-eqv-relation` for all `category-@`
-
-    - arrow-eqv-s must be an eqv-relation-t
-      for all hom-set [a b arrow-s]
-
 *** can function not be stored in data-field ?
 
-*** set-cat
+*** set-category
 
     - surjective
 
@@ -50,21 +51,15 @@
 
 *** nat-total-order
 
-*** monad as cat
+*** monad as category
 
-*** dependent-category-theory
-
-    - use pullback and pushout
+*** dependent-category -- use pullback and pushout
 
 *** topos-theory
 
 *** logic programming
 
     - what is the logic programming interface of the type system ?
-
-*** re-gain implicit generic-ness of type-class
-
-    - by maintain a map from type constructor to class
 
 *** new (do) notation
 
@@ -101,17 +96,13 @@
       object are just like type.
       just without sum-type, only product-type.
 
+*** should (:) (%) form types too ? -- like eqv-c
+
 * [note]
 
 *** (:) (%)
 
-    - x -
-      just like `=` in some language can form type
-      [in cicada, eqv-c and eqv-s]
-      should these form types too ?
-
-    - k -
-      I do not think so
+    - (%) is reversed (:)
 
 *** (*)
 
@@ -212,6 +203,23 @@
 
     - whatever object inhabits c1 also inhabits c2.
 
+*** (<class>-&)
+
+    - a syntax for partial-class-type
+
+    - some of the fields of the a partial-class-type
+      are already inhabited by data
+
+    - to inhabited such partial-class-type
+
+    - we only need to inhabit remaining fields
+
+    ------
+
+    - x -
+      without sexp
+      our design of syntax seems get lost
+
 *** data-type vs class-type
 
 ***** low-level vs high-level
@@ -240,26 +248,26 @@
 
 ***** level table
 
-      | - | data, object                        |
-      |---+-------------------------------------|
-      | 0 | <data>-s                            |
-      |   | data-type, sum-type                 |
-      |   | union-type, record-type, tuple-type |
-      |---+-------------------------------------|
-      | 1 | set-t, preorder-t, category-t       |
-      |---+-------------------------------------|
-      | 2 | set-t2, class-tt                    |
+      | - | data, object                           |
+      |---+----------------------------------------|
+      | 0 | <data>-s                               |
+      |   | data-type, sum-type                    |
+      |   | union-type, record-type, tuple-type    |
+      |---+----------------------------------------|
+      | 1 | set-t, class-t, preorder-t, category-t |
+      |---+----------------------------------------|
+      | 2 | set-tt, class-tt, category-tt          |
 
 ***** level examples
 
       | 0                     | 1                   | 2               |
       |-----------------------+---------------------+-----------------|
-      | nat-s                 | set-t               | set-t2          |
-      | (* nat-s nat-s)       | set-t               | set-t2          |
-      | [nat-s nat-s]         | [set-t set-s]       | [set-t2 set-t2] |
-      | (union nat-t, bool-s) | set-t               | set-t2          |
-      | (-- nat-s -> nat-s)   | set-t               | set-t2          |
-      | list-s                | (-- set-t -> set-s) | set-t2          |
+      | nat-s                 | set-t               | set-tt          |
+      | (* nat-s nat-s)       | set-t               | set-tt          |
+      | [nat-s nat-s]         | [set-t set-s]       | [set-tt set-tt] |
+      | (union nat-t, bool-s) | set-t               | set-tt          |
+      | (-- nat-s -> nat-s)   | set-t               | set-tt          |
+      | list-s                | (-- set-t -> set-s) | set-tt          |
 
 *** conventions
 
@@ -267,6 +275,23 @@
 
       - take `nat-add` as a example,
         we (case) over the argument at the top of the stack.
+
+*** implicit-ness
+
+***** builtin level polymorphism
+
+      - we can not really afford to
+        split category-t* to category-t and category-tt,
+        because we have to redefined so many classes along category-t.
+
+      - instead we assume that when category-t is defined,
+        category-tt is also defined,
+        and all the postfix changes
+        are handled by the language implicitly.
+
+***** >< implicit generic-ness of haskell type-class
+
+      - by maintain a map from type-constructor to class
 
 * void
 
@@ -705,54 +730,6 @@
           -> a c pre-s
       #+end_src
 
-***** preorder-morphism-t
-
-      #+begin_src cicada
-      preorder-morphism-t : class-tt
-      preorder-morphism-t = class
-        ante : preorder-t
-        succ : preorder-t
-
-        map :
-          -- ante.element-s
-          -> succ.element-s
-
-        map-respect-pre-relation :
-          -- x y ante.pre-s
-          -> x map y map succ.pre-s
-      #+end_src
-
-***** ><><>< preorder-morphism-eqv-t
-
-      - this is the problem of equivalence between morphism
-        where the morphism are between class -- preorder-t
-
-      #+begin_src cicada
-
-      #+end_src
-
-***** preorder-cat
-
-      #+begin_src cicada
-      preorder-cat : category-t
-      preorder-cat = category-@
-        object-s : class-tt
-        object-s = preorder-t
-
-        arrow-s : -- preorder-t preorder-t -> class-tt
-        arrow-s = lambda
-          let ante succ in
-          preorder-t % (@ ante succ)
-
-        arrow-eqv-s :
-          -- preorder-t % (@ ante succ)
-             preorder-t % (@ ante succ)
-          -> class-tt
-        arrow-eqv-s = lambda
-          let lhs rhs in
-          preorder-morphism-eqv-t (@ lhs rhs)
-      #+end_src
-
 *** partial-order
 
 ***** partial-order-t
@@ -794,81 +771,7 @@
           -> (union a b pre-s b a pre-s)
       #+end_src
 
-* category
-
-*** category-t
-
-    #+begin_src cicada
-    category-t : class-tt
-    category-t = class
-      object-s : set-t*
-
-      arrow-s :
-        -- object-s object-s
-        -> set-t*
-
-      arrow-eqv-s :
-        -- a b arrow-s a b arrow-s
-        -> set-t*
-
-      identity :
-        -- object-s % a
-        -> a a arrow-s
-
-      compose :
-        -- a b arrow-s
-           b c arrow-s
-        -> a c arrow-s
-
-      identity-neutral-left :
-        -- a b arrow-s % f
-        -> a identity f compose, f arrow-eqv-s
-
-      identity-neutral-right :
-        -- a b arrow-s % f
-        -> f b identity compose, f arrow-eqv-s
-
-      compose-associative :
-        -- a b arrow-s % f
-           b c arrow-s % g
-           c d arrow-s % h
-        -> f g h compose compose
-           f g compose h compose arrow-eqv-s
-
-      arrow-eqv-relation :
-        -- [a b] :: object-s
-        -> eqv-relation-t %
-           (@ element-s = a b arrow-s
-              pre-s = lambda arrow-eqv-s)
-    #+end_src
-
-*** category.arrow-inverse-s
-
-    #+begin_src cicada
-    category.arrow-inverse-s :
-      -- a b arrow-s
-         b a arrow-s
-      -> set-t
-    category.arrow-inverse-s = lambda
-      let f g in
-      * f g compose a identity arrow-eqv-s
-        g f compose b identity arrow-eqv-s
-    #+end_src
-
-*** category.arrow-unique-s
-
-    #+begin_src cicada
-    category.arrow-unique-s :
-      -- a b arrow-s
-         -- a b arrow-s -> set-t
-      -> set-t
-    category.arrow-unique-s = lambda
-      let f theorem in
-      * f theorem
-        -- a b arrow-s % g
-           g theorem
-        -> f g arrow-eqv-s
-    #+end_src
+* unique
 
 *** (unique ... under ...)
 
@@ -887,339 +790,278 @@
         -> $x y $eqv-s
     #+end_src
 
-*** category.iso-object-s
+* category
+
+*** category-t
 
     #+begin_src cicada
-    category.iso-object-s : -- object-s object-s -> set-t
-    category.iso-object-s = lambda
-      let a b in
-      * a b arrow-s % f
-        b a arrow-s % g
-        f g compose a identity arrow-eqv-s
-        g f compose b identity arrow-eqv-s
+    category-t : class-tt
+    category-t = class
+      object-s : set-t
+      arrow-s : -- object-s object-s -> set-t
+      arrow-eqv-s : -- a b arrow-s a b arrow-s -> set-t
+
+      identity : -- object-s % a -> a a arrow-s
+
+      compose : -- a b arrow-s b c arrow-s -> a c arrow-s
+
+      identity-neutral-left :
+        -- a b arrow-s % f
+        -> a identity f compose, f arrow-eqv-s
+
+      identity-neutral-right :
+        -- a b arrow-s % f
+        -> f b identity compose, f arrow-eqv-s
+
+      compose-associative :
+        -- a b arrow-s % f
+           b c arrow-s % g
+           c d arrow-s % h
+        -> f g h compose compose
+           f g compose h compose arrow-eqv-s
+
+      arrow-eqv-relation :
+        -- [a b] :: object-s
+        -> eqv-relation-&
+             element-s = a b arrow-s
+             pre-s = lambda arrow-eqv-s
     #+end_src
 
-*** category.product-object-s
+*** basic relation
 
-    #+begin_src cicada
-    category.product-object-s :
-      -- object-s % a
-         object-s % b
-         object-s % p
-         p a arrow-s % pa
-         p b arrow-s % pb
-      -> set-t
-    category.product-object-s = lambda
-      let a b p pa pb in
-      -- object-s % q
-         q a arrow-s % qa
-         q b arrow-s % qb
-      -> unique q p arrow-s % qp
-         under arrow-eqv-s such-that
-           * qa, qp pa compose arrow-eqv-s
-             qb, qp pb compose arrow-eqv-s
-    #+end_src
+***** category.arrow-inverse-s
 
-*** category.coproduct-object-s
+      #+begin_src cicada
+      category.arrow-inverse-s :
+        -- a b arrow-s
+           b a arrow-s
+        -> set-t
+      category.arrow-inverse-s = lambda
+        let f g in
+        * f g compose a identity arrow-eqv-s
+          g f compose b identity arrow-eqv-s
+      #+end_src
 
-    #+begin_src cicada
-    category.coproduct-object-s :
-      -- object-s % a
-         object-s % b
-         object-s % p
-         a p arrow-s % ap
-         b p arrow-s % bp
-      -> set-t
-    category.product-object-s = lambda
-      let a b p ap bp in
-      -- object-s % q
-         a q arrow-s % aq
-         a q arrow-s % bq
-      -> unique p q arrow-s % pq
-         under arrow-eqv-s such-that
-           * aq, ap pq compose arrow-eqv-s
-             bq, bp pq compose arrow-eqv-s
-    #+end_src
+***** category.iso-object-s
 
-*** category.initial-object-s
+      #+begin_src cicada
+      category.iso-object-s : -- object-s object-s -> set-t
+      category.iso-object-s = lambda
+        let a b in
+        * a b arrow-s % f
+          b a arrow-s % g
+          f g compose a identity arrow-eqv-s
+          g f compose b identity arrow-eqv-s
+      #+end_src
 
-    #+begin_src cicada
-    category.initial-object-s : -- object-s -> set-t
-    category.initial-object-s = lambda
-      let a in
-      -- object-s % b
-      -> unique a b arrow-s % f under arrow-eqv-s
-    #+end_src
+*** universal construction
 
-*** category.terminal-object-s
+***** category.product-object-s
 
-    #+begin_src cicada
-    category.terminal-object-s : -- object-s -- set-t
-    category.terminal-object-s = lambda
-      let a in
-      -- object-s % b
-      -> unique b a arrow-s % f under arrow-eqv-s
-    #+end_src
-
-*** product-closed-category-t
-
-    #+begin_src cicada
-    product-closed-category-t <: category-t
-    product-closed-category-t = class
-      product :
+      #+begin_src cicada
+      category.product-object-s :
         -- object-s % a
            object-s % b
-        -> object-s % p
+           object-s % p
            p a arrow-s % pa
            p b arrow-s % pb
-           a b p pa pb product-object-s
-    #+end_src
-
-*** category-product
-
-    #+begin_src cicada
-    category-product : -- category-t category-t -> category-t
-    category-product = lambda
-      let #1 #2 in category-@
-
-      object-s = lambda (* #1.object-s #2.object-s)
-
-      arrow-s :
-        -- (* #1.object-s #2.object-s)
-           (* #1.object-s #2.object-s)
         -> set-t
-      arrow-s = lambda
-        let succ ante in
-        * succ.1 ante.1 #1.arrow-s
-          succ.2 ante.2 #2.arrow-s
+      category.product-object-s = lambda
+        let a b p pa pb in
+        -- object-s % q
+           q a arrow-s % qa
+           q b arrow-s % qb
+        -> unique q p arrow-s % qp
+           under arrow-eqv-s such-that
+             * qa, qp pa compose arrow-eqv-s
+               qb, qp pb compose arrow-eqv-s
+      #+end_src
 
-      arrow-eqv-s :
-        -- * a.1 b.1 #1.arrow-s
-             a.2 b.2 #2.arrow-s
-           * a.1 b.1 #1.arrow-s
-             a.2 b.2 #2.arrow-s
-        -> set-t
-      arrow-eqv-s = lambda
-        let lhs rhs in
-        * lhs.1 rhs.1 #1.arrow-eqv-s
-          lhs.2 rhs.2 #2.arrow-eqv-s
+***** category.coproduct-object-s
 
-      identity :
-        -- (* #1.object-s #2.object-s) % a
-        -> * a.1 a.1 #1.arrow-s
-             a.2 a.2 #2.arrow-s
-      identity = lambda
-        let a in
-        * a.1 #1.identity
-          a.2 #2.identity
-
-      compose :
-        -- * a.1 b.1 #1.arrow-s
-             a.2 b.2 #2.arrow-s
-           * b.1 c.1 #1.arrow-s
-             b.2 c.2 #2.arrow-s
-        -> * a.1 c.1 #1.arrow-s
-             a.2 c.2 #2.arrow-s
-      compose = lambda
-        let f g in
-        * f.1 g.1 #1.compose
-          f.2 g.2 #2.compose
-
-      identity-neutral-left :
-        -- * a.1 b.1 #1.arrow-s
-             a.2 b.2 #2.arrow-s % f
-        -> * a.1 #1.identity f.1 #1.compose f.1 #1.arrow-eqv-s
-             a.2 #2.identity f.2 #2.compose f.2 #2.arrow-eqv-s
-      identity-neutral-left = lambda
-        let f in
-        * f.1 #1.identity-neutral-left
-          f.2 #2.identity-neutral-left
-
-      identity-neutral-right :
-        -- * a.1 b.1 #1.arrow-s
-             a.2 b.2 #2.arrow-s % f
-        -> * f.1 b.1 #1.identity #1.compose f.1 #1.arrow-eqv-s
-             f.2 b.2 #2.identity #2.compose f.2 #2.arrow-eqv-s
-      identity-neutral-right = lambda
-        let f in
-        * f.1 #1.identity-neutral-right
-          f.2 #2.identity-neutral-right
-
-      compose-associative :
-        -- * a.1 b.1 #1.arrow-s
-             a.2 b.2 #2.arrow-s % f
-           * b.1 c.1 #1.arrow-s
-             b.2 c.2 #2.arrow-s % g
-           * c.1 d.1 #1.arrow-s
-             c.2 d.2 #2.arrow-s % h
-        -> * f.1 g.1 h.1 #1.compose #1.compose
-             f.1 g.1 h.1 #1.compose #1.compose #1.arrow-eqv-s
-             f.2 g.2 #2.compose h.2 #2.compose
-             f.2 g.2 #2.compose h.2 #2.compose #2.arrow-eqv-s
-      compose-associative = lambda
-        let f g h in
-        * f.1 g.1 h.1 #1.compose-associative
-          f.2 g.2 h.2 #2.compose-associative
-    #+end_src
-
-*** category-product -- without type
-
-    #+begin_src cicada
-    category-product : -- category-t category-t -> category-t
-    category-product = lambda
-      let #1 #2 in category-@
-
-      object-s = lambda (* #1.object-s #2.object-s)
-
-      arrow-s = lambda
-        let succ ante in
-        * succ.1 ante.1 #1.arrow-s
-          succ.2 ante.2 #2.arrow-s
-
-      arrow-eqv-s = lambda
-        let lhs rhs in
-        * lhs.1 rhs.1 #1.arrow-eqv-s
-          lhs.2 rhs.2 #2.arrow-eqv-s
-
-      identity = lambda
-        let a in
-        * a.1 #1.identity
-          a.2 #2.identity
-
-      compose = lambda
-        let f g in
-        * f.1 g.1 #1.compose
-          f.2 g.2 #2.compose
-
-      identity-neutral-left = lambda
-        let f in
-        * f.1 #1.identity-neutral-left
-          f.2 #2.identity-neutral-left
-
-      identity-neutral-right = lambda
-        let f in
-        * f.1 #1.identity-neutral-right
-          f.2 #2.identity-neutral-right
-
-      compose-associative = lambda
-        let f g h in
-        * f.1 g.1 h.1 #1.compose-associative
-          f.2 g.2 h.2 #2.compose-associative
-    #+end_src
-
-*** opposite-category-s
-
-*** category.opposite
-
-    #+begin_src cicada
-    category.opposite : category-t
-    category.opposite = category-@
-      object-s = lambda this.object-s
-
-      arrow-s :
-        -- object-s object-s
-        -> set-t*
-      arrow-s = lambda swap this.arrow-s
-
-      arrow-eqv-s :
-        -- b a this.arrow-s b a this.arrow-s
-        -> set-t*
-      arrow-eqv-s = lambda this.arrow-eqv-s
-
-      identity :
+      #+begin_src cicada
+      category.coproduct-object-s :
         -- object-s % a
-        -> a a arrow-s
-      identity = lambda this.identity
+           object-s % b
+           object-s % p
+           a p arrow-s % ap
+           b p arrow-s % bp
+        -> set-t
+      category.product-object-s = lambda
+        let a b p ap bp in
+        -- object-s % q
+           a q arrow-s % aq
+           a q arrow-s % bq
+        -> unique p q arrow-s % pq
+           under arrow-eqv-s such-that
+             * aq, ap pq compose arrow-eqv-s
+               bq, bp pq compose arrow-eqv-s
+      #+end_src
 
-      compose :
-        -- b a this.arrow-s
-           c b this.arrow-s
-        -> c a this.arrow-s
-      compose = lambda swap this.compose
+***** category.initial-object-s
 
-      identity-neutral-left :
-        -- b a this.arrow-s % f
-        -> f a identity this.compose, f arrow-eqv-s
-      identity-neutral-left = lambda this.identity-neutral-right
+      #+begin_src cicada
+      category.initial-object-s : -- object-s -> set-t
+      category.initial-object-s = lambda
+        let a in
+        -- object-s % b
+        -> unique a b arrow-s % f under arrow-eqv-s
+      #+end_src
 
-      identity-neutral-right :
-        -- b a this.arrow-s % f
-        -> b identity f this.compose, f arrow-eqv-s
-      identity-neutral-right = lambda this.identity-neutral-left
+***** category.terminal-object-s
 
-      compose-associative :
-        -- b a this.arrow-s % f
-           c b this.arrow-s % g
-           d c this.arrow-s % h
-        -> h g this.compose f this.compose
-           h g f this.compose this.compose arrow-eqv-s
-      compose-associative = lambda
-        let f g h in
-        h g f this.compose-associative
-        this.arrow-eqv-relation.pre-symmetric
-    #+end_src
+      #+begin_src cicada
+      category.terminal-object-s : -- object-s -- set-t
+      category.terminal-object-s = lambda
+        let a in
+        -- object-s % b
+        -> unique b a arrow-s % f under arrow-eqv-s
+      #+end_src
 
-*** preorder.as-cat
+*** other structure as category
 
-    #+begin_src cicada
-    note
-      to view a preorder as a category
-      we simple view all arrow of the same type as eqv
+***** preorder.as-category
 
-    preorder.as-cat : category-t
-    preorder.as-cat = category-@
-      object-s = element-s
+      #+begin_src cicada
+      note
+        to view a preorder as a category
+        we simple view all arrow of the same type as eqv
 
-      arrow-s = lambda pre-s
+      preorder.as-category : category-t
+      preorder.as-category = category-@
+        object-s = element-s
 
-      arrow-eqv-s = lambda
-        drop drop unit-s
+        arrow-s = lambda pre-s
 
-      identity = lambda pre-reflexive
+        arrow-eqv-s = lambda
+          drop drop unit-s
 
-      compose = lambda pre-transitive
+        identity = lambda pre-reflexive
 
-      identity-neutral-left = lambda
-        drop unit-c
+        compose = lambda pre-transitive
 
-      identity-neutral-right = lambda
-        drop unit-c
+        identity-neutral-left = lambda
+          drop unit-c
 
-      compose-associative = lambda
-        drop drop drop unit-c
-    #+end_src
+        identity-neutral-right = lambda
+          drop unit-c
 
-*** category-morphism-t
+        compose-associative = lambda
+          drop drop drop unit-c
+      #+end_src
 
-    #+begin_src cicada
-    category-morphism-t : class-tt
-    category-morphism-t = class
-      ante : category-t
-      succ : category-t
+*** build new category from old category
 
-      object-map :
-        -- ante.object-s
-        -> succ.object-s
+***** category.opposite
 
-      arrow-map :
-        -- a b ante.arrow-s
-        -> a object-map b object-map succ.arrow-s
+      #+begin_src cicada
+      category.opposite : category-t
+      category.opposite = category-@
+        object-s = lambda this.object-s
 
-      arrow-map-respect-compose :
-        -- a b ante.arrow-s % f
-           b c ante.arrow-s % g
-        -> f g ante.compose arrow-map
-           f arrow-map g arrow-map succ.compose
-           succ.arrow-eqv-s
+        arrow-s :
+          -- object-s object-s
+          -> set-t
+        arrow-s = lambda swap this.arrow-s
 
-      arrow-map-respect-identity :
-        -- a : ante.object-s
-        -> a object-map succ.identity
-           a ante.identity arrow-map
-           succ.arrow-eqv-s
-    #+end_src
+        arrow-eqv-s :
+          -- b a this.arrow-s b a this.arrow-s
+          -> set-t
+        arrow-eqv-s = lambda this.arrow-eqv-s
 
-* void-cat
+        identity :
+          -- object-s % a
+          -> a a arrow-s
+        identity = lambda this.identity
+
+        compose :
+          -- b a this.arrow-s
+             c b this.arrow-s
+          -> c a this.arrow-s
+        compose = lambda swap this.compose
+
+        identity-neutral-left :
+          -- b a this.arrow-s % f
+          -> f a identity this.compose, f arrow-eqv-s
+        identity-neutral-left = lambda this.identity-neutral-right
+
+        identity-neutral-right :
+          -- b a this.arrow-s % f
+          -> b identity f this.compose, f arrow-eqv-s
+        identity-neutral-right = lambda this.identity-neutral-left
+
+        compose-associative :
+          -- b a this.arrow-s % f
+             c b this.arrow-s % g
+             d c this.arrow-s % h
+          -> h g this.compose f this.compose
+             h g f this.compose this.compose arrow-eqv-s
+        compose-associative = lambda
+          let f g h in
+          h g f this.compose-associative
+          this.arrow-eqv-relation.pre-symmetric
+      #+end_src
+
+***** category-product
+
+      #+begin_src cicada
+      category-product : -- category-t category-t -> category-t
+      category-product = lambda
+        let #1 #2 in category-@
+
+        object-s = lambda * #1.object-s #2.object-s
+
+        arrow-s = lambda
+          let succ ante in
+          * succ.1 ante.1 #1.arrow-s
+            succ.2 ante.2 #2.arrow-s
+
+        arrow-eqv-s = lambda
+          let lhs rhs in
+          * lhs.1 rhs.1 #1.arrow-eqv-s
+            lhs.2 rhs.2 #2.arrow-eqv-s
+
+        identity = lambda
+          let a in
+          * a.1 #1.identity
+            a.2 #2.identity
+
+        compose = lambda
+          let f g in
+          * f.1 g.1 #1.compose
+            f.2 g.2 #2.compose
+
+        identity-neutral-left = lambda
+          let f in
+          * f.1 #1.identity-neutral-left
+            f.2 #2.identity-neutral-left
+
+        identity-neutral-right = lambda
+          let f in
+          * f.1 #1.identity-neutral-right
+            f.2 #2.identity-neutral-right
+
+        compose-associative = lambda
+          let f g h in
+          * f.1 g.1 h.1 #1.compose-associative
+            f.2 g.2 h.2 #2.compose-associative
+      #+end_src
+
+* product-closed-category-t
+
+  #+begin_src cicada
+  product-closed-category-t <: category-t
+  product-closed-category-t = class
+    product :
+      -- object-s % a
+         object-s % b
+      -> object-s % p
+         p a arrow-s % pa
+         p b arrow-s % pb
+         a b p pa pb product-object-s
+  #+end_src
+
+* void-category
 
 *** void-arrow-s
 
@@ -1244,11 +1086,11 @@
         -- -> lhs rhs void-arrow-eqv-s
     #+end_src
 
-*** void-cat
+*** void-category
 
     #+begin_src cicada
-    void-cat : category-t
-    void-cat = category-@
+    void-category : category-t
+    void-category = category-@
       object-s = lambda void-s
       arrow-s = lambda void-arrow-s
       arrow-eqv-s = lambda void-arrow-eqv-s
@@ -1341,11 +1183,11 @@
            p q link-path-c r link-path-c associative-path-eqv-s
     #+end_src
 
-*** graph.as-free-cat
+*** graph.as-free-category
 
     #+begin_src cicada
-    graph.as-free-cat : category-t
-    graph.as-free-cat = category-@
+    graph.as-free-category : category-t
+    graph.as-free-category = category-@
       object-s = lambda node-s
       arrow-s = lambda path-s
       arrow-eqv-s = lambda path-eqv-s
@@ -1380,7 +1222,7 @@
       compose-associative = lambda associative-path-eqv-c
     #+end_src
 
-* nat-order-cat
+* nat-order-category
 
 *** nat-lteq-s
 
@@ -1447,11 +1289,11 @@
       succ-c dup nat-lteq-reflexive
     #+end_src
 
-*** nat-order-cat
+*** nat-order-category
 
     #+begin_src cicada
-    nat-order-cat : category-t
-    nat-order-cat = category-@
+    nat-order-category : category-t
+    nat-order-category = category-@
       object-s = lambda nat-s
       arrow-s = lambda nat-lteq-s
       arrow-eqv-s = lambda eqv-s
@@ -1530,11 +1372,11 @@
            a b product c product element-eqv-s
     #+end_src
 
-*** monoid.as-cat
+*** monoid.as-category
 
     #+begin_src cicada
-    monoid.as-cat : category-t
-    monoid.as-cat = category-@
+    monoid.as-category : category-t
+    monoid.as-category = category-@
       object-s = lambda unit-s
       arrow-s = lambda drop drop element-s
       arrow-eqv-s = lambda element-eqv-s
@@ -1557,119 +1399,13 @@
 
 * >< limit
 
-* set-cat
-
-*** [note]
-
-    - this construction is not yet powerful enough
-      to model the semantic of cicada.
-
-*** set-arrow-s
-
-    #+begin_src cicada
-    set-arrow-s : -- set-t set-t -> set-t
-    set-arrow-s = lambda
-      let succ ante in
-      lazy -- succ -> ante
-    #+end_src
-
-*** fun-eqv-s
-
-    #+begin_src cicada
-    fun-eqv-s : -- (lazy -- a -> b) (lazy -- a -> b) -> set-t
-    fun-eqv-s = data
-      @ [lhs rhs] : (lazy -- a -> b)
-      fun-eqv-c :
-        -- theorem : (-- x : a -> x lhs apply x rhs apply eqv-s)
-        -> lhs rhs fun-eqv-s
-    #+end_src
-
-*** set-cat
-
-    #+begin_src cicada
-    set-cat : category-t
-    set-cat = category-@
-      object-s = lambda set-t
-      arrow-s = lambda set-arrow-s
-      arrow-eqv-s = lambda fun-eqv-s
-
-      identity :
-        -- set-t % a
-        -> (lazy -- a -> a)
-      identity = lambda
-        let x in {}
-
-      compose :
-        -- (lazy -- a -> b)
-           (lazy -- b -> c)
-        -> (lazy -- a -> c)
-      compose = lambda
-        let f g in {f apply g apply}
-
-      identity-neutral-left :
-        -- (lazy -- a -> b) % f
-        -> {{} apply f apply}, f fun-eqv-s
-      identity-neutral-left = lambda
-        {drop eqv-c} fun-eqv-c
-
-      identity-neutral-right :
-        -- (lazy -- a -> b) % f
-        -> {f apply {} apply}, f fun-eqv-s
-      identity-neutral-right = lambda
-        {drop eqv-c} fun-eqv-c
-
-      compose-associative :
-        -- (lazy -- a -> b) % f
-           (lazy -- b -> c) % g
-           (lazy -- c -> d) % h
-        -> {f apply {g apply h apply} apply}
-           {{f apply g apply} apply h apply} fun-eqv-s
-      compose-associative = lambda
-        {drop eqv-c} fun-eqv-c
-    #+end_src
-
-* class-cat
-
-*** [note]
-
-    - since (class) is used to model mathematical structure,
-      this class-cat is big category.
-
-*** class-arrow-s
-
-    - x -
-      arrow-s of this cat is not just function,
-      it must be functor which respects the structure of class.
-
-    - k -
-      what do you mean by "respect the structure of class" ?
-
-    #+begin_src cicada
-    class-arrow-s : -- class-tt class-tt -> class-tt
-    class-arrow-s = lambda
-      let succ ante in
-      lazy -- succ -> ante
-    #+end_src
-
-*** ><
-
-*** class-cat
-
-    #+begin_src cicada
-    class-cat : category-t
-    class-cat = category-@
-      object-s = lambda class-tt
-      arrow-s = lambda class-arrow-s
-      arrow-eqv-s = lambda
-    #+end_src
-
 * functor
 
 *** functor-t
 
     #+begin_src cicada
     note
-      endofunctor of set-cat
+      endofunctor of set-category
 
     functor-t : class-tt
     functor-t = class
@@ -1938,42 +1674,245 @@
         -> y z d mod-gcd-s
     #+end_src
 
-* ><>< dependent-category
+* set-category
 
-*** dependent-category-t
+*** set-morphism-t
 
     #+begin_src cicada
-    dependent-category-t : class-tt
-    dependent-category-t = class
-      object-s : set-t
-      object-eqv-s : -- object-s object-s -> set-t
-      arrow-s : -- object-s object-s -> set-t
-      arrow-eqv-s : -- a b arrow-s a b arrow-s -> set-t
-      substitution-s : monoid-t
-      substitute : -- object-s substitution-s -> object-s
-      unification :
-        -- a : object-s
-           b : object-s
-        -> c : object-s
-           s : substitution-s
-           a s substitute c object-eqv-s
-           b s substitute c object-eqv-s
+    set-morphism-t : class-tt
+    set-morphism-t = class
+      ante : set-t
+      succ : set-t
+
+      morphism : -- ante -> succ
+    #+end_src
+
+*** set-morphism-eqv-t
+
+    #+begin_src cicada
+    set-morphism-eqv-t : class-tt
+    set-morphism-eqv-t = class
+      lhs : set-morphism-& a b
+      rhs : set-morphism-& a b
+
+      morphism-eqv :
+        -- x : a
+        -> x lhs.morphism x rhs.morphism eqv-s
+    #+end_src
+
+*** set-category
+
+    #+begin_src cicada
+    set-category : category-tt
+    set-category = category-@
+      object-t : class-tt
+      object-t = set-t
+
+      arrow-t : -- set-t set-t -> class-tt
+      arrow-t = lambda
+        let a b in
+        set-morphism-& a b
+
+      arrow-eqv-t :
+        -- set-morphism-& a b
+           set-morphism-& a b
+        -> class-tt
+      arrow-eqv-t = lambda
+        let lhs rhs in
+        set-morphism-eqv-& lhs rhs
+
       identity :
-        -- a : object-s
-        -> a a arrow-s
-      cut :
-        -- a b arrow-s
-           c d arrow-s
-        -> a b c unifier substitute
-           d b c unifier substitute
-           arrow-s
+        -- set-t % a
+        -> set-morphism-& a a
+      identity = lambda drop set-morphism-@
+        morphism = lambda
+
+      compose :
+        -- set-morphism-& a b
+           set-morphism-& b c
+        -> set-morphism-& a c
+      compose = lambda let f g in set-morphism-@
+        morphism = lambda f.morphism g.morphism
+
       identity-neutral-left :
-        --
-        ->
+        -- f : set-morphism-& a b
+        -> set-morphism-eqv-& f b identity compose, f
+      identity-neutral-left = lambda let f in set-morphism-eqv-@
+        lhs : set-morphism-& a b
+        lhs = f b identity compose
+        rhs : set-morphism-& a b
+        rhs = f
+        morphism-eqv :
+          -- x : a
+          -> x f.morphism x f.morphism eqv-s
+        morphism-eqv = lambda let x in eqv-c
+
       identity-neutral-right :
-        --
-        ->
-      cut-associative :
-        --
-        ->
+        -- f : set-morphism-& a b
+        -> set-morphism-eqv-& a identity f compose, f
+      identity-neutral-right = lambda let f in set-morphism-eqv-@
+        morphism-eqv = lambda drop eqv-c
+
+      compose-associative :
+        -- f : set-morphism-& a b
+           g : set-morphism-& b c
+           h : set-morphism-& c d
+        -> set-morphism-eqv-&
+             lhs = f g h compose compose
+             rhs = f g compose h compose
+      compose-associative = lambda let f g h in set-morphism-eqv-@
+        morphism-eqv = lambda drop eqv-c
+    #+end_src
+
+*** set-category -- without type
+
+    #+begin_src cicada
+    set-category : category-tt
+    set-category = category-@
+      object-t = set-t
+
+      arrow-t = lambda
+        let a b in
+        set-morphism-& a b
+
+      arrow-eqv-t = lambda
+        let lhs rhs in
+        set-morphism-eqv-& lhs rhs
+
+      identity = lambda drop set-morphism-@
+        morphism = lambda
+
+      compose = lambda let f g in set-morphism-@
+        morphism = lambda f.morphism g.morphism
+
+      identity-neutral-left = lambda drop set-morphism-eqv-@
+        morphism-eqv = lambda drop eqv-c
+
+      identity-neutral-right = lambda drop set-morphism-eqv-@
+        morphism-eqv = lambda drop eqv-c
+
+      compose-associative = lambda drop drop drop set-morphism-eqv-@
+        morphism-eqv = lambda drop eqv-c
+    #+end_src
+
+* preorder-category
+
+*** preorder-morphism-t
+
+    #+begin_src cicada
+    preorder-morphism-t : class-tt
+    preorder-morphism-t = class
+      ante : preorder-t
+      succ : preorder-t
+
+      morphism : -- ante.element-s -> succ.element-s
+
+      morphism-respect-pre-relation :
+        -- x y ante.pre-s
+        -> x morphism y morphism succ.pre-s
+    #+end_src
+
+*** preorder-morphism-eqv-t
+
+    #+begin_src cicada
+    preorder-morphism-eqv-t : class-tt
+    preorder-morphism-eqv-t = class
+      lhs : preorder-morphism-& ante succ
+      rhs : preorder-morphism-& ante succ
+
+      morphism-eqv :
+        -- x : ante.element-s
+        -> x lhs.morphism x rhs.morphism eqv-s
+    #+end_src
+
+*** preorder-category
+
+    #+begin_src cicada
+    preorder-category : category-tt
+    preorder-category = category-@
+      object-t : class-tt
+      object-t = preorder-t
+
+      arrow-t : -- preorder-t preorder-t -> class-tt
+      arrow-t = lambda
+        let ante succ in
+        preorder-morphism-& ante succ
+
+      arrow-eqv-t :
+        -- preorder-morphism-& ante succ
+           preorder-morphism-& ante succ
+        -> class-tt
+      arrow-eqv-t = lambda
+        let lhs rhs in
+        preorder-morphism-eqv-& lhs rhs
+
+      identity :
+        -- preorder-t % a
+        -> preorder-morphism-& a a
+      identity = lambda drop preorder-morphism-@
+        morphism = lambda
+        morphism-respect-pre-relation = lambda
+
+      compose :
+        -- preorder-morphism-& a b
+           preorder-morphism-& b c
+        -> preorder-morphism-& a c
+      compose = lambda let f g in preorder-morphism-@
+        morphism = lambda f.morphism g.morphism
+        morphism-respect-pre-relation = lambda
+          f.morphism-respect-pre-relation
+          g.morphism-respect-pre-relation
+
+      identity-neutral-left = lambda let f in preorder-morphism-eqv-@
+        morphism-eqv = lambda let x in eqv-c
+
+      identity-neutral-right = lambda let f in preorder-morphism-eqv-@
+        morphism-eqv = lambda drop eqv-c
+
+      compose-associative = lambda let f g h in preorder-morphism-eqv-@
+        morphism-eqv = lambda drop eqv-c
+    #+end_src
+
+* >< category-category
+
+*** category-morphism-t
+
+    #+begin_src cicada
+    category-morphism-t : class-tt
+    category-morphism-t = class
+      ante : category-t
+      succ : category-t
+
+      object-map :
+        -- ante.object-s
+        -> succ.object-s
+
+      arrow-map :
+        -- a b ante.arrow-s
+        -> a object-map b object-map succ.arrow-s
+
+      arrow-map-respect-compose :
+        -- a b ante.arrow-s % f
+           b c ante.arrow-s % g
+        -> f g ante.compose arrow-map
+           f arrow-map g arrow-map succ.compose
+           succ.arrow-eqv-s
+
+      arrow-map-respect-identity :
+        -- a : ante.object-s
+        -> a object-map succ.identity
+           a ante.identity arrow-map
+           succ.arrow-eqv-s
+    #+end_src
+
+* >< class-category
+
+*** class-category
+
+    #+begin_src cicada
+    class-category : category-ttt
+    class-category = category-@
+      object-tt = lambda class-tt
+      arrow-tt =
+      arrow-eqv-tt =
     #+end_src
