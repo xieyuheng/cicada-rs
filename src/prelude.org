@@ -1,6 +1,6 @@
 #+html_head: <link rel="stylesheet" href="css/org-page.css"/>
 #+title: prelude
-* unify (data) and (class)
+
 * [todo-stack]
 
 *** category-category
@@ -174,15 +174,9 @@
 
 *** (data)
 
-    - data-type
+    - data-type of type set-t
 
     - named record-type
-
-    - it names a type-constructor for the data-type,
-      whose return type is set-t
-
-    - it also names a data-constructor,
-      whose return type is constructed by the type-constructor.
 
     - to inhabit a data-type constructed by type-constructor,
       we call its data-constructor.
@@ -191,27 +185,21 @@
 
       - (<name>-c <field> = <data> ...) -- call with field
 
-*** >< (class)
+*** (class)
 
-    - class-type
+    - class-type of type class-tt
 
     - named record-type just like data-type
 
-    - but unlike data-type,
-      it can only names a class-constructor with zero arity.
+*** data-type vs class-type
 
-      thus the class-constructor
-      is only act as a name of the class-type.
+    - they are almost the same,
+      only low-level vs high-level.
 
-    - to inhabit a class-type constructed by class-constructor,
-      we call its object-constructor.
+    - data-type's fields' types are often other data-types.
 
-      - (<name>-c <data> ...) -- call with order
-
-      - (<name>-c <field> = <data> ...) -- call with field
-
-    - also a class-type can inherit other class-types,
-      bringing in the sub-class relation between class-types
+    - class-type's fields' types are often set-t or arrow-type,
+      i.e. of higher levels.
 
 *** (sum)
 
@@ -219,24 +207,26 @@
 
     - named data-type list
 
-    - type-constructor of each data-type have the same type
+    - if declares same fields,
+      and names a type-constructor for the sum-type.
 
-    - it also names a type-constructor for the sum-type,
-      which has the same type as the data-type's type-constructor
+    - type-constructor of each data-type
+      must have the same declared fields and types
 
-    - since it always create new data-type list,
-      it can be viewed as disjoin-union,
+    - it can be viewed as disjoin-union,
       because data-types in the list are disjoin.
 
 *** (<:)
 
-    - sub-class relation between class-types
+    - a class-type or data-type
+      can inherit other class-types or data-types,
+      bringing in the sub-class relation between them.
 
     - [c1 <: c2] means c1 inherit c2 's fields,
       thus c1 is more special then c2,
       because c1 has more interface functions than c2.
 
-    - whatever object inhabits c1 also inhabits c2.
+    - whatever data inhabits c1 also inhabits c2.
 
 *** currying of type-constructor as partial-class-type
 
@@ -246,26 +236,6 @@
     - to inhabited such partial-class-type
 
     - we only need to inhabit remaining fields
-
-*** data-type vs class-type
-
-***** low-level vs high-level
-
-      - data-type's fields' types are often other data-types.
-
-      - class-type's fields' types are often set-t or arrow-type,
-        i.e. of higher levels.
-
-***** implicit vs explicit
-
-      - data-type's type-constructor can take arguments,
-        the informations in the arguments,
-        can be viewed as implicit
-        to the data constructed by its data-constructor.
-
-      - class-type's class-constructor can not take arguments,
-        all the informations
-        are explicitly stored in its instance object.
 
 *** level of universe
 
@@ -338,7 +308,7 @@
 
     #+begin_src cicada
     void-s : set-t
-    void-s = sum
+    void-s = sum []
     #+end_src
 
 *** absurd
@@ -354,7 +324,6 @@
     #+begin_src cicada
     unit-s : set-t
     unit-s = data
-      unit-c : unit-s
     #+end_src
 
 *** unit
@@ -370,9 +339,13 @@
 
     #+begin_src cicada
     bool-s : set-t
-    bool-s = sum
-      true-c : true-s
-      false-c : false-s
+    bool-s = sum [true-s false-s]
+
+    true-s : set-t
+    true-s = data
+
+    false-s : set-t
+    false-s = data
     #+end_src
 
 * eqv
@@ -380,10 +353,10 @@
 *** eqv-s
 
     #+begin_src cicada
-    eqv-s : -- t t -> set-t
+    eqv-s : set-t
     eqv-s = data
-      @ [lhs rhs] : t
-      eqv-c : (eqv-s v v)
+      [lhs rhs] : t
+      lhs = rhs
     #+end_src
 
 *** eqv-apply
@@ -416,9 +389,14 @@
 
     #+begin_src cicada
     nat-s : set-t
-    nat-s = sum
-      zero-c : zero-s
-      succ-c : -- prev : nat-s -> succ-s
+    nat-s = sum [zero-s succ-s]
+
+    zero-s : set-t
+    zero-s = data
+
+    succ-s : set-t
+    succ-s = data
+      prev : nat-s
     #+end_src
 
 *** nat-add
@@ -466,14 +444,25 @@
 *** nat-even-s
 
     #+begin_src cicada
-    nat-even-s : -- nat-s -> set-t
-    nat-even-s = sum
-      @ nat : nat-s
-      zero-even-c : (zero-even-s zero-c)
-      even-plus-two-even-c :
-        -- prev : (nat-even-s m)
-        -> (even-plus-two-even-s (succ-c (succ-c m)))
+    nat-even-s : set-t
+    nat-even-s = sum [zero-even-s even-plus-two-even-s]
+      nat : nat-s
 
+    zero-even-s : set-t
+    zero-even-s = data
+      nat : nat-s
+      nat = zero-c
+
+    even-plus-two-even-s : set-t
+    even-plus-two-even-s = data
+      nat : nat-s
+      prev : (nat-even-s m)
+      nat = (succ-c (succ-c m))
+    #+end_src
+
+*** two-even
+
+    #+begin_src cicada
     two-even : (nat-even-s (succ-c (succ-c zero-c)))
     two-even = (even-plus-two-even-c zero-even-c)
     #+end_src
@@ -556,14 +545,19 @@
 *** list-s
 
     #+begin_src cicada
-    list-s : -- set-t -> set-t
-    list-s = sum
-      @ t : set-t
-      null-c : (null-s t)
-      cons-c :
-        -- car : t
-           cdr : (list-s t)
-        -> (cons-s t)
+    list-s : class-t
+    list-s = sum [null-s cons-s]
+      t : set-t
+
+    null-s : class-t
+    null-s = class
+      t : set-t
+
+    cons-s : class-t
+    cons-s = class
+      t : set-t
+      car : t
+      cdr : (list-s t)
     #+end_src
 
 *** list-length
@@ -615,23 +609,26 @@
 *** list-length-s -- re-imp function as relation
 
     #+begin_src cicada
-    note
-      list-length :
-        -- list : (list-s t)
-        -> length : nat-s
-      list-length-s :
-        -- list : (list-s t)
-           length : nat-s
-        -> set-t
+    list-length-s : set-t
+    list-length-s = sum [zero-length-s succ-length-s]
+      list : (list-s t)
+      length : nat-s
 
-    list-length-s : -- (list-t t) nat-s -> set-t
-    list-length-s = sum
-      @ list : (list-s t)
-        length : nat-s
-      zero-length-c : (zero-length-s null-c zero-c)
-      succ-length-c :
-        -- prev : (list-length-s list length)
-        -> (succ-length-s (cons-c x list) (succ-c length))
+
+    zero-length-s : set-t
+    zero-length-s = data
+      list : (list-s t)
+      length : nat-s
+      list = null-c
+      length = zero-c
+
+    succ-length-s : set-t
+    succ-length-s = data
+      list : (list-s t)
+      length : nat-s
+      prev : (list-length-s list length)
+      list = (cons-c x list)
+      length = (succ-c length)
     #+end_src
 
 *** list-map-preserve-list-length
@@ -646,22 +643,34 @@
         succ-length-s (succ-length-c (recur h.prev))
     #+end_src
 
-*** list-append-s
+*** list-append-s -- in prolog
 
     #+begin_src cicada
     note in prolog, we will have :
       append([], Succ, Succ).
       append([Car | Cdr], Succ, [Car | ResultCdr]):-
         append(Cdr, Succ, ResultCdr).
+    #+end_src
 
-    list-append-s : -- (list-s t) (list-s t) (list-s t) -> set-t
-    list-append-s = sum
-      @ [ante succ result] : (list-s t)
-      zero-append-c : (zero-append-s null-c succ succ)
-      succ-append-c :
-        -- prev : (list-append-s cdr succ result-cdr)
-        -> (succ-append-s
-             (cons-c car cdr) succ (cons-c car result-cdr))
+*** list-append-s
+
+    #+begin_src cicada
+    list-append-s : set-t
+    list-append-s = sum [zero-append-s succ-append-s]
+      [ante succ result] : (list-s t)
+
+    zero-append-s : set-t
+    zero-append-s = data
+      [ante succ result] : (list-s t)
+      ante = null-c
+      result = succ
+
+    succ-append-s : set-t
+    succ-append-s = data
+      [ante succ result] : (list-s t)
+      prev : (list-append-s cdr succ result-cdr)
+      ante = (cons-c car cdr)
+      result = (cons-c car result-cdr)
     #+end_src
 
 * vect
@@ -669,15 +678,24 @@
 *** vect-s
 
     #+begin_src cicada
-    vect-s : -- set-t nat-s -> set-t
-    vect-s = sum
-      @ t : set-t
-        length : nat-s
-      null-vect-c : (null-vect-s t zero-c)
-      cons-vect-c :
-        -- car : t
-           cdr : (vect-s t length)
-        -> (cons-vect-s t (succ-c length))
+    vect-s : set-t
+    vect-s = sum [null-vect-s cons-vect-t]
+      t : set-t
+      length : nat-s
+
+    null-vect-s : set-t
+    null-vect-s = data
+      t : set-t
+      length : nat-s
+      length = zero-c
+
+    cons-vect-s : set-t
+    cons-vect-s = data
+      t : set-t
+      length : nat-s
+      car : t
+      cdr : (vect-s t length)
+      length = (succ-c length)
     #+end_src
 
 *** vect-append
@@ -1049,22 +1067,17 @@
 *** void-arrow-s
 
     #+begin_src cicada
-    void-arrow-s : -- void-s void-s -> set-t
+    void-arrow-s : set-t
     void-arrow-s = data
-      @ [ante succ] : void-s
-      void-arrow-c : (void-arrow-s ante succ)
+      [ante succ] : void-s
     #+end_src
 
 *** void-arrow-eqv-s
 
     #+begin_src cicada
-    void-arrow-eqv-s :
-      -- (void-arrow-s a b)
-         (void-arrow-s a b)
-      -> set-t
+    void-arrow-eqv-s : set-t
     void-arrow-eqv-s = data
-      @ [lhs rhs] : (void-arrow-s a b)
-      void-arrow-eqv-c : (void-arrow-eqv-s lhs rhs)
+      [lhs rhs] : (void-arrow-s a b)
     #+end_src
 
 *** void-category
@@ -1119,47 +1132,70 @@
 *** graph.path-s
 
     #+begin_src cicada
-    graph.path-s : -- node-s node-s -> set-t
-    graph.path-s = sum
-      @ [start end] : node-s
-      node-path-c :
-        -- node-s % node
-        -> (node-path-s node node)
-      edge-path-c :
-        -- (edge-s a b) % edge
-        -> (edge-path-s a b)
-      link-path-c :
-        -- (path-s a b) % first
-           (path-s b c) % next
-        -> (link-path-s a c)
+    graph.path-s : set-t
+    graph.path-s = sum [graph.node-path-s
+                        graph.edge-path-s
+                        graph.link-path-s]
+      [start end] : node-s
+
+    graph.node-path-s : set-t
+    graph.node-path-s = data
+      [start end] : node-s
+      node : node-s
+      start = node
+      end = node
+
+    graph.edge-path-s : set-t
+    graph.edge-path-s = data
+      [start end] : node-s
+      edge : (edge-s start end)
+
+    graph.link-path-s : set-t
+    graph.link-path-s = data
+      [start end] : node-s
+      first : (path-s start middle)
+      next : (path-s middle end)
     #+end_src
 
 *** graph.path-eqv-s
 
     #+begin_src cicada
-    graph.path-eqv-s : -- (path-t a b) (path-s a b) -> set-t
-    graph.path-eqv-s = sum
-      @ [lhs rhs] : (path-s a b)
-      refl-path-eqv-c :
-        -- (path-s a b) % p
-        -> (refl-path-eqv-s p p)
-      node-left-path-eqv-c :
-        -- (path-s a b) % p
-        -> (node-left-path-eqv-s
-             (link-path-c (node-path-c a) p)
-             p)
-      node-right-path-eqv-c :
-        -- (path-s a b) % p
-        -> (node-right-path-eqv-s
-             (link-path-c p (node-path-c b)))
-             p
-      associative-path-eqv-c :
-        -- (path-s a b) % p
-           (path-s b c) % q
-           (path-s c d) % r
-        -> (associative-path-eqv-s
-             (link-path-c p (link-path-c q r)))
-             (link-path-c (link-path-c p q) r)
+    graph.path-eqv-s : set-t
+    graph.path-eqv-s = sum [graph.refl-path-eqv-s
+                            graph.node-left-path-eqv-s
+                            graph.node-right-path-eqv-s
+                            graph.associative-path-eqv-s]
+      [lhs rhs] : (path-s a b)
+
+    graph.refl-path-eqv-s : set-t
+    graph.refl-path-eqv-s = data
+      [lhs rhs] : (path-s a b)
+      p : (path-s a b)
+      lhs = p
+      lhs = p
+
+    graph.node-left-path-eqv-s : set-t
+    graph.node-left-path-eqv-s = data
+      [lhs rhs] : (path-s a b)
+      p : (path-s a b)
+      lhs = p
+      rhs = (link-path-c (node-path-c a) p)
+
+    graph.node-right-path-eqv-s : set-t
+    graph.node-right-path-eqv-s = data
+      [lhs rhs] : (path-s a b)
+      p : (path-s a b)
+      lhs = p
+      rhs = (link-path-c p (node-path-c b))
+
+    graph.associative-path-eqv-s : set-t
+    graph.associative-path-eqv-s = data
+      [lhs rhs] : (path-s a b)
+      p : (path-s a b)
+      q : (path-s b c)
+      r : (path-s c d)
+      lhs = (link-path-c p (link-path-c q r))
+      rhs = (link-path-c (link-path-c p q) r)
     #+end_src
 
 *** graph.as-free-category
@@ -1203,13 +1239,21 @@
 *** nat-lteq-s
 
     #+begin_src cicada
-    nat-lteq-s : -- nat-s nat-s -> set-t
-    nat-lteq-s = sum
-      @ [l r] : nat-s
-      zero-lteq-c : (zero-lteq-s zero-c r)
-      succ-lteq-c :
-        -- prev : (nat-lteq-s l r)
-        -> (succ-lteq-s (succ-c l) (succ-c r))
+    nat-lteq-s : set-t
+    nat-lteq-s = sum [zero-lteq-s succ-lteq-s]
+      [l r] : nat-s
+
+    zero-lteq-s : set-t
+    zero-lteq-s = data
+      [l r] : nat-s
+      l = zero-c
+
+    succ-lteq-s : set-t
+    succ-lteq-s = data
+      [l r] : nat-s
+      prev : (nat-lteq-s x y)
+      l = (succ-c x)
+      r = (succ-c y)
     #+end_src
 
 *** nat-non-negative
@@ -1400,10 +1444,10 @@
 *** const-s
 
     #+begin_src cicada
-    const-s : -- set-t set-t -> set-t
+    const-s : set-t
     const-s = data
-      @ [c a] : set-t
-      const-c : -- value : c -> (const-s c a)
+      [c a] : set-t
+      value : c
     #+end_src
 
 *** const-functor
@@ -1444,7 +1488,7 @@
     monad.flatten :
       -- (fun-s (fun-s a))
       -> (fun-s a)
-    monad.flatten m = (bind m (lambda))
+    monad.flatten m = (bind m (lambda []))
     #+end_src
 
 *** list-monad
@@ -1464,12 +1508,18 @@
 *** maybe-s
 
     #+begin_src cicada
-    maybe-s : -- set-t -> set-t
-    maybe-s = sum
-      @ t : set-t
-      none-c : (none-s t)
-      just-c :
-        -- value : t -> (just-s t)
+    maybe-s : set-t
+    maybe-s = sum [none-s just-s]
+      t : set-t
+
+    none-s : set-t
+    none-s = data
+      t : set-t
+
+    just-s : set-t
+    just-s = data
+      t : set-t
+      value : t
     #+end_src
 
 *** maybe-functor
@@ -1539,14 +1589,19 @@
 *** tree-s
 
     #+begin_src cicada
-    tree-s : -- set-t -> set-t
-    tree-s = sum
-      @ t : set-t
-      leaf-c :
-        -- t % value -> (leaf-s t)
-      branch-c :
-        -- (tree-s t) % [left right]
-        -> (branch-s t)
+    tree-s : set-t
+    tree-s = sum [leaf-s branch-s]
+      t : set-t
+
+    leaf-s : set-t
+    leaf-s = data
+      t : set-t
+      value : t
+
+    branch-s : set-t
+    branch-s = data
+      t : set-t
+      [left right] : (tree-s t)
     #+end_src
 
 *** tree-functor
@@ -1607,14 +1662,21 @@
 *** gcd-s
 
     #+begin_src cicada
-    gcd-s : -- int-s int-s int-s -> set-t
-    gcd-s = sum
-      @ [x y d] : int-s
-      zero-gcd-c : (zero-gcd-s x zero-c x)
-      mod-gcd-c :
-        -- gcd : (gcd-s x y d)
-           mod : (mod-s x y z)
-        -> (mod-gcd-s y z d)
+    gcd-s : set-t
+    gcd-s = sum [zero-gcd-s mod-gcd-s]
+      [x y d] : int-s
+
+    zero-gcd-s : set-t
+    zero-gcd-s = data
+      [x y d] : int-s
+      y = zero-c
+      x = d
+
+    mod-gcd-s : set-t
+    mod-gcd-s = data
+      [x y d] : int-s
+      gcd : (gcd-s z x d)
+      mod : (mod-s z x y)
     #+end_src
 
 * set-category
