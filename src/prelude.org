@@ -1,6 +1,5 @@
 #+html_head: <link rel="stylesheet" href="css/org-page.css"/>
 #+title: prelude
-* fix the use of `-&`
 * fix the use of `-@`
 * unify (data) and (class)
 * [todo-stack]
@@ -845,7 +844,7 @@
 
       arrow-eqv-relation :
         -- [a b] :: object-s
-        -> (eqv-relation-&
+        -> (eqv-relation-t
              element-s = (arrow-s a b)
              pre-s = arrow-eqv-s)
     #+end_src
@@ -1655,8 +1654,8 @@
     #+begin_src cicada
     set-morphism-eqv-t : class-tt
     set-morphism-eqv-t = class
-      lhs : set-morphism-& a b
-      rhs : set-morphism-& a b
+      lhs : (set-morphism-t a b)
+      rhs : (set-morphism-t a b)
 
       morphism-eqv :
         -- x : a
@@ -1672,35 +1671,34 @@
       object-t = set-t
 
       arrow-t : -- set-t set-t -> class-tt
-      arrow-t a b =
-        set-morphism-& a b
+      arrow-t a b = (set-morphism-t a b)
 
       arrow-eqv-t :
-        -- set-morphism-& a b
-           set-morphism-& a b
+        -- (set-morphism-t a b)
+           (set-morphism-t a b)
         -> class-tt
-      arrow-eqv-t lhs rhs = set-morphism-eqv-& lhs rhs
+      arrow-eqv-t lhs rhs = (set-morphism-eqv-t lhs rhs)
 
       identity :
         -- set-t % a
-        -> set-morphism-& a a
+        -> (set-morphism-t a a)
       identity _ = set-morphism-@
         morphism = nop
 
       compose :
-        -- set-morphism-& a b
-           set-morphism-& b c
-        -> set-morphism-& a c
+        -- (set-morphism-t a b)
+           (set-morphism-t b c)
+        -> (set-morphism-t a c)
       compose f g = set-morphism-@
         morphism = (| f.morphism g.morphism)
 
       identity-neutral-left :
-        -- f : set-morphism-& a b
-        -> set-morphism-eqv-& f (compose f (identity b))
+        -- f : (set-morphism-t a b)
+        -> (set-morphism-eqv-t f (compose f (identity b)))
       identity-neutral-left f = set-morphism-eqv-@
-        lhs : set-morphism-& a b
+        lhs : (set-morphism-t a b)
         lhs = f
-        rhs : set-morphism-& a b
+        rhs : (set-morphism-t a b)
         rhs = (compose f (identity b))
         morphism-eqv :
           -- x : a
@@ -1708,18 +1706,18 @@
         morphism-eqv x = eqv-c
 
       identity-neutral-right :
-        -- f : set-morphism-& a b
-        -> set-morphism-eqv-& f (compose (identity a) f)
+        -- f : (set-morphism-t a b)
+        -> (set-morphism-eqv-t f (compose (identity a) f))
       identity-neutral-right f = set-morphism-eqv-@
         morphism-eqv _ = eqv-c
 
       compose-associative :
-        -- f : set-morphism-& a b
-           g : set-morphism-& b c
-           h : set-morphism-& c d
-        -> set-morphism-eqv-&
+        -- f : (set-morphism-t a b)
+           g : (set-morphism-t b c)
+           h : (set-morphism-t c d)
+        -> (set-morphism-eqv-t
              lhs = (compose f (compose g h))
-             rhs = (compose (compose f g) h)
+             rhs = (compose (compose f g) h))
       compose-associative f g h = set-morphism-eqv-@
         morphism-eqv _ = eqv-c
     #+end_src
@@ -1731,9 +1729,9 @@
     set-category = category-@
       object-t = set-t
 
-      arrow-t a b = set-morphism-& a b
+      arrow-t a b = (set-morphism-t a b)
 
-      arrow-eqv-t lhs rhs = set-morphism-eqv-& lhs rhs
+      arrow-eqv-t lhs rhs = (set-morphism-eqv-t lhs rhs)
 
       identity _ = set-morphism-@
         morphism = nop
@@ -1773,8 +1771,8 @@
     #+begin_src cicada
     preorder-morphism-eqv-t : class-tt
     preorder-morphism-eqv-t = class
-      lhs : preorder-morphism-& a b
-      rhs : preorder-morphism-& a b
+      lhs : (preorder-morphism-t a b)
+      rhs : (preorder-morphism-t a b)
 
       morphism-eqv :
         -- x : a.element-s
@@ -1790,25 +1788,25 @@
       object-t = preorder-t
 
       arrow-t : -- preorder-t preorder-t -> class-tt
-      arrow-t a b = preorder-morphism-& a b
+      arrow-t a b = (preorder-morphism-t a b)
 
       arrow-eqv-t :
-        -- preorder-morphism-& a b
-           preorder-morphism-& a b
+        -- (preorder-morphism-t a b)
+           (preorder-morphism-t a b)
         -> class-tt
-      arrow-eqv-t lhs rhs = preorder-morphism-eqv-& lhs rhs
+      arrow-eqv-t lhs rhs = (preorder-morphism-eqv-t lhs rhs)
 
       identity :
         -- preorder-t % a
-        -> preorder-morphism-& a a
+        -> (preorder-morphism-t a a)
       identity _ = preorder-morphism-@
         morphism = nop
         morphism-respect-pre-relation = nop
 
       compose :
-        -- preorder-morphism-& a b
-           preorder-morphism-& b c
-        -> preorder-morphism-& a c
+        -- (preorder-morphism-t a b)
+           (preorder-morphism-t b c)
+        -> (preorder-morphism-t a c)
       compose f g = preorder-morphism-@
         morphism = (| f.morphism g.morphism)
         morphism-respect-pre-relation =
@@ -1868,8 +1866,8 @@
     #+begin_src cicada
     category-morphism-eqv-tt : class-ttt
     category-morphism-eqv-tt = class
-      lhs : category-morphism-&& a b
-      rhs : category-morphism-&& a b
+      lhs : (category-morphism-tt a b)
+      rhs : (category-morphism-tt a b)
 
       morphism-eqv :
         ><><><
@@ -1886,13 +1884,13 @@
       arrow-tt :
         -- category-tt category-tt
         -> class-ttt
-      arrow-tt a b = category-morphism-&& a b
+      arrow-tt a b = (category-morphism-tt a b)
 
       arrow-eqv-tt :
-        -- category-morphism-&& a b
-           category-morphism-&& a b
+        -- (category-morphism-tt a b)
+           (category-morphism-tt a b)
         -> class-ttt
-      arrow-eqv-tt lhs rhs = category-morphism-eqv-&& lhs rhs
+      arrow-eqv-tt lhs rhs = (category-morphism-eqv-tt lhs rhs)
 
       ><><><
     #+end_src
