@@ -1,7 +1,5 @@
 #+html_head: <link rel="stylesheet" href="css/org-page.css"/>
 #+title: prelude
-* fix state
-* fix multi-return-value
 * fix the use of `-&`
 * fix the use of `-@`
 * unify (data) and (class)
@@ -831,11 +829,11 @@
 
       identity-neutral-left :
         -- (arrow-s a b) % f
-        -> (arrow-eqv-s (compose (identity a) f) f)
+        -> (arrow-eqv-s f (compose (identity a) f))
 
       identity-neutral-right :
         -- (arrow-s a b) % f
-        -> (arrow-eqv-s (compose f (identity b)) f)
+        -> (arrow-eqv-s f (compose f (identity b)))
 
       compose-associative :
         -- (arrow-s a b) % f
@@ -997,12 +995,12 @@
 
         identity-neutral-left :
           -- (this.arrow-s b a) % f
-          -> (arrow-eqv-s (this.compose f (identity a)) f)
+          -> (arrow-eqv-s f (this.compose f (identity a)))
         identity-neutral-left = this.identity-neutral-right
 
         identity-neutral-right :
           -- (this.arrow-s b a) % f
-          -> (arrow-eqv-s (this.compose (identity b) f) f)
+          -> (arrow-eqv-s f (this.compose (identity b) f))
         identity-neutral-right = this.identity-neutral-left
 
         compose-associative :
@@ -1059,12 +1057,11 @@
   product-closed-category-t <: category-t
   product-closed-category-t = class
     product :
-      -- object-s % a
-         object-s % b
-      -> object-s % p
-         (arrow-s p a) % pa
-         (arrow-s p b) % pb
-         (product-object-s a b p pa pb)
+      -- object-s % [a b]
+      -> (* object-s % p
+            (arrow-s p a) % pa
+            (arrow-s p b) % pb
+            (product-object-s a b p pa pb))
   #+end_src
 
 * void-category
@@ -1108,12 +1105,12 @@
 
       identity-neutral-left :
         -- (void-arrow-s a b) % f
-        -> (void-arrow-eqv-s void-arrow-c f)
+        -> (void-arrow-eqv-s f void-arrow-c)
       identity-neutral-left _ = void-arrow-eqv-c
 
       identity-neutral-right :
         -- (void-arrow-s a b) % f
-        -> (void-arrow-eqv-s void-arrow-c f)
+        -> (void-arrow-eqv-s f void-arrow-c)
       identity-neutral-right _ = void-arrow-eqv-c
 
       compose-associative :
@@ -1203,16 +1200,12 @@
 
       identity-neutral-left :
         -- (path-s a b) % f
-        -> (path-eqv-s
-             (link-path-c (node-path-c a) f)
-             f)
+        -> (path-eqv-s f (link-path-c (node-path-c a) f))
       identity-neutral-left = node-left-path-eqv-c
 
       identity-neutral-right :
         -- (path-s a b) % f
-        -> (path-eqv-s
-             (link-path-c f (node-path-c b))
-             f)
+        -> (path-eqv-s f (link-path-c f (node-path-c b)))
       identity-neutral-right = node-right-path-eqv-c
 
       compose-associative :
@@ -1298,7 +1291,7 @@
 
       identity = nat-lteq-reflexive
 
-      compose  = nat-lteq-transitive
+      compose = nat-lteq-transitive
 
       identity-neutral-left x =
         case x
@@ -1326,8 +1319,8 @@
     groupoid-t = class
       inverse :
         -- (arrow-s a b) % f
-        -> (arrow-s b a) % g
-           (arrow-inverse-s f g)
+        -> (* (arrow-s b a) % g
+              (arrow-inverse-s f g))
     #+end_src
 
 * >< nat-total-order
@@ -1538,15 +1531,27 @@
     state-monad : -- set-t -> monad-t
     state-monad s = monad-@
       fun-s = (state-s s)
+
       map : -- (-- a -> b)
-               (state-s a s)
-            -> (state-s b s)
+               (state-s s a)
+            -> (state-s s b)
       map : -- (-- a -> b)
                (-- s -> (* s a))
             -> (-- s -> (* s b))
-      map fun state = (lambda [s] (fun (state s)))
-      pure value = {value}
-      bind state fun = {state fun apply}
+      map f m = lambda [s]
+        * (1st (m s))
+          (f (2nd (m s)))
+
+      pure : -- t -> (state-s s t)
+      pure : -- t -> (-- s -> (* s t))
+      pure v = lambda [s] (* s v)
+
+      bind : -- (fun-s a) (-- a -> (fun-s b)) -> (fun-s b)
+      bind : -- (state-s s a) (-- a -> (state-s s b)) -> (state-s s b)
+      bind : -- (-- s -> (* s a))
+                (-- a -> (-- s -> (* s b)))
+             -> (-- s -> (* s b))
+      bind m f = lambda [s] ((f (2st (m s))) (1st (m s)))
     #+end_src
 
 * tree
@@ -1602,14 +1607,15 @@
     #+begin_src cicada
     tree-numbering :
       -- (tree-s t)
-      -> (state-s (tree-s nat-s))
+      -> (state-s nat-s (tree-s nat-s))
     tree-numbering tree =
       case tree
-        leaf-s {dup inc swap leaf-c}
+        leaf-s lambda [n]
+          (* (nat-inc n) (leaf-c n))
         branch-s
           do left <- (recur tree.left)
              right <- (recur tree.right)
-             (branch-c left right)
+             (pure (branch-c left right))
     #+end_src
 
 * int
@@ -1690,12 +1696,12 @@
 
       identity-neutral-left :
         -- f : set-morphism-& a b
-        -> set-morphism-eqv-& (compose f (identity b)) f
+        -> set-morphism-eqv-& f (compose f (identity b))
       identity-neutral-left f = set-morphism-eqv-@
         lhs : set-morphism-& a b
-        lhs = (compose f (identity b))
+        lhs = f
         rhs : set-morphism-& a b
-        rhs = f
+        rhs = (compose f (identity b))
         morphism-eqv :
           -- x : a
           -> (eqv-s (f.morphism x) (f.morphism x))
@@ -1703,7 +1709,7 @@
 
       identity-neutral-right :
         -- f : set-morphism-& a b
-        -> set-morphism-eqv-& (compose (identity a) f) f
+        -> set-morphism-eqv-& f (compose (identity a) f)
       identity-neutral-right f = set-morphism-eqv-@
         morphism-eqv _ = eqv-c
 
@@ -1850,12 +1856,11 @@
              (arrow-map (ante.compose f g))
              (succ.compose (arrow-map f) (arrow-map g)))
 
-
       arrow-map-respect-identity :
         -- a : ante.object-t
         -> (succ.arrow-eqv-t
-             (succ.identity (object-map a))
-             (arrow-map (ante.identity a)))
+             (arrow-map (ante.identity a))
+             (succ.identity (object-map a)))
     #+end_src
 
 *** category-morphism-eqv-tt
