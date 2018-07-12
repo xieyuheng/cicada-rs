@@ -1,10 +1,10 @@
 #+html_head: <link rel="stylesheet" href="css/org-page.css"/>
 #+title: prelude
-* fix argument order -- map, add, append
 * fix state
 * fix multi-return-value
 * fix the use of `-&`
 * fix the use of `-@`
+* unify (data) and (class)
 * [todo-stack]
 
 *** category-category
@@ -397,113 +397,6 @@
       false-c : false-s
     #+end_src
 
-* nat
-
-*** nat-s
-
-    #+begin_src cicada
-    nat-s : set-t
-    nat-s = sum
-      zero-c : zero-s
-      succ-c : -- prev : nat-s -> succ-s
-    #+end_src
-
-*** nat-add
-
-    #+begin_src cicada
-    nat-add : -- nat-s nat-s -> nat-s
-    nat-add m n =
-      case n
-        zero-s m
-        succ-s (succ-c (recur m n.prev))
-    #+end_src
-
-*** nat-mul
-
-    #+begin_src cicada
-    nat-mul : -- nat-s nat-s -> nat-s
-    nat-mul m n =
-      case n
-        zero-s n
-        succ-s (nat-add (recur m n.prev) m)
-    #+end_src
-
-*** nat-factorial
-
-    #+begin_src cicada
-    nat-factorial : -- nat-s -> nat-s
-    nat-factorial n =
-      case n
-        zero-s (succ-c zero-c)
-        succ-s (nat-mul (recur n.prev) n)
-    #+end_src
-
-* list
-
-*** list-s
-
-    #+begin_src cicada
-    list-s : -- set-t -> set-t
-    list-s = sum
-      @ t : set-t
-      null-c : (null-s t)
-      cons-c :
-        -- car : t
-           cdr : (list-s t)
-        -> (cons-s t)
-    #+end_src
-
-*** list-length
-
-    #+begin_src cicada
-    list-length : -- (list-s t) -> nat-s
-    list-length list =
-      case list
-        null-s zero-c
-        cons-s (succ-c (recur list.cdr))
-    #+end_src
-
-*** list-append
-
-    #+begin_src cicada
-    list-append :
-      -- (list-s t)
-         (list-s t)
-      -> (list-s t)
-    list-append ante succ =
-      case succ
-        null-s ante
-        cons-s (cons-c succ.car (recur ante succ.cdr))
-    #+end_src
-
-*** list-map
-
-    #+begin_src cicada
-    list-map :
-      -- (list-s a)
-         -- a -> b
-      -> (list-s b)
-    list-map list fun =
-      case list
-        null-s list
-        cons-s (cons-c (fun list.car) (recur list.cdr fun))
-    #+end_src
-
-*** list-remove-first
-
-    #+begin_src cicada
-    list-remove-first :
-      -- t
-         (list-s t)
-      -> (list-s t)
-    list-remove-first x list =
-      case list
-        null-s list
-        cons-s case (eq-p list.car x)
-          true-s list.cdr
-          false-s (cons-c list.car (recur list.cdr x))
-    #+end_src
-
 * eqv
 
 *** eqv-s
@@ -519,35 +412,66 @@
 
     #+begin_src cicada
     eqv-apply :
-      -- [x y] :: a
+      -- fun : (-- a -> b)
          (eqv-s x y)
-         fun : -- a -> b
       -> (eqv-s (fun x) (fun y))
-    eqv-apply v fun = eqv-c
+    eqv-apply _ _ = eqv-c
     #+end_src
 
 *** eqv-swap
 
     #+begin_src cicada
-    eqv-swap :
-      -- [x y] :: t
-         (eqv-s x y)
-      -> (eqv-s y x)
-    eqv-swap v = eqv-c
+    eqv-swap : -- (eqv-s x y) -> (eqv-s y x)
+    eqv-swap _ = eqv-c
     #+end_src
 
 *** eqv-compose
 
     #+begin_src cicada
-    eqv-compose :
-      -- [x y z] :: t
-         (eqv-s x y)
-         (eqv-s y z)
-      -> (eqv-s x z)
-    eqv-compose v u = eqv-c
+    eqv-compose : -- (eqv-s x y) (eqv-s y z) -> (eqv-s x z)
+    eqv-compose _ _ = eqv-c
     #+end_src
 
 * nat
+
+*** nat-s
+
+    #+begin_src cicada
+    nat-s : set-t
+    nat-s = sum
+      zero-c : zero-s
+      succ-c : -- prev : nat-s -> succ-s
+    #+end_src
+
+*** nat-add
+
+    #+begin_src cicada
+    nat-add : -- nat-s nat-s -> nat-s
+    nat-add x y =
+      case x
+        zero-s y
+        succ-s (succ-c (recur x.prev y))
+    #+end_src
+
+*** nat-mul
+
+    #+begin_src cicada
+    nat-mul : -- nat-s nat-s -> nat-s
+    nat-mul x y =
+      case x
+        zero-s zero-c
+        succ-s (nat-add y (recur x.prev y))
+    #+end_src
+
+*** nat-factorial
+
+    #+begin_src cicada
+    nat-factorial : -- nat-s -> nat-s
+    nat-factorial n =
+      case n
+        zero-s (succ-c zero-c)
+        succ-s (nat-mul n (recur n.prev))
+    #+end_src
 
 *** nat-even-p
 
@@ -585,57 +509,130 @@
            (nat-add (nat-add x y) z)
            (nat-add x (nat-add y z)))
     nat-add-associative x y z =
-      case z
+      case x
         zero-s eqv-c
-        succ-s (eqv-apply (recur x y z.prev) succ-c)
+        succ-s (eqv-apply succ-c (recur x.prev y z))
     #+end_src
 
 *** nat-add-commutative
 
     #+begin_src cicada
     nat-add-commutative :
-      -- [m n] : nat-s
+      -- [x y] : nat-s
       -> (eqv-s
-           (nat-add m n)
-           (nat-add n m))
-    nat-add-commutative m n =
-      case n
-        zero-s (nat-add-zero-commutative m)
+           (nat-add x y)
+           (nat-add y x))
+    nat-add-commutative x y =
+      case x
+        zero-s (nat-add-zero-commutative y)
         succ-s
           (eqv-compose
-            (eqv-apply (recur m n.prev) succ-c)
-            (nat-add-succ-commutative n.prev m))
+            (eqv-apply succ-c (recur x.prev y))
+            (nat-add-succ-commutative y x.prev))
     #+end_src
 
 *** nat-add-zero-commutative
 
     #+begin_src cicada
     nat-add-zero-commutative :
-      -- m : nat-s
+      -- x : nat-s
       -> (eqv-s
-           (nat-add m zero-c)
-           (nat-add zero-c m))
-    nat-add-zero-commutative m =
-      case m
+           (nat-add zero-c x)
+           (nat-add x zero-c))
+    nat-add-zero-commutative x =
+      case x
         zero-s eqv-c
-        succ-s (eqv-apply (recur m.prev) succ-c)
+        succ-s (eqv-apply succ-c (recur x.prev))
     #+end_src
 
-*** nat-add-succ-commutative
+*** nat-add-succ-commutative-1
 
     #+begin_src cicada
-    nat-add-succ-commutative :
-      -- [m n] : nat-s
+    nat-add-succ-commutative-1 :
+      -- [x y] : nat-s
       -> (eqv-s
-           (nat-add (succ-c m) n)
-           (succ-c (nat-add m n)))
-    nat-add-succ-commutative m n =
-      case n
+           (nat-add (succ-c x) y)
+           (succ-c (nat-add x y)))
+    nat-add-succ-commutative-1 x y =
+      case x
         zero-s eqv-c
-        succ-s (eqv-apply (recur m n.prev) succ-c)
+        succ-s (eqv-apply succ-c (recur x.prev y))
+    #+end_src
+
+*** nat-add-succ-commutative-2
+
+    #+begin_src cicada
+    nat-add-succ-commutative-2 :
+      -- [x y] : nat-s
+      -> (eqv-s
+           (nat-add y (succ-c x))
+           (succ-c (nat-add x y)))
+    nat-add-succ-commutative-2 x y =
+      case x
+        zero-s eqv-c
+        succ-s (eqv-apply succ-c (recur x.prev y))
     #+end_src
 
 * list
+
+*** list-s
+
+    #+begin_src cicada
+    list-s : -- set-t -> set-t
+    list-s = sum
+      @ t : set-t
+      null-c : (null-s t)
+      cons-c :
+        -- car : t
+           cdr : (list-s t)
+        -> (cons-s t)
+    #+end_src
+
+*** list-length
+
+    #+begin_src cicada
+    list-length : -- (list-s t) -> nat-s
+    list-length list =
+      case list
+        null-s zero-c
+        cons-s (succ-c (recur list.cdr))
+    #+end_src
+
+*** list-append
+
+    #+begin_src cicada
+    list-append :
+      -- (list-s t)
+         (list-s t)
+      -> (list-s t)
+    list-append ante succ =
+      case ante
+        null-s succ
+        cons-s (cons-c ante.car (recur ante.cdr succ))
+    #+end_src
+
+*** list-map
+
+    #+begin_src cicada
+    list-map : -- (-- a -> b) (list-s a) -> (list-s b)
+    list-map fun list =
+      case list
+        null-s list
+        cons-s (cons-c (fun list.car) (recur fun list.cdr))
+    #+end_src
+
+*** list-remove-first
+
+    #+begin_src cicada
+    list-remove-first : -- t (list-s t) -> (list-s t)
+    list-remove-first x list =
+      case list
+        null-s list
+        cons-s
+          if (eq-p list.car x)
+          then list.cdr
+          else (cons-c list.car (recur list.cdr x))
+    #+end_src
 
 *** list-length-s -- re-imp function as relation
 
@@ -656,20 +653,15 @@
       zero-length-c : (zero-length-s null-c zero-c)
       succ-length-c :
         -- prev : (list-length-s list length)
-        -> element :: t
-           (cons-c element list)
-           (succ-length-s (succ-c length))
+        -> (succ-length-s (cons-c x list) (succ-c length))
     #+end_src
 
 *** list-map-preserve-list-length
 
     #+begin_src cicada
     list-map-preserve-list-length :
-      -- fun :: -- a -> b
-         list :: (list-s a)
-         n :: nat-s
-         (list-length-s list n)
-      -> (list-length-s (list-map list fun) n)
+      -- (list-length-s list n)
+      -> (list-length-s (list-map fun list) n)
     list-map-preserve-list-length h =
       case h
         zero-length-s h
@@ -689,13 +681,9 @@
       @ [ante succ result] : (list-s t)
       zero-append-c : (zero-append-s null-c succ succ)
       succ-append-c :
-        -- car :: t
-           cdr :: (list-s t)
-           result-cdr :: (list-s t)
-           prev : (list-append-s cdr succ result-cdr)
+        -- prev : (list-append-s cdr succ result-cdr)
         -> (succ-append-s
-             (cons-c car cdr) succ
-             (cons-c car result-cdr))
+             (cons-c car cdr) succ (cons-c car result-cdr))
     #+end_src
 
 * vect
@@ -703,38 +691,38 @@
 *** vect-s
 
     #+begin_src cicada
-    vect-s : -- nat-s set-t -> set-t
+    vect-s : -- set-t nat-s -> set-t
     vect-s = sum
-      @ length : nat-s
-        t : set-t
-      null-vect-c : (null-vect-s zero-c t)
+      @ t : set-t
+        length : nat-s
+      null-vect-c : (null-vect-s t zero-c)
       cons-vect-c :
         -- car : t
-           cdr : (vect-s length t)
-        -> (cons-vect-s (succ-c length) t)
+           cdr : (vect-s t length)
+        -> (cons-vect-s t (succ-c length))
     #+end_src
 
 *** vect-append
 
     #+begin_src cicada
     vect-append :
-      -- (vect-s m t)
-         (vect-s n t)
-      -> (vect-s (nat-add m n) t)
-    vect-append x y =
-      case y
-        null-vect-s x
-        cons-vect-s (cons-vect-c (recur y.car x y.cdr))
+      -- (vect-s t m)
+         (vect-s t n)
+      -> (vect-s t (nat-add m n))
+    vect-append ante succ =
+      case ante
+        null-vect-s succ
+        cons-vect-s (cons-vect-c ante.car (recur ante.cdr succ))
     #+end_src
 
 *** vect-map
 
     #+begin_src cicada
-    vect-map : -- (vect-s n a) (-- a -> b) -> (vect-s n b)
-    vect-map list fun =
+    vect-map : -- (-- a -> b) (vect-s a n) -> (vect-s a n)
+    vect-map fun list =
       case list
         null-vect-s list
-        cons-vect-s (cons-vect-c (fun list.car) (recur list.cdr fun))
+        cons-vect-s (cons-vect-c (fun list.car) (recur fun list.cdr))
     #+end_src
 
 * order
@@ -1315,18 +1303,18 @@
       identity-neutral-left x =
         case x
           zero-lteq-s eqv-c
-          succ-lteq-s (eqv-apply (recur x.prev) succ-lteq-c)
+          succ-lteq-s (eqv-apply succ-lteq-c (recur x.prev))
 
       identity-neutral-righ x =
         case x
           zero-lteq-s eqv-c
-          succ-lteq-s (eqv-apply (recur x.prev) succ-lteq-c)
+          succ-lteq-s (eqv-apply succ-lteq-c (recur x.prev))
 
       compose-associative f g h =
         case [f g h]
           [zero-lteq-s _ _] eqv-c
           [succ-lteq-s succ-lteq-s succ-lteq-s]
-            (eqv-apply (recur f.prev g.prev h.prev) succ-lteq-c)
+            (eqv-apply succ-lteq-c (recur f.prev g.prev h.prev))
     #+end_src
 
 * groupoid
@@ -1418,7 +1406,7 @@
     functor-t : class-tt
     functor-t = class
       fun-s : -- set-t -> set-t
-      map : -- (fun-t a) (-- a -> b) -> (fun-s b)
+      map : -- (-- a -> b) (fun-t a) -> (fun-s b)
     #+end_src
 
 *** list-functor
@@ -1427,11 +1415,11 @@
     list-functor : functor-t
     list-functor = functor-@
       fun-s = list-s
-      map list fun =
+      map fun list =
         case list
           null-s null-c
           cons-s
-            (cons-c (fun list.car) (recur list.cdr fun))
+            (cons-c (fun list.car) (recur fun list.cdr))
     #+end_src
 
 * const
@@ -1452,8 +1440,8 @@
     const-functor c = functor-@
       fun-s = (const-s c)
 
-      map : -- (const-s c a) (-- a -> b) -> (const-s c b)
-      map _ = nop
+      map : -- (-- a -> b) (const-s c a) -> (const-s c b)
+      map _ x = x
     #+end_src
 
 * monad
@@ -1517,7 +1505,7 @@
     maybe-functor : functor-t
     maybe-functor = functor-@
       fun-s = maybe-s
-      map maybe fun =
+      map fun maybe =
         case maybe
           none-s none-c
           just-s (just-c (fun maybe.value))
@@ -1550,12 +1538,13 @@
     state-monad : -- set-t -> monad-t
     state-monad s = monad-@
       fun-s = (state-s s)
-      map : -- (state-s a s) (-- a -> b)
+      map : -- (-- a -> b)
+               (state-s a s)
             -> (state-s b s)
-      map : -- (-- s -> (* s a)) (-- a -> b)
+      map : -- (-- a -> b)
+               (-- s -> (* s a))
             -> (-- s -> (* s b))
-      map state fun =
-        (lambda [s] (fun (state s)))
+      map fun state = (lambda [s] (fun (state s)))
       pure value = {value}
       bind state fun = {state fun apply}
     #+end_src
@@ -1581,13 +1570,13 @@
     tree-functor : functor-t
     tree-functor = functor-@
       fun-s = tree-s
-      map tree fun =
+      map fun tree =
         case tree
           leaf-s (leaf-c (fun tree.value))
           branch-s
             (branch-c
-              (recur tree.left fun)
-              (recur tree.right fun))
+              (recur fun tree.left)
+              (recur fun tree.right))
     #+end_src
 
 *** tree-zip
