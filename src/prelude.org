@@ -1,6 +1,5 @@
 #+html_head: <link rel="stylesheet" href="css/org-page.css"/>
 #+title: prelude
-* fix the use of `-@`
 * unify (data) and (class)
 * [todo-stack]
 
@@ -52,7 +51,7 @@
         is specially important
         because homology and homotopy are functors!
 
-*** arrow-eqv-s -- amend `arrow-eqv-relation` for all `category-@`
+*** arrow-eqv-s -- amend `arrow-eqv-relation` for all category
 
     - arrow-eqv-s must be an eqv-relation-t
       for all hom-set [a b arrow-s]
@@ -156,14 +155,6 @@
 
     - inhabit by literal tuple -- (* <data> ...)
 
-*** []
-
-    - syntax for values on stack
-
-    - type on stack [<type> ...]
-
-    - inhabit by data on stack [<data> ...]
-
 *** (@)
 
     - product-type with named fields
@@ -196,14 +187,31 @@
     - to inhabit a data-type constructed by type-constructor,
       we call its data-constructor.
 
-      - <name>-c -- call the data-constructor
-        with ordered arguments on stack
+      - (<name>-c <data> ...) -- call with order
 
-      - <name>-cr -- call the data-constructor
-        with one record-data on the top of stack
+      - (<name>-c <field> = <data> ...) -- call with field
 
-      - (<name>-@ <field> = <data> ...) -- literal syntax
-        in which the order of <data> does not matter
+*** >< (class)
+
+    - class-type
+
+    - named record-type just like data-type
+
+    - but unlike data-type,
+      it can only names a class-constructor with zero arity.
+
+      thus the class-constructor
+      is only act as a name of the class-type.
+
+    - to inhabit a class-type constructed by class-constructor,
+      we call its object-constructor.
+
+      - (<name>-c <data> ...) -- call with order
+
+      - (<name>-c <field> = <data> ...) -- call with field
+
+    - also a class-type can inherit other class-types,
+      bringing in the sub-class relation between class-types
 
 *** (sum)
 
@@ -220,25 +228,6 @@
       it can be viewed as disjoin-union,
       because data-types in the list are disjoin.
 
-*** (class)
-
-    - class-type
-
-    - named record-type just like data-type
-
-    - but unlike data-type,
-      it can only names a class-constructor with zero arity.
-
-      thus the class-constructor
-      is only act as a name of the class-type.
-
-    - to inhabit a class-type,
-      we can only use the literal syntax
-      (<name>-@ <field> = <data> ...) -- instance object of the class
-
-    - also a class-type can inherit other class-types,
-      bringing in the sub-class relation between class-types
-
 *** (<:)
 
     - sub-class relation between class-types
@@ -249,9 +238,7 @@
 
     - whatever object inhabits c1 also inhabits c2.
 
-*** (<class>-&)
-
-    - a syntax for partial-class-type
+*** currying of type-constructor as partial-class-type
 
     - some of the fields of the a partial-class-type
       are already inhabited by data
@@ -259,12 +246,6 @@
     - to inhabited such partial-class-type
 
     - we only need to inhabit remaining fields
-
-    ------
-
-    - x -
-      without sexp
-      our design of syntax seems get lost
 
 *** data-type vs class-type
 
@@ -944,7 +925,7 @@
         we simple view all arrow of the same type as eqv
 
       preorder.as-category : category-t
-      preorder.as-category = category-@
+      preorder.as-category = category-c
         object-s = element-s
 
         arrow-s = pre-s
@@ -968,7 +949,7 @@
 
       #+begin_src cicada
       category.opposite : category-t
-      category.opposite = category-@
+      category.opposite = category-c
         object-s = this.object-s
 
         arrow-s :
@@ -1018,7 +999,7 @@
 
       #+begin_src cicada
       category-product : -- category-t category-t -> category-t
-      category-product #1 #2 = category-@
+      category-product #1 #2 = category-c
         object-s = * #1.object-s #2.object-s
 
         arrow-s a b =
@@ -1090,7 +1071,7 @@
 
     #+begin_src cicada
     void-category : category-t
-    void-category = category-@
+    void-category = category-c
       object-s = void-s
       arrow-s = void-arrow-s
       arrow-eqv-s = void-arrow-eqv-s
@@ -1185,7 +1166,7 @@
 
     #+begin_src cicada
     graph.as-free-category : category-t
-    graph.as-free-category = category-@
+    graph.as-free-category = category-c
       object-s = node-s
       arrow-s = path-s
       arrow-eqv-s = path-eqv-s
@@ -1283,7 +1264,7 @@
 
     #+begin_src cicada
     nat-order-category : category-t
-    nat-order-category = category-@
+    nat-order-category = category-c
       object-s = nat-s
       arrow-s = nat-lteq-s
       arrow-eqv-s = eqv-s
@@ -1364,7 +1345,7 @@
 
     #+begin_src cicada
     monoid.as-category : category-t
-    monoid.as-category = category-@
+    monoid.as-category = category-c
       object-s = unit-s
       arrow-s _ _ = element-s
       arrow-eqv-s = element-eqv-s
@@ -1405,7 +1386,7 @@
 
     #+begin_src cicada
     list-functor : functor-t
-    list-functor = functor-@
+    list-functor = functor-c
       fun-s = list-s
       map fun list =
         case list
@@ -1429,7 +1410,7 @@
 
     #+begin_src cicada
     const-functor : -- set-t -> functor-t
-    const-functor c = functor-@
+    const-functor c = functor-c
       fun-s = (const-s c)
 
       map : -- (-- a -> b) (const-s c a) -> (const-s c b)
@@ -1470,7 +1451,7 @@
 
     #+begin_src cicada
     list-monad : monad-t
-    list-monad = monad-@
+    list-monad = monad-c
       pure x = (cons-c x null-c)
       bind list fun =
         case list
@@ -1495,7 +1476,7 @@
 
     #+begin_src cicada
     maybe-functor : functor-t
-    maybe-functor = functor-@
+    maybe-functor = functor-c
       fun-s = maybe-s
       map fun maybe =
         case maybe
@@ -1507,7 +1488,7 @@
 
     #+begin_src cicada
     maybe-monad : monad-t
-    maybe-monad = monad-@
+    maybe-monad = monad-c
       pure = just-c
       bind maybe fun =
         case maybe
@@ -1528,7 +1509,7 @@
 
     #+begin_src cicada
     state-monad : -- set-t -> monad-t
-    state-monad s = monad-@
+    state-monad s = monad-c
       fun-s = (state-s s)
 
       map : -- (-- a -> b)
@@ -1572,7 +1553,7 @@
 
     #+begin_src cicada
     tree-functor : functor-t
-    tree-functor = functor-@
+    tree-functor = functor-c
       fun-s = tree-s
       map fun tree =
         case tree
@@ -1666,7 +1647,7 @@
 
     #+begin_src cicada
     set-category : category-tt
-    set-category = category-@
+    set-category = category-c
       object-t : class-tt
       object-t = set-t
 
@@ -1682,20 +1663,20 @@
       identity :
         -- set-t % a
         -> (set-morphism-t a a)
-      identity _ = set-morphism-@
+      identity _ = set-morphism-c
         morphism = nop
 
       compose :
         -- (set-morphism-t a b)
            (set-morphism-t b c)
         -> (set-morphism-t a c)
-      compose f g = set-morphism-@
+      compose f g = set-morphism-c
         morphism = (| f.morphism g.morphism)
 
       identity-neutral-left :
         -- f : (set-morphism-t a b)
         -> (set-morphism-eqv-t f (compose f (identity b)))
-      identity-neutral-left f = set-morphism-eqv-@
+      identity-neutral-left f = set-morphism-eqv-c
         lhs : (set-morphism-t a b)
         lhs = f
         rhs : (set-morphism-t a b)
@@ -1708,7 +1689,7 @@
       identity-neutral-right :
         -- f : (set-morphism-t a b)
         -> (set-morphism-eqv-t f (compose (identity a) f))
-      identity-neutral-right f = set-morphism-eqv-@
+      identity-neutral-right f = set-morphism-eqv-c
         morphism-eqv _ = eqv-c
 
       compose-associative :
@@ -1718,7 +1699,7 @@
         -> (set-morphism-eqv-t
              lhs = (compose f (compose g h))
              rhs = (compose (compose f g) h))
-      compose-associative f g h = set-morphism-eqv-@
+      compose-associative f g h = set-morphism-eqv-c
         morphism-eqv _ = eqv-c
     #+end_src
 
@@ -1726,26 +1707,26 @@
 
     #+begin_src cicada
     set-category : category-tt
-    set-category = category-@
+    set-category = category-c
       object-t = set-t
 
       arrow-t a b = (set-morphism-t a b)
 
       arrow-eqv-t lhs rhs = (set-morphism-eqv-t lhs rhs)
 
-      identity _ = set-morphism-@
+      identity _ = set-morphism-c
         morphism = nop
 
-      compose f g = set-morphism-@
+      compose f g = set-morphism-c
         morphism = (| f.morphism g.morphism)
 
-      identity-neutral-left _ = set-morphism-eqv-@
+      identity-neutral-left _ = set-morphism-eqv-c
         morphism-eqv _ = eqv-c
 
-      identity-neutral-right _ = set-morphism-eqv-@
+      identity-neutral-right _ = set-morphism-eqv-c
         morphism-eqv _ = eqv-c
 
-      compose-associative _ _ _ = set-morphism-eqv-@
+      compose-associative _ _ _ = set-morphism-eqv-c
         morphism-eqv _ = eqv-c
     #+end_src
 
@@ -1783,7 +1764,7 @@
 
     #+begin_src cicada
     preorder-category : category-tt
-    preorder-category = category-@
+    preorder-category = category-c
       object-t : class-tt
       object-t = preorder-t
 
@@ -1799,7 +1780,7 @@
       identity :
         -- preorder-t % a
         -> (preorder-morphism-t a a)
-      identity _ = preorder-morphism-@
+      identity _ = preorder-morphism-c
         morphism = nop
         morphism-respect-pre-relation = nop
 
@@ -1807,19 +1788,19 @@
         -- (preorder-morphism-t a b)
            (preorder-morphism-t b c)
         -> (preorder-morphism-t a c)
-      compose f g = preorder-morphism-@
+      compose f g = preorder-morphism-c
         morphism = (| f.morphism g.morphism)
         morphism-respect-pre-relation =
           (| f.morphism-respect-pre-relation
              g.morphism-respect-pre-relation)
 
-      identity-neutral-left f = preorder-morphism-eqv-@
+      identity-neutral-left f = preorder-morphism-eqv-c
         morphism-eqv x = eqv-c
 
-      identity-neutral-right f = preorder-morphism-eqv-@
+      identity-neutral-right f = preorder-morphism-eqv-c
         morphism-eqv _ = eqv-c
 
-      compose-associative f g h = preorder-morphism-eqv-@
+      compose-associative f g h = preorder-morphism-eqv-c
         morphism-eqv _ = eqv-c
     #+end_src
 
@@ -1877,7 +1858,7 @@
 
     #+begin_src cicada
     category-category : category-ttt
-    category-category = category-@
+    category-category = category-c
       object-tt : category-ttt
       object-tt = category-tt
 
