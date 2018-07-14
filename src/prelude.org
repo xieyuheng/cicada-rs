@@ -74,7 +74,7 @@
     - it can be viewed as disjoin-union,
       because data-types in the list are disjoin.
 
-*** (<:)
+*** (class [<super-class> ...] ...)
 
     - a class-type or data-type
       can inherit other class-types or data-types,
@@ -613,8 +613,8 @@
 ***** partial-order-t
 
       #+begin_src cicada
-      partial-order-t <: preorder-t
-      partial-order-t = class
+      partial-order-t : class-tt
+      partial-order-t = class [preorder-t]
         element-eqv-s :
           -- element-s
              element-s
@@ -630,8 +630,8 @@
 ***** eqv-relation-t
 
       #+begin_src cicada
-      eqv-relation-t <: preorder-t
-      eqv-relation-t = class
+      eqv-relation-t : class-tt
+      eqv-relation-t = class [preorder-t]
         pre-symmetric :
           -- (pre-s a b)
           -> (pre-s b a)
@@ -642,8 +642,8 @@
 ***** total-order-t
 
       #+begin_src cicada
-      total-order-t <: partial-order-t
-      total-order-t = class
+      total-order-t : class-tt
+      total-order-t = class [partial-order-t]
         pre-connex :
           -- [a b] : element-s
           -> (union (pre-s a b) (pre-s b a))
@@ -910,8 +910,8 @@
 * product-closed-category-t
 
   #+begin_src cicada
-  product-closed-category-t <: category-t
-  product-closed-category-t = class
+  product-closed-category-t : class-tt
+  product-closed-category-t = class [category-t]
     product :
       -- object-s % [a b]
       -> (* object-s % p
@@ -1197,8 +1197,8 @@
 *** groupoid-t
 
     #+begin_src cicada
-    groupoid-t <: category-t
-    groupoid-t = class
+    groupoid-t : class-tt
+    groupoid-t = class [category-t]
       inverse :
         -- (arrow-s a b) % f
         -> (* (arrow-s b a) % g
@@ -1324,8 +1324,8 @@
 *** monad-t
 
     #+begin_src cicada
-    monad-t <: functor-t
-    monad-t = class
+    monad-t : class-tt
+    monad-t = class [functor-t]
       pure : -- t -> (fun-s t)
       bind : -- (fun-s a) (-- a -> (fun-s b)) -> (fun-s b)
     #+end_src
