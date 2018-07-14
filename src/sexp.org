@@ -1,0 +1,50 @@
+#+title: sexp
+
+* sexp
+
+  #+begin_src cicada
+  (: sexp-s set-t)
+  (= sexp-s (union string-s (list-s string-s)))
+  #+end_src
+
+* list
+
+  #+begin_src cicada
+  (: list-s set-t)
+  (= list-s
+     (sum [null-s cons-s]
+       (: t set-t)))
+
+  (: null-s set-t)
+  (= null-s
+     (data
+       (: t set-t)))
+
+  (: cons-s set-t)
+  (= cons-s
+     (data
+       (: t set-t)
+       (: car t))
+       (: cdr (list-s t)))
+
+  (note
+    example data construction
+    (cons-c
+      (= car zero-c)
+      (= cdr null-c))
+    (cons-c zero-c null-c))
+
+  (: list-length (-- (list-s t) -> nat-s))
+  (= list-length
+     (lambda [list]
+       (case list
+         (null-s zero-c)
+         (cons-s (succ-c (recur list.cdr))))))
+
+  (: list-append (-- (list-s t) (list-s t) -> (list-s t)))
+  (= list-append
+     (lambda [ante succ]
+       (case ante
+         (null-s succ)
+         (cons-s (cons-c ante.car (recur ante.cdr succ))))))
+  #+end_src
