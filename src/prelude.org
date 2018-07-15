@@ -3,7 +3,13 @@
 
 * [todo-stack]
 
+*** product-arrow
+
+***** we need to use the `factor` in `unique-factor`
+
 *** simplify identity for product-arrow
+
+***** specify the use of (::)
 
 *** representable-functor and set
 
@@ -749,7 +755,7 @@
           -> (+ (pre-s a b) (pre-s b a))
       #+end_src
 
-* unique
+* (unique)
 
 *** (unique ... under ...)
 
@@ -841,8 +847,7 @@
         initial : object-t
 
       category.initial-t : type-tt
-      category.initial-t = data
-        <: [category.initial-candidate-t]
+      category.initial-t = data <: [initial-candidate-t]
         unique-factor :
           -- cand : initial-candidate-t
           -> unique factor : (arrow-t initial cand.initial)
@@ -857,8 +862,7 @@
         terminal : object-t
 
       category.terminal-t : type-tt
-      category.terminal-t = data
-        <: [category.terminal-candidate-t]
+      category.terminal-t = data <: [terminal-candidate-t]
         unique-factor :
           -- cand : terminal-candidate-t
           -> unique factor : (arrow-t cand.terminal terminal)
@@ -877,18 +881,17 @@
         snd-projection : (arrow-t product snd)
 
       category.product-t : type-tt
-      category.product-t = data
-        <: [category.product-candidate-t]
+      category.product-t = data <: [product-candidate-t]
         unique-factor :
           -- cand : (product-candidate-t fst snd)
           -> unique factor : (arrow-t cand.product product)
              under arrow-eqv-t such-that
-               * (arrow-eqv-t
-                   cand.fst-projection
-                   (compose factor fst-projection))
-                 (arrow-eqv-t
-                   cand.snd-projection
-                   (compose factor snd-projection))
+               (arrow-eqv-t
+                 cand.fst-projection
+                 (compose factor fst-projection))
+               (arrow-eqv-t
+                 cand.snd-projection
+                 (compose factor snd-projection))
       #+end_src
 
 ***** category.sum-t
@@ -903,18 +906,17 @@
         snd-injection : (arrow-t snd sum)
 
       category.sum-t : type-tt
-      category.sum-t = data
-        <: [category.sum-candidate-t]
+      category.sum-t = data <: [sum-candidate-t]
         unique-factor :
           -- cand : (sum-candidate-t fst snd)
           -> unique factor : (arrow-t sum cand.sum)
              under arrow-eqv-t such-that
-               * (arrow-eqv-t
-                   cand.fst-injection
-                   (compose fst-injection factor))
-                 (arrow-eqv-t
-                   cand.snd-injection
-                   (compose snd-injection factor))
+               (arrow-eqv-t
+                 cand.fst-injection
+                 (compose fst-injection factor))
+               (arrow-eqv-t
+                 cand.snd-injection
+                 (compose snd-injection factor))
       #+end_src
 
 *** other structure as category
@@ -1033,6 +1035,14 @@
             (#2.compose-associative f.2 g.2 h.2)
       #+end_src
 
+* (give)
+
+*** (give <return-value> such-that <condition> ...)
+
+    - return such thing literally.
+
+    - when called only return <return-value>.
+
 * product-closed-category
 
 *** product-closed-category-tt
@@ -1042,13 +1052,19 @@
     product-closed-category-tt = data <: [category-tt]
       product :
         -- [a b] : object-t
-        -> p : object-t such-that (product-t a b p)
-      product-arrow :
-        -- [f g] : (arrow-t a b)
-        -> h : (arrow-t a b) such-that (product-arrow-t f g h)
+        -> give p : object-t such-that (product-t a b p)
     #+end_src
 
-*** >< product-closed-category.product-arrow-t
+*** >< product-closed-category.product-arrow
+
+    #+begin_src cicada
+    product-closed-category.product-arrow :
+      -- (arrow-t a b)
+         (arrow-t c d)
+      -> (arrow-t (product a c) (product b d))
+    product-closed-category.product-arrow f g =
+      ><
+    #+end_src
 
 *** product-closed-category.exponential-t
 
@@ -1061,18 +1077,17 @@
       eval : (arrow-t (product exponential ante) succ)
 
     category.exponential-t : type-tt
-    category.exponential-t = data
-      <: [category.exponential-candidate-t]
+    category.exponential-t = data <: [exponential-candidate-t]
       unique-factor :
         -- cand : (exponential-candidate-t ante succ)
         -> unique factor : (arrow-t cand.exponential exponential)
            under arrow-eqv-t such-that
-             * (arrow-eqv-t
-                 cand.eval
-                 (compose eval (product-arrow factor identity)))
+             (arrow-eqv-t
+               cand.eval
+               (compose eval (product-arrow factor identity)))
     #+end_src
 
-* product-closed-category
+* >< cartesian-closed-category
 
 * void-category
 
@@ -1146,9 +1161,9 @@
     #+begin_src cicada
     graph.path-s : type-t
     graph.path-s = data
-      :> [graph.node-path-s
-          graph.edge-path-s
-          graph.link-path-s]
+      :> [node-path-s
+          edge-path-s
+          link-path-s]
       [start end] : node-s
 
     graph.node-path-s : type-t
@@ -1175,10 +1190,10 @@
     #+begin_src cicada
     graph.path-eqv-s : type-t
     graph.path-eqv-s = data
-      :> [graph.refl-path-eqv-s
-          graph.node-left-path-eqv-s
-          graph.node-right-path-eqv-s
-          graph.associative-path-eqv-s]
+      :> [refl-path-eqv-s
+          node-left-path-eqv-s
+          node-right-path-eqv-s
+          associative-path-eqv-s]
       [lhs rhs] : (path-s a b)
 
     graph.refl-path-eqv-s : type-t
