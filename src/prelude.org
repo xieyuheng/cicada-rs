@@ -1,15 +1,25 @@
 #+html_head: <link rel="stylesheet" href="css/org-page.css"/>
 #+title: prelude
 
+*** simplify identity
+
+*** exponential-t
+
+    - with a syntax from `product-t` to `product`
+
 * [todo-stack]
+
+*** current principle
+
+    - x -
+      type is part of a record-data
+      data is the whole record-data
 
 *** representable-functor and set
 
 *** fix set-morphism-t -- with set-t
 
     - maybe no top level eqv-s
-
-*** exponential-object-t
 
 *** category-category
 
@@ -112,7 +122,7 @@
       object are just like type.
       just without sum-type, only product-type.
 
-*** should (:) (%) (<:) form types too ? -- like eqv-c
+*** should (:) (<:) form types too ? -- like eqv-c
 
 *** other topics to be formalized
 
@@ -143,10 +153,6 @@
       - https://en.wikipedia.org/wiki/Cantor%27s_diagonal_argument
 
 * [note]
-
-*** (:) (%)
-
-    - (%) is reversed (:)
 
 *** (*)
 
@@ -221,14 +227,14 @@
 
 ***** level table
 
-      | - | data, object                            |
-      |---+-----------------------------------------|
-      | 0 | <data>-s                                |
-      |   | data-type, sum-type                     |
-      |   | union-type, record-type, tuple-type     |
-      |---+-----------------------------------------|
+      | - | data, object                           |
+      |---+----------------------------------------|
+      | 0 | <data>-s                               |
+      |   | data-type, sum-type                    |
+      |   | union-type, record-type, tuple-type    |
+      |---+----------------------------------------|
       | 1 | type-t, type-t, preorder-t, category-t |
-      |---+-----------------------------------------|
+      |---+----------------------------------------|
       | 2 | type-tt, type-tt, category-tt          |
 
 ***** level examples
@@ -263,11 +269,9 @@
         we only write down the level or levels
         in which the class is most used.
 
-        - for example,
-          we define  [category-morphism-tt : type-ttt]
-          instead of [category-morphism-t : type-tt]
-          and we define [category-category : category-ttt]
-          instead of    [category-category : category-tt]
+        - for example :
+          [category-morphism-tt : type-ttt]
+          [category-category : category-ttt]
 
 ***** >< implicit generic-ness of haskell type-class
 
@@ -714,7 +718,7 @@
           -> type-t
 
         pre-reflexive :
-          -- element-s % a
+          -- a : element-s
           -> (pre-s a a)
 
         pre-transitive :
@@ -794,22 +798,22 @@
       arrow-t : -- object-t object-t -> type-tt
       arrow-eqv-t : -- (arrow-t a b) (arrow-t a b) -> type-tt
 
-      identity : -- object-t % a -> (arrow-t a a)
+      identity : -- a : object-t -> (arrow-t a a)
 
       compose : -- (arrow-t a b) (arrow-t b c) -> (arrow-t a c)
 
       identity-neutral-left :
-        -- (arrow-t a b) % f
+        -- f : (arrow-t a b)
         -> (arrow-eqv-t f (compose (identity a) f))
 
       identity-neutral-right :
-        -- (arrow-t a b) % f
+        -- f : (arrow-t a b)
         -> (arrow-eqv-t f (compose f (identity b)))
 
       compose-associative :
-        -- (arrow-t a b) % f
-           (arrow-t b c) % g
-           (arrow-t c d) % h
+        -- f : (arrow-t a b)
+           g : (arrow-t b c)
+           h : (arrow-t c d)
         -> (arrow-eqv-t
              (compose f (compose g h))
              (compose (compose f g) h))
@@ -830,22 +834,22 @@
       arrow-s : -- object-s object-s -> type-t
       arrow-eqv-s : -- (arrow-s a b) (arrow-s a b) -> type-t
 
-      identity : -- object-s % a -> (arrow-s a a)
+      identity : -- a : object-s -> (arrow-s a a)
 
       compose : -- (arrow-s a b) (arrow-s b c) -> (arrow-s a c)
 
       identity-neutral-left :
-        -- (arrow-s a b) % f
+        -- f : (arrow-s a b)
         -> (arrow-eqv-s f (compose (identity a) f))
 
       identity-neutral-right :
-        -- (arrow-s a b) % f
+        -- f : (arrow-s a b)
         -> (arrow-eqv-s f (compose f (identity b)))
 
       compose-associative :
-        -- (arrow-s a b) % f
-           (arrow-s b c) % g
-           (arrow-s c d) % h
+        -- f : (arrow-s a b)
+           g : (arrow-s b c)
+           h : (arrow-s c d)
         -> (arrow-eqv-s
              (compose f (compose g h))
              (compose (compose f g) h))
@@ -876,53 +880,47 @@
       #+begin_src cicada
       category.isomorphic-object-t : -- object-t object-t -> type-t
       category.isomorphic-object-t a b =
-        * (arrow-t a b) % f
-          (arrow-t b a) % g
+        * f : (arrow-t a b)
+          g : (arrow-t b a)
           (arrow-eqv-t (compose f g) (identity a))
           (arrow-eqv-t (compose g f) (identity b))
       #+end_src
 
 *** universal construction
 
-***** category.initial-candidate-t
+***** category.initial-t
 
       #+begin_src cicada
       category.initial-candidate-t : type-tt
       category.initial-candidate-t = data
         initial : object-t
-      #+end_src
 
-***** category.initial-object-t
-
-      #+begin_src cicada
-      category.initial-object-t : type-tt
-      category.initial-object-t = data <: [initial-candidate-t]
+      category.initial-t : type-tt
+      category.initial-t = data
+        <: [category.initial-candidate-t]
         unique-factor :
-          -- initial-candidate-t % cand
-          -> unique (arrow-t initial cand.initial) % factor
+          -- cand : initial-candidate-t
+          -> unique factor : (arrow-t initial cand.initial)
              under arrow-eqv-t
       #+end_src
 
-***** category.terminal-candidate-t
+***** category.terminal-t
 
       #+begin_src cicada
       category.terminal-candidate-t : type-tt
       category.terminal-candidate-t = data
         terminal : object-t
-      #+end_src
 
-***** category.terminal-object-t
-
-      #+begin_src cicada
-      category.terminal-object-t : type-tt
-      category.terminal-object-t = data <: [terminal-candidate-t]
+      category.terminal-t : type-tt
+      category.terminal-t = data
+        <: [category.terminal-candidate-t]
         unique-factor :
-          -- terminal-candidate-t % cand
-          -> unique (arrow-t cand.terminal terminal) % factor
+          -- cand : terminal-candidate-t
+          -> unique factor : (arrow-t cand.terminal terminal)
              under arrow-eqv-t
       #+end_src
 
-***** category.product-candidate-t
+***** category.product-t
 
       #+begin_src cicada
       category.product-candidate-t : type-tt
@@ -932,16 +930,13 @@
         product : object-t
         fst-projection : (arrow-t product fst)
         snd-projection : (arrow-t product snd)
-      #+end_src
 
-***** category.product-object-t
-
-      #+begin_src cicada
-      category.product-object-t : type-tt
-      category.product-object-t = data <: [product-candidate-t]
+      category.product-t : type-tt
+      category.product-t = data
+        <: [category.product-candidate-t]
         unique-factor :
-          -- (product-candidate-t fst snd) % cand
-          -> unique (arrow-t cand.product product) % factor
+          -- cand : (product-candidate-t fst snd)
+          -> unique factor : (arrow-t cand.product product)
              under arrow-eqv-t such-that
                * (arrow-eqv-t
                    cand.fst-projection
@@ -951,7 +946,7 @@
                    (compose factor snd-projection))
       #+end_src
 
-***** category.sum-candidate-t
+***** category.sum-t
 
       #+begin_src cicada
       category.sum-candidate-t : type-tt
@@ -961,16 +956,13 @@
         sum : object-t
         fst-injection : (arrow-t fst sum)
         snd-injection : (arrow-t snd sum)
-      #+end_src
 
-***** category.sum-object-t
-
-      #+begin_src cicada
-      category.sum-object-t : type-tt
-      category.sum-object-t = data <: [sum-candidate-t]
+      category.sum-t : type-tt
+      category.sum-t = data
+        <: [category.sum-candidate-t]
         unique-factor :
-          -- (sum-candidate-t fst snd) % cand
-          -> unique (arrow-t sum cand.sum) % factor
+          -- cand : (sum-candidate-t fst snd)
+          -> unique factor : (arrow-t sum cand.sum)
              under arrow-eqv-t such-that
                * (arrow-eqv-t
                    cand.fst-injection
@@ -978,12 +970,6 @@
                  (arrow-eqv-t
                    cand.snd-injection
                    (compose snd-injection factor))
-      #+end_src
-
-***** >< category.exponential-object-t
-
-      #+begin_src cicada
-      category.exponential-object-t : type-tt
       #+end_src
 
 *** other structure as category
@@ -1034,7 +1020,7 @@
         arrow-eqv-t = this.arrow-eqv-t
 
         identity :
-          -- object-t % a
+          -- a : object-t
           -> (arrow-t a a)
         identity = this.identity
 
@@ -1045,19 +1031,19 @@
         compose f g = this.compose g f
 
         identity-neutral-left :
-          -- (this.arrow-t b a) % f
+          -- f : (this.arrow-t b a)
           -> (arrow-eqv-t f (this.compose f (identity a)))
         identity-neutral-left = this.identity-neutral-right
 
         identity-neutral-right :
-          -- (this.arrow-t b a) % f
+          -- f : (this.arrow-t b a)
           -> (arrow-eqv-t f (this.compose (identity b) f))
         identity-neutral-right = this.identity-neutral-left
 
         compose-associative :
-          -- (this.arrow-t b a) % f
-             (this.arrow-t c b) % g
-             (this.arrow-t d c) % h
+          -- f : (this.arrow-t b a)
+             g : (this.arrow-t c b)
+             h : (this.arrow-t d c)
           -> (arrow-eqv-t
                (this.compose (this.compose h g) f)
                (this.compose h (this.compose g f)))
@@ -1102,18 +1088,44 @@
             (#2.compose-associative f.2 g.2 h.2)
       #+end_src
 
-* product-closed-category-tt
+* product-closed-category
 
-  #+begin_src cicada
-  product-closed-category-tt : type-ttt
-  product-closed-category-tt = data <: [category-tt]
-    product :
-      -- object-t % [a b]
-      -> (* object-t % p
-            (arrow-t p a) % pa
-            (arrow-t p b) % pb
-            (product-object-t a b p pa pb))
-  #+end_src
+*** product-closed-category-tt
+
+    #+begin_src cicada
+    product-closed-category-tt : type-ttt
+    product-closed-category-tt = data <: [category-tt]
+      product :
+        -- [a b] : object-t
+        -> (product-t a b) .product
+      arrow-product :
+        -- [f g] : (arrow-t a b)
+        -> (product-arrow-t f g).product-arrow
+    #+end_src
+
+*** >< product-closed-category.exponential-t
+
+    #+begin_src cicada
+    product-closed-category.exponential-candidate-t : type-tt
+    product-closed-category.exponential-candidate-t = data
+      ante : object-t
+      succ : object-t
+      exponential : object-t
+      eval : (arrow-t (product exponential ante) succ)
+
+    category.exponential-t : type-tt
+    category.exponential-t = data
+      <: [category.exponential-candidate-t]
+      unique-factor :
+        -- cand : (exponential-candidate-t ante succ)
+        -> unique factor : (arrow-t cand.exponential exponential)
+           under arrow-eqv-t such-that
+             * (arrow-eqv-t
+                 cand.eval
+                 (compose eval (arrow-product factor identity)))
+    #+end_src
+
+* product-closed-category
 
 * void-category
 
@@ -1143,26 +1155,26 @@
       arrow-eqv-s = void-arrow-eqv-s
 
       identity :
-        -- void-s % a
+        -- a : void-s
         -> (void-arrow-s a a)
       identity _ = void-arrow-c
 
       compose _ _ = void-arrow-c
 
       identity-neutral-left :
-        -- (void-arrow-s a b) % f
+        -- f : (void-arrow-s a b)
         -> (void-arrow-eqv-s f void-arrow-c)
       identity-neutral-left _ = void-arrow-eqv-c
 
       identity-neutral-right :
-        -- (void-arrow-s a b) % f
+        -- f : (void-arrow-s a b)
         -> (void-arrow-eqv-s f void-arrow-c)
       identity-neutral-right _ = void-arrow-eqv-c
 
       compose-associative :
-        -- (void-arrow-s a b) % f
-           (void-arrow-s b c) % g
-           (void-arrow-s c d) % h
+        -- f : (void-arrow-s a b)
+           g : (void-arrow-s b c)
+           h : (void-arrow-s c d)
         -> (void-arrow-eqv-s void-arrow-eqv-c void-arrow-eqv-c)
       compose-associative _ _ _ = void-arrow-eqv-c
     #+end_src
@@ -1263,26 +1275,26 @@
       arrow-eqv-s = path-eqv-s
 
       identity :
-        -- node-s % a
+        -- a : node-s
         -> (path-s a a)
       identity = node-path-c
 
       compose = link-path-c
 
       identity-neutral-left :
-        -- (path-s a b) % f
+        -- f : (path-s a b)
         -> (path-eqv-s f (link-path-c (node-path-c a) f))
       identity-neutral-left = node-left-path-eqv-c
 
       identity-neutral-right :
-        -- (path-s a b) % f
+        -- f : (path-s a b)
         -> (path-eqv-s f (link-path-c f (node-path-c b)))
       identity-neutral-right = node-right-path-eqv-c
 
       compose-associative :
-        -- (path-s a b) % f
-           (path-s b c) % g
-           (path-s c d) % h
+        -- f : (path-s a b)
+           g : (path-s b c)
+           h : (path-s c d)
         -> (path-eqv-s
              (link-path-c f (link-path-c g h))
              (link-path-c (link-path-c f g) h))
@@ -1397,8 +1409,8 @@
     groupoid-t : type-tt
     groupoid-t = data <: [category-t]
       inverse :
-        -- (arrow-s a b) % f
-        -> (* (arrow-s b a) % g
+        -- f : (arrow-s a b)
+        -> (* g : (arrow-s b a)
               (arrow-inverse-s f g))
     #+end_src
 
@@ -1790,7 +1802,7 @@
       arrow-eqv-t lhs rhs = (set-morphism-eqv-t lhs rhs)
 
       identity :
-        -- type-t % a
+        -- a : type-t
         -> (set-morphism-t a a)
       identity _ = set-morphism-c
         morphism = nop
@@ -1907,7 +1919,7 @@
       arrow-eqv-t lhs rhs = (preorder-morphism-eqv-t lhs rhs)
 
       identity :
-        -- preorder-t % a
+        -- a : preorder-t
         -> (preorder-morphism-t a a)
       identity _ = preorder-morphism-c
         morphism = nop
@@ -1958,8 +1970,8 @@
         -> (succ.arrow-t (object-map a) (object-map b))
 
       arrow-map-respect-compose :
-        -- (ante.arrow-t a b) % f
-           (ante.arrow-t b c) % g
+        -- f : (ante.arrow-t a b)
+           g : (ante.arrow-t b c)
         -> (succ.arrow-eqv-t
              (arrow-map (ante.compose f g))
              (succ.compose (arrow-map f) (arrow-map g)))
