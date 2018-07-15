@@ -1,19 +1,9 @@
 #+html_head: <link rel="stylesheet" href="css/org-page.css"/>
 #+title: prelude
 
-*** simplify identity
-
-*** exponential-t
-
-    - with a syntax from `product-t` to `product`
-
 * [todo-stack]
 
-*** current principle
-
-    - x -
-      type is part of a record-data
-      data is the whole record-data
+*** simplify identity for product-arrow
 
 *** representable-functor and set
 
@@ -219,15 +209,14 @@
 
 ***** level table
 
-      | - | data, object                           |
-      |---+----------------------------------------|
-      | 0 | <data>-s                               |
-      |   | data-type, sum-type                    |
-      |   | union-type, record-type, tuple-type    |
-      |---+----------------------------------------|
-      | 1 | type-t, type-t, preorder-t, category-t |
-      |---+----------------------------------------|
-      | 2 | type-tt, type-tt, category-tt          |
+      | - | data, object           |
+      |---+------------------------|
+      | 0 | <name>-s, data-type    |
+      |   | union-type, tuple-type |
+      |---+------------------------|
+      | 1 | type-t, category-t     |
+      |---+------------------------|
+      | 2 | type-tt, category-tt   |
 
 ***** level examples
 
@@ -817,42 +806,6 @@
              pre-t = arrow-eqv-t)
     #+end_src
 
-*** category-t
-
-    #+begin_src cicada
-    category-t : type-tt
-    category-t = data
-      object-s : type-t
-      arrow-s : -- object-s object-s -> type-t
-      arrow-eqv-s : -- (arrow-s a b) (arrow-s a b) -> type-t
-
-      identity : -- a : object-s -> (arrow-s a a)
-
-      compose : -- (arrow-s a b) (arrow-s b c) -> (arrow-s a c)
-
-      identity-neutral-left :
-        -- f : (arrow-s a b)
-        -> (arrow-eqv-s f (compose (identity a) f))
-
-      identity-neutral-right :
-        -- f : (arrow-s a b)
-        -> (arrow-eqv-s f (compose f (identity b)))
-
-      compose-associative :
-        -- f : (arrow-s a b)
-           g : (arrow-s b c)
-           h : (arrow-s c d)
-        -> (arrow-eqv-s
-             (compose f (compose g h))
-             (compose (compose f g) h))
-
-      arrow-eqv-relation :
-        -- [a b] :: object-s
-        -> (eqv-relation-t
-             element-s = (arrow-s a b)
-             pre-s = arrow-eqv-s)
-    #+end_src
-
 *** basic relation
 
 ***** category.arrow-inverse-t
@@ -1089,13 +1042,15 @@
     product-closed-category-tt = data <: [category-tt]
       product :
         -- [a b] : object-t
-        -> (product-t a b) .product
-      arrow-product :
+        -> p : object-t such-that (product-t a b p)
+      product-arrow :
         -- [f g] : (arrow-t a b)
-        -> (product-arrow-t f g).product-arrow
+        -> h : (arrow-t a b) such-that (product-arrow-t f g h)
     #+end_src
 
-*** >< product-closed-category.exponential-t
+*** >< product-closed-category.product-arrow-t
+
+*** product-closed-category.exponential-t
 
     #+begin_src cicada
     product-closed-category.exponential-candidate-t : type-tt
@@ -1114,7 +1069,7 @@
            under arrow-eqv-t such-that
              * (arrow-eqv-t
                  cand.eval
-                 (compose eval (arrow-product factor identity)))
+                 (compose eval (product-arrow factor identity)))
     #+end_src
 
 * product-closed-category
