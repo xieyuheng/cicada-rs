@@ -3,7 +3,11 @@
 
 * [todo-stack]
 
-*** representable-functor
+*** representable-functor and set
+
+*** fix set-morphism-t -- with set-t
+
+    - maybe no top level eqv-s
 
 *** exponential-object-t
 
@@ -169,8 +173,6 @@
 
 *** (data)
 
-    - data-type of type set-t
-
     - named record-type
 
     - to inhabit a data-type constructed by type-constructor,
@@ -183,8 +185,6 @@
 *** (data :> [<sub-type> ...])
 
     - summing sub-types.
-
-    - named data-type list
 
     - if declares same fields,
       and names a type-constructor for the sum-type.
@@ -233,13 +233,13 @@
 
 ***** level examples
 
-      | 0                   | 1                     | 2       |
-      |---------------------+-----------------------+---------|
-      | nat-s               | type-t                | type-tt |
-      | (* nat-s nat-s)     | type-t                | type-tt |
-      | (+ nat-s bool-s)    | type-t                | type-tt |
-      | (-- nat-s -> nat-s) | type-t                | type-tt |
-      | list-s              | (-- type-t -> type-t) | type-tt |
+      | 0                   | 1      | 2       |
+      |---------------------+--------+---------|
+      | nat-s               | type-t | type-tt |
+      | (* nat-s nat-s)     | type-t | type-tt |
+      | (+ bool-s nat-s)    | type-t | type-tt |
+      | (-- nat-s -> nat-s) | type-t | type-tt |
+      | list-s              | type-t | type-tt |
 
 *** implicit-ness
 
@@ -1102,17 +1102,17 @@
             (#2.compose-associative f.2 g.2 h.2)
       #+end_src
 
-* product-closed-category-t
+* product-closed-category-tt
 
   #+begin_src cicada
-  product-closed-category-t : type-tt
-  product-closed-category-t = data <: [category-t]
+  product-closed-category-tt : type-ttt
+  product-closed-category-tt = data <: [category-tt]
     product :
-      -- object-s % [a b]
-      -> (* object-s % p
-            (arrow-s p a) % pa
-            (arrow-s p b) % pb
-            (product-object-s a b p pa pb))
+      -- object-t % [a b]
+      -> (* object-t % p
+            (arrow-t p a) % pa
+            (arrow-t p b) % pb
+            (product-object-t a b p pa pb))
   #+end_src
 
 * void-category
@@ -1689,7 +1689,7 @@
           do left <- (recur x.left y.left)
              right <- (recur x.right y.right)
              (pure (branch-c left right))
-        else none-c
+        [_ _] none-c
     #+end_src
 
 *** tree-numbering
@@ -1735,6 +1735,18 @@
     #+end_src
 
 * set-category
+
+*** set-t
+
+    #+begin_src cicada
+    note
+      The set theory of Errett Bishop.
+
+    set-t : type-tt
+    set-t = data
+      element-s : type-t
+      eqv-s : -> element-s element-s -> type-t
+    #+end_src
 
 *** set-morphism-t
 
