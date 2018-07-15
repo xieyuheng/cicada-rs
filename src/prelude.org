@@ -3,6 +3,8 @@
 
 * [todo-stack]
 
+*** handle (unique) and (give) as type-t
+
 *** product-arrow
 
 ***** we need to use the `factor` in `unique-factor`
@@ -16,6 +18,12 @@
 *** fix set-morphism-t -- with set-t
 
     - maybe no top level eqv-s
+
+    ------
+
+    - x -
+      maybe we can not afford to do this.
+      for syntax reason.
 
 *** category-category
 
@@ -202,7 +210,7 @@
 *** currying of type-constructor
 
     - some of the fields of the type are already inhabited by data,
-      to inhabited such partial-class-type,
+      to inhabited such partial-type,
       we only need to inhabit remaining fields.
 
 *** level of universe
@@ -240,9 +248,9 @@
 
       - we can not really afford to
         split category-t* to category-t and category-tt,
-        because we have to redefined so many classes along category-t.
+        because we have to redefined so many types along category-t.
 
-      - instead we assume that when a class is define in one level,
+      - instead we assume that when a type is define in one level,
         it is defined for all levels.
 
         and all the postfix changes
@@ -254,7 +262,7 @@
 
       - a convention is that
         we only write down the level or levels
-        in which the class is most used.
+        in which the type is most used.
 
         - for example :
           [category-morphism-tt : type-ttt]
@@ -262,7 +270,7 @@
 
 ***** >< implicit generic-ness of haskell type-class
 
-      - by maintain a map from type-constructor to class.
+      - by maintain a map from type-constructor to class-like types.
 
       - something like the template of c++.
 
@@ -755,7 +763,24 @@
           -> (+ (pre-s a b) (pre-s b a))
       #+end_src
 
-* (unique)
+* unique
+
+*** unique-t
+
+    #+begin_src cicada
+    unique-t : type-tt
+    unique-t = data
+      t : type-t
+      x : t
+      t-eqv-s : (-- t t -> type-t)
+      condition-s : (-- t -> type-t)
+
+      unique-proof :
+        * (condition-s x)
+          -- y : t
+             (condition-s y)
+          -> (t-eqv-s x y)
+    #+end_src
 
 *** (unique ... under ...)
 
@@ -767,10 +792,10 @@
 *** (unique ... under ... such-that ...)
 
     #+begin_src cicada
-    unique [$x : $t] under $eqv-s such-that $theorem  = macro
-      * $x $theorem
+    unique [$x : $t] under $eqv-s such-that $condition = macro
+      * $x $condition
         -- y : $t
-           y $theorem
+           y $condition
         -> ($eqv-s $x y)
     #+end_src
 
@@ -1035,7 +1060,9 @@
             (#2.compose-associative f.2 g.2 h.2)
       #+end_src
 
-* (give)
+* give
+
+*** give-t
 
 *** (give <return-value> such-that <condition> ...)
 
