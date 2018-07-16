@@ -3,27 +3,31 @@
 
 * [todo-stack]
 
+*** factorizer in universal-construction
+
 *** category-category
 
-*** handle (unique) and (give) as type-t
+*** set
 
-    - to use `factor` in `unique-factor`
+***** representable-functor and set
 
-*** product-arrow
+***** fix set-morphism-t -- with set-t
 
-    - we need to use the `factor` in `unique-factor`
+      - maybe no top level eqv-s
 
-*** representable-functor and set
+      ------
 
-*** fix set-morphism-t -- with set-t
+      - x -
+        maybe we can not afford to do this.
+        for syntax reason.
 
-    - maybe no top level eqv-s
+***** set-category
 
-    ------
+      - surjective
 
-    - x -
-      maybe we can not afford to do this.
-      for syntax reason.
+      - injective
+
+      - bijective
 
 *** arrow-eqv-t -- amend `arrow-eqv-relation` for all category
 
@@ -38,14 +42,6 @@
       checking functorial laws for each component of the pair.
 
       - this is the whole point of Cartesian product
-
-*** set-category
-
-    - surjective
-
-    - injective
-
-    - bijective
 
 *** prove iso for universal-construction
 
@@ -195,7 +191,7 @@
 
       - the value must be constructed by the function.
         but normal function call syntax will not return the value.
-        use explicit (apply-for-details (<name> ...) ...)
+        use explicit (with-details (<name> ...) ...)
         to get all details.
 
 *** currying of type-constructor
@@ -773,14 +769,14 @@
           -> (t-eqv-s x y)
     #+end_src
 
-*** (unique ... under ...)
+*** >< (unique ... under ...)
 
     #+begin_src cicada
     unique [$x : $t] under $eqv-s = macro
       (-- y : $t -> ($eqv-s $x y))
     #+end_src
 
-*** (unique ... under ... such-that ...)
+*** >< (unique ... under ... such-that ...)
 
     #+begin_src cicada
     unique [$x : $t] under $eqv-s such-that $condition = macro
@@ -1061,7 +1057,13 @@
          (arrow-t c d)
       -> (arrow-t (product a c) (product b d))
     product-closed-category.product-arrow f g =
-      ><
+      with-details (product a c)
+        p <- product-relation
+      with-details (product b d)
+        q <- product-relation
+      (q.factorizer
+        (compose p.fst-projection f)
+        (compose p.fst-projection g))
     #+end_src
 
 *** product-closed-category.exponential-t
