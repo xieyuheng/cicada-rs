@@ -1,0 +1,3074 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+"http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en">
+<head>
+<!-- 2018-07-17 Tue 00:48 -->
+<meta http-equiv="Content-Type" content="text/html;charset=utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>prelude</title>
+<meta name="generator" content="Org-mode" />
+<link rel="stylesheet" href="css/org-page.css"/>
+<script type="text/javascript">
+/*
+@licstart  The following is the entire license notice for the
+JavaScript code in this tag.
+
+Copyright (C) 2012-2013 Free Software Foundation, Inc.
+
+The JavaScript code in this tag is free software: you can
+redistribute it and/or modify it under the terms of the GNU
+General Public License (GNU GPL) as published by the Free Software
+Foundation, either version 3 of the License, or (at your option)
+any later version.  The code is distributed WITHOUT ANY WARRANTY;
+without even the implied warranty of MERCHANTABILITY or FITNESS
+FOR A PARTICULAR PURPOSE.  See the GNU GPL for more details.
+
+As additional permission under GNU GPL version 3 section 7, you
+may distribute non-source (e.g., minimized or compacted) forms of
+that code without the copy of the GNU GPL normally required by
+section 4, provided you include this license notice and a URL
+through which recipients can access the Corresponding Source.
+
+
+@licend  The above is the entire license notice
+for the JavaScript code in this tag.
+*/
+<!--/*--><![CDATA[/*><!--*/
+ function CodeHighlightOn(elem, id)
+ {
+   var target = document.getElementById(id);
+   if(null != target) {
+     elem.cacheClassElem = elem.className;
+     elem.cacheClassTarget = target.className;
+     target.className = "code-highlighted";
+     elem.className   = "code-highlighted";
+   }
+ }
+ function CodeHighlightOff(elem, id)
+ {
+   var target = document.getElementById(id);
+   if(elem.cacheClassElem)
+     elem.className = elem.cacheClassElem;
+   if(elem.cacheClassTarget)
+     target.className = elem.cacheClassTarget;
+ }
+/*]]>*///-->
+</script>
+</head>
+<body>
+<div id="content">
+<h1 class="title">prelude</h1>
+<div id="table-of-contents">
+<h2>overview</h2>
+<div id="text-table-of-contents">
+<ul>
+<li><a href="#org3b42360"><span class="done _todo_stack_">[todo-stack]</span> </a>
+<ul>
+<li><a href="#org8e61285">category-category</a></li>
+<li><a href="#orgf6de980">universal-construction</a></li>
+<li><a href="#org63536f9">prove iso for universal-construction</a></li>
+<li><a href="#org4eb225a">set</a>
+<ul>
+<li><a href="#orgf4e56c9">representable-functor and set</a></li>
+<li><a href="#org295e920">fix set-morphism-t &#x2013; with set-t</a></li>
+<li><a href="#org913c296">set-category</a></li>
+</ul>
+</li>
+<li><a href="#org5092e08">arrow-eqv-t &#x2013; amend `arrow-eqv-relation` for all category</a></li>
+<li><a href="#org261aa1e">bifunctor</a></li>
+<li><a href="#org6ba96e7">nat-total-order</a></li>
+<li><a href="#org2c1b9f0">monad as category</a></li>
+<li><a href="#org6c1e682">dependent-category &#x2013; use pullback, pushout and equalizer</a></li>
+<li><a href="#org828005b">topos-theory</a></li>
+<li><a href="#org5bdc14c">logic programming interface of the type system</a></li>
+<li><a href="#org1fcd54c">use number theory to test type-checker as prover</a></li>
+<li><a href="#orgee45fe8">algebraic structure</a></li>
+<li><a href="#orgdb89170">should (:) (&lt;:) form types too ? &#x2013; like eqv-c</a></li>
+<li><a href="#orgfd0f14e">other topics to be formalized</a>
+<ul>
+<li><a href="#org7bb2cd7">Ordinal number</a></li>
+<li><a href="#orgb11875c">Cardinal number</a></li>
+<li><a href="#orgd65f52a">Skeleton (category theory)</a></li>
+<li><a href="#orgd437d4c">Cantor's diagonal argument</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li><a href="#orgd375ad8"><span class="todo _note_">[note]</span> </a>
+<ul>
+<li><a href="#org49767f3">(*) &#x2013; tuple-type</a></li>
+<li><a href="#orge1b7d9f">(+) &#x2013; union-type</a></li>
+<li><a href="#org54e5c86">(data) &#x2013; named record-type</a></li>
+<li><a href="#org16811a5">(data :&gt; [&lt;sub-type&gt; &#x2026;]) &#x2013; summing sub-types</a></li>
+<li><a href="#org7a2a073">(data &lt;: [&lt;super-type&gt; &#x2026;]) &#x2013; inheriting super-types</a></li>
+<li><a href="#orgf613a34">(::) &#x2013; implicit arguments</a></li>
+<li><a href="#org3747961">level of universe</a>
+<ul>
+<li><a href="#orgd8800ec"><span class="done _todo_">[todo]</span> accumulative or not ?</a></li>
+<li><a href="#org2a50f60"><span class="done _todo_">[todo]</span> level rule</a></li>
+<li><a href="#org14d8231"><span class="done _todo_">[todo]</span> searchable-set vs non-searchable-set</a></li>
+<li><a href="#org2b7d565">level table</a></li>
+<li><a href="#org2610518">level examples</a></li>
+<li><a href="#org655bb6a">builtin level polymorphism</a></li>
+<li><a href="#org37cf7ec"><span class="done _todo_">[todo]</span> implicit generic-ness of haskell type-class</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li><a href="#org21a11f3">void</a>
+<ul>
+<li><a href="#org7be36e7">void-s</a></li>
+<li><a href="#org6148d51">absurd</a></li>
+</ul>
+</li>
+<li><a href="#org88611b1">unit</a>
+<ul>
+<li><a href="#org3464854">unit-s</a></li>
+<li><a href="#orga493abe">unit</a></li>
+</ul>
+</li>
+<li><a href="#orgba053d2">bool</a>
+<ul>
+<li><a href="#org9b25bc6">bool-s</a></li>
+</ul>
+</li>
+<li><a href="#org5c39548">eqv</a>
+<ul>
+<li><a href="#org8d65c21">eqv-s</a></li>
+<li><a href="#org720d452">eqv-apply</a></li>
+<li><a href="#org6f2c1ee">eqv-swap</a></li>
+<li><a href="#org202685d">eqv-compose</a></li>
+</ul>
+</li>
+<li><a href="#org3e56227">nat</a>
+<ul>
+<li><a href="#org7739a6d">nat-s</a></li>
+<li><a href="#org62480d1">nat-add</a></li>
+<li><a href="#orge6c8bfd">nat-mul</a></li>
+<li><a href="#org6f21852">nat-factorial</a></li>
+<li><a href="#org9f67167">nat-even-p</a></li>
+<li><a href="#org7e24f40">nat-even-s</a></li>
+<li><a href="#org30a69f8">two-even</a></li>
+<li><a href="#org304c1bf">nat-add-associative</a></li>
+<li><a href="#orgc7d3e8f">nat-add-commutative</a></li>
+<li><a href="#orgf8a0f46">nat-add-zero-commutative</a></li>
+<li><a href="#orged76da9">nat-add-succ-commutative-1</a></li>
+<li><a href="#orga4906b6">nat-add-succ-commutative-2</a></li>
+</ul>
+</li>
+<li><a href="#org5aaac72">list</a>
+<ul>
+<li><a href="#orgfdc914e">list-s</a></li>
+<li><a href="#orgcd908ad">list-length</a></li>
+<li><a href="#org37c0ace">list-append</a></li>
+<li><a href="#orgf29b051">list-map</a></li>
+<li><a href="#org6771753">list-remove-first</a></li>
+<li><a href="#org716f07">list-length-s &#x2013; re-imp function as relation</a></li>
+<li><a href="#orgaf7036">list-map-preserve-list-length</a></li>
+<li><a href="#org55750af">list-append-s &#x2013; in prolog</a></li>
+<li><a href="#org5e8caf0">list-append-s</a></li>
+</ul>
+</li>
+<li><a href="#org2b5dd2b">vect</a>
+<ul>
+<li><a href="#org6b7928e">vect-s</a></li>
+<li><a href="#orgde290a8">vect-append</a></li>
+<li><a href="#orgda52a34">vect-map</a></li>
+</ul>
+</li>
+<li><a href="#orgbe2828a">order</a>
+<ul>
+<li><a href="#orgfab5d2f">preorder</a>
+<ul>
+<li><a href="#org8f89fa8">preorder-t</a></li>
+</ul>
+</li>
+<li><a href="#orgf30182d">partial-order</a>
+<ul>
+<li><a href="#org4bd6a99">partial-order-t</a></li>
+</ul>
+</li>
+<li><a href="#org7177c9b">eqv-relation</a>
+<ul>
+<li><a href="#orge6ab6db">eqv-relation-t</a></li>
+</ul>
+</li>
+<li><a href="#orgb5ea82e">total-order</a>
+<ul>
+<li><a href="#orgf167eda">total-order-t</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li><a href="#org25b7274">unique</a>
+<ul>
+<li><a href="#orgcf7f045">unique-t</a></li>
+</ul>
+</li>
+<li><a href="#orge9dc6c2">category</a>
+<ul>
+<li><a href="#org2d77ceb">category-tt</a></li>
+<li><a href="#orge745c6d">basic relation</a>
+<ul>
+<li><a href="#org8cab4d1">category.isomorphic-t</a></li>
+</ul>
+</li>
+<li><a href="#org171baf4">universal construction</a>
+<ul>
+<li><a href="#orgfc3d8a0">category.initial-t</a></li>
+<li><a href="#org9c947f6">category.terminal-t</a></li>
+<li><a href="#org97cc88">category.product-t</a></li>
+<li><a href="#org22b2075">category.sum-t</a></li>
+</ul>
+</li>
+<li><a href="#orgc9e203f">other structure as category</a>
+<ul>
+<li><a href="#org69b2fab">preorder.as-category</a></li>
+</ul>
+</li>
+<li><a href="#org23ab6bb">build new category from old category</a>
+<ul>
+<li><a href="#org2b7c5ff">category.opposite</a></li>
+<li><a href="#org8bdbdcb">category-product</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li><a href="#orge924b03">product-closed-category</a>
+<ul>
+<li><a href="#org3aa27a">product-closed-category-tt</a></li>
+<li><a href="#orge551675">product-closed-category.product-arrow</a></li>
+<li><a href="#org5a194f5">product-closed-category.exponential-t</a></li>
+</ul>
+</li>
+<li><a href="#orgf39d76e"><span class="done _todo_">[todo]</span> cartesian-closed-category</a></li>
+<li><a href="#org471fc84">void-category</a>
+<ul>
+<li><a href="#orgbff8a0e">void-arrow-s</a></li>
+<li><a href="#org7ec2d58">void-arrow-eqv-s</a></li>
+<li><a href="#org367d9ac">void-category</a></li>
+</ul>
+</li>
+<li><a href="#org8303339">graph-t</a>
+<ul>
+<li><a href="#orgb3a9f22">graph-t</a></li>
+<li><a href="#orge290493">graph.path-s</a></li>
+<li><a href="#org8321dcc">graph.path-eqv-s</a></li>
+<li><a href="#orgd5860bd">graph.as-free-category</a></li>
+</ul>
+</li>
+<li><a href="#org3336589">nat-order-category</a>
+<ul>
+<li><a href="#org7c97877">nat-lteq-s</a></li>
+<li><a href="#org58a271a">nat-non-negative</a></li>
+<li><a href="#orgcd2e4e2">nat-lteq-reflexive</a></li>
+<li><a href="#org8c5315">nat-lteq-transitive</a></li>
+<li><a href="#org2becf77">nat-lt-s</a></li>
+<li><a href="#org6ee716e">nat-archimedean-property</a></li>
+<li><a href="#org93ae8f2">nat-order-category</a></li>
+</ul>
+</li>
+<li><a href="#orgec9a6b5">groupoid</a>
+<ul>
+<li><a href="#orgff7813f">groupoid-t</a></li>
+</ul>
+</li>
+<li><a href="#org1a47ff6"><span class="done _todo_">[todo]</span> nat-total-order</a></li>
+<li><a href="#orgfe3502c">monoid</a>
+<ul>
+<li><a href="#orgc070f9b">monoid-t</a></li>
+<li><a href="#org4e1a424">monoid.as-category</a></li>
+</ul>
+</li>
+<li><a href="#orgc4a803f"><span class="done _todo_">[todo]</span> group</a></li>
+<li><a href="#org6b9109"><span class="done _todo_">[todo]</span> abelian-group</a></li>
+<li><a href="#org83ddcb"><span class="done _todo_">[todo]</span> ring</a></li>
+<li><a href="#org1477721"><span class="done _todo_">[todo]</span> field</a></li>
+<li><a href="#org37f734f"><span class="done _todo_">[todo]</span> vector-space</a></li>
+<li><a href="#org3446898"><span class="done _todo_">[todo]</span> limit</a></li>
+<li><a href="#org144cf61">container</a>
+<ul>
+<li><a href="#org5cc780a">container-t</a></li>
+<li><a href="#org744822f">list-container</a></li>
+</ul>
+</li>
+<li><a href="#orgab5f18d">const</a>
+<ul>
+<li><a href="#orge76d200">const-s</a></li>
+<li><a href="#orga01aa5d">const-container</a></li>
+</ul>
+</li>
+<li><a href="#orgc8899d0">monad</a>
+<ul>
+<li><a href="#org2b7e089">monad-t</a></li>
+<li><a href="#org5b2f981">monad.compose</a></li>
+<li><a href="#orga5c8c02">monad.flatten</a></li>
+<li><a href="#orgc9909bc">list-monad</a></li>
+</ul>
+</li>
+<li><a href="#orge023f0b">maybe</a>
+<ul>
+<li><a href="#org51bcc4a">maybe-s</a></li>
+<li><a href="#orgbd214b8">maybe-container</a></li>
+<li><a href="#org7519caf">maybe-monad</a></li>
+</ul>
+</li>
+<li><a href="#orga14ea8">state</a>
+<ul>
+<li><a href="#org9c37fd3">state-s</a></li>
+<li><a href="#org708ff8d">state-monad</a></li>
+</ul>
+</li>
+<li><a href="#orgbfe1ae">tree</a>
+<ul>
+<li><a href="#org259cb08">tree-s</a></li>
+<li><a href="#org91c5ec6">tree-container</a></li>
+<li><a href="#orgf5d541c">tree-zip</a></li>
+<li><a href="#org68c1e3b">tree-numbering</a></li>
+</ul>
+</li>
+<li><a href="#org15ed306">int</a>
+<ul>
+<li><a href="#orga4ad120"><span class="done _todo_">[todo]</span> int-s</a></li>
+<li><a href="#org46bb0e"><span class="done _todo_">[todo]</span> mod-s</a></li>
+<li><a href="#orgbb7ba3">gcd-s</a></li>
+</ul>
+</li>
+<li><a href="#org1350237">set-category</a>
+<ul>
+<li><a href="#org85912e4"><span class="done _todo_">[todo]</span> set-t</a></li>
+<li><a href="#orgd0ad77c">set-morphism-t</a></li>
+<li><a href="#org2b6c92c">set-morphism-eqv-t</a></li>
+<li><a href="#org9aa4ef5">set-category</a></li>
+<li><a href="#org4c2d4ca">set-category &#x2013; without type</a></li>
+</ul>
+</li>
+<li><a href="#orgee235f7">preorder-category</a>
+<ul>
+<li><a href="#orgeca795a">preorder-morphism-t</a></li>
+<li><a href="#org5a8559b">preorder-morphism-eqv-t</a></li>
+<li><a href="#orgda7e66e">preorder-category</a></li>
+</ul>
+</li>
+<li><a href="#org5f7ba60">category-category</a>
+<ul>
+<li><a href="#org7d4f459">functor-tt</a></li>
+<li><a href="#orgb5b1f87">natural-transformation-tt</a></li>
+<li><a href="#orgb653e8">natural-isomorphism-tt</a></li>
+<li><a href="#org2585a8f"><span class="done _todo_">[todo]</span> category-category</a></li>
+</ul>
+</li>
+</ul>
+</div>
+</div>
+
+<div id="outline-container-org3b42360" class="outline-2">
+<h2 id="org3b42360"><span class="done _todo_stack_">[todo-stack]</span> </h2>
+<div class="outline-text-2" id="text-org3b42360">
+</div><div id="outline-container-org8e61285" class="outline-3">
+<h3 id="org8e61285">category-category</h3>
+</div>
+
+<div id="outline-container-orgf6de980" class="outline-3">
+<h3 id="orgf6de980">universal-construction</h3>
+<div class="outline-text-3" id="text-orgf6de980">
+<ul class="org-ul">
+<li><p>a carefully designed modelling of universal-construction</p><p>is the core of modelling category-theory</p></li></ul>
+</div>
+</div>
+
+<div id="outline-container-org63536f9" class="outline-3">
+<h3 id="org63536f9">prove iso for universal-construction</h3>
+<div class="outline-text-3" id="text-org63536f9">
+<ul class="org-ul">
+<li><p>a universal-construction is unique up to unique isomorphism</p></li>
+
+<li><p>we need to use unique to prove eqv</p></li></ul>
+</div>
+</div>
+
+<div id="outline-container-org4eb225a" class="outline-3">
+<h3 id="org4eb225a">set</h3>
+<div class="outline-text-3" id="text-org4eb225a">
+</div><div id="outline-container-orgf4e56c9" class="outline-4">
+<h4 id="orgf4e56c9">representable-functor and set</h4>
+</div>
+
+<div id="outline-container-org295e920" class="outline-4">
+<h4 id="org295e920">fix set-morphism-t &#x2013; with set-t</h4>
+<div class="outline-text-4" id="text-org295e920">
+<ul class="org-ul">
+<li><p>maybe no top level eqv-s</p></li>
+
+<li><p>x -</p><p>maybe we can not afford to do this.</p><p>for syntax reason.</p></li></ul>
+</div>
+</div>
+
+<div id="outline-container-org913c296" class="outline-4">
+<h4 id="org913c296">set-category</h4>
+<div class="outline-text-4" id="text-org913c296">
+<ul class="org-ul">
+<li><p>surjective</p></li>
+
+<li><p>injective</p></li>
+
+<li><p>bijective</p></li></ul>
+</div>
+</div>
+</div>
+
+<div id="outline-container-org5092e08" class="outline-3">
+<h3 id="org5092e08">arrow-eqv-t &#x2013; amend `arrow-eqv-relation` for all category</h3>
+<div class="outline-text-3" id="text-org5092e08">
+<ul class="org-ul">
+<li><p>arrow-eqv-t must be an eqv-relation-t</p><p>for all hom-set [a b arrow-t]</p></li></ul>
+</div>
+</div>
+
+<div id="outline-container-org261aa1e" class="outline-3">
+<h3 id="org261aa1e">bifunctor</h3>
+<div class="outline-text-3" id="text-org261aa1e">
+<ul class="org-ul">
+<li><p>checking functorial laws of pair of categories,</p><p>[where pair is Cartesian product]</p><p>is equivalent to</p><p>checking functorial laws for each component of the pair.</p><p></p><p><ul class="org-ul"></p><p><li><p>this is the whole point of Cartesian product</p></li></ul></p></li></ul>
+</div>
+</div>
+
+<div id="outline-container-org6ba96e7" class="outline-3">
+<h3 id="org6ba96e7">nat-total-order</h3>
+</div>
+
+<div id="outline-container-org2c1b9f0" class="outline-3">
+<h3 id="org2c1b9f0">monad as category</h3>
+</div>
+
+<div id="outline-container-org6c1e682" class="outline-3">
+<h3 id="org6c1e682">dependent-category &#x2013; use pullback, pushout and equalizer</h3>
+<div class="outline-text-3" id="text-org6c1e682">
+<ul class="org-ul">
+<li><p>maybe we still need to get out of category at the end</p></li>
+
+<li><p>to open a new mode of explanation</p></li></ul>
+</div>
+</div>
+
+<div id="outline-container-org828005b" class="outline-3">
+<h3 id="org828005b">topos-theory</h3>
+</div>
+
+<div id="outline-container-org5bdc14c" class="outline-3">
+<h3 id="org5bdc14c">logic programming interface of the type system</h3>
+</div>
+
+<div id="outline-container-org1fcd54c" class="outline-3">
+<h3 id="org1fcd54c">use number theory to test type-checker as prover</h3>
+</div>
+
+<div id="outline-container-orgee45fe8" class="outline-3">
+<h3 id="orgee45fe8">algebraic structure</h3>
+<div class="outline-text-3" id="text-orgee45fe8">
+<ul class="org-ul">
+<li><p>(*) and (+) in type-t</p><p>provide two commutative monoidal structures &#x2013; semi-ring-t</p><p>for we can’t define subtraction of types.</p><p>&#x2013; a.k.a rig-t, ring without negative.</p><p></p><p><ul class="org-ul"></p><p><li><p><p></p><p>note that, to be monoidal-category,</p><p>the binary operator must also be a bifunctor.</p><p></p></p><p></p><p><p></p><p>i.e. the monoidal product must be</p><p>compatible with the structure of the category,</p><p>which is defined by morphisms.</p><p></p></p></li></ul></p></li>
+
+<li><p><p></p><p>order relation for algebraic data type</p><p></p></p><p></p><p><p></p><p>for example :</p><p>a &lt; a + b</p><p>a &lt; a * 2</p><p></p></p><p></p><p><p></p><p>this can be viewed as a functor from type-t to rational-s</p><p></p></p></li>
+
+<li><p>x -</p><p>can we extend the algebraic structure to dependent type ?</p></li>
+
+<li><p>k -</p><p>we will need to extend the algebraic structure to object</p></li>
+
+<li><p>x -</p><p>object are just like type.</p><p>just without sum-type, only product-type.</p></li></ul>
+</div>
+</div>
+
+<div id="outline-container-orgdb89170" class="outline-3">
+<h3 id="orgdb89170">should (:) (&lt;:) form types too ? &#x2013; like eqv-c</h3>
+</div>
+
+<div id="outline-container-orgfd0f14e" class="outline-3">
+<h3 id="orgfd0f14e">other topics to be formalized</h3>
+<div class="outline-text-3" id="text-orgfd0f14e">
+</div><div id="outline-container-org7bb2cd7" class="outline-4">
+<h4 id="org7bb2cd7">Ordinal number</h4>
+<div class="outline-text-4" id="text-org7bb2cd7">
+<ul class="org-ul">
+<li><p><a href="https://en.wikipedia.org/wiki/Ordinal_number">https://en.wikipedia.org/wiki/Ordinal_number</a></p></li>
+
+<li><p>well-order</p></li>
+
+<li><p>Order type</p></li>
+
+<li><p>Every well-ordered set is order-equivalent</p><p>to exactly one ordinal number.</p></li></ul>
+</div>
+</div>
+
+<div id="outline-container-orgb11875c" class="outline-4">
+<h4 id="orgb11875c">Cardinal number</h4>
+<div class="outline-text-4" id="text-orgb11875c">
+<ul class="org-ul">
+<li><p><a href="https://en.wikipedia.org/wiki/Cardinal_number">https://en.wikipedia.org/wiki/Cardinal_number</a></p></li>
+
+<li><p>In category theory,</p><p>the cardinal numbers form a skeleton of the category of sets.</p></li></ul>
+</div>
+</div>
+
+<div id="outline-container-orgd65f52a" class="outline-4">
+<h4 id="orgd65f52a">Skeleton (category theory)</h4>
+<div class="outline-text-4" id="text-orgd65f52a">
+<ul class="org-ul">
+<li><p><a href="https://en.wikipedia.org/wiki/Skeleton_(category_theory)">https://en.wikipedia.org/wiki/Skeleton_(category_theory)</a></p></li></ul>
+</div>
+</div>
+
+<div id="outline-container-orgd437d4c" class="outline-4">
+<h4 id="orgd437d4c">Cantor's diagonal argument</h4>
+<div class="outline-text-4" id="text-orgd437d4c">
+<ul class="org-ul">
+<li><p><a href="https://en.wikipedia.org/wiki/Cantor's_diagonal_argument">https://en.wikipedia.org/wiki/Cantor's_diagonal_argument</a></p></li></ul>
+</div>
+</div>
+</div>
+</div>
+
+<div id="outline-container-orgd375ad8" class="outline-2">
+<h2 id="orgd375ad8"><span class="todo _note_">[note]</span> </h2>
+<div class="outline-text-2" id="text-orgd375ad8">
+</div><div id="outline-container-org49767f3" class="outline-3">
+<h3 id="org49767f3">(*) &#x2013; tuple-type</h3>
+<div class="outline-text-3" id="text-org49767f3">
+<ul class="org-ul">
+<li><p>literal tuple-type &#x2013; (* &lt;type&gt; &#x2026;)</p></li>
+
+<li><p>inhabit by literal tuple &#x2013; (* &lt;data&gt; &#x2026;)</p></li></ul>
+</div>
+</div>
+
+<div id="outline-container-orge1b7d9f" class="outline-3">
+<h3 id="orge1b7d9f">(+) &#x2013; union-type</h3>
+<div class="outline-text-3" id="text-orge1b7d9f">
+<ul class="org-ul">
+<li><p>literal union-type &#x2013; (+ &lt;type&gt; &#x2026;)</p></li>
+
+<li><p>we do not have literal union-data,</p><p>the union-type is inhabited by [&lt;data&gt; : &lt;type&gt;] and so on</p></li></ul>
+</div>
+</div>
+
+<div id="outline-container-org54e5c86" class="outline-3">
+<h3 id="org54e5c86">(data) &#x2013; named record-type</h3>
+<div class="outline-text-3" id="text-org54e5c86">
+<ul class="org-ul">
+<li><p>a type is a partly inhabited record</p></li>
+
+<li><p>a data is a fully inhabited record</p></li>
+
+<li><p>for example :</p><p>(cons-t t)</p><p>(cons-c car cdr)</p></li>
+
+<li><p>constructor call syntax :</p><p></p><p><ul class="org-ul"></p><p><li><p>(&lt;name&gt;-c &lt;data&gt; &#x2026;) &#x2013; call-with-order</p></li></p><p></p><p><li><p>(&lt;name&gt;-c &lt;field&gt; = &lt;data&gt; &#x2026;) &#x2013; call-with-field</p></li></ul></p></li></ul>
+</div>
+</div>
+
+<div id="outline-container-org16811a5" class="outline-3">
+<h3 id="org16811a5">(data :&gt; [&lt;sub-type&gt; &#x2026;]) &#x2013; summing sub-types</h3>
+<div class="outline-text-3" id="text-org16811a5">
+<ul class="org-ul">
+<li><p>if declares same fields,</p><p>and names a type-constructor for the sum-type.</p></li>
+
+<li><p>type-constructor of each data-type</p><p>must have the same declared fields and types</p></li>
+
+<li><p>it can be viewed as disjoin-union,</p><p>because data-types in the list are disjoin.</p></li></ul>
+</div>
+</div>
+
+<div id="outline-container-org7a2a073" class="outline-3">
+<h3 id="org7a2a073">(data &lt;: [&lt;super-type&gt; &#x2026;]) &#x2013; inheriting super-types</h3>
+<div class="outline-text-3" id="text-org7a2a073">
+<ul class="org-ul">
+<li><p>[c1 &lt;: c2] means c1 inherit c2 's fields,</p><p>thus c1 is more special then c2,</p><p>because c1 has more interface functions than c2.</p></li>
+
+<li><p>whatever data inhabits c1 also inhabits c2.</p></li></ul>
+</div>
+</div>
+
+<div id="outline-container-orgf613a34" class="outline-3">
+<h3 id="orgf613a34">(::) &#x2013; implicit arguments</h3>
+<div class="outline-text-3" id="text-orgf613a34">
+<ul class="org-ul">
+<li><p>in arguments :</p><p></p><p><ul class="org-ul"></p><p><li><p>the value of the argument will be inferred.</p><p>use call-with-field syntax to give explicit value.</p></li></ul></p></li>
+
+<li><p>in return values :</p><p></p><p><ul class="org-ul"></p><p><li><p>the value must be constructed by the function.</p><p>but normal function call syntax will not return the value.</p><p>use explicit (with-details (&lt;name&gt; &#x2026;) &#x2026;) to get all details.</p></li></ul></p></li></ul>
+</div>
+</div>
+
+<div id="outline-container-org3747961" class="outline-3">
+<h3 id="org3747961">level of universe</h3>
+<div class="outline-text-3" id="text-org3747961">
+</div><div id="outline-container-orgd8800ec" class="outline-4">
+<h4 id="orgd8800ec"><span class="done _todo_">[todo]</span> accumulative or not ?</h4>
+</div>
+
+<div id="outline-container-org2a50f60" class="outline-4">
+<h4 id="org2a50f60"><span class="done _todo_">[todo]</span> level rule</h4>
+</div>
+
+<div id="outline-container-org14d8231" class="outline-4">
+<h4 id="org14d8231"><span class="done _todo_">[todo]</span> searchable-set vs non-searchable-set</h4>
+</div>
+
+<div id="outline-container-org2b7d565" class="outline-4">
+<h4 id="org2b7d565">level table</h4>
+<div class="outline-text-4" id="text-org2b7d565">
+<table border="2" cellspacing="0" cellpadding="6" rules="groups" frame="hsides">
+
+
+<colgroup>
+<col  class="org-right" />
+
+<col  class="org-left" />
+</colgroup>
+<thead>
+<tr>
+<th scope="col" class="org-right">-</th>
+<th scope="col" class="org-left">data, object</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="org-right">0</td>
+<td class="org-left">&lt;name&gt;-s, data-type</td>
+</tr>
+
+<tr>
+<td class="org-right">&#xa0;</td>
+<td class="org-left">union-type, tuple-type</td>
+</tr>
+</tbody>
+<tbody>
+<tr>
+<td class="org-right">1</td>
+<td class="org-left">type-t, category-t</td>
+</tr>
+</tbody>
+<tbody>
+<tr>
+<td class="org-right">2</td>
+<td class="org-left">type-tt, category-tt</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+
+<div id="outline-container-org2610518" class="outline-4">
+<h4 id="org2610518">level examples</h4>
+<div class="outline-text-4" id="text-org2610518">
+<table border="2" cellspacing="0" cellpadding="6" rules="groups" frame="hsides">
+
+
+<colgroup>
+<col  class="org-left" />
+
+<col  class="org-left" />
+
+<col  class="org-left" />
+</colgroup>
+<thead>
+<tr>
+<th scope="col" class="org-left">0</th>
+<th scope="col" class="org-left">1</th>
+<th scope="col" class="org-left">2</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="org-left">nat-s</td>
+<td class="org-left">type-t</td>
+<td class="org-left">type-tt</td>
+</tr>
+
+<tr>
+<td class="org-left">(* nat-s nat-s)</td>
+<td class="org-left">type-t</td>
+<td class="org-left">type-tt</td>
+</tr>
+
+<tr>
+<td class="org-left">(+ bool-s nat-s)</td>
+<td class="org-left">type-t</td>
+<td class="org-left">type-tt</td>
+</tr>
+
+<tr>
+<td class="org-left">(&#x2013; nat-s -&gt; nat-s)</td>
+<td class="org-left">type-t</td>
+<td class="org-left">type-tt</td>
+</tr>
+
+<tr>
+<td class="org-left">list-s</td>
+<td class="org-left">type-t</td>
+<td class="org-left">type-tt</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+
+<div id="outline-container-org655bb6a" class="outline-4">
+<h4 id="org655bb6a">builtin level polymorphism</h4>
+<div class="outline-text-4" id="text-org655bb6a">
+<ul class="org-ul">
+<li><p>we can not really afford to</p><p>split category-t* to category-t and category-tt,</p><p>because we have to redefined so many types along category-t.</p></li>
+
+<li><p><p></p><p>instead we assume that when a type is define in one level,</p><p>it is defined for all levels.</p><p></p></p><p></p><p><p></p><p>and all the postfix changes</p><p>are handled by the language implicitly.</p><p></p></p><p></p><p><ul class="org-ul"></p><p><li><p>for example, when</p><p>[category-t : type-tt] is defined,</p><p>[category-tt : type-ttt] is also defined.</p></li></ul></p></li>
+
+<li><p>a convention is that</p><p>we only write down the level or levels</p><p>in which the type is most used.</p><p></p><p><ul class="org-ul"></p><p><li><p>for example :</p><p>[category-morphism-tt : type-ttt]</p><p>[category-category : category-ttt]</p></li></ul></p></li></ul>
+</div>
+</div>
+
+<div id="outline-container-org37cf7ec" class="outline-4">
+<h4 id="org37cf7ec"><span class="done _todo_">[todo]</span> implicit generic-ness of haskell type-class</h4>
+<div class="outline-text-4" id="text-org37cf7ec">
+<ul class="org-ul">
+<li><p>by maintain a map from type-constructor to class-like types.</p></li>
+
+<li><p>something like the template of c++.</p></li></ul>
+</div>
+</div>
+</div>
+</div>
+
+<div id="outline-container-org21a11f3" class="outline-2">
+<h2 id="org21a11f3">void</h2>
+<div class="outline-text-2" id="text-org21a11f3">
+</div><div id="outline-container-org7be36e7" class="outline-3">
+<h3 id="org7be36e7">void-s</h3>
+<div class="outline-text-3" id="text-org7be36e7">
+<div class="org-src-container">
+
+<pre class="src src-cicada"><span style="color: #7CB8BB;">void-s</span> <span style="color: #DFAF8F;">:</span> <span style="color: #7CB8BB;">type-t</span>
+void-s <span style="color: #DFAF8F;">=</span> <span style="color: #F0DFAF; font-weight: bold;">data</span> <span style="color: #DFAF8F;">:&gt;</span> []
+</pre>
+</div>
+</div>
+</div>
+
+<div id="outline-container-org6148d51" class="outline-3">
+<h3 id="org6148d51">absurd</h3>
+<div class="outline-text-3" id="text-org6148d51">
+<div class="org-src-container">
+
+<pre class="src src-cicada">absurd <span style="color: #DFAF8F;">:</span> <span style="color: #7CB8BB;">--</span> <span style="color: #7CB8BB;">void-s</span> <span style="color: #7CB8BB;">-&gt;</span> t
+</pre>
+</div>
+</div>
+</div>
+</div>
+
+<div id="outline-container-org88611b1" class="outline-2">
+<h2 id="org88611b1">unit</h2>
+<div class="outline-text-2" id="text-org88611b1">
+</div><div id="outline-container-org3464854" class="outline-3">
+<h3 id="org3464854">unit-s</h3>
+<div class="outline-text-3" id="text-org3464854">
+<div class="org-src-container">
+
+<pre class="src src-cicada"><span style="color: #7CB8BB;">unit-s</span> <span style="color: #DFAF8F;">:</span> <span style="color: #7CB8BB;">type-t</span>
+unit-s <span style="color: #DFAF8F;">=</span> <span style="color: #F0DFAF; font-weight: bold;">data</span>
+</pre>
+</div>
+</div>
+</div>
+
+<div id="outline-container-orga493abe" class="outline-3">
+<h3 id="orga493abe">unit</h3>
+<div class="outline-text-3" id="text-orga493abe">
+<div class="org-src-container">
+
+<pre class="src src-cicada">unit <span style="color: #DFAF8F;">:</span> <span style="color: #7CB8BB;">--</span> a <span style="color: #7CB8BB;">-&gt;</span> <span style="color: #7CB8BB;">unit-s</span>
+unit a <span style="color: #DFAF8F;">=</span> <span style="color: #DFAF8F;">unit-c</span>
+</pre>
+</div>
+</div>
+</div>
+</div>
+
+<div id="outline-container-orgba053d2" class="outline-2">
+<h2 id="orgba053d2">bool</h2>
+<div class="outline-text-2" id="text-orgba053d2">
+</div><div id="outline-container-org9b25bc6" class="outline-3">
+<h3 id="org9b25bc6">bool-s</h3>
+<div class="outline-text-3" id="text-org9b25bc6">
+<div class="org-src-container">
+
+<pre class="src src-cicada"><span style="color: #7CB8BB;">bool-s</span> <span style="color: #DFAF8F;">:</span> <span style="color: #7CB8BB;">type-t</span>
+bool-s <span style="color: #DFAF8F;">=</span> <span style="color: #F0DFAF; font-weight: bold;">data</span> <span style="color: #DFAF8F;">:&gt;</span> [<span style="color: #7CB8BB;">true-s</span> <span style="color: #7CB8BB;">false-s]</span>
+
+<span style="color: #7CB8BB;">true-s</span> <span style="color: #DFAF8F;">:</span> <span style="color: #7CB8BB;">type-t</span>
+true-s <span style="color: #DFAF8F;">=</span> <span style="color: #7CB8BB;">data</span>
+
+<span style="color: #7CB8BB;">false-s</span> <span style="color: #DFAF8F;">:</span> <span style="color: #7CB8BB;">type-t</span>
+false-s <span style="color: #DFAF8F;">=</span> <span style="color: #F0DFAF; font-weight: bold;">data</span>
+</pre>
+</div>
+</div>
+</div>
+</div>
+
+<div id="outline-container-org5c39548" class="outline-2">
+<h2 id="org5c39548">eqv</h2>
+<div class="outline-text-2" id="text-org5c39548">
+</div><div id="outline-container-org8d65c21" class="outline-3">
+<h3 id="org8d65c21">eqv-s</h3>
+<div class="outline-text-3" id="text-org8d65c21">
+<div class="org-src-container">
+
+<pre class="src src-cicada"><span style="color: #7CB8BB;">eqv-s</span> <span style="color: #DFAF8F;">:</span> <span style="color: #7CB8BB;">type-t</span>
+eqv-s <span style="color: #DFAF8F;">=</span> <span style="color: #F0DFAF; font-weight: bold;">data</span>
+  [lhs rhs] <span style="color: #DFAF8F;">:</span> t
+  lhs <span style="color: #DFAF8F;">=</span> rhs
+</pre>
+</div>
+</div>
+</div>
+
+<div id="outline-container-org720d452" class="outline-3">
+<h3 id="org720d452">eqv-apply</h3>
+<div class="outline-text-3" id="text-org720d452">
+<div class="org-src-container">
+
+<pre class="src src-cicada">eqv-apply <span style="color: #DFAF8F;">:</span>
+  <span style="color: #7CB8BB;">--</span> fun <span style="color: #DFAF8F;">:</span> (<span style="color: #7CB8BB;">--</span> a <span style="color: #7CB8BB;">-&gt;</span> b)
+     (<span style="color: #7CB8BB;">eqv-s</span> x y)
+  <span style="color: #7CB8BB;">-&gt;</span> (<span style="color: #7CB8BB;">eqv-s</span> (fun x) (fun y))
+eqv-apply _ _ <span style="color: #DFAF8F;">=</span> <span style="color: #DFAF8F;">eqv-c</span>
+</pre>
+</div>
+</div>
+</div>
+
+<div id="outline-container-org6f2c1ee" class="outline-3">
+<h3 id="org6f2c1ee">eqv-swap</h3>
+<div class="outline-text-3" id="text-org6f2c1ee">
+<div class="org-src-container">
+
+<pre class="src src-cicada">eqv-swap <span style="color: #DFAF8F;">:</span> <span style="color: #7CB8BB;">--</span> (<span style="color: #7CB8BB;">eqv-s</span> x y) <span style="color: #7CB8BB;">-&gt;</span> (<span style="color: #7CB8BB;">eqv-s</span> y x)
+eqv-swap _ <span style="color: #DFAF8F;">=</span> <span style="color: #DFAF8F;">eqv-c</span>
+</pre>
+</div>
+</div>
+</div>
+
+<div id="outline-container-org202685d" class="outline-3">
+<h3 id="org202685d">eqv-compose</h3>
+<div class="outline-text-3" id="text-org202685d">
+<div class="org-src-container">
+
+<pre class="src src-cicada">eqv-compose <span style="color: #DFAF8F;">:</span> <span style="color: #7CB8BB;">--</span> (<span style="color: #7CB8BB;">eqv-s</span> x y) (<span style="color: #7CB8BB;">eqv-s</span> y z) <span style="color: #7CB8BB;">-&gt;</span> (<span style="color: #7CB8BB;">eqv-s</span> x z)
+eqv-compose _ _ <span style="color: #DFAF8F;">=</span> <span style="color: #DFAF8F;">eqv-c</span>
+</pre>
+</div>
+</div>
+</div>
+</div>
+
+<div id="outline-container-org3e56227" class="outline-2">
+<h2 id="org3e56227">nat</h2>
+<div class="outline-text-2" id="text-org3e56227">
+</div><div id="outline-container-org7739a6d" class="outline-3">
+<h3 id="org7739a6d">nat-s</h3>
+<div class="outline-text-3" id="text-org7739a6d">
+<div class="org-src-container">
+
+<pre class="src src-cicada"><span style="color: #7CB8BB;">nat-s</span> <span style="color: #DFAF8F;">:</span> <span style="color: #7CB8BB;">type-t</span>
+nat-s <span style="color: #DFAF8F;">=</span> <span style="color: #F0DFAF; font-weight: bold;">data</span> <span style="color: #DFAF8F;">:&gt;</span> [<span style="color: #7CB8BB;">zero-s</span> <span style="color: #7CB8BB;">succ-s]</span>
+
+<span style="color: #7CB8BB;">zero-s</span> <span style="color: #DFAF8F;">:</span> <span style="color: #7CB8BB;">type-t</span>
+zero-s <span style="color: #DFAF8F;">=</span> <span style="color: #7CB8BB;">data</span>
+
+<span style="color: #7CB8BB;">succ-s</span> <span style="color: #DFAF8F;">:</span> <span style="color: #7CB8BB;">type-t</span>
+succ-s <span style="color: #DFAF8F;">=</span> <span style="color: #F0DFAF; font-weight: bold;">data</span>
+  prev <span style="color: #DFAF8F;">:</span> <span style="color: #7CB8BB;">nat-s</span>
+</pre>
+</div>
+</div>
+</div>
+
+<div id="outline-container-org62480d1" class="outline-3">
+<h3 id="org62480d1">nat-add</h3>
+<div class="outline-text-3" id="text-org62480d1">
+<div class="org-src-container">
+
+<pre class="src src-cicada">nat-add <span style="color: #DFAF8F;">:</span> <span style="color: #7CB8BB;">--</span> <span style="color: #7CB8BB;">nat-s</span> <span style="color: #7CB8BB;">nat-s</span> <span style="color: #7CB8BB;">-&gt;</span> <span style="color: #7CB8BB;">nat-s</span>
+nat-add x y <span style="color: #DFAF8F;">=</span>
+  <span style="color: #F0DFAF; font-weight: bold;">case</span> x
+    <span style="color: #7CB8BB;">zero-s</span> y
+    <span style="color: #7CB8BB;">succ-s</span> (<span style="color: #DFAF8F;">succ-c</span> (<span style="color: #7CB8BB;">recur</span> x<span style="color: #BFEBBF;">.prev</span> y))
+</pre>
+</div>
+</div>
+</div>
+
+<div id="outline-container-orge6c8bfd" class="outline-3">
+<h3 id="orge6c8bfd">nat-mul</h3>
+<div class="outline-text-3" id="text-orge6c8bfd">
+<div class="org-src-container">
+
+<pre class="src src-cicada">nat-mul <span style="color: #DFAF8F;">:</span> <span style="color: #7CB8BB;">--</span> <span style="color: #7CB8BB;">nat-s</span> <span style="color: #7CB8BB;">nat-s</span> <span style="color: #7CB8BB;">-&gt;</span> <span style="color: #7CB8BB;">nat-s</span>
+nat-mul x y <span style="color: #DFAF8F;">=</span>
+  <span style="color: #F0DFAF; font-weight: bold;">case</span> x
+    <span style="color: #7CB8BB;">zero-s</span> <span style="color: #DFAF8F;">zero-c</span>
+    <span style="color: #7CB8BB;">succ-s</span> (nat-add y (<span style="color: #7CB8BB;">recur</span> x<span style="color: #BFEBBF;">.prev</span> y))
+</pre>
+</div>
+</div>
+</div>
+
+<div id="outline-container-org6f21852" class="outline-3">
+<h3 id="org6f21852">nat-factorial</h3>
+<div class="outline-text-3" id="text-org6f21852">
+<div class="org-src-container">
+
+<pre class="src src-cicada">nat-factorial <span style="color: #DFAF8F;">:</span> <span style="color: #7CB8BB;">--</span> <span style="color: #7CB8BB;">nat-s</span> <span style="color: #7CB8BB;">-&gt;</span> <span style="color: #7CB8BB;">nat-s</span>
+nat-factorial n <span style="color: #DFAF8F;">=</span>
+  <span style="color: #F0DFAF; font-weight: bold;">case</span> n
+    <span style="color: #7CB8BB;">zero-s</span> (<span style="color: #DFAF8F;">succ-c</span> <span style="color: #DFAF8F;">zero-c</span>)
+    <span style="color: #7CB8BB;">succ-s</span> (nat-mul n (<span style="color: #7CB8BB;">recur</span> n<span style="color: #BFEBBF;">.prev</span>))
+</pre>
+</div>
+</div>
+</div>
+
+<div id="outline-container-org9f67167" class="outline-3">
+<h3 id="org9f67167">nat-even-p</h3>
+<div class="outline-text-3" id="text-org9f67167">
+<div class="org-src-container">
+
+<pre class="src src-cicada"><span style="color: #DFAF8F;">nat-even-p</span> <span style="color: #DFAF8F;">:</span> <span style="color: #7CB8BB;">--</span> <span style="color: #7CB8BB;">nat-s</span> <span style="color: #7CB8BB;">-&gt;</span> <span style="color: #7CB8BB;">bool-s</span>
+nat-even-p x <span style="color: #DFAF8F;">=</span>
+  <span style="color: #F0DFAF; font-weight: bold;">case</span> x
+    <span style="color: #7CB8BB;">zero-s</span> <span style="color: #DFAF8F;">true-c</span>
+    <span style="color: #7CB8BB;">succ-s</span> <span style="color: #F0DFAF; font-weight: bold;">case</span> x<span style="color: #BFEBBF;">.prev</span>
+      <span style="color: #7CB8BB;">zero-s</span> <span style="color: #DFAF8F;">false-c</span>
+      <span style="color: #7CB8BB;">succ-s</span> (<span style="color: #7CB8BB;">recur</span> x<span style="color: #BFEBBF;">.prev.prev</span>)
+</pre>
+</div>
+</div>
+</div>
+
+<div id="outline-container-org7e24f40" class="outline-3">
+<h3 id="org7e24f40">nat-even-s</h3>
+<div class="outline-text-3" id="text-org7e24f40">
+<div class="org-src-container">
+
+<pre class="src src-cicada"><span style="color: #7CB8BB;">nat-even-s</span> <span style="color: #DFAF8F;">:</span> <span style="color: #7CB8BB;">type-t</span>
+nat-even-s <span style="color: #DFAF8F;">=</span> <span style="color: #F0DFAF; font-weight: bold;">data</span> <span style="color: #DFAF8F;">:&gt;</span> [<span style="color: #7CB8BB;">zero-even-s</span> <span style="color: #7CB8BB;">even-plus-two-even-s</span>]
+  nat <span style="color: #DFAF8F;">:</span> <span style="color: #7CB8BB;">nat-s</span>
+
+<span style="color: #7CB8BB;">zero-even-s</span> <span style="color: #DFAF8F;">:</span> <span style="color: #7CB8BB;">type-t</span>
+zero-even-s <span style="color: #DFAF8F;">=</span> <span style="color: #F0DFAF; font-weight: bold;">data</span>
+  nat <span style="color: #DFAF8F;">:</span> <span style="color: #7CB8BB;">nat-s</span>
+  nat <span style="color: #DFAF8F;">=</span> <span style="color: #7CB8BB;">zero-c</span>
+
+<span style="color: #7CB8BB;">even-plus-two-even-s</span> <span style="color: #DFAF8F;">:</span> <span style="color: #7CB8BB;">type-t</span>
+even-plus-two-even-s <span style="color: #DFAF8F;">=</span> <span style="color: #F0DFAF; font-weight: bold;">data</span>
+  nat <span style="color: #DFAF8F;">:</span> <span style="color: #7CB8BB;">nat-s</span>
+  prev <span style="color: #DFAF8F;">:</span> (<span style="color: #7CB8BB;">nat-even-s</span> m)
+  nat <span style="color: #DFAF8F;">=</span> (<span style="color: #DFAF8F;">succ-c</span> (<span style="color: #DFAF8F;">succ-c</span> m))
+</pre>
+</div>
+</div>
+</div>
+
+<div id="outline-container-org30a69f8" class="outline-3">
+<h3 id="org30a69f8">two-even</h3>
+<div class="outline-text-3" id="text-org30a69f8">
+<div class="org-src-container">
+
+<pre class="src src-cicada">two-even <span style="color: #DFAF8F;">:</span> (<span style="color: #7CB8BB;">nat-even-s</span> (<span style="color: #DFAF8F;">succ-c</span> (<span style="color: #DFAF8F;">succ-c</span> <span style="color: #DFAF8F;">zero-c</span>)))
+two-even <span style="color: #DFAF8F;">=</span> (<span style="color: #DFAF8F;">even-plus-two-even-c</span> <span style="color: #DFAF8F;">zero-even-c</span>)
+</pre>
+</div>
+</div>
+</div>
+
+<div id="outline-container-org304c1bf" class="outline-3">
+<h3 id="org304c1bf">nat-add-associative</h3>
+<div class="outline-text-3" id="text-org304c1bf">
+<div class="org-src-container">
+
+<pre class="src src-cicada">nat-add-associative <span style="color: #DFAF8F;">:</span>
+  <span style="color: #7CB8BB;">--</span> [x y z] <span style="color: #DFAF8F;">:</span> <span style="color: #7CB8BB;">nat-s</span>
+  <span style="color: #7CB8BB;">-&gt;</span> (<span style="color: #7CB8BB;">eqv-s</span>
+       (nat-add (nat-add x y) z)
+       (nat-add x (nat-add y z)))
+nat-add-associative x y z <span style="color: #DFAF8F;">=</span>
+  <span style="color: #F0DFAF; font-weight: bold;">case</span> x
+    <span style="color: #7CB8BB;">zero-s</span> <span style="color: #DFAF8F;">eqv-c</span>
+    <span style="color: #7CB8BB;">succ-s</span> (eqv-apply <span style="color: #DFAF8F;">succ-c</span> (<span style="color: #7CB8BB;">recur</span> x<span style="color: #BFEBBF;">.prev</span> y z))
+</pre>
+</div>
+</div>
+</div>
+
+<div id="outline-container-orgc7d3e8f" class="outline-3">
+<h3 id="orgc7d3e8f">nat-add-commutative</h3>
+<div class="outline-text-3" id="text-orgc7d3e8f">
+<div class="org-src-container">
+
+<pre class="src src-cicada">nat-add-commutative <span style="color: #DFAF8F;">:</span>
+  <span style="color: #7CB8BB;">--</span> [x y] <span style="color: #DFAF8F;">:</span> <span style="color: #7CB8BB;">nat-s</span>
+  <span style="color: #7CB8BB;">-&gt;</span> (<span style="color: #7CB8BB;">eqv-s</span>
+       (nat-add x y)
+       (nat-add y x))
+nat-add-commutative x y <span style="color: #DFAF8F;">=</span>
+  <span style="color: #F0DFAF; font-weight: bold;">case</span> x
+    <span style="color: #7CB8BB;">zero-s</span> (nat-add-zero-commutative y)
+    <span style="color: #7CB8BB;">succ-s</span>
+      (eqv-compose
+        (eqv-apply <span style="color: #DFAF8F;">succ-c</span> (<span style="color: #7CB8BB;">recur</span> x<span style="color: #BFEBBF;">.prev</span> y))
+        (nat-add-succ-commutative y x<span style="color: #BFEBBF;">.prev</span>))
+</pre>
+</div>
+</div>
+</div>
+
+<div id="outline-container-orgf8a0f46" class="outline-3">
+<h3 id="orgf8a0f46">nat-add-zero-commutative</h3>
+<div class="outline-text-3" id="text-orgf8a0f46">
+<div class="org-src-container">
+
+<pre class="src src-cicada">nat-add-zero-commutative <span style="color: #DFAF8F;">:</span>
+  <span style="color: #7CB8BB;">--</span> x <span style="color: #DFAF8F;">:</span> <span style="color: #7CB8BB;">nat-s</span>
+  <span style="color: #7CB8BB;">-&gt;</span> (<span style="color: #7CB8BB;">eqv-s</span>
+       (nat-add <span style="color: #DFAF8F;">zero-c</span> x)
+       (nat-add x <span style="color: #DFAF8F;">zero-c</span>))
+nat-add-zero-commutative x <span style="color: #DFAF8F;">=</span>
+  <span style="color: #F0DFAF; font-weight: bold;">case</span> x
+    <span style="color: #7CB8BB;">zero-s</span> <span style="color: #DFAF8F;">eqv-c</span>
+    <span style="color: #7CB8BB;">succ-s</span> (eqv-apply <span style="color: #DFAF8F;">succ-c</span> (<span style="color: #7CB8BB;">recur</span> x<span style="color: #BFEBBF;">.prev</span>))
+</pre>
+</div>
+</div>
+</div>
+
+<div id="outline-container-orged76da9" class="outline-3">
+<h3 id="orged76da9">nat-add-succ-commutative-1</h3>
+<div class="outline-text-3" id="text-orged76da9">
+<div class="org-src-container">
+
+<pre class="src src-cicada">nat-add-succ-commutative-1 <span style="color: #DFAF8F;">:</span>
+  <span style="color: #7CB8BB;">--</span> [x y] <span style="color: #DFAF8F;">:</span> <span style="color: #7CB8BB;">nat-s</span>
+  <span style="color: #7CB8BB;">-&gt;</span> (<span style="color: #7CB8BB;">eqv-s</span>
+       (nat-add (<span style="color: #DFAF8F;">succ-c</span> x) y)
+       (<span style="color: #DFAF8F;">succ-c</span> (nat-add x y)))
+nat-add-succ-commutative-1 x y <span style="color: #DFAF8F;">=</span>
+  <span style="color: #F0DFAF; font-weight: bold;">case</span> x
+    <span style="color: #7CB8BB;">zero-s</span> <span style="color: #DFAF8F;">eqv-c</span>
+    <span style="color: #7CB8BB;">succ-s</span> (eqv-apply <span style="color: #DFAF8F;">succ-c</span> (<span style="color: #7CB8BB;">recur</span> x<span style="color: #BFEBBF;">.prev</span> y))
+</pre>
+</div>
+</div>
+</div>
+
+<div id="outline-container-orga4906b6" class="outline-3">
+<h3 id="orga4906b6">nat-add-succ-commutative-2</h3>
+<div class="outline-text-3" id="text-orga4906b6">
+<div class="org-src-container">
+
+<pre class="src src-cicada">nat-add-succ-commutative-2 <span style="color: #DFAF8F;">:</span>
+  <span style="color: #7CB8BB;">--</span> [x y] <span style="color: #DFAF8F;">:</span> <span style="color: #7CB8BB;">nat-s</span>
+  <span style="color: #7CB8BB;">-&gt;</span> (<span style="color: #7CB8BB;">eqv-s</span>
+       (nat-add y (<span style="color: #DFAF8F;">succ-c</span> x))
+       (<span style="color: #DFAF8F;">succ-c</span> (nat-add x y)))
+nat-add-succ-commutative-2 x y <span style="color: #DFAF8F;">=</span>
+  <span style="color: #F0DFAF; font-weight: bold;">case</span> x
+    <span style="color: #7CB8BB;">zero-s</span> <span style="color: #DFAF8F;">eqv-c</span>
+    <span style="color: #7CB8BB;">succ-s</span> (eqv-apply <span style="color: #DFAF8F;">succ-c</span> (<span style="color: #7CB8BB;">recur</span> x<span style="color: #BFEBBF;">.prev</span> y))
+</pre>
+</div>
+</div>
+</div>
+</div>
+
+<div id="outline-container-org5aaac72" class="outline-2">
+<h2 id="org5aaac72">list</h2>
+<div class="outline-text-2" id="text-org5aaac72">
+</div><div id="outline-container-orgfdc914e" class="outline-3">
+<h3 id="orgfdc914e">list-s</h3>
+<div class="outline-text-3" id="text-orgfdc914e">
+<div class="org-src-container">
+
+<pre class="src src-cicada"><span style="color: #7CB8BB;">list-s</span> <span style="color: #DFAF8F;">:</span> <span style="color: #7CB8BB;">type-t</span>
+list-s <span style="color: #DFAF8F;">=</span> <span style="color: #F0DFAF; font-weight: bold;">data</span> <span style="color: #DFAF8F;">:&gt;</span> [<span style="color: #7CB8BB;">null-s</span> <span style="color: #7CB8BB;">cons-s</span>]
+  t <span style="color: #DFAF8F;">:</span> <span style="color: #7CB8BB;">type-t</span>
+
+null-s <span style="color: #DFAF8F;">:</span> <span style="color: #7CB8BB;">type-t</span>
+null-s <span style="color: #DFAF8F;">=</span> <span style="color: #F0DFAF; font-weight: bold;">data</span>
+  t <span style="color: #DFAF8F;">:</span> <span style="color: #7CB8BB;">type-t</span>
+
+cons-s <span style="color: #DFAF8F;">:</span> <span style="color: #7CB8BB;">type-t</span>
+cons-s <span style="color: #DFAF8F;">=</span> <span style="color: #F0DFAF; font-weight: bold;">data</span>
+  t <span style="color: #DFAF8F;">:</span> <span style="color: #7CB8BB;">type-t</span>
+  car <span style="color: #DFAF8F;">:</span> t
+  cdr <span style="color: #DFAF8F;">:</span> (<span style="color: #7CB8BB;">list-s</span> t)
+</pre>
+</div>
+</div>
+</div>
+
+<div id="outline-container-orgcd908ad" class="outline-3">
+<h3 id="orgcd908ad">list-length</h3>
+<div class="outline-text-3" id="text-orgcd908ad">
+<div class="org-src-container">
+
+<pre class="src src-cicada">list-length <span style="color: #DFAF8F;">:</span> <span style="color: #7CB8BB;">--</span> (<span style="color: #7CB8BB;">list-s</span> t) <span style="color: #7CB8BB;">-&gt;</span> <span style="color: #7CB8BB;">nat-s</span>
+list-length list <span style="color: #DFAF8F;">=</span>
+  <span style="color: #F0DFAF; font-weight: bold;">case</span> list
+    <span style="color: #7CB8BB;">null-s</span> <span style="color: #DFAF8F;">zero-c</span>
+    <span style="color: #7CB8BB;">cons-s</span> (<span style="color: #DFAF8F;">succ-c</span> (<span style="color: #7CB8BB;">recur</span> list<span style="color: #BFEBBF;">.cdr</span>))
+</pre>
+</div>
+</div>
+</div>
+
+<div id="outline-container-org37c0ace" class="outline-3">
+<h3 id="org37c0ace">list-append</h3>
+<div class="outline-text-3" id="text-org37c0ace">
+<div class="org-src-container">
+
+<pre class="src src-cicada">list-append <span style="color: #DFAF8F;">:</span>
+  <span style="color: #7CB8BB;">--</span> (<span style="color: #7CB8BB;">list-s</span> t)
+     (<span style="color: #7CB8BB;">list-s</span> t)
+  <span style="color: #7CB8BB;">-&gt;</span> (<span style="color: #7CB8BB;">list-s</span> t)
+list-append ante succ <span style="color: #DFAF8F;">=</span>
+  <span style="color: #F0DFAF; font-weight: bold;">case</span> ante
+    <span style="color: #7CB8BB;">null-s</span> succ
+    <span style="color: #7CB8BB;">cons-s</span> (<span style="color: #DFAF8F;">cons-c</span> ante<span style="color: #BFEBBF;">.car</span> (<span style="color: #7CB8BB;">recur</span> ante<span style="color: #BFEBBF;">.cdr</span> succ))
+</pre>
+</div>
+</div>
+</div>
+
+<div id="outline-container-orgf29b051" class="outline-3">
+<h3 id="orgf29b051">list-map</h3>
+<div class="outline-text-3" id="text-orgf29b051">
+<div class="org-src-container">
+
+<pre class="src src-cicada">list-map <span style="color: #DFAF8F;">:</span> <span style="color: #7CB8BB;">--</span> (<span style="color: #7CB8BB;">--</span> a <span style="color: #7CB8BB;">-&gt;</span> b) (<span style="color: #7CB8BB;">list-s</span> a) <span style="color: #7CB8BB;">-&gt;</span> (<span style="color: #7CB8BB;">list-s</span> b)
+list-map fun list <span style="color: #DFAF8F;">=</span>
+  <span style="color: #F0DFAF; font-weight: bold;">case</span> list
+    <span style="color: #7CB8BB;">null-s</span> list
+    <span style="color: #7CB8BB;">cons-s</span> (<span style="color: #DFAF8F;">cons-c</span> (fun list<span style="color: #BFEBBF;">.car</span>) (<span style="color: #7CB8BB;">recur</span> fun list<span style="color: #BFEBBF;">.cdr</span>))
+</pre>
+</div>
+</div>
+</div>
+
+<div id="outline-container-org6771753" class="outline-3">
+<h3 id="org6771753">list-remove-first</h3>
+<div class="outline-text-3" id="text-org6771753">
+<div class="org-src-container">
+
+<pre class="src src-cicada">list-remove-first <span style="color: #DFAF8F;">:</span> <span style="color: #7CB8BB;">--</span> t (<span style="color: #7CB8BB;">list-s</span> t) <span style="color: #7CB8BB;">-&gt;</span> (<span style="color: #7CB8BB;">list-s</span> t)
+list-remove-first x list <span style="color: #DFAF8F;">=</span>
+  <span style="color: #F0DFAF; font-weight: bold;">case</span> list
+    <span style="color: #7CB8BB;">null-s</span> list
+    <span style="color: #7CB8BB;">cons-s</span>
+      <span style="color: #F0DFAF; font-weight: bold;">if</span> (<span style="color: #DFAF8F;">eq-p</span> list<span style="color: #BFEBBF;">.car</span> x)
+      <span style="color: #F0DFAF; font-weight: bold;">then</span> list<span style="color: #BFEBBF;">.cdr</span>
+      <span style="color: #F0DFAF; font-weight: bold;">else</span> (<span style="color: #DFAF8F;">cons-c</span> list<span style="color: #BFEBBF;">.car</span> (<span style="color: #7CB8BB;">recur</span> list<span style="color: #BFEBBF;">.cdr</span> x))
+</pre>
+</div>
+</div>
+</div>
+
+<div id="outline-container-org716f07" class="outline-3">
+<h3 id="org716f07">list-length-s &#x2013; re-imp function as relation</h3>
+<div class="outline-text-3" id="text-org716f07">
+<div class="org-src-container">
+
+<pre class="src src-cicada"><span style="color: #7CB8BB;">list-length-s</span> <span style="color: #DFAF8F;">:</span> <span style="color: #7CB8BB;">type-t</span>
+list-length-s <span style="color: #DFAF8F;">=</span> <span style="color: #F0DFAF; font-weight: bold;">data</span> <span style="color: #DFAF8F;">:&gt;</span> [<span style="color: #7CB8BB;">zero-length-s</span> <span style="color: #7CB8BB;">succ-length-s</span>]
+  list <span style="color: #DFAF8F;">:</span> (<span style="color: #7CB8BB;">list-s</span> t)
+  length <span style="color: #DFAF8F;">:</span> <span style="color: #7CB8BB;">nat-s</span>
+
+
+<span style="color: #7CB8BB;">zero-length-s</span> <span style="color: #DFAF8F;">:</span> <span style="color: #7CB8BB;">type-t</span>
+zero-length-s <span style="color: #DFAF8F;">=</span> <span style="color: #F0DFAF; font-weight: bold;">data</span>
+  list <span style="color: #DFAF8F;">:</span> (<span style="color: #7CB8BB;">list-s</span> t)
+  length <span style="color: #DFAF8F;">:</span> <span style="color: #7CB8BB;">nat-s</span>
+  list <span style="color: #DFAF8F;">=</span> <span style="color: #DFAF8F;">null-c</span>
+  length <span style="color: #DFAF8F;">=</span> <span style="color: #7CB8BB;">zero-c</span>
+
+<span style="color: #7CB8BB;">succ-length-s</span> <span style="color: #DFAF8F;">:</span> <span style="color: #7CB8BB;">type-t</span>
+succ-length-s <span style="color: #DFAF8F;">=</span> <span style="color: #F0DFAF; font-weight: bold;">data</span>
+  list <span style="color: #DFAF8F;">:</span> (<span style="color: #7CB8BB;">list-s</span> t)
+  length <span style="color: #DFAF8F;">:</span> <span style="color: #7CB8BB;">nat-s</span>
+  prev <span style="color: #DFAF8F;">:</span> (<span style="color: #7CB8BB;">list-length-s</span> list length)
+  list <span style="color: #DFAF8F;">=</span> (<span style="color: #DFAF8F;">cons-c</span> x list)
+  length <span style="color: #DFAF8F;">=</span> (<span style="color: #DFAF8F;">succ-c</span> length)
+</pre>
+</div>
+</div>
+</div>
+
+<div id="outline-container-orgaf7036" class="outline-3">
+<h3 id="orgaf7036">list-map-preserve-list-length</h3>
+<div class="outline-text-3" id="text-orgaf7036">
+<div class="org-src-container">
+
+<pre class="src src-cicada">list-map-preserve-list-length <span style="color: #DFAF8F;">:</span>
+  <span style="color: #7CB8BB;">--</span> (<span style="color: #7CB8BB;">list-length-s</span> list n)
+  <span style="color: #7CB8BB;">-&gt;</span> (<span style="color: #7CB8BB;">list-length-s</span> (list-map fun list) n)
+list-map-preserve-list-length h <span style="color: #DFAF8F;">=</span>
+  <span style="color: #F0DFAF; font-weight: bold;">case</span> h
+    <span style="color: #7CB8BB;">zero-length-s</span> h
+    <span style="color: #7CB8BB;">succ-length-s</span> (<span style="color: #DFAF8F;">succ-length-c</span> (<span style="color: #7CB8BB;">recur</span> h<span style="color: #BFEBBF;">.prev</span>))
+</pre>
+</div>
+</div>
+</div>
+
+<div id="outline-container-org55750af" class="outline-3">
+<h3 id="org55750af">list-append-s &#x2013; in prolog</h3>
+<div class="outline-text-3" id="text-org55750af">
+<div class="org-src-container">
+
+<pre class="src src-cicada"><span style="color: #F0DFAF; font-weight: bold;">note</span> <span style="color: #F0DFAF; font-weight: bold;">in</span> prolog<span style="color: #F0DFAF; font-weight: bold;">,</span> we will have <span style="color: #DFAF8F;">:</span>
+  append([]<span style="color: #F0DFAF; font-weight: bold;">,</span> <span style="color: #7CB8BB;">Succ</span><span style="color: #F0DFAF; font-weight: bold;">,</span> <span style="color: #7CB8BB;">Succ).</span>
+  append([<span style="color: #7CB8BB;">Car</span> <span style="color: #7CB8BB;">|</span> <span style="color: #7CB8BB;">Cdr</span>]<span style="color: #F0DFAF; font-weight: bold;">,</span> <span style="color: #7CB8BB;">Succ</span><span style="color: #F0DFAF; font-weight: bold;">,</span> [<span style="color: #7CB8BB;">Car</span> <span style="color: #7CB8BB;">|</span> <span style="color: #7CB8BB;">ResultCdr]):-</span>
+    append(<span style="color: #7CB8BB;">Cdr</span><span style="color: #F0DFAF; font-weight: bold;">,</span> <span style="color: #7CB8BB;">Succ</span><span style="color: #F0DFAF; font-weight: bold;">,</span> <span style="color: #7CB8BB;">ResultCdr).</span>
+</pre>
+</div>
+</div>
+</div>
+
+<div id="outline-container-org5e8caf0" class="outline-3">
+<h3 id="org5e8caf0">list-append-s</h3>
+<div class="outline-text-3" id="text-org5e8caf0">
+<div class="org-src-container">
+
+<pre class="src src-cicada"><span style="color: #7CB8BB;">list-append-s</span> <span style="color: #DFAF8F;">:</span> <span style="color: #7CB8BB;">type-t</span>
+list-append-s <span style="color: #DFAF8F;">=</span> <span style="color: #F0DFAF; font-weight: bold;">data</span> <span style="color: #DFAF8F;">:&gt;</span> [<span style="color: #7CB8BB;">zero-append-s</span> <span style="color: #7CB8BB;">succ-append-s</span>]
+  [ante succ result] <span style="color: #DFAF8F;">:</span> (<span style="color: #7CB8BB;">list-s</span> <span style="color: #7CB8BB;">t)</span>
+
+<span style="color: #7CB8BB;">zero-append-s</span> <span style="color: #DFAF8F;">:</span> <span style="color: #7CB8BB;">type-t</span>
+zero-append-s <span style="color: #DFAF8F;">=</span> <span style="color: #F0DFAF; font-weight: bold;">data</span>
+  [ante succ result] <span style="color: #DFAF8F;">:</span> (<span style="color: #7CB8BB;">list-s</span> t)
+  ante <span style="color: #DFAF8F;">=</span> <span style="color: #DFAF8F;">null-c</span>
+  result <span style="color: #DFAF8F;">=</span> <span style="color: #7CB8BB;">succ</span>
+
+<span style="color: #7CB8BB;">succ-append-s</span> <span style="color: #DFAF8F;">:</span> <span style="color: #7CB8BB;">type-t</span>
+succ-append-s <span style="color: #DFAF8F;">=</span> <span style="color: #F0DFAF; font-weight: bold;">data</span>
+  [ante succ result] <span style="color: #DFAF8F;">:</span> (<span style="color: #7CB8BB;">list-s</span> t)
+  prev <span style="color: #DFAF8F;">:</span> (<span style="color: #7CB8BB;">list-append-s</span> cdr succ result-cdr)
+  ante <span style="color: #DFAF8F;">=</span> (<span style="color: #DFAF8F;">cons-c</span> car cdr)
+  result <span style="color: #DFAF8F;">=</span> (<span style="color: #DFAF8F;">cons-c</span> car result-cdr)
+</pre>
+</div>
+</div>
+</div>
+</div>
+
+<div id="outline-container-org2b5dd2b" class="outline-2">
+<h2 id="org2b5dd2b">vect</h2>
+<div class="outline-text-2" id="text-org2b5dd2b">
+</div><div id="outline-container-org6b7928e" class="outline-3">
+<h3 id="org6b7928e">vect-s</h3>
+<div class="outline-text-3" id="text-org6b7928e">
+<div class="org-src-container">
+
+<pre class="src src-cicada"><span style="color: #7CB8BB;">vect-s</span> <span style="color: #DFAF8F;">:</span> <span style="color: #7CB8BB;">type-t</span>
+vect-s <span style="color: #DFAF8F;">=</span> <span style="color: #F0DFAF; font-weight: bold;">data</span> <span style="color: #DFAF8F;">:&gt;</span> [<span style="color: #7CB8BB;">null-vect-s</span> <span style="color: #7CB8BB;">cons-vect-t</span>]
+  t <span style="color: #DFAF8F;">:</span> <span style="color: #7CB8BB;">type-t</span>
+  length <span style="color: #DFAF8F;">:</span> <span style="color: #7CB8BB;">nat-s</span>
+
+<span style="color: #7CB8BB;">null-vect-s</span> <span style="color: #DFAF8F;">:</span> <span style="color: #7CB8BB;">type-t</span>
+null-vect-s <span style="color: #DFAF8F;">=</span> <span style="color: #F0DFAF; font-weight: bold;">data</span>
+  t <span style="color: #DFAF8F;">:</span> <span style="color: #7CB8BB;">type-t</span>
+  length <span style="color: #DFAF8F;">:</span> <span style="color: #7CB8BB;">nat-s</span>
+  length <span style="color: #DFAF8F;">=</span> <span style="color: #7CB8BB;">zero-c</span>
+
+<span style="color: #7CB8BB;">cons-vect-s</span> <span style="color: #DFAF8F;">:</span> <span style="color: #7CB8BB;">type-t</span>
+cons-vect-s <span style="color: #DFAF8F;">=</span> <span style="color: #F0DFAF; font-weight: bold;">data</span>
+  t <span style="color: #DFAF8F;">:</span> <span style="color: #7CB8BB;">type-t</span>
+  length <span style="color: #DFAF8F;">:</span> <span style="color: #7CB8BB;">nat-s</span>
+  car <span style="color: #DFAF8F;">:</span> t
+  cdr <span style="color: #DFAF8F;">:</span> (<span style="color: #7CB8BB;">vect-s</span> t length)
+  length <span style="color: #DFAF8F;">=</span> (<span style="color: #DFAF8F;">succ-c</span> length)
+</pre>
+</div>
+</div>
+</div>
+
+<div id="outline-container-orgde290a8" class="outline-3">
+<h3 id="orgde290a8">vect-append</h3>
+<div class="outline-text-3" id="text-orgde290a8">
+<div class="org-src-container">
+
+<pre class="src src-cicada">vect-append <span style="color: #DFAF8F;">:</span>
+  <span style="color: #7CB8BB;">--</span> (<span style="color: #7CB8BB;">vect-s</span> t m)
+     (<span style="color: #7CB8BB;">vect-s</span> t n)
+  <span style="color: #7CB8BB;">-&gt;</span> (<span style="color: #7CB8BB;">vect-s</span> t (nat-add m n))
+vect-append ante succ <span style="color: #DFAF8F;">=</span>
+  <span style="color: #F0DFAF; font-weight: bold;">case</span> ante
+    <span style="color: #7CB8BB;">null-vect-s</span> succ
+    <span style="color: #7CB8BB;">cons-vect-s</span> (<span style="color: #DFAF8F;">cons-vect-c</span> ante<span style="color: #BFEBBF;">.car</span> (<span style="color: #7CB8BB;">recur</span> ante<span style="color: #BFEBBF;">.cdr</span> succ))
+</pre>
+</div>
+</div>
+</div>
+
+<div id="outline-container-orgda52a34" class="outline-3">
+<h3 id="orgda52a34">vect-map</h3>
+<div class="outline-text-3" id="text-orgda52a34">
+<div class="org-src-container">
+
+<pre class="src src-cicada">vect-map <span style="color: #DFAF8F;">:</span> <span style="color: #7CB8BB;">--</span> (<span style="color: #7CB8BB;">--</span> a <span style="color: #7CB8BB;">-&gt;</span> b) (<span style="color: #7CB8BB;">vect-s</span> a n) <span style="color: #7CB8BB;">-&gt;</span> (<span style="color: #7CB8BB;">vect-s</span> a n)
+vect-map fun list <span style="color: #DFAF8F;">=</span>
+  <span style="color: #F0DFAF; font-weight: bold;">case</span> list
+    <span style="color: #7CB8BB;">null-vect-s</span> list
+    <span style="color: #7CB8BB;">cons-vect-s</span> (<span style="color: #DFAF8F;">cons-vect-c</span> (fun list<span style="color: #BFEBBF;">.car</span>) (<span style="color: #7CB8BB;">recur</span> fun list<span style="color: #BFEBBF;">.cdr</span>))
+</pre>
+</div>
+</div>
+</div>
+</div>
+
+<div id="outline-container-orgbe2828a" class="outline-2">
+<h2 id="orgbe2828a">order</h2>
+<div class="outline-text-2" id="text-orgbe2828a">
+</div><div id="outline-container-orgfab5d2f" class="outline-3">
+<h3 id="orgfab5d2f">preorder</h3>
+<div class="outline-text-3" id="text-orgfab5d2f">
+</div><div id="outline-container-org8f89fa8" class="outline-4">
+<h4 id="org8f89fa8">preorder-t</h4>
+<div class="outline-text-4" id="text-org8f89fa8">
+<div class="org-src-container">
+
+<pre class="src src-cicada"><span style="color: #F0DFAF; font-weight: bold;">note</span>
+  preorder is a thin category
+  with at most one morphism from an object to another<span style="color: #BFEBBF;">.</span>
+
+<span style="color: #BFEBBF;">preorder-t</span> <span style="color: #DFAF8F;">:</span> <span style="color: #7CB8BB;">type-tt</span>
+<span style="color: #7CB8BB;">preorder-t</span> <span style="color: #DFAF8F;">=</span> <span style="color: #F0DFAF; font-weight: bold;">data</span>
+  <span style="color: #7CB8BB;">element-s</span> <span style="color: #DFAF8F;">:</span> <span style="color: #7CB8BB;">type-t</span>
+
+  <span style="color: #7CB8BB;">pre-s</span> <span style="color: #DFAF8F;">:</span>
+    <span style="color: #7CB8BB;">--</span> <span style="color: #7CB8BB;">element-s</span> <span style="color: #7CB8BB;">element-s</span>
+    <span style="color: #7CB8BB;">-&gt;</span> <span style="color: #7CB8BB;">type-t</span>
+
+  pre-reflexive <span style="color: #DFAF8F;">:</span>
+    <span style="color: #7CB8BB;">--</span> a <span style="color: #BFEBBF;">::</span> <span style="color: #7CB8BB;">element-s</span>
+    <span style="color: #7CB8BB;">-&gt;</span> (<span style="color: #7CB8BB;">pre-s</span> a a)
+
+  pre-transitive <span style="color: #DFAF8F;">:</span>
+    <span style="color: #7CB8BB;">--</span> (<span style="color: #7CB8BB;">pre-s</span> a b)
+       (<span style="color: #7CB8BB;">pre-s</span> b c)
+    <span style="color: #7CB8BB;">-&gt;</span> (<span style="color: #7CB8BB;">pre-s</span> a c)
+</pre>
+</div>
+</div>
+</div>
+</div>
+
+<div id="outline-container-orgf30182d" class="outline-3">
+<h3 id="orgf30182d">partial-order</h3>
+<div class="outline-text-3" id="text-orgf30182d">
+</div><div id="outline-container-org4bd6a99" class="outline-4">
+<h4 id="org4bd6a99">partial-order-t</h4>
+<div class="outline-text-4" id="text-org4bd6a99">
+<div class="org-src-container">
+
+<pre class="src src-cicada"><span style="color: #7CB8BB;">partial-order-t</span> <span style="color: #DFAF8F;">:</span> <span style="color: #7CB8BB;">type-tt</span>
+<span style="color: #7CB8BB;">partial-order-t</span> <span style="color: #DFAF8F;">=</span> <span style="color: #F0DFAF; font-weight: bold;">data</span> <span style="color: #DFAF8F;">&lt;:</span> [<span style="color: #7CB8BB;">preorder-t</span>]
+  <span style="color: #7CB8BB;">element-eqv-s</span> <span style="color: #DFAF8F;">:</span>
+    <span style="color: #7CB8BB;">--</span> <span style="color: #7CB8BB;">element-s</span>
+       <span style="color: #7CB8BB;">element-s</span>
+    <span style="color: #7CB8BB;">-&gt;</span> <span style="color: #7CB8BB;">type-t</span>
+  pre-anti-symmetric <span style="color: #DFAF8F;">:</span>
+    <span style="color: #7CB8BB;">--</span> (<span style="color: #7CB8BB;">pre-s</span> a b)
+       (<span style="color: #7CB8BB;">pre-s</span> b a)
+    <span style="color: #7CB8BB;">-&gt;</span> (<span style="color: #7CB8BB;">element-eqv-s</span> a b)
+</pre>
+</div>
+</div>
+</div>
+</div>
+
+<div id="outline-container-org7177c9b" class="outline-3">
+<h3 id="org7177c9b">eqv-relation</h3>
+<div class="outline-text-3" id="text-org7177c9b">
+</div><div id="outline-container-orge6ab6db" class="outline-4">
+<h4 id="orge6ab6db">eqv-relation-t</h4>
+<div class="outline-text-4" id="text-orge6ab6db">
+<div class="org-src-container">
+
+<pre class="src src-cicada"><span style="color: #7CB8BB;">eqv-relation-t</span> <span style="color: #DFAF8F;">:</span> <span style="color: #7CB8BB;">type-tt</span>
+<span style="color: #7CB8BB;">eqv-relation-t</span> <span style="color: #DFAF8F;">=</span> <span style="color: #F0DFAF; font-weight: bold;">data</span> <span style="color: #DFAF8F;">&lt;:</span> [<span style="color: #7CB8BB;">preorder-t</span>]
+  pre-symmetric <span style="color: #DFAF8F;">:</span>
+    <span style="color: #7CB8BB;">--</span> (<span style="color: #7CB8BB;">pre-s</span> a b)
+    <span style="color: #7CB8BB;">-&gt;</span> (<span style="color: #7CB8BB;">pre-s</span> b a)
+</pre>
+</div>
+</div>
+</div>
+</div>
+
+<div id="outline-container-orgb5ea82e" class="outline-3">
+<h3 id="orgb5ea82e">total-order</h3>
+<div class="outline-text-3" id="text-orgb5ea82e">
+</div><div id="outline-container-orgf167eda" class="outline-4">
+<h4 id="orgf167eda">total-order-t</h4>
+<div class="outline-text-4" id="text-orgf167eda">
+<div class="org-src-container">
+
+<pre class="src src-cicada"><span style="color: #7CB8BB;">total-order-t</span> <span style="color: #DFAF8F;">:</span> <span style="color: #7CB8BB;">type-tt</span>
+<span style="color: #7CB8BB;">total-order-t</span> <span style="color: #DFAF8F;">=</span> <span style="color: #F0DFAF; font-weight: bold;">data</span> <span style="color: #DFAF8F;">&lt;:</span> [<span style="color: #7CB8BB;">partial-order-t</span>]
+  pre-connex <span style="color: #DFAF8F;">:</span>
+    <span style="color: #7CB8BB;">--</span> [a b] <span style="color: #DFAF8F;">:</span> <span style="color: #7CB8BB;">element-s</span>
+    <span style="color: #7CB8BB;">-&gt;</span> (<span style="color: #7CB8BB;">+</span> (<span style="color: #7CB8BB;">pre-s</span> a b) (<span style="color: #7CB8BB;">pre-s</span> b a))
+</pre>
+</div>
+</div>
+</div>
+</div>
+</div>
+
+<div id="outline-container-org25b7274" class="outline-2">
+<h2 id="org25b7274">unique</h2>
+<div class="outline-text-2" id="text-org25b7274">
+</div><div id="outline-container-orgcf7f045" class="outline-3">
+<h3 id="orgcf7f045">unique-t</h3>
+<div class="outline-text-3" id="text-orgcf7f045">
+<div class="org-src-container">
+
+<pre class="src src-cicada"><span style="color: #7CB8BB;">unique-t</span> <span style="color: #DFAF8F;">:</span> <span style="color: #7CB8BB;">type-tt</span>
+<span style="color: #7CB8BB;">unique-t</span> <span style="color: #DFAF8F;">=</span> <span style="color: #F0DFAF; font-weight: bold;">data</span>
+  t <span style="color: #DFAF8F;">:</span> <span style="color: #7CB8BB;">type-t</span>
+  x <span style="color: #DFAF8F;">:</span> t
+  <span style="color: #7CB8BB;">t-eqv-s</span> <span style="color: #DFAF8F;">:</span> (<span style="color: #7CB8BB;">--</span> t t <span style="color: #7CB8BB;">-&gt;</span> <span style="color: #7CB8BB;">type-t</span>)
+  <span style="color: #7CB8BB;">condition-s</span> <span style="color: #DFAF8F;">:</span> (<span style="color: #7CB8BB;">--</span> t <span style="color: #7CB8BB;">-&gt;</span> <span style="color: #7CB8BB;">type-t</span>)
+
+  unique-proof <span style="color: #DFAF8F;">:</span>
+    <span style="color: #7CB8BB;">*</span> (<span style="color: #7CB8BB;">condition-s</span> x)
+      <span style="color: #7CB8BB;">--</span> y <span style="color: #DFAF8F;">:</span> t
+         (<span style="color: #7CB8BB;">condition-s</span> y)
+      <span style="color: #7CB8BB;">-&gt;</span> (<span style="color: #7CB8BB;">t-eqv-s</span> x y)
+</pre>
+</div>
+</div>
+</div>
+</div>
+
+<div id="outline-container-orge9dc6c2" class="outline-2">
+<h2 id="orge9dc6c2">category</h2>
+<div class="outline-text-2" id="text-orge9dc6c2">
+</div><div id="outline-container-org2d77ceb" class="outline-3">
+<h3 id="org2d77ceb">category-tt</h3>
+<div class="outline-text-3" id="text-org2d77ceb">
+<div class="org-src-container">
+
+<pre class="src src-cicada"><span style="color: #7CB8BB;">category-tt</span> <span style="color: #DFAF8F;">:</span> <span style="color: #7CB8BB;">type-ttt</span>
+<span style="color: #7CB8BB;">category-tt</span> <span style="color: #DFAF8F;">=</span> <span style="color: #F0DFAF; font-weight: bold;">data</span>
+  <span style="color: #7CB8BB;">object-t</span> <span style="color: #DFAF8F;">:</span> <span style="color: #7CB8BB;">type-tt</span>
+  <span style="color: #7CB8BB;">arrow-t</span> <span style="color: #DFAF8F;">:</span> <span style="color: #7CB8BB;">--</span> <span style="color: #7CB8BB;">object-t</span> <span style="color: #7CB8BB;">object-t</span> <span style="color: #7CB8BB;">-&gt;</span> <span style="color: #7CB8BB;">type-tt</span>
+  <span style="color: #7CB8BB;">arrow-eqv-t</span> <span style="color: #DFAF8F;">:</span> <span style="color: #7CB8BB;">--</span> (<span style="color: #7CB8BB;">arrow-t</span> a b) (<span style="color: #7CB8BB;">arrow-t</span> a b) <span style="color: #7CB8BB;">-&gt;</span> <span style="color: #7CB8BB;">type-tt</span>
+
+  identity <span style="color: #DFAF8F;">:</span> <span style="color: #7CB8BB;">--</span> a <span style="color: #BFEBBF;">::</span> <span style="color: #7CB8BB;">object-t</span> <span style="color: #7CB8BB;">-&gt;</span> (<span style="color: #7CB8BB;">arrow-t</span> a a)
+
+  compose <span style="color: #DFAF8F;">:</span> <span style="color: #7CB8BB;">--</span> (<span style="color: #7CB8BB;">arrow-t</span> a b) (<span style="color: #7CB8BB;">arrow-t</span> b c) <span style="color: #7CB8BB;">-&gt;</span> (<span style="color: #7CB8BB;">arrow-t</span> a c)
+
+  identity-neutral-left <span style="color: #DFAF8F;">:</span>
+    <span style="color: #7CB8BB;">--</span> f <span style="color: #DFAF8F;">:</span> (<span style="color: #7CB8BB;">arrow-t</span> a b)
+    <span style="color: #7CB8BB;">-&gt;</span> (<span style="color: #7CB8BB;">arrow-eqv-t</span> f (compose identity f))
+
+  identity-neutral-right <span style="color: #DFAF8F;">:</span>
+    <span style="color: #7CB8BB;">--</span> f <span style="color: #DFAF8F;">:</span> (<span style="color: #7CB8BB;">arrow-t</span> a b)
+    <span style="color: #7CB8BB;">-&gt;</span> (<span style="color: #7CB8BB;">arrow-eqv-t</span> f (compose f identity))
+
+  compose-associative <span style="color: #DFAF8F;">:</span>
+    <span style="color: #7CB8BB;">--</span> f <span style="color: #DFAF8F;">:</span> (<span style="color: #7CB8BB;">arrow-t</span> a b)
+       g <span style="color: #DFAF8F;">:</span> (<span style="color: #7CB8BB;">arrow-t</span> b c)
+       h <span style="color: #DFAF8F;">:</span> (<span style="color: #7CB8BB;">arrow-t</span> c d)
+    <span style="color: #7CB8BB;">-&gt;</span> (<span style="color: #7CB8BB;">arrow-eqv-t</span>
+         (compose f (compose g h))
+         (compose (compose f g) h))
+
+  arrow-eqv-relation <span style="color: #DFAF8F;">:</span>
+    <span style="color: #7CB8BB;">--</span> [a b] <span style="color: #BFEBBF;">::</span> <span style="color: #7CB8BB;">object-t</span>
+    <span style="color: #7CB8BB;">-&gt;</span> (<span style="color: #7CB8BB;">eqv-relation-t</span>
+         <span style="color: #7CB8BB;">element-t</span> <span style="color: #DFAF8F;">=</span> (<span style="color: #7CB8BB;">arrow-t</span> a b)
+         <span style="color: #7CB8BB;">pre-t</span> <span style="color: #DFAF8F;">=</span> <span style="color: #7CB8BB;">arrow-eqv-t</span>)
+</pre>
+</div>
+</div>
+</div>
+
+<div id="outline-container-orge745c6d" class="outline-3">
+<h3 id="orge745c6d">basic relation</h3>
+<div class="outline-text-3" id="text-orge745c6d">
+</div><div id="outline-container-org8cab4d1" class="outline-4">
+<h4 id="org8cab4d1">category.isomorphic-t</h4>
+<div class="outline-text-4" id="text-org8cab4d1">
+<div class="org-src-container">
+
+<pre class="src src-cicada">category<span style="color: #BFEBBF;">.isomorphic-t</span> <span style="color: #DFAF8F;">:</span> type-tt
+category<span style="color: #BFEBBF;">.isomorphic-t</span> <span style="color: #DFAF8F;">=</span> <span style="color: #F0DFAF; font-weight: bold;">data</span>
+  [lhs rhs] <span style="color: #DFAF8F;">:</span> <span style="color: #7CB8BB;">object-t</span>
+  iso <span style="color: #DFAF8F;">:</span> (<span style="color: #7CB8BB;">arrow-t</span> lhs rhs)
+  inv <span style="color: #DFAF8F;">:</span> (<span style="color: #7CB8BB;">arrow-t</span> rhs lhs)
+  iso-inv-identity <span style="color: #DFAF8F;">:</span> (<span style="color: #7CB8BB;">arrow-eqv-t</span> (compose iso inv) identity)
+  inv-iso-identity <span style="color: #DFAF8F;">:</span> (<span style="color: #7CB8BB;">arrow-eqv-t</span> (compose inv iso) identity)
+</pre>
+</div>
+</div>
+</div>
+</div>
+
+<div id="outline-container-org171baf4" class="outline-3">
+<h3 id="org171baf4">universal construction</h3>
+<div class="outline-text-3" id="text-org171baf4">
+</div><div id="outline-container-orgfc3d8a0" class="outline-4">
+<h4 id="orgfc3d8a0">category.initial-t</h4>
+<div class="outline-text-4" id="text-orgfc3d8a0">
+<div class="org-src-container">
+
+<pre class="src src-cicada">category<span style="color: #BFEBBF;">.initial-t</span> <span style="color: #DFAF8F;">:</span> type-tt
+category<span style="color: #BFEBBF;">.initial-t</span> <span style="color: #DFAF8F;">=</span> <span style="color: #F0DFAF; font-weight: bold;">data</span>
+  initial <span style="color: #DFAF8F;">:</span> <span style="color: #7CB8BB;">object-t</span>
+  factorizer <span style="color: #DFAF8F;">:</span>
+    <span style="color: #7CB8BB;">--</span> cand <span style="color: #DFAF8F;">:</span> <span style="color: #7CB8BB;">object-t</span>
+    <span style="color: #7CB8BB;">-&gt;</span> factor <span style="color: #DFAF8F;">:</span> (<span style="color: #7CB8BB;">arrow-t</span> initial cand)
+</pre>
+</div>
+</div>
+</div>
+
+<div id="outline-container-org9c947f6" class="outline-4">
+<h4 id="org9c947f6">category.terminal-t</h4>
+<div class="outline-text-4" id="text-org9c947f6">
+<div class="org-src-container">
+
+<pre class="src src-cicada">category<span style="color: #BFEBBF;">.terminal-t</span> <span style="color: #DFAF8F;">:</span> type-tt
+category<span style="color: #BFEBBF;">.terminal-t</span> <span style="color: #DFAF8F;">=</span> <span style="color: #F0DFAF; font-weight: bold;">data</span> <span style="color: #DFAF8F;">&lt;:</span> [<span style="color: #7CB8BB;">terminal-candidate-t</span>]
+  terminal <span style="color: #DFAF8F;">:</span> <span style="color: #7CB8BB;">object-t</span>
+  factorizer <span style="color: #DFAF8F;">:</span>
+    <span style="color: #7CB8BB;">--</span> cand <span style="color: #DFAF8F;">:</span> <span style="color: #7CB8BB;">object-t</span>
+    <span style="color: #7CB8BB;">-&gt;</span> factor <span style="color: #DFAF8F;">:</span> (<span style="color: #7CB8BB;">arrow-t</span> cand terminal)
+</pre>
+</div>
+</div>
+</div>
+
+<div id="outline-container-org97cc88" class="outline-4">
+<h4 id="org97cc88">category.product-t</h4>
+<div class="outline-text-4" id="text-org97cc88">
+<div class="org-src-container">
+
+<pre class="src src-cicada">category<span style="color: #BFEBBF;">.product-candidate-t</span> <span style="color: #DFAF8F;">:</span> type-tt
+category<span style="color: #BFEBBF;">.product-candidate-t</span> <span style="color: #DFAF8F;">=</span> <span style="color: #F0DFAF; font-weight: bold;">data</span>
+  fst <span style="color: #DFAF8F;">:</span> <span style="color: #7CB8BB;">object-t</span>
+  snd <span style="color: #DFAF8F;">:</span> <span style="color: #7CB8BB;">object-t</span>
+  product <span style="color: #DFAF8F;">:</span> <span style="color: #7CB8BB;">object-t</span>
+  fst-projection <span style="color: #DFAF8F;">:</span> (<span style="color: #7CB8BB;">arrow-t</span> product fst)
+  snd-projection <span style="color: #DFAF8F;">:</span> (<span style="color: #7CB8BB;">arrow-t</span> product snd)
+
+category<span style="color: #BFEBBF;">.product-t</span> <span style="color: #DFAF8F;">:</span> type-tt
+category<span style="color: #BFEBBF;">.product-t</span> <span style="color: #DFAF8F;">=</span> <span style="color: #F0DFAF; font-weight: bold;">data</span> <span style="color: #DFAF8F;">&lt;:</span> [<span style="color: #7CB8BB;">product-candidate-t</span>]
+  factorizer <span style="color: #DFAF8F;">:</span>
+    <span style="color: #7CB8BB;">--</span> cand <span style="color: #DFAF8F;">:</span> (<span style="color: #7CB8BB;">product-candidate-t</span> fst snd)
+    <span style="color: #7CB8BB;">-&gt;</span> factor <span style="color: #DFAF8F;">:</span> (<span style="color: #7CB8BB;">arrow-t</span> cand<span style="color: #BFEBBF;">.product</span> product)
+  unique-factor <span style="color: #DFAF8F;">:</span>
+    <span style="color: #7CB8BB;">--</span> cand <span style="color: #DFAF8F;">:</span> (<span style="color: #7CB8BB;">product-candidate-t</span> fst snd)
+    <span style="color: #7CB8BB;">-&gt;</span> (<span style="color: #7CB8BB;">unique-t</span>
+         (<span style="color: #7CB8BB;">arrow-t</span> cand<span style="color: #BFEBBF;">.product</span> product)
+         (factorizer cand)
+         <span style="color: #7CB8BB;">arrow-eqv-t</span>
+         (<span style="color: #7CB8BB;">*</span> (<span style="color: #7CB8BB;">arrow-eqv-t</span>
+              cand<span style="color: #BFEBBF;">.fst-projection</span>
+              (compose factor fst-projection))
+            (<span style="color: #7CB8BB;">arrow-eqv-t</span>
+              cand<span style="color: #BFEBBF;">.snd-projection</span>
+              (compose factor snd-projection))))
+</pre>
+</div>
+</div>
+</div>
+
+<div id="outline-container-org22b2075" class="outline-4">
+<h4 id="org22b2075">category.sum-t</h4>
+<div class="outline-text-4" id="text-org22b2075">
+<div class="org-src-container">
+
+<pre class="src src-cicada">category<span style="color: #BFEBBF;">.sum-candidate-t</span> <span style="color: #DFAF8F;">:</span> type-tt
+category<span style="color: #BFEBBF;">.sum-candidate-t</span> <span style="color: #DFAF8F;">=</span> <span style="color: #F0DFAF; font-weight: bold;">data</span>
+  fst <span style="color: #DFAF8F;">:</span> <span style="color: #7CB8BB;">object-t</span>
+  snd <span style="color: #DFAF8F;">:</span> <span style="color: #7CB8BB;">object-t</span>
+  sum <span style="color: #DFAF8F;">:</span> <span style="color: #7CB8BB;">object-t</span>
+  fst-injection <span style="color: #DFAF8F;">:</span> (<span style="color: #7CB8BB;">arrow-t</span> fst sum)
+  snd-injection <span style="color: #DFAF8F;">:</span> (<span style="color: #7CB8BB;">arrow-t</span> snd sum)
+
+category<span style="color: #BFEBBF;">.sum-t</span> <span style="color: #DFAF8F;">:</span> type-tt
+category<span style="color: #BFEBBF;">.sum-t</span> <span style="color: #DFAF8F;">=</span> <span style="color: #F0DFAF; font-weight: bold;">data</span> <span style="color: #DFAF8F;">&lt;:</span> [<span style="color: #7CB8BB;">sum-candidate-t</span>]
+  factorizer <span style="color: #DFAF8F;">:</span>
+    <span style="color: #7CB8BB;">--</span> cand <span style="color: #DFAF8F;">:</span> (<span style="color: #7CB8BB;">sum-candidate-t</span> fst snd)
+    <span style="color: #7CB8BB;">-&gt;</span> factor <span style="color: #DFAF8F;">:</span> (<span style="color: #7CB8BB;">arrow-t</span> sum cand<span style="color: #BFEBBF;">.sum</span>)
+  unique-factor <span style="color: #DFAF8F;">:</span>
+    <span style="color: #7CB8BB;">--</span> cand <span style="color: #DFAF8F;">:</span> (<span style="color: #7CB8BB;">sum-candidate-t</span> fst snd)
+    <span style="color: #7CB8BB;">-&gt;</span> (<span style="color: #7CB8BB;">unique-t</span>
+         (<span style="color: #7CB8BB;">arrow-t</span> sum cand<span style="color: #BFEBBF;">.sum</span>)
+         (factorizer cand)
+         <span style="color: #7CB8BB;">arrow-eqv-t</span>
+         (<span style="color: #7CB8BB;">*</span> (<span style="color: #7CB8BB;">arrow-eqv-t</span>
+              cand<span style="color: #BFEBBF;">.fst-injection</span>
+              (compose fst-injection factor))
+            (<span style="color: #7CB8BB;">arrow-eqv-t</span>
+              cand<span style="color: #BFEBBF;">.snd-injection</span>
+              (compose snd-injection factor))))
+</pre>
+</div>
+</div>
+</div>
+</div>
+
+<div id="outline-container-orgc9e203f" class="outline-3">
+<h3 id="orgc9e203f">other structure as category</h3>
+<div class="outline-text-3" id="text-orgc9e203f">
+</div><div id="outline-container-org69b2fab" class="outline-4">
+<h4 id="org69b2fab">preorder.as-category</h4>
+<div class="outline-text-4" id="text-org69b2fab">
+<div class="org-src-container">
+
+<pre class="src src-cicada"><span style="color: #F0DFAF; font-weight: bold;">note</span>
+  to view a preorder <span style="color: #F0DFAF; font-weight: bold;">as</span> a category
+  we simple view all arrow of the same <span style="color: #F0DFAF; font-weight: bold;">type</span> <span style="color: #F0DFAF; font-weight: bold;">as</span> eqv
+
+preorder<span style="color: #BFEBBF;">.as-category</span> <span style="color: #DFAF8F;">:</span> <span style="color: #7CB8BB;">category-t</span>
+preorder<span style="color: #BFEBBF;">.as-category</span> <span style="color: #DFAF8F;">=</span> <span style="color: #DFAF8F;">category-c</span>
+  <span style="color: #7CB8BB;">object-s</span> <span style="color: #DFAF8F;">=</span> <span style="color: #7CB8BB;">element-s</span>
+
+  <span style="color: #7CB8BB;">arrow-s</span> <span style="color: #DFAF8F;">=</span> <span style="color: #7CB8BB;">pre-s</span>
+
+  <span style="color: #7CB8BB;">arrow-eqv-s</span> _ _ <span style="color: #DFAF8F;">=</span> <span style="color: #7CB8BB;">unit-s</span>
+
+  identity <span style="color: #DFAF8F;">=</span> pre-reflexive
+
+  compose <span style="color: #DFAF8F;">=</span> pre-transitive
+
+  identity-neutral-left _ <span style="color: #DFAF8F;">=</span> <span style="color: #DFAF8F;">unit-c</span>
+
+  identity-neutral-right _ <span style="color: #DFAF8F;">=</span> <span style="color: #DFAF8F;">unit-c</span>
+
+  compose-associative _ _ _ <span style="color: #DFAF8F;">=</span> <span style="color: #DFAF8F;">unit-c</span>
+</pre>
+</div>
+</div>
+</div>
+</div>
+
+<div id="outline-container-org23ab6bb" class="outline-3">
+<h3 id="org23ab6bb">build new category from old category</h3>
+<div class="outline-text-3" id="text-org23ab6bb">
+</div><div id="outline-container-org2b7c5ff" class="outline-4">
+<h4 id="org2b7c5ff">category.opposite</h4>
+<div class="outline-text-4" id="text-org2b7c5ff">
+<div class="org-src-container">
+
+<pre class="src src-cicada">category<span style="color: #BFEBBF;">.opposite</span> <span style="color: #DFAF8F;">:</span> <span style="color: #7CB8BB;">category-tt</span>
+category<span style="color: #BFEBBF;">.opposite</span> <span style="color: #DFAF8F;">=</span> <span style="color: #DFAF8F;">category-cc</span>
+  <span style="color: #7CB8BB;">object-t</span> <span style="color: #DFAF8F;">=</span> this<span style="color: #BFEBBF;">.object-t</span>
+
+  <span style="color: #7CB8BB;">arrow-t</span> <span style="color: #DFAF8F;">:</span>
+    <span style="color: #7CB8BB;">--</span> <span style="color: #7CB8BB;">object-t</span> <span style="color: #7CB8BB;">object-t</span>
+    <span style="color: #7CB8BB;">-&gt;</span> <span style="color: #7CB8BB;">type-t</span>
+  <span style="color: #7CB8BB;">arrow-t</span> a b <span style="color: #DFAF8F;">=</span> this<span style="color: #BFEBBF;">.arrow-t</span> b a
+
+  <span style="color: #7CB8BB;">arrow-eqv-t</span> <span style="color: #DFAF8F;">:</span>
+    <span style="color: #7CB8BB;">--</span> (this<span style="color: #BFEBBF;">.arrow-t</span> b a) (this<span style="color: #BFEBBF;">.arrow-t</span> b a)
+    <span style="color: #7CB8BB;">-&gt;</span> <span style="color: #7CB8BB;">type-t</span>
+  <span style="color: #7CB8BB;">arrow-eqv-t</span> <span style="color: #DFAF8F;">=</span> this<span style="color: #BFEBBF;">.arrow-eqv-t</span>
+
+  identity <span style="color: #DFAF8F;">:</span>
+    <span style="color: #7CB8BB;">--</span> a <span style="color: #BFEBBF;">::</span> <span style="color: #7CB8BB;">object-t</span>
+    <span style="color: #7CB8BB;">-&gt;</span> (<span style="color: #7CB8BB;">arrow-t</span> a a)
+  identity <span style="color: #DFAF8F;">=</span> this<span style="color: #BFEBBF;">.identity</span>
+
+  compose <span style="color: #DFAF8F;">:</span>
+    <span style="color: #7CB8BB;">--</span> (this<span style="color: #BFEBBF;">.arrow-t</span> b a)
+       (this<span style="color: #BFEBBF;">.arrow-t</span> c b)
+    <span style="color: #7CB8BB;">-&gt;</span> (this<span style="color: #BFEBBF;">.arrow-t</span> c a)
+  compose f g <span style="color: #DFAF8F;">=</span> this<span style="color: #BFEBBF;">.compose</span> g f
+
+  identity-neutral-left <span style="color: #DFAF8F;">:</span>
+    <span style="color: #7CB8BB;">--</span> f <span style="color: #DFAF8F;">:</span> (this<span style="color: #BFEBBF;">.arrow-t</span> b a)
+    <span style="color: #7CB8BB;">-&gt;</span> (<span style="color: #7CB8BB;">arrow-eqv-t</span> f (this<span style="color: #BFEBBF;">.compose</span> f identity))
+  identity-neutral-left <span style="color: #DFAF8F;">=</span> this<span style="color: #BFEBBF;">.identity-neutral-right</span>
+
+  identity-neutral-right <span style="color: #DFAF8F;">:</span>
+    <span style="color: #7CB8BB;">--</span> f <span style="color: #DFAF8F;">:</span> (this<span style="color: #BFEBBF;">.arrow-t</span> b a)
+    <span style="color: #7CB8BB;">-&gt;</span> (<span style="color: #7CB8BB;">arrow-eqv-t</span> f (this<span style="color: #BFEBBF;">.compose</span> identity f))
+  identity-neutral-right <span style="color: #DFAF8F;">=</span> this<span style="color: #BFEBBF;">.identity-neutral-left</span>
+
+  compose-associative <span style="color: #DFAF8F;">:</span>
+    <span style="color: #7CB8BB;">--</span> f <span style="color: #DFAF8F;">:</span> (this<span style="color: #BFEBBF;">.arrow-t</span> b a)
+       g <span style="color: #DFAF8F;">:</span> (this<span style="color: #BFEBBF;">.arrow-t</span> c b)
+       h <span style="color: #DFAF8F;">:</span> (this<span style="color: #BFEBBF;">.arrow-t</span> d c)
+    <span style="color: #7CB8BB;">-&gt;</span> (<span style="color: #7CB8BB;">arrow-eqv-t</span>
+         (this<span style="color: #BFEBBF;">.compose</span> (this<span style="color: #BFEBBF;">.compose</span> h g) f)
+         (this<span style="color: #BFEBBF;">.compose</span> h (this<span style="color: #BFEBBF;">.compose</span> g f)))
+  compose-associative f g h <span style="color: #DFAF8F;">=</span>
+    (this<span style="color: #BFEBBF;">.arrow-eqv-relation.pre-symmetric</span>
+      (this<span style="color: #BFEBBF;">.compose-associative</span> h g f))
+</pre>
+</div>
+</div>
+</div>
+
+<div id="outline-container-org8bdbdcb" class="outline-4">
+<h4 id="org8bdbdcb">category-product</h4>
+<div class="outline-text-4" id="text-org8bdbdcb">
+<div class="org-src-container">
+
+<pre class="src src-cicada">category-product <span style="color: #DFAF8F;">:</span> <span style="color: #7CB8BB;">--</span> <span style="color: #7CB8BB;">category-tt</span> <span style="color: #7CB8BB;">category-tt</span> <span style="color: #7CB8BB;">-&gt;</span> <span style="color: #7CB8BB;">category-tt</span>
+category-product <span style="color: #BFEBBF;">#1</span> <span style="color: #BFEBBF;">#2</span> <span style="color: #DFAF8F;">=</span> <span style="color: #DFAF8F;">category-cc</span>
+  <span style="color: #7CB8BB;">object-t</span> <span style="color: #DFAF8F;">=</span> <span style="color: #7CB8BB;">*</span> <span style="color: #BFEBBF;">#1.object-t</span> <span style="color: #BFEBBF;">#2.object-t</span>
+
+  <span style="color: #7CB8BB;">arrow-t</span> a b <span style="color: #DFAF8F;">=</span>
+    <span style="color: #7CB8BB;">*</span> (<span style="color: #BFEBBF;">#1.arrow-t</span> a<span style="color: #BFEBBF;">.1</span> b<span style="color: #BFEBBF;">.1</span>)
+      (<span style="color: #BFEBBF;">#2.arrow-t</span> a<span style="color: #BFEBBF;">.2</span> b<span style="color: #BFEBBF;">.2</span>)
+
+  <span style="color: #7CB8BB;">arrow-eqv-t</span> lhs rhs <span style="color: #DFAF8F;">=</span>
+    <span style="color: #7CB8BB;">*</span> (<span style="color: #BFEBBF;">#1.arrow-eqv-t</span> lhs<span style="color: #BFEBBF;">.1</span> rhs<span style="color: #BFEBBF;">.1</span>)
+      (<span style="color: #BFEBBF;">#2.arrow-eqv-t</span> lhs<span style="color: #BFEBBF;">.2</span> rhs<span style="color: #BFEBBF;">.2</span>)
+
+  identity <span style="color: #DFAF8F;">=</span>
+    <span style="color: #7CB8BB;">*</span> <span style="color: #BFEBBF;">#1.identity</span>
+      <span style="color: #BFEBBF;">#2.identity</span>
+
+  compose f g <span style="color: #DFAF8F;">=</span>
+    <span style="color: #7CB8BB;">*</span> (<span style="color: #BFEBBF;">#1.compose</span> f<span style="color: #BFEBBF;">.1</span> g<span style="color: #BFEBBF;">.1</span>)
+      (<span style="color: #BFEBBF;">#2.compose</span> f<span style="color: #BFEBBF;">.2</span> g<span style="color: #BFEBBF;">.2</span>)
+
+  identity-neutral-left f <span style="color: #DFAF8F;">=</span>
+    <span style="color: #7CB8BB;">*</span> (<span style="color: #BFEBBF;">#1.identity-neutral-left</span> f<span style="color: #BFEBBF;">.1</span>)
+      (<span style="color: #BFEBBF;">#2.identity-neutral-left</span> f<span style="color: #BFEBBF;">.2</span>)
+
+  identity-neutral-right f <span style="color: #DFAF8F;">=</span>
+    <span style="color: #7CB8BB;">*</span> (<span style="color: #BFEBBF;">#1.identity-neutral-right</span> f<span style="color: #BFEBBF;">.1</span>)
+      (<span style="color: #BFEBBF;">#2.identity-neutral-right</span> f<span style="color: #BFEBBF;">.2</span>)
+
+  compose-associative f g h <span style="color: #DFAF8F;">=</span>
+    <span style="color: #7CB8BB;">*</span> (<span style="color: #BFEBBF;">#1.compose-associative</span> f<span style="color: #BFEBBF;">.1</span> g<span style="color: #BFEBBF;">.1</span> h<span style="color: #BFEBBF;">.1</span>)
+      (<span style="color: #BFEBBF;">#2.compose-associative</span> f<span style="color: #BFEBBF;">.2</span> g<span style="color: #BFEBBF;">.2</span> h<span style="color: #BFEBBF;">.2</span>)
+</pre>
+</div>
+</div>
+</div>
+</div>
+</div>
+
+<div id="outline-container-orge924b03" class="outline-2">
+<h2 id="orge924b03">product-closed-category</h2>
+<div class="outline-text-2" id="text-orge924b03">
+</div><div id="outline-container-org3aa27a" class="outline-3">
+<h3 id="org3aa27a">product-closed-category-tt</h3>
+<div class="outline-text-3" id="text-org3aa27a">
+<div class="org-src-container">
+
+<pre class="src src-cicada"><span style="color: #7CB8BB;">product-closed-category-tt</span> <span style="color: #DFAF8F;">:</span> <span style="color: #7CB8BB;">type-ttt</span>
+<span style="color: #7CB8BB;">product-closed-category-tt</span> <span style="color: #DFAF8F;">=</span> <span style="color: #F0DFAF; font-weight: bold;">data</span> <span style="color: #DFAF8F;">&lt;:</span> [<span style="color: #7CB8BB;">category-tt</span>]
+  product <span style="color: #DFAF8F;">:</span>
+    <span style="color: #7CB8BB;">--</span> [a b] <span style="color: #DFAF8F;">:</span> <span style="color: #7CB8BB;">object-t</span>
+    <span style="color: #7CB8BB;">-&gt;</span> p <span style="color: #DFAF8F;">:</span> <span style="color: #7CB8BB;">object-t</span>
+       product-relation <span style="color: #BFEBBF;">::</span> (<span style="color: #7CB8BB;">product-t</span> a b p)
+</pre>
+</div>
+</div>
+</div>
+
+<div id="outline-container-orge551675" class="outline-3">
+<h3 id="orge551675">product-closed-category.product-arrow</h3>
+<div class="outline-text-3" id="text-orge551675">
+<div class="org-src-container">
+
+<pre class="src src-cicada">product-closed-category<span style="color: #BFEBBF;">.product-arrow</span> <span style="color: #DFAF8F;">:</span>
+  <span style="color: #7CB8BB;">--</span> (<span style="color: #7CB8BB;">arrow-t</span> a b)
+     (<span style="color: #7CB8BB;">arrow-t</span> c d)
+  <span style="color: #7CB8BB;">-&gt;</span> (<span style="color: #7CB8BB;">arrow-t</span> (product a c) (product b d))
+product-closed-category<span style="color: #BFEBBF;">.product-arrow</span> f g <span style="color: #DFAF8F;">=</span>
+  <span style="color: #F0DFAF; font-weight: bold;">with-details</span> (product a c)
+    p <span style="color: #7CB8BB;">&lt;-</span> product-relation
+  <span style="color: #F0DFAF; font-weight: bold;">with-details</span> (product b d)
+    q <span style="color: #7CB8BB;">&lt;-</span> product-relation
+  (q<span style="color: #BFEBBF;">.factorizer</span>
+    (<span style="color: #DFAF8F;">product-candidate-c</span>
+      fst <span style="color: #DFAF8F;">=</span> b
+      snd <span style="color: #DFAF8F;">=</span> d
+      product <span style="color: #DFAF8F;">=</span> (product a c)
+      fst-projection <span style="color: #DFAF8F;">=</span> (compose p<span style="color: #BFEBBF;">.fst-projection</span> f)
+      snd-projection <span style="color: #DFAF8F;">=</span> (compose p<span style="color: #BFEBBF;">.fst-projection</span> g)))
+</pre>
+</div>
+</div>
+</div>
+
+<div id="outline-container-org5a194f5" class="outline-3">
+<h3 id="org5a194f5">product-closed-category.exponential-t</h3>
+<div class="outline-text-3" id="text-org5a194f5">
+<div class="org-src-container">
+
+<pre class="src src-cicada">product-closed-category<span style="color: #BFEBBF;">.exponential-candidate-t</span> <span style="color: #DFAF8F;">:</span> type-tt
+product-closed-category<span style="color: #BFEBBF;">.exponential-candidate-t</span> <span style="color: #DFAF8F;">=</span> <span style="color: #F0DFAF; font-weight: bold;">data</span>
+  ante <span style="color: #DFAF8F;">:</span> <span style="color: #7CB8BB;">object-t</span>
+  succ <span style="color: #DFAF8F;">:</span> <span style="color: #7CB8BB;">object-t</span>
+  exponential <span style="color: #DFAF8F;">:</span> <span style="color: #7CB8BB;">object-t</span>
+  eval <span style="color: #DFAF8F;">:</span> (<span style="color: #7CB8BB;">arrow-t</span> (product exponential ante) succ)
+
+category<span style="color: #BFEBBF;">.exponential-t</span> <span style="color: #DFAF8F;">:</span> type-tt
+category<span style="color: #BFEBBF;">.exponential-t</span> <span style="color: #DFAF8F;">=</span> <span style="color: #F0DFAF; font-weight: bold;">data</span> <span style="color: #DFAF8F;">&lt;:</span> [<span style="color: #7CB8BB;">exponential-candidate-t</span>]
+  factorizer <span style="color: #DFAF8F;">:</span>
+    <span style="color: #7CB8BB;">--</span> cand <span style="color: #DFAF8F;">:</span> (<span style="color: #7CB8BB;">exponential-candidate-t</span> ante succ)
+    <span style="color: #7CB8BB;">-&gt;</span> factor <span style="color: #DFAF8F;">:</span> (<span style="color: #7CB8BB;">arrow-t</span> cand<span style="color: #BFEBBF;">.exponential</span> exponential)
+  unique-factor <span style="color: #DFAF8F;">:</span>
+    <span style="color: #7CB8BB;">--</span> cand <span style="color: #DFAF8F;">:</span> (<span style="color: #7CB8BB;">exponential-candidate-t</span> ante succ)
+    <span style="color: #7CB8BB;">-&gt;</span> (<span style="color: #7CB8BB;">unique-t</span>
+         (<span style="color: #7CB8BB;">arrow-t</span> cand<span style="color: #BFEBBF;">.exponential</span> exponential)
+         (factorizer cand)
+         <span style="color: #7CB8BB;">arrow-eqv-t</span>
+         (<span style="color: #7CB8BB;">arrow-eqv-t</span>
+           cand<span style="color: #BFEBBF;">.eval</span>
+           (compose eval (product-arrow factor identity))))
+</pre>
+</div>
+</div>
+</div>
+</div>
+
+<div id="outline-container-orgf39d76e" class="outline-2">
+<h2 id="orgf39d76e"><span class="done _todo_">[todo]</span> cartesian-closed-category</h2>
+</div>
+
+<div id="outline-container-org471fc84" class="outline-2">
+<h2 id="org471fc84">void-category</h2>
+<div class="outline-text-2" id="text-org471fc84">
+</div><div id="outline-container-orgbff8a0e" class="outline-3">
+<h3 id="orgbff8a0e">void-arrow-s</h3>
+<div class="outline-text-3" id="text-orgbff8a0e">
+<div class="org-src-container">
+
+<pre class="src src-cicada"><span style="color: #7CB8BB;">void-arrow-s</span> <span style="color: #DFAF8F;">:</span> <span style="color: #7CB8BB;">type-t</span>
+void-arrow-s <span style="color: #DFAF8F;">=</span> <span style="color: #F0DFAF; font-weight: bold;">data</span>
+  [ante succ] <span style="color: #DFAF8F;">:</span> <span style="color: #7CB8BB;">void-s</span>
+</pre>
+</div>
+</div>
+</div>
+
+<div id="outline-container-org7ec2d58" class="outline-3">
+<h3 id="org7ec2d58">void-arrow-eqv-s</h3>
+<div class="outline-text-3" id="text-org7ec2d58">
+<div class="org-src-container">
+
+<pre class="src src-cicada"><span style="color: #7CB8BB;">void-arrow-eqv-s</span> <span style="color: #DFAF8F;">:</span> <span style="color: #7CB8BB;">type-t</span>
+void-arrow-eqv-s <span style="color: #DFAF8F;">=</span> <span style="color: #F0DFAF; font-weight: bold;">data</span>
+  [lhs rhs] <span style="color: #DFAF8F;">:</span> (<span style="color: #7CB8BB;">void-arrow-s</span> a b)
+</pre>
+</div>
+</div>
+</div>
+
+<div id="outline-container-org367d9ac" class="outline-3">
+<h3 id="org367d9ac">void-category</h3>
+<div class="outline-text-3" id="text-org367d9ac">
+<div class="org-src-container">
+
+<pre class="src src-cicada">void-category <span style="color: #DFAF8F;">:</span> <span style="color: #7CB8BB;">category-t</span>
+void-category <span style="color: #DFAF8F;">=</span> <span style="color: #DFAF8F;">category-c</span>
+  <span style="color: #7CB8BB;">object-s</span> <span style="color: #DFAF8F;">=</span> <span style="color: #7CB8BB;">void-s</span>
+  <span style="color: #7CB8BB;">arrow-s</span> <span style="color: #DFAF8F;">=</span> <span style="color: #7CB8BB;">void-arrow-s</span>
+  <span style="color: #7CB8BB;">arrow-eqv-s</span> <span style="color: #DFAF8F;">=</span> <span style="color: #7CB8BB;">void-arrow-eqv-s</span>
+
+  identity <span style="color: #DFAF8F;">:</span>
+    <span style="color: #7CB8BB;">--</span> a <span style="color: #BFEBBF;">::</span> <span style="color: #7CB8BB;">void-s</span>
+    <span style="color: #7CB8BB;">-&gt;</span> (<span style="color: #7CB8BB;">void-arrow-s</span> a a)
+  identity _ <span style="color: #DFAF8F;">=</span> <span style="color: #DFAF8F;">void-arrow-c</span>
+
+  compose _ _ <span style="color: #DFAF8F;">=</span> <span style="color: #DFAF8F;">void-arrow-c</span>
+
+  identity-neutral-left <span style="color: #DFAF8F;">:</span>
+    <span style="color: #7CB8BB;">--</span> f <span style="color: #DFAF8F;">:</span> (<span style="color: #7CB8BB;">void-arrow-s</span> a b)
+    <span style="color: #7CB8BB;">-&gt;</span> (<span style="color: #7CB8BB;">void-arrow-eqv-s</span> f <span style="color: #DFAF8F;">void-arrow-c</span>)
+  identity-neutral-left _ <span style="color: #DFAF8F;">=</span> <span style="color: #DFAF8F;">void-arrow-eqv-c</span>
+
+  identity-neutral-right <span style="color: #DFAF8F;">:</span>
+    <span style="color: #7CB8BB;">--</span> f <span style="color: #DFAF8F;">:</span> (<span style="color: #7CB8BB;">void-arrow-s</span> a b)
+    <span style="color: #7CB8BB;">-&gt;</span> (<span style="color: #7CB8BB;">void-arrow-eqv-s</span> f <span style="color: #DFAF8F;">void-arrow-c</span>)
+  identity-neutral-right _ <span style="color: #DFAF8F;">=</span> <span style="color: #DFAF8F;">void-arrow-eqv-c</span>
+
+  compose-associative <span style="color: #DFAF8F;">:</span>
+    <span style="color: #7CB8BB;">--</span> f <span style="color: #DFAF8F;">:</span> (<span style="color: #7CB8BB;">void-arrow-s</span> a b)
+       g <span style="color: #DFAF8F;">:</span> (<span style="color: #7CB8BB;">void-arrow-s</span> b c)
+       h <span style="color: #DFAF8F;">:</span> (<span style="color: #7CB8BB;">void-arrow-s</span> c d)
+    <span style="color: #7CB8BB;">-&gt;</span> (<span style="color: #7CB8BB;">void-arrow-eqv-s</span> <span style="color: #DFAF8F;">void-arrow-eqv-c</span> <span style="color: #DFAF8F;">void-arrow-eqv-c</span>)
+  compose-associative _ _ _ <span style="color: #DFAF8F;">=</span> <span style="color: #DFAF8F;">void-arrow-eqv-c</span>
+</pre>
+</div>
+</div>
+</div>
+</div>
+
+<div id="outline-container-org8303339" class="outline-2">
+<h2 id="org8303339">graph-t</h2>
+<div class="outline-text-2" id="text-org8303339">
+</div><div id="outline-container-orgb3a9f22" class="outline-3">
+<h3 id="orgb3a9f22">graph-t</h3>
+<div class="outline-text-3" id="text-orgb3a9f22">
+<div class="org-src-container">
+
+<pre class="src src-cicada"><span style="color: #F0DFAF; font-weight: bold;">note</span>
+  different between graph and category is that<span style="color: #F0DFAF; font-weight: bold;">,</span>
+  composing [linking] two edges does not <span style="color: #F0DFAF; font-weight: bold;">give</span> you edge but path<span style="color: #BFEBBF;">.</span>
+
+<span style="color: #BFEBBF;">graph-t</span> <span style="color: #DFAF8F;">:</span> <span style="color: #7CB8BB;">type-tt</span>
+<span style="color: #7CB8BB;">graph-t</span> <span style="color: #DFAF8F;">=</span> <span style="color: #F0DFAF; font-weight: bold;">data</span>
+  <span style="color: #7CB8BB;">node-s</span> <span style="color: #DFAF8F;">:</span> <span style="color: #7CB8BB;">type-t</span>
+  <span style="color: #7CB8BB;">edge-s</span> <span style="color: #DFAF8F;">:</span> <span style="color: #7CB8BB;">--</span> <span style="color: #7CB8BB;">node-s</span> <span style="color: #7CB8BB;">node-s</span> <span style="color: #7CB8BB;">-&gt;</span> <span style="color: #7CB8BB;">type-t</span>
+</pre>
+</div>
+</div>
+</div>
+
+<div id="outline-container-orge290493" class="outline-3">
+<h3 id="orge290493">graph.path-s</h3>
+<div class="outline-text-3" id="text-orge290493">
+<div class="org-src-container">
+
+<pre class="src src-cicada">graph<span style="color: #BFEBBF;">.path-s</span> <span style="color: #DFAF8F;">:</span> <span style="color: #7CB8BB;">type-t</span>
+graph<span style="color: #BFEBBF;">.path-s</span> <span style="color: #DFAF8F;">=</span> <span style="color: #F0DFAF; font-weight: bold;">data</span>
+  <span style="color: #DFAF8F;">:&gt;</span> [<span style="color: #7CB8BB;">node-path-s</span>
+      <span style="color: #7CB8BB;">edge-path-s</span>
+      <span style="color: #7CB8BB;">link-path-s</span>]
+  [start end] <span style="color: #DFAF8F;">:</span> node-s
+
+graph<span style="color: #BFEBBF;">.node-path-s</span> <span style="color: #DFAF8F;">:</span> <span style="color: #7CB8BB;">type-t</span>
+graph<span style="color: #BFEBBF;">.node-path-s</span> <span style="color: #DFAF8F;">=</span> <span style="color: #F0DFAF; font-weight: bold;">data</span>
+  [start end] <span style="color: #DFAF8F;">:</span> <span style="color: #7CB8BB;">node-s</span>
+  node <span style="color: #DFAF8F;">:</span> <span style="color: #7CB8BB;">node-s</span>
+  start <span style="color: #DFAF8F;">=</span> node
+  end <span style="color: #DFAF8F;">=</span> node
+
+graph<span style="color: #BFEBBF;">.edge-path-s</span> <span style="color: #DFAF8F;">:</span> <span style="color: #7CB8BB;">type-t</span>
+graph<span style="color: #BFEBBF;">.edge-path-s</span> <span style="color: #DFAF8F;">=</span> <span style="color: #F0DFAF; font-weight: bold;">data</span>
+  [start end] <span style="color: #DFAF8F;">:</span> <span style="color: #7CB8BB;">node-s</span>
+  edge <span style="color: #DFAF8F;">:</span> (<span style="color: #7CB8BB;">edge-s</span> start end)
+
+graph<span style="color: #BFEBBF;">.link-path-s</span> <span style="color: #DFAF8F;">:</span> <span style="color: #7CB8BB;">type-t</span>
+graph<span style="color: #BFEBBF;">.link-path-s</span> <span style="color: #DFAF8F;">=</span> <span style="color: #F0DFAF; font-weight: bold;">data</span>
+  [start end] <span style="color: #DFAF8F;">:</span> <span style="color: #7CB8BB;">node-s</span>
+  first <span style="color: #DFAF8F;">:</span> (<span style="color: #7CB8BB;">path-s</span> start middle)
+  next <span style="color: #DFAF8F;">:</span> (<span style="color: #7CB8BB;">path-s</span> middle end)
+</pre>
+</div>
+</div>
+</div>
+
+<div id="outline-container-org8321dcc" class="outline-3">
+<h3 id="org8321dcc">graph.path-eqv-s</h3>
+<div class="outline-text-3" id="text-org8321dcc">
+<div class="org-src-container">
+
+<pre class="src src-cicada">graph<span style="color: #BFEBBF;">.path-eqv-s</span> <span style="color: #DFAF8F;">:</span> <span style="color: #7CB8BB;">type-t</span>
+graph<span style="color: #BFEBBF;">.path-eqv-s</span> <span style="color: #DFAF8F;">=</span> <span style="color: #F0DFAF; font-weight: bold;">data</span>
+  <span style="color: #DFAF8F;">:&gt;</span> [<span style="color: #7CB8BB;">refl-path-eqv-s</span>
+      <span style="color: #7CB8BB;">node-left-path-eqv-s</span>
+      <span style="color: #7CB8BB;">node-right-path-eqv-s</span>
+      <span style="color: #7CB8BB;">associative-path-eqv-s</span>]
+  [lhs rhs] <span style="color: #DFAF8F;">:</span> (<span style="color: #7CB8BB;">path-s</span> a b)
+
+graph<span style="color: #BFEBBF;">.refl-path-eqv-s</span> <span style="color: #DFAF8F;">:</span> <span style="color: #7CB8BB;">type-t</span>
+graph<span style="color: #BFEBBF;">.refl-path-eqv-s</span> <span style="color: #DFAF8F;">=</span> <span style="color: #F0DFAF; font-weight: bold;">data</span>
+  [lhs rhs] <span style="color: #DFAF8F;">:</span> (<span style="color: #7CB8BB;">path-s</span> a b)
+  p <span style="color: #DFAF8F;">:</span> (<span style="color: #7CB8BB;">path-s</span> a b)
+  lhs <span style="color: #DFAF8F;">=</span> p
+  lhs <span style="color: #DFAF8F;">=</span> p
+
+graph<span style="color: #BFEBBF;">.node-left-path-eqv-s</span> <span style="color: #DFAF8F;">:</span> <span style="color: #7CB8BB;">type-t</span>
+graph<span style="color: #BFEBBF;">.node-left-path-eqv-s</span> <span style="color: #DFAF8F;">=</span> <span style="color: #F0DFAF; font-weight: bold;">data</span>
+  [lhs rhs] <span style="color: #DFAF8F;">:</span> (<span style="color: #7CB8BB;">path-s</span> a b)
+  p <span style="color: #DFAF8F;">:</span> (<span style="color: #7CB8BB;">path-s</span> a b)
+  lhs <span style="color: #DFAF8F;">=</span> p
+  rhs <span style="color: #DFAF8F;">=</span> (<span style="color: #DFAF8F;">link-path-c</span> (<span style="color: #DFAF8F;">node-path-c</span> a) p)
+
+graph<span style="color: #BFEBBF;">.node-right-path-eqv-s</span> <span style="color: #DFAF8F;">:</span> <span style="color: #7CB8BB;">type-t</span>
+graph<span style="color: #BFEBBF;">.node-right-path-eqv-s</span> <span style="color: #DFAF8F;">=</span> <span style="color: #F0DFAF; font-weight: bold;">data</span>
+  [lhs rhs] <span style="color: #DFAF8F;">:</span> (<span style="color: #7CB8BB;">path-s</span> a b)
+  p <span style="color: #DFAF8F;">:</span> (<span style="color: #7CB8BB;">path-s</span> a b)
+  lhs <span style="color: #DFAF8F;">=</span> p
+  rhs <span style="color: #DFAF8F;">=</span> (<span style="color: #DFAF8F;">link-path-c</span> p (<span style="color: #DFAF8F;">node-path-c</span> b))
+
+graph<span style="color: #BFEBBF;">.associative-path-eqv-s</span> <span style="color: #DFAF8F;">:</span> <span style="color: #7CB8BB;">type-t</span>
+graph<span style="color: #BFEBBF;">.associative-path-eqv-s</span> <span style="color: #DFAF8F;">=</span> <span style="color: #F0DFAF; font-weight: bold;">data</span>
+  [lhs rhs] <span style="color: #DFAF8F;">:</span> (<span style="color: #7CB8BB;">path-s</span> a b)
+  p <span style="color: #DFAF8F;">:</span> (<span style="color: #7CB8BB;">path-s</span> a b)
+  q <span style="color: #DFAF8F;">:</span> (<span style="color: #7CB8BB;">path-s</span> b c)
+  r <span style="color: #DFAF8F;">:</span> (<span style="color: #7CB8BB;">path-s</span> c d)
+  lhs <span style="color: #DFAF8F;">=</span> (<span style="color: #DFAF8F;">link-path-c</span> p (<span style="color: #DFAF8F;">link-path-c</span> q r))
+  rhs <span style="color: #DFAF8F;">=</span> (<span style="color: #DFAF8F;">link-path-c</span> (<span style="color: #DFAF8F;">link-path-c</span> p q) r)
+</pre>
+</div>
+</div>
+</div>
+
+<div id="outline-container-orgd5860bd" class="outline-3">
+<h3 id="orgd5860bd">graph.as-free-category</h3>
+<div class="outline-text-3" id="text-orgd5860bd">
+<div class="org-src-container">
+
+<pre class="src src-cicada">graph<span style="color: #BFEBBF;">.as-free-category</span> <span style="color: #DFAF8F;">:</span> <span style="color: #7CB8BB;">category-t</span>
+graph<span style="color: #BFEBBF;">.as-free-category</span> <span style="color: #DFAF8F;">=</span> <span style="color: #DFAF8F;">category-c</span>
+  <span style="color: #7CB8BB;">object-s</span> <span style="color: #DFAF8F;">=</span> <span style="color: #7CB8BB;">node-s</span>
+  <span style="color: #7CB8BB;">arrow-s</span> <span style="color: #DFAF8F;">=</span> <span style="color: #7CB8BB;">path-s</span>
+  <span style="color: #7CB8BB;">arrow-eqv-s</span> <span style="color: #DFAF8F;">=</span> <span style="color: #7CB8BB;">path-eqv-s</span>
+
+  identity <span style="color: #DFAF8F;">:</span>
+    <span style="color: #7CB8BB;">--</span> a <span style="color: #BFEBBF;">::</span> <span style="color: #7CB8BB;">node-s</span>
+    <span style="color: #7CB8BB;">-&gt;</span> (<span style="color: #7CB8BB;">path-s</span> a a)
+  identity <span style="color: #DFAF8F;">=</span> (<span style="color: #DFAF8F;">node-path-c</span> a)
+
+  compose <span style="color: #DFAF8F;">=</span> <span style="color: #DFAF8F;">link-path-c</span>
+
+  identity-neutral-left <span style="color: #DFAF8F;">:</span>
+    <span style="color: #7CB8BB;">--</span> f <span style="color: #DFAF8F;">:</span> (<span style="color: #7CB8BB;">path-s</span> a b)
+    <span style="color: #7CB8BB;">-&gt;</span> (<span style="color: #7CB8BB;">path-eqv-s</span> f (<span style="color: #DFAF8F;">link-path-c</span> (<span style="color: #DFAF8F;">node-path-c</span> a) f))
+  identity-neutral-left <span style="color: #DFAF8F;">=</span> <span style="color: #DFAF8F;">node-left-path-eqv-c</span>
+
+  identity-neutral-right <span style="color: #DFAF8F;">:</span>
+    <span style="color: #7CB8BB;">--</span> f <span style="color: #DFAF8F;">:</span> (<span style="color: #7CB8BB;">path-s</span> a b)
+    <span style="color: #7CB8BB;">-&gt;</span> (<span style="color: #7CB8BB;">path-eqv-s</span> f (<span style="color: #DFAF8F;">link-path-c</span> f (<span style="color: #DFAF8F;">node-path-c</span> b)))
+  identity-neutral-right <span style="color: #DFAF8F;">=</span> <span style="color: #DFAF8F;">node-right-path-eqv-c</span>
+
+  compose-associative <span style="color: #DFAF8F;">:</span>
+    <span style="color: #7CB8BB;">--</span> f <span style="color: #DFAF8F;">:</span> (<span style="color: #7CB8BB;">path-s</span> a b)
+       g <span style="color: #DFAF8F;">:</span> (<span style="color: #7CB8BB;">path-s</span> b c)
+       h <span style="color: #DFAF8F;">:</span> (<span style="color: #7CB8BB;">path-s</span> c d)
+    <span style="color: #7CB8BB;">-&gt;</span> (<span style="color: #7CB8BB;">path-eqv-s</span>
+         (<span style="color: #DFAF8F;">link-path-c</span> f (<span style="color: #DFAF8F;">link-path-c</span> g h))
+         (<span style="color: #DFAF8F;">link-path-c</span> (<span style="color: #DFAF8F;">link-path-c</span> f g) h))
+  compose-associative <span style="color: #DFAF8F;">=</span> <span style="color: #DFAF8F;">associative-path-eqv-c</span>
+</pre>
+</div>
+</div>
+</div>
+</div>
+
+<div id="outline-container-org3336589" class="outline-2">
+<h2 id="org3336589">nat-order-category</h2>
+<div class="outline-text-2" id="text-org3336589">
+</div><div id="outline-container-org7c97877" class="outline-3">
+<h3 id="org7c97877">nat-lteq-s</h3>
+<div class="outline-text-3" id="text-org7c97877">
+<div class="org-src-container">
+
+<pre class="src src-cicada"><span style="color: #7CB8BB;">nat-lteq-s</span> <span style="color: #DFAF8F;">:</span> <span style="color: #7CB8BB;">type-t</span>
+nat-lteq-s <span style="color: #DFAF8F;">=</span> <span style="color: #F0DFAF; font-weight: bold;">data</span> <span style="color: #DFAF8F;">:&gt;</span> [<span style="color: #7CB8BB;">zero-lteq-s</span> <span style="color: #7CB8BB;">succ-lteq-s</span>]
+  [l r] <span style="color: #DFAF8F;">:</span> <span style="color: #7CB8BB;">nat-s</span>
+
+<span style="color: #7CB8BB;">zero-lteq-s</span> <span style="color: #DFAF8F;">:</span> <span style="color: #7CB8BB;">type-t</span>
+zero-lteq-s <span style="color: #DFAF8F;">=</span> <span style="color: #F0DFAF; font-weight: bold;">data</span>
+  [l r] <span style="color: #DFAF8F;">:</span> <span style="color: #7CB8BB;">nat-s</span>
+  l <span style="color: #DFAF8F;">=</span> <span style="color: #7CB8BB;">zero-c</span>
+
+<span style="color: #7CB8BB;">succ-lteq-s</span> <span style="color: #DFAF8F;">:</span> <span style="color: #7CB8BB;">type-t</span>
+succ-lteq-s <span style="color: #DFAF8F;">=</span> <span style="color: #F0DFAF; font-weight: bold;">data</span>
+  [l r] <span style="color: #DFAF8F;">:</span> <span style="color: #7CB8BB;">nat-s</span>
+  prev <span style="color: #DFAF8F;">:</span> (<span style="color: #7CB8BB;">nat-lteq-s</span> x y)
+  l <span style="color: #DFAF8F;">=</span> (<span style="color: #DFAF8F;">succ-c</span> x)
+  r <span style="color: #DFAF8F;">=</span> (<span style="color: #DFAF8F;">succ-c</span> y)
+</pre>
+</div>
+</div>
+</div>
+
+<div id="outline-container-org58a271a" class="outline-3">
+<h3 id="org58a271a">nat-non-negative</h3>
+<div class="outline-text-3" id="text-org58a271a">
+<div class="org-src-container">
+
+<pre class="src src-cicada">nat-non-negative <span style="color: #DFAF8F;">:</span> <span style="color: #7CB8BB;">--</span> n <span style="color: #DFAF8F;">:</span> <span style="color: #7CB8BB;">nat-s</span> <span style="color: #7CB8BB;">-&gt;</span> (<span style="color: #7CB8BB;">nat-lteq-s</span> <span style="color: #DFAF8F;">zero-c</span> n)
+nat-non-negative <span style="color: #DFAF8F;">=</span> <span style="color: #DFAF8F;">zero-lteq-c</span>
+</pre>
+</div>
+</div>
+</div>
+
+<div id="outline-container-orgcd2e4e2" class="outline-3">
+<h3 id="orgcd2e4e2">nat-lteq-reflexive</h3>
+<div class="outline-text-3" id="text-orgcd2e4e2">
+<div class="org-src-container">
+
+<pre class="src src-cicada">nat-lteq-reflexive <span style="color: #DFAF8F;">:</span> <span style="color: #7CB8BB;">--</span> n <span style="color: #DFAF8F;">:</span> <span style="color: #7CB8BB;">nat-s</span> <span style="color: #7CB8BB;">-&gt;</span> (<span style="color: #7CB8BB;">nat-lteq-s</span> n n)
+nat-lteq-reflexive n <span style="color: #DFAF8F;">=</span>
+  <span style="color: #F0DFAF; font-weight: bold;">case</span> n
+    <span style="color: #7CB8BB;">zero-s</span> <span style="color: #DFAF8F;">zero-lteq-c</span>
+    <span style="color: #7CB8BB;">succ-s</span> (<span style="color: #DFAF8F;">succ-lteq-c</span> (<span style="color: #7CB8BB;">recur</span> n<span style="color: #BFEBBF;">.prev</span>))
+</pre>
+</div>
+</div>
+</div>
+
+<div id="outline-container-org8c5315" class="outline-3">
+<h3 id="org8c5315">nat-lteq-transitive</h3>
+<div class="outline-text-3" id="text-org8c5315">
+<div class="org-src-container">
+
+<pre class="src src-cicada">nat-lteq-transitive <span style="color: #DFAF8F;">:</span>
+  <span style="color: #7CB8BB;">--</span> (<span style="color: #7CB8BB;">nat-lteq-s</span> a b)
+     (<span style="color: #7CB8BB;">nat-lteq-s</span> b c)
+  <span style="color: #7CB8BB;">-&gt;</span> (<span style="color: #7CB8BB;">nat-lteq-s</span> a c)
+nat-lteq-transitive x y <span style="color: #DFAF8F;">=</span>
+  <span style="color: #F0DFAF; font-weight: bold;">case</span> x
+    <span style="color: #7CB8BB;">zero-lteq-s</span> <span style="color: #DFAF8F;">zero-lteq-c</span>
+    <span style="color: #7CB8BB;">succ-lteq-s</span> (<span style="color: #DFAF8F;">succ-lteq-c</span> (<span style="color: #7CB8BB;">recur</span> x<span style="color: #BFEBBF;">.prev</span> y<span style="color: #BFEBBF;">.prev</span>))
+</pre>
+</div>
+</div>
+</div>
+
+<div id="outline-container-org2becf77" class="outline-3">
+<h3 id="org2becf77">nat-lt-s</h3>
+<div class="outline-text-3" id="text-org2becf77">
+<div class="org-src-container">
+
+<pre class="src src-cicada"><span style="color: #7CB8BB;">nat-lt-s</span> <span style="color: #DFAF8F;">:</span> <span style="color: #7CB8BB;">--</span> <span style="color: #7CB8BB;">nat-s</span> <span style="color: #7CB8BB;">nat-s</span> <span style="color: #7CB8BB;">-&gt;</span> <span style="color: #7CB8BB;">type-t</span>
+nat-lt-s l r <span style="color: #DFAF8F;">=</span> (<span style="color: #7CB8BB;">nat-lteq-s</span> (<span style="color: #DFAF8F;">succ-c</span> l) r)
+</pre>
+</div>
+</div>
+</div>
+
+<div id="outline-container-org6ee716e" class="outline-3">
+<h3 id="org6ee716e">nat-archimedean-property</h3>
+<div class="outline-text-3" id="text-org6ee716e">
+<div class="org-src-container">
+
+<pre class="src src-cicada">nat-archimedean-property <span style="color: #DFAF8F;">:</span>
+  <span style="color: #7CB8BB;">--</span> x <span style="color: #DFAF8F;">:</span> <span style="color: #7CB8BB;">nat-s</span>
+  <span style="color: #7CB8BB;">-&gt;</span> (<span style="color: #7CB8BB;">*</span> y <span style="color: #DFAF8F;">:</span> <span style="color: #7CB8BB;">nat-s</span>
+        (<span style="color: #7CB8BB;">nat-lt-s</span> x y))
+nat-archimedean-property x <span style="color: #DFAF8F;">=</span>
+  (<span style="color: #7CB8BB;">*</span> (<span style="color: #DFAF8F;">succ-c</span> x) (nat-lteq-reflexive (<span style="color: #DFAF8F;">succ-c</span> x)))
+</pre>
+</div>
+</div>
+</div>
+
+<div id="outline-container-org93ae8f2" class="outline-3">
+<h3 id="org93ae8f2">nat-order-category</h3>
+<div class="outline-text-3" id="text-org93ae8f2">
+<div class="org-src-container">
+
+<pre class="src src-cicada">nat-order-category <span style="color: #DFAF8F;">:</span> <span style="color: #7CB8BB;">category-t</span>
+nat-order-category <span style="color: #DFAF8F;">=</span> <span style="color: #DFAF8F;">category-c</span>
+  <span style="color: #7CB8BB;">object-s</span> <span style="color: #DFAF8F;">=</span> <span style="color: #7CB8BB;">nat-s</span>
+  <span style="color: #7CB8BB;">arrow-s</span> <span style="color: #DFAF8F;">=</span> <span style="color: #7CB8BB;">nat-lteq-s</span>
+  <span style="color: #7CB8BB;">arrow-eqv-s</span> <span style="color: #DFAF8F;">=</span> <span style="color: #7CB8BB;">eqv-s</span>
+
+  identity <span style="color: #DFAF8F;">:</span>
+    <span style="color: #7CB8BB;">--</span> a <span style="color: #BFEBBF;">::</span> <span style="color: #7CB8BB;">nat-s</span>
+    <span style="color: #7CB8BB;">-&gt;</span> (<span style="color: #7CB8BB;">nat-lteq-s</span> a a)
+  identity <span style="color: #DFAF8F;">=</span> (nat-lteq-reflexive a)
+
+  compose <span style="color: #DFAF8F;">=</span> nat-lteq-transitive
+
+  identity-neutral-left x <span style="color: #DFAF8F;">=</span>
+    <span style="color: #F0DFAF; font-weight: bold;">case</span> x
+      <span style="color: #7CB8BB;">zero-lteq-s</span> <span style="color: #DFAF8F;">eqv-c</span>
+      <span style="color: #7CB8BB;">succ-lteq-s</span> (eqv-apply <span style="color: #DFAF8F;">succ-lteq-c</span> (<span style="color: #7CB8BB;">recur</span> x<span style="color: #BFEBBF;">.prev</span>))
+
+  identity-neutral-righ x <span style="color: #DFAF8F;">=</span>
+    <span style="color: #F0DFAF; font-weight: bold;">case</span> x
+      <span style="color: #7CB8BB;">zero-lteq-s</span> <span style="color: #DFAF8F;">eqv-c</span>
+      <span style="color: #7CB8BB;">succ-lteq-s</span> (eqv-apply <span style="color: #DFAF8F;">succ-lteq-c</span> (<span style="color: #7CB8BB;">recur</span> x<span style="color: #BFEBBF;">.prev</span>))
+
+  compose-associative f g h <span style="color: #DFAF8F;">=</span>
+    <span style="color: #F0DFAF; font-weight: bold;">case</span> [f g h]
+      [<span style="color: #7CB8BB;">zero-lteq-s</span> _ _] <span style="color: #DFAF8F;">eqv-c</span>
+      [<span style="color: #7CB8BB;">succ-lteq-s</span> <span style="color: #7CB8BB;">succ-lteq-s</span> <span style="color: #7CB8BB;">succ-lteq-s</span>]
+        (eqv-apply <span style="color: #DFAF8F;">succ-lteq-c</span> (<span style="color: #7CB8BB;">recur</span> f<span style="color: #BFEBBF;">.prev</span> g<span style="color: #BFEBBF;">.prev</span> h<span style="color: #BFEBBF;">.prev</span>))
+</pre>
+</div>
+</div>
+</div>
+</div>
+
+<div id="outline-container-orgec9a6b5" class="outline-2">
+<h2 id="orgec9a6b5">groupoid</h2>
+<div class="outline-text-2" id="text-orgec9a6b5">
+</div><div id="outline-container-orgff7813f" class="outline-3">
+<h3 id="orgff7813f">groupoid-t</h3>
+<div class="outline-text-3" id="text-orgff7813f">
+<div class="org-src-container">
+
+<pre class="src src-cicada"><span style="color: #7CB8BB;">groupoid-t</span> <span style="color: #DFAF8F;">:</span> <span style="color: #7CB8BB;">type-tt</span>
+<span style="color: #7CB8BB;">groupoid-t</span> <span style="color: #DFAF8F;">=</span> <span style="color: #F0DFAF; font-weight: bold;">data</span> <span style="color: #DFAF8F;">&lt;:</span> [<span style="color: #7CB8BB;">category-t</span>]
+  inverse <span style="color: #DFAF8F;">:</span> <span style="color: #7CB8BB;">--</span> f <span style="color: #DFAF8F;">:</span> (<span style="color: #7CB8BB;">arrow-s</span> a b) <span style="color: #7CB8BB;">-&gt;</span> (<span style="color: #7CB8BB;">isomorphic-s</span> a b f)
+</pre>
+</div>
+</div>
+</div>
+</div>
+
+<div id="outline-container-org1a47ff6" class="outline-2">
+<h2 id="org1a47ff6"><span class="done _todo_">[todo]</span> nat-total-order</h2>
+</div>
+
+<div id="outline-container-orgfe3502c" class="outline-2">
+<h2 id="orgfe3502c">monoid</h2>
+<div class="outline-text-2" id="text-orgfe3502c">
+</div><div id="outline-container-orgc070f9b" class="outline-3">
+<h3 id="orgc070f9b">monoid-t</h3>
+<div class="outline-text-3" id="text-orgc070f9b">
+<div class="org-src-container">
+
+<pre class="src src-cicada"><span style="color: #7CB8BB;">monoid-t</span> <span style="color: #DFAF8F;">:</span> <span style="color: #7CB8BB;">type-tt</span>
+<span style="color: #7CB8BB;">monoid-t</span> <span style="color: #DFAF8F;">=</span> <span style="color: #F0DFAF; font-weight: bold;">data</span>
+  <span style="color: #7CB8BB;">element-s</span> <span style="color: #DFAF8F;">:</span> <span style="color: #7CB8BB;">type-t</span>
+
+  <span style="color: #7CB8BB;">element-eqv-s</span> <span style="color: #DFAF8F;">:</span>
+    <span style="color: #7CB8BB;">--</span> <span style="color: #7CB8BB;">element-s</span> <span style="color: #7CB8BB;">element-s</span>
+    <span style="color: #7CB8BB;">-&gt;</span> <span style="color: #7CB8BB;">type-t</span>
+
+  unit <span style="color: #DFAF8F;">:</span> <span style="color: #7CB8BB;">element-s</span>
+
+  product <span style="color: #DFAF8F;">:</span>
+    <span style="color: #7CB8BB;">--</span> <span style="color: #7CB8BB;">element-s</span> <span style="color: #7CB8BB;">element-s</span>
+    <span style="color: #7CB8BB;">-&gt;</span> <span style="color: #7CB8BB;">element-s</span>
+
+  unit-neutral-left <span style="color: #DFAF8F;">:</span>
+    <span style="color: #7CB8BB;">--</span> a <span style="color: #DFAF8F;">:</span> <span style="color: #7CB8BB;">element-s</span>
+    <span style="color: #7CB8BB;">-&gt;</span> (<span style="color: #7CB8BB;">element-eqv-s</span> (product a unit) a)
+
+  unit-neutral-right <span style="color: #DFAF8F;">:</span>
+    <span style="color: #7CB8BB;">--</span> a <span style="color: #DFAF8F;">:</span> <span style="color: #7CB8BB;">element-s</span>
+    <span style="color: #7CB8BB;">-&gt;</span> (<span style="color: #7CB8BB;">element-eqv-s</span> (product unit a) a)
+
+  product-associative <span style="color: #DFAF8F;">:</span>
+    <span style="color: #7CB8BB;">--</span> a <span style="color: #DFAF8F;">:</span> <span style="color: #7CB8BB;">element-s</span>
+       b <span style="color: #DFAF8F;">:</span> <span style="color: #7CB8BB;">element-s</span>
+       c <span style="color: #DFAF8F;">:</span> <span style="color: #7CB8BB;">element-s</span>
+    <span style="color: #7CB8BB;">-&gt;</span> (<span style="color: #7CB8BB;">element-eqv-s</span>
+         (product a (product b c))
+         (product (product a b) c))
+</pre>
+</div>
+</div>
+</div>
+
+<div id="outline-container-org4e1a424" class="outline-3">
+<h3 id="org4e1a424">monoid.as-category</h3>
+<div class="outline-text-3" id="text-org4e1a424">
+<div class="org-src-container">
+
+<pre class="src src-cicada">monoid<span style="color: #BFEBBF;">.as-category</span> <span style="color: #DFAF8F;">:</span> <span style="color: #7CB8BB;">category-t</span>
+monoid<span style="color: #BFEBBF;">.as-category</span> <span style="color: #DFAF8F;">=</span> <span style="color: #DFAF8F;">category-c</span>
+  <span style="color: #7CB8BB;">object-s</span> <span style="color: #DFAF8F;">=</span> <span style="color: #7CB8BB;">unit-s</span>
+  <span style="color: #7CB8BB;">arrow-s</span> _ _ <span style="color: #DFAF8F;">=</span> <span style="color: #7CB8BB;">element-s</span>
+  <span style="color: #7CB8BB;">arrow-eqv-s</span> <span style="color: #DFAF8F;">=</span> <span style="color: #7CB8BB;">element-eqv-s</span>
+  identity <span style="color: #DFAF8F;">=</span> unit
+  compose <span style="color: #DFAF8F;">=</span> product
+  identity-neutral-left <span style="color: #DFAF8F;">=</span> unit-neutral-left
+  identity-neutral-right <span style="color: #DFAF8F;">=</span> unit-neutral-right
+  compose-associative <span style="color: #DFAF8F;">=</span> product-associative
+</pre>
+</div>
+</div>
+</div>
+</div>
+
+<div id="outline-container-orgc4a803f" class="outline-2">
+<h2 id="orgc4a803f"><span class="done _todo_">[todo]</span> group</h2>
+</div>
+
+<div id="outline-container-org6b9109" class="outline-2">
+<h2 id="org6b9109"><span class="done _todo_">[todo]</span> abelian-group</h2>
+</div>
+
+<div id="outline-container-org83ddcb" class="outline-2">
+<h2 id="org83ddcb"><span class="done _todo_">[todo]</span> ring</h2>
+</div>
+
+<div id="outline-container-org1477721" class="outline-2">
+<h2 id="org1477721"><span class="done _todo_">[todo]</span> field</h2>
+</div>
+
+<div id="outline-container-org37f734f" class="outline-2">
+<h2 id="org37f734f"><span class="done _todo_">[todo]</span> vector-space</h2>
+</div>
+
+<div id="outline-container-org3446898" class="outline-2">
+<h2 id="org3446898"><span class="done _todo_">[todo]</span> limit</h2>
+</div>
+
+<div id="outline-container-org144cf61" class="outline-2">
+<h2 id="org144cf61">container</h2>
+<div class="outline-text-2" id="text-org144cf61">
+</div><div id="outline-container-org5cc780a" class="outline-3">
+<h3 id="org5cc780a">container-t</h3>
+<div class="outline-text-3" id="text-org5cc780a">
+<div class="org-src-container">
+
+<pre class="src src-cicada"><span style="color: #F0DFAF; font-weight: bold;">note</span>
+  endofunctor of <span style="color: #7CB8BB;">set-category</span>
+
+<span style="color: #7CB8BB;">container-t</span> <span style="color: #DFAF8F;">:</span> <span style="color: #7CB8BB;">type-tt</span>
+<span style="color: #7CB8BB;">container-t</span> <span style="color: #DFAF8F;">=</span> <span style="color: #F0DFAF; font-weight: bold;">data</span>
+  <span style="color: #7CB8BB;">fun-s</span> <span style="color: #DFAF8F;">:</span> <span style="color: #7CB8BB;">--</span> <span style="color: #7CB8BB;">type-t</span> <span style="color: #7CB8BB;">-&gt;</span> <span style="color: #7CB8BB;">type-t</span>
+  map <span style="color: #DFAF8F;">:</span> <span style="color: #7CB8BB;">--</span> (<span style="color: #7CB8BB;">--</span> a <span style="color: #7CB8BB;">-&gt;</span> b) (<span style="color: #7CB8BB;">fun-t</span> a) <span style="color: #7CB8BB;">-&gt;</span> (<span style="color: #7CB8BB;">fun-s</span> b)
+</pre>
+</div>
+</div>
+</div>
+
+<div id="outline-container-org744822f" class="outline-3">
+<h3 id="org744822f">list-container</h3>
+<div class="outline-text-3" id="text-org744822f">
+<div class="org-src-container">
+
+<pre class="src src-cicada">list-container <span style="color: #DFAF8F;">:</span> <span style="color: #7CB8BB;">container-t</span>
+list-container <span style="color: #DFAF8F;">=</span> <span style="color: #DFAF8F;">container-c</span>
+  <span style="color: #7CB8BB;">fun-s</span> <span style="color: #DFAF8F;">=</span> <span style="color: #7CB8BB;">list-s</span>
+  map fun list <span style="color: #DFAF8F;">=</span>
+    <span style="color: #F0DFAF; font-weight: bold;">case</span> list
+      <span style="color: #7CB8BB;">null-s</span> <span style="color: #DFAF8F;">null-c</span>
+      <span style="color: #7CB8BB;">cons-s</span>
+        (<span style="color: #DFAF8F;">cons-c</span> (fun list<span style="color: #BFEBBF;">.car</span>) (<span style="color: #7CB8BB;">recur</span> fun list<span style="color: #BFEBBF;">.cdr</span>))
+</pre>
+</div>
+</div>
+</div>
+</div>
+
+<div id="outline-container-orgab5f18d" class="outline-2">
+<h2 id="orgab5f18d">const</h2>
+<div class="outline-text-2" id="text-orgab5f18d">
+</div><div id="outline-container-orge76d200" class="outline-3">
+<h3 id="orge76d200">const-s</h3>
+<div class="outline-text-3" id="text-orge76d200">
+<div class="org-src-container">
+
+<pre class="src src-cicada"><span style="color: #7CB8BB;">const-s</span> <span style="color: #DFAF8F;">:</span> <span style="color: #7CB8BB;">type-t</span>
+const-s <span style="color: #DFAF8F;">=</span> <span style="color: #F0DFAF; font-weight: bold;">data</span>
+  [c a] <span style="color: #DFAF8F;">:</span> <span style="color: #7CB8BB;">type-t</span>
+  value <span style="color: #DFAF8F;">:</span> c
+</pre>
+</div>
+</div>
+</div>
+
+<div id="outline-container-orga01aa5d" class="outline-3">
+<h3 id="orga01aa5d">const-container</h3>
+<div class="outline-text-3" id="text-orga01aa5d">
+<div class="org-src-container">
+
+<pre class="src src-cicada">const-container <span style="color: #DFAF8F;">:</span> <span style="color: #7CB8BB;">--</span> <span style="color: #7CB8BB;">type-t</span> <span style="color: #7CB8BB;">-&gt;</span> <span style="color: #7CB8BB;">container-t</span>
+const-container c <span style="color: #DFAF8F;">=</span> <span style="color: #DFAF8F;">container-c</span>
+  <span style="color: #7CB8BB;">fun-s</span> <span style="color: #DFAF8F;">=</span> (<span style="color: #7CB8BB;">const-s</span> c)
+
+  map <span style="color: #DFAF8F;">:</span> <span style="color: #7CB8BB;">--</span> (<span style="color: #7CB8BB;">--</span> a <span style="color: #7CB8BB;">-&gt;</span> b) (<span style="color: #7CB8BB;">const-s</span> c a) <span style="color: #7CB8BB;">-&gt;</span> (<span style="color: #7CB8BB;">const-s</span> c b)
+  map _ x <span style="color: #DFAF8F;">=</span> x
+</pre>
+</div>
+</div>
+</div>
+</div>
+
+<div id="outline-container-orgc8899d0" class="outline-2">
+<h2 id="orgc8899d0">monad</h2>
+<div class="outline-text-2" id="text-orgc8899d0">
+</div><div id="outline-container-org2b7e089" class="outline-3">
+<h3 id="org2b7e089">monad-t</h3>
+<div class="outline-text-3" id="text-org2b7e089">
+<div class="org-src-container">
+
+<pre class="src src-cicada"><span style="color: #7CB8BB;">monad-t</span> <span style="color: #DFAF8F;">:</span> <span style="color: #7CB8BB;">type-tt</span>
+<span style="color: #7CB8BB;">monad-t</span> <span style="color: #DFAF8F;">=</span> <span style="color: #F0DFAF; font-weight: bold;">data</span> <span style="color: #DFAF8F;">&lt;:</span> [<span style="color: #7CB8BB;">container-t</span>]
+  pure <span style="color: #DFAF8F;">:</span> <span style="color: #7CB8BB;">--</span> t <span style="color: #7CB8BB;">-&gt;</span> (<span style="color: #7CB8BB;">fun-s</span> t)
+  bind <span style="color: #DFAF8F;">:</span> <span style="color: #7CB8BB;">--</span> (<span style="color: #7CB8BB;">fun-s</span> a) (<span style="color: #7CB8BB;">--</span> a <span style="color: #7CB8BB;">-&gt;</span> (<span style="color: #7CB8BB;">fun-s</span> b)) <span style="color: #7CB8BB;">-&gt;</span> (<span style="color: #7CB8BB;">fun-s</span> b)
+</pre>
+</div>
+</div>
+</div>
+
+<div id="outline-container-org5b2f981" class="outline-3">
+<h3 id="org5b2f981">monad.compose</h3>
+<div class="outline-text-3" id="text-org5b2f981">
+<div class="org-src-container">
+
+<pre class="src src-cicada">monad<span style="color: #BFEBBF;">.compose</span> <span style="color: #DFAF8F;">:</span>
+  <span style="color: #7CB8BB;">--</span> (<span style="color: #7CB8BB;">--</span> a <span style="color: #7CB8BB;">-&gt;</span> (<span style="color: #7CB8BB;">fun-s</span> b))
+     (<span style="color: #7CB8BB;">--</span> b <span style="color: #7CB8BB;">-&gt;</span> (<span style="color: #7CB8BB;">fun-s</span> c))
+  <span style="color: #7CB8BB;">-&gt;</span> (<span style="color: #7CB8BB;">--</span> a <span style="color: #7CB8BB;">-&gt;</span> (<span style="color: #7CB8BB;">fun-s</span> c))
+monad<span style="color: #BFEBBF;">.compose</span> f g <span style="color: #DFAF8F;">=</span> (<span style="color: #F0DFAF; font-weight: bold;">lambda</span> [a] (<span style="color: #F0DFAF; font-weight: bold;">bind</span> (f a) g))
+</pre>
+</div>
+</div>
+</div>
+
+<div id="outline-container-orga5c8c02" class="outline-3">
+<h3 id="orga5c8c02">monad.flatten</h3>
+<div class="outline-text-3" id="text-orga5c8c02">
+<div class="org-src-container">
+
+<pre class="src src-cicada">monad<span style="color: #BFEBBF;">.flatten</span> <span style="color: #DFAF8F;">:</span>
+  <span style="color: #7CB8BB;">--</span> (<span style="color: #7CB8BB;">fun-s</span> (<span style="color: #7CB8BB;">fun-s</span> a))
+  <span style="color: #7CB8BB;">-&gt;</span> (<span style="color: #7CB8BB;">fun-s</span> a)
+monad<span style="color: #BFEBBF;">.flatten</span> m <span style="color: #DFAF8F;">=</span> (<span style="color: #F0DFAF; font-weight: bold;">bind</span> m (<span style="color: #F0DFAF; font-weight: bold;">lambda</span> []))
+</pre>
+</div>
+</div>
+</div>
+
+<div id="outline-container-orgc9909bc" class="outline-3">
+<h3 id="orgc9909bc">list-monad</h3>
+<div class="outline-text-3" id="text-orgc9909bc">
+<div class="org-src-container">
+
+<pre class="src src-cicada">list-monad <span style="color: #DFAF8F;">:</span> <span style="color: #7CB8BB;">monad-t</span>
+list-monad <span style="color: #DFAF8F;">=</span> <span style="color: #DFAF8F;">monad-c</span>
+  pure x <span style="color: #DFAF8F;">=</span> (<span style="color: #DFAF8F;">cons-c</span> x <span style="color: #DFAF8F;">null-c</span>)
+  bind list fun <span style="color: #DFAF8F;">=</span>
+    <span style="color: #F0DFAF; font-weight: bold;">case</span> list
+      <span style="color: #7CB8BB;">null-s</span> <span style="color: #DFAF8F;">null-c</span>
+      <span style="color: #7CB8BB;">cons-s</span> (list-append (fun list<span style="color: #BFEBBF;">.car</span>) (<span style="color: #7CB8BB;">recur</span> list<span style="color: #BFEBBF;">.cdr</span> fun))
+</pre>
+</div>
+</div>
+</div>
+</div>
+
+<div id="outline-container-orge023f0b" class="outline-2">
+<h2 id="orge023f0b">maybe</h2>
+<div class="outline-text-2" id="text-orge023f0b">
+</div><div id="outline-container-org51bcc4a" class="outline-3">
+<h3 id="org51bcc4a">maybe-s</h3>
+<div class="outline-text-3" id="text-org51bcc4a">
+<div class="org-src-container">
+
+<pre class="src src-cicada"><span style="color: #7CB8BB;">maybe-s</span> <span style="color: #DFAF8F;">:</span> <span style="color: #7CB8BB;">type-t</span>
+maybe-s <span style="color: #DFAF8F;">=</span> <span style="color: #F0DFAF; font-weight: bold;">data</span> <span style="color: #DFAF8F;">:&gt;</span> [<span style="color: #7CB8BB;">none-s</span> <span style="color: #7CB8BB;">just-s</span>]
+  t <span style="color: #DFAF8F;">:</span> <span style="color: #7CB8BB;">type-t</span>
+
+none-s <span style="color: #DFAF8F;">:</span> <span style="color: #7CB8BB;">type-t</span>
+none-s <span style="color: #DFAF8F;">=</span> <span style="color: #F0DFAF; font-weight: bold;">data</span>
+  t <span style="color: #DFAF8F;">:</span> <span style="color: #7CB8BB;">type-t</span>
+
+just-s <span style="color: #DFAF8F;">:</span> <span style="color: #7CB8BB;">type-t</span>
+just-s <span style="color: #DFAF8F;">=</span> <span style="color: #F0DFAF; font-weight: bold;">data</span>
+  t <span style="color: #DFAF8F;">:</span> <span style="color: #7CB8BB;">type-t</span>
+  value <span style="color: #DFAF8F;">:</span> t
+</pre>
+</div>
+</div>
+</div>
+
+<div id="outline-container-orgbd214b8" class="outline-3">
+<h3 id="orgbd214b8">maybe-container</h3>
+<div class="outline-text-3" id="text-orgbd214b8">
+<div class="org-src-container">
+
+<pre class="src src-cicada">maybe-container <span style="color: #DFAF8F;">:</span> <span style="color: #7CB8BB;">container-t</span>
+maybe-container <span style="color: #DFAF8F;">=</span> <span style="color: #DFAF8F;">container-c</span>
+  <span style="color: #7CB8BB;">fun-s</span> <span style="color: #DFAF8F;">=</span> <span style="color: #7CB8BB;">maybe-s</span>
+  map fun maybe <span style="color: #DFAF8F;">=</span>
+    <span style="color: #F0DFAF; font-weight: bold;">case</span> maybe
+      <span style="color: #7CB8BB;">none-s</span> <span style="color: #DFAF8F;">none-c</span>
+      <span style="color: #7CB8BB;">just-s</span> (<span style="color: #DFAF8F;">just-c</span> (fun maybe<span style="color: #BFEBBF;">.value</span>))
+</pre>
+</div>
+</div>
+</div>
+
+<div id="outline-container-org7519caf" class="outline-3">
+<h3 id="org7519caf">maybe-monad</h3>
+<div class="outline-text-3" id="text-org7519caf">
+<div class="org-src-container">
+
+<pre class="src src-cicada">maybe-monad <span style="color: #DFAF8F;">:</span> <span style="color: #7CB8BB;">monad-t</span>
+maybe-monad <span style="color: #DFAF8F;">=</span> <span style="color: #DFAF8F;">monad-c</span>
+  pure <span style="color: #DFAF8F;">=</span> <span style="color: #DFAF8F;">just-c</span>
+  bind maybe fun <span style="color: #DFAF8F;">=</span>
+    <span style="color: #F0DFAF; font-weight: bold;">case</span> maybe
+      <span style="color: #7CB8BB;">none-s</span> <span style="color: #DFAF8F;">none-c</span>
+      <span style="color: #7CB8BB;">just-s</span> (fun maybe<span style="color: #BFEBBF;">.value</span>)
+</pre>
+</div>
+</div>
+</div>
+</div>
+
+<div id="outline-container-orga14ea8" class="outline-2">
+<h2 id="orga14ea8">state</h2>
+<div class="outline-text-2" id="text-orga14ea8">
+</div><div id="outline-container-org9c37fd3" class="outline-3">
+<h3 id="org9c37fd3">state-s</h3>
+<div class="outline-text-3" id="text-org9c37fd3">
+<div class="org-src-container">
+
+<pre class="src src-cicada"><span style="color: #7CB8BB;">state-s</span> <span style="color: #DFAF8F;">:</span> <span style="color: #7CB8BB;">--</span> <span style="color: #7CB8BB;">type-t</span> <span style="color: #7CB8BB;">type-t</span> <span style="color: #7CB8BB;">-&gt;</span> <span style="color: #7CB8BB;">type-t</span>
+state-s s a <span style="color: #DFAF8F;">=</span> <span style="color: #7CB8BB;">--</span> s <span style="color: #7CB8BB;">-&gt;</span> (<span style="color: #7CB8BB;">*</span> s a)
+</pre>
+</div>
+</div>
+</div>
+
+<div id="outline-container-org708ff8d" class="outline-3">
+<h3 id="org708ff8d">state-monad</h3>
+<div class="outline-text-3" id="text-org708ff8d">
+<div class="org-src-container">
+
+<pre class="src src-cicada">state-monad <span style="color: #DFAF8F;">:</span> <span style="color: #7CB8BB;">--</span> <span style="color: #7CB8BB;">type-t</span> <span style="color: #7CB8BB;">-&gt;</span> <span style="color: #7CB8BB;">monad-t</span>
+state-monad s <span style="color: #DFAF8F;">=</span> <span style="color: #DFAF8F;">monad-c</span>
+  <span style="color: #7CB8BB;">fun-s</span> <span style="color: #DFAF8F;">=</span> (<span style="color: #7CB8BB;">state-s</span> s)
+
+  map <span style="color: #DFAF8F;">:</span> <span style="color: #7CB8BB;">--</span> (<span style="color: #7CB8BB;">--</span> a <span style="color: #7CB8BB;">-&gt;</span> b)
+           (<span style="color: #7CB8BB;">state-s</span> s a)
+        <span style="color: #7CB8BB;">-&gt;</span> (<span style="color: #7CB8BB;">state-s</span> s b)
+  map <span style="color: #DFAF8F;">:</span> <span style="color: #7CB8BB;">--</span> (<span style="color: #7CB8BB;">--</span> a <span style="color: #7CB8BB;">-&gt;</span> b)
+           (<span style="color: #7CB8BB;">--</span> s <span style="color: #7CB8BB;">-&gt;</span> (<span style="color: #7CB8BB;">*</span> s a))
+        <span style="color: #7CB8BB;">-&gt;</span> (<span style="color: #7CB8BB;">--</span> s <span style="color: #7CB8BB;">-&gt;</span> (<span style="color: #7CB8BB;">*</span> s b))
+  map f m <span style="color: #DFAF8F;">=</span> <span style="color: #F0DFAF; font-weight: bold;">lambda</span> [s]
+    <span style="color: #7CB8BB;">*</span> (1st (m s))
+      (f (2nd (m s)))
+
+  pure <span style="color: #DFAF8F;">:</span> <span style="color: #7CB8BB;">--</span> t <span style="color: #7CB8BB;">-&gt;</span> (<span style="color: #7CB8BB;">state-s</span> s t)
+  pure <span style="color: #DFAF8F;">:</span> <span style="color: #7CB8BB;">--</span> t <span style="color: #7CB8BB;">-&gt;</span> (<span style="color: #7CB8BB;">--</span> s <span style="color: #7CB8BB;">-&gt;</span> (<span style="color: #7CB8BB;">*</span> s t))
+  pure v <span style="color: #DFAF8F;">=</span> <span style="color: #F0DFAF; font-weight: bold;">lambda</span> [s] (<span style="color: #7CB8BB;">*</span> s v)
+
+  bind <span style="color: #DFAF8F;">:</span> <span style="color: #7CB8BB;">--</span> (<span style="color: #7CB8BB;">fun-s</span> a) (<span style="color: #7CB8BB;">--</span> a <span style="color: #7CB8BB;">-&gt;</span> (<span style="color: #7CB8BB;">fun-s</span> b)) <span style="color: #7CB8BB;">-&gt;</span> (<span style="color: #7CB8BB;">fun-s</span> b)
+  bind <span style="color: #DFAF8F;">:</span> <span style="color: #7CB8BB;">--</span> (<span style="color: #7CB8BB;">state-s</span> s a) (<span style="color: #7CB8BB;">--</span> a <span style="color: #7CB8BB;">-&gt;</span> (<span style="color: #7CB8BB;">state-s</span> s b)) <span style="color: #7CB8BB;">-&gt;</span> (<span style="color: #7CB8BB;">state-s</span> s b)
+  bind <span style="color: #DFAF8F;">:</span> <span style="color: #7CB8BB;">--</span> (<span style="color: #7CB8BB;">--</span> s <span style="color: #7CB8BB;">-&gt;</span> (<span style="color: #7CB8BB;">*</span> s a))
+            (<span style="color: #7CB8BB;">--</span> a <span style="color: #7CB8BB;">-&gt;</span> (<span style="color: #7CB8BB;">--</span> s <span style="color: #7CB8BB;">-&gt;</span> (<span style="color: #7CB8BB;">*</span> s b)))
+         <span style="color: #7CB8BB;">-&gt;</span> (<span style="color: #7CB8BB;">--</span> s <span style="color: #7CB8BB;">-&gt;</span> (<span style="color: #7CB8BB;">*</span> s b))
+  bind m f <span style="color: #DFAF8F;">=</span> <span style="color: #F0DFAF; font-weight: bold;">lambda</span> [s] ((f (2st (m s))) (1st (m s)))
+</pre>
+</div>
+</div>
+</div>
+</div>
+
+<div id="outline-container-orgbfe1ae" class="outline-2">
+<h2 id="orgbfe1ae">tree</h2>
+<div class="outline-text-2" id="text-orgbfe1ae">
+</div><div id="outline-container-org259cb08" class="outline-3">
+<h3 id="org259cb08">tree-s</h3>
+<div class="outline-text-3" id="text-org259cb08">
+<div class="org-src-container">
+
+<pre class="src src-cicada"><span style="color: #7CB8BB;">tree-s</span> <span style="color: #DFAF8F;">:</span> <span style="color: #7CB8BB;">type-t</span>
+tree-s <span style="color: #DFAF8F;">=</span> <span style="color: #F0DFAF; font-weight: bold;">data</span> <span style="color: #DFAF8F;">:&gt;</span> [<span style="color: #7CB8BB;">leaf-s</span> <span style="color: #7CB8BB;">branch-s</span>]
+  t <span style="color: #DFAF8F;">:</span> <span style="color: #7CB8BB;">type-t</span>
+
+leaf-s <span style="color: #DFAF8F;">:</span> <span style="color: #7CB8BB;">type-t</span>
+leaf-s <span style="color: #DFAF8F;">=</span> <span style="color: #F0DFAF; font-weight: bold;">data</span>
+  t <span style="color: #DFAF8F;">:</span> <span style="color: #7CB8BB;">type-t</span>
+  value <span style="color: #DFAF8F;">:</span> <span style="color: #7CB8BB;">t</span>
+
+<span style="color: #7CB8BB;">branch-s</span> <span style="color: #DFAF8F;">:</span> <span style="color: #7CB8BB;">type-t</span>
+branch-s <span style="color: #DFAF8F;">=</span> <span style="color: #F0DFAF; font-weight: bold;">data</span>
+  t <span style="color: #DFAF8F;">:</span> <span style="color: #7CB8BB;">type-t</span>
+  [left right] <span style="color: #DFAF8F;">:</span> (<span style="color: #7CB8BB;">tree-s</span> t)
+</pre>
+</div>
+</div>
+</div>
+
+<div id="outline-container-org91c5ec6" class="outline-3">
+<h3 id="org91c5ec6">tree-container</h3>
+<div class="outline-text-3" id="text-org91c5ec6">
+<div class="org-src-container">
+
+<pre class="src src-cicada">tree-container <span style="color: #DFAF8F;">:</span> <span style="color: #7CB8BB;">container-t</span>
+tree-container <span style="color: #DFAF8F;">=</span> <span style="color: #DFAF8F;">container-c</span>
+  <span style="color: #7CB8BB;">fun-s</span> <span style="color: #DFAF8F;">=</span> <span style="color: #7CB8BB;">tree-s</span>
+  map fun tree <span style="color: #DFAF8F;">=</span>
+    <span style="color: #F0DFAF; font-weight: bold;">case</span> tree
+      <span style="color: #7CB8BB;">leaf-s</span> (<span style="color: #DFAF8F;">leaf-c</span> (fun tree<span style="color: #BFEBBF;">.value</span>))
+      <span style="color: #7CB8BB;">branch-s</span>
+        (<span style="color: #DFAF8F;">branch-c</span>
+          (<span style="color: #7CB8BB;">recur</span> fun tree<span style="color: #BFEBBF;">.left</span>)
+          (<span style="color: #7CB8BB;">recur</span> fun tree<span style="color: #BFEBBF;">.right</span>))
+</pre>
+</div>
+</div>
+</div>
+
+<div id="outline-container-orgf5d541c" class="outline-3">
+<h3 id="orgf5d541c">tree-zip</h3>
+<div class="outline-text-3" id="text-orgf5d541c">
+<div class="org-src-container">
+
+<pre class="src src-cicada">tree-zip <span style="color: #DFAF8F;">:</span>
+  <span style="color: #7CB8BB;">--</span> (<span style="color: #7CB8BB;">tree-s</span> a)
+     (<span style="color: #7CB8BB;">tree-s</span> b)
+  <span style="color: #7CB8BB;">-&gt;</span> (<span style="color: #7CB8BB;">maybe-s</span> (<span style="color: #7CB8BB;">tree-s</span> (<span style="color: #7CB8BB;">*</span> a b)))
+tree-zip x y <span style="color: #DFAF8F;">=</span>
+  <span style="color: #F0DFAF; font-weight: bold;">case</span> [x y]
+    [<span style="color: #7CB8BB;">leaf-s</span> <span style="color: #7CB8BB;">leaf-s</span>]
+      (pure (<span style="color: #DFAF8F;">leaf-c</span> (<span style="color: #7CB8BB;">*</span> x<span style="color: #BFEBBF;">.value</span> y<span style="color: #BFEBBF;">.value</span>)))
+    [<span style="color: #7CB8BB;">branch-s</span> <span style="color: #7CB8BB;">branch-s</span>]
+      do left <span style="color: #7CB8BB;">&lt;-</span> (<span style="color: #7CB8BB;">recur</span> x<span style="color: #BFEBBF;">.left</span> y<span style="color: #BFEBBF;">.left</span>)
+         right <span style="color: #7CB8BB;">&lt;-</span> (<span style="color: #7CB8BB;">recur</span> x<span style="color: #BFEBBF;">.right</span> y<span style="color: #BFEBBF;">.right</span>)
+         (pure (<span style="color: #DFAF8F;">branch-c</span> left right))
+    [_ _] <span style="color: #DFAF8F;">none-c</span>
+</pre>
+</div>
+</div>
+</div>
+
+<div id="outline-container-org68c1e3b" class="outline-3">
+<h3 id="org68c1e3b">tree-numbering</h3>
+<div class="outline-text-3" id="text-org68c1e3b">
+<div class="org-src-container">
+
+<pre class="src src-cicada">tree-numbering <span style="color: #DFAF8F;">:</span>
+  <span style="color: #7CB8BB;">--</span> (<span style="color: #7CB8BB;">tree-s</span> t)
+  <span style="color: #7CB8BB;">-&gt;</span> (<span style="color: #7CB8BB;">state-s</span> <span style="color: #7CB8BB;">nat-s</span> (<span style="color: #7CB8BB;">tree-s</span> <span style="color: #7CB8BB;">nat-s</span>))
+tree-numbering tree <span style="color: #DFAF8F;">=</span>
+  <span style="color: #F0DFAF; font-weight: bold;">case</span> tree
+    <span style="color: #7CB8BB;">leaf-s</span> <span style="color: #F0DFAF; font-weight: bold;">lambda</span> [n]
+      (<span style="color: #7CB8BB;">*</span> (nat-inc n) (<span style="color: #DFAF8F;">leaf-c</span> n))
+    <span style="color: #7CB8BB;">branch-s</span>
+      do left <span style="color: #7CB8BB;">&lt;-</span> (<span style="color: #7CB8BB;">recur</span> tree<span style="color: #BFEBBF;">.left</span>)
+         right <span style="color: #7CB8BB;">&lt;-</span> (<span style="color: #7CB8BB;">recur</span> tree<span style="color: #BFEBBF;">.right</span>)
+         (pure (<span style="color: #DFAF8F;">branch-c</span> left right))
+</pre>
+</div>
+</div>
+</div>
+</div>
+
+<div id="outline-container-org15ed306" class="outline-2">
+<h2 id="org15ed306">int</h2>
+<div class="outline-text-2" id="text-org15ed306">
+</div><div id="outline-container-orga4ad120" class="outline-3">
+<h3 id="orga4ad120"><span class="done _todo_">[todo]</span> int-s</h3>
+</div>
+
+<div id="outline-container-org46bb0e" class="outline-3">
+<h3 id="org46bb0e"><span class="done _todo_">[todo]</span> mod-s</h3>
+</div>
+
+<div id="outline-container-orgbb7ba3" class="outline-3">
+<h3 id="orgbb7ba3">gcd-s</h3>
+<div class="outline-text-3" id="text-orgbb7ba3">
+<div class="org-src-container">
+
+<pre class="src src-cicada"><span style="color: #7CB8BB;">gcd-s</span> <span style="color: #DFAF8F;">:</span> <span style="color: #7CB8BB;">type-t</span>
+gcd-s <span style="color: #DFAF8F;">=</span> <span style="color: #F0DFAF; font-weight: bold;">data</span> <span style="color: #DFAF8F;">:&gt;</span> [<span style="color: #7CB8BB;">zero-gcd-s</span> <span style="color: #7CB8BB;">mod-gcd-s</span>]
+  [x y d] <span style="color: #DFAF8F;">:</span> <span style="color: #7CB8BB;">int-s</span>
+
+<span style="color: #7CB8BB;">zero-gcd-s</span> <span style="color: #DFAF8F;">:</span> <span style="color: #7CB8BB;">type-t</span>
+zero-gcd-s <span style="color: #DFAF8F;">=</span> <span style="color: #F0DFAF; font-weight: bold;">data</span>
+  [x y d] <span style="color: #DFAF8F;">:</span> <span style="color: #7CB8BB;">int-s</span>
+  y <span style="color: #DFAF8F;">=</span> <span style="color: #DFAF8F;">zero-c</span>
+  x <span style="color: #DFAF8F;">=</span> <span style="color: #7CB8BB;">d</span>
+
+<span style="color: #7CB8BB;">mod-gcd-s</span> <span style="color: #DFAF8F;">:</span> <span style="color: #7CB8BB;">type-t</span>
+mod-gcd-s <span style="color: #DFAF8F;">=</span> <span style="color: #F0DFAF; font-weight: bold;">data</span>
+  [x y d] <span style="color: #DFAF8F;">:</span> <span style="color: #7CB8BB;">int-s</span>
+  gcd <span style="color: #DFAF8F;">:</span> (<span style="color: #7CB8BB;">gcd-s</span> z x d)
+  mod <span style="color: #DFAF8F;">:</span> (<span style="color: #7CB8BB;">mod-s</span> z x y)
+</pre>
+</div>
+</div>
+</div>
+</div>
+
+<div id="outline-container-org1350237" class="outline-2">
+<h2 id="org1350237">set-category</h2>
+<div class="outline-text-2" id="text-org1350237">
+</div><div id="outline-container-org85912e4" class="outline-3">
+<h3 id="org85912e4"><span class="done _todo_">[todo]</span> set-t</h3>
+<div class="outline-text-3" id="text-org85912e4">
+<div class="org-src-container">
+
+<pre class="src src-cicada"><span style="color: #F0DFAF; font-weight: bold;">note</span>
+  <span style="color: #7CB8BB;">The</span> <span style="color: #F0DFAF; font-weight: bold;">set</span> theory of <span style="color: #7CB8BB;">Errett</span> <span style="color: #7CB8BB;">Bishop.</span>
+
+<span style="color: #7CB8BB;">set-t</span> <span style="color: #DFAF8F;">:</span> <span style="color: #7CB8BB;">type-tt</span>
+<span style="color: #7CB8BB;">set-t</span> <span style="color: #DFAF8F;">=</span> <span style="color: #F0DFAF; font-weight: bold;">data</span>
+  <span style="color: #7CB8BB;">element-s</span> <span style="color: #DFAF8F;">:</span> <span style="color: #7CB8BB;">type-t</span>
+  <span style="color: #7CB8BB;">eqv-s</span> <span style="color: #DFAF8F;">:</span> <span style="color: #7CB8BB;">-&gt;</span> <span style="color: #7CB8BB;">element-s</span> <span style="color: #7CB8BB;">element-s</span> <span style="color: #7CB8BB;">-&gt;</span> <span style="color: #7CB8BB;">type-t</span>
+</pre>
+</div>
+</div>
+</div>
+
+<div id="outline-container-orgd0ad77c" class="outline-3">
+<h3 id="orgd0ad77c">set-morphism-t</h3>
+<div class="outline-text-3" id="text-orgd0ad77c">
+<div class="org-src-container">
+
+<pre class="src src-cicada"><span style="color: #7CB8BB;">set-morphism-t</span> <span style="color: #DFAF8F;">:</span> <span style="color: #7CB8BB;">type-tt</span>
+<span style="color: #7CB8BB;">set-morphism-t</span> <span style="color: #DFAF8F;">=</span> <span style="color: #F0DFAF; font-weight: bold;">data</span>
+  ante <span style="color: #DFAF8F;">:</span> <span style="color: #7CB8BB;">type-t</span>
+  succ <span style="color: #DFAF8F;">:</span> <span style="color: #7CB8BB;">type-t</span>
+
+  morphism <span style="color: #DFAF8F;">:</span> <span style="color: #7CB8BB;">--</span> ante <span style="color: #7CB8BB;">-&gt;</span> succ
+</pre>
+</div>
+</div>
+</div>
+
+<div id="outline-container-org2b6c92c" class="outline-3">
+<h3 id="org2b6c92c">set-morphism-eqv-t</h3>
+<div class="outline-text-3" id="text-org2b6c92c">
+<div class="org-src-container">
+
+<pre class="src src-cicada"><span style="color: #7CB8BB;">set-morphism-eqv-t</span> <span style="color: #DFAF8F;">:</span> <span style="color: #7CB8BB;">type-tt</span>
+<span style="color: #7CB8BB;">set-morphism-eqv-t</span> <span style="color: #DFAF8F;">=</span> <span style="color: #F0DFAF; font-weight: bold;">data</span>
+  lhs <span style="color: #DFAF8F;">:</span> (<span style="color: #7CB8BB;">set-morphism-t</span> a b)
+  rhs <span style="color: #DFAF8F;">:</span> (<span style="color: #7CB8BB;">set-morphism-t</span> a b)
+
+  morphism-eqv <span style="color: #DFAF8F;">:</span>
+    <span style="color: #7CB8BB;">--</span> x <span style="color: #DFAF8F;">:</span> a
+    <span style="color: #7CB8BB;">-&gt;</span> (<span style="color: #7CB8BB;">eqv-s</span> (lhs<span style="color: #BFEBBF;">.morphism</span> x) (rhs<span style="color: #BFEBBF;">.morphism</span> x))
+</pre>
+</div>
+</div>
+</div>
+
+<div id="outline-container-org9aa4ef5" class="outline-3">
+<h3 id="org9aa4ef5">set-category</h3>
+<div class="outline-text-3" id="text-org9aa4ef5">
+<div class="org-src-container">
+
+<pre class="src src-cicada">set-category <span style="color: #DFAF8F;">:</span> <span style="color: #7CB8BB;">category-tt</span>
+set-category <span style="color: #DFAF8F;">=</span> <span style="color: #DFAF8F;">category-cc</span>
+  <span style="color: #7CB8BB;">object-t</span> <span style="color: #DFAF8F;">:</span> <span style="color: #7CB8BB;">type-tt</span>
+  <span style="color: #7CB8BB;">object-t</span> <span style="color: #DFAF8F;">=</span> <span style="color: #7CB8BB;">type-t</span>
+
+  <span style="color: #7CB8BB;">arrow-t</span> <span style="color: #DFAF8F;">:</span> <span style="color: #7CB8BB;">--</span> <span style="color: #7CB8BB;">type-t</span> <span style="color: #7CB8BB;">type-t</span> <span style="color: #7CB8BB;">-&gt;</span> <span style="color: #7CB8BB;">type-tt</span>
+  <span style="color: #7CB8BB;">arrow-t</span> a b <span style="color: #DFAF8F;">=</span> (<span style="color: #7CB8BB;">set-morphism-t</span> a b)
+
+  <span style="color: #7CB8BB;">arrow-eqv-t</span> <span style="color: #DFAF8F;">:</span>
+    <span style="color: #7CB8BB;">--</span> (<span style="color: #7CB8BB;">set-morphism-t</span> a b)
+       (<span style="color: #7CB8BB;">set-morphism-t</span> a b)
+    <span style="color: #7CB8BB;">-&gt;</span> <span style="color: #7CB8BB;">type-tt</span>
+  <span style="color: #7CB8BB;">arrow-eqv-t</span> lhs rhs <span style="color: #DFAF8F;">=</span> (<span style="color: #7CB8BB;">set-morphism-eqv-t</span> lhs rhs)
+
+  identity <span style="color: #DFAF8F;">:</span>
+    <span style="color: #7CB8BB;">--</span> a <span style="color: #BFEBBF;">::</span> <span style="color: #7CB8BB;">type-t</span>
+    <span style="color: #7CB8BB;">-&gt;</span> (<span style="color: #7CB8BB;">set-morphism-t</span> a a)
+  identity <span style="color: #DFAF8F;">=</span> <span style="color: #DFAF8F;">set-morphism-c</span>
+    morphism <span style="color: #DFAF8F;">=</span> nop
+
+  compose <span style="color: #DFAF8F;">:</span>
+    <span style="color: #7CB8BB;">--</span> (<span style="color: #7CB8BB;">set-morphism-t</span> a b)
+       (<span style="color: #7CB8BB;">set-morphism-t</span> b c)
+    <span style="color: #7CB8BB;">-&gt;</span> (<span style="color: #7CB8BB;">set-morphism-t</span> a c)
+  compose f g <span style="color: #DFAF8F;">=</span> <span style="color: #DFAF8F;">set-morphism-c</span>
+    morphism <span style="color: #DFAF8F;">=</span> (<span style="color: #7CB8BB;">|</span> f<span style="color: #BFEBBF;">.morphism</span> g<span style="color: #BFEBBF;">.morphism</span>)
+
+  identity-neutral-left <span style="color: #DFAF8F;">:</span>
+    <span style="color: #7CB8BB;">--</span> f <span style="color: #DFAF8F;">:</span> (<span style="color: #7CB8BB;">set-morphism-t</span> a b)
+    <span style="color: #7CB8BB;">-&gt;</span> (<span style="color: #7CB8BB;">set-morphism-eqv-t</span> f (compose f identity))
+  identity-neutral-left f <span style="color: #DFAF8F;">=</span> <span style="color: #DFAF8F;">set-morphism-eqv-c</span>
+    lhs <span style="color: #DFAF8F;">:</span> (<span style="color: #7CB8BB;">set-morphism-t</span> a b)
+    lhs <span style="color: #DFAF8F;">=</span> f
+    rhs <span style="color: #DFAF8F;">:</span> (<span style="color: #7CB8BB;">set-morphism-t</span> a b)
+    rhs <span style="color: #DFAF8F;">=</span> (compose f identity)
+    morphism-eqv <span style="color: #DFAF8F;">:</span>
+      <span style="color: #7CB8BB;">--</span> x <span style="color: #DFAF8F;">:</span> a
+      <span style="color: #7CB8BB;">-&gt;</span> (<span style="color: #7CB8BB;">eqv-s</span> (f<span style="color: #BFEBBF;">.morphism</span> x) (f<span style="color: #BFEBBF;">.morphism</span> x))
+    morphism-eqv x <span style="color: #DFAF8F;">=</span> <span style="color: #DFAF8F;">eqv-c</span>
+
+  identity-neutral-right <span style="color: #DFAF8F;">:</span>
+    <span style="color: #7CB8BB;">--</span> f <span style="color: #DFAF8F;">:</span> (<span style="color: #7CB8BB;">set-morphism-t</span> a b)
+    <span style="color: #7CB8BB;">-&gt;</span> (<span style="color: #7CB8BB;">set-morphism-eqv-t</span> f (compose identity f))
+  identity-neutral-right f <span style="color: #DFAF8F;">=</span> <span style="color: #DFAF8F;">set-morphism-eqv-c</span>
+    morphism-eqv _ <span style="color: #DFAF8F;">=</span> <span style="color: #DFAF8F;">eqv-c</span>
+
+  compose-associative <span style="color: #DFAF8F;">:</span>
+    <span style="color: #7CB8BB;">--</span> f <span style="color: #DFAF8F;">:</span> (<span style="color: #7CB8BB;">set-morphism-t</span> a b)
+       g <span style="color: #DFAF8F;">:</span> (<span style="color: #7CB8BB;">set-morphism-t</span> b c)
+       h <span style="color: #DFAF8F;">:</span> (<span style="color: #7CB8BB;">set-morphism-t</span> c d)
+    <span style="color: #7CB8BB;">-&gt;</span> (<span style="color: #7CB8BB;">set-morphism-eqv-t</span>
+         lhs <span style="color: #DFAF8F;">=</span> (compose f (compose g h))
+         rhs <span style="color: #DFAF8F;">=</span> (compose (compose f g) h))
+  compose-associative f g h <span style="color: #DFAF8F;">=</span> <span style="color: #DFAF8F;">set-morphism-eqv-c</span>
+    morphism-eqv _ <span style="color: #DFAF8F;">=</span> <span style="color: #DFAF8F;">eqv-c</span>
+</pre>
+</div>
+</div>
+</div>
+
+<div id="outline-container-org4c2d4ca" class="outline-3">
+<h3 id="org4c2d4ca">set-category &#x2013; without type</h3>
+<div class="outline-text-3" id="text-org4c2d4ca">
+<div class="org-src-container">
+
+<pre class="src src-cicada">set-category <span style="color: #DFAF8F;">:</span> <span style="color: #7CB8BB;">category-tt</span>
+set-category <span style="color: #DFAF8F;">=</span> <span style="color: #DFAF8F;">category-cc</span>
+  <span style="color: #7CB8BB;">object-t</span> <span style="color: #DFAF8F;">=</span> <span style="color: #7CB8BB;">type-t</span>
+
+  <span style="color: #7CB8BB;">arrow-t</span> a b <span style="color: #DFAF8F;">=</span> (<span style="color: #7CB8BB;">set-morphism-t</span> a b)
+
+  <span style="color: #7CB8BB;">arrow-eqv-t</span> lhs rhs <span style="color: #DFAF8F;">=</span> (<span style="color: #7CB8BB;">set-morphism-eqv-t</span> lhs rhs)
+
+  identity <span style="color: #DFAF8F;">=</span> <span style="color: #DFAF8F;">set-morphism-c</span>
+    morphism <span style="color: #DFAF8F;">=</span> nop
+
+  compose f g <span style="color: #DFAF8F;">=</span> <span style="color: #DFAF8F;">set-morphism-c</span>
+    morphism <span style="color: #DFAF8F;">=</span> (<span style="color: #7CB8BB;">|</span> f<span style="color: #BFEBBF;">.morphism</span> g<span style="color: #BFEBBF;">.morphism</span>)
+
+  identity-neutral-left _ <span style="color: #DFAF8F;">=</span> <span style="color: #DFAF8F;">set-morphism-eqv-c</span>
+    morphism-eqv _ <span style="color: #DFAF8F;">=</span> <span style="color: #DFAF8F;">eqv-c</span>
+
+  identity-neutral-right _ <span style="color: #DFAF8F;">=</span> <span style="color: #DFAF8F;">set-morphism-eqv-c</span>
+    morphism-eqv _ <span style="color: #DFAF8F;">=</span> <span style="color: #DFAF8F;">eqv-c</span>
+
+  compose-associative _ _ _ <span style="color: #DFAF8F;">=</span> <span style="color: #DFAF8F;">set-morphism-eqv-c</span>
+    morphism-eqv _ <span style="color: #DFAF8F;">=</span> <span style="color: #DFAF8F;">eqv-c</span>
+</pre>
+</div>
+</div>
+</div>
+</div>
+
+<div id="outline-container-orgee235f7" class="outline-2">
+<h2 id="orgee235f7">preorder-category</h2>
+<div class="outline-text-2" id="text-orgee235f7">
+</div><div id="outline-container-orgeca795a" class="outline-3">
+<h3 id="orgeca795a">preorder-morphism-t</h3>
+<div class="outline-text-3" id="text-orgeca795a">
+<div class="org-src-container">
+
+<pre class="src src-cicada"><span style="color: #7CB8BB;">preorder-morphism-t</span> <span style="color: #DFAF8F;">:</span> <span style="color: #7CB8BB;">type-tt</span>
+<span style="color: #7CB8BB;">preorder-morphism-t</span> <span style="color: #DFAF8F;">=</span> <span style="color: #F0DFAF; font-weight: bold;">data</span>
+  ante <span style="color: #DFAF8F;">:</span> <span style="color: #7CB8BB;">preorder-t</span>
+  succ <span style="color: #DFAF8F;">:</span> <span style="color: #7CB8BB;">preorder-t</span>
+
+  morphism <span style="color: #DFAF8F;">:</span> <span style="color: #7CB8BB;">--</span> ante<span style="color: #BFEBBF;">.element-s</span> <span style="color: #7CB8BB;">-&gt;</span> succ<span style="color: #BFEBBF;">.element-s</span>
+
+  morphism-respect-pre-relation <span style="color: #DFAF8F;">:</span>
+    <span style="color: #7CB8BB;">--</span> (ante<span style="color: #BFEBBF;">.pre-s</span> x y)
+    <span style="color: #7CB8BB;">-&gt;</span> (succ<span style="color: #BFEBBF;">.pre-s</span> (morphism x) (morphism y))
+</pre>
+</div>
+</div>
+</div>
+
+<div id="outline-container-org5a8559b" class="outline-3">
+<h3 id="org5a8559b">preorder-morphism-eqv-t</h3>
+<div class="outline-text-3" id="text-org5a8559b">
+<div class="org-src-container">
+
+<pre class="src src-cicada"><span style="color: #7CB8BB;">preorder-morphism-eqv-t</span> <span style="color: #DFAF8F;">:</span> <span style="color: #7CB8BB;">type-tt</span>
+<span style="color: #7CB8BB;">preorder-morphism-eqv-t</span> <span style="color: #DFAF8F;">=</span> <span style="color: #F0DFAF; font-weight: bold;">data</span>
+  lhs <span style="color: #DFAF8F;">:</span> (<span style="color: #7CB8BB;">preorder-morphism-t</span> a b)
+  rhs <span style="color: #DFAF8F;">:</span> (<span style="color: #7CB8BB;">preorder-morphism-t</span> a b)
+
+  morphism-eqv <span style="color: #DFAF8F;">:</span>
+    <span style="color: #7CB8BB;">--</span> x <span style="color: #DFAF8F;">:</span> a<span style="color: #BFEBBF;">.element-s</span>
+    <span style="color: #7CB8BB;">-&gt;</span> (<span style="color: #7CB8BB;">eqv-s</span> (lhs<span style="color: #BFEBBF;">.morphism</span> x) (rhs<span style="color: #BFEBBF;">.morphism</span> x))
+</pre>
+</div>
+</div>
+</div>
+
+<div id="outline-container-orgda7e66e" class="outline-3">
+<h3 id="orgda7e66e">preorder-category</h3>
+<div class="outline-text-3" id="text-orgda7e66e">
+<div class="org-src-container">
+
+<pre class="src src-cicada">preorder-category <span style="color: #DFAF8F;">:</span> <span style="color: #7CB8BB;">category-tt</span>
+preorder-category <span style="color: #DFAF8F;">=</span> <span style="color: #DFAF8F;">category-cc</span>
+  <span style="color: #7CB8BB;">object-t</span> <span style="color: #DFAF8F;">:</span> <span style="color: #7CB8BB;">type-tt</span>
+  <span style="color: #7CB8BB;">object-t</span> <span style="color: #DFAF8F;">=</span> <span style="color: #7CB8BB;">preorder-t</span>
+
+  <span style="color: #7CB8BB;">arrow-t</span> <span style="color: #DFAF8F;">:</span> <span style="color: #7CB8BB;">--</span> <span style="color: #7CB8BB;">preorder-t</span> <span style="color: #7CB8BB;">preorder-t</span> <span style="color: #7CB8BB;">-&gt;</span> <span style="color: #7CB8BB;">type-tt</span>
+  <span style="color: #7CB8BB;">arrow-t</span> a b <span style="color: #DFAF8F;">=</span> (<span style="color: #7CB8BB;">preorder-morphism-t</span> a b)
+
+  <span style="color: #7CB8BB;">arrow-eqv-t</span> <span style="color: #DFAF8F;">:</span>
+    <span style="color: #7CB8BB;">--</span> (<span style="color: #7CB8BB;">preorder-morphism-t</span> a b)
+       (<span style="color: #7CB8BB;">preorder-morphism-t</span> a b)
+    <span style="color: #7CB8BB;">-&gt;</span> <span style="color: #7CB8BB;">type-tt</span>
+  <span style="color: #7CB8BB;">arrow-eqv-t</span> lhs rhs <span style="color: #DFAF8F;">=</span> (<span style="color: #7CB8BB;">preorder-morphism-eqv-t</span> lhs rhs)
+
+  identity <span style="color: #DFAF8F;">:</span>
+    <span style="color: #7CB8BB;">--</span> a <span style="color: #BFEBBF;">::</span> <span style="color: #7CB8BB;">preorder-t</span>
+    <span style="color: #7CB8BB;">-&gt;</span> (<span style="color: #7CB8BB;">preorder-morphism-t</span> a a)
+  identity <span style="color: #DFAF8F;">=</span> <span style="color: #DFAF8F;">preorder-morphism-c</span>
+    morphism <span style="color: #DFAF8F;">=</span> nop
+    morphism-respect-pre-relation <span style="color: #DFAF8F;">=</span> nop
+
+  compose <span style="color: #DFAF8F;">:</span>
+    <span style="color: #7CB8BB;">--</span> (<span style="color: #7CB8BB;">preorder-morphism-t</span> a b)
+       (<span style="color: #7CB8BB;">preorder-morphism-t</span> b c)
+    <span style="color: #7CB8BB;">-&gt;</span> (<span style="color: #7CB8BB;">preorder-morphism-t</span> a c)
+  compose f g <span style="color: #DFAF8F;">=</span> <span style="color: #DFAF8F;">preorder-morphism-c</span>
+    morphism <span style="color: #DFAF8F;">=</span> (<span style="color: #7CB8BB;">|</span> f<span style="color: #BFEBBF;">.morphism</span> g<span style="color: #BFEBBF;">.morphism</span>)
+    morphism-respect-pre-relation <span style="color: #DFAF8F;">=</span>
+      (<span style="color: #7CB8BB;">|</span> f<span style="color: #BFEBBF;">.morphism-respect-pre-relation</span>
+         g<span style="color: #BFEBBF;">.morphism-respect-pre-relation</span>)
+
+  identity-neutral-left f <span style="color: #DFAF8F;">=</span> <span style="color: #DFAF8F;">preorder-morphism-eqv-c</span>
+    morphism-eqv x <span style="color: #DFAF8F;">=</span> <span style="color: #DFAF8F;">eqv-c</span>
+
+  identity-neutral-right f <span style="color: #DFAF8F;">=</span> <span style="color: #DFAF8F;">preorder-morphism-eqv-c</span>
+    morphism-eqv _ <span style="color: #DFAF8F;">=</span> <span style="color: #DFAF8F;">eqv-c</span>
+
+  compose-associative f g h <span style="color: #DFAF8F;">=</span> <span style="color: #DFAF8F;">preorder-morphism-eqv-c</span>
+    morphism-eqv _ <span style="color: #DFAF8F;">=</span> <span style="color: #DFAF8F;">eqv-c</span>
+</pre>
+</div>
+</div>
+</div>
+</div>
+
+<div id="outline-container-org5f7ba60" class="outline-2">
+<h2 id="org5f7ba60">category-category</h2>
+<div class="outline-text-2" id="text-org5f7ba60">
+</div><div id="outline-container-org7d4f459" class="outline-3">
+<h3 id="org7d4f459">functor-tt</h3>
+<div class="outline-text-3" id="text-org7d4f459">
+<ul class="org-ul">
+<li><p>a functor between two categories is a natural-construction</p><p>of the structure of [ante : category-tt]</p><p>in the structure of [succ : category-tt]</p></li></ul>
+
+<div class="org-src-container">
+
+<pre class="src src-cicada"><span style="color: #7CB8BB;">functor-tt</span> <span style="color: #DFAF8F;">:</span> <span style="color: #7CB8BB;">type-ttt</span>
+<span style="color: #7CB8BB;">functor-tt</span> <span style="color: #DFAF8F;">=</span> <span style="color: #F0DFAF; font-weight: bold;">data</span>
+  ante <span style="color: #DFAF8F;">:</span> <span style="color: #7CB8BB;">category-tt</span>
+  succ <span style="color: #DFAF8F;">:</span> <span style="color: #7CB8BB;">category-tt</span>
+
+  object-map <span style="color: #DFAF8F;">:</span>
+    <span style="color: #7CB8BB;">--</span> ante<span style="color: #BFEBBF;">.object-t</span>
+    <span style="color: #7CB8BB;">-&gt;</span> succ<span style="color: #BFEBBF;">.object-t</span>
+
+  arrow-map <span style="color: #DFAF8F;">:</span>
+    <span style="color: #7CB8BB;">--</span> (ante<span style="color: #BFEBBF;">.arrow-t</span> a b)
+    <span style="color: #7CB8BB;">-&gt;</span> (succ<span style="color: #BFEBBF;">.arrow-t</span> (object-map a) (object-map b))
+
+  arrow-map-respect-compose <span style="color: #DFAF8F;">:</span>
+    <span style="color: #7CB8BB;">--</span> f <span style="color: #DFAF8F;">:</span> (ante<span style="color: #BFEBBF;">.arrow-t</span> a b)
+       g <span style="color: #DFAF8F;">:</span> (ante<span style="color: #BFEBBF;">.arrow-t</span> b c)
+    <span style="color: #7CB8BB;">-&gt;</span> (succ<span style="color: #BFEBBF;">.arrow-eqv-t</span>
+         (arrow-map (ante<span style="color: #BFEBBF;">.compose</span> f g))
+         (succ<span style="color: #BFEBBF;">.compose</span> (arrow-map f) (arrow-map g)))
+
+  arrow-map-respect-identity <span style="color: #DFAF8F;">:</span>
+    <span style="color: #7CB8BB;">--</span> a <span style="color: #BFEBBF;">::</span> ante<span style="color: #BFEBBF;">.object-t</span>
+    <span style="color: #7CB8BB;">-&gt;</span> (succ<span style="color: #BFEBBF;">.arrow-eqv-t</span>
+         (arrow-map (ante<span style="color: #BFEBBF;">.identity</span> a))
+         (succ<span style="color: #BFEBBF;">.identity</span> (object-map a)))
+</pre>
+</div>
+</div>
+</div>
+
+<div id="outline-container-orgb5b1f87" class="outline-3">
+<h3 id="orgb5b1f87">natural-transformation-tt</h3>
+<div class="outline-text-3" id="text-orgb5b1f87">
+<ul class="org-ul">
+<li><p>a natural-transformation is a level up map,</p><p>which maps objects to arrows, and arrows to squares.</p></li></ul>
+
+<div class="org-src-container">
+
+<pre class="src src-cicada"><span style="color: #7CB8BB;">natural-transformation-tt</span> <span style="color: #DFAF8F;">:</span> <span style="color: #7CB8BB;">type-ttt</span>
+<span style="color: #7CB8BB;">natural-transformation-tt</span> <span style="color: #DFAF8F;">=</span> <span style="color: #F0DFAF; font-weight: bold;">data</span>
+  lhs <span style="color: #DFAF8F;">:</span> (<span style="color: #7CB8BB;">functor-tt</span> c d)
+  rhs <span style="color: #DFAF8F;">:</span> (<span style="color: #7CB8BB;">functor-tt</span> c d)
+
+  component <span style="color: #DFAF8F;">:</span>
+    <span style="color: #7CB8BB;">--</span> a <span style="color: #DFAF8F;">:</span> c<span style="color: #BFEBBF;">.object-t</span>
+    <span style="color: #7CB8BB;">-&gt;</span> (d<span style="color: #BFEBBF;">.arrow-t</span> (lhs<span style="color: #BFEBBF;">.object-map</span> a) (rhs<span style="color: #BFEBBF;">.object-map</span> a))
+
+  transformation <span style="color: #DFAF8F;">:</span>
+    <span style="color: #7CB8BB;">--</span> f <span style="color: #DFAF8F;">:</span> (c<span style="color: #BFEBBF;">.arrow-t</span> a b)
+    <span style="color: #7CB8BB;">-&gt;</span> (d<span style="color: #BFEBBF;">.arrow-eqv-t</span>
+         (d<span style="color: #BFEBBF;">.compose</span> (component a) (rhs<span style="color: #BFEBBF;">.arrow-map</span> f))
+         (d<span style="color: #BFEBBF;">.compose</span> (lhs<span style="color: #BFEBBF;">.arrow-map</span> f) (component b)))
+</pre>
+</div>
+</div>
+</div>
+
+<div id="outline-container-orgb653e8" class="outline-3">
+<h3 id="orgb653e8">natural-isomorphism-tt</h3>
+<div class="outline-text-3" id="text-orgb653e8">
+<div class="org-src-container">
+
+<pre class="src src-cicada"><span style="color: #7CB8BB;">natural-isomorphism-tt</span> <span style="color: #DFAF8F;">:</span> <span style="color: #7CB8BB;">type-ttt</span>
+<span style="color: #7CB8BB;">natural-isomorphism-tt</span> <span style="color: #DFAF8F;">=</span> <span style="color: #F0DFAF; font-weight: bold;">data</span> <span style="color: #DFAF8F;">&lt;:</span> [<span style="color: #7CB8BB;">natural-transformation-tt</span>]
+  isomorphic-component <span style="color: #DFAF8F;">:</span>
+    <span style="color: #7CB8BB;">--</span> a <span style="color: #DFAF8F;">:</span> c<span style="color: #BFEBBF;">.object-t</span>
+    <span style="color: #7CB8BB;">-&gt;</span> (d<span style="color: #BFEBBF;">.isomorphic-t</span> iso <span style="color: #DFAF8F;">=</span> (component a))
+</pre>
+</div>
+</div>
+</div>
+
+<div id="outline-container-org2585a8f" class="outline-3">
+<h3 id="org2585a8f"><span class="done _todo_">[todo]</span> category-category</h3>
+<div class="outline-text-3" id="text-org2585a8f">
+<div class="org-src-container">
+
+<pre class="src src-cicada">category-category <span style="color: #DFAF8F;">:</span> <span style="color: #7CB8BB;">category-ttt</span>
+category-category <span style="color: #DFAF8F;">=</span> <span style="color: #DFAF8F;">category-ccc</span>
+  <span style="color: #7CB8BB;">object-tt</span> <span style="color: #DFAF8F;">:</span> <span style="color: #7CB8BB;">category-ttt</span>
+  <span style="color: #7CB8BB;">object-tt</span> <span style="color: #DFAF8F;">=</span> <span style="color: #7CB8BB;">category-tt</span>
+
+  <span style="color: #7CB8BB;">arrow-tt</span> <span style="color: #DFAF8F;">:</span>
+    <span style="color: #7CB8BB;">--</span> <span style="color: #7CB8BB;">category-tt</span> <span style="color: #7CB8BB;">category-tt</span>
+    <span style="color: #7CB8BB;">-&gt;</span> <span style="color: #7CB8BB;">type-ttt</span>
+  <span style="color: #7CB8BB;">arrow-tt</span> a b <span style="color: #DFAF8F;">=</span> (<span style="color: #7CB8BB;">functor-tt</span> a b)
+
+  <span style="color: #7CB8BB;">arrow-eqv-tt</span> <span style="color: #DFAF8F;">:</span>
+    <span style="color: #7CB8BB;">--</span> (<span style="color: #7CB8BB;">functor-tt</span> a b)
+       (<span style="color: #7CB8BB;">functor-tt</span> a b)
+    <span style="color: #7CB8BB;">-&gt;</span> <span style="color: #7CB8BB;">type-ttt</span>
+  <span style="color: #7CB8BB;">arrow-eqv-tt</span> lhs rhs <span style="color: #DFAF8F;">=</span> (<span style="color: #7CB8BB;">natural-isomorphism-tt</span> lhs rhs)
+
+  identity <span style="color: #DFAF8F;">:</span> <span style="color: #7CB8BB;">--</span> a <span style="color: #BFEBBF;">::</span> <span style="color: #7CB8BB;">category-tt</span> <span style="color: #7CB8BB;">-&gt;</span> (<span style="color: #7CB8BB;">functor-tt</span> a a)
+  identity <span style="color: #DFAF8F;">=</span> <span style="color: #DFAF8F;">functor-cc</span>
+    ante <span style="color: #DFAF8F;">=</span> a
+    succ <span style="color: #DFAF8F;">=</span> a
+    [todo]
+
+  compose <span style="color: #DFAF8F;">:</span>
+    <span style="color: #7CB8BB;">--</span> (<span style="color: #7CB8BB;">functor-tt</span> a b)
+       (<span style="color: #7CB8BB;">functor-tt</span> b c)
+    <span style="color: #7CB8BB;">-&gt;</span> (<span style="color: #7CB8BB;">functor-tt</span> a c)
+
+
+  identity-neutral-left <span style="color: #DFAF8F;">:</span>
+    <span style="color: #7CB8BB;">--</span> f <span style="color: #DFAF8F;">:</span> (<span style="color: #7CB8BB;">functor-tt</span> a b)
+    <span style="color: #7CB8BB;">-&gt;</span> (<span style="color: #7CB8BB;">natural-isomorphism-tt</span> f (compose identity f))
+
+
+  identity-neutral-right <span style="color: #DFAF8F;">:</span>
+    <span style="color: #7CB8BB;">--</span> f <span style="color: #DFAF8F;">:</span> (<span style="color: #7CB8BB;">functor-tt</span> a b)
+    <span style="color: #7CB8BB;">-&gt;</span> (<span style="color: #7CB8BB;">natural-isomorphism-tt</span> f (compose f identity))
+
+
+  compose-associative <span style="color: #DFAF8F;">:</span>
+    <span style="color: #7CB8BB;">--</span> f <span style="color: #DFAF8F;">:</span> (<span style="color: #7CB8BB;">functor-tt</span> a b)
+       g <span style="color: #DFAF8F;">:</span> (<span style="color: #7CB8BB;">functor-tt</span> b c)
+       h <span style="color: #DFAF8F;">:</span> (<span style="color: #7CB8BB;">functor-tt</span> c d)
+    <span style="color: #7CB8BB;">-&gt;</span> (<span style="color: #7CB8BB;">natural-isomorphism-tt</span>
+         (compose f (compose g h))
+         (compose (compose f g) h))
+</pre>
+</div>
+</div>
+</div>
+</div>
+</div>
+<div id="postamble" class="status">
+<p class="date">Created: 2018-07-17 Tue 00:48</p>
+<p class="validation"><a href="http://validator.w3.org/check?uri=referer">Validate</a></p>
+</div>
+</body>
+</html>

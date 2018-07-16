@@ -3,9 +3,18 @@
 
 * [todo-stack]
 
-*** factorizer in universal-construction
-
 *** category-category
+
+*** universal-construction
+
+    - a carefully designed modelling of universal-construction
+      is the core of modelling category-theory
+
+*** prove iso for universal-construction
+
+    - a universal-construction is unique up to unique isomorphism
+
+    - we need to use unique to prove eqv
 
 *** set
 
@@ -14,8 +23,6 @@
 ***** fix set-morphism-t -- with set-t
 
       - maybe no top level eqv-s
-
-      ------
 
       - x -
         maybe we can not afford to do this.
@@ -42,12 +49,6 @@
       checking functorial laws for each component of the pair.
 
       - this is the whole point of Cartesian product
-
-*** prove iso for universal-construction
-
-    - a universal-construction is unique up to unique isomorphism
-
-    - we need to use unique to prove eqv
 
 *** nat-total-order
 
@@ -86,8 +87,6 @@
       a < a * 2
 
       this can be viewed as a functor from type-t to rational-s
-
-    ------
 
     - x -
       can we extend the algebraic structure to dependent type ?
@@ -131,35 +130,36 @@
 
 * [note]
 
-*** (*)
+*** (*) -- tuple-type
 
     - literal tuple-type -- (* <type> ...)
 
     - inhabit by literal tuple -- (* <data> ...)
 
-*** (+)
-
-    - union of set theory
+*** (+) -- union-type
 
     - literal union-type -- (+ <type> ...)
 
     - we do not have literal union-data,
       the union-type is inhabited by [<data> : <type>] and so on
 
-*** (data)
+*** (data) -- named record-type
 
-    - named record-type
+    - a type is a partly inhabited record
 
-    - to inhabit a data-type constructed by type-constructor,
-      we call its data-constructor.
+    - a data is a fully inhabited record
 
-      - (<name>-c <data> ...) -- call with order
+    - for example :
+      (cons-t t)
+      (cons-c car cdr)
 
-      - (<name>-c <field> = <data> ...) -- call with field
+    - constructor call syntax :
 
-*** (data :> [<sub-type> ...])
+      - (<name>-c <data> ...) -- call-with-order
 
-    - summing sub-types.
+      - (<name>-c <field> = <data> ...) -- call-with-field
+
+*** (data :> [<sub-type> ...]) -- summing sub-types
 
     - if declares same fields,
       and names a type-constructor for the sum-type.
@@ -170,9 +170,7 @@
     - it can be viewed as disjoin-union,
       because data-types in the list are disjoin.
 
-*** (data <: [<super-type> ...])
-
-    - inhabiting super-types.
+*** (data <: [<super-type> ...]) -- inheriting super-types
 
     - [c1 <: c2] means c1 inherit c2 's fields,
       thus c1 is more special then c2,
@@ -180,33 +178,26 @@
 
     - whatever data inhabits c1 also inhabits c2.
 
-*** (::)
+*** (::) -- implicit arguments
 
     - in arguments :
 
       - the value of the argument will be inferred.
-        use keyword function call syntax to give explicit value.
+        use call-with-field syntax to give explicit value.
 
     - in return values :
 
       - the value must be constructed by the function.
         but normal function call syntax will not return the value.
-        use explicit (with-details (<name> ...) ...)
-        to get all details.
-
-*** currying of type-constructor
-
-    - some of the fields of the type are already inhabited by data,
-      to inhabited such partial-type,
-      we only need to inhabit remaining fields.
+        use explicit (with-details (<name> ...) ...) to get all details.
 
 *** level of universe
 
-***** >< accumulative or not ?
+***** [todo] accumulative or not ?
 
-***** >< level rule
+***** [todo] level rule
 
-***** >< searchable-set vs non-searchable-set
+***** [todo] searchable-set vs non-searchable-set
 
 ***** level table
 
@@ -228,8 +219,6 @@
       | (+ bool-s nat-s)    | type-t | type-tt |
       | (-- nat-s -> nat-s) | type-t | type-tt |
       | list-s              | type-t | type-tt |
-
-*** implicit-ness
 
 ***** builtin level polymorphism
 
@@ -255,7 +244,7 @@
           [category-morphism-tt : type-ttt]
           [category-category : category-ttt]
 
-***** >< implicit generic-ness of haskell type-class
+***** [todo] implicit generic-ness of haskell type-class
 
       - by maintain a map from type-constructor to class-like types.
 
@@ -769,23 +758,6 @@
           -> (t-eqv-s x y)
     #+end_src
 
-*** >< (unique ... under ...)
-
-    #+begin_src cicada
-    unique [$x : $t] under $eqv-s = macro
-      (-- y : $t -> ($eqv-s $x y))
-    #+end_src
-
-*** >< (unique ... under ... such-that ...)
-
-    #+begin_src cicada
-    unique [$x : $t] under $eqv-s such-that $condition = macro
-      * ($condition $x)
-        -- y : $t
-           ($condition y)
-        -> ($eqv-s $x y)
-    #+end_src
-
 * category
 
 *** category-tt
@@ -843,31 +815,23 @@
 ***** category.initial-t
 
       #+begin_src cicada
-      category.initial-candidate-t : type-tt
-      category.initial-candidate-t = data
-        initial : object-t
-
       category.initial-t : type-tt
-      category.initial-t = data <: [initial-candidate-t]
-        unique-factor :
-          -- cand : initial-candidate-t
-          -> unique factor : (arrow-t initial cand.initial)
-             under arrow-eqv-t
+      category.initial-t = data
+        initial : object-t
+        factorizer :
+          -- cand : object-t
+          -> factor : (arrow-t initial cand)
       #+end_src
 
 ***** category.terminal-t
 
       #+begin_src cicada
-      category.terminal-candidate-t : type-tt
-      category.terminal-candidate-t = data
-        terminal : object-t
-
       category.terminal-t : type-tt
       category.terminal-t = data <: [terminal-candidate-t]
-        unique-factor :
-          -- cand : terminal-candidate-t
-          -> unique factor : (arrow-t cand.terminal terminal)
-             under arrow-eqv-t
+        terminal : object-t
+        factorizer :
+          -- cand : object-t
+          -> factor : (arrow-t cand terminal)
       #+end_src
 
 ***** category.product-t
@@ -883,16 +847,21 @@
 
       category.product-t : type-tt
       category.product-t = data <: [product-candidate-t]
+        factorizer :
+          -- cand : (product-candidate-t fst snd)
+          -> factor : (arrow-t cand.product product)
         unique-factor :
           -- cand : (product-candidate-t fst snd)
-          -> unique factor : (arrow-t cand.product product)
-             under arrow-eqv-t such-that
-               (arrow-eqv-t
-                 cand.fst-projection
-                 (compose factor fst-projection))
-               (arrow-eqv-t
-                 cand.snd-projection
-                 (compose factor snd-projection))
+          -> (unique-t
+               (arrow-t cand.product product)
+               (factorizer cand)
+               arrow-eqv-t
+               (* (arrow-eqv-t
+                    cand.fst-projection
+                    (compose factor fst-projection))
+                  (arrow-eqv-t
+                    cand.snd-projection
+                    (compose factor snd-projection))))
       #+end_src
 
 ***** category.sum-t
@@ -908,16 +877,21 @@
 
       category.sum-t : type-tt
       category.sum-t = data <: [sum-candidate-t]
+        factorizer :
+          -- cand : (sum-candidate-t fst snd)
+          -> factor : (arrow-t sum cand.sum)
         unique-factor :
           -- cand : (sum-candidate-t fst snd)
-          -> unique factor : (arrow-t sum cand.sum)
-             under arrow-eqv-t such-that
-               (arrow-eqv-t
-                 cand.fst-injection
-                 (compose fst-injection factor))
-               (arrow-eqv-t
-                 cand.snd-injection
-                 (compose snd-injection factor))
+          -> (unique-t
+               (arrow-t sum cand.sum)
+               (factorizer cand)
+               arrow-eqv-t
+               (* (arrow-eqv-t
+                    cand.fst-injection
+                    (compose fst-injection factor))
+                  (arrow-eqv-t
+                    cand.snd-injection
+                    (compose snd-injection factor))))
       #+end_src
 
 *** other structure as category
@@ -1049,7 +1023,7 @@
            product-relation :: (product-t a b p)
     #+end_src
 
-*** >< product-closed-category.product-arrow
+*** product-closed-category.product-arrow
 
     #+begin_src cicada
     product-closed-category.product-arrow :
@@ -1062,8 +1036,12 @@
       with-details (product b d)
         q <- product-relation
       (q.factorizer
-        (compose p.fst-projection f)
-        (compose p.fst-projection g))
+        (product-candidate-c
+          fst = b
+          snd = d
+          product = (product a c)
+          fst-projection = (compose p.fst-projection f)
+          snd-projection = (compose p.fst-projection g)))
     #+end_src
 
 *** product-closed-category.exponential-t
@@ -1078,16 +1056,21 @@
 
     category.exponential-t : type-tt
     category.exponential-t = data <: [exponential-candidate-t]
+      factorizer :
+        -- cand : (exponential-candidate-t ante succ)
+        -> factor : (arrow-t cand.exponential exponential)
       unique-factor :
         -- cand : (exponential-candidate-t ante succ)
-        -> unique factor : (arrow-t cand.exponential exponential)
-           under arrow-eqv-t such-that
+        -> (unique-t
+             (arrow-t cand.exponential exponential)
+             (factorizer cand)
+             arrow-eqv-t
              (arrow-eqv-t
                cand.eval
-               (compose eval (product-arrow factor identity)))
+               (compose eval (product-arrow factor identity))))
     #+end_src
 
-* >< cartesian-closed-category
+* [todo] cartesian-closed-category
 
 * void-category
 
@@ -1376,7 +1359,7 @@
       inverse : -- f : (arrow-s a b) -> (isomorphic-s a b f)
     #+end_src
 
-* >< nat-total-order
+* [todo] nat-total-order
 
 * monoid
 
@@ -1429,17 +1412,17 @@
       compose-associative = product-associative
     #+end_src
 
-* >< group
+* [todo] group
 
-* >< abelian-group
+* [todo] abelian-group
 
-* >< ring
+* [todo] ring
 
-* >< field
+* [todo] field
 
-* >< vector-space
+* [todo] vector-space
 
-* >< limit
+* [todo] limit
 
 * container
 
@@ -1684,9 +1667,9 @@
 
 * int
 
-*** >< int-s
+*** [todo] int-s
 
-*** >< mod-s
+*** [todo] mod-s
 
 *** gcd-s
 
@@ -1710,7 +1693,7 @@
 
 * set-category
 
-*** >< set-t
+*** [todo] set-t
 
     #+begin_src cicada
     note
@@ -1975,7 +1958,7 @@
         -> (d.isomorphic-t iso = (component a))
     #+end_src
 
-*** >< category-category
+*** [todo] category-category
 
     #+begin_src cicada
     category-category : category-ttt
@@ -1994,14 +1977,34 @@
         -> type-ttt
       arrow-eqv-tt lhs rhs = (natural-isomorphism-tt lhs rhs)
 
-      identity
+      identity : -- a :: category-tt -> (functor-tt a a)
+      identity = functor-cc
+        ante = a
+        succ = a
+        [todo]
 
-      compose
+      compose :
+        -- (functor-tt a b)
+           (functor-tt b c)
+        -> (functor-tt a c)
 
-      identity-neutral-left
 
-      identity-neutral-right
+      identity-neutral-left :
+        -- f : (functor-tt a b)
+        -> (natural-isomorphism-tt f (compose identity f))
 
-      compose-associative
+
+      identity-neutral-right :
+        -- f : (functor-tt a b)
+        -> (natural-isomorphism-tt f (compose f identity))
+
+
+      compose-associative :
+        -- f : (functor-tt a b)
+           g : (functor-tt b c)
+           h : (functor-tt c d)
+        -> (natural-isomorphism-tt
+             (compose f (compose g h))
+             (compose (compose f g) h))
 
     #+end_src
