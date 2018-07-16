@@ -1,18 +1,18 @@
 #+html_head: <link rel="stylesheet" href="css/org-page.css"/>
 #+title: prelude
 
-* [todo-stack]
-
 *** natural-isomorphism -- for category-category
 
     - natural-transformation whose component are isomorphism
       instead of merely morphism
 
-    - natural-isomorphism is eqv-relation between functors
-
     - eqv-relation between functors
       is specially important
       because homology and homotopy are functors!
+
+* [todo-stack]
+
+*** category-category
 
 *** handle (unique) and (give) as type-t
 
@@ -1926,17 +1926,15 @@
 
 * category-category
 
-*** category-morphism-tt
-
-    - a category-morphism-tt is a functor between two categories.
+*** functor-tt
 
     - a functor between two categories is a natural-construction
       of the structure of [ante : category-tt]
       in the structure of [succ : category-tt]
 
     #+begin_src cicada
-    category-morphism-tt : type-ttt
-    category-morphism-tt = data
+    functor-tt : type-ttt
+    functor-tt = data
       ante : category-tt
       succ : category-tt
 
@@ -1962,19 +1960,16 @@
              (succ.identity (object-map a)))
     #+end_src
 
-*** category-morphism-eqv-tt
-
-    - a category-morphism-eqv-tt
-      is a natural-transformation between two functors.
+*** natural-transformation-tt
 
     - a natural-transformation is a level up map,
       which maps objects to arrows, and arrows to squares.
 
     #+begin_src cicada
-    category-morphism-eqv-tt : type-ttt
-    category-morphism-eqv-tt = data
-      lhs : (category-morphism-tt c d)
-      rhs : (category-morphism-tt c d)
+    natural-transformation-tt : type-ttt
+    natural-transformation-tt = data
+      lhs : (functor-tt c d)
+      rhs : (functor-tt c d)
 
       component :
         -- a : c.object-t
@@ -1983,8 +1978,16 @@
       transformation :
         -- f : (c.arrow-t a b)
         -> (d.arrow-eqv-t
-             (compose (component a) (rhs.arrow-map f))
-             (compose (lhs.arrow-map f) (component b)))
+             (d.compose (component a) (rhs.arrow-map f))
+             (d.compose (lhs.arrow-map f) (component b)))
+    #+end_src
+
+*** >< natural-isomorphism-tt
+
+    #+begin_src cicada
+    natural-isomorphism-tt : type-ttt
+    natural-isomorphism-tt = data <: [natural-transformation-tt]
+
     #+end_src
 
 *** >< category-category
@@ -1998,13 +2001,13 @@
       arrow-tt :
         -- category-tt category-tt
         -> type-ttt
-      arrow-tt a b = (category-morphism-tt a b)
+      arrow-tt a b = (functor-tt a b)
 
       arrow-eqv-tt :
-        -- (category-morphism-tt a b)
-           (category-morphism-tt a b)
+        -- (functor-tt a b)
+           (functor-tt a b)
         -> type-ttt
-      arrow-eqv-tt lhs rhs = (category-morphism-eqv-tt lhs rhs)
+      arrow-eqv-tt lhs rhs = (natural-transformation-tt lhs rhs)
 
       ><><><
     #+end_src
