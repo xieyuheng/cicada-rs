@@ -2,8 +2,8 @@
 
 ## tabel of content
 
-- [project-proposal](index.html)
-- [prelude](prelude.html) -- Basic mathematical structures.
-- [sexp-syntax](sexp-syntax.html) -- sexp as intermedium syntax.
-- [todo](todo.html) -- todo list.
-- [topics](topics.html) -- Other topics to be formalized.
+- [project-proposal](https://xieyuheng.github.io/cicada)
+- [prelude](https://xieyuheng.github.io/cicada/prelude) -- Basic mathematical structures.
+- [sexp-syntax](https://xieyuheng.github.io/cicada/sexp-syntax) -- sexp as intermedium syntax.
+- [todo](https://xieyuheng.github.io/cicada/todo) -- todo list.
+- [topics](https://xieyuheng.github.io/cicada/topics) -- Other topics to be formalized.
