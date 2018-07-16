@@ -3,6 +3,8 @@
 
 * [todo-stack]
 
+*** specify the use of (::)
+
 *** category-category
 
 *** handle (unique) and (give) as type-t
@@ -10,10 +12,6 @@
 *** product-arrow
 
 ***** we need to use the `factor` in `unique-factor`
-
-*** simplify identity for product-arrow
-
-***** specify the use of (::)
 
 *** representable-functor and set
 
@@ -59,7 +57,7 @@
 
 *** monad as category
 
-*** dependent-category -- use pullback and pushout
+*** dependent-category -- use pullback, pushout and equalizer
 
     - maybe we still need to get out of category at the end
 
@@ -67,11 +65,9 @@
 
 *** topos-theory
 
-*** logic programming
+*** logic programming interface of the type system
 
-    - what is the logic programming interface of the type system ?
-
-*** use number theory -- to test type-checker as prover
+*** use number theory to test type-checker as prover
 
 *** algebraic structure
 
@@ -694,7 +690,7 @@
           -> type-t
 
         pre-reflexive :
-          -- a : element-s
+          -- a :: element-s
           -> (pre-s a a)
 
         pre-transitive :
@@ -791,17 +787,17 @@
       arrow-t : -- object-t object-t -> type-tt
       arrow-eqv-t : -- (arrow-t a b) (arrow-t a b) -> type-tt
 
-      identity : -- a : object-t -> (arrow-t a a)
+      identity : -- a :: object-t -> (arrow-t a a)
 
       compose : -- (arrow-t a b) (arrow-t b c) -> (arrow-t a c)
 
       identity-neutral-left :
         -- f : (arrow-t a b)
-        -> (arrow-eqv-t f (compose (identity a) f))
+        -> (arrow-eqv-t f (compose identity f))
 
       identity-neutral-right :
         -- f : (arrow-t a b)
-        -> (arrow-eqv-t f (compose f (identity b)))
+        -> (arrow-eqv-t f (compose f identity))
 
       compose-associative :
         -- f : (arrow-t a b)
@@ -828,8 +824,8 @@
            (arrow-t b a)
         -> type-t
       category.arrow-inverse-t f g =
-        * (arrow-eqv-t (compose f g) (identity a))
-          (arrow-eqv-t (compose g f) (identity b))
+        * (arrow-eqv-t (compose f g) identity)
+          (arrow-eqv-t (compose g f) identity)
       #+end_src
 
 ***** category.isomorphic-object-t
@@ -839,8 +835,8 @@
       category.isomorphic-object-t a b =
         * f : (arrow-t a b)
           g : (arrow-t b a)
-          (arrow-eqv-t (compose f g) (identity a))
-          (arrow-eqv-t (compose g f) (identity b))
+          (arrow-eqv-t (compose f g) identity)
+          (arrow-eqv-t (compose g f) identity)
       #+end_src
 
 *** universal construction
@@ -973,7 +969,7 @@
         arrow-eqv-t = this.arrow-eqv-t
 
         identity :
-          -- a : object-t
+          -- a :: object-t
           -> (arrow-t a a)
         identity = this.identity
 
@@ -985,12 +981,12 @@
 
         identity-neutral-left :
           -- f : (this.arrow-t b a)
-          -> (arrow-eqv-t f (this.compose f (identity a)))
+          -> (arrow-eqv-t f (this.compose f identity))
         identity-neutral-left = this.identity-neutral-right
 
         identity-neutral-right :
           -- f : (this.arrow-t b a)
-          -> (arrow-eqv-t f (this.compose (identity b) f))
+          -> (arrow-eqv-t f (this.compose identity f))
         identity-neutral-right = this.identity-neutral-left
 
         compose-associative :
@@ -1020,9 +1016,9 @@
           * (#1.arrow-eqv-t lhs.1 rhs.1)
             (#2.arrow-eqv-t lhs.2 rhs.2)
 
-        identity a =
-          * (#1.identity a.1)
-            (#2.identity a.2)
+        identity =
+          * #1.identity
+            #2.identity
 
         compose f g =
           * (#1.compose f.1 g.1)
@@ -1125,7 +1121,7 @@
       arrow-eqv-s = void-arrow-eqv-s
 
       identity :
-        -- a : void-s
+        -- a :: void-s
         -> (void-arrow-s a a)
       identity _ = void-arrow-c
 
@@ -1245,9 +1241,9 @@
       arrow-eqv-s = path-eqv-s
 
       identity :
-        -- a : node-s
+        -- a :: node-s
         -> (path-s a a)
-      identity = node-path-c
+      identity = (node-path-c a)
 
       compose = link-path-c
 
@@ -1350,7 +1346,10 @@
       arrow-s = nat-lteq-s
       arrow-eqv-s = eqv-s
 
-      identity = nat-lteq-reflexive
+      identity :
+        -- a :: nat-s
+        -> (nat-lteq-s a a)
+      identity = (nat-lteq-reflexive a)
 
       compose = nat-lteq-transitive
 
@@ -1430,7 +1429,7 @@
       object-s = unit-s
       arrow-s _ _ = element-s
       arrow-eqv-s = element-eqv-s
-      identity _ = unit
+      identity = unit
       compose = product
       identity-neutral-left = unit-neutral-left
       identity-neutral-right = unit-neutral-right
@@ -1772,9 +1771,9 @@
       arrow-eqv-t lhs rhs = (set-morphism-eqv-t lhs rhs)
 
       identity :
-        -- a : type-t
+        -- a :: type-t
         -> (set-morphism-t a a)
-      identity _ = set-morphism-c
+      identity = set-morphism-c
         morphism = nop
 
       compose :
@@ -1786,12 +1785,12 @@
 
       identity-neutral-left :
         -- f : (set-morphism-t a b)
-        -> (set-morphism-eqv-t f (compose f (identity b)))
+        -> (set-morphism-eqv-t f (compose f identity))
       identity-neutral-left f = set-morphism-eqv-c
         lhs : (set-morphism-t a b)
         lhs = f
         rhs : (set-morphism-t a b)
-        rhs = (compose f (identity b))
+        rhs = (compose f identity)
         morphism-eqv :
           -- x : a
           -> (eqv-s (f.morphism x) (f.morphism x))
@@ -1799,7 +1798,7 @@
 
       identity-neutral-right :
         -- f : (set-morphism-t a b)
-        -> (set-morphism-eqv-t f (compose (identity a) f))
+        -> (set-morphism-eqv-t f (compose identity f))
       identity-neutral-right f = set-morphism-eqv-c
         morphism-eqv _ = eqv-c
 
@@ -1825,7 +1824,7 @@
 
       arrow-eqv-t lhs rhs = (set-morphism-eqv-t lhs rhs)
 
-      identity _ = set-morphism-c
+      identity = set-morphism-c
         morphism = nop
 
       compose f g = set-morphism-c
@@ -1889,9 +1888,9 @@
       arrow-eqv-t lhs rhs = (preorder-morphism-eqv-t lhs rhs)
 
       identity :
-        -- a : preorder-t
+        -- a :: preorder-t
         -> (preorder-morphism-t a a)
-      identity _ = preorder-morphism-c
+      identity = preorder-morphism-c
         morphism = nop
         morphism-respect-pre-relation = nop
 
@@ -1945,7 +1944,7 @@
              (succ.compose (arrow-map f) (arrow-map g)))
 
       arrow-map-respect-identity :
-        -- a : ante.object-t
+        -- a :: ante.object-t
         -> (succ.arrow-eqv-t
              (arrow-map (ante.identity a))
              (succ.identity (object-map a)))
