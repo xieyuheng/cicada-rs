@@ -1,6 +1,4 @@
-# cicada language
-
-## tabel of content
+#### cicada language
 
 - [project-proposal](https://xieyuheng.github.io/cicada)
 - [prelude](https://xieyuheng.github.io/cicada/prelude) -- Basic mathematical structures.
