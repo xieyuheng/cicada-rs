@@ -3,6 +3,17 @@
 
 * [todo-stack]
 
+*** natural-isomorphism -- for category-category
+
+    - natural-transformation whose component are isomorphism
+      instead of merely morphism
+
+    - natural-isomorphism is eqv-relation between functors
+
+    - eqv-relation between functors
+      is specially important
+      because homology and homotopy are functors!
+
 *** handle (unique) and (give) as type-t
 
 *** product-arrow
@@ -24,27 +35,6 @@
     - x -
       maybe we can not afford to do this.
       for syntax reason.
-
-*** category-category
-
-***** natural-transformation
-
-      - natural-transformation is a level up map.
-
-        the definition of natural-transformation
-        maps object to arrow,
-        and arrow to square.
-
-***** natural-isomorphism
-
-      - natural-transformation whose ><><>< are isomorphism
-        instead of merely morphism
-
-      - natural-isomorphism is eqv-relation between functors
-
-      - eqv-relation between functors
-        is specially important
-        because homology and homotopy are functors!
 
 *** arrow-eqv-t -- amend `arrow-eqv-relation` for all category
 
@@ -793,9 +783,9 @@
 
     #+begin_src cicada
     unique [$x : $t] under $eqv-s such-that $condition = macro
-      * $x $condition
+      * ($condition $x)
         -- y : $t
-           y $condition
+           ($condition y)
         -> ($eqv-s $x y)
     #+end_src
 
@@ -1468,25 +1458,25 @@
 
 * >< limit
 
-* functor
+* container
 
-*** functor-t
+*** container-t
 
     #+begin_src cicada
     note
       endofunctor of set-category
 
-    functor-t : type-tt
-    functor-t = data
+    container-t : type-tt
+    container-t = data
       fun-s : -- type-t -> type-t
       map : -- (-- a -> b) (fun-t a) -> (fun-s b)
     #+end_src
 
-*** list-functor
+*** list-container
 
     #+begin_src cicada
-    list-functor : functor-t
-    list-functor = functor-c
+    list-container : container-t
+    list-container = container-c
       fun-s = list-s
       map fun list =
         case list
@@ -1506,11 +1496,11 @@
       value : c
     #+end_src
 
-*** const-functor
+*** const-container
 
     #+begin_src cicada
-    const-functor : -- type-t -> functor-t
-    const-functor c = functor-c
+    const-container : -- type-t -> container-t
+    const-container c = container-c
       fun-s = (const-s c)
 
       map : -- (-- a -> b) (const-s c a) -> (const-s c b)
@@ -1523,7 +1513,7 @@
 
     #+begin_src cicada
     monad-t : type-tt
-    monad-t = data <: [functor-t]
+    monad-t = data <: [container-t]
       pure : -- t -> (fun-s t)
       bind : -- (fun-s a) (-- a -> (fun-s b)) -> (fun-s b)
     #+end_src
@@ -1578,11 +1568,11 @@
       value : t
     #+end_src
 
-*** maybe-functor
+*** maybe-container
 
     #+begin_src cicada
-    maybe-functor : functor-t
-    maybe-functor = functor-c
+    maybe-container : container-t
+    maybe-container = container-c
       fun-s = maybe-s
       map fun maybe =
         case maybe
@@ -1660,11 +1650,11 @@
       [left right] : (tree-s t)
     #+end_src
 
-*** tree-functor
+*** tree-container
 
     #+begin_src cicada
-    tree-functor : functor-t
-    tree-functor = functor-c
+    tree-container : container-t
+    tree-container = container-c
       fun-s = tree-s
       map fun tree =
         case tree
@@ -1972,16 +1962,29 @@
              (succ.identity (object-map a)))
     #+end_src
 
-*** >< category-morphism-eqv-tt
+*** category-morphism-eqv-tt
+
+    - a category-morphism-eqv-tt
+      is a natural-transformation between two functors.
+
+    - a natural-transformation is a level up map,
+      which maps objects to arrows, and arrows to squares.
 
     #+begin_src cicada
     category-morphism-eqv-tt : type-ttt
     category-morphism-eqv-tt = data
-      lhs : (category-morphism-tt a b)
-      rhs : (category-morphism-tt a b)
+      lhs : (category-morphism-tt c d)
+      rhs : (category-morphism-tt c d)
 
-      morphism-eqv :
-        ><><><
+      component :
+        -- a : c.object-t
+        -> (d.arrow-t (lhs.object-map a) (rhs.object-map a))
+
+      transformation :
+        -- f : (c.arrow-t a b)
+        -> (d.arrow-eqv-t
+             (compose (component a) (rhs.arrow-map f))
+             (compose (lhs.arrow-map f) (component b)))
     #+end_src
 
 *** >< category-category
