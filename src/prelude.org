@@ -3,15 +3,15 @@
 
 * [todo-stack]
 
-*** specify the use of (::)
-
 *** category-category
 
 *** handle (unique) and (give) as type-t
 
+    - to use `factor` in `unique-factor`
+
 *** product-arrow
 
-***** we need to use the `factor` in `unique-factor`
+    - we need to use the `factor` in `unique-factor`
 
 *** representable-functor and set
 
@@ -183,6 +183,20 @@
       because c1 has more interface functions than c2.
 
     - whatever data inhabits c1 also inhabits c2.
+
+*** (::)
+
+    - in arguments :
+
+      - the value of the argument will be inferred.
+        use keyword function call syntax to give explicit value.
+
+    - in return values :
+
+      - the value must be constructed by the function.
+        but normal function call syntax will not return the value.
+        use explicit (apply-for-details (<name> ...) ...)
+        to get all details.
 
 *** currying of type-constructor
 
@@ -816,27 +830,16 @@
 
 *** basic relation
 
-***** category.arrow-inverse-t
+***** category.isomorphic-t
 
       #+begin_src cicada
-      category.arrow-inverse-t :
-        -- (arrow-t a b)
-           (arrow-t b a)
-        -> type-t
-      category.arrow-inverse-t f g =
-        * (arrow-eqv-t (compose f g) identity)
-          (arrow-eqv-t (compose g f) identity)
-      #+end_src
-
-***** category.isomorphic-object-t
-
-      #+begin_src cicada
-      category.isomorphic-object-t : -- object-t object-t -> type-t
-      category.isomorphic-object-t a b =
-        * f : (arrow-t a b)
-          g : (arrow-t b a)
-          (arrow-eqv-t (compose f g) identity)
-          (arrow-eqv-t (compose g f) identity)
+      category.isomorphic-t : type-tt
+      category.isomorphic-t = data
+        [lhs rhs] : object-t
+        iso : (arrow-t lhs rhs)
+        inv : (arrow-t rhs lhs)
+        iso-inv-identity : (arrow-eqv-t (compose iso inv) identity)
+        inv-iso-identity : (arrow-eqv-t (compose inv iso) identity)
       #+end_src
 
 *** universal construction
@@ -1037,16 +1040,6 @@
             (#2.compose-associative f.2 g.2 h.2)
       #+end_src
 
-* give
-
-*** give-t
-
-*** (give <return-value> such-that <condition> ...)
-
-    - return such thing literally.
-
-    - when called only return <return-value>.
-
 * product-closed-category
 
 *** product-closed-category-tt
@@ -1056,7 +1049,8 @@
     product-closed-category-tt = data <: [category-tt]
       product :
         -- [a b] : object-t
-        -> give p : object-t such-that (product-t a b p)
+        -> p : object-t
+           product-relation :: (product-t a b p)
     #+end_src
 
 *** >< product-closed-category.product-arrow
@@ -1377,10 +1371,7 @@
     #+begin_src cicada
     groupoid-t : type-tt
     groupoid-t = data <: [category-t]
-      inverse :
-        -- f : (arrow-s a b)
-        -> (* g : (arrow-s b a)
-              (arrow-inverse-s f g))
+      inverse : -- f : (arrow-s a b) -> (isomorphic-s a b f)
     #+end_src
 
 * >< nat-total-order
@@ -1717,7 +1708,7 @@
 
 * set-category
 
-*** set-t
+*** >< set-t
 
     #+begin_src cicada
     note
@@ -1972,12 +1963,14 @@
              (d.compose (lhs.arrow-map f) (component b)))
     #+end_src
 
-*** >< natural-isomorphism-tt
+*** natural-isomorphism-tt
 
     #+begin_src cicada
     natural-isomorphism-tt : type-ttt
     natural-isomorphism-tt = data <: [natural-transformation-tt]
-
+      isomorphic-component :
+        -- a : c.object-t
+        -> (d.isomorphic-t iso = (component a))
     #+end_src
 
 *** >< category-category
@@ -1997,7 +1990,16 @@
         -- (functor-tt a b)
            (functor-tt a b)
         -> type-ttt
-      arrow-eqv-tt lhs rhs = (natural-transformation-tt lhs rhs)
+      arrow-eqv-tt lhs rhs = (natural-isomorphism-tt lhs rhs)
 
-      ><><><
+      identity
+
+      compose
+
+      identity-neutral-left
+
+      identity-neutral-right
+
+      compose-associative
+
     #+end_src
