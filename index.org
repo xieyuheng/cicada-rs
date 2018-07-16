@@ -1,17 +1,282 @@
-#+html_head: <link rel="stylesheet" href="css/org-page-no-toc.css"/>
+#+html_head: <link rel="stylesheet" href="css/org-page.css"/>
 #+title: Project Proposal
 
 * Status
 
-  - I am designing a programming language prototype.
+  - I am [[https://xieyuheng.github.io][Xie Yuheng]]. I am designing a programming language.
 
-  - I tried very hard to make the design consistent,
-    and clearly expressing what's in my mind,
-    but I know the design can never be perfect.
+  - It might never be perfect, but I've tried very hard to make the design consistent,
+    and to clearly expressing what's in my mind.
 
-  - I have committed too much to this project.
-    I am hoping to get a second opinion.
-    If it will be a failure, I only wish I can fail now.
+  - I have committed too much of my life to this project.
+    I am writing this Project Proposal,
+    because I am hoping to get a second opinion.
+    If it will be a failure, I wish only I can fail now.
+
+* Intro
+
+  - The future of programming language is mathematics.
+
+  - Post-CS mathematics will be formalized in programming languages,
+    in which mathematical constructions will be tested and debugged,
+    and theorems will be proved with the help of the machines.
+
+  - The modern mathematical language is category theory.
+
+  - Thus I am designing a programming language here,
+    of which the main aim is to formalize category theory.
+
+* [todo] The Design
+
+
+
+* Examples
+
+*** Functional Programming
+
+***** nat-s
+
+      #+begin_src cicada
+      nat-s : type-t
+      nat-s = data :> [zero-s succ-s]
+
+      zero-s : type-t
+      zero-s = data
+
+      succ-s : type-t
+      succ-s = data
+        prev : nat-s
+      #+end_src
+
+***** nat-add
+
+      #+begin_src cicada
+      nat-add : -- nat-s nat-s -> nat-s
+      nat-add x y =
+        case x
+          zero-s y
+          succ-s (succ-c (recur x.prev y))
+      #+end_src
+
+***** list-s
+
+      #+begin_src cicada
+      list-s : type-t
+      list-s = data :> [null-s cons-s]
+        t : type-t
+
+      null-s : type-t
+      null-s = data
+        t : type-t
+
+      cons-s : type-t
+      cons-s = data
+        t : type-t
+        car : t
+        cdr : (list-s t)
+      #+end_src
+
+***** list-length
+
+      #+begin_src cicada
+      list-length : -- (list-s t) -> nat-s
+      list-length list =
+        case list
+          null-s zero-c
+          cons-s (succ-c (recur list.cdr))
+      #+end_src
+
+***** list-append
+
+      #+begin_src cicada
+      list-append : -- (list-s t) (list-s t) -> (list-s t)
+      list-append ante succ =
+        case ante
+          null-s succ
+          cons-s (cons-c ante.car (recur ante.cdr succ))
+      #+end_src
+
+***** list-map
+
+      #+begin_src cicada
+      list-map : -- (-- a -> b) (list-s a) -> (list-s b)
+      list-map fun list =
+        case list
+          null-s list
+          cons-s (cons-c (fun list.car) (recur fun list.cdr))
+      #+end_src
+
+*** Logic Programming
+
+***** list-length-s
+
+      #+begin_src cicada
+      list-length-s : type-t
+      list-length-s = data :> [zero-length-s succ-length-s]
+        list : (list-s t)
+        length : nat-s
+
+      zero-length-s : type-t
+      zero-length-s = data
+        list : (list-s t)
+        length : nat-s
+        list = null-c
+        length = zero-c
+
+      succ-length-s : type-t
+      succ-length-s = data
+        list : (list-s t)
+        length : nat-s
+        prev : (list-length-s list length)
+        list = (cons-c x list)
+        length = (succ-c length)
+      #+end_src
+
+***** list-append-s
+
+      #+begin_src cicada
+      list-append-s : type-t
+      list-append-s = data :> [zero-append-s succ-append-s]
+        [ante succ result] : (list-s t)
+
+      zero-append-s : type-t
+      zero-append-s = data
+        [ante succ result] : (list-s t)
+        ante = null-c
+        result = succ
+
+      succ-append-s : type-t
+      succ-append-s = data
+        [ante succ result] : (list-s t)
+        prev : (list-append-s cdr succ result-cdr)
+        ante = (cons-c car cdr)
+        result = (cons-c car result-cdr)
+      #+end_src
+
+*** Mathematical Structures
+
+***** preorder-t
+
+      #+begin_src cicada
+      note
+        preorder is a thin category
+        with at most one morphism from an object to another.
+
+      preorder-t : type-tt
+      preorder-t = data
+        element-s : type-t
+
+        pre-s :
+          -- element-s element-s
+          -> type-t
+
+        pre-reflexive :
+          -- a :: element-s
+          -> (pre-s a a)
+
+        pre-transitive :
+          -- (pre-s a b)
+             (pre-s b c)
+          -> (pre-s a c)
+      #+end_src
+
+***** eqv-relation-t
+
+      #+begin_src cicada
+      eqv-relation-t : type-tt
+      eqv-relation-t = data <: [preorder-t]
+        pre-symmetric :
+          -- (pre-s a b)
+          -> (pre-s b a)
+      #+end_src
+
+*** Category theory
+
+***** category-tt
+
+      #+begin_src cicada
+      category-tt : type-ttt
+      category-tt = data
+        object-t : type-tt
+        arrow-t : -- object-t object-t -> type-tt
+        arrow-eqv-t : -- (arrow-t a b) (arrow-t a b) -> type-tt
+
+        identity : -- a :: object-t -> (arrow-t a a)
+
+        compose : -- (arrow-t a b) (arrow-t b c) -> (arrow-t a c)
+
+        identity-neutral-left :
+          -- f : (arrow-t a b)
+          -> (arrow-eqv-t f (compose identity f))
+
+        identity-neutral-right :
+          -- f : (arrow-t a b)
+          -> (arrow-eqv-t f (compose f identity))
+
+        compose-associative :
+          -- f : (arrow-t a b)
+             g : (arrow-t b c)
+             h : (arrow-t c d)
+          -> (arrow-eqv-t
+               (compose f (compose g h))
+               (compose (compose f g) h))
+
+        arrow-eqv-relation :
+          -- [a b] :: object-t
+          -> (eqv-relation-t
+               element-t = (arrow-t a b)
+               pre-t = arrow-eqv-t)
+      #+end_src
+
+***** category.isomorphic-t
+
+      #+begin_src cicada
+      category.isomorphic-t : type-tt
+      category.isomorphic-t = data
+        [lhs rhs] : object-t
+        iso : (arrow-t lhs rhs)
+        inv : (arrow-t rhs lhs)
+        iso-inv-identity : (arrow-eqv-t (compose iso inv) identity)
+        inv-iso-identity : (arrow-eqv-t (compose inv iso) identity)
+      #+end_src
+
+***** category.product-t
+
+      #+begin_src cicada
+      category.product-candidate-t : type-tt
+      category.product-candidate-t = data
+        fst : object-t
+        snd : object-t
+        product : object-t
+        fst-projection : (arrow-t product fst)
+        snd-projection : (arrow-t product snd)
+
+      category.product-t : type-tt
+      category.product-t = data <: [product-candidate-t]
+        factorizer :
+          -- cand : (product-candidate-t fst snd)
+          -> factor : (arrow-t cand.product product)
+        unique-factor :
+          -- cand : (product-candidate-t fst snd)
+          -> unique (factorizer cand)
+             of (arrow-t cand.product product)
+             under arrow-eqv-t
+             such-that
+               (arrow-eqv-t
+                 cand.fst-projection
+                 (compose factor fst-projection))
+               (arrow-eqv-t
+                 cand.snd-projection
+                 (compose factor snd-projection))
+      #+end_src
+
+* A Proposal
+
+  - I wish to defend my design and implementation as PhD thesis,
+    because I need a peaceful place to read and write,
+    and I wish to talk and learn from people who share the same interests with me.
+
+  - Please contact me if you have any advises. My email -- xyheme@gmail.com
 
 * Tabel of Content
 
@@ -19,11 +284,3 @@
   - [[./sexp-syntax.html][sexp-syntax]] -- Sexp as intermedium syntax.
   - [[./todo.html][todo]] -- Todo list.
   - [[./topics.html][topics]] -- Other topics to be formalized.
-
-* The Design
-
-  - ><
-
-* A Proposal
-
-  - ><

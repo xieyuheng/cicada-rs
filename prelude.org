@@ -394,10 +394,7 @@
 *** list-append
 
     #+begin_src cicada
-    list-append :
-      -- (list-s t)
-         (list-s t)
-      -> (list-s t)
+    list-append : -- (list-s t) (list-s t) -> (list-s t)
     list-append ante succ =
       case ante
         null-s succ
@@ -427,14 +424,13 @@
           else (cons-c list.car (recur list.cdr x))
     #+end_src
 
-*** list-length-s -- re-imp function as relation
+*** list-length-s
 
     #+begin_src cicada
     list-length-s : type-t
     list-length-s = data :> [zero-length-s succ-length-s]
       list : (list-s t)
       length : nat-s
-
 
     zero-length-s : type-t
     zero-length-s = data
@@ -452,19 +448,7 @@
       length = (succ-c length)
     #+end_src
 
-*** list-map-preserve-list-length
-
-    #+begin_src cicada
-    list-map-preserve-list-length :
-      -- (list-length-s list n)
-      -> (list-length-s (list-map fun list) n)
-    list-map-preserve-list-length h =
-      case h
-        zero-length-s h
-        succ-length-s (succ-length-c (recur h.prev))
-    #+end_src
-
-*** list-append-s -- in prolog
+*** [note] `append` in prolog
 
     #+begin_src cicada
     note in prolog, we will have :
@@ -544,73 +528,65 @@
 
 * order
 
-*** preorder
+*** preorder-t
 
-***** preorder-t
+    #+begin_src cicada
+    note
+      preorder is a thin category
+      with at most one morphism from an object to another.
 
-      #+begin_src cicada
-      note
-        preorder is a thin category
-        with at most one morphism from an object to another.
+    preorder-t : type-tt
+    preorder-t = data
+      element-s : type-t
 
-      preorder-t : type-tt
-      preorder-t = data
-        element-s : type-t
+      pre-s :
+        -- element-s element-s
+        -> type-t
 
-        pre-s :
-          -- element-s element-s
-          -> type-t
+      pre-reflexive :
+        -- a :: element-s
+        -> (pre-s a a)
 
-        pre-reflexive :
-          -- a :: element-s
-          -> (pre-s a a)
+      pre-transitive :
+        -- (pre-s a b)
+           (pre-s b c)
+        -> (pre-s a c)
+    #+end_src
 
-        pre-transitive :
-          -- (pre-s a b)
-             (pre-s b c)
-          -> (pre-s a c)
-      #+end_src
+*** partial-order-t
 
-*** partial-order
+    #+begin_src cicada
+    partial-order-t : type-tt
+    partial-order-t = data <: [preorder-t]
+      element-eqv-s :
+        -- element-s
+           element-s
+        -> type-t
+      pre-anti-symmetric :
+        -- (pre-s a b)
+           (pre-s b a)
+        -> (element-eqv-s a b)
+    #+end_src
 
-***** partial-order-t
+*** eqv-relation-t
 
-      #+begin_src cicada
-      partial-order-t : type-tt
-      partial-order-t = data <: [preorder-t]
-        element-eqv-s :
-          -- element-s
-             element-s
-          -> type-t
-        pre-anti-symmetric :
-          -- (pre-s a b)
-             (pre-s b a)
-          -> (element-eqv-s a b)
-      #+end_src
+    #+begin_src cicada
+    eqv-relation-t : type-tt
+    eqv-relation-t = data <: [preorder-t]
+      pre-symmetric :
+        -- (pre-s a b)
+        -> (pre-s b a)
+    #+end_src
 
-*** eqv-relation
+*** total-order-t
 
-***** eqv-relation-t
-
-      #+begin_src cicada
-      eqv-relation-t : type-tt
-      eqv-relation-t = data <: [preorder-t]
-        pre-symmetric :
-          -- (pre-s a b)
-          -> (pre-s b a)
-      #+end_src
-
-*** total-order
-
-***** total-order-t
-
-      #+begin_src cicada
-      total-order-t : type-tt
-      total-order-t = data <: [partial-order-t]
-        pre-connex :
-          -- [a b] : element-s
-          -> (+ (pre-s a b) (pre-s b a))
-      #+end_src
+    #+begin_src cicada
+    total-order-t : type-tt
+    total-order-t = data <: [partial-order-t]
+      pre-connex :
+        -- [a b] : element-s
+        -> (+ (pre-s a b) (pre-s b a))
+    #+end_src
 
 * unique
 
