@@ -27,7 +27,99 @@
 
 * The Design
 
-  - ...
+*** Sub-type Relation
+
+    - It is natural to use sub-type relation to model relation between mathematical structures.
+      For example :
+      - equivalent-relation is preorder structure plus symmetric axiom.
+      - groupoid structure is category structure plus one more axiom about inverse of arrow.
+
+    - To achieve this modeling,
+      I use inheritable record-type as the main datatype.
+      For example :
+      - eqv-relation-t <: preorder-t
+      - groupoid-t <: category-t
+
+*** Sum-type
+
+    - The use of record-type and the introduction of sub-type,
+      will not be in conflict with algebraic datatype.
+
+    - On the contrary, when record-type is used uniformly,
+      sum-type will be symmetric to sub-type :
+
+      | syntax | semantics              |
+      |--------+------------------------|
+      | :>     | summing sub-types      |
+      | <:     | inheriting super-types |
+
+    - For example, list-s can be defined as following :
+
+    #+begin_src cicada
+    list-s : type-t
+    list-s = data :> [null-s cons-s]
+      t : type-t
+
+    null-s : type-t
+    null-s = data
+      t : type-t
+
+    cons-s : type-t
+    cons-s = data
+      t : type-t
+      car : t
+      cdr : (list-s t)
+    #+end_src
+
+    - list-s is declared as sum-type of null-s and cons-s,
+      thus null-s and cons-s must have all the fields of list-s,
+      `list-s :> [null-s cons-s]` also means
+      `null-s <: list-s` and `cons-s <: list-s`.
+
+*** Partly Inhabited Record as Type
+
+    - A type is a partly inhabited record -- constructed by <name>-s.
+
+    - A data is a fully inhabited record -- constructed by <name>-c.
+
+    #+begin_src cicada
+    list-append : -- (list-s t) (list-s t) -> (list-s t)
+    list-append ante succ =
+      case ante
+        null-s succ
+        cons-s (cons-c ante.car (recur ante.cdr succ))
+    #+end_src
+
+    - In the type of `list-append`,
+      (list-s t) means the first field of the record list-s
+      is inhabited by a value of type `type-t`;
+
+    - To construct a data of the type (list-s t),
+      we can use (cons-c <car> <cdr>),
+      which inhabit the rest of the fields of the record cons-s.
+
+*** Naming Convention to make Levels of Universes explicit
+
+    - I also introduced a naming convention to make the level-ness of a type explicit.
+      For examples :
+
+    | level | example                             |
+    |-------+-------------------------------------|
+    |    -1 | zero-c, null-c, cons-c              |
+    |-------+-------------------------------------|
+    |     0 | nat-s, list-s, (-- list-s -> nat-s) |
+    |-------+-------------------------------------|
+    |     1 | type-t, category-t                  |
+    |-------+-------------------------------------|
+    |     2 | type-tt, category-t                 |
+
+*** Conclusion
+
+    - To model mathematical structures
+      will be as intuitive as object-oriented programming.
+
+    - To prove theorems about mathematical constructions
+      will be as intuitive as functional programming.
 
 * Examples
 
@@ -269,6 +361,14 @@
                  (compose factor snd-projection))
       #+end_src
 
+***** groupoid-t
+
+      #+begin_src cicada
+      groupoid-t : type-tt
+      groupoid-t = data <: [category-t]
+        inverse : -- f : (arrow-s a b) -> (isomorphic-s a b f)
+      #+end_src
+
 * A Proposal
 
   - I wish to defend my design and implementation as PhD thesis,
@@ -277,9 +377,13 @@
 
   - Please contact me if you have any advises. My email -- xyheme@gmail.com
 
-* Tabel of Content
+  - I can also ...
 
-  - [[./prelude.html][prelude]] -- Basic mathematical structures.
-  - [[./sexp-syntax.html][sexp-syntax]] -- Sexp as intermedium syntax.
-  - [[./todo.html][todo]] -- Todo list.
-  - [[./topics.html][topics]] -- Other topics to be formalized.
+* More
+
+  - More informations and examples can be found in the following pages :
+
+    - [[./prelude.html][prelude]] -- Basic mathematical structures.
+    - [[./sexp-syntax.html][sexp-syntax]] -- Sexp as intermedium syntax.
+    - [[./todo.html][todo]] -- Todo list.
+    - [[./topics.html][topics]] -- Other topics to be formalized.
