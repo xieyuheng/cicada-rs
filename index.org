@@ -47,6 +47,38 @@
 
 * The Design
 
+*** Fulfilling Type
+
+    - I the fulfilling type system,
+      I use partly inhabited typed-record as type,
+      and fully inhabited typed-record to inhabits such type.
+
+    - For example, cons-s can be defend as following :
+
+    #+begin_src cicada
+    cons-s : type-t
+    cons-s = data
+      t : type-t
+      car : t
+      cdr : (list-s t)
+    #+end_src
+
+    - The record is named `cons-s`,
+      it has three fields, each with a name and a type.
+
+    #+begin_src cicada
+    ;; We can use `cons-s` as type-constructor :
+    (cons-s <t>)
+    (cons-s <t> <car>)
+    (cons-s t = <t>, cdr = <cdr>)
+
+    ;; We can use `cons-c` as data-constructor,
+    ;;   and the above types will be inhabited respectively as the following :
+    (cons-c <car> <cdr>)
+    (cons-c <cdr>)
+    (cons-c <car>)
+    #+end_src
+
 *** Sub-type Relation
 
     - It is natural to use sub-type relation to model relation between mathematical structures.
