@@ -3,7 +3,7 @@
 "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en">
 <head>
-<!-- 2018-07-18 Wed 22:14 -->
+<!-- 2018-07-18 Wed 22:19 -->
 <meta http-equiv="Content-Type" content="text/html;charset=utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>Fulfilling Type System</title>
@@ -63,76 +63,76 @@ for the JavaScript code in this tag.
 <h2>overview</h2>
 <div id="text-table-of-contents">
 <ul>
-<li><a href="#org15f31f1">Abstract</a></li>
-<li><a href="#orga6d8354">Project Proposal</a></li>
-<li><a href="#org5f69a48">Background</a></li>
-<li><a href="#org1857cc0">The Design</a>
+<li><a href="#org1da82e1">Abstract</a></li>
+<li><a href="#org8381910">Project Proposal</a></li>
+<li><a href="#orgffb0d1c">Background</a></li>
+<li><a href="#org93208b3">The Design</a>
 <ul>
-<li><a href="#org6ba241a">Sub-type Relation</a></li>
-<li><a href="#org2941339">Sum-type</a></li>
-<li><a href="#org84abf46">Partly Inhabited Record as Type</a></li>
-<li><a href="#orga1509dc">Naming Convention to make Levels of Universes explicit</a></li>
-<li><a href="#orgd51dc42">Summary</a></li>
+<li><a href="#org8f71165">Sub-type Relation</a></li>
+<li><a href="#org9267a80">Sum-type</a></li>
+<li><a href="#orgf2291bd">Partly Inhabited Record as Type</a></li>
+<li><a href="#org10b2c">Naming Convention to make Levels of Universes explicit</a></li>
+<li><a href="#orgaf1f9eb">Summary</a></li>
 </ul>
 </li>
-<li><a href="#orgaca923c">Examples</a>
+<li><a href="#org625dd79">Examples</a>
 <ul>
-<li><a href="#orgca7a6fc">Functional Programming</a>
+<li><a href="#org87b74ac">Functional Programming</a>
 <ul>
-<li><a href="#org5cd5ac8">nat-s</a></li>
-<li><a href="#org17f31b2">nat-add</a></li>
-<li><a href="#orge660a99">list-s</a></li>
-<li><a href="#orgec0618b">list-length</a></li>
-<li><a href="#org390e6f8">list-append</a></li>
-<li><a href="#org2c4dbfb">list-map</a></li>
+<li><a href="#org989d03e">nat-s</a></li>
+<li><a href="#org1297ecc">nat-add</a></li>
+<li><a href="#orgf43879c">list-s</a></li>
+<li><a href="#org227d1b6">list-length</a></li>
+<li><a href="#org9a5c1bc">list-append</a></li>
+<li><a href="#org25492f">list-map</a></li>
 </ul>
 </li>
-<li><a href="#orga46283e">Logic Programming</a>
+<li><a href="#org93d2304">Logic Programming</a>
 <ul>
-<li><a href="#org67b8c1b">list-length-s</a></li>
-<li><a href="#orgd326161">list-append-s</a></li>
+<li><a href="#orged4faab">list-length-s</a></li>
+<li><a href="#org1329f0c">list-append-s</a></li>
 </ul>
 </li>
-<li><a href="#org2207895">Mathematical Structures</a>
+<li><a href="#orgf045d2f">Mathematical Structures</a>
 <ul>
-<li><a href="#org7c5cd49">preorder-t</a></li>
-<li><a href="#org581e11c">eqv-relation-t</a></li>
+<li><a href="#org87bdee2">preorder-t</a></li>
+<li><a href="#org2a2ea43">eqv-relation-t</a></li>
 </ul>
 </li>
-<li><a href="#org5da1176">Category theory</a>
+<li><a href="#orgf01e936">Category theory</a>
 <ul>
-<li><a href="#org4e62b5f">category-tt</a></li>
-<li><a href="#orgc135694">category.isomorphic-t</a></li>
-<li><a href="#org2c6a100">category.product-t</a></li>
-<li><a href="#orgbe85be7">groupoid-t</a></li>
+<li><a href="#orgc513bdc">category-tt</a></li>
+<li><a href="#org53ec989">category.isomorphic-t</a></li>
+<li><a href="#orgb2f9156">category.product-t</a></li>
+<li><a href="#orga9e379d">groupoid-t</a></li>
 </ul>
 </li>
 </ul>
 </li>
-<li><a href="#orgd8d7461">More</a></li>
+<li><a href="#orgb0be939">More</a></li>
 </ul>
 </div>
 </div>
 <ul class="org-ul">
 <li><p>Author : <a href="https://xieyuheng.github.io">Xie Yuheng</a></p></li>
 <li><p>Date : 2018-07-18</p></li>
-<li><p>Keywords : Dependent type, Categorical model, Programming Language Design.</p></li></ul>
+<li><p>Keywords : Type System, Dependent type, Categorical model, Programming Language Design.</p></li></ul>
 
-<div id="outline-container-org15f31f1" class="outline-2">
-<h2 id="org15f31f1">Abstract</h2>
-<div class="outline-text-2" id="text-org15f31f1">
+<div id="outline-container-org1da82e1" class="outline-2">
+<h2 id="org1da82e1">Abstract</h2>
+<div class="outline-text-2" id="text-org1da82e1">
 <ul class="org-ul">
-<li><p>In this work, I am designing language,</p><p>in which I use partly inhabited typed record as type,</p><p>and fully inhabited typed record inhabits such type.</p><p>Thus I call it <b>Fulfilling Type System</b>.</p></li>
+<li><p>In this work, I am designing a language,</p><p>in which I use partly inhabited typed-record as type,</p><p>and fully inhabited typed-record to inhabits such type.</p><p>Thus I call it <b>Fulfilling Type System</b>.</p></li>
 
-<li><p>The fields of a typed record can naturally dependent on each other.</p><p>And one typed record can be used in different ways, by omitting different fields.</p></li>
+<li><p>The fields of a typed-record can naturally dependent on each other.</p><p>And one typed-record can be used in different ways, by omitting different fields.</p></li>
 
-<li><p>When defining a type by giving a typed record a name, it can inherit other types.</p><p>This inheritability means sub-type relation,</p><p>which makes the system suitable to formalize mathematical structures.</p><p>In this paper, I will formalize basic category theory as the main example.</p></li></ul>
+<li><p>When defining a type by giving a typed-record a name, it can inherit other types.</p><p>This inheritability introduces sub-type relation between types,</p><p>which makes the type system suitable to formalize mathematical structures.</p><p><ul class="org-ul"></p><p><li><p>In this paper, I will formalize basic category theory as the main example.</p></li></ul></p></li></ul>
 </div>
 </div>
 
-<div id="outline-container-orga6d8354" class="outline-2">
-<h2 id="orga6d8354">Project Proposal</h2>
-<div class="outline-text-2" id="text-orga6d8354">
+<div id="outline-container-org8381910" class="outline-2">
+<h2 id="org8381910">Project Proposal</h2>
+<div class="outline-text-2" id="text-org8381910">
 <ul class="org-ul">
 <li><p>I wish to defend my design and implementation as PhD thesis,</p><p>because I need a peaceful place to read and write,</p><p>and I wish to talk and learn from people who share the same interests with me.</p></li>
 
@@ -142,9 +142,9 @@ for the JavaScript code in this tag.
 </div>
 </div>
 
-<div id="outline-container-org5f69a48" class="outline-2">
-<h2 id="org5f69a48">Background</h2>
-<div class="outline-text-2" id="text-org5f69a48">
+<div id="outline-container-orgffb0d1c" class="outline-2">
+<h2 id="orgffb0d1c">Background</h2>
+<div class="outline-text-2" id="text-orgffb0d1c">
 <ul class="org-ul">
 <li><p>The future of programming language is mathematics.</p></li>
 
@@ -156,12 +156,12 @@ for the JavaScript code in this tag.
 </div>
 </div>
 
-<div id="outline-container-org1857cc0" class="outline-2">
-<h2 id="org1857cc0">The Design</h2>
-<div class="outline-text-2" id="text-org1857cc0">
-</div><div id="outline-container-org6ba241a" class="outline-3">
-<h3 id="org6ba241a">Sub-type Relation</h3>
-<div class="outline-text-3" id="text-org6ba241a">
+<div id="outline-container-org93208b3" class="outline-2">
+<h2 id="org93208b3">The Design</h2>
+<div class="outline-text-2" id="text-org93208b3">
+</div><div id="outline-container-org8f71165" class="outline-3">
+<h3 id="org8f71165">Sub-type Relation</h3>
+<div class="outline-text-3" id="text-org8f71165">
 <ul class="org-ul">
 <li><p>It is natural to use sub-type relation to model relation between mathematical structures.</p><p>For example :</p><p><ul class="org-ul"></p><p><li><p>equivalent-relation is preorder structure plus symmetric axiom.</p></li></p><p><li><p>groupoid structure is category structure plus one more axiom about inverse of arrow.</p></li></ul></p></li>
 
@@ -169,9 +169,9 @@ for the JavaScript code in this tag.
 </div>
 </div>
 
-<div id="outline-container-org2941339" class="outline-3">
-<h3 id="org2941339">Sum-type</h3>
-<div class="outline-text-3" id="text-org2941339">
+<div id="outline-container-org9267a80" class="outline-3">
+<h3 id="org9267a80">Sum-type</h3>
+<div class="outline-text-3" id="text-org9267a80">
 <ul class="org-ul">
 <li><p>The use of record-type and the introduction of sub-type,</p><p>will not be in conflict with algebraic datatype.</p></li>
 
@@ -202,9 +202,9 @@ cons-s <span style="color: #DFAF8F;">=</span> <span style="color: #F0DFAF; font-
 </div>
 </div>
 
-<div id="outline-container-org84abf46" class="outline-3">
-<h3 id="org84abf46">Partly Inhabited Record as Type</h3>
-<div class="outline-text-3" id="text-org84abf46">
+<div id="outline-container-orgf2291bd" class="outline-3">
+<h3 id="orgf2291bd">Partly Inhabited Record as Type</h3>
+<div class="outline-text-3" id="text-orgf2291bd">
 <ul class="org-ul">
 <li><p>A type is a partly inhabited record &#x2013; constructed by &lt;name&gt;-s.</p></li>
 
@@ -227,9 +227,9 @@ list-append ante succ <span style="color: #DFAF8F;">=</span>
 </div>
 </div>
 
-<div id="outline-container-orga1509dc" class="outline-3">
-<h3 id="orga1509dc">Naming Convention to make Levels of Universes explicit</h3>
-<div class="outline-text-3" id="text-orga1509dc">
+<div id="outline-container-org10b2c" class="outline-3">
+<h3 id="org10b2c">Naming Convention to make Levels of Universes explicit</h3>
+<div class="outline-text-3" id="text-org10b2c">
 <ul class="org-ul">
 <li><p>I also introduced a naming convention to make the level-ness of a type explicit.</p><p>For examples :</p></li></ul>
 
@@ -275,11 +275,11 @@ list-append ante succ <span style="color: #DFAF8F;">=</span>
 </div>
 </div>
 
-<div id="outline-container-orgd51dc42" class="outline-3">
-<h3 id="orgd51dc42">Summary</h3>
-<div class="outline-text-3" id="text-orgd51dc42">
+<div id="outline-container-orgaf1f9eb" class="outline-3">
+<h3 id="orgaf1f9eb">Summary</h3>
+<div class="outline-text-3" id="text-orgaf1f9eb">
 <ul class="org-ul">
-<li><p>I am using partly inhabited typed record as type,</p><p>and fully inhabited typed record inhabits such type.</p></li>
+<li><p>I am using partly inhabited typed-record as type,</p><p>and fully inhabited typed-record to inhabits such type.</p></li>
 
 <li><p>I call it <b>fulfilling type system</b>.</p></li>
 
@@ -292,15 +292,15 @@ list-append ante succ <span style="color: #DFAF8F;">=</span>
 </div>
 </div>
 
-<div id="outline-container-orgaca923c" class="outline-2">
-<h2 id="orgaca923c">Examples</h2>
-<div class="outline-text-2" id="text-orgaca923c">
-</div><div id="outline-container-orgca7a6fc" class="outline-3">
-<h3 id="orgca7a6fc">Functional Programming</h3>
-<div class="outline-text-3" id="text-orgca7a6fc">
-</div><div id="outline-container-org5cd5ac8" class="outline-4">
-<h4 id="org5cd5ac8">nat-s</h4>
-<div class="outline-text-4" id="text-org5cd5ac8">
+<div id="outline-container-org625dd79" class="outline-2">
+<h2 id="org625dd79">Examples</h2>
+<div class="outline-text-2" id="text-org625dd79">
+</div><div id="outline-container-org87b74ac" class="outline-3">
+<h3 id="org87b74ac">Functional Programming</h3>
+<div class="outline-text-3" id="text-org87b74ac">
+</div><div id="outline-container-org989d03e" class="outline-4">
+<h4 id="org989d03e">nat-s</h4>
+<div class="outline-text-4" id="text-org989d03e">
 <div class="org-src-container">
 
 <pre class="src src-cicada"><span style="color: #7CB8BB;">nat-s</span> <span style="color: #DFAF8F;">:</span> <span style="color: #7CB8BB;">type-t</span>
@@ -317,9 +317,9 @@ succ-s <span style="color: #DFAF8F;">=</span> <span style="color: #F0DFAF; font-
 </div>
 </div>
 
-<div id="outline-container-org17f31b2" class="outline-4">
-<h4 id="org17f31b2">nat-add</h4>
-<div class="outline-text-4" id="text-org17f31b2">
+<div id="outline-container-org1297ecc" class="outline-4">
+<h4 id="org1297ecc">nat-add</h4>
+<div class="outline-text-4" id="text-org1297ecc">
 <div class="org-src-container">
 
 <pre class="src src-cicada">nat-add <span style="color: #DFAF8F;">:</span> <span style="color: #7CB8BB;">--</span> <span style="color: #7CB8BB;">nat-s</span> <span style="color: #7CB8BB;">nat-s</span> <span style="color: #7CB8BB;">-&gt;</span> <span style="color: #7CB8BB;">nat-s</span>
@@ -332,9 +332,9 @@ nat-add x y <span style="color: #DFAF8F;">=</span>
 </div>
 </div>
 
-<div id="outline-container-orge660a99" class="outline-4">
-<h4 id="orge660a99">list-s</h4>
-<div class="outline-text-4" id="text-orge660a99">
+<div id="outline-container-orgf43879c" class="outline-4">
+<h4 id="orgf43879c">list-s</h4>
+<div class="outline-text-4" id="text-orgf43879c">
 <div class="org-src-container">
 
 <pre class="src src-cicada"><span style="color: #7CB8BB;">list-s</span> <span style="color: #DFAF8F;">:</span> <span style="color: #7CB8BB;">type-t</span>
@@ -355,9 +355,9 @@ cons-s <span style="color: #DFAF8F;">=</span> <span style="color: #F0DFAF; font-
 </div>
 </div>
 
-<div id="outline-container-orgec0618b" class="outline-4">
-<h4 id="orgec0618b">list-length</h4>
-<div class="outline-text-4" id="text-orgec0618b">
+<div id="outline-container-org227d1b6" class="outline-4">
+<h4 id="org227d1b6">list-length</h4>
+<div class="outline-text-4" id="text-org227d1b6">
 <div class="org-src-container">
 
 <pre class="src src-cicada">list-length <span style="color: #DFAF8F;">:</span> <span style="color: #7CB8BB;">--</span> (<span style="color: #7CB8BB;">list-s</span> t) <span style="color: #7CB8BB;">-&gt;</span> <span style="color: #7CB8BB;">nat-s</span>
@@ -370,9 +370,9 @@ list-length list <span style="color: #DFAF8F;">=</span>
 </div>
 </div>
 
-<div id="outline-container-org390e6f8" class="outline-4">
-<h4 id="org390e6f8">list-append</h4>
-<div class="outline-text-4" id="text-org390e6f8">
+<div id="outline-container-org9a5c1bc" class="outline-4">
+<h4 id="org9a5c1bc">list-append</h4>
+<div class="outline-text-4" id="text-org9a5c1bc">
 <div class="org-src-container">
 
 <pre class="src src-cicada">list-append <span style="color: #DFAF8F;">:</span> <span style="color: #7CB8BB;">--</span> (<span style="color: #7CB8BB;">list-s</span> t) (<span style="color: #7CB8BB;">list-s</span> t) <span style="color: #7CB8BB;">-&gt;</span> (<span style="color: #7CB8BB;">list-s</span> t)
@@ -385,9 +385,9 @@ list-append ante succ <span style="color: #DFAF8F;">=</span>
 </div>
 </div>
 
-<div id="outline-container-org2c4dbfb" class="outline-4">
-<h4 id="org2c4dbfb">list-map</h4>
-<div class="outline-text-4" id="text-org2c4dbfb">
+<div id="outline-container-org25492f" class="outline-4">
+<h4 id="org25492f">list-map</h4>
+<div class="outline-text-4" id="text-org25492f">
 <div class="org-src-container">
 
 <pre class="src src-cicada">list-map <span style="color: #DFAF8F;">:</span> <span style="color: #7CB8BB;">--</span> (<span style="color: #7CB8BB;">--</span> a <span style="color: #7CB8BB;">-&gt;</span> b) (<span style="color: #7CB8BB;">list-s</span> a) <span style="color: #7CB8BB;">-&gt;</span> (<span style="color: #7CB8BB;">list-s</span> b)
@@ -401,12 +401,12 @@ list-map fun list <span style="color: #DFAF8F;">=</span>
 </div>
 </div>
 
-<div id="outline-container-orga46283e" class="outline-3">
-<h3 id="orga46283e">Logic Programming</h3>
-<div class="outline-text-3" id="text-orga46283e">
-</div><div id="outline-container-org67b8c1b" class="outline-4">
-<h4 id="org67b8c1b">list-length-s</h4>
-<div class="outline-text-4" id="text-org67b8c1b">
+<div id="outline-container-org93d2304" class="outline-3">
+<h3 id="org93d2304">Logic Programming</h3>
+<div class="outline-text-3" id="text-org93d2304">
+</div><div id="outline-container-orged4faab" class="outline-4">
+<h4 id="orged4faab">list-length-s</h4>
+<div class="outline-text-4" id="text-orged4faab">
 <div class="org-src-container">
 
 <pre class="src src-cicada"><span style="color: #7CB8BB;">list-length-s</span> <span style="color: #DFAF8F;">:</span> <span style="color: #7CB8BB;">type-t</span>
@@ -433,9 +433,9 @@ succ-length-s <span style="color: #DFAF8F;">=</span> <span style="color: #F0DFAF
 </div>
 </div>
 
-<div id="outline-container-orgd326161" class="outline-4">
-<h4 id="orgd326161">list-append-s</h4>
-<div class="outline-text-4" id="text-orgd326161">
+<div id="outline-container-org1329f0c" class="outline-4">
+<h4 id="org1329f0c">list-append-s</h4>
+<div class="outline-text-4" id="text-org1329f0c">
 <div class="org-src-container">
 
 <pre class="src src-cicada"><span style="color: #7CB8BB;">list-append-s</span> <span style="color: #DFAF8F;">:</span> <span style="color: #7CB8BB;">type-t</span>
@@ -460,12 +460,12 @@ succ-append-s <span style="color: #DFAF8F;">=</span> <span style="color: #F0DFAF
 </div>
 </div>
 
-<div id="outline-container-org2207895" class="outline-3">
-<h3 id="org2207895">Mathematical Structures</h3>
-<div class="outline-text-3" id="text-org2207895">
-</div><div id="outline-container-org7c5cd49" class="outline-4">
-<h4 id="org7c5cd49">preorder-t</h4>
-<div class="outline-text-4" id="text-org7c5cd49">
+<div id="outline-container-orgf045d2f" class="outline-3">
+<h3 id="orgf045d2f">Mathematical Structures</h3>
+<div class="outline-text-3" id="text-orgf045d2f">
+</div><div id="outline-container-org87bdee2" class="outline-4">
+<h4 id="org87bdee2">preorder-t</h4>
+<div class="outline-text-4" id="text-org87bdee2">
 <div class="org-src-container">
 
 <pre class="src src-cicada"><span style="color: #F0DFAF; font-weight: bold;">note</span>
@@ -493,9 +493,9 @@ succ-append-s <span style="color: #DFAF8F;">=</span> <span style="color: #F0DFAF
 </div>
 </div>
 
-<div id="outline-container-org581e11c" class="outline-4">
-<h4 id="org581e11c">eqv-relation-t</h4>
-<div class="outline-text-4" id="text-org581e11c">
+<div id="outline-container-org2a2ea43" class="outline-4">
+<h4 id="org2a2ea43">eqv-relation-t</h4>
+<div class="outline-text-4" id="text-org2a2ea43">
 <div class="org-src-container">
 
 <pre class="src src-cicada"><span style="color: #7CB8BB;">eqv-relation-t</span> <span style="color: #DFAF8F;">:</span> <span style="color: #7CB8BB;">type-tt</span>
@@ -509,12 +509,12 @@ succ-append-s <span style="color: #DFAF8F;">=</span> <span style="color: #F0DFAF
 </div>
 </div>
 
-<div id="outline-container-org5da1176" class="outline-3">
-<h3 id="org5da1176">Category theory</h3>
-<div class="outline-text-3" id="text-org5da1176">
-</div><div id="outline-container-org4e62b5f" class="outline-4">
-<h4 id="org4e62b5f">category-tt</h4>
-<div class="outline-text-4" id="text-org4e62b5f">
+<div id="outline-container-orgf01e936" class="outline-3">
+<h3 id="orgf01e936">Category theory</h3>
+<div class="outline-text-3" id="text-orgf01e936">
+</div><div id="outline-container-orgc513bdc" class="outline-4">
+<h4 id="orgc513bdc">category-tt</h4>
+<div class="outline-text-4" id="text-orgc513bdc">
 <div class="org-src-container">
 
 <pre class="src src-cicada"><span style="color: #7CB8BB;">category-tt</span> <span style="color: #DFAF8F;">:</span> <span style="color: #7CB8BB;">type-ttt</span>
@@ -553,9 +553,9 @@ succ-append-s <span style="color: #DFAF8F;">=</span> <span style="color: #F0DFAF
 </div>
 </div>
 
-<div id="outline-container-orgc135694" class="outline-4">
-<h4 id="orgc135694">category.isomorphic-t</h4>
-<div class="outline-text-4" id="text-orgc135694">
+<div id="outline-container-org53ec989" class="outline-4">
+<h4 id="org53ec989">category.isomorphic-t</h4>
+<div class="outline-text-4" id="text-org53ec989">
 <div class="org-src-container">
 
 <pre class="src src-cicada">category<span style="color: #BFEBBF;">.isomorphic-t</span> <span style="color: #DFAF8F;">:</span> type-tt
@@ -570,9 +570,9 @@ category<span style="color: #BFEBBF;">.isomorphic-t</span> <span style="color: #
 </div>
 </div>
 
-<div id="outline-container-org2c6a100" class="outline-4">
-<h4 id="org2c6a100">category.product-t</h4>
-<div class="outline-text-4" id="text-org2c6a100">
+<div id="outline-container-orgb2f9156" class="outline-4">
+<h4 id="orgb2f9156">category.product-t</h4>
+<div class="outline-text-4" id="text-orgb2f9156">
 <div class="org-src-container">
 
 <pre class="src src-cicada">category<span style="color: #BFEBBF;">.product-candidate-t</span> <span style="color: #DFAF8F;">:</span> type-tt
@@ -605,9 +605,9 @@ category<span style="color: #BFEBBF;">.product-t</span> <span style="color: #DFA
 </div>
 </div>
 
-<div id="outline-container-orgbe85be7" class="outline-4">
-<h4 id="orgbe85be7">groupoid-t</h4>
-<div class="outline-text-4" id="text-orgbe85be7">
+<div id="outline-container-orga9e379d" class="outline-4">
+<h4 id="orga9e379d">groupoid-t</h4>
+<div class="outline-text-4" id="text-orga9e379d">
 <div class="org-src-container">
 
 <pre class="src src-cicada"><span style="color: #7CB8BB;">groupoid-t</span> <span style="color: #DFAF8F;">:</span> <span style="color: #7CB8BB;">type-tt</span>
@@ -620,9 +620,9 @@ category<span style="color: #BFEBBF;">.product-t</span> <span style="color: #DFA
 </div>
 </div>
 
-<div id="outline-container-orgd8d7461" class="outline-2">
-<h2 id="orgd8d7461">More</h2>
-<div class="outline-text-2" id="text-orgd8d7461">
+<div id="outline-container-orgb0be939" class="outline-2">
+<h2 id="orgb0be939">More</h2>
+<div class="outline-text-2" id="text-orgb0be939">
 <ul class="org-ul">
 <li><p>More informations and examples can be found in the following pages :</p><p></p><p><ul class="org-ul"></p><p><li><p><a href="./prelude.html">prelude</a> &#x2013; Basic mathematical structures.</p></li></p><p><li><p><a href="./sexp-syntax.html">sexp-syntax</a> &#x2013; Sexp as intermedium syntax.</p></li></p><p><li><p><a href="./todo.html">todo</a> &#x2013; Todo list.</p></li></p><p><li><p><a href="./topics.html">topics</a> &#x2013; Other topics to be formalized.</p></li></ul></p></li>
 
@@ -631,7 +631,7 @@ category<span style="color: #BFEBBF;">.product-t</span> <span style="color: #DFA
 </div>
 </div>
 <div id="postamble" class="status">
-<p class="date">Created: 2018-07-18 Wed 22:14</p>
+<p class="date">Created: 2018-07-18 Wed 22:19</p>
 <p class="validation"><a href="http://validator.w3.org/check?uri=referer">Validate</a></p>
 </div>
 </body>
