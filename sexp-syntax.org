@@ -13,22 +13,22 @@
 * list
 
   #+begin_src cicada
-  (: list-s type-tt)
-  (= list-s
-     (sum [null-s cons-s]
+  (: list-t type-tt)
+  (= list-t
+     (sum [null-t cons-t]
        (: t type-tt)))
 
-  (: null-s type-tt)
-  (= null-s
+  (: null-t type-tt)
+  (= null-t
      (data
        (: t type-tt)))
 
-  (: cons-s type-tt)
-  (= cons-s
+  (: cons-t type-tt)
+  (= cons-t
      (data
        (: t type-tt)
        (: car t))
-       (: cdr (list-s t)))
+       (: cdr (list-t t)))
 
   (note
     example data construction
@@ -37,17 +37,17 @@
       (= cdr null-c))
     (cons-c zero-c null-c))
 
-  (: list-length (-- (list-s t) -> nat-s))
+  (: list-length (-- (list-t t) -> nat-t))
   (= list-length
      (lambda [list]
        (case list
-         (null-s zero-c)
-         (cons-s (succ-c (recur list.cdr))))))
+         (null-t zero-c)
+         (cons-t (succ-c (recur list.cdr))))))
 
-  (: list-append (-- (list-s t) (list-s t) -> (list-s t)))
+  (: list-append (-- (list-t t) (list-t t) -> (list-t t)))
   (= list-append
      (lambda [ante succ]
        (case ante
-         (null-s succ)
-         (cons-s (cons-c ante.car (recur ante.cdr succ))))))
+         (null-t succ)
+         (cons-t (cons-c ante.car (recur ante.cdr succ))))))
   #+end_src
