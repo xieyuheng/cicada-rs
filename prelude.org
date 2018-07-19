@@ -1235,7 +1235,7 @@
     #+begin_src cicada
     groupoid-tt : type-ttt
     groupoid-tt = data <: [category-tt]
-      inverse : -- f : (arrow-t a b) -> (isomorphic-t a b f)
+      inverse : -- f : (arrow-tt a b) -> (isomorphic-tt a b f)
     #+end_src
 
 * [todo] nat-total-order
@@ -1813,18 +1813,20 @@
     #+begin_src cicada
     natural-transformation-ttt : type-tttt
     natural-transformation-ttt = data
-      lhs : (functor-ttt c d)
-      rhs : (functor-ttt c d)
+      lhs : (functor-ttt ante succ)
+      rhs : (functor-ttt ante succ)
+
+      ante succ :: object-ttt
 
       component :
-        -- a : c.object-tt
-        -> (d.arrow-tt (lhs.object-map a) (rhs.object-map a))
+        -- a : ante.object-tt
+        -> (succ.arrow-tt (lhs.object-map a) (rhs.object-map a))
 
       transformation :
-        -- f : (c.arrow-tt a b)
-        -> (d.arrow-eqv-tt
-             (d.compose (component a) (rhs.arrow-map f))
-             (d.compose (lhs.arrow-map f) (component b)))
+        -- f : (ante.arrow-tt a b)
+        -> (succ.arrow-eqv-tt
+             (succ.compose (component a) (rhs.arrow-map f))
+             (succ.compose (lhs.arrow-map f) (component b)))
     #+end_src
 
 *** natural-isomorphism-ttt
@@ -1833,8 +1835,8 @@
     natural-isomorphism-ttt : type-tttt
     natural-isomorphism-ttt = data <: [natural-transformation-ttt]
       isomorphic-component :
-        -- a : c.object-tt
-        -> (d.isomorphic-tt iso = (component a))
+        -- a : ante.object-tt
+        -> (succ.isomorphic-tt iso = (component a))
     #+end_src
 
 *** [todo] category-category

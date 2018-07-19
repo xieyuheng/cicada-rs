@@ -3,7 +3,7 @@
 "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en">
 <head>
-<!-- 2018-07-20 Fri 03:13 -->
+<!-- 2018-07-20 Fri 03:29 -->
 <meta http-equiv="Content-Type" content="text/html;charset=utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>prelude</title>
@@ -63,264 +63,264 @@ for the JavaScript code in this tag.
 <h2>overview</h2>
 <div id="text-table-of-contents">
 <ul>
-<li><a href="#org561411f"><span class="todo _note_">[note]</span> </a>
+<li><a href="#org4b7a1a9"><span class="todo _note_">[note]</span> </a>
 <ul>
-<li><a href="#org187dfbe">(*) &#x2013; tuple-type</a></li>
-<li><a href="#org57c7932">(+) &#x2013; union-type</a></li>
-<li><a href="#org4c210e2">(data) &#x2013; named record-type</a></li>
-<li><a href="#orgfd8c46">(data :&gt; [&lt;sub-type&gt; &#x2026;]) &#x2013; summing sub-types</a></li>
-<li><a href="#org756dd0e">(data &lt;: [&lt;super-type&gt; &#x2026;]) &#x2013; inheriting super-types</a></li>
-<li><a href="#orga8bc3c3">(::) &#x2013; implicit arguments</a></li>
-<li><a href="#orgaf87cbb">level of universe</a>
+<li><a href="#org373a587">(*) &#x2013; tuple-type</a></li>
+<li><a href="#orgd6df84c">(+) &#x2013; union-type</a></li>
+<li><a href="#org76c5a35">(data) &#x2013; named record-type</a></li>
+<li><a href="#orgd10d9fb">(data :&gt; [&lt;sub-type&gt; &#x2026;]) &#x2013; summing sub-types</a></li>
+<li><a href="#orga19847f">(data &lt;: [&lt;super-type&gt; &#x2026;]) &#x2013; inheriting super-types</a></li>
+<li><a href="#org81e5deb">(::) &#x2013; implicit arguments</a></li>
+<li><a href="#orgb73577b">level of universe</a>
 <ul>
-<li><a href="#orgfcac00f">accumulative or not ?</a></li>
-<li><a href="#orge2bd4ba">level rule</a></li>
-<li><a href="#orgfe146a8">level examples</a></li>
-<li><a href="#org42eefb9">level table</a></li>
-<li><a href="#orgd0e4dc6">builtin level polymorphism</a></li>
-<li><a href="#org7b5b1ff"><span class="done _todo_">[todo]</span> searchable-type vs non-searchable-type</a></li>
-<li><a href="#orgf475c39"><span class="done _todo_">[todo]</span> implicit generic-ness of haskell type-class</a></li>
+<li><a href="#org1439b10">accumulative or not ?</a></li>
+<li><a href="#org4f3a707">level rule</a></li>
+<li><a href="#org35b7dde">level examples</a></li>
+<li><a href="#orgeee71de">level table</a></li>
+<li><a href="#orgeeb16b5">builtin level polymorphism</a></li>
+<li><a href="#orgeb5fb71"><span class="done _todo_">[todo]</span> searchable-type vs non-searchable-type</a></li>
+<li><a href="#orga02d752"><span class="done _todo_">[todo]</span> implicit generic-ness of haskell type-class</a></li>
 </ul>
 </li>
 </ul>
 </li>
-<li><a href="#org2dfa44">void</a>
+<li><a href="#org2f70850">void</a>
 <ul>
-<li><a href="#org7d0db05">void-t</a></li>
-<li><a href="#orge34fbf0">absurd</a></li>
+<li><a href="#org89a9d0c">void-t</a></li>
+<li><a href="#org55dede1">absurd</a></li>
 </ul>
 </li>
-<li><a href="#org81c628c">unit</a>
+<li><a href="#org434ac24">unit</a>
 <ul>
-<li><a href="#orgab81ac9">unit-t</a></li>
-<li><a href="#org3a250c6">unit</a></li>
+<li><a href="#org9f636a0">unit-t</a></li>
+<li><a href="#org33d9efb">unit</a></li>
 </ul>
 </li>
-<li><a href="#org5557f9e">bool</a>
+<li><a href="#orgbc0ff02">bool</a>
 <ul>
-<li><a href="#org5286b9c">bool-t</a></li>
+<li><a href="#orga6f24f7">bool-t</a></li>
 </ul>
 </li>
-<li><a href="#orgc893680">eqv</a>
+<li><a href="#org19aaf2b">eqv</a>
 <ul>
-<li><a href="#orgfe5ac3d">eqv-t</a></li>
-<li><a href="#org3ec894">eqv-apply</a></li>
-<li><a href="#orgc402a5b">eqv-swap</a></li>
-<li><a href="#org3e68210">eqv-compose</a></li>
+<li><a href="#orga144f31">eqv-t</a></li>
+<li><a href="#org7ef6193">eqv-apply</a></li>
+<li><a href="#orgcf1ff71">eqv-swap</a></li>
+<li><a href="#orgedd8f57">eqv-compose</a></li>
 </ul>
 </li>
-<li><a href="#org964cba5">nat</a>
+<li><a href="#org14d0a2d">nat</a>
 <ul>
-<li><a href="#org30a984a">nat-t</a></li>
-<li><a href="#org10cf65a">nat-add</a></li>
-<li><a href="#org3e58d28">nat-mul</a></li>
-<li><a href="#org87a99c9">nat-factorial</a></li>
-<li><a href="#orgedac0ee">nat-even-p</a></li>
-<li><a href="#orge790aed">nat-even-t</a></li>
-<li><a href="#org81b6b0b">two-even</a></li>
-<li><a href="#org1f28518">nat-add-associative</a></li>
-<li><a href="#orge01da22">nat-add-commutative</a></li>
-<li><a href="#org25ee47c">nat-add-zero-commutative</a></li>
-<li><a href="#orgdd867d8">nat-add-succ-commutative-1</a></li>
-<li><a href="#org5dd296c">nat-add-succ-commutative-2</a></li>
+<li><a href="#orgb81144c">nat-t</a></li>
+<li><a href="#org895edbc">nat-add</a></li>
+<li><a href="#org4879cd">nat-mul</a></li>
+<li><a href="#orgdf1260c">nat-factorial</a></li>
+<li><a href="#org20ed3e3">nat-even-p</a></li>
+<li><a href="#org6e9bc56">nat-even-t</a></li>
+<li><a href="#org5685f60">two-even</a></li>
+<li><a href="#org6473adb">nat-add-associative</a></li>
+<li><a href="#org509db75">nat-add-commutative</a></li>
+<li><a href="#org64350d9">nat-add-zero-commutative</a></li>
+<li><a href="#org7d3a1dc">nat-add-succ-commutative-1</a></li>
+<li><a href="#org8cc5c69">nat-add-succ-commutative-2</a></li>
 </ul>
 </li>
-<li><a href="#orge3bf383">list</a>
+<li><a href="#org49b4ba3">list</a>
 <ul>
-<li><a href="#orged12db">list-t</a></li>
-<li><a href="#orgafe573d">list-length</a></li>
-<li><a href="#orgdfa811b">list-append</a></li>
-<li><a href="#org7b7352">list-map</a></li>
-<li><a href="#org7dcef86">list-remove-first</a></li>
-<li><a href="#orgc500e82">list-length-t</a></li>
-<li><a href="#org6d1aa56"><span class="todo _note_">[note]</span> `append` in prolog</a></li>
-<li><a href="#orgdc9b4b0">list-append-t</a></li>
+<li><a href="#org6b01f7d">list-t</a></li>
+<li><a href="#org3999cfb">list-length</a></li>
+<li><a href="#org60c320">list-append</a></li>
+<li><a href="#orgff6165e">list-map</a></li>
+<li><a href="#org15ae56e">list-remove-first</a></li>
+<li><a href="#orgaa58d0f">list-length-t</a></li>
+<li><a href="#orgec0fa63"><span class="todo _note_">[note]</span> `append` in prolog</a></li>
+<li><a href="#org87979b1">list-append-t</a></li>
 </ul>
 </li>
-<li><a href="#org1d1dc9a">vect</a>
+<li><a href="#orgd23e4f3">vect</a>
 <ul>
-<li><a href="#org98358c1">vect-t</a></li>
-<li><a href="#org31f03f3">vect-append</a></li>
-<li><a href="#org7912b05">vect-map</a></li>
+<li><a href="#org756209a">vect-t</a></li>
+<li><a href="#orge5d6e56">vect-append</a></li>
+<li><a href="#org6101ae0">vect-map</a></li>
 </ul>
 </li>
-<li><a href="#orgb459059">order</a>
+<li><a href="#org238fe16">order</a>
 <ul>
-<li><a href="#org1a27bc">preorder-tt</a></li>
-<li><a href="#org614e15f">partial-order-tt</a></li>
-<li><a href="#orgd1ce999">eqv-relation-tt</a></li>
-<li><a href="#org4c3e81d">total-order-tt</a></li>
+<li><a href="#orgd747a9">preorder-tt</a></li>
+<li><a href="#orgd326f36">partial-order-tt</a></li>
+<li><a href="#org3795291">eqv-relation-tt</a></li>
+<li><a href="#orgd15b0a1">total-order-tt</a></li>
 </ul>
 </li>
-<li><a href="#orgf91c8a2">unique</a>
+<li><a href="#orgb5caacc">unique</a>
 <ul>
-<li><a href="#org3e9bd14">unique-tt</a></li>
-<li><a href="#org42eb1fd">(unique)</a></li>
+<li><a href="#orge9b7f21">unique-tt</a></li>
+<li><a href="#org6c19adf">(unique)</a></li>
 </ul>
 </li>
-<li><a href="#orgd5f1148">category</a>
+<li><a href="#orgea5e7fd">category</a>
 <ul>
-<li><a href="#org3a93d5f">category-ttt</a></li>
-<li><a href="#orgf8e3f70">basic relation</a>
+<li><a href="#org18a60c7">category-ttt</a></li>
+<li><a href="#orgd2e6230">basic relation</a>
 <ul>
-<li><a href="#orga4ca7c6">category.isomorphic-tt</a></li>
+<li><a href="#org1113572">category.isomorphic-tt</a></li>
 </ul>
 </li>
-<li><a href="#org49dd3fc">universal construction</a>
+<li><a href="#orgb8ec921">universal construction</a>
 <ul>
-<li><a href="#org644dcb4">category.initial-tt</a></li>
-<li><a href="#orgbb109da">category.terminal-tt</a></li>
-<li><a href="#org4bfd7b5">category.product-tt</a></li>
-<li><a href="#orgee49a30">category.sum-tt</a></li>
+<li><a href="#orge40e4c4">category.initial-tt</a></li>
+<li><a href="#orge7fdd97">category.terminal-tt</a></li>
+<li><a href="#orge4a48fa">category.product-tt</a></li>
+<li><a href="#org118a8a8">category.sum-tt</a></li>
 </ul>
 </li>
-<li><a href="#org71d1c6c">other structure as category</a>
+<li><a href="#org53d3082">other structure as category</a>
 <ul>
-<li><a href="#org97d2c4d">preorder.as-category</a></li>
+<li><a href="#org4dfc440">preorder.as-category</a></li>
 </ul>
 </li>
-<li><a href="#org4f5254f">build new category from old category</a>
+<li><a href="#orgf5b7620">build new category from old category</a>
 <ul>
-<li><a href="#org1958e5f">category.opposite</a></li>
-<li><a href="#org8c45c82">category-product</a></li>
+<li><a href="#org1d9f42d">category.opposite</a></li>
+<li><a href="#org2485dba">category-product</a></li>
 </ul>
 </li>
 </ul>
 </li>
-<li><a href="#orgffc315a">product-closed-category</a>
+<li><a href="#org3480eee">product-closed-category</a>
 <ul>
-<li><a href="#org947f52c">product-closed-category-ttt</a></li>
-<li><a href="#org8423297">product-closed-category.product-arrow</a></li>
-<li><a href="#orgfd04b3">product-closed-category.exponential-tt</a></li>
+<li><a href="#org415737a">product-closed-category-ttt</a></li>
+<li><a href="#org6d5cc8c">product-closed-category.product-arrow</a></li>
+<li><a href="#org6dc5bb2">product-closed-category.exponential-tt</a></li>
 </ul>
 </li>
-<li><a href="#org3a5f699"><span class="done _todo_">[todo]</span> cartesian-closed-category</a></li>
-<li><a href="#orgaf8b402">void-category</a>
+<li><a href="#org514ee00"><span class="done _todo_">[todo]</span> cartesian-closed-category</a></li>
+<li><a href="#org322256d">void-category</a>
 <ul>
-<li><a href="#org1a0d953">void-arrow-t</a></li>
-<li><a href="#org3a8ab93">void-arrow-eqv-t</a></li>
-<li><a href="#org4d3a51b">void-category</a></li>
+<li><a href="#orgbd7d748">void-arrow-t</a></li>
+<li><a href="#orgfbf8d79">void-arrow-eqv-t</a></li>
+<li><a href="#org9d010da">void-category</a></li>
 </ul>
 </li>
-<li><a href="#org5bcdb51">graph-tt</a>
+<li><a href="#org6185284">graph-tt</a>
 <ul>
-<li><a href="#org2a67538">graph-tt</a></li>
-<li><a href="#orgaa8e38a">graph.path-t</a></li>
-<li><a href="#orgfa95d6f">graph.path-eqv-t</a></li>
-<li><a href="#org8705b4">graph.as-free-category</a></li>
+<li><a href="#org41c24d2">graph-tt</a></li>
+<li><a href="#org93494f">graph.path-t</a></li>
+<li><a href="#orgcdc5bc6">graph.path-eqv-t</a></li>
+<li><a href="#org9717f11">graph.as-free-category</a></li>
 </ul>
 </li>
-<li><a href="#orgd88d659">nat-order-category</a>
+<li><a href="#orgf3ef4b3">nat-order-category</a>
 <ul>
-<li><a href="#orgeda5f1f">nat-lteq-t</a></li>
-<li><a href="#orgc42b4c3">nat-non-negative</a></li>
-<li><a href="#orga92d3a1">nat-lteq-reflexive</a></li>
-<li><a href="#org9bf35d6">nat-lteq-transitive</a></li>
-<li><a href="#org7135a36">nat-lt-t</a></li>
-<li><a href="#orge91cb1b">nat-archimedean-property</a></li>
-<li><a href="#orge055fd6">nat-order-category</a></li>
+<li><a href="#org6d29813">nat-lteq-t</a></li>
+<li><a href="#org1a6a80b">nat-non-negative</a></li>
+<li><a href="#orgeb4970c">nat-lteq-reflexive</a></li>
+<li><a href="#orgb4b2bee">nat-lteq-transitive</a></li>
+<li><a href="#org5132c04">nat-lt-t</a></li>
+<li><a href="#orge370217">nat-archimedean-property</a></li>
+<li><a href="#org50db30f">nat-order-category</a></li>
 </ul>
 </li>
-<li><a href="#org939eb88">groupoid</a>
+<li><a href="#org3f4375f">groupoid</a>
 <ul>
-<li><a href="#org9240868">groupoid-tt</a></li>
+<li><a href="#org782e9f8">groupoid-tt</a></li>
 </ul>
 </li>
-<li><a href="#org8b26658"><span class="done _todo_">[todo]</span> nat-total-order</a></li>
-<li><a href="#org7337d9e">monoid</a>
+<li><a href="#org4d01c26"><span class="done _todo_">[todo]</span> nat-total-order</a></li>
+<li><a href="#org4bcf2b1">monoid</a>
 <ul>
-<li><a href="#orgdb23d91">monoid-tt</a></li>
-<li><a href="#org7c1f66c">monoid.as-category</a></li>
+<li><a href="#org316bd81">monoid-tt</a></li>
+<li><a href="#org463b37c">monoid.as-category</a></li>
 </ul>
 </li>
-<li><a href="#org7cf994d"><span class="done _todo_">[todo]</span> group</a></li>
-<li><a href="#org79894af"><span class="done _todo_">[todo]</span> abelian-group</a></li>
-<li><a href="#org9c5c444"><span class="done _todo_">[todo]</span> ring</a></li>
-<li><a href="#orgf26cd8"><span class="done _todo_">[todo]</span> field</a></li>
-<li><a href="#org6c55ba1"><span class="done _todo_">[todo]</span> vector-space</a></li>
-<li><a href="#org61d23d2"><span class="done _todo_">[todo]</span> limit</a></li>
-<li><a href="#org5fb33b5">container</a>
+<li><a href="#org82394af"><span class="done _todo_">[todo]</span> group</a></li>
+<li><a href="#org8354133"><span class="done _todo_">[todo]</span> abelian-group</a></li>
+<li><a href="#orgd2b30fe"><span class="done _todo_">[todo]</span> ring</a></li>
+<li><a href="#org193b4f2"><span class="done _todo_">[todo]</span> field</a></li>
+<li><a href="#org90c45a1"><span class="done _todo_">[todo]</span> vector-space</a></li>
+<li><a href="#org3de5158"><span class="done _todo_">[todo]</span> limit</a></li>
+<li><a href="#org27684e5">container</a>
 <ul>
-<li><a href="#orga889d9a">container-tt</a></li>
-<li><a href="#orgec342ce">list-container</a></li>
+<li><a href="#org551dd88">container-tt</a></li>
+<li><a href="#org472f598">list-container</a></li>
 </ul>
 </li>
-<li><a href="#org87af502">const</a>
+<li><a href="#org8301a7f">const</a>
 <ul>
-<li><a href="#orgd3bee7f">const-t</a></li>
-<li><a href="#orgfe20236">const-container</a></li>
+<li><a href="#orgf6cad3">const-t</a></li>
+<li><a href="#orgbacc45">const-container</a></li>
 </ul>
 </li>
-<li><a href="#orgeec2eb6">monad</a>
+<li><a href="#org3b529e2">monad</a>
 <ul>
-<li><a href="#orgb86bfdd">monad-tt</a></li>
-<li><a href="#org3abe15c">monad.compose</a></li>
-<li><a href="#orgf3cf10f">monad.flatten</a></li>
-<li><a href="#org8486ba">list-monad</a></li>
+<li><a href="#org62f6d1a">monad-tt</a></li>
+<li><a href="#org8acb74a">monad.compose</a></li>
+<li><a href="#orgb1b3b32">monad.flatten</a></li>
+<li><a href="#org38da380">list-monad</a></li>
 </ul>
 </li>
-<li><a href="#orgdef8d5d">maybe</a>
+<li><a href="#orgf4cb38e">maybe</a>
 <ul>
-<li><a href="#orgdb41982">maybe-t</a></li>
-<li><a href="#orgf54c6ce">maybe-container</a></li>
-<li><a href="#org758dd9b">maybe-monad</a></li>
+<li><a href="#org725ca07">maybe-t</a></li>
+<li><a href="#orgfde8567">maybe-container</a></li>
+<li><a href="#org5d7b3c6">maybe-monad</a></li>
 </ul>
 </li>
-<li><a href="#org2928e4">state</a>
+<li><a href="#orge8bbaa">state</a>
 <ul>
-<li><a href="#orgbc17b73">state-t</a></li>
-<li><a href="#org3337923">state-monad</a></li>
+<li><a href="#org2301221">state-t</a></li>
+<li><a href="#org20ecec9">state-monad</a></li>
 </ul>
 </li>
-<li><a href="#orgc00070c">tree</a>
+<li><a href="#org1747e97">tree</a>
 <ul>
-<li><a href="#org7fc6583">tree-t</a></li>
-<li><a href="#org1e7fee7">tree-container</a></li>
-<li><a href="#orgffd078a">tree-zip</a></li>
-<li><a href="#orgc6c081">tree-numbering</a></li>
+<li><a href="#org1562580">tree-t</a></li>
+<li><a href="#org2bff4e5">tree-container</a></li>
+<li><a href="#org708df32">tree-zip</a></li>
+<li><a href="#org3ae9375">tree-numbering</a></li>
 </ul>
 </li>
-<li><a href="#org58b4fc7">int</a>
+<li><a href="#orgc27af9a">int</a>
 <ul>
-<li><a href="#orgf1f4d9c"><span class="done _todo_">[todo]</span> int-t</a></li>
-<li><a href="#org58a7f9b"><span class="done _todo_">[todo]</span> mod-t</a></li>
-<li><a href="#org79eded8">gcd-t</a></li>
+<li><a href="#org90731ff"><span class="done _todo_">[todo]</span> int-t</a></li>
+<li><a href="#org6ebf319"><span class="done _todo_">[todo]</span> mod-t</a></li>
+<li><a href="#org7619f50">gcd-t</a></li>
 </ul>
 </li>
-<li><a href="#org6f48fd3">set-category</a>
+<li><a href="#org20e4379">set-category</a>
 <ul>
-<li><a href="#org9fd311a"><span class="done _todo_">[todo]</span> set-tt</a></li>
-<li><a href="#orgca4889d">set-morphism-tt</a></li>
-<li><a href="#orgfb6e523">set-morphism-eqv-tt</a></li>
-<li><a href="#org420c732">set-category</a></li>
-<li><a href="#orgdf06bf6">set-category &#x2013; without type</a></li>
+<li><a href="#orgc55ed1c"><span class="done _todo_">[todo]</span> set-tt</a></li>
+<li><a href="#org2bdf96b">set-morphism-tt</a></li>
+<li><a href="#org2b8fca1">set-morphism-eqv-tt</a></li>
+<li><a href="#orgeb60068">set-category</a></li>
+<li><a href="#org6fdb6fe">set-category &#x2013; without type</a></li>
 </ul>
 </li>
-<li><a href="#org84c7052">preorder-category</a>
+<li><a href="#org42333bb">preorder-category</a>
 <ul>
-<li><a href="#org5bc463a">preorder-morphism-tt</a></li>
-<li><a href="#orge98af6d">preorder-morphism-eqv-tt</a></li>
-<li><a href="#org8eb7fc9">preorder-category</a></li>
+<li><a href="#orgaa3178">preorder-morphism-tt</a></li>
+<li><a href="#org3da2328">preorder-morphism-eqv-tt</a></li>
+<li><a href="#org7c5d8a">preorder-category</a></li>
 </ul>
 </li>
-<li><a href="#orgdd74e64">category-category</a>
+<li><a href="#org813bf12">category-category</a>
 <ul>
-<li><a href="#orgab7de15">functor-ttt</a></li>
-<li><a href="#org88a9f01">natural-transformation-ttt</a></li>
-<li><a href="#org998efd3">natural-isomorphism-ttt</a></li>
-<li><a href="#orgc445dc1"><span class="done _todo_">[todo]</span> category-category</a></li>
+<li><a href="#orge636eca">functor-ttt</a></li>
+<li><a href="#orgfb4d22a">natural-transformation-ttt</a></li>
+<li><a href="#org102699d">natural-isomorphism-ttt</a></li>
+<li><a href="#org31c5eb8"><span class="done _todo_">[todo]</span> category-category</a></li>
 </ul>
 </li>
 </ul>
 </div>
 </div>
 
-<div id="outline-container-org561411f" class="outline-2">
-<h2 id="org561411f"><span class="todo _note_">[note]</span> </h2>
-<div class="outline-text-2" id="text-org561411f">
-</div><div id="outline-container-org187dfbe" class="outline-3">
-<h3 id="org187dfbe">(*) &#x2013; tuple-type</h3>
-<div class="outline-text-3" id="text-org187dfbe">
+<div id="outline-container-org4b7a1a9" class="outline-2">
+<h2 id="org4b7a1a9"><span class="todo _note_">[note]</span> </h2>
+<div class="outline-text-2" id="text-org4b7a1a9">
+</div><div id="outline-container-org373a587" class="outline-3">
+<h3 id="org373a587">(*) &#x2013; tuple-type</h3>
+<div class="outline-text-3" id="text-org373a587">
 <ul class="org-ul">
 <li><p>literal tuple-type &#x2013; (* &lt;type&gt; &#x2026;)</p></li>
 
@@ -328,9 +328,9 @@ for the JavaScript code in this tag.
 </div>
 </div>
 
-<div id="outline-container-org57c7932" class="outline-3">
-<h3 id="org57c7932">(+) &#x2013; union-type</h3>
-<div class="outline-text-3" id="text-org57c7932">
+<div id="outline-container-orgd6df84c" class="outline-3">
+<h3 id="orgd6df84c">(+) &#x2013; union-type</h3>
+<div class="outline-text-3" id="text-orgd6df84c">
 <ul class="org-ul">
 <li><p>literal union-type &#x2013; (+ &lt;type&gt; &#x2026;)</p></li>
 
@@ -338,9 +338,9 @@ for the JavaScript code in this tag.
 </div>
 </div>
 
-<div id="outline-container-org4c210e2" class="outline-3">
-<h3 id="org4c210e2">(data) &#x2013; named record-type</h3>
-<div class="outline-text-3" id="text-org4c210e2">
+<div id="outline-container-org76c5a35" class="outline-3">
+<h3 id="org76c5a35">(data) &#x2013; named record-type</h3>
+<div class="outline-text-3" id="text-org76c5a35">
 <ul class="org-ul">
 <li><p>a type is a partly inhabited record</p></li>
 
@@ -352,9 +352,9 @@ for the JavaScript code in this tag.
 </div>
 </div>
 
-<div id="outline-container-orgfd8c46" class="outline-3">
-<h3 id="orgfd8c46">(data :&gt; [&lt;sub-type&gt; &#x2026;]) &#x2013; summing sub-types</h3>
-<div class="outline-text-3" id="text-orgfd8c46">
+<div id="outline-container-orgd10d9fb" class="outline-3">
+<h3 id="orgd10d9fb">(data :&gt; [&lt;sub-type&gt; &#x2026;]) &#x2013; summing sub-types</h3>
+<div class="outline-text-3" id="text-orgd10d9fb">
 <ul class="org-ul">
 <li><p>if declares same fields,</p><p>and names a type-constructor for the sum-type.</p></li>
 
@@ -364,9 +364,9 @@ for the JavaScript code in this tag.
 </div>
 </div>
 
-<div id="outline-container-org756dd0e" class="outline-3">
-<h3 id="org756dd0e">(data &lt;: [&lt;super-type&gt; &#x2026;]) &#x2013; inheriting super-types</h3>
-<div class="outline-text-3" id="text-org756dd0e">
+<div id="outline-container-orga19847f" class="outline-3">
+<h3 id="orga19847f">(data &lt;: [&lt;super-type&gt; &#x2026;]) &#x2013; inheriting super-types</h3>
+<div class="outline-text-3" id="text-orga19847f">
 <ul class="org-ul">
 <li><p>[c1 &lt;: c2] means c1 inherit c2 's fields,</p><p>thus c1 is more special then c2,</p><p>because c1 has more interface functions than c2.</p></li>
 
@@ -374,9 +374,9 @@ for the JavaScript code in this tag.
 </div>
 </div>
 
-<div id="outline-container-orga8bc3c3" class="outline-3">
-<h3 id="orga8bc3c3">(::) &#x2013; implicit arguments</h3>
-<div class="outline-text-3" id="text-orga8bc3c3">
+<div id="outline-container-org81e5deb" class="outline-3">
+<h3 id="org81e5deb">(::) &#x2013; implicit arguments</h3>
+<div class="outline-text-3" id="text-org81e5deb">
 <ul class="org-ul">
 <li><p>in arguments :</p><p></p><p><ul class="org-ul"></p><p><li><p>the value of the argument will be inferred.</p><p>use call-with-field syntax to give explicit value.</p></li></ul></p></li>
 
@@ -384,12 +384,12 @@ for the JavaScript code in this tag.
 </div>
 </div>
 
-<div id="outline-container-orgaf87cbb" class="outline-3">
-<h3 id="orgaf87cbb">level of universe</h3>
-<div class="outline-text-3" id="text-orgaf87cbb">
-</div><div id="outline-container-orgfcac00f" class="outline-4">
-<h4 id="orgfcac00f">accumulative or not ?</h4>
-<div class="outline-text-4" id="text-orgfcac00f">
+<div id="outline-container-orgb73577b" class="outline-3">
+<h3 id="orgb73577b">level of universe</h3>
+<div class="outline-text-3" id="text-orgb73577b">
+</div><div id="outline-container-org1439b10" class="outline-4">
+<h4 id="org1439b10">accumulative or not ?</h4>
+<div class="outline-text-4" id="text-org1439b10">
 <ul class="org-ul">
 <li><p>I choose to be non-accumulative for now.</p></li>
 
@@ -397,9 +397,9 @@ for the JavaScript code in this tag.
 </div>
 </div>
 
-<div id="outline-container-orge2bd4ba" class="outline-4">
-<h4 id="orge2bd4ba">level rule</h4>
-<div class="outline-text-4" id="text-orge2bd4ba">
+<div id="outline-container-org4f3a707" class="outline-4">
+<h4 id="org4f3a707">level rule</h4>
+<div class="outline-text-4" id="text-org4f3a707">
 <div class="org-src-container">
 
 <pre class="src src-cicada">(level (<span style="color: #7CB8BB;">*</span> <span style="color: #7CB8BB;">&lt;type&gt;</span> ...)) <span style="color: #DFAF8F;">=</span> (max (level <span style="color: #7CB8BB;">&lt;type&gt;</span>) ...)
@@ -413,9 +413,9 @@ for the JavaScript code in this tag.
 </div>
 </div>
 
-<div id="outline-container-orgfe146a8" class="outline-4">
-<h4 id="orgfe146a8">level examples</h4>
-<div class="outline-text-4" id="text-orgfe146a8">
+<div id="outline-container-org35b7dde" class="outline-4">
+<h4 id="org35b7dde">level examples</h4>
+<div class="outline-text-4" id="text-org35b7dde">
 <table border="2" cellspacing="0" cellpadding="6" rules="groups" frame="hsides">
 
 
@@ -468,9 +468,9 @@ for the JavaScript code in this tag.
 </div>
 </div>
 
-<div id="outline-container-org42eefb9" class="outline-4">
-<h4 id="org42eefb9">level table</h4>
-<div class="outline-text-4" id="text-org42eefb9">
+<div id="outline-container-orgeee71de" class="outline-4">
+<h4 id="orgeee71de">level table</h4>
+<div class="outline-text-4" id="text-orgeee71de">
 <table border="2" cellspacing="0" cellpadding="6" rules="groups" frame="hsides">
 
 
@@ -512,9 +512,9 @@ for the JavaScript code in this tag.
 </div>
 </div>
 
-<div id="outline-container-orgd0e4dc6" class="outline-4">
-<h4 id="orgd0e4dc6">builtin level polymorphism</h4>
-<div class="outline-text-4" id="text-orgd0e4dc6">
+<div id="outline-container-orgeeb16b5" class="outline-4">
+<h4 id="orgeeb16b5">builtin level polymorphism</h4>
+<div class="outline-text-4" id="text-orgeeb16b5">
 <ul class="org-ul">
 <li><p>we can not really afford to</p><p>split category-t* to category-t and category-tt,</p><p>because we have to redefined so many types along category-t.</p></li>
 
@@ -524,17 +524,17 @@ for the JavaScript code in this tag.
 </div>
 </div>
 
-<div id="outline-container-org7b5b1ff" class="outline-4">
-<h4 id="org7b5b1ff"><span class="done _todo_">[todo]</span> searchable-type vs non-searchable-type</h4>
-<div class="outline-text-4" id="text-org7b5b1ff">
+<div id="outline-container-orgeb5fb71" class="outline-4">
+<h4 id="orgeb5fb71"><span class="done _todo_">[todo]</span> searchable-type vs non-searchable-type</h4>
+<div class="outline-text-4" id="text-orgeb5fb71">
 <ul class="org-ul">
 <li><p>(&#x2013; &lt;type&gt; &#x2026; -&gt; &lt;result-type&gt;)</p><p>is the most important example of searchable-type.</p></li></ul>
 </div>
 </div>
 
-<div id="outline-container-orgf475c39" class="outline-4">
-<h4 id="orgf475c39"><span class="done _todo_">[todo]</span> implicit generic-ness of haskell type-class</h4>
-<div class="outline-text-4" id="text-orgf475c39">
+<div id="outline-container-orga02d752" class="outline-4">
+<h4 id="orga02d752"><span class="done _todo_">[todo]</span> implicit generic-ness of haskell type-class</h4>
+<div class="outline-text-4" id="text-orga02d752">
 <ul class="org-ul">
 <li><p>by maintain a map from type-constructor to class-like types.</p></li>
 
@@ -544,12 +544,12 @@ for the JavaScript code in this tag.
 </div>
 </div>
 
-<div id="outline-container-org2dfa44" class="outline-2">
-<h2 id="org2dfa44">void</h2>
-<div class="outline-text-2" id="text-org2dfa44">
-</div><div id="outline-container-org7d0db05" class="outline-3">
-<h3 id="org7d0db05">void-t</h3>
-<div class="outline-text-3" id="text-org7d0db05">
+<div id="outline-container-org2f70850" class="outline-2">
+<h2 id="org2f70850">void</h2>
+<div class="outline-text-2" id="text-org2f70850">
+</div><div id="outline-container-org89a9d0c" class="outline-3">
+<h3 id="org89a9d0c">void-t</h3>
+<div class="outline-text-3" id="text-org89a9d0c">
 <div class="org-src-container">
 
 <pre class="src src-cicada"><span style="color: #7CB8BB;">void-t</span> <span style="color: #DFAF8F;">:</span> <span style="color: #7CB8BB;">type-tt</span>
@@ -559,9 +559,9 @@ for the JavaScript code in this tag.
 </div>
 </div>
 
-<div id="outline-container-orge34fbf0" class="outline-3">
-<h3 id="orge34fbf0">absurd</h3>
-<div class="outline-text-3" id="text-orge34fbf0">
+<div id="outline-container-org55dede1" class="outline-3">
+<h3 id="org55dede1">absurd</h3>
+<div class="outline-text-3" id="text-org55dede1">
 <div class="org-src-container">
 
 <pre class="src src-cicada">absurd <span style="color: #DFAF8F;">:</span> <span style="color: #7CB8BB;">--</span> <span style="color: #7CB8BB;">void-t</span> <span style="color: #7CB8BB;">-&gt;</span> t
@@ -571,12 +571,12 @@ for the JavaScript code in this tag.
 </div>
 </div>
 
-<div id="outline-container-org81c628c" class="outline-2">
-<h2 id="org81c628c">unit</h2>
-<div class="outline-text-2" id="text-org81c628c">
-</div><div id="outline-container-orgab81ac9" class="outline-3">
-<h3 id="orgab81ac9">unit-t</h3>
-<div class="outline-text-3" id="text-orgab81ac9">
+<div id="outline-container-org434ac24" class="outline-2">
+<h2 id="org434ac24">unit</h2>
+<div class="outline-text-2" id="text-org434ac24">
+</div><div id="outline-container-org9f636a0" class="outline-3">
+<h3 id="org9f636a0">unit-t</h3>
+<div class="outline-text-3" id="text-org9f636a0">
 <div class="org-src-container">
 
 <pre class="src src-cicada"><span style="color: #7CB8BB;">unit-t</span> <span style="color: #DFAF8F;">:</span> <span style="color: #7CB8BB;">type-tt</span>
@@ -586,9 +586,9 @@ for the JavaScript code in this tag.
 </div>
 </div>
 
-<div id="outline-container-org3a250c6" class="outline-3">
-<h3 id="org3a250c6">unit</h3>
-<div class="outline-text-3" id="text-org3a250c6">
+<div id="outline-container-org33d9efb" class="outline-3">
+<h3 id="org33d9efb">unit</h3>
+<div class="outline-text-3" id="text-org33d9efb">
 <div class="org-src-container">
 
 <pre class="src src-cicada">unit <span style="color: #DFAF8F;">:</span> <span style="color: #7CB8BB;">--</span> a <span style="color: #7CB8BB;">-&gt;</span> <span style="color: #7CB8BB;">unit-t</span>
@@ -599,12 +599,12 @@ unit a <span style="color: #DFAF8F;">=</span> <span style="color: #DFAF8F;">unit
 </div>
 </div>
 
-<div id="outline-container-org5557f9e" class="outline-2">
-<h2 id="org5557f9e">bool</h2>
-<div class="outline-text-2" id="text-org5557f9e">
-</div><div id="outline-container-org5286b9c" class="outline-3">
-<h3 id="org5286b9c">bool-t</h3>
-<div class="outline-text-3" id="text-org5286b9c">
+<div id="outline-container-orgbc0ff02" class="outline-2">
+<h2 id="orgbc0ff02">bool</h2>
+<div class="outline-text-2" id="text-orgbc0ff02">
+</div><div id="outline-container-orga6f24f7" class="outline-3">
+<h3 id="orga6f24f7">bool-t</h3>
+<div class="outline-text-3" id="text-orga6f24f7">
 <div class="org-src-container">
 
 <pre class="src src-cicada"><span style="color: #7CB8BB;">bool-t</span> <span style="color: #DFAF8F;">:</span> <span style="color: #7CB8BB;">type-tt</span>
@@ -621,12 +621,12 @@ unit a <span style="color: #DFAF8F;">=</span> <span style="color: #DFAF8F;">unit
 </div>
 </div>
 
-<div id="outline-container-orgc893680" class="outline-2">
-<h2 id="orgc893680">eqv</h2>
-<div class="outline-text-2" id="text-orgc893680">
-</div><div id="outline-container-orgfe5ac3d" class="outline-3">
-<h3 id="orgfe5ac3d">eqv-t</h3>
-<div class="outline-text-3" id="text-orgfe5ac3d">
+<div id="outline-container-org19aaf2b" class="outline-2">
+<h2 id="org19aaf2b">eqv</h2>
+<div class="outline-text-2" id="text-org19aaf2b">
+</div><div id="outline-container-orga144f31" class="outline-3">
+<h3 id="orga144f31">eqv-t</h3>
+<div class="outline-text-3" id="text-orga144f31">
 <div class="org-src-container">
 
 <pre class="src src-cicada"><span style="color: #7CB8BB;">eqv-t</span> <span style="color: #DFAF8F;">:</span> <span style="color: #7CB8BB;">type-tt</span>
@@ -638,9 +638,9 @@ unit a <span style="color: #DFAF8F;">=</span> <span style="color: #DFAF8F;">unit
 </div>
 </div>
 
-<div id="outline-container-org3ec894" class="outline-3">
-<h3 id="org3ec894">eqv-apply</h3>
-<div class="outline-text-3" id="text-org3ec894">
+<div id="outline-container-org7ef6193" class="outline-3">
+<h3 id="org7ef6193">eqv-apply</h3>
+<div class="outline-text-3" id="text-org7ef6193">
 <div class="org-src-container">
 
 <pre class="src src-cicada">eqv-apply <span style="color: #DFAF8F;">:</span>
@@ -653,9 +653,9 @@ eqv-apply _ _ <span style="color: #DFAF8F;">=</span> <span style="color: #DFAF8F
 </div>
 </div>
 
-<div id="outline-container-orgc402a5b" class="outline-3">
-<h3 id="orgc402a5b">eqv-swap</h3>
-<div class="outline-text-3" id="text-orgc402a5b">
+<div id="outline-container-orgcf1ff71" class="outline-3">
+<h3 id="orgcf1ff71">eqv-swap</h3>
+<div class="outline-text-3" id="text-orgcf1ff71">
 <div class="org-src-container">
 
 <pre class="src src-cicada">eqv-swap <span style="color: #DFAF8F;">:</span> <span style="color: #7CB8BB;">--</span> (<span style="color: #7CB8BB;">eqv-t</span> x y) <span style="color: #7CB8BB;">-&gt;</span> (<span style="color: #7CB8BB;">eqv-t</span> y x)
@@ -665,9 +665,9 @@ eqv-swap _ <span style="color: #DFAF8F;">=</span> <span style="color: #DFAF8F;">
 </div>
 </div>
 
-<div id="outline-container-org3e68210" class="outline-3">
-<h3 id="org3e68210">eqv-compose</h3>
-<div class="outline-text-3" id="text-org3e68210">
+<div id="outline-container-orgedd8f57" class="outline-3">
+<h3 id="orgedd8f57">eqv-compose</h3>
+<div class="outline-text-3" id="text-orgedd8f57">
 <div class="org-src-container">
 
 <pre class="src src-cicada">eqv-compose <span style="color: #DFAF8F;">:</span> <span style="color: #7CB8BB;">--</span> (<span style="color: #7CB8BB;">eqv-t</span> x y) (<span style="color: #7CB8BB;">eqv-t</span> y z) <span style="color: #7CB8BB;">-&gt;</span> (<span style="color: #7CB8BB;">eqv-t</span> x z)
@@ -678,12 +678,12 @@ eqv-compose _ _ <span style="color: #DFAF8F;">=</span> <span style="color: #DFAF
 </div>
 </div>
 
-<div id="outline-container-org964cba5" class="outline-2">
-<h2 id="org964cba5">nat</h2>
-<div class="outline-text-2" id="text-org964cba5">
-</div><div id="outline-container-org30a984a" class="outline-3">
-<h3 id="org30a984a">nat-t</h3>
-<div class="outline-text-3" id="text-org30a984a">
+<div id="outline-container-org14d0a2d" class="outline-2">
+<h2 id="org14d0a2d">nat</h2>
+<div class="outline-text-2" id="text-org14d0a2d">
+</div><div id="outline-container-orgb81144c" class="outline-3">
+<h3 id="orgb81144c">nat-t</h3>
+<div class="outline-text-3" id="text-orgb81144c">
 <div class="org-src-container">
 
 <pre class="src src-cicada"><span style="color: #7CB8BB;">nat-t</span> <span style="color: #DFAF8F;">:</span> <span style="color: #7CB8BB;">type-tt</span>
@@ -700,9 +700,9 @@ eqv-compose _ _ <span style="color: #DFAF8F;">=</span> <span style="color: #DFAF
 </div>
 </div>
 
-<div id="outline-container-org10cf65a" class="outline-3">
-<h3 id="org10cf65a">nat-add</h3>
-<div class="outline-text-3" id="text-org10cf65a">
+<div id="outline-container-org895edbc" class="outline-3">
+<h3 id="org895edbc">nat-add</h3>
+<div class="outline-text-3" id="text-org895edbc">
 <div class="org-src-container">
 
 <pre class="src src-cicada">nat-add <span style="color: #DFAF8F;">:</span> <span style="color: #7CB8BB;">--</span> <span style="color: #7CB8BB;">nat-t</span> <span style="color: #7CB8BB;">nat-t</span> <span style="color: #7CB8BB;">-&gt;</span> <span style="color: #7CB8BB;">nat-t</span>
@@ -715,9 +715,9 @@ nat-add x y <span style="color: #DFAF8F;">=</span>
 </div>
 </div>
 
-<div id="outline-container-org3e58d28" class="outline-3">
-<h3 id="org3e58d28">nat-mul</h3>
-<div class="outline-text-3" id="text-org3e58d28">
+<div id="outline-container-org4879cd" class="outline-3">
+<h3 id="org4879cd">nat-mul</h3>
+<div class="outline-text-3" id="text-org4879cd">
 <div class="org-src-container">
 
 <pre class="src src-cicada">nat-mul <span style="color: #DFAF8F;">:</span> <span style="color: #7CB8BB;">--</span> <span style="color: #7CB8BB;">nat-t</span> <span style="color: #7CB8BB;">nat-t</span> <span style="color: #7CB8BB;">-&gt;</span> <span style="color: #7CB8BB;">nat-t</span>
@@ -730,9 +730,9 @@ nat-mul x y <span style="color: #DFAF8F;">=</span>
 </div>
 </div>
 
-<div id="outline-container-org87a99c9" class="outline-3">
-<h3 id="org87a99c9">nat-factorial</h3>
-<div class="outline-text-3" id="text-org87a99c9">
+<div id="outline-container-orgdf1260c" class="outline-3">
+<h3 id="orgdf1260c">nat-factorial</h3>
+<div class="outline-text-3" id="text-orgdf1260c">
 <div class="org-src-container">
 
 <pre class="src src-cicada">nat-factorial <span style="color: #DFAF8F;">:</span> <span style="color: #7CB8BB;">--</span> <span style="color: #7CB8BB;">nat-t</span> <span style="color: #7CB8BB;">-&gt;</span> <span style="color: #7CB8BB;">nat-t</span>
@@ -745,9 +745,9 @@ nat-factorial n <span style="color: #DFAF8F;">=</span>
 </div>
 </div>
 
-<div id="outline-container-orgedac0ee" class="outline-3">
-<h3 id="orgedac0ee">nat-even-p</h3>
-<div class="outline-text-3" id="text-orgedac0ee">
+<div id="outline-container-org20ed3e3" class="outline-3">
+<h3 id="org20ed3e3">nat-even-p</h3>
+<div class="outline-text-3" id="text-org20ed3e3">
 <div class="org-src-container">
 
 <pre class="src src-cicada"><span style="color: #7CB8BB;">nat-even-p</span> <span style="color: #DFAF8F;">:</span> <span style="color: #7CB8BB;">--</span> <span style="color: #7CB8BB;">nat-t</span> <span style="color: #7CB8BB;">-&gt;</span> <span style="color: #7CB8BB;">bool-t</span>
@@ -762,9 +762,9 @@ nat-factorial n <span style="color: #DFAF8F;">=</span>
 </div>
 </div>
 
-<div id="outline-container-orge790aed" class="outline-3">
-<h3 id="orge790aed">nat-even-t</h3>
-<div class="outline-text-3" id="text-orge790aed">
+<div id="outline-container-org6e9bc56" class="outline-3">
+<h3 id="org6e9bc56">nat-even-t</h3>
+<div class="outline-text-3" id="text-org6e9bc56">
 <div class="org-src-container">
 
 <pre class="src src-cicada"><span style="color: #7CB8BB;">nat-even-t</span> <span style="color: #DFAF8F;">:</span> <span style="color: #7CB8BB;">type-tt</span>
@@ -786,9 +786,9 @@ nat-factorial n <span style="color: #DFAF8F;">=</span>
 </div>
 </div>
 
-<div id="outline-container-org81b6b0b" class="outline-3">
-<h3 id="org81b6b0b">two-even</h3>
-<div class="outline-text-3" id="text-org81b6b0b">
+<div id="outline-container-org5685f60" class="outline-3">
+<h3 id="org5685f60">two-even</h3>
+<div class="outline-text-3" id="text-org5685f60">
 <div class="org-src-container">
 
 <pre class="src src-cicada">two-even <span style="color: #DFAF8F;">:</span> (<span style="color: #7CB8BB;">nat-even-t</span> (<span style="color: #DFAF8F;">succ-c</span> (<span style="color: #DFAF8F;">succ-c</span> <span style="color: #DFAF8F;">zero-c</span>)))
@@ -798,9 +798,9 @@ two-even <span style="color: #DFAF8F;">=</span> (<span style="color: #DFAF8F;">e
 </div>
 </div>
 
-<div id="outline-container-org1f28518" class="outline-3">
-<h3 id="org1f28518">nat-add-associative</h3>
-<div class="outline-text-3" id="text-org1f28518">
+<div id="outline-container-org6473adb" class="outline-3">
+<h3 id="org6473adb">nat-add-associative</h3>
+<div class="outline-text-3" id="text-org6473adb">
 <div class="org-src-container">
 
 <pre class="src src-cicada">nat-add-associative <span style="color: #DFAF8F;">:</span>
@@ -817,9 +817,9 @@ nat-add-associative x y z <span style="color: #DFAF8F;">=</span>
 </div>
 </div>
 
-<div id="outline-container-orge01da22" class="outline-3">
-<h3 id="orge01da22">nat-add-commutative</h3>
-<div class="outline-text-3" id="text-orge01da22">
+<div id="outline-container-org509db75" class="outline-3">
+<h3 id="org509db75">nat-add-commutative</h3>
+<div class="outline-text-3" id="text-org509db75">
 <div class="org-src-container">
 
 <pre class="src src-cicada">nat-add-commutative <span style="color: #DFAF8F;">:</span>
@@ -839,9 +839,9 @@ nat-add-commutative x y <span style="color: #DFAF8F;">=</span>
 </div>
 </div>
 
-<div id="outline-container-org25ee47c" class="outline-3">
-<h3 id="org25ee47c">nat-add-zero-commutative</h3>
-<div class="outline-text-3" id="text-org25ee47c">
+<div id="outline-container-org64350d9" class="outline-3">
+<h3 id="org64350d9">nat-add-zero-commutative</h3>
+<div class="outline-text-3" id="text-org64350d9">
 <div class="org-src-container">
 
 <pre class="src src-cicada">nat-add-zero-commutative <span style="color: #DFAF8F;">:</span>
@@ -858,9 +858,9 @@ nat-add-zero-commutative x <span style="color: #DFAF8F;">=</span>
 </div>
 </div>
 
-<div id="outline-container-orgdd867d8" class="outline-3">
-<h3 id="orgdd867d8">nat-add-succ-commutative-1</h3>
-<div class="outline-text-3" id="text-orgdd867d8">
+<div id="outline-container-org7d3a1dc" class="outline-3">
+<h3 id="org7d3a1dc">nat-add-succ-commutative-1</h3>
+<div class="outline-text-3" id="text-org7d3a1dc">
 <div class="org-src-container">
 
 <pre class="src src-cicada">nat-add-succ-commutative-1 <span style="color: #DFAF8F;">:</span>
@@ -877,9 +877,9 @@ nat-add-succ-commutative-1 x y <span style="color: #DFAF8F;">=</span>
 </div>
 </div>
 
-<div id="outline-container-org5dd296c" class="outline-3">
-<h3 id="org5dd296c">nat-add-succ-commutative-2</h3>
-<div class="outline-text-3" id="text-org5dd296c">
+<div id="outline-container-org8cc5c69" class="outline-3">
+<h3 id="org8cc5c69">nat-add-succ-commutative-2</h3>
+<div class="outline-text-3" id="text-org8cc5c69">
 <div class="org-src-container">
 
 <pre class="src src-cicada">nat-add-succ-commutative-2 <span style="color: #DFAF8F;">:</span>
@@ -897,12 +897,12 @@ nat-add-succ-commutative-2 x y <span style="color: #DFAF8F;">=</span>
 </div>
 </div>
 
-<div id="outline-container-orge3bf383" class="outline-2">
-<h2 id="orge3bf383">list</h2>
-<div class="outline-text-2" id="text-orge3bf383">
-</div><div id="outline-container-orged12db" class="outline-3">
-<h3 id="orged12db">list-t</h3>
-<div class="outline-text-3" id="text-orged12db">
+<div id="outline-container-org49b4ba3" class="outline-2">
+<h2 id="org49b4ba3">list</h2>
+<div class="outline-text-2" id="text-org49b4ba3">
+</div><div id="outline-container-org6b01f7d" class="outline-3">
+<h3 id="org6b01f7d">list-t</h3>
+<div class="outline-text-3" id="text-org6b01f7d">
 <div class="org-src-container">
 
 <pre class="src src-cicada"><span style="color: #7CB8BB;">list-t</span> <span style="color: #DFAF8F;">:</span> <span style="color: #7CB8BB;">type-tt</span>
@@ -923,9 +923,9 @@ nat-add-succ-commutative-2 x y <span style="color: #DFAF8F;">=</span>
 </div>
 </div>
 
-<div id="outline-container-orgafe573d" class="outline-3">
-<h3 id="orgafe573d">list-length</h3>
-<div class="outline-text-3" id="text-orgafe573d">
+<div id="outline-container-org3999cfb" class="outline-3">
+<h3 id="org3999cfb">list-length</h3>
+<div class="outline-text-3" id="text-org3999cfb">
 <div class="org-src-container">
 
 <pre class="src src-cicada">list-length <span style="color: #DFAF8F;">:</span> <span style="color: #7CB8BB;">--</span> (<span style="color: #7CB8BB;">list-t</span> t) <span style="color: #7CB8BB;">-&gt;</span> <span style="color: #7CB8BB;">nat-t</span>
@@ -938,9 +938,9 @@ list-length list <span style="color: #DFAF8F;">=</span>
 </div>
 </div>
 
-<div id="outline-container-orgdfa811b" class="outline-3">
-<h3 id="orgdfa811b">list-append</h3>
-<div class="outline-text-3" id="text-orgdfa811b">
+<div id="outline-container-org60c320" class="outline-3">
+<h3 id="org60c320">list-append</h3>
+<div class="outline-text-3" id="text-org60c320">
 <div class="org-src-container">
 
 <pre class="src src-cicada">list-append <span style="color: #DFAF8F;">:</span> <span style="color: #7CB8BB;">--</span> (<span style="color: #7CB8BB;">list-t</span> t) (<span style="color: #7CB8BB;">list-t</span> t) <span style="color: #7CB8BB;">-&gt;</span> (<span style="color: #7CB8BB;">list-t</span> t)
@@ -953,9 +953,9 @@ list-append ante succ <span style="color: #DFAF8F;">=</span>
 </div>
 </div>
 
-<div id="outline-container-org7b7352" class="outline-3">
-<h3 id="org7b7352">list-map</h3>
-<div class="outline-text-3" id="text-org7b7352">
+<div id="outline-container-orgff6165e" class="outline-3">
+<h3 id="orgff6165e">list-map</h3>
+<div class="outline-text-3" id="text-orgff6165e">
 <div class="org-src-container">
 
 <pre class="src src-cicada">list-map <span style="color: #DFAF8F;">:</span> <span style="color: #7CB8BB;">--</span> (<span style="color: #7CB8BB;">--</span> a <span style="color: #7CB8BB;">-&gt;</span> b) (<span style="color: #7CB8BB;">list-t</span> a) <span style="color: #7CB8BB;">-&gt;</span> (<span style="color: #7CB8BB;">list-t</span> b)
@@ -968,9 +968,9 @@ list-map fun list <span style="color: #DFAF8F;">=</span>
 </div>
 </div>
 
-<div id="outline-container-org7dcef86" class="outline-3">
-<h3 id="org7dcef86">list-remove-first</h3>
-<div class="outline-text-3" id="text-org7dcef86">
+<div id="outline-container-org15ae56e" class="outline-3">
+<h3 id="org15ae56e">list-remove-first</h3>
+<div class="outline-text-3" id="text-org15ae56e">
 <div class="org-src-container">
 
 <pre class="src src-cicada">list-remove-first <span style="color: #DFAF8F;">:</span> <span style="color: #7CB8BB;">--</span> t (<span style="color: #7CB8BB;">list-t</span> t) <span style="color: #7CB8BB;">-&gt;</span> (<span style="color: #7CB8BB;">list-t</span> t)
@@ -986,9 +986,9 @@ list-remove-first x list <span style="color: #DFAF8F;">=</span>
 </div>
 </div>
 
-<div id="outline-container-orgc500e82" class="outline-3">
-<h3 id="orgc500e82">list-length-t</h3>
-<div class="outline-text-3" id="text-orgc500e82">
+<div id="outline-container-orgaa58d0f" class="outline-3">
+<h3 id="orgaa58d0f">list-length-t</h3>
+<div class="outline-text-3" id="text-orgaa58d0f">
 <div class="org-src-container">
 
 <pre class="src src-cicada"><span style="color: #7CB8BB;">list-length-t</span> <span style="color: #DFAF8F;">:</span> <span style="color: #7CB8BB;">type-tt</span>
@@ -1015,9 +1015,9 @@ list-remove-first x list <span style="color: #DFAF8F;">=</span>
 </div>
 </div>
 
-<div id="outline-container-org6d1aa56" class="outline-3">
-<h3 id="org6d1aa56"><span class="todo _note_">[note]</span> `append` in prolog</h3>
-<div class="outline-text-3" id="text-org6d1aa56">
+<div id="outline-container-orgec0fa63" class="outline-3">
+<h3 id="orgec0fa63"><span class="todo _note_">[note]</span> `append` in prolog</h3>
+<div class="outline-text-3" id="text-orgec0fa63">
 <div class="org-src-container">
 
 <pre class="src src-cicada"><span style="color: #F0DFAF; font-weight: bold;">note</span> <span style="color: #F0DFAF; font-weight: bold;">in</span> prolog<span style="color: #F0DFAF; font-weight: bold;">,</span> we will have <span style="color: #DFAF8F;">:</span>
@@ -1029,9 +1029,9 @@ list-remove-first x list <span style="color: #DFAF8F;">=</span>
 </div>
 </div>
 
-<div id="outline-container-orgdc9b4b0" class="outline-3">
-<h3 id="orgdc9b4b0">list-append-t</h3>
-<div class="outline-text-3" id="text-orgdc9b4b0">
+<div id="outline-container-org87979b1" class="outline-3">
+<h3 id="org87979b1">list-append-t</h3>
+<div class="outline-text-3" id="text-org87979b1">
 <div class="org-src-container">
 
 <pre class="src src-cicada"><span style="color: #7CB8BB;">list-append-t</span> <span style="color: #DFAF8F;">:</span> <span style="color: #7CB8BB;">type-tt</span>
@@ -1056,12 +1056,12 @@ list-remove-first x list <span style="color: #DFAF8F;">=</span>
 </div>
 </div>
 
-<div id="outline-container-org1d1dc9a" class="outline-2">
-<h2 id="org1d1dc9a">vect</h2>
-<div class="outline-text-2" id="text-org1d1dc9a">
-</div><div id="outline-container-org98358c1" class="outline-3">
-<h3 id="org98358c1">vect-t</h3>
-<div class="outline-text-3" id="text-org98358c1">
+<div id="outline-container-orgd23e4f3" class="outline-2">
+<h2 id="orgd23e4f3">vect</h2>
+<div class="outline-text-2" id="text-orgd23e4f3">
+</div><div id="outline-container-org756209a" class="outline-3">
+<h3 id="org756209a">vect-t</h3>
+<div class="outline-text-3" id="text-org756209a">
 <div class="org-src-container">
 
 <pre class="src src-cicada"><span style="color: #7CB8BB;">vect-t</span> <span style="color: #DFAF8F;">:</span> <span style="color: #7CB8BB;">type-tt</span>
@@ -1087,9 +1087,9 @@ list-remove-first x list <span style="color: #DFAF8F;">=</span>
 </div>
 </div>
 
-<div id="outline-container-org31f03f3" class="outline-3">
-<h3 id="org31f03f3">vect-append</h3>
-<div class="outline-text-3" id="text-org31f03f3">
+<div id="outline-container-orge5d6e56" class="outline-3">
+<h3 id="orge5d6e56">vect-append</h3>
+<div class="outline-text-3" id="text-orge5d6e56">
 <div class="org-src-container">
 
 <pre class="src src-cicada">vect-append <span style="color: #DFAF8F;">:</span>
@@ -1105,9 +1105,9 @@ vect-append ante succ <span style="color: #DFAF8F;">=</span>
 </div>
 </div>
 
-<div id="outline-container-org7912b05" class="outline-3">
-<h3 id="org7912b05">vect-map</h3>
-<div class="outline-text-3" id="text-org7912b05">
+<div id="outline-container-org6101ae0" class="outline-3">
+<h3 id="org6101ae0">vect-map</h3>
+<div class="outline-text-3" id="text-org6101ae0">
 <div class="org-src-container">
 
 <pre class="src src-cicada">vect-map <span style="color: #DFAF8F;">:</span> <span style="color: #7CB8BB;">--</span> (<span style="color: #7CB8BB;">--</span> a <span style="color: #7CB8BB;">-&gt;</span> b) (<span style="color: #7CB8BB;">vect-t</span> a n) <span style="color: #7CB8BB;">-&gt;</span> (<span style="color: #7CB8BB;">vect-t</span> a n)
@@ -1121,12 +1121,12 @@ vect-map fun list <span style="color: #DFAF8F;">=</span>
 </div>
 </div>
 
-<div id="outline-container-orgb459059" class="outline-2">
-<h2 id="orgb459059">order</h2>
-<div class="outline-text-2" id="text-orgb459059">
-</div><div id="outline-container-org1a27bc" class="outline-3">
-<h3 id="org1a27bc">preorder-tt</h3>
-<div class="outline-text-3" id="text-org1a27bc">
+<div id="outline-container-org238fe16" class="outline-2">
+<h2 id="org238fe16">order</h2>
+<div class="outline-text-2" id="text-org238fe16">
+</div><div id="outline-container-orgd747a9" class="outline-3">
+<h3 id="orgd747a9">preorder-tt</h3>
+<div class="outline-text-3" id="text-orgd747a9">
 <div class="org-src-container">
 
 <pre class="src src-cicada"><span style="color: #F0DFAF; font-weight: bold;">note</span>
@@ -1154,9 +1154,9 @@ vect-map fun list <span style="color: #DFAF8F;">=</span>
 </div>
 </div>
 
-<div id="outline-container-org614e15f" class="outline-3">
-<h3 id="org614e15f">partial-order-tt</h3>
-<div class="outline-text-3" id="text-org614e15f">
+<div id="outline-container-orgd326f36" class="outline-3">
+<h3 id="orgd326f36">partial-order-tt</h3>
+<div class="outline-text-3" id="text-orgd326f36">
 <div class="org-src-container">
 
 <pre class="src src-cicada"><span style="color: #7CB8BB;">partial-order-tt</span> <span style="color: #DFAF8F;">:</span> <span style="color: #7CB8BB;">type-ttt</span>
@@ -1174,9 +1174,9 @@ vect-map fun list <span style="color: #DFAF8F;">=</span>
 </div>
 </div>
 
-<div id="outline-container-orgd1ce999" class="outline-3">
-<h3 id="orgd1ce999">eqv-relation-tt</h3>
-<div class="outline-text-3" id="text-orgd1ce999">
+<div id="outline-container-org3795291" class="outline-3">
+<h3 id="org3795291">eqv-relation-tt</h3>
+<div class="outline-text-3" id="text-org3795291">
 <div class="org-src-container">
 
 <pre class="src src-cicada"><span style="color: #7CB8BB;">eqv-relation-tt</span> <span style="color: #DFAF8F;">:</span> <span style="color: #7CB8BB;">type-ttt</span>
@@ -1189,9 +1189,9 @@ vect-map fun list <span style="color: #DFAF8F;">=</span>
 </div>
 </div>
 
-<div id="outline-container-org4c3e81d" class="outline-3">
-<h3 id="org4c3e81d">total-order-tt</h3>
-<div class="outline-text-3" id="text-org4c3e81d">
+<div id="outline-container-orgd15b0a1" class="outline-3">
+<h3 id="orgd15b0a1">total-order-tt</h3>
+<div class="outline-text-3" id="text-orgd15b0a1">
 <div class="org-src-container">
 
 <pre class="src src-cicada"><span style="color: #7CB8BB;">total-order-tt</span> <span style="color: #DFAF8F;">:</span> <span style="color: #7CB8BB;">type-ttt</span>
@@ -1205,12 +1205,12 @@ vect-map fun list <span style="color: #DFAF8F;">=</span>
 </div>
 </div>
 
-<div id="outline-container-orgf91c8a2" class="outline-2">
-<h2 id="orgf91c8a2">unique</h2>
-<div class="outline-text-2" id="text-orgf91c8a2">
-</div><div id="outline-container-org3e9bd14" class="outline-3">
-<h3 id="org3e9bd14">unique-tt</h3>
-<div class="outline-text-3" id="text-org3e9bd14">
+<div id="outline-container-orgb5caacc" class="outline-2">
+<h2 id="orgb5caacc">unique</h2>
+<div class="outline-text-2" id="text-orgb5caacc">
+</div><div id="outline-container-orge9b7f21" class="outline-3">
+<h3 id="orge9b7f21">unique-tt</h3>
+<div class="outline-text-3" id="text-orge9b7f21">
 <div class="org-src-container">
 
 <pre class="src src-cicada"><span style="color: #7CB8BB;">unique-tt</span> <span style="color: #DFAF8F;">:</span> <span style="color: #7CB8BB;">type-ttt</span>
@@ -1230,9 +1230,9 @@ vect-map fun list <span style="color: #DFAF8F;">=</span>
 </div>
 </div>
 
-<div id="outline-container-org42eb1fd" class="outline-3">
-<h3 id="org42eb1fd">(unique)</h3>
-<div class="outline-text-3" id="text-org42eb1fd">
+<div id="outline-container-org6c19adf" class="outline-3">
+<h3 id="org6c19adf">(unique)</h3>
+<div class="outline-text-3" id="text-org6c19adf">
 <div class="org-src-container">
 
 <pre class="src src-cicada">(<span style="color: #F0DFAF; font-weight: bold;">unique</span> <span style="color: #7CB8BB;">&lt;t&gt;</span>
@@ -1250,12 +1250,12 @@ vect-map fun list <span style="color: #DFAF8F;">=</span>
 </div>
 </div>
 
-<div id="outline-container-orgd5f1148" class="outline-2">
-<h2 id="orgd5f1148">category</h2>
-<div class="outline-text-2" id="text-orgd5f1148">
-</div><div id="outline-container-org3a93d5f" class="outline-3">
-<h3 id="org3a93d5f">category-ttt</h3>
-<div class="outline-text-3" id="text-org3a93d5f">
+<div id="outline-container-orgea5e7fd" class="outline-2">
+<h2 id="orgea5e7fd">category</h2>
+<div class="outline-text-2" id="text-orgea5e7fd">
+</div><div id="outline-container-org18a60c7" class="outline-3">
+<h3 id="org18a60c7">category-ttt</h3>
+<div class="outline-text-3" id="text-org18a60c7">
 <div class="org-src-container">
 
 <pre class="src src-cicada"><span style="color: #7CB8BB;">category-ttt</span> <span style="color: #DFAF8F;">:</span> <span style="color: #7CB8BB;">type-tttt</span>
@@ -1294,12 +1294,12 @@ vect-map fun list <span style="color: #DFAF8F;">=</span>
 </div>
 </div>
 
-<div id="outline-container-orgf8e3f70" class="outline-3">
-<h3 id="orgf8e3f70">basic relation</h3>
-<div class="outline-text-3" id="text-orgf8e3f70">
-</div><div id="outline-container-orga4ca7c6" class="outline-4">
-<h4 id="orga4ca7c6">category.isomorphic-tt</h4>
-<div class="outline-text-4" id="text-orga4ca7c6">
+<div id="outline-container-orgd2e6230" class="outline-3">
+<h3 id="orgd2e6230">basic relation</h3>
+<div class="outline-text-3" id="text-orgd2e6230">
+</div><div id="outline-container-org1113572" class="outline-4">
+<h4 id="org1113572">category.isomorphic-tt</h4>
+<div class="outline-text-4" id="text-org1113572">
 <div class="org-src-container">
 
 <pre class="src src-cicada"><span style="color: #7CB8BB;">category.isomorphic-tt</span> <span style="color: #DFAF8F;">:</span> <span style="color: #7CB8BB;">type-ttt</span>
@@ -1315,12 +1315,12 @@ vect-map fun list <span style="color: #DFAF8F;">=</span>
 </div>
 </div>
 
-<div id="outline-container-org49dd3fc" class="outline-3">
-<h3 id="org49dd3fc">universal construction</h3>
-<div class="outline-text-3" id="text-org49dd3fc">
-</div><div id="outline-container-org644dcb4" class="outline-4">
-<h4 id="org644dcb4">category.initial-tt</h4>
-<div class="outline-text-4" id="text-org644dcb4">
+<div id="outline-container-orgb8ec921" class="outline-3">
+<h3 id="orgb8ec921">universal construction</h3>
+<div class="outline-text-3" id="text-orgb8ec921">
+</div><div id="outline-container-orge40e4c4" class="outline-4">
+<h4 id="orge40e4c4">category.initial-tt</h4>
+<div class="outline-text-4" id="text-orge40e4c4">
 <div class="org-src-container">
 
 <pre class="src src-cicada"><span style="color: #7CB8BB;">category.initial-tt</span> <span style="color: #DFAF8F;">:</span> <span style="color: #7CB8BB;">type-ttt</span>
@@ -1334,9 +1334,9 @@ vect-map fun list <span style="color: #DFAF8F;">=</span>
 </div>
 </div>
 
-<div id="outline-container-orgbb109da" class="outline-4">
-<h4 id="orgbb109da">category.terminal-tt</h4>
-<div class="outline-text-4" id="text-orgbb109da">
+<div id="outline-container-orge7fdd97" class="outline-4">
+<h4 id="orge7fdd97">category.terminal-tt</h4>
+<div class="outline-text-4" id="text-orge7fdd97">
 <div class="org-src-container">
 
 <pre class="src src-cicada"><span style="color: #7CB8BB;">category.terminal-tt</span> <span style="color: #DFAF8F;">:</span> <span style="color: #7CB8BB;">type-ttt</span>
@@ -1350,9 +1350,9 @@ vect-map fun list <span style="color: #DFAF8F;">=</span>
 </div>
 </div>
 
-<div id="outline-container-org4bfd7b5" class="outline-4">
-<h4 id="org4bfd7b5">category.product-tt</h4>
-<div class="outline-text-4" id="text-org4bfd7b5">
+<div id="outline-container-orge4a48fa" class="outline-4">
+<h4 id="orge4a48fa">category.product-tt</h4>
+<div class="outline-text-4" id="text-orge4a48fa">
 <div class="org-src-container">
 
 <pre class="src src-cicada"><span style="color: #7CB8BB;">category.product-candidate-tt</span> <span style="color: #DFAF8F;">:</span> <span style="color: #7CB8BB;">type-ttt</span>
@@ -1385,9 +1385,9 @@ vect-map fun list <span style="color: #DFAF8F;">=</span>
 </div>
 </div>
 
-<div id="outline-container-orgee49a30" class="outline-4">
-<h4 id="orgee49a30">category.sum-tt</h4>
-<div class="outline-text-4" id="text-orgee49a30">
+<div id="outline-container-org118a8a8" class="outline-4">
+<h4 id="org118a8a8">category.sum-tt</h4>
+<div class="outline-text-4" id="text-org118a8a8">
 <div class="org-src-container">
 
 <pre class="src src-cicada"><span style="color: #7CB8BB;">category.sum-candidate-tt</span> <span style="color: #DFAF8F;">:</span> <span style="color: #7CB8BB;">type-ttt</span>
@@ -1421,12 +1421,12 @@ vect-map fun list <span style="color: #DFAF8F;">=</span>
 </div>
 </div>
 
-<div id="outline-container-org71d1c6c" class="outline-3">
-<h3 id="org71d1c6c">other structure as category</h3>
-<div class="outline-text-3" id="text-org71d1c6c">
-</div><div id="outline-container-org97d2c4d" class="outline-4">
-<h4 id="org97d2c4d">preorder.as-category</h4>
-<div class="outline-text-4" id="text-org97d2c4d">
+<div id="outline-container-org53d3082" class="outline-3">
+<h3 id="org53d3082">other structure as category</h3>
+<div class="outline-text-3" id="text-org53d3082">
+</div><div id="outline-container-org4dfc440" class="outline-4">
+<h4 id="org4dfc440">preorder.as-category</h4>
+<div class="outline-text-4" id="text-org4dfc440">
 <div class="org-src-container">
 
 <pre class="src src-cicada"><span style="color: #F0DFAF; font-weight: bold;">note</span>
@@ -1456,12 +1456,12 @@ preorder.as-category <span style="color: #DFAF8F;">=</span> <span style="color: 
 </div>
 </div>
 
-<div id="outline-container-org4f5254f" class="outline-3">
-<h3 id="org4f5254f">build new category from old category</h3>
-<div class="outline-text-3" id="text-org4f5254f">
-</div><div id="outline-container-org1958e5f" class="outline-4">
-<h4 id="org1958e5f">category.opposite</h4>
-<div class="outline-text-4" id="text-org1958e5f">
+<div id="outline-container-orgf5b7620" class="outline-3">
+<h3 id="orgf5b7620">build new category from old category</h3>
+<div class="outline-text-3" id="text-orgf5b7620">
+</div><div id="outline-container-org1d9f42d" class="outline-4">
+<h4 id="org1d9f42d">category.opposite</h4>
+<div class="outline-text-4" id="text-org1d9f42d">
 <div class="org-src-container">
 
 <pre class="src src-cicada">category.opposite <span style="color: #DFAF8F;">:</span> <span style="color: #7CB8BB;">category-ttt</span>
@@ -1514,9 +1514,9 @@ category.opposite <span style="color: #DFAF8F;">=</span> <span style="color: #DF
 </div>
 </div>
 
-<div id="outline-container-org8c45c82" class="outline-4">
-<h4 id="org8c45c82">category-product</h4>
-<div class="outline-text-4" id="text-org8c45c82">
+<div id="outline-container-org2485dba" class="outline-4">
+<h4 id="org2485dba">category-product</h4>
+<div class="outline-text-4" id="text-org2485dba">
 <div class="org-src-container">
 
 <pre class="src src-cicada">category-product <span style="color: #DFAF8F;">:</span> <span style="color: #7CB8BB;">--</span> <span style="color: #7CB8BB;">category-ttt</span> <span style="color: #7CB8BB;">category-ttt</span> <span style="color: #7CB8BB;">-&gt;</span> <span style="color: #7CB8BB;">category-ttt</span>
@@ -1557,12 +1557,12 @@ category-product <span style="color: #BFEBBF;">#1</span> <span style="color: #BF
 </div>
 </div>
 
-<div id="outline-container-orgffc315a" class="outline-2">
-<h2 id="orgffc315a">product-closed-category</h2>
-<div class="outline-text-2" id="text-orgffc315a">
-</div><div id="outline-container-org947f52c" class="outline-3">
-<h3 id="org947f52c">product-closed-category-ttt</h3>
-<div class="outline-text-3" id="text-org947f52c">
+<div id="outline-container-org3480eee" class="outline-2">
+<h2 id="org3480eee">product-closed-category</h2>
+<div class="outline-text-2" id="text-org3480eee">
+</div><div id="outline-container-org415737a" class="outline-3">
+<h3 id="org415737a">product-closed-category-ttt</h3>
+<div class="outline-text-3" id="text-org415737a">
 <div class="org-src-container">
 
 <pre class="src src-cicada"><span style="color: #7CB8BB;">product-closed-category-ttt</span> <span style="color: #DFAF8F;">:</span> <span style="color: #7CB8BB;">type-tttt</span>
@@ -1576,9 +1576,9 @@ category-product <span style="color: #BFEBBF;">#1</span> <span style="color: #BF
 </div>
 </div>
 
-<div id="outline-container-org8423297" class="outline-3">
-<h3 id="org8423297">product-closed-category.product-arrow</h3>
-<div class="outline-text-3" id="text-org8423297">
+<div id="outline-container-org6d5cc8c" class="outline-3">
+<h3 id="org6d5cc8c">product-closed-category.product-arrow</h3>
+<div class="outline-text-3" id="text-org6d5cc8c">
 <div class="org-src-container">
 
 <pre class="src src-cicada">product-closed-category.product-arrow <span style="color: #DFAF8F;">:</span>
@@ -1602,9 +1602,9 @@ product-closed-category.product-arrow f g <span style="color: #DFAF8F;">=</span>
 </div>
 </div>
 
-<div id="outline-container-orgfd04b3" class="outline-3">
-<h3 id="orgfd04b3">product-closed-category.exponential-tt</h3>
-<div class="outline-text-3" id="text-orgfd04b3">
+<div id="outline-container-org6dc5bb2" class="outline-3">
+<h3 id="org6dc5bb2">product-closed-category.exponential-tt</h3>
+<div class="outline-text-3" id="text-org6dc5bb2">
 <div class="org-src-container">
 
 <pre class="src src-cicada"><span style="color: #7CB8BB;">product-closed-category.exponential-candidate-tt</span> <span style="color: #DFAF8F;">:</span> <span style="color: #7CB8BB;">type-ttt</span>
@@ -1634,16 +1634,16 @@ product-closed-category.product-arrow f g <span style="color: #DFAF8F;">=</span>
 </div>
 </div>
 
-<div id="outline-container-org3a5f699" class="outline-2">
-<h2 id="org3a5f699"><span class="done _todo_">[todo]</span> cartesian-closed-category</h2>
+<div id="outline-container-org514ee00" class="outline-2">
+<h2 id="org514ee00"><span class="done _todo_">[todo]</span> cartesian-closed-category</h2>
 </div>
 
-<div id="outline-container-orgaf8b402" class="outline-2">
-<h2 id="orgaf8b402">void-category</h2>
-<div class="outline-text-2" id="text-orgaf8b402">
-</div><div id="outline-container-org1a0d953" class="outline-3">
-<h3 id="org1a0d953">void-arrow-t</h3>
-<div class="outline-text-3" id="text-org1a0d953">
+<div id="outline-container-org322256d" class="outline-2">
+<h2 id="org322256d">void-category</h2>
+<div class="outline-text-2" id="text-org322256d">
+</div><div id="outline-container-orgbd7d748" class="outline-3">
+<h3 id="orgbd7d748">void-arrow-t</h3>
+<div class="outline-text-3" id="text-orgbd7d748">
 <div class="org-src-container">
 
 <pre class="src src-cicada"><span style="color: #7CB8BB;">void-arrow-t</span> <span style="color: #DFAF8F;">:</span> <span style="color: #7CB8BB;">type-tt</span>
@@ -1654,9 +1654,9 @@ product-closed-category.product-arrow f g <span style="color: #DFAF8F;">=</span>
 </div>
 </div>
 
-<div id="outline-container-org3a8ab93" class="outline-3">
-<h3 id="org3a8ab93">void-arrow-eqv-t</h3>
-<div class="outline-text-3" id="text-org3a8ab93">
+<div id="outline-container-orgfbf8d79" class="outline-3">
+<h3 id="orgfbf8d79">void-arrow-eqv-t</h3>
+<div class="outline-text-3" id="text-orgfbf8d79">
 <div class="org-src-container">
 
 <pre class="src src-cicada"><span style="color: #7CB8BB;">void-arrow-eqv-t</span> <span style="color: #DFAF8F;">:</span> <span style="color: #7CB8BB;">type-tt</span>
@@ -1667,9 +1667,9 @@ product-closed-category.product-arrow f g <span style="color: #DFAF8F;">=</span>
 </div>
 </div>
 
-<div id="outline-container-org4d3a51b" class="outline-3">
-<h3 id="org4d3a51b">void-category</h3>
-<div class="outline-text-3" id="text-org4d3a51b">
+<div id="outline-container-org9d010da" class="outline-3">
+<h3 id="org9d010da">void-category</h3>
+<div class="outline-text-3" id="text-org9d010da">
 <div class="org-src-container">
 
 <pre class="src src-cicada">void-category <span style="color: #DFAF8F;">:</span> <span style="color: #7CB8BB;">category-tt</span>
@@ -1707,12 +1707,12 @@ void-category <span style="color: #DFAF8F;">=</span> <span style="color: #DFAF8F
 </div>
 </div>
 
-<div id="outline-container-org5bcdb51" class="outline-2">
-<h2 id="org5bcdb51">graph-tt</h2>
-<div class="outline-text-2" id="text-org5bcdb51">
-</div><div id="outline-container-org2a67538" class="outline-3">
-<h3 id="org2a67538">graph-tt</h3>
-<div class="outline-text-3" id="text-org2a67538">
+<div id="outline-container-org6185284" class="outline-2">
+<h2 id="org6185284">graph-tt</h2>
+<div class="outline-text-2" id="text-org6185284">
+</div><div id="outline-container-org41c24d2" class="outline-3">
+<h3 id="org41c24d2">graph-tt</h3>
+<div class="outline-text-3" id="text-org41c24d2">
 <div class="org-src-container">
 
 <pre class="src src-cicada"><span style="color: #F0DFAF; font-weight: bold;">note</span>
@@ -1728,9 +1728,9 @@ void-category <span style="color: #DFAF8F;">=</span> <span style="color: #DFAF8F
 </div>
 </div>
 
-<div id="outline-container-orgaa8e38a" class="outline-3">
-<h3 id="orgaa8e38a">graph.path-t</h3>
-<div class="outline-text-3" id="text-orgaa8e38a">
+<div id="outline-container-org93494f" class="outline-3">
+<h3 id="org93494f">graph.path-t</h3>
+<div class="outline-text-3" id="text-org93494f">
 <div class="org-src-container">
 
 <pre class="src src-cicada"><span style="color: #7CB8BB;">graph.path-t</span> <span style="color: #DFAF8F;">:</span> <span style="color: #7CB8BB;">type-tt</span>
@@ -1762,9 +1762,9 @@ void-category <span style="color: #DFAF8F;">=</span> <span style="color: #DFAF8F
 </div>
 </div>
 
-<div id="outline-container-orgfa95d6f" class="outline-3">
-<h3 id="orgfa95d6f">graph.path-eqv-t</h3>
-<div class="outline-text-3" id="text-orgfa95d6f">
+<div id="outline-container-orgcdc5bc6" class="outline-3">
+<h3 id="orgcdc5bc6">graph.path-eqv-t</h3>
+<div class="outline-text-3" id="text-orgcdc5bc6">
 <div class="org-src-container">
 
 <pre class="src src-cicada"><span style="color: #7CB8BB;">graph.path-eqv-t</span> <span style="color: #DFAF8F;">:</span> <span style="color: #7CB8BB;">type-tt</span>
@@ -1809,9 +1809,9 @@ void-category <span style="color: #DFAF8F;">=</span> <span style="color: #DFAF8F
 </div>
 </div>
 
-<div id="outline-container-org8705b4" class="outline-3">
-<h3 id="org8705b4">graph.as-free-category</h3>
-<div class="outline-text-3" id="text-org8705b4">
+<div id="outline-container-org9717f11" class="outline-3">
+<h3 id="org9717f11">graph.as-free-category</h3>
+<div class="outline-text-3" id="text-org9717f11">
 <div class="org-src-container">
 
 <pre class="src src-cicada">graph.as-free-category <span style="color: #DFAF8F;">:</span> <span style="color: #7CB8BB;">category-tt</span>
@@ -1851,12 +1851,12 @@ graph.as-free-category <span style="color: #DFAF8F;">=</span> <span style="color
 </div>
 </div>
 
-<div id="outline-container-orgd88d659" class="outline-2">
-<h2 id="orgd88d659">nat-order-category</h2>
-<div class="outline-text-2" id="text-orgd88d659">
-</div><div id="outline-container-orgeda5f1f" class="outline-3">
-<h3 id="orgeda5f1f">nat-lteq-t</h3>
-<div class="outline-text-3" id="text-orgeda5f1f">
+<div id="outline-container-orgf3ef4b3" class="outline-2">
+<h2 id="orgf3ef4b3">nat-order-category</h2>
+<div class="outline-text-2" id="text-orgf3ef4b3">
+</div><div id="outline-container-org6d29813" class="outline-3">
+<h3 id="org6d29813">nat-lteq-t</h3>
+<div class="outline-text-3" id="text-org6d29813">
 <div class="org-src-container">
 
 <pre class="src src-cicada"><span style="color: #7CB8BB;">nat-lteq-t</span> <span style="color: #DFAF8F;">:</span> <span style="color: #7CB8BB;">type-tt</span>
@@ -1879,9 +1879,9 @@ graph.as-free-category <span style="color: #DFAF8F;">=</span> <span style="color
 </div>
 </div>
 
-<div id="outline-container-orgc42b4c3" class="outline-3">
-<h3 id="orgc42b4c3">nat-non-negative</h3>
-<div class="outline-text-3" id="text-orgc42b4c3">
+<div id="outline-container-org1a6a80b" class="outline-3">
+<h3 id="org1a6a80b">nat-non-negative</h3>
+<div class="outline-text-3" id="text-org1a6a80b">
 <div class="org-src-container">
 
 <pre class="src src-cicada">nat-non-negative <span style="color: #DFAF8F;">:</span> <span style="color: #7CB8BB;">--</span> n <span style="color: #DFAF8F;">:</span> <span style="color: #7CB8BB;">nat-t</span> <span style="color: #7CB8BB;">-&gt;</span> (<span style="color: #7CB8BB;">nat-lteq-t</span> <span style="color: #DFAF8F;">zero-c</span> n)
@@ -1891,9 +1891,9 @@ nat-non-negative <span style="color: #DFAF8F;">=</span> <span style="color: #DFA
 </div>
 </div>
 
-<div id="outline-container-orga92d3a1" class="outline-3">
-<h3 id="orga92d3a1">nat-lteq-reflexive</h3>
-<div class="outline-text-3" id="text-orga92d3a1">
+<div id="outline-container-orgeb4970c" class="outline-3">
+<h3 id="orgeb4970c">nat-lteq-reflexive</h3>
+<div class="outline-text-3" id="text-orgeb4970c">
 <div class="org-src-container">
 
 <pre class="src src-cicada">nat-lteq-reflexive <span style="color: #DFAF8F;">:</span> <span style="color: #7CB8BB;">--</span> n <span style="color: #DFAF8F;">:</span> <span style="color: #7CB8BB;">nat-t</span> <span style="color: #7CB8BB;">-&gt;</span> (<span style="color: #7CB8BB;">nat-lteq-t</span> n n)
@@ -1906,9 +1906,9 @@ nat-lteq-reflexive n <span style="color: #DFAF8F;">=</span>
 </div>
 </div>
 
-<div id="outline-container-org9bf35d6" class="outline-3">
-<h3 id="org9bf35d6">nat-lteq-transitive</h3>
-<div class="outline-text-3" id="text-org9bf35d6">
+<div id="outline-container-orgb4b2bee" class="outline-3">
+<h3 id="orgb4b2bee">nat-lteq-transitive</h3>
+<div class="outline-text-3" id="text-orgb4b2bee">
 <div class="org-src-container">
 
 <pre class="src src-cicada">nat-lteq-transitive <span style="color: #DFAF8F;">:</span>
@@ -1924,9 +1924,9 @@ nat-lteq-transitive x y <span style="color: #DFAF8F;">=</span>
 </div>
 </div>
 
-<div id="outline-container-org7135a36" class="outline-3">
-<h3 id="org7135a36">nat-lt-t</h3>
-<div class="outline-text-3" id="text-org7135a36">
+<div id="outline-container-org5132c04" class="outline-3">
+<h3 id="org5132c04">nat-lt-t</h3>
+<div class="outline-text-3" id="text-org5132c04">
 <div class="org-src-container">
 
 <pre class="src src-cicada"><span style="color: #7CB8BB;">nat-lt-t</span> <span style="color: #DFAF8F;">:</span> <span style="color: #7CB8BB;">--</span> <span style="color: #7CB8BB;">nat-t</span> <span style="color: #7CB8BB;">nat-t</span> <span style="color: #7CB8BB;">-&gt;</span> <span style="color: #7CB8BB;">type-tt</span>
@@ -1936,9 +1936,9 @@ nat-lteq-transitive x y <span style="color: #DFAF8F;">=</span>
 </div>
 </div>
 
-<div id="outline-container-orge91cb1b" class="outline-3">
-<h3 id="orge91cb1b">nat-archimedean-property</h3>
-<div class="outline-text-3" id="text-orge91cb1b">
+<div id="outline-container-orge370217" class="outline-3">
+<h3 id="orge370217">nat-archimedean-property</h3>
+<div class="outline-text-3" id="text-orge370217">
 <div class="org-src-container">
 
 <pre class="src src-cicada">nat-archimedean-property <span style="color: #DFAF8F;">:</span>
@@ -1952,9 +1952,9 @@ nat-archimedean-property x <span style="color: #DFAF8F;">=</span>
 </div>
 </div>
 
-<div id="outline-container-orge055fd6" class="outline-3">
-<h3 id="orge055fd6">nat-order-category</h3>
-<div class="outline-text-3" id="text-orge055fd6">
+<div id="outline-container-org50db30f" class="outline-3">
+<h3 id="org50db30f">nat-order-category</h3>
+<div class="outline-text-3" id="text-org50db30f">
 <div class="org-src-container">
 
 <pre class="src src-cicada">nat-order-category <span style="color: #DFAF8F;">:</span> <span style="color: #7CB8BB;">category-tt</span>
@@ -1991,33 +1991,33 @@ nat-order-category <span style="color: #DFAF8F;">=</span> <span style="color: #D
 </div>
 </div>
 
-<div id="outline-container-org939eb88" class="outline-2">
-<h2 id="org939eb88">groupoid</h2>
-<div class="outline-text-2" id="text-org939eb88">
-</div><div id="outline-container-org9240868" class="outline-3">
-<h3 id="org9240868">groupoid-tt</h3>
-<div class="outline-text-3" id="text-org9240868">
+<div id="outline-container-org3f4375f" class="outline-2">
+<h2 id="org3f4375f">groupoid</h2>
+<div class="outline-text-2" id="text-org3f4375f">
+</div><div id="outline-container-org782e9f8" class="outline-3">
+<h3 id="org782e9f8">groupoid-tt</h3>
+<div class="outline-text-3" id="text-org782e9f8">
 <div class="org-src-container">
 
 <pre class="src src-cicada"><span style="color: #7CB8BB;">groupoid-tt</span> <span style="color: #DFAF8F;">:</span> <span style="color: #7CB8BB;">type-ttt</span>
 <span style="color: #7CB8BB;">groupoid-tt</span> <span style="color: #DFAF8F;">=</span> <span style="color: #F0DFAF; font-weight: bold;">data</span> <span style="color: #DFAF8F;">&lt;:</span> [<span style="color: #7CB8BB;">category-tt</span>]
-  inverse <span style="color: #DFAF8F;">:</span> <span style="color: #7CB8BB;">--</span> f <span style="color: #DFAF8F;">:</span> (<span style="color: #7CB8BB;">arrow-t</span> a b) <span style="color: #7CB8BB;">-&gt;</span> (<span style="color: #7CB8BB;">isomorphic-t</span> a b f)
+  inverse <span style="color: #DFAF8F;">:</span> <span style="color: #7CB8BB;">--</span> f <span style="color: #DFAF8F;">:</span> (<span style="color: #7CB8BB;">arrow-tt</span> a b) <span style="color: #7CB8BB;">-&gt;</span> (<span style="color: #7CB8BB;">isomorphic-tt</span> a b f)
 </pre>
 </div>
 </div>
 </div>
 </div>
 
-<div id="outline-container-org8b26658" class="outline-2">
-<h2 id="org8b26658"><span class="done _todo_">[todo]</span> nat-total-order</h2>
+<div id="outline-container-org4d01c26" class="outline-2">
+<h2 id="org4d01c26"><span class="done _todo_">[todo]</span> nat-total-order</h2>
 </div>
 
-<div id="outline-container-org7337d9e" class="outline-2">
-<h2 id="org7337d9e">monoid</h2>
-<div class="outline-text-2" id="text-org7337d9e">
-</div><div id="outline-container-orgdb23d91" class="outline-3">
-<h3 id="orgdb23d91">monoid-tt</h3>
-<div class="outline-text-3" id="text-orgdb23d91">
+<div id="outline-container-org4bcf2b1" class="outline-2">
+<h2 id="org4bcf2b1">monoid</h2>
+<div class="outline-text-2" id="text-org4bcf2b1">
+</div><div id="outline-container-org316bd81" class="outline-3">
+<h3 id="org316bd81">monoid-tt</h3>
+<div class="outline-text-3" id="text-org316bd81">
 <div class="org-src-container">
 
 <pre class="src src-cicada"><span style="color: #7CB8BB;">monoid-tt</span> <span style="color: #DFAF8F;">:</span> <span style="color: #7CB8BB;">type-ttt</span>
@@ -2054,9 +2054,9 @@ nat-order-category <span style="color: #DFAF8F;">=</span> <span style="color: #D
 </div>
 </div>
 
-<div id="outline-container-org7c1f66c" class="outline-3">
-<h3 id="org7c1f66c">monoid.as-category</h3>
-<div class="outline-text-3" id="text-org7c1f66c">
+<div id="outline-container-org463b37c" class="outline-3">
+<h3 id="org463b37c">monoid.as-category</h3>
+<div class="outline-text-3" id="text-org463b37c">
 <div class="org-src-container">
 
 <pre class="src src-cicada">monoid.as-category <span style="color: #DFAF8F;">:</span> <span style="color: #7CB8BB;">category-tt</span>
@@ -2075,36 +2075,36 @@ monoid.as-category <span style="color: #DFAF8F;">=</span> <span style="color: #D
 </div>
 </div>
 
-<div id="outline-container-org7cf994d" class="outline-2">
-<h2 id="org7cf994d"><span class="done _todo_">[todo]</span> group</h2>
+<div id="outline-container-org82394af" class="outline-2">
+<h2 id="org82394af"><span class="done _todo_">[todo]</span> group</h2>
 </div>
 
-<div id="outline-container-org79894af" class="outline-2">
-<h2 id="org79894af"><span class="done _todo_">[todo]</span> abelian-group</h2>
+<div id="outline-container-org8354133" class="outline-2">
+<h2 id="org8354133"><span class="done _todo_">[todo]</span> abelian-group</h2>
 </div>
 
-<div id="outline-container-org9c5c444" class="outline-2">
-<h2 id="org9c5c444"><span class="done _todo_">[todo]</span> ring</h2>
+<div id="outline-container-orgd2b30fe" class="outline-2">
+<h2 id="orgd2b30fe"><span class="done _todo_">[todo]</span> ring</h2>
 </div>
 
-<div id="outline-container-orgf26cd8" class="outline-2">
-<h2 id="orgf26cd8"><span class="done _todo_">[todo]</span> field</h2>
+<div id="outline-container-org193b4f2" class="outline-2">
+<h2 id="org193b4f2"><span class="done _todo_">[todo]</span> field</h2>
 </div>
 
-<div id="outline-container-org6c55ba1" class="outline-2">
-<h2 id="org6c55ba1"><span class="done _todo_">[todo]</span> vector-space</h2>
+<div id="outline-container-org90c45a1" class="outline-2">
+<h2 id="org90c45a1"><span class="done _todo_">[todo]</span> vector-space</h2>
 </div>
 
-<div id="outline-container-org61d23d2" class="outline-2">
-<h2 id="org61d23d2"><span class="done _todo_">[todo]</span> limit</h2>
+<div id="outline-container-org3de5158" class="outline-2">
+<h2 id="org3de5158"><span class="done _todo_">[todo]</span> limit</h2>
 </div>
 
-<div id="outline-container-org5fb33b5" class="outline-2">
-<h2 id="org5fb33b5">container</h2>
-<div class="outline-text-2" id="text-org5fb33b5">
-</div><div id="outline-container-orga889d9a" class="outline-3">
-<h3 id="orga889d9a">container-tt</h3>
-<div class="outline-text-3" id="text-orga889d9a">
+<div id="outline-container-org27684e5" class="outline-2">
+<h2 id="org27684e5">container</h2>
+<div class="outline-text-2" id="text-org27684e5">
+</div><div id="outline-container-org551dd88" class="outline-3">
+<h3 id="org551dd88">container-tt</h3>
+<div class="outline-text-3" id="text-org551dd88">
 <div class="org-src-container">
 
 <pre class="src src-cicada"><span style="color: #F0DFAF; font-weight: bold;">note</span>
@@ -2119,9 +2119,9 @@ monoid.as-category <span style="color: #DFAF8F;">=</span> <span style="color: #D
 </div>
 </div>
 
-<div id="outline-container-orgec342ce" class="outline-3">
-<h3 id="orgec342ce">list-container</h3>
-<div class="outline-text-3" id="text-orgec342ce">
+<div id="outline-container-org472f598" class="outline-3">
+<h3 id="org472f598">list-container</h3>
+<div class="outline-text-3" id="text-org472f598">
 <div class="org-src-container">
 
 <pre class="src src-cicada">list-container <span style="color: #DFAF8F;">:</span> <span style="color: #7CB8BB;">container-tt</span>
@@ -2138,12 +2138,12 @@ list-container <span style="color: #DFAF8F;">=</span> <span style="color: #DFAF8
 </div>
 </div>
 
-<div id="outline-container-org87af502" class="outline-2">
-<h2 id="org87af502">const</h2>
-<div class="outline-text-2" id="text-org87af502">
-</div><div id="outline-container-orgd3bee7f" class="outline-3">
-<h3 id="orgd3bee7f">const-t</h3>
-<div class="outline-text-3" id="text-orgd3bee7f">
+<div id="outline-container-org8301a7f" class="outline-2">
+<h2 id="org8301a7f">const</h2>
+<div class="outline-text-2" id="text-org8301a7f">
+</div><div id="outline-container-orgf6cad3" class="outline-3">
+<h3 id="orgf6cad3">const-t</h3>
+<div class="outline-text-3" id="text-orgf6cad3">
 <div class="org-src-container">
 
 <pre class="src src-cicada"><span style="color: #7CB8BB;">const-t</span> <span style="color: #DFAF8F;">:</span> <span style="color: #7CB8BB;">type-tt</span>
@@ -2155,9 +2155,9 @@ list-container <span style="color: #DFAF8F;">=</span> <span style="color: #DFAF8
 </div>
 </div>
 
-<div id="outline-container-orgfe20236" class="outline-3">
-<h3 id="orgfe20236">const-container</h3>
-<div class="outline-text-3" id="text-orgfe20236">
+<div id="outline-container-orgbacc45" class="outline-3">
+<h3 id="orgbacc45">const-container</h3>
+<div class="outline-text-3" id="text-orgbacc45">
 <div class="org-src-container">
 
 <pre class="src src-cicada">const-container <span style="color: #DFAF8F;">:</span> <span style="color: #7CB8BB;">--</span> <span style="color: #7CB8BB;">type-tt</span> <span style="color: #7CB8BB;">-&gt;</span> <span style="color: #7CB8BB;">container-tt</span>
@@ -2172,12 +2172,12 @@ const-container c <span style="color: #DFAF8F;">=</span> <span style="color: #DF
 </div>
 </div>
 
-<div id="outline-container-orgeec2eb6" class="outline-2">
-<h2 id="orgeec2eb6">monad</h2>
-<div class="outline-text-2" id="text-orgeec2eb6">
-</div><div id="outline-container-orgb86bfdd" class="outline-3">
-<h3 id="orgb86bfdd">monad-tt</h3>
-<div class="outline-text-3" id="text-orgb86bfdd">
+<div id="outline-container-org3b529e2" class="outline-2">
+<h2 id="org3b529e2">monad</h2>
+<div class="outline-text-2" id="text-org3b529e2">
+</div><div id="outline-container-org62f6d1a" class="outline-3">
+<h3 id="org62f6d1a">monad-tt</h3>
+<div class="outline-text-3" id="text-org62f6d1a">
 <div class="org-src-container">
 
 <pre class="src src-cicada"><span style="color: #7CB8BB;">monad-tt</span> <span style="color: #DFAF8F;">:</span> <span style="color: #7CB8BB;">type-ttt</span>
@@ -2189,9 +2189,9 @@ const-container c <span style="color: #DFAF8F;">=</span> <span style="color: #DF
 </div>
 </div>
 
-<div id="outline-container-org3abe15c" class="outline-3">
-<h3 id="org3abe15c">monad.compose</h3>
-<div class="outline-text-3" id="text-org3abe15c">
+<div id="outline-container-org8acb74a" class="outline-3">
+<h3 id="org8acb74a">monad.compose</h3>
+<div class="outline-text-3" id="text-org8acb74a">
 <div class="org-src-container">
 
 <pre class="src src-cicada">monad.compose <span style="color: #DFAF8F;">:</span>
@@ -2204,9 +2204,9 @@ monad.compose f g <span style="color: #DFAF8F;">=</span> (<span style="color: #F
 </div>
 </div>
 
-<div id="outline-container-orgf3cf10f" class="outline-3">
-<h3 id="orgf3cf10f">monad.flatten</h3>
-<div class="outline-text-3" id="text-orgf3cf10f">
+<div id="outline-container-orgb1b3b32" class="outline-3">
+<h3 id="orgb1b3b32">monad.flatten</h3>
+<div class="outline-text-3" id="text-orgb1b3b32">
 <div class="org-src-container">
 
 <pre class="src src-cicada">monad.flatten <span style="color: #DFAF8F;">:</span>
@@ -2218,9 +2218,9 @@ monad.flatten m <span style="color: #DFAF8F;">=</span> (<span style="color: #F0D
 </div>
 </div>
 
-<div id="outline-container-org8486ba" class="outline-3">
-<h3 id="org8486ba">list-monad</h3>
-<div class="outline-text-3" id="text-org8486ba">
+<div id="outline-container-org38da380" class="outline-3">
+<h3 id="org38da380">list-monad</h3>
+<div class="outline-text-3" id="text-org38da380">
 <div class="org-src-container">
 
 <pre class="src src-cicada">list-monad <span style="color: #DFAF8F;">:</span> <span style="color: #7CB8BB;">monad-tt</span>
@@ -2236,12 +2236,12 @@ list-monad <span style="color: #DFAF8F;">=</span> <span style="color: #DFAF8F;">
 </div>
 </div>
 
-<div id="outline-container-orgdef8d5d" class="outline-2">
-<h2 id="orgdef8d5d">maybe</h2>
-<div class="outline-text-2" id="text-orgdef8d5d">
-</div><div id="outline-container-orgdb41982" class="outline-3">
-<h3 id="orgdb41982">maybe-t</h3>
-<div class="outline-text-3" id="text-orgdb41982">
+<div id="outline-container-orgf4cb38e" class="outline-2">
+<h2 id="orgf4cb38e">maybe</h2>
+<div class="outline-text-2" id="text-orgf4cb38e">
+</div><div id="outline-container-org725ca07" class="outline-3">
+<h3 id="org725ca07">maybe-t</h3>
+<div class="outline-text-3" id="text-org725ca07">
 <div class="org-src-container">
 
 <pre class="src src-cicada"><span style="color: #7CB8BB;">maybe-t</span> <span style="color: #DFAF8F;">:</span> <span style="color: #7CB8BB;">type-tt</span>
@@ -2261,9 +2261,9 @@ list-monad <span style="color: #DFAF8F;">=</span> <span style="color: #DFAF8F;">
 </div>
 </div>
 
-<div id="outline-container-orgf54c6ce" class="outline-3">
-<h3 id="orgf54c6ce">maybe-container</h3>
-<div class="outline-text-3" id="text-orgf54c6ce">
+<div id="outline-container-orgfde8567" class="outline-3">
+<h3 id="orgfde8567">maybe-container</h3>
+<div class="outline-text-3" id="text-orgfde8567">
 <div class="org-src-container">
 
 <pre class="src src-cicada">maybe-container <span style="color: #DFAF8F;">:</span> <span style="color: #7CB8BB;">container-tt</span>
@@ -2278,9 +2278,9 @@ maybe-container <span style="color: #DFAF8F;">=</span> <span style="color: #DFAF
 </div>
 </div>
 
-<div id="outline-container-org758dd9b" class="outline-3">
-<h3 id="org758dd9b">maybe-monad</h3>
-<div class="outline-text-3" id="text-org758dd9b">
+<div id="outline-container-org5d7b3c6" class="outline-3">
+<h3 id="org5d7b3c6">maybe-monad</h3>
+<div class="outline-text-3" id="text-org5d7b3c6">
 <div class="org-src-container">
 
 <pre class="src src-cicada">maybe-monad <span style="color: #DFAF8F;">:</span> <span style="color: #7CB8BB;">monad-tt</span>
@@ -2296,12 +2296,12 @@ maybe-monad <span style="color: #DFAF8F;">=</span> <span style="color: #DFAF8F;"
 </div>
 </div>
 
-<div id="outline-container-org2928e4" class="outline-2">
-<h2 id="org2928e4">state</h2>
-<div class="outline-text-2" id="text-org2928e4">
-</div><div id="outline-container-orgbc17b73" class="outline-3">
-<h3 id="orgbc17b73">state-t</h3>
-<div class="outline-text-3" id="text-orgbc17b73">
+<div id="outline-container-orge8bbaa" class="outline-2">
+<h2 id="orge8bbaa">state</h2>
+<div class="outline-text-2" id="text-orge8bbaa">
+</div><div id="outline-container-org2301221" class="outline-3">
+<h3 id="org2301221">state-t</h3>
+<div class="outline-text-3" id="text-org2301221">
 <div class="org-src-container">
 
 <pre class="src src-cicada"><span style="color: #7CB8BB;">state-t</span> <span style="color: #DFAF8F;">:</span> <span style="color: #7CB8BB;">--</span> <span style="color: #7CB8BB;">type-tt</span> <span style="color: #7CB8BB;">type-tt</span> <span style="color: #7CB8BB;">-&gt;</span> <span style="color: #7CB8BB;">type-tt</span>
@@ -2311,9 +2311,9 @@ maybe-monad <span style="color: #DFAF8F;">=</span> <span style="color: #DFAF8F;"
 </div>
 </div>
 
-<div id="outline-container-org3337923" class="outline-3">
-<h3 id="org3337923">state-monad</h3>
-<div class="outline-text-3" id="text-org3337923">
+<div id="outline-container-org20ecec9" class="outline-3">
+<h3 id="org20ecec9">state-monad</h3>
+<div class="outline-text-3" id="text-org20ecec9">
 <div class="org-src-container">
 
 <pre class="src src-cicada">state-monad <span style="color: #DFAF8F;">:</span> <span style="color: #7CB8BB;">--</span> <span style="color: #7CB8BB;">type-tt</span> <span style="color: #7CB8BB;">-&gt;</span> <span style="color: #7CB8BB;">monad-tt</span>
@@ -2346,12 +2346,12 @@ state-monad s <span style="color: #DFAF8F;">=</span> <span style="color: #DFAF8F
 </div>
 </div>
 
-<div id="outline-container-orgc00070c" class="outline-2">
-<h2 id="orgc00070c">tree</h2>
-<div class="outline-text-2" id="text-orgc00070c">
-</div><div id="outline-container-org7fc6583" class="outline-3">
-<h3 id="org7fc6583">tree-t</h3>
-<div class="outline-text-3" id="text-org7fc6583">
+<div id="outline-container-org1747e97" class="outline-2">
+<h2 id="org1747e97">tree</h2>
+<div class="outline-text-2" id="text-org1747e97">
+</div><div id="outline-container-org1562580" class="outline-3">
+<h3 id="org1562580">tree-t</h3>
+<div class="outline-text-3" id="text-org1562580">
 <div class="org-src-container">
 
 <pre class="src src-cicada"><span style="color: #7CB8BB;">tree-t</span> <span style="color: #DFAF8F;">:</span> <span style="color: #7CB8BB;">type-tt</span>
@@ -2372,9 +2372,9 @@ state-monad s <span style="color: #DFAF8F;">=</span> <span style="color: #DFAF8F
 </div>
 </div>
 
-<div id="outline-container-org1e7fee7" class="outline-3">
-<h3 id="org1e7fee7">tree-container</h3>
-<div class="outline-text-3" id="text-org1e7fee7">
+<div id="outline-container-org2bff4e5" class="outline-3">
+<h3 id="org2bff4e5">tree-container</h3>
+<div class="outline-text-3" id="text-org2bff4e5">
 <div class="org-src-container">
 
 <pre class="src src-cicada">tree-container <span style="color: #DFAF8F;">:</span> <span style="color: #7CB8BB;">container-tt</span>
@@ -2392,9 +2392,9 @@ tree-container <span style="color: #DFAF8F;">=</span> <span style="color: #DFAF8
 </div>
 </div>
 
-<div id="outline-container-orgffd078a" class="outline-3">
-<h3 id="orgffd078a">tree-zip</h3>
-<div class="outline-text-3" id="text-orgffd078a">
+<div id="outline-container-org708df32" class="outline-3">
+<h3 id="org708df32">tree-zip</h3>
+<div class="outline-text-3" id="text-org708df32">
 <div class="org-src-container">
 
 <pre class="src src-cicada">tree-zip <span style="color: #DFAF8F;">:</span>
@@ -2415,9 +2415,9 @@ tree-zip x y <span style="color: #DFAF8F;">=</span>
 </div>
 </div>
 
-<div id="outline-container-orgc6c081" class="outline-3">
-<h3 id="orgc6c081">tree-numbering</h3>
-<div class="outline-text-3" id="text-orgc6c081">
+<div id="outline-container-org3ae9375" class="outline-3">
+<h3 id="org3ae9375">tree-numbering</h3>
+<div class="outline-text-3" id="text-org3ae9375">
 <div class="org-src-container">
 
 <pre class="src src-cicada">tree-numbering <span style="color: #DFAF8F;">:</span>
@@ -2437,20 +2437,20 @@ tree-numbering tree <span style="color: #DFAF8F;">=</span>
 </div>
 </div>
 
-<div id="outline-container-org58b4fc7" class="outline-2">
-<h2 id="org58b4fc7">int</h2>
-<div class="outline-text-2" id="text-org58b4fc7">
-</div><div id="outline-container-orgf1f4d9c" class="outline-3">
-<h3 id="orgf1f4d9c"><span class="done _todo_">[todo]</span> int-t</h3>
+<div id="outline-container-orgc27af9a" class="outline-2">
+<h2 id="orgc27af9a">int</h2>
+<div class="outline-text-2" id="text-orgc27af9a">
+</div><div id="outline-container-org90731ff" class="outline-3">
+<h3 id="org90731ff"><span class="done _todo_">[todo]</span> int-t</h3>
 </div>
 
-<div id="outline-container-org58a7f9b" class="outline-3">
-<h3 id="org58a7f9b"><span class="done _todo_">[todo]</span> mod-t</h3>
+<div id="outline-container-org6ebf319" class="outline-3">
+<h3 id="org6ebf319"><span class="done _todo_">[todo]</span> mod-t</h3>
 </div>
 
-<div id="outline-container-org79eded8" class="outline-3">
-<h3 id="org79eded8">gcd-t</h3>
-<div class="outline-text-3" id="text-org79eded8">
+<div id="outline-container-org7619f50" class="outline-3">
+<h3 id="org7619f50">gcd-t</h3>
+<div class="outline-text-3" id="text-org7619f50">
 <div class="org-src-container">
 
 <pre class="src src-cicada"><span style="color: #7CB8BB;">gcd-t</span> <span style="color: #DFAF8F;">:</span> <span style="color: #7CB8BB;">type-tt</span>
@@ -2474,12 +2474,12 @@ tree-numbering tree <span style="color: #DFAF8F;">=</span>
 </div>
 </div>
 
-<div id="outline-container-org6f48fd3" class="outline-2">
-<h2 id="org6f48fd3">set-category</h2>
-<div class="outline-text-2" id="text-org6f48fd3">
-</div><div id="outline-container-org9fd311a" class="outline-3">
-<h3 id="org9fd311a"><span class="done _todo_">[todo]</span> set-tt</h3>
-<div class="outline-text-3" id="text-org9fd311a">
+<div id="outline-container-org20e4379" class="outline-2">
+<h2 id="org20e4379">set-category</h2>
+<div class="outline-text-2" id="text-org20e4379">
+</div><div id="outline-container-orgc55ed1c" class="outline-3">
+<h3 id="orgc55ed1c"><span class="done _todo_">[todo]</span> set-tt</h3>
+<div class="outline-text-3" id="text-orgc55ed1c">
 <div class="org-src-container">
 
 <pre class="src src-cicada"><span style="color: #F0DFAF; font-weight: bold;">note</span>
@@ -2494,9 +2494,9 @@ tree-numbering tree <span style="color: #DFAF8F;">=</span>
 </div>
 </div>
 
-<div id="outline-container-orgca4889d" class="outline-3">
-<h3 id="orgca4889d">set-morphism-tt</h3>
-<div class="outline-text-3" id="text-orgca4889d">
+<div id="outline-container-org2bdf96b" class="outline-3">
+<h3 id="org2bdf96b">set-morphism-tt</h3>
+<div class="outline-text-3" id="text-org2bdf96b">
 <div class="org-src-container">
 
 <pre class="src src-cicada"><span style="color: #7CB8BB;">set-morphism-tt</span> <span style="color: #DFAF8F;">:</span> <span style="color: #7CB8BB;">type-ttt</span>
@@ -2510,9 +2510,9 @@ tree-numbering tree <span style="color: #DFAF8F;">=</span>
 </div>
 </div>
 
-<div id="outline-container-orgfb6e523" class="outline-3">
-<h3 id="orgfb6e523">set-morphism-eqv-tt</h3>
-<div class="outline-text-3" id="text-orgfb6e523">
+<div id="outline-container-org2b8fca1" class="outline-3">
+<h3 id="org2b8fca1">set-morphism-eqv-tt</h3>
+<div class="outline-text-3" id="text-org2b8fca1">
 <div class="org-src-container">
 
 <pre class="src src-cicada"><span style="color: #7CB8BB;">set-morphism-eqv-tt</span> <span style="color: #DFAF8F;">:</span> <span style="color: #7CB8BB;">type-ttt</span>
@@ -2528,9 +2528,9 @@ tree-numbering tree <span style="color: #DFAF8F;">=</span>
 </div>
 </div>
 
-<div id="outline-container-org420c732" class="outline-3">
-<h3 id="org420c732">set-category</h3>
-<div class="outline-text-3" id="text-org420c732">
+<div id="outline-container-orgeb60068" class="outline-3">
+<h3 id="orgeb60068">set-category</h3>
+<div class="outline-text-3" id="text-orgeb60068">
 <div class="org-src-container">
 
 <pre class="src src-cicada">set-category <span style="color: #DFAF8F;">:</span> <span style="color: #7CB8BB;">category-ttt</span>
@@ -2593,9 +2593,9 @@ set-category <span style="color: #DFAF8F;">=</span> <span style="color: #DFAF8F;
 </div>
 </div>
 
-<div id="outline-container-orgdf06bf6" class="outline-3">
-<h3 id="orgdf06bf6">set-category &#x2013; without type</h3>
-<div class="outline-text-3" id="text-orgdf06bf6">
+<div id="outline-container-org6fdb6fe" class="outline-3">
+<h3 id="org6fdb6fe">set-category &#x2013; without type</h3>
+<div class="outline-text-3" id="text-org6fdb6fe">
 <div class="org-src-container">
 
 <pre class="src src-cicada">set-category <span style="color: #DFAF8F;">:</span> <span style="color: #7CB8BB;">category-ttt</span>
@@ -2626,12 +2626,12 @@ set-category <span style="color: #DFAF8F;">=</span> <span style="color: #DFAF8F;
 </div>
 </div>
 
-<div id="outline-container-org84c7052" class="outline-2">
-<h2 id="org84c7052">preorder-category</h2>
-<div class="outline-text-2" id="text-org84c7052">
-</div><div id="outline-container-org5bc463a" class="outline-3">
-<h3 id="org5bc463a">preorder-morphism-tt</h3>
-<div class="outline-text-3" id="text-org5bc463a">
+<div id="outline-container-org42333bb" class="outline-2">
+<h2 id="org42333bb">preorder-category</h2>
+<div class="outline-text-2" id="text-org42333bb">
+</div><div id="outline-container-orgaa3178" class="outline-3">
+<h3 id="orgaa3178">preorder-morphism-tt</h3>
+<div class="outline-text-3" id="text-orgaa3178">
 <div class="org-src-container">
 
 <pre class="src src-cicada"><span style="color: #7CB8BB;">preorder-morphism-tt</span> <span style="color: #DFAF8F;">:</span> <span style="color: #7CB8BB;">type-ttt</span>
@@ -2649,9 +2649,9 @@ set-category <span style="color: #DFAF8F;">=</span> <span style="color: #DFAF8F;
 </div>
 </div>
 
-<div id="outline-container-orge98af6d" class="outline-3">
-<h3 id="orge98af6d">preorder-morphism-eqv-tt</h3>
-<div class="outline-text-3" id="text-orge98af6d">
+<div id="outline-container-org3da2328" class="outline-3">
+<h3 id="org3da2328">preorder-morphism-eqv-tt</h3>
+<div class="outline-text-3" id="text-org3da2328">
 <div class="org-src-container">
 
 <pre class="src src-cicada"><span style="color: #7CB8BB;">preorder-morphism-eqv-tt</span> <span style="color: #DFAF8F;">:</span> <span style="color: #7CB8BB;">type-ttt</span>
@@ -2667,9 +2667,9 @@ set-category <span style="color: #DFAF8F;">=</span> <span style="color: #DFAF8F;
 </div>
 </div>
 
-<div id="outline-container-org8eb7fc9" class="outline-3">
-<h3 id="org8eb7fc9">preorder-category</h3>
-<div class="outline-text-3" id="text-org8eb7fc9">
+<div id="outline-container-org7c5d8a" class="outline-3">
+<h3 id="org7c5d8a">preorder-category</h3>
+<div class="outline-text-3" id="text-org7c5d8a">
 <div class="org-src-container">
 
 <pre class="src src-cicada">preorder-category <span style="color: #DFAF8F;">:</span> <span style="color: #7CB8BB;">category-ttt</span>
@@ -2717,12 +2717,12 @@ preorder-category <span style="color: #DFAF8F;">=</span> <span style="color: #DF
 </div>
 </div>
 
-<div id="outline-container-orgdd74e64" class="outline-2">
-<h2 id="orgdd74e64">category-category</h2>
-<div class="outline-text-2" id="text-orgdd74e64">
-</div><div id="outline-container-orgab7de15" class="outline-3">
-<h3 id="orgab7de15">functor-ttt</h3>
-<div class="outline-text-3" id="text-orgab7de15">
+<div id="outline-container-org813bf12" class="outline-2">
+<h2 id="org813bf12">category-category</h2>
+<div class="outline-text-2" id="text-org813bf12">
+</div><div id="outline-container-orge636eca" class="outline-3">
+<h3 id="orge636eca">functor-ttt</h3>
+<div class="outline-text-3" id="text-orge636eca">
 <ul class="org-ul">
 <li><p>a functor between two categories is a natural-construction</p><p>of the structure of [ante : category-ttt]</p><p>in the structure of [succ : category-ttt]</p></li></ul>
 
@@ -2758,9 +2758,9 @@ preorder-category <span style="color: #DFAF8F;">=</span> <span style="color: #DF
 </div>
 </div>
 
-<div id="outline-container-org88a9f01" class="outline-3">
-<h3 id="org88a9f01">natural-transformation-ttt</h3>
-<div class="outline-text-3" id="text-org88a9f01">
+<div id="outline-container-orgfb4d22a" class="outline-3">
+<h3 id="orgfb4d22a">natural-transformation-ttt</h3>
+<div class="outline-text-3" id="text-orgfb4d22a">
 <ul class="org-ul">
 <li><p>a natural-transformation is a level up map,</p><p>which maps objects to arrows, and arrows to squares.</p></li></ul>
 
@@ -2768,41 +2768,43 @@ preorder-category <span style="color: #DFAF8F;">=</span> <span style="color: #DF
 
 <pre class="src src-cicada"><span style="color: #7CB8BB;">natural-transformation-ttt</span> <span style="color: #DFAF8F;">:</span> <span style="color: #7CB8BB;">type-tttt</span>
 <span style="color: #7CB8BB;">natural-transformation-ttt</span> <span style="color: #DFAF8F;">=</span> <span style="color: #F0DFAF; font-weight: bold;">data</span>
-  lhs <span style="color: #DFAF8F;">:</span> (<span style="color: #7CB8BB;">functor-ttt</span> c d)
-  rhs <span style="color: #DFAF8F;">:</span> (<span style="color: #7CB8BB;">functor-ttt</span> c d)
+  lhs <span style="color: #DFAF8F;">:</span> (<span style="color: #7CB8BB;">functor-ttt</span> ante succ)
+  rhs <span style="color: #DFAF8F;">:</span> (<span style="color: #7CB8BB;">functor-ttt</span> ante succ)
+
+  ante succ <span style="color: #BFEBBF;">::</span> <span style="color: #7CB8BB;">object-ttt</span>
 
   component <span style="color: #DFAF8F;">:</span>
-    <span style="color: #7CB8BB;">--</span> a <span style="color: #DFAF8F;">:</span> <span style="color: #7CB8BB;">c.object-tt</span>
-    <span style="color: #7CB8BB;">-&gt;</span> (<span style="color: #7CB8BB;">d.arrow-tt</span> (lhs.object-map a) (rhs.object-map a))
+    <span style="color: #7CB8BB;">--</span> a <span style="color: #DFAF8F;">:</span> <span style="color: #7CB8BB;">ante.object-tt</span>
+    <span style="color: #7CB8BB;">-&gt;</span> (<span style="color: #7CB8BB;">succ.arrow-tt</span> (lhs.object-map a) (rhs.object-map a))
 
   transformation <span style="color: #DFAF8F;">:</span>
-    <span style="color: #7CB8BB;">--</span> f <span style="color: #DFAF8F;">:</span> (<span style="color: #7CB8BB;">c.arrow-tt</span> a b)
-    <span style="color: #7CB8BB;">-&gt;</span> (<span style="color: #7CB8BB;">d.arrow-eqv-tt</span>
-         (d.compose (component a) (rhs.arrow-map f))
-         (d.compose (lhs.arrow-map f) (component b)))
+    <span style="color: #7CB8BB;">--</span> f <span style="color: #DFAF8F;">:</span> (<span style="color: #7CB8BB;">ante.arrow-tt</span> a b)
+    <span style="color: #7CB8BB;">-&gt;</span> (<span style="color: #7CB8BB;">succ.arrow-eqv-tt</span>
+         (succ.compose (component a) (rhs.arrow-map f))
+         (succ.compose (lhs.arrow-map f) (component b)))
 </pre>
 </div>
 </div>
 </div>
 
-<div id="outline-container-org998efd3" class="outline-3">
-<h3 id="org998efd3">natural-isomorphism-ttt</h3>
-<div class="outline-text-3" id="text-org998efd3">
+<div id="outline-container-org102699d" class="outline-3">
+<h3 id="org102699d">natural-isomorphism-ttt</h3>
+<div class="outline-text-3" id="text-org102699d">
 <div class="org-src-container">
 
 <pre class="src src-cicada"><span style="color: #7CB8BB;">natural-isomorphism-ttt</span> <span style="color: #DFAF8F;">:</span> <span style="color: #7CB8BB;">type-tttt</span>
 <span style="color: #7CB8BB;">natural-isomorphism-ttt</span> <span style="color: #DFAF8F;">=</span> <span style="color: #F0DFAF; font-weight: bold;">data</span> <span style="color: #DFAF8F;">&lt;:</span> [<span style="color: #7CB8BB;">natural-transformation-ttt</span>]
   isomorphic-component <span style="color: #DFAF8F;">:</span>
-    <span style="color: #7CB8BB;">--</span> a <span style="color: #DFAF8F;">:</span> <span style="color: #7CB8BB;">c.object-tt</span>
-    <span style="color: #7CB8BB;">-&gt;</span> (<span style="color: #7CB8BB;">d.isomorphic-tt</span> iso <span style="color: #DFAF8F;">=</span> (component a))
+    <span style="color: #7CB8BB;">--</span> a <span style="color: #DFAF8F;">:</span> <span style="color: #7CB8BB;">ante.object-tt</span>
+    <span style="color: #7CB8BB;">-&gt;</span> (<span style="color: #7CB8BB;">succ.isomorphic-tt</span> iso <span style="color: #DFAF8F;">=</span> (component a))
 </pre>
 </div>
 </div>
 </div>
 
-<div id="outline-container-orgc445dc1" class="outline-3">
-<h3 id="orgc445dc1"><span class="done _todo_">[todo]</span> category-category</h3>
-<div class="outline-text-3" id="text-orgc445dc1">
+<div id="outline-container-org31c5eb8" class="outline-3">
+<h3 id="org31c5eb8"><span class="done _todo_">[todo]</span> category-category</h3>
+<div class="outline-text-3" id="text-org31c5eb8">
 <div class="org-src-container">
 
 <pre class="src src-cicada">category-category <span style="color: #DFAF8F;">:</span> <span style="color: #7CB8BB;">category-tttt</span>
@@ -2857,7 +2859,7 @@ category-category <span style="color: #DFAF8F;">=</span> <span style="color: #DF
 </div>
 </div>
 <div id="postamble" class="status">
-<p class="date">Created: 2018-07-20 Fri 03:13</p>
+<p class="date">Created: 2018-07-20 Fri 03:29</p>
 <p class="validation"><a href="http://validator.w3.org/check?uri=referer">Validate</a></p>
 </div>
 </body>
