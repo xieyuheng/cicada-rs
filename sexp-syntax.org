@@ -6,27 +6,27 @@
 * sexp
 
   #+begin_src cicada
-  (: sexp-s set-t)
-  (= sexp-s (union string-s (list-s string-s)))
+  (: sexp-t type-tt)
+  (= sexp-t (union string-t (list-t string-t)))
   #+end_src
 
 * list
 
   #+begin_src cicada
-  (: list-s set-t)
+  (: list-s type-tt)
   (= list-s
      (sum [null-s cons-s]
-       (: t set-t)))
+       (: t type-tt)))
 
-  (: null-s set-t)
+  (: null-s type-tt)
   (= null-s
      (data
-       (: t set-t)))
+       (: t type-tt)))
 
-  (: cons-s set-t)
+  (: cons-s type-tt)
   (= cons-s
      (data
-       (: t set-t)
+       (: t type-tt)
        (: car t))
        (: cdr (list-s t)))
 

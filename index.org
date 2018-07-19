@@ -53,24 +53,24 @@
       I use partly inhabited typed-record as type,
       and fully inhabited typed-record to inhabits such type.
 
-    - For example, cons-s can be defend as following :
+    - For example, cons-t can be defend as following :
 
     #+begin_src cicada
-    cons-s : type-t
-    cons-s = data
-      t : type-t
+    cons-t : type-tt
+    cons-t = data
+      t : type-tt
       car : t
-      cdr : (list-s t)
+      cdr : (list-t t)
     #+end_src
 
-    - The record is named `cons-s`,
+    - The record is named `cons-t`,
       it has three fields, each with a name and a type.
 
     #+begin_src cicada
-    ;; We can use `cons-s` as type-constructor :
-    (cons-s <t>)
-    (cons-s <t> <car>)
-    (cons-s t = <t>, cdr = <cdr>)
+    ;; We can use `cons-t` as type-constructor :
+    (cons-t <t>)
+    (cons-t <t> <car>)
+    (cons-t t = <t>, cdr = <cdr>)
 
     ;; We can use `cons-c` as data-constructor,
     ;;   and the above types will be inhabited respectively as the following :
@@ -105,50 +105,50 @@
       | :>     | summing sub-types      |
       | <:     | inheriting super-types |
 
-    - For example, list-s can be defined as following :
+    - For example, list-t can be defined as following :
 
     #+begin_src cicada
-    list-s : type-t
-    list-s = data :> [null-s cons-s]
-      t : type-t
+    list-t : type-tt
+    list-t = data :> [null-t cons-t]
+      t : type-tt
 
-    null-s : type-t
-    null-s = data
-      t : type-t
+    null-t : type-tt
+    null-t = data
+      t : type-tt
 
-    cons-s : type-t
-    cons-s = data
-      t : type-t
+    cons-t : type-tt
+    cons-t = data
+      t : type-tt
       car : t
-      cdr : (list-s t)
+      cdr : (list-t t)
     #+end_src
 
-    - list-s is declared as sum-type of null-s and cons-s,
-      thus null-s and cons-s must have all the fields of list-s,
-      `list-s :> [null-s cons-s]` also means
-      `null-s <: list-s` and `cons-s <: list-s`.
+    - list-t is declared as sum-type of null-t and cons-t,
+      thus null-t and cons-t must have all the fields of list-t,
+      `list-t :> [null-t cons-t]` also means
+      `null-t <: list-t` and `cons-t <: list-t`.
 
 *** Partly Inhabited Record as Type
 
-    - A type is a partly inhabited record -- constructed by <name>-s.
+    - A type is a partly inhabited record -- constructed by <name>-t.
 
     - A data is a fully inhabited record -- constructed by <name>-c.
 
     #+begin_src cicada
-    list-append : -- (list-s t) (list-s t) -> (list-s t)
+    list-append : -- (list-t t) (list-t t) -> (list-t t)
     list-append ante succ =
       case ante
-        null-s succ
-        cons-s (cons-c ante.car (recur ante.cdr succ))
+        null-t succ
+        cons-t (cons-c ante.car (recur ante.cdr succ))
     #+end_src
 
     - In the type of `list-append`,
-      (list-s t) means the first field of the record list-s
+      (list-t t) means the first field of the record list-t
       is inhabited by a value of type `type-t`;
 
-    - To construct a data of the type (list-s t),
+    - To construct a data of the type (list-t t),
       we can use (cons-c <car> <cdr>),
-      which inhabit the rest of the fields of the record cons-s.
+      which inhabit the rest of the fields of the record cons-t.
 
 *** Naming Convention to make Levels of Universes explicit
 
@@ -157,13 +157,13 @@
 
     | level | example                             |
     |-------+-------------------------------------|
-    |    -1 | zero-c, null-c, cons-c              |
+    |     0 | zero-c, null-c, cons-c              |
     |-------+-------------------------------------|
-    |     0 | nat-s, list-s, (-- list-s -> nat-s) |
+    |     1 | nat-t, list-t, (-- list-t -> nat-t) |
     |-------+-------------------------------------|
-    |     1 | type-t, category-t                  |
+    |     2 | type-tt, category-tt                |
     |-------+-------------------------------------|
-    |     2 | type-tt, category-t                 |
+    |     3 | type-ttt, category-ttt              |
 
 *** Summary
 
@@ -185,248 +185,249 @@
 
 *** Functional Programming
 
-***** nat-s
+***** nat-t
 
       #+begin_src cicada
-      nat-s : type-t
-      nat-s = data :> [zero-s succ-s]
+      nat-t : type-tt
+      nat-t = data :> [zero-t succ-t]
 
-      zero-s : type-t
-      zero-s = data
+      zero-t : type-tt
+      zero-t = data
 
-      succ-s : type-t
-      succ-s = data
-        prev : nat-s
+      succ-t : type-tt
+      succ-t = data
+        prev : nat-t
       #+end_src
 
 ***** nat-add
 
       #+begin_src cicada
-      nat-add : -- nat-s nat-s -> nat-s
+      nat-add : -- nat-t nat-t -> nat-t
       nat-add x y =
         case x
-          zero-s y
-          succ-s (succ-c (recur x.prev y))
+          zero-t y
+          succ-t (succ-c (recur x.prev y))
       #+end_src
 
-***** list-s
+***** list-t
 
       #+begin_src cicada
-      list-s : type-t
-      list-s = data :> [null-s cons-s]
-        t : type-t
+      list-t : type-tt
+      list-t = data :> [null-t cons-t]
+        t : type-tt
 
-      null-s : type-t
-      null-s = data
-        t : type-t
+      null-t : type-tt
+      null-t = data
+        t : type-tt
 
-      cons-s : type-t
-      cons-s = data
-        t : type-t
+      cons-t : type-tt
+      cons-t = data
+        t : type-tt
         car : t
-        cdr : (list-s t)
+        cdr : (list-t t)
       #+end_src
 
 ***** list-length
 
       #+begin_src cicada
-      list-length : -- (list-s t) -> nat-s
+      list-length : -- (list-t t) -> nat-t
       list-length list =
         case list
-          null-s zero-c
-          cons-s (succ-c (recur list.cdr))
+          null-t zero-c
+          cons-t (succ-c (recur list.cdr))
       #+end_src
 
 ***** list-append
 
       #+begin_src cicada
-      list-append : -- (list-s t) (list-s t) -> (list-s t)
+      list-append : -- (list-t t) (list-t t) -> (list-t t)
       list-append ante succ =
         case ante
-          null-s succ
-          cons-s (cons-c ante.car (recur ante.cdr succ))
+          null-t succ
+          cons-t (cons-c ante.car (recur ante.cdr succ))
       #+end_src
 
 ***** list-map
 
       #+begin_src cicada
-      list-map : -- (-- a -> b) (list-s a) -> (list-s b)
+      list-map : -- (-- a -> b) (list-t a) -> (list-t b)
       list-map fun list =
         case list
-          null-s list
-          cons-s (cons-c (fun list.car) (recur fun list.cdr))
+          null-t list
+          cons-t (cons-c (fun list.car) (recur fun list.cdr))
       #+end_src
 
 *** Logic Programming
 
-***** list-length-s
+***** list-length-t
 
       #+begin_src cicada
-      list-length-s : type-t
-      list-length-s = data :> [zero-length-s succ-length-s]
-        list : (list-s t)
-        length : nat-s
+      list-length-t : type-tt
+      list-length-t = data :> [zero-length-t succ-length-t]
+        list : (list-t t)
+        length : nat-t
 
-      zero-length-s : type-t
-      zero-length-s = data
-        list : (list-s t)
-        length : nat-s
+      zero-length-t : type-tt
+      zero-length-t = data
+        list : (list-t t)
+        length : nat-t
         list = null-c
         length = zero-c
 
-      succ-length-s : type-t
-      succ-length-s = data
-        list : (list-s t)
-        length : nat-s
-        prev : (list-length-s list length)
+      succ-length-t : type-tt
+      succ-length-t = data
+        list : (list-t t)
+        length : nat-t
+        prev : (list-length-t list length)
         list = (cons-c x list)
         length = (succ-c length)
       #+end_src
 
-***** list-append-s
+***** list-append-t
 
       #+begin_src cicada
-      list-append-s : type-t
-      list-append-s = data :> [zero-append-s succ-append-s]
-        [ante succ result] : (list-s t)
+      list-append-t : type-tt
+      list-append-t = data :> [zero-append-t succ-append-t]
+        [ante succ result] : (list-t t)
 
-      zero-append-s : type-t
-      zero-append-s = data
-        [ante succ result] : (list-s t)
+      zero-append-t : type-tt
+      zero-append-t = data
+        [ante succ result] : (list-t t)
         ante = null-c
         result = succ
 
-      succ-append-s : type-t
-      succ-append-s = data
-        [ante succ result] : (list-s t)
-        prev : (list-append-s cdr succ result-cdr)
+      succ-append-t : type-tt
+      succ-append-t = data
+        [ante succ result] : (list-t t)
+        prev : (list-append-t cdr succ result-cdr)
         ante = (cons-c car cdr)
         result = (cons-c car result-cdr)
       #+end_src
 
 *** Mathematical Structures
 
-***** preorder-t
+***** preorder-tt
 
       #+begin_src cicada
       note
         preorder is a thin category
         with at most one morphism from an object to another.
 
-      preorder-t : type-tt
-      preorder-t = data
-        element-s : type-t
+      preorder-tt : type-ttt
+      preorder-tt = data
+        element-t : type-tt
 
-        pre-s :
-          -- element-s element-s
-          -> type-t
+        pre-t :
+          -- element-t element-t
+          -> type-tt
 
         pre-reflexive :
-          -- a :: element-s
-          -> (pre-s a a)
+          -- a :: element-t
+          -> (pre-t a a)
 
         pre-transitive :
-          -- (pre-s a b)
-             (pre-s b c)
-          -> (pre-s a c)
+          -- (pre-t a b)
+             (pre-t b c)
+          -> (pre-t a c)
       #+end_src
 
-***** eqv-relation-t
+***** eqv-relation-tt
 
       #+begin_src cicada
-      eqv-relation-t : type-tt
-      eqv-relation-t = data <: [preorder-t]
+      eqv-relation-tt : type-ttt
+      eqv-relation-tt = data <: [preorder-tt]
         pre-symmetric :
-          -- (pre-s a b)
-          -> (pre-s b a)
+          -- (pre-t a b)
+          -> (pre-t b a)
       #+end_src
 
 *** Category theory
 
-***** category-tt
+
+***** category-ttt
 
       #+begin_src cicada
-      category-tt : type-ttt
-      category-tt = data
-        object-t : type-tt
-        arrow-t : -- object-t object-t -> type-tt
-        arrow-eqv-t : -- (arrow-t a b) (arrow-t a b) -> type-tt
+      category-ttt : type-tttt
+      category-ttt = data
+        object-tt : type-ttt
+        arrow-tt : -- object-tt object-tt -> type-ttt
+        arrow-eqv-tt : -- (arrow-tt a b) (arrow-tt a b) -> type-ttt
 
-        identity : -- a :: object-t -> (arrow-t a a)
+        identity : -- a :: object-tt -> (arrow-tt a a)
 
-        compose : -- (arrow-t a b) (arrow-t b c) -> (arrow-t a c)
+        compose : -- (arrow-tt a b) (arrow-tt b c) -> (arrow-tt a c)
 
         identity-neutral-left :
-          -- f : (arrow-t a b)
-          -> (arrow-eqv-t f (compose identity f))
+          -- f : (arrow-tt a b)
+          -> (arrow-eqv-tt f (compose identity f))
 
         identity-neutral-right :
-          -- f : (arrow-t a b)
-          -> (arrow-eqv-t f (compose f identity))
+          -- f : (arrow-tt a b)
+          -> (arrow-eqv-tt f (compose f identity))
 
         compose-associative :
-          -- f : (arrow-t a b)
-             g : (arrow-t b c)
-             h : (arrow-t c d)
-          -> (arrow-eqv-t
+          -- f : (arrow-tt a b)
+             g : (arrow-tt b c)
+             h : (arrow-tt c d)
+          -> (arrow-eqv-tt
                (compose f (compose g h))
                (compose (compose f g) h))
 
         arrow-eqv-relation :
-          -- [a b] :: object-t
-          -> (eqv-relation-t
-               element-t = (arrow-t a b)
-               pre-t = arrow-eqv-t)
+          -- [a b] :: object-tt
+          -> (eqv-relation-tt
+               element-tt = (arrow-tt a b)
+               pre-tt = arrow-eqv-tt)
       #+end_src
 
-***** category.isomorphic-t
+***** category.isomorphic-tt
 
       #+begin_src cicada
-      category.isomorphic-t : type-tt
-      category.isomorphic-t = data
-        [lhs rhs] : object-t
-        iso : (arrow-t lhs rhs)
-        inv : (arrow-t rhs lhs)
-        iso-inv-identity : (arrow-eqv-t (compose iso inv) identity)
-        inv-iso-identity : (arrow-eqv-t (compose inv iso) identity)
+      category.isomorphic-tt : type-ttt
+      category.isomorphic-tt = data
+        [lhs rhs] : object-tt
+        iso : (arrow-tt lhs rhs)
+        inv : (arrow-tt rhs lhs)
+        iso-inv-identity : (arrow-eqv-tt (compose iso inv) identity)
+        inv-iso-identity : (arrow-eqv-tt (compose inv iso) identity)
       #+end_src
 
-***** category.product-t
+***** category.product-tt
 
       #+begin_src cicada
-      category.product-candidate-t : type-tt
-      category.product-candidate-t = data
-        fst : object-t
-        snd : object-t
-        product : object-t
-        fst-projection : (arrow-t product fst)
-        snd-projection : (arrow-t product snd)
+      category.product-candidate-tt : type-ttt
+      category.product-candidate-tt = data
+        fst : object-tt
+        snd : object-tt
+        product : object-tt
+        fst-projection : (arrow-tt product fst)
+        snd-projection : (arrow-tt product snd)
 
-      category.product-t : type-tt
-      category.product-t = data <: [product-candidate-t]
+      category.product-tt : type-ttt
+      category.product-tt = data <: [product-candidate-tt]
         factorizer :
-          -- cand : (product-candidate-t fst snd)
-          -> factor : (arrow-t cand.product product)
+          -- cand : (product-candidate-tt fst snd)
+          -> factor : (arrow-tt cand.product product)
         unique-factor :
-          -- cand : (product-candidate-t fst snd)
+          -- cand : (product-candidate-tt fst snd)
           -> unique (factorizer cand)
-             of (arrow-t cand.product product)
-             under arrow-eqv-t
+             of (arrow-tt cand.product product)
+             under arrow-eqv-tt
              such-that
-               (arrow-eqv-t
+               (arrow-eqv-tt
                  cand.fst-projection
                  (compose factor fst-projection))
-               (arrow-eqv-t
+               (arrow-eqv-tt
                  cand.snd-projection
                  (compose factor snd-projection))
       #+end_src
 
-***** groupoid-t
+***** groupoid-tt
 
       #+begin_src cicada
-      groupoid-t : type-tt
-      groupoid-t = data <: [category-t]
-        inverse : -- f : (arrow-s a b) -> (isomorphic-s a b f)
+      groupoid-tt : type-ttt
+      groupoid-tt = data <: [category-tt]
+        inverse : -- f : (arrow-t a b) -> (isomorphic-t a b f)
       #+end_src
 
 * More
