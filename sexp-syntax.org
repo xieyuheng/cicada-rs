@@ -38,16 +38,14 @@
     (cons-c zero-c null-c))
 
   (: list-length (-- (list-t t) -> nat-t))
-  (= list-length
-     (lambda [list]
-       (case list
-         (null-t zero-c)
-         (cons-t (succ-c (recur list.cdr))))))
+  (= (list-length list)
+     (case list
+       (null-t zero-c)
+       (cons-t (succ-c (recur list.cdr)))))
 
   (: list-append (-- (list-t t) (list-t t) -> (list-t t)))
-  (= list-append
-     (lambda [ante succ]
-       (case ante
-         (null-t succ)
-         (cons-t (cons-c ante.car (recur ante.cdr succ))))))
+  (= (list-append ante succ)
+     (case ante
+       (null-t succ)
+       (cons-t (cons-c ante.car (recur ante.cdr succ)))))
   #+end_src
