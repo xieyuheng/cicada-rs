@@ -6,7 +6,7 @@
 
 ------
 
-- [paper](https://xieyuheng.github.io/cicada) -- This is also a project proposal.
+- [paper](https://xieyuheng.github.io/cicada) -- About the fulfilling type system.
 - [prelude](https://xieyuheng.github.io/cicada/prelude) -- Basic mathematical structures.
 - [sexp-syntax](https://xieyuheng.github.io/cicada/sexp-syntax) -- Sexp as intermedium syntax.
 - [todo](https://xieyuheng.github.io/cicada/todo) -- Todo list.
