@@ -6,10 +6,10 @@
 
 ------
 
-- Community, Identity, Culture, Art, Dynamic and Activities
-  -- Cicada Market of Huahin, Thailand
-
 ![Cicada Market](https://github.com/xieyuheng/image/raw/master/cicada/cicada-market-1.jpg)
+
+- Community, Identity, Culture, Art, Dynamic and Activities
+  - Cicada Market of Huahin, Thailand
 
 ------
 
