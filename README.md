@@ -6,6 +6,13 @@
 
 ------
 
+- Community, Identity, Culture, Art, Dynamic and Activities
+  -- Cicada Market of Huahin, Thailand
+
+![Cicada Market](https://github.com/xieyuheng/image/raw/master/cicada/cicada-market-1.jpg)
+
+------
+
 - [paper](https://xieyuheng.github.io/cicada) -- About the fulfilling type system.
 - [prelude](https://xieyuheng.github.io/cicada/prelude) -- Basic mathematical structures.
 - [sexp-syntax](https://xieyuheng.github.io/cicada/sexp-syntax) -- Sexp as intermedium syntax.
