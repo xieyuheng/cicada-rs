@@ -13,16 +13,14 @@
 
 ------
 
-- [About the fulfilling type system.][paper]
+- [Paper about the fulfilling type system.][paper]
 - [Basic mathematical structures.][prelude]
 - [Sexp as intermedium syntax.][sexp-syntax]
-- [Todo list.][todo]
-- [Other topics to be formalized.][topics]
+- [Story Map.][story-map]
 
 ------
 
 [paper]: https://xieyuheng.github.io/cicada
 [prelude]: https://xieyuheng.github.io/cicada/prelude
 [sexp-syntax]: https://xieyuheng.github.io/cicada/sexp-syntax
-[todo]: https://xieyuheng.github.io/cicada/todo
-[topics]: https://xieyuheng.github.io/cicada/topics
+[story-map]: https://xieyuheng.github.io/cicada/story-map
