@@ -676,11 +676,11 @@
 
 *** basic relation
 
-***** category.isomorphic-tt
+***** category-ttt.isomorphic-tt
 
       #+begin_src cicada
-      category.isomorphic-tt : type-ttt
-      category.isomorphic-tt = data
+      category-ttt.isomorphic-tt : type-ttt
+      category-ttt.isomorphic-tt = data
         [lhs rhs] : object-tt
         iso : (arrow-tt lhs rhs)
         inv : (arrow-tt rhs lhs)
@@ -690,41 +690,41 @@
 
 *** universal construction
 
-***** category.initial-tt
+***** category-ttt.initial-tt
 
       #+begin_src cicada
-      category.initial-tt : type-ttt
-      category.initial-tt = data
+      category-ttt.initial-tt : type-ttt
+      category-ttt.initial-tt = data
         initial : object-tt
         factorizer :
           -- cand : object-tt
           -> factor : (arrow-tt initial cand)
       #+end_src
 
-***** category.terminal-tt
+***** category-ttt.terminal-tt
 
       #+begin_src cicada
-      category.terminal-tt : type-ttt
-      category.terminal-tt = data <: [terminal-candidate-tt]
+      category-ttt.terminal-tt : type-ttt
+      category-ttt.terminal-tt = data <: [terminal-candidate-tt]
         terminal : object-tt
         factorizer :
           -- cand : object-tt
           -> factor : (arrow-tt cand terminal)
       #+end_src
 
-***** category.product-tt
+***** category-ttt.product-tt
 
       #+begin_src cicada
-      category.product-candidate-tt : type-ttt
-      category.product-candidate-tt = data
+      category-ttt.product-candidate-tt : type-ttt
+      category-ttt.product-candidate-tt = data
         fst : object-tt
         snd : object-tt
         product : object-tt
         fst-projection : (arrow-tt product fst)
         snd-projection : (arrow-tt product snd)
 
-      category.product-tt : type-ttt
-      category.product-tt = data <: [product-candidate-tt]
+      category-ttt.product-tt : type-ttt
+      category-ttt.product-tt = data <: [product-candidate-tt]
         factorizer :
           -- cand : (product-candidate-tt fst snd)
           -> factor : (arrow-tt cand.product product)
@@ -742,19 +742,19 @@
                  (compose factor snd-projection))
       #+end_src
 
-***** category.sum-tt
+***** category-ttt.sum-tt
 
       #+begin_src cicada
-      category.sum-candidate-tt : type-ttt
-      category.sum-candidate-tt = data
+      category-ttt.sum-candidate-tt : type-ttt
+      category-ttt.sum-candidate-tt = data
         fst : object-tt
         snd : object-tt
         sum : object-tt
         fst-injection : (arrow-tt fst sum)
         snd-injection : (arrow-tt snd sum)
 
-      category.sum-tt : type-ttt
-      category.sum-tt = data <: [sum-candidate-tt]
+      category-ttt.sum-tt : type-ttt
+      category-ttt.sum-tt = data <: [sum-candidate-tt]
         factorizer :
           -- cand : (sum-candidate-tt fst snd)
           -> factor : (arrow-tt sum cand.sum)
@@ -802,11 +802,11 @@
 
 *** build new category from old category
 
-***** category.opposite
+***** category-ttt.opposite
 
       #+begin_src cicada
-      category.opposite : category-ttt
-      category.opposite = category-ccc
+      category-ttt.opposite : category-ttt
+      category-ttt.opposite = category-ccc
         object-tt = this.object-tt
 
         arrow-tt :
@@ -901,14 +901,14 @@
            product-relation :: (product-tt a b p)
     #+end_src
 
-*** product-closed-category.product-arrow
+*** product-closed-category-ttt.product-arrow
 
     #+begin_src cicada
-    product-closed-category.product-arrow :
+    product-closed-category-ttt.product-arrow :
       -- (arrow-tt a b)
          (arrow-tt c d)
       -> (arrow-tt (product a c) (product b d))
-    product-closed-category.product-arrow f g =
+    product-closed-category-ttt.product-arrow f g =
       with-details (product a c)
         p <- product-relation
       with-details (product b d)
@@ -922,18 +922,18 @@
           snd-projection = (compose p.fst-projection g)))
     #+end_src
 
-*** product-closed-category.exponential-tt
+*** product-closed-category-ttt.exponential-tt
 
     #+begin_src cicada
-    product-closed-category.exponential-candidate-tt : type-ttt
-    product-closed-category.exponential-candidate-tt = data
+    product-closed-category-ttt.exponential-candidate-tt : type-ttt
+    product-closed-category-ttt.exponential-candidate-tt = data
       ante : object-tt
       succ : object-tt
       exponential : object-tt
       eval : (arrow-tt (product exponential ante) succ)
 
-    category.exponential-tt : type-ttt
-    category.exponential-tt = data <: [exponential-candidate-tt]
+    category-ttt.exponential-tt : type-ttt
+    category-ttt.exponential-tt = data <: [exponential-candidate-tt]
       factorizer :
         -- cand : (exponential-candidate-tt ante succ)
         -> factor : (arrow-tt cand.exponential exponential)
@@ -1020,66 +1020,66 @@
 *** graph.path-t
 
     #+begin_src cicada
-    graph.path-t : type-tt
-    graph.path-t = data
+    graph-tt.path-t : type-tt
+    graph-tt.path-t = data
       :> [node-path-t
           edge-path-t
           link-path-t]
       [start end] : node-t
 
-    graph.node-path-t : type-tt
-    graph.node-path-t = data
+    graph-tt.node-path-t : type-tt
+    graph-tt.node-path-t = data
       [start end] : node-t
       node : node-t
       start = node
       end = node
 
-    graph.edge-path-t : type-tt
-    graph.edge-path-t = data
+    graph-tt.edge-path-t : type-tt
+    graph-tt.edge-path-t = data
       [start end] : node-t
       edge : (edge-t start end)
 
-    graph.link-path-t : type-tt
-    graph.link-path-t = data
+    graph-tt.link-path-t : type-tt
+    graph-tt.link-path-t = data
       [start end] : node-t
       first : (path-t start middle)
       next : (path-t middle end)
     #+end_src
 
-*** graph.path-eqv-t
+*** graph-tt.path-eqv-t
 
     #+begin_src cicada
-    graph.path-eqv-t : type-tt
-    graph.path-eqv-t = data
+    graph-tt.path-eqv-t : type-tt
+    graph-tt.path-eqv-t = data
       :> [refl-path-eqv-t
           node-left-path-eqv-t
           node-right-path-eqv-t
           associative-path-eqv-t]
       [lhs rhs] : (path-t a b)
 
-    graph.refl-path-eqv-t : type-tt
-    graph.refl-path-eqv-t = data
+    graph-tt.refl-path-eqv-t : type-tt
+    graph-tt.refl-path-eqv-t = data
       [lhs rhs] : (path-t a b)
       p : (path-t a b)
       lhs = p
       lhs = p
 
-    graph.node-left-path-eqv-t : type-tt
-    graph.node-left-path-eqv-t = data
+    graph-tt.node-left-path-eqv-t : type-tt
+    graph-tt.node-left-path-eqv-t = data
       [lhs rhs] : (path-t a b)
       p : (path-t a b)
       lhs = p
       rhs = (link-path-c (node-path-c a) p)
 
-    graph.node-right-path-eqv-t : type-tt
-    graph.node-right-path-eqv-t = data
+    graph-tt.node-right-path-eqv-t : type-tt
+    graph-tt.node-right-path-eqv-t = data
       [lhs rhs] : (path-t a b)
       p : (path-t a b)
       lhs = p
       rhs = (link-path-c p (node-path-c b))
 
-    graph.associative-path-eqv-t : type-tt
-    graph.associative-path-eqv-t = data
+    graph-tt.associative-path-eqv-t : type-tt
+    graph-tt.associative-path-eqv-t = data
       [lhs rhs] : (path-t a b)
       p : (path-t a b)
       q : (path-t b c)
@@ -1088,11 +1088,11 @@
       rhs = (link-path-c (link-path-c p q) r)
     #+end_src
 
-*** graph.as-free-category
+*** graph-tt.as-free-category
 
     #+begin_src cicada
-    graph.as-free-category : category-tt
-    graph.as-free-category = category-cc
+    graph-tt.as-free-category : category-tt
+    graph-tt.as-free-category = category-cc
       object-t = node-t
       arrow-t = path-t
       arrow-eqv-t = path-eqv-t
@@ -1275,11 +1275,11 @@
              (product (product a b) c))
     #+end_src
 
-*** monoid.as-category
+*** monoid-tt.as-category
 
     #+begin_src cicada
-    monoid.as-category : category-tt
-    monoid.as-category = category-cc
+    monoid-tt.as-category : category-tt
+    monoid-tt.as-category = category-cc
       object-t = unit-t
       arrow-t _ _ = element-t
       arrow-eqv-t = element-eqv-t
@@ -1362,23 +1362,23 @@
       bind : -- (fun-t a) (-- a -> (fun-t b)) -> (fun-t b)
     #+end_src
 
-*** monad.compose
+*** monad-tt.compose
 
     #+begin_src cicada
-    monad.compose :
+    monad-tt.compose :
       -- (-- a -> (fun-t b))
          (-- b -> (fun-t c))
       -> (-- a -> (fun-t c))
-    monad.compose f g = (lambda [a] (bind (f a) g))
+    monad-tt.compose f g = (lambda [a] (bind (f a) g))
     #+end_src
 
-*** monad.flatten
+*** monad-tt.flatten
 
     #+begin_src cicada
-    monad.flatten :
+    monad-tt.flatten :
       -- (fun-t (fun-t a))
       -> (fun-t a)
-    monad.flatten m = (bind m (lambda []))
+    monad-tt.flatten m = (bind m (lambda []))
     #+end_src
 
 *** list-monad
