@@ -358,7 +358,7 @@
     nat-add-zero-commutative x =
       case x
         zero-t eqv-c
-        succ-t (eqv-apply succ-c (recur x.prev))
+        succ-t (eqv-apply succ-c (nat-add-zero-commutative x.prev))
     #+end_src
 
 *** nat-add-succ-commutative-1
@@ -372,7 +372,7 @@
     nat-add-succ-commutative-1 x y =
       case x
         zero-t eqv-c
-        succ-t (eqv-apply succ-c (recur x.prev y))
+        succ-t (eqv-apply succ-c (nat-add-succ-commutative-1 x.prev y))
     #+end_src
 
 *** nat-add-succ-commutative-2
@@ -386,7 +386,7 @@
     nat-add-succ-commutative-2 x y =
       case x
         zero-t eqv-c
-        succ-t (eqv-apply succ-c (recur x.prev y))
+        succ-t (eqv-apply succ-c (nat-add-succ-commutative-2 x.prev y))
     #+end_src
 
 * list
@@ -416,7 +416,7 @@
     list-length list =
       case list
         null-t zero-c
-        cons-t (succ-c (recur list.cdr))
+        cons-t (succ-c (list-length list.cdr))
     #+end_src
 
 *** list-append
@@ -426,7 +426,7 @@
     list-append ante succ =
       case ante
         null-t succ
-        cons-t (cons-c ante.car (recur ante.cdr succ))
+        cons-t (cons-c ante.car (list-append ante.cdr succ))
     #+end_src
 
 *** list-map
@@ -436,7 +436,7 @@
     list-map fun list =
       case list
         null-t list
-        cons-t (cons-c (fun list.car) (recur fun list.cdr))
+        cons-t (cons-c (fun list.car) (list-map fun list.cdr))
     #+end_src
 
 *** list-remove-first
@@ -449,7 +449,7 @@
         cons-t
           if (eq-p list.car x)
           then list.cdr
-          else (cons-c list.car (recur list.cdr x))
+          else (cons-c list.car (list-remove-first list.cdr x))
     #+end_src
 
 *** list-length-t
@@ -541,7 +541,7 @@
     vect-append ante succ =
       case ante
         null-vect-t succ
-        cons-vect-t (cons-vect-c ante.car (recur ante.cdr succ))
+        cons-vect-t (cons-vect-c ante.car (vect-append ante.cdr succ))
     #+end_src
 
 *** vect-map
@@ -551,7 +551,7 @@
     vect-map fun list =
       case list
         null-vect-t list
-        cons-vect-t (cons-vect-c (fun list.car) (recur fun list.cdr))
+        cons-vect-t (cons-vect-c (fun list.car) (vect-map fun list.cdr))
     #+end_src
 
 * order
@@ -1247,7 +1247,7 @@
     nat-lteq-reflexive n =
       case n
         zero-t zero-lteq-c
-        succ-t (succ-lteq-c (recur n.prev))
+        succ-t (succ-lteq-c (nat-lteq-reflexive n.prev))
     #+end_src
 
 *** nat-lteq-transitive
@@ -1260,7 +1260,7 @@
     nat-lteq-transitive x y =
       case x
         zero-lteq-t zero-lteq-c
-        succ-lteq-t (succ-lteq-c (recur x.prev y.prev))
+        succ-lteq-t (succ-lteq-c (nat-lteq-transitive x.prev y.prev))
     #+end_src
 
 *** nat-lt-t
@@ -1300,18 +1300,20 @@
       identity-neutral-left x =
         case x
           zero-lteq-t eqv-c
-          succ-lteq-t (eqv-apply succ-lteq-c (recur x.prev))
+          succ-lteq-t
+            (eqv-apply succ-lteq-c (identity-neutral-left x.prev))
 
       identity-neutral-righ x =
         case x
           zero-lteq-t eqv-c
-          succ-lteq-t (eqv-apply succ-lteq-c (recur x.prev))
+          succ-lteq-t
+            (eqv-apply succ-lteq-c (identity-neutral-righ x.prev))
 
       compose-associative f g h =
         case [f g h]
           [zero-lteq-t _ _] eqv-c
           [succ-lteq-t succ-lteq-t succ-lteq-t]
-            (eqv-apply succ-lteq-c (recur f.prev g.prev h.prev))
+            (eqv-apply succ-lteq-c (compose-associative f.prev g.prev h.prev))
     #+end_src
 
 * groupoid
@@ -1413,7 +1415,7 @@
         case list
           null-t null-c
           cons-t
-            (cons-c (fun list.car) (recur fun list.cdr))
+            (cons-c (fun list.car) (map fun list.cdr))
     #+end_src
 
 * const
@@ -1477,7 +1479,7 @@
       bind list fun =
         case list
           null-t null-c
-          cons-t (list-append (fun list.car) (recur list.cdr fun))
+          cons-t (list-append (fun list.car) (bind list.cdr fun))
     #+end_src
 
 * maybe
@@ -1592,8 +1594,8 @@
           leaf-t (leaf-c (fun tree.value))
           branch-t
             (branch-c
-              (recur fun tree.left)
-              (recur fun tree.right))
+              (map fun tree.left)
+              (map fun tree.right))
     #+end_src
 
 *** tree-zip
@@ -1608,8 +1610,8 @@
         [leaf-t leaf-t]
           (pure (leaf-c (* x.value y.value)))
         [branch-t branch-t]
-          do left <- (recur x.left y.left)
-             right <- (recur x.right y.right)
+          do left <- (tree-zip x.left y.left)
+             right <- (tree-zip x.right y.right)
              (pure (branch-c left right))
         [_ _] none-c
     #+end_src
@@ -1625,8 +1627,8 @@
         leaf-t lambda [n]
           (* (nat-inc n) (leaf-c n))
         branch-t
-          do left <- (recur tree.left)
-             right <- (recur tree.right)
+          do left <- (tree-numbering tree.left)
+             right <- (tree-numbering tree.right)
              (pure (branch-c left right))
     #+end_src
 
