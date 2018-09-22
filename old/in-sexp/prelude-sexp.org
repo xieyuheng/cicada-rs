@@ -144,7 +144,7 @@
 
     #+begin_src cicada
     void-t : type-tt
-    void-t = data :> [] { }
+    void-t = data :> []
     #+end_src
 
 *** absurd
@@ -159,14 +159,14 @@
 
     #+begin_src cicada
     unit-t : type-tt
-    unit-t = data { }
+    unit-t = data
     #+end_src
 
 *** unit
 
     #+begin_src cicada
     unit : -- a -> unit-t
-    unit (a) = unit-c ()
+    unit a = unit-c
     #+end_src
 
 * bool
@@ -175,13 +175,13 @@
 
     #+begin_src cicada
     bool-t : type-tt
-    bool-t = data :> (true-t, false-t) { }
+    bool-t = data :> [true-t false-t]
 
     true-t : type-tt
-    true-t = data { }
+    true-t = data
 
     false-t : type-tt
-    false-t = data { }
+    false-t = data
     #+end_src
 
 * eqv
@@ -190,20 +190,19 @@
 
     #+begin_src cicada
     eqv-t : type-tt
-    eqv-t = data {
-      [lhs, rhs] : t
+    eqv-t = data
+      [lhs rhs] : t
       lhs = rhs
-    }
     #+end_src
 
 *** eqv-apply
 
     #+begin_src cicada
     eqv-apply :
-      -- fun : -- a -> b,
-         eqv-t (x, y)
-      -> eqv-t (fun (x), fun (y))
-    eqv-apply (_, _) = eqv-c ()
+      -- fun : (-- a -> b)
+         (eqv-t x y)
+      -> (eqv-t (fun x) (fun y))
+    eqv-apply _ _ = eqv-c
     #+end_src
 
 *** eqv-swap
@@ -239,13 +238,11 @@
 *** nat-add
 
     #+begin_src cicada
-    nat-add : -- nat-t, nat-t -> nat-t
-    nat-add (x, y) = {
-      case x {
-        zero-t -> y
-        succ-t -> succ-c (nat-add (x.prev, y))
-      }
-    }
+    nat-add : -- nat-t nat-t -> nat-t
+    nat-add x y =
+      case x
+        zero-t y
+        succ-t (succ-c (recur x.prev y))
     #+end_src
 
 *** nat-mul
@@ -255,7 +252,7 @@
     nat-mul x y =
       case x
         zero-t zero-c
-        succ-t (nat-add y (nat-mul x.prev y))
+        succ-t (nat-add y (recur x.prev y))
     #+end_src
 
 *** nat-factorial
@@ -265,7 +262,7 @@
     nat-factorial x =
       case x
         zero-t (succ-c zero-c)
-        succ-t (nat-mul x (nat-factorial x.prev))
+        succ-t (nat-mul x (recur x.prev))
     #+end_src
 
 *** nat-even-p
@@ -277,7 +274,7 @@
         zero-t true-c
         succ-t case x.prev
           zero-t false-c
-          succ-t (nat-even-p x.prev.prev)
+          succ-t (recur x.prev.prev)
     #+end_src
 
 *** nat-even-t
@@ -299,16 +296,6 @@
       nat = (succ-c (succ-c m))
     #+end_src
 
-*** ><
-
-    #+begin_src cicada
-    even-plus-two-even-t : type-tt
-    even-plus-two-even-t = data {
-      nat : nat-t
-      prev : nat-even-t (m)
-      nat = succ-c (succ-c (m))
-    }
-    #+end_src
 
 *** two-even
 
@@ -328,23 +315,24 @@
     nat-add-associative x y z =
       case x
         zero-t eqv-c
-        succ-t (eqv-apply succ-c (nat-add-associative x.prev y z))
+        succ-t (eqv-apply succ-c (recur x.prev y z))
     #+end_src
 
 *** nat-add-commutative
 
     #+begin_src cicada
     nat-add-commutative :
-      -- [x, y] : nat-t
-      -> eqv-t (
-           nat-add (x, y),
-           nat-add (y, x))
-    nat-add-commutative (x, y) = case x {
-      zero-t -> nat-add-zero-commutative (y)
-      succ-t -> eqv-compose (
-        eqv-apply (succ-c, nat-add-commutative (x.prev, y)),
-        nat-add-succ-commutative (y, x.prev))
-    }
+      -- [x y] : nat-t
+      -> (eqv-t
+           (nat-add x y)
+           (nat-add y x))
+    nat-add-commutative x y =
+      case x
+        zero-t (nat-add-zero-commutative y)
+        succ-t
+          (eqv-compose
+            (eqv-apply succ-c (recur x.prev y))
+            (nat-add-succ-commutative y x.prev))
     #+end_src
 
 *** nat-add-zero-commutative
@@ -685,80 +673,6 @@
         -> (eqv-relation-tt
              element-tt = (arrow-tt a b)
              pre-tt = arrow-eqv-tt)
-    #+end_src
-
-*** [c] category-ttt
-
-    #+begin_src c
-    category-ttt : type-tttt
-    category-ttt = data {
-      object-tt : type-ttt
-      arrow-tt : -- { object-tt, object-tt } -> { type-ttt }
-      arrow-eqv-tt : -- (arrow-tt a b) (arrow-tt a b) -> type-ttt
-
-      identity : -- a :: object-tt -> (arrow-tt a a)
-
-      compose : -- (arrow-tt a b) (arrow-tt b c) -> (arrow-tt a c)
-
-      identity-neutral-left :
-        -- f : (arrow-tt a b)
-        -> (arrow-eqv-tt f (compose identity f))
-
-      identity-neutral-right :
-        -- f : (arrow-tt a b)
-        -> (arrow-eqv-tt f (compose f identity))
-
-      compose-associative :
-        -- f : (arrow-tt a b)
-           g : (arrow-tt b c)
-           h : (arrow-tt c d)
-        -> (arrow-eqv-tt
-             (compose f (compose g h))
-             (compose (compose f g) h))
-
-      arrow-eqv-relation :
-        -- [a b] :: object-tt
-        -> (eqv-relation-tt
-             element-tt = (arrow-tt a b)
-             pre-tt = arrow-eqv-tt)
-    }
-    #+end_src
-
-*** [sexp] category-ttt
-
-    #+begin_src cicada
-    (: category-ttt type-tttt)
-    (= category-ttt
-       (data
-         (: object-tt type-ttt)
-         (: arrow-tt (-- object-tt object-tt -> type-ttt))
-         (: arrow-eqv-tt (-- (arrow-tt a b) (arrow-tt a b) -> type-ttt))
-
-         (: identity (-- a :: object-tt -> (arrow-tt a a)))
-
-         (: compose (-- (arrow-tt a b) (arrow-tt b c) -> (arrow-tt a c)))
-
-         (: identity-neutral-left
-            (-- f : (arrow-tt a b)
-             -> (arrow-eqv-tt f (compose identity f))))
-
-         (: identity-neutral-right
-            (-- f : (arrow-tt a b)
-             -> (arrow-eqv-tt f (compose f identity))))
-
-         (: compose-associative
-            (-- f : (arrow-tt a b)
-                g : (arrow-tt b c)
-                h : (arrow-tt c d)
-             -> (arrow-eqv-tt
-                  (compose f (compose g h))
-                  (compose (compose f g) h))))
-
-         (: arrow-eqv-relation)
-            (-- [a b] :: object-tt
-             -> (eqv-relation-tt
-                  element-tt = (arrow-tt a b)
-                  pre-tt = arrow-eqv-tt))))
     #+end_src
 
 *** basic relation
