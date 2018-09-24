@@ -1,0 +1,2015 @@
+#+title: prelude
+
+* [note]
+
+*** * [] -- tuple-type
+
+    - literal tuple-type -- * [<type>, ...]
+
+    - inhabit by literal tuple -- * [<data>, ...]
+
+*** + [] -- union-type
+
+    - literal union-type -- + [<type>, ...]
+
+    - we do not have literal union-data,
+      the union-type is inhabited by [<data> : <type>] and so on
+
+*** data {...} -- named record-type
+
+    - a type is a partly inhabited record
+
+    - a data is a fully inhabited record
+
+    - for example :
+      cons-t (t)
+      cons-c (car, cdr)
+
+    - constructor call syntax :
+
+      - <name>-c (<data>, ...) -- call-with-order
+
+      - <name>-c (<field> = <data>, ...) -- call-with-field
+
+*** data :> [<sub-type>, ...] {...} -- summing sub-types
+
+    - if declares same fields,
+      and names a type-constructor for the sum-type.
+
+    - type-constructor of each data-type
+      must have the same declared fields and types
+
+    - it can be viewed as disjoin-union,
+      because data-types in the list are disjoin.
+
+*** data <: [<super-type>, ...] {...} -- inheriting super-types
+
+    - [c1 <: c2] means c1 inherit c2 's fields,
+      thus c1 is more special then c2,
+      because c1 has more interface functions than c2.
+
+    - whatever data inhabits c1 also inhabits c2.
+
+*** :: -- implicit arguments
+
+    - in arguments :
+
+      - the value of the argument will be inferred.
+        use call-with-field syntax to give explicit value.
+
+    - in return values :
+
+      - the value must be constructed by the function.
+        but normal function call syntax will not return the value.
+        use explicit (with-details (<name> ...) ...) to get all details.
+
+*** level of universe
+
+***** accumulative or not ?
+
+      - I choose to be non-accumulative for now.
+
+      - It means (:) is not transitive.
+
+***** level rule
+
+      #+begin_src cicada
+      level (* [<type>, ...]) = max [level (<type>), ...]
+
+      level (+ [<type>, ...]) = max [level (<type>), ...]
+
+      level (-- <type> ... -> <result-type>) =
+        max [level (<type>), ..., level (<result-type>)]
+      #+end_src
+
+***** level examples
+
+      | 0                 | 1       | 2        |
+      |-------------------+---------+----------|
+      | nat-t             | type-tt | type-ttt |
+      | * [nat-t, nat-t]  | type-tt | type-ttt |
+      | + [bool-t, nat-t] | type-tt | type-ttt |
+      | -- nat-t -> nat-t | type-tt | type-ttt |
+      | list-t            | type-tt | type-ttt |
+
+***** level table
+
+      | 0 | data, object           |
+      |---+------------------------|
+      | 1 | <name>_t, data_type    |
+      |   | union_type, tuple_type |
+      |---+------------------------|
+      | 2 | type_tt, category_tt   |
+      |---+------------------------|
+      | 3 | type_ttt, category_ttt |
+
+***** builtin level polymorphism
+
+      - we can not really afford to
+        split category_t* to category_t and category_tt,
+        because we have to redefined so many types along category_t.
+
+      - instead we assume that when a type is define in one level,
+        it is defined for all levels.
+
+        and all the postfix changes
+        are handled by the language implicitly.
+
+        - for example, when
+          [category_tt : type_ttt] is defined,
+          [category_ttt : type_tttt] is also defined.
+
+      - a convention is that
+        we only write down the level or levels
+        in which the type is most used.
+
+        - for example :
+          [category_morphism_ttt : type_tttt]
+          [category_category : category_tttt]
+
+***** [todo] searchable_type vs non_searchable_type
+
+      - -- <type> ... -> <result_type>
+        is the most important example of searchable_type.
+
+***** [todo] implicit generic_ness of haskell type_class
+
+      - by maintain a map from type_constructor to class_like types.
+
+      - something like the template of c++.
+
+* void
+
+*** void_t
+
+    #+begin_src cicada
+    void_t : type_tt
+    void_t = data :> [] { }
+    #+end_src
+
+*** absurd
+
+    #+begin_src cicada
+    absurd : -- void_t -> t
+    #+end_src
+
+* unit
+
+*** unit_t
+
+    #+begin_src cicada
+    unit_t : type_tt
+    unit_t = data { }
+    #+end_src
+
+*** unit
+
+    #+begin_src cicada
+    unit : -- a -> unit_t
+    unit (a) = unit_c
+    #+end_src
+
+* bool
+
+*** bool_t
+
+    #+begin_src cicada
+    bool_t : type_tt
+    bool_t = data :> [true_t, false_t] { }
+
+    true_t : type_tt
+    true_t = data { }
+
+    false_t : type_tt
+    false_t = data { }
+    #+end_src
+
+* eqv
+
+*** eqv_t
+
+    #+begin_src cicada
+    eqv_t : type_tt
+    eqv_t = data {
+      [lhs, rhs] : t
+      lhs = rhs
+    }
+    #+end_src
+
+*** eqv_apply
+
+    #+begin_src cicada
+    eqv_apply :
+      -- fun : -- a -> b,
+         eqv_t (x, y)
+      -> eqv_t (fun (x), fun (y))
+    eqv_apply (_, _) = eqv_c
+    #+end_src
+
+*** eqv_swap
+
+    #+begin_src cicada
+    eqv_swap : -- eqv_t (x, y) -> eqv_t (y, x)
+    eqv_swap (_) = eqv_c
+    #+end_src
+
+*** eqv_compose
+
+    #+begin_src cicada
+    eqv_compose : -- eqv_t (x, y), eqv_t (y, z) -> eqv_t (x, z)
+    eqv_compose (_, _) = eqv_c
+    #+end_src
+
+* nat
+
+*** nat_t
+
+    #+begin_src cicada
+    nat_t : type_tt
+    nat_t = data :> [zero_t, succ_t] { }
+
+    zero_t : type_tt
+    zero_t = data { }
+
+    succ_t : type_tt
+    succ_t = data {
+      prev : nat_t
+    }
+    #+end_src
+
+*** nat_add
+
+    #+begin_src cicada
+    nat_add : -- nat_t, nat_t -> nat_t
+    nat_add (x, y) = {
+      case x {
+        zero_t => y
+        succ_t => succ_c (nat_add (x.prev, y))
+      }
+    }
+    #+end_src
+
+*** nat_mul
+
+    #+begin_src cicada
+    nat_mul : -- nat_t, nat_t -> nat_t
+    nat_mul (x, y) = {
+      case x {
+        zero_t => zero_c
+        succ_t => nat_add (y, nat_mul (x.prev, y))
+      }
+    }
+    #+end_src
+
+*** nat_factorial
+
+    #+begin_src cicada
+    nat_factorial : -- nat_t -> nat_t
+    nat_factorial (x) = {
+      case x {
+        zero_t => succ_c (zero_c)
+        succ_t => nat_mul (x, nat_factorial (x.prev))
+      }
+    }
+    #+end_src
+
+*** nat_even_p
+
+    #+begin_src cicada
+    nat_even_p : -- nat_t -> bool_t
+    nat_even_p (x) = {
+      case x {
+        zero_t => true_c
+        succ_t => case x.prev {
+          zero_t => false_c
+          succ_t => nat_even_p (x.prev.prev)
+        }
+      }
+    }
+    #+end_src
+
+*** nat_even_t
+
+    #+begin_src cicada
+    nat_even_t : type_tt
+    nat_even_t = data :> [zero_even_t, even_plus_two_even_t] {
+      nat : nat_t
+    }
+
+    zero_even_t : type_tt
+    zero_even_t = data {
+      nat : nat_t
+      nat = zero_c
+    }
+
+    even_plus_two_even_t : type_tt
+    even_plus_two_even_t = data {
+      nat : nat_t
+      prev : nat_even_t (m)
+      nat = succ_c (succ_c (m))
+    }
+    #+end_src
+
+*** two_even
+
+    #+begin_src cicada
+    two_even : nat_even_t (succ_c (succ_c (zero_c)))
+    two_even = even_plus_two_even_c (zero_even_c)
+    #+end_src
+
+*** nat_add_associative
+
+    #+begin_src cicada
+    nat_add_associative :
+      -- [x, y, z] : nat_t
+      -> eqv_t (
+           nat_add (nat_add (x, y), z)
+           nat_add (x, nat_add (y, z)))
+    nat_add_associative (x, y, z) = {
+      case x {
+        zero_t => eqv_c
+        succ_t => eqv_apply (
+          succ_c, nat_add_associative (x.prev, y, z))
+      }
+    }
+    #+end_src
+
+*** nat_add_commutative
+
+    #+begin_src cicada
+    nat_add_commutative :
+      -- [x, y] : nat_t
+      -> eqv_t (
+           nat_add (x, y),
+           nat_add (y, x))
+    nat_add_commutative (x, y) = case x {
+      zero_t => nat_add_zero_commutative (y)
+      succ_t => eqv_compose (
+        eqv_apply (succ_c, nat_add_commutative (x.prev, y)),
+        nat_add_succ_commutative (y, x.prev))
+    }
+    #+end_src
+
+*** nat_add_zero_commutative
+
+    #+begin_src cicada
+    nat_add_zero_commutative :
+      -- x : nat_t
+      -> eqv_t (
+           nat_add (zero_c, x),
+           nat_add (x, zero_c))
+    nat_add_zero_commutative (x) = {
+      case x {
+        zero_t => eqv_c
+        succ_t => eqv_apply (succ_c, nat_add_zero_commutative (x.prev))
+      }
+    }
+    #+end_src
+
+*** nat_add_succ_commutative_1
+
+    #+begin_src cicada
+    nat_add_succ_commutative_1 :
+      -- [x, y] : nat_t
+      -> eqv_t (
+           nat_add (succ_c (x), y),
+           succ_c (nat_add (x, y)))
+    nat_add_succ_commutative_1 (x, y) = {
+      case x {
+        zero_t => eqv_c
+        succ_t => eqv_apply (
+          succ_c, nat_add_succ_commutative_1 (x.prev, y))
+      }
+    }
+    #+end_src
+
+*** nat_add_succ_commutative_2
+
+    #+begin_src cicada
+    nat_add_succ_commutative_2 :
+      -- [x, y] : nat_t
+      -> eqv_t (
+           nat_add (y, succ_c (x)),
+           succ_c (nat_add (x, y)))
+    nat_add_succ_commutative_2 (x, y) = {
+      case x {
+        zero_t => eqv_c
+        succ_t => eqv_apply (
+          succ_c, nat_add_succ_commutative_2 (x.prev, y))
+      }
+    }
+    #+end_src
+
+* list
+
+*** list_t
+
+    #+begin_src cicada
+    list_t : type_tt
+    list_t = data :> [null_t, cons_t] {
+      t : type_tt
+    }
+
+    null_t : type_tt
+    null_t = data {
+      t : type_tt
+    }
+
+    cons_t : type_tt
+    cons_t = data {
+      t : type_tt
+      car : t
+      cdr : list_t (t)
+    }
+    #+end_src
+
+*** list_length
+
+    #+begin_src cicada
+    list_length : -- list_t (t) -> nat_t
+    list_length (list) = {
+      case list {
+        null_t => zero_c
+        cons_t => succ_c (list_length (list.cdr))
+      }
+    }
+    #+end_src
+
+*** list_append
+
+    #+begin_src cicada
+    list_append : -- list_t (t) list_t (t) -> list_t (t)
+    list_append (ante, succ) = {
+      case ante {
+        null_t => succ
+        cons_t => cons_c (ante.car, list_append (ante.cdr, succ))
+      }
+    }
+    #+end_src
+
+*** list_map
+
+    #+begin_src cicada
+    list_map : -- -- a -> b, list_t (a) -> list_t (b)
+    list_map (fun, list) = {
+      case list {
+        null_t => list
+        cons_t => cons_c (fun (list.car), list_map (fun, list.cdr))
+      }
+    }
+    #+end_src
+
+*** list_remove_first
+
+    #+begin_src cicada
+    list_remove_first : -- t, list_t (t) -> list_t (t)
+    list_remove_first (x, list) = {
+      case list {
+        null_t => list
+        cons_t =>
+          if eq_p (list.car, x)
+            list.cdr
+          else
+            cons_c (list.car, list_remove_first (list.cdr, x))
+      }
+    }
+    #+end_src
+
+*** list_length_t
+
+    #+begin_src cicada
+    list_length_t : type_tt
+    list_length_t = data :> [zero_length_t succ_length_t] {
+      list : list_t (t)
+      length : nat_t
+    }
+
+    zero_length_t : type_tt
+    zero_length_t = data {
+      list : list_t (t)
+      length : nat_t
+      list = null_c
+      length = zero_c
+    }
+
+    succ_length_t : type_tt
+    succ_length_t = data {
+      list : list_t (t)
+      length : nat_t
+      prev : list_length_t (list, length)
+      list = cons_c (x, list)
+      length = succ_c (length)
+    }
+    #+end_src
+
+*** [note] `append` in prolog
+
+    #+begin_src cicada
+    note {
+      in prolog, we will have :
+        append([], Succ, Succ).
+        append([Car | Cdr], Succ, [Car | ResultCdr]):_
+          append(Cdr, Succ, ResultCdr).
+    }
+    #+end_src
+
+*** list_append_t
+
+    #+begin_src cicada
+    list_append_t : type_tt
+    list_append_t = data :> [zero_append_t, succ_append_t] {
+      [ante, succ, result] : list_t (t)
+    }
+
+    zero_append_t : type_tt
+    zero_append_t = data {
+      [ante, succ, result] : list_t (t)
+      ante = null_c
+      result = succ
+    }
+
+    succ_append_t : type_tt
+    succ_append_t = data {
+      [ante, succ, result] : list_t (t)
+      prev : list_append_t (cdr, succ, result_cdr)
+      ante = cons_c (car, cdr)
+      result = cons_c (car, result_cdr)
+    }
+    #+end_src
+
+* vect
+
+*** vect_t
+
+    #+begin_src cicada
+    vect_t : type_tt
+    vect_t = data :> [null_vect_t cons_vect_tt] {
+      t : type_tt
+      length : nat_t
+    }
+
+    null_vect_t : type_tt
+    null_vect_t = data {
+      t : type_tt
+      length : nat_t
+      length = zero_c
+    }
+
+    cons_vect_t : type_tt
+    cons_vect_t = data {
+      t : type_tt
+      length : nat_t
+      car : t
+      cdr : vect_t (t, length)
+      length = succ_c (length)
+    }
+    #+end_src
+
+*** vect_append
+
+    #+begin_src cicada
+    vect_append :
+      -- vect_t (t, m),
+         vect_t (t, n),
+      -> vect_t (t, nat_add (m, n))
+    vect_append (ante, succ) = {
+      case ante {
+        null_vect_t => succ
+        cons_vect_t => cons_vect_c (
+          ante.car, vect_append (ante.cdr, succ))
+      }
+    }
+    #+end_src
+
+*** vect_map
+
+    #+begin_src cicada
+    vect_map : -- -- a -> b, vect_t (a, n) -> vect_t (a, n)
+    vect_map (fun, list) = {
+      case list {
+        null_vect_t => list
+        cons_vect_t => cons_vect_c (
+          fun (list.car), vect_map (fun, list.cdr))
+      }
+    }
+    #+end_src
+
+* order
+
+*** preorder_tt
+
+    #+begin_src cicada
+    note {
+      preorder is a thin category
+      with at most one morphism from an object to another.
+    }
+
+    preorder_tt : type_ttt
+    preorder_tt = data {
+      element_t : type_tt
+
+      pre_t :
+        -- element_t, element_t
+        -> type_tt
+
+      pre_reflexive :
+        -- a :: element_t
+        -> pre_t (a, a)
+
+      pre_transitive :
+        -- pre_t (a, b)
+           pre_t (b, c)
+        -> pre_t (a, c)
+    }
+    #+end_src
+
+*** partial_order_tt
+
+    #+begin_src cicada
+    partial_order_tt : type_ttt
+    partial_order_tt = data <: [preorder_tt] {
+      element_eqv_t :
+        -- element_t
+           element_t
+        -> type_tt
+
+      pre_anti_symmetric :
+        -- pre_t (a, b)
+           pre_t (b, a)
+        -> element_eqv_t (a, b)
+    }
+    #+end_src
+
+*** eqv_relation_tt
+
+    #+begin_src cicada
+    eqv_relation_tt : type_ttt
+    eqv_relation_tt = data <: [preorder_tt] {
+      pre_symmetric :
+        -- pre_t (a, b)
+        -> pre_t (b, a)
+    }
+    #+end_src
+
+*** total_order_tt
+
+    #+begin_src cicada
+    total_order_tt : type_ttt
+    total_order_tt = data <: [partial_order_tt] {
+      pre_connex :
+        -- [a, b] : element_t
+        -> + [pre_t (a, b), pre_t (b, a)]
+    }
+    #+end_src
+
+* unique
+
+*** unique_tt
+
+    #+begin_src cicada
+    unique_tt : type_ttt
+    unique_tt = data {
+      t : type_tt
+      value : t
+      underlying_eqv_t : -- t, t -> type_tt
+      condition_t : -- t -> type_tt
+
+      unique_proof :
+        * [condition_t (value)
+           -- another : t
+              condition_t (another)
+           -> underlying_eqv_t (value, another)]
+    }
+    #+end_src
+
+*** [todo] (unique)
+
+    #+begin_src cicada
+    (unique <t>
+     of <value>
+     under <underlying_eqv_t>
+     such_that <condition_t>) = macro {
+       unique_tt
+         t = <t>
+         value = <value>
+         underlying_eqv_t = <underlying_eqv_t>
+         condition_t = <condition_t>
+     }
+    #+end_src
+
+* category
+
+*** category_ttt
+
+    #+begin_src cicada
+    category_ttt : type_tttt
+    category_ttt = data {
+      object_tt : type_ttt
+      arrow_tt : -- object_tt object_tt -> type_ttt
+      arrow_eqv_tt : -- arrow_tt (a, b), arrow_tt (a, b) -> type_ttt
+
+      identity : -- a :: object_tt -> arrow_tt (a, a)
+
+      compose : -- arrow_tt (a, b), arrow_tt (b, c) -> arrow_tt (a, c)
+
+      identity_neutral_left :
+        -- f : arrow_tt (a, b)
+        -> arrow_eqv_tt (f, compose (identity, f))
+
+      identity_neutral_right :
+        -- f : arrow_tt (a, b)
+        -> arrow_eqv_tt (f, compose (f, identity))
+
+      compose_associative :
+        -- f : arrow_tt (a, b)
+           g : arrow_tt (b, c)
+           h : arrow_tt (c, d)
+        -> arrow_eqv_tt (
+             compose (f, compose (g, h))
+             compose (compose (f, g), h))
+
+      arrow_eqv_relation :
+        -- [a, b] :: object_tt
+        -> eqv_relation_tt (
+             element_tt = arrow_tt (a, b)
+             pre_tt = arrow_eqv_tt)
+    }
+    #+end_src
+
+*** basic relation
+
+***** category_ttt.isomorphic_tt
+
+      #+begin_src cicada
+      category_ttt.isomorphic_tt : type_ttt
+      category_ttt.isomorphic_tt = data {
+        [lhs, rhs] : object_tt
+        iso : arrow_tt (lhs, rhs)
+        inv : arrow_tt (rhs, lhs)
+        iso_inv_identity : arrow_eqv_tt (compose (iso, inv), identity)
+        inv_iso_identity : arrow_eqv_tt (compose (inv, iso), identity)
+      }
+      #+end_src
+
+*** universal construction
+
+***** category_ttt.initial_tt
+
+      #+begin_src cicada
+      category_ttt.initial_tt : type_ttt
+      category_ttt.initial_tt = data {
+        initial : object_tt
+        factorizer :
+          -- cand : object_tt
+          -> factor : arrow_tt (initial, cand)
+      }
+      #+end_src
+
+***** category_ttt.terminal_tt
+
+      #+begin_src cicada
+      category_ttt.terminal_tt : type_ttt
+      category_ttt.terminal_tt = data <: [terminal_candidate_tt] {
+        terminal : object_tt
+        factorizer :
+          -- cand : object_tt
+          -> factor : arrow_tt (cand, terminal)
+      }
+      #+end_src
+
+***** category_ttt.product_tt
+
+      #+begin_src cicada
+      category_ttt.product_candidate_tt : type_ttt
+      category_ttt.product_candidate_tt = data {
+        fst : object_tt
+        snd : object_tt
+        product : object_tt
+        fst_projection : arrow_tt (product, fst)
+        snd_projection : arrow_tt (product, snd)
+      }
+
+      category_ttt.product_tt : type_ttt
+      category_ttt.product_tt = data <: [product_candidate_tt] {
+        factorizer :
+          -- cand : product_candidate_tt (fst, snd)
+          -> factor : arrow_tt (cand.product, product)
+        unique_factor :
+          -- cand : product_candidate_tt (fst, snd)
+          -> unique factorizer (cand)
+             of arrow_tt (cand.product, product)
+             under arrow_eqv_tt
+             such_that
+               arrow_eqv_tt (
+                 cand.fst_projection
+                 compose (factor, fst_projection))
+               arrow_eqv_tt (
+                 cand.snd_projection
+                 compose (factor, snd_projection))
+      }
+      #+end_src
+
+***** category_ttt.sum_tt
+
+      #+begin_src cicada
+      category_ttt.sum_candidate_tt : type_ttt
+      category_ttt.sum_candidate_tt = data {
+        fst : object_tt
+        snd : object_tt
+        sum : object_tt
+        fst_injection : arrow_tt (fst, sum)
+        snd_injection : arrow_tt (snd, sum)
+      }
+
+      category_ttt.sum_tt : type_ttt
+      category_ttt.sum_tt = data <: [sum_candidate_tt] {
+        factorizer :
+          -- cand : sum_candidate_tt (fst, snd)
+          -> factor : arrow_tt (sum, cand.sum)
+        unique_factor :
+          -- cand : sum_candidate_tt (fst, snd)
+          -> unique factorizer (cand)
+             of arrow_tt (sum, cand.sum)
+             under arrow_eqv_tt
+             such_that
+               arrow_eqv_tt (
+                 cand.fst_injection
+                 compose (fst_injection, factor))
+               arrow_eqv_tt (
+                 cand.snd_injection
+                 compose (snd_injection, factor))
+      }
+      #+end_src
+
+*** other structure as category
+
+***** preorder.as_category
+
+      #+begin_src cicada
+      note {
+        to view a preorder as a category
+        we simple view all arrow of the same type as eqv
+      }
+
+      preorder.as_category : category_tt
+      preorder.as_category = category_cc {
+        object_t = element_t
+
+        arrow_t = pre_t
+
+        arrow_eqv_t (_, _) = unit_t
+
+        identity = pre_reflexive
+
+        compose = pre_transitive
+
+        identity_neutral_left (_) = unit_c
+
+        identity_neutral_right (_) = unit_c
+
+        compose_associative (_, _, _) = unit_c
+      }
+      #+end_src
+
+*** build new category from old category
+
+***** category_ttt.opposite
+
+      #+begin_src cicada
+      category_ttt.opposite : category_ttt
+      category_ttt.opposite = category_ccc {
+        object_tt = this.object_tt
+
+        arrow_tt :
+          -- object_tt, object_tt
+          -> type_tt
+        arrow_tt (a, b) = this.arrow_tt (b, a)
+
+        arrow_eqv_tt :
+          -- this.arrow_tt (b, a), this.arrow_tt (b, a)
+          -> type_tt
+        arrow_eqv_tt = this.arrow_eqv_tt
+
+        identity :
+          -- a :: object_tt
+          -> arrow_tt (a, a)
+        identity = this.identity
+
+        compose :
+          -- this.arrow_tt (b, a)
+             this.arrow_tt (c, b)
+          -> this.arrow_tt (c, a)
+        compose (f, g) = this.compose (g, f)
+
+        identity_neutral_left :
+          -- f : this.arrow_tt (b, a)
+          -> arrow_eqv_tt (f, this.compose (f, identity))
+        identity_neutral_left = this.identity_neutral_right
+
+        identity_neutral_right :
+          -- f : this.arrow_tt (b, a)
+          -> arrow_eqv_tt (f, this.compose (identity, f))
+        identity_neutral_right = this.identity_neutral_left
+
+        compose_associative :
+          -- f : this.arrow_tt (b, a)
+             g : this.arrow_tt (c, b)
+             h : this.arrow_tt (d, c)
+          -> arrow_eqv_tt (
+               this.compose (this.compose (h, g), f)
+               this.compose (h, this.compose (g, f)))
+        compose_associative (f, g, h) = {
+          this.arrow_eqv_relation.pre_symmetric (
+            this.compose_associative (h, g, f))
+        }
+      }
+      #+end_src
+
+***** category_product
+
+      #+begin_src cicada
+      category_product : -- category_ttt, category_ttt -> category_ttt
+      category_product (#1, #2) = category_ccc {
+        object_tt = * [#1.object_tt, #2.object_tt]
+
+        arrow_tt (a, b) =
+          * [#1.arrow_tt (a.1, b.1)
+             #2.arrow_tt (a.2, b.2)]
+
+        arrow_eqv_tt (lhs, rhs) =
+          * [#1.arrow_eqv_tt (lhs.1, rhs.1)
+             #2.arrow_eqv_tt (lhs.2, rhs.2)]
+
+        identity =
+          * [#1.identity
+             #2.identity]
+
+        compose (f, g) =
+          * [#1.compose (f.1, g.1)
+             #2.compose (f.2, g.2)]
+
+        identity_neutral_left (f) =
+          * [#1.identity_neutral_left (f.1)
+             #2.identity_neutral_left (f.2)]
+
+        identity_neutral_right (f) =
+          * [#1.identity_neutral_right (f.1)
+             #2.identity_neutral_right (f.2)]
+
+        compose_associative (f, g, h) =
+          * [#1.compose_associative (f.1, g.1, h.1)
+             #2.compose_associative (f.2, g.2, h.2)]
+      }
+      #+end_src
+
+* product_closed_category
+
+*** product_closed_category_ttt
+
+    #+begin_src cicada
+    product_closed_category_ttt : type_tttt
+    product_closed_category_ttt = data <: [category_ttt] {
+      product :
+        -- [a, b] : object_tt
+        -> p : object_tt
+           product_relation :: product_tt (a, b, p)
+    }
+    #+end_src
+
+*** ><><>< product_closed_category_ttt.product_arrow
+
+    #+begin_src cicada
+    product_closed_category_ttt.product_arrow :
+      -- arrow_tt (a, b)
+         arrow_tt (c, d)
+      -> arrow_tt (product (a c), product (b, d))
+    product_closed_category_ttt.product_arrow (f, g) = {
+      with_details product (a, c)
+        p <- product_relation
+      with_details product (b, d)
+        q <- product_relation
+      q.factorizer (
+        product_candidate_cc (
+          fst = b
+          snd = d
+          product = product (a, c)
+          fst_projection = compose (p.fst_projection, f)
+          snd_projection = compose (p.fst_projection, g)))
+    }
+    #+end_src
+
+*** product_closed_category_ttt.exponential_tt
+
+    #+begin_src cicada
+    product_closed_category_ttt.exponential_candidate_tt : type_ttt
+    product_closed_category_ttt.exponential_candidate_tt = data {
+      ante : object_tt
+      succ : object_tt
+      exponential : object_tt
+      eval : arrow_tt (product (exponential, ante), succ)
+    }
+
+    category_ttt.exponential_tt : type_ttt
+    category_ttt.exponential_tt = data <: [exponential_candidate_tt] {
+      factorizer :
+        -- cand : exponential_candidate_tt (ante, succ)
+        -> factor : arrow_tt (cand.exponential, exponential)
+      unique_factor :
+        -- cand : exponential_candidate_tt (ante, succ)
+        -> unique factorizer (cand)
+           of arrow_tt (cand.exponential, exponential)
+           under arrow_eqv_tt
+           such_that
+             arrow_eqv_tt (
+               cand.eval,
+               compose (eval, product_arrow (factor, identity)))
+    }
+    #+end_src
+
+* [todo] cartesian_closed_category
+
+* void_category
+
+*** void_arrow_t
+
+    #+begin_src cicada
+    void_arrow_t : type_tt
+    void_arrow_t = data {
+      [ante, succ] : void_t
+    }
+    #+end_src
+
+*** void_arrow_eqv_t
+
+    #+begin_src cicada
+    void_arrow_eqv_t : type_tt
+    void_arrow_eqv_t = data {
+      [lhs, rhs] : void_arrow_t (a, b)
+    }
+    #+end_src
+
+*** void_category
+
+    #+begin_src cicada
+    void_category : category_tt
+    void_category = category_cc {
+      object_t = void_t
+      arrow_t = void_arrow_t
+      arrow_eqv_t = void_arrow_eqv_t
+
+      identity :
+        -- a :: void_t
+        -> void_arrow_t (a, a)
+      identity (_) = void_arrow_c
+
+      compose (_, _) = void_arrow_c
+
+      identity_neutral_left :
+        -- f : void_arrow_t (a, b)
+        -> void_arrow_eqv_t (f, void_arrow_c)
+      identity_neutral_left (_) = void_arrow_eqv_c
+
+      identity_neutral_right :
+        -- f : void_arrow_t (a, b)
+        -> void_arrow_eqv_t (f, void_arrow_c)
+      identity_neutral_right (_) = void_arrow_eqv_c
+
+      compose_associative :
+        -- f : void_arrow_t (a, b)
+           g : void_arrow_t (b, c)
+           h : void_arrow_t (c, d)
+        -> void_arrow_eqv_t (void_arrow_eqv_c, void_arrow_eqv_c)
+      compose_associative (_, _, _) = void_arrow_eqv_c
+    }
+    #+end_src
+
+* graph_tt
+
+*** graph_tt
+
+    #+begin_src cicada
+    note {
+      different between graph and category is that,
+      composing [linking] two edges does not give you edge but path.
+    }
+
+    graph_tt : type_ttt
+    graph_tt = data {
+      node_t : type_tt
+      edge_t : -- node_t, node_t -> type_tt
+    }
+    #+end_src
+
+*** graph.path_t
+
+    #+begin_src cicada
+    graph_tt.path_t : type_tt
+    graph_tt.path_t = data
+      :> [node_path_t
+          edge_path_t
+          link_path_t] {
+      [start, end] : node_t
+    }
+
+    graph_tt.node_path_t : type_tt
+    graph_tt.node_path_t = data {
+      [start, end] : node_t
+      node : node_t
+      start = node
+      end = node
+    }
+
+    graph_tt.edge_path_t : type_tt
+    graph_tt.edge_path_t = data {
+      [start, end] : node_t
+      edge : edge_t (start, end)
+    }
+
+    graph_tt.link_path_t : type_tt
+    graph_tt.link_path_t = data {
+      [start, end] : node_t
+      first : path_t (start, middle)
+      next : path_t (middle, end)
+    }
+    #+end_src
+
+*** graph_tt.path_eqv_t
+
+    #+begin_src cicada
+    graph_tt.path_eqv_t : type_tt
+    graph_tt.path_eqv_t = data
+      :> [refl_path_eqv_t
+          node_left_path_eqv_t
+          node_right_path_eqv_t
+          associative_path_eqv_t] {
+      [lhs, rhs] : path_t (a, b)
+    }
+
+    graph_tt.refl_path_eqv_t : type_tt
+    graph_tt.refl_path_eqv_t = data {
+      [lhs, rhs] : path_t (a, b)
+      p : path_t (a, b)
+      lhs = p
+      lhs = p
+    }
+
+    graph_tt.node_left_path_eqv_t : type_tt
+    graph_tt.node_left_path_eqv_t = data {
+      [lhs, rhs] : path_t (a, b)
+      p : path_t (a, b)
+      lhs = p
+      rhs = link_path_c (node_path_c (a), p)
+    }
+
+    graph_tt.node_right_path_eqv_t : type_tt
+    graph_tt.node_right_path_eqv_t = data {
+      [lhs, rhs] : path_t (a, b)
+      p : path_t (a, b)
+      lhs = p
+      rhs = link_path_c (p, node_path_c (b))
+    }
+
+    graph_tt.associative_path_eqv_t : type_tt
+    graph_tt.associative_path_eqv_t = data {
+      [lhs, rhs] : path_t (a, b)
+      p : path_t (a, b)
+      q : path_t (b, c)
+      r : path_t (c, d)
+      lhs = link_path_c (p, link_path_c (q, r))
+      rhs = link_path_c (link_path_c (p, q), r)
+    }
+    #+end_src
+
+*** graph_tt.as_free_category
+
+    #+begin_src cicada
+    graph_tt.as_free_category : category_tt
+    graph_tt.as_free_category = category_cc {
+      object_t = node_t
+      arrow_t = path_t
+      arrow_eqv_t = path_eqv_t
+
+      identity :
+        -- a :: node_t
+        -> path_t (a, a)
+      identity = node_path_c (a)
+
+      compose = link_path_c
+
+      identity_neutral_left :
+        -- f : path_t (a, b)
+        -> path_eqv_t (f, link_path_c (node_path_c (a), f))
+      identity_neutral_left = node_left_path_eqv_c
+
+      identity_neutral_right :
+        -- f : path_t (a, b)
+        -> path_eqv_t (f, link_path_c (f, node_path_c (b)))
+      identity_neutral_right = node_right_path_eqv_c
+
+      compose_associative :
+        -- f : path_t (a, b)
+           g : path_t (b, c)
+           h : path_t (c, d)
+        -> path_eqv_t (
+             link_path_c (f, link_path_c (g, h))
+             link_path_c (link_path_c (f, g), h))
+      compose_associative = associative_path_eqv_c
+    }
+    #+end_src
+
+* nat_order_category
+
+*** nat_lteq_t
+
+    #+begin_src cicada
+    nat_lteq_t : type_tt
+    nat_lteq_t = data :> [zero_lteq_t, succ_lteq_t] {
+      [l, r] : nat_t
+    }
+
+
+    zero_lteq_t : type_tt
+    zero_lteq_t = data {
+      [l, r] : nat_t
+      l = zero_c
+    }
+
+    succ_lteq_t : type_tt
+    succ_lteq_t = data {
+      [l, r] : nat_t
+      prev : nat_lteq_t (x, y)
+      l = succ_c (x)
+      r = succ_c (y)
+    }
+    #+end_src
+
+*** nat_non_negative
+
+    #+begin_src cicada
+    nat_non_negative : -- n : nat_t -> nat_lteq_t (zero_c, n)
+    nat_non_negative = zero_lteq_c
+    #+end_src
+
+*** nat_lteq_reflexive
+
+    #+begin_src cicada
+    nat_lteq_reflexive : -- n : nat_t -> nat_lteq_t (n, n)
+    nat_lteq_reflexive (n) = {
+      case n {
+        zero_t => zero_lteq_c
+        succ_t => succ_lteq_c (nat_lteq_reflexive (n.prev))
+      }
+    }
+    #+end_src
+
+*** nat_lteq_transitive
+
+    #+begin_src cicada
+    nat_lteq_transitive :
+      -- nat_lteq_t (a, b)
+         nat_lteq_t (b, c)
+      -> nat_lteq_t (a, c)
+    nat_lteq_transitive (x, y) = {
+      case x {
+        zero_lteq_t => zero_lteq_c
+        succ_lteq_t => succ_lteq_c (nat_lteq_transitive (x.prev, y.prev))
+      }
+    }
+    #+end_src
+
+*** nat_lt_t
+
+    #+begin_src cicada
+    nat_lt_t : -- nat_t nat_t -> type_tt
+    nat_lt_t (l, r) = nat_lteq_t (succ_c (l), r)
+    #+end_src
+
+*** nat_archimedean_property
+
+    #+begin_src cicada
+    nat_archimedean_property :
+      -- x : nat_t
+      -> * [y : nat_t
+            nat_lt_t (x, y)]
+    nat_archimedean_property x =
+      * [succ_c (x), nat_lteq_reflexive (succ_c (x))]
+    #+end_src
+
+*** nat_order_category
+
+    #+begin_src cicada
+    nat_order_category : category_tt
+    nat_order_category = category_cc {
+      object_t = nat_t
+      arrow_t = nat_lteq_t
+      arrow_eqv_t = eqv_t
+
+      identity :
+        -- a :: nat_t
+        -> nat_lteq_t (a, a)
+      identity = nat_lteq_reflexive (a)
+
+      compose = nat_lteq_transitive
+
+      identity_neutral_left (x) = {
+        case x {
+          zero_lteq_t => eqv_c
+          succ_lteq_t => eqv_apply (
+            succ_lteq_c, identity_neutral_left (x.prev))
+        }
+      }
+
+      identity_neutral_righ (x) = {
+        case x {
+          zero_lteq_t => eqv_c
+          succ_lteq_t => eqv_apply (
+            succ_lteq_c, identity_neutral_righ (x.prev))
+        }
+      }
+
+      compose_associative (f, g, h) = {
+        case [f, g, h] {
+          [zero_lteq_t, _, _] => eqv_c
+          [succ_lteq_t, succ_lteq_t, succ_lteq_t] =>
+            eqv_apply (
+              succ_lteq_c,
+              compose_associative (f.prev, g.prev, h.prev))
+        }
+      }
+    }
+    #+end_src
+
+* groupoid
+
+*** groupoid_tt
+
+    #+begin_src cicada
+    groupoid_tt : type_ttt
+    groupoid_tt = data <: [category_tt] {
+      inverse : -- f : arrow_tt (a, b) -> isomorphic_tt (a, b, f)
+    }
+    #+end_src
+
+* [todo] nat_total_order
+
+* monoid
+
+*** monoid_tt
+
+    #+begin_src cicada
+    monoid_tt : type_ttt
+    monoid_tt = data {
+      element_t : type_tt
+
+      element_eqv_t :
+        -- element_t, element_t
+        -> type_tt
+
+      unit : element_t
+
+      product :
+        -- element_t, element_t
+        -> element_t
+
+      unit_neutral_left :
+        -- a : element_t
+        -> element_eqv_t (product (a, unit), a)
+
+      unit_neutral_right :
+        -- a : element_t
+        -> element_eqv_t (product (unit, a), a)
+
+      product_associative :
+        -- a : element_t
+           b : element_t
+           c : element_t
+        -> element_eqv_t (
+             product (a, product (b, c))
+             product (product (a, b), c))
+    }
+    #+end_src
+
+*** monoid_tt.as_category
+
+    #+begin_src cicada
+    monoid_tt.as_category : category_tt
+    monoid_tt.as_category = category_cc {
+      object_t = unit_t
+      arrow_t (_, _) = element_t
+      arrow_eqv_t = element_eqv_t
+      identity = unit
+      compose = product
+      identity_neutral_left = unit_neutral_left
+      identity_neutral_right = unit_neutral_right
+      compose_associative = product_associative
+    }
+    #+end_src
+
+* [todo] group
+
+* [todo] abelian_group
+
+* [todo] ring
+
+* [todo] field
+
+* [todo] vector_space
+
+* [todo] limit
+
+* container
+
+*** container_tt
+
+    #+begin_src cicada
+    note {
+      endofunctor of set_category
+    }
+
+    container_tt : type_ttt
+    container_tt = data {
+      fun_t : -- type_tt -> type_tt
+      map : -- -- a -> b, fun_tt (a) -> fun_t (b)
+    }
+    #+end_src
+
+*** list_container
+
+    #+begin_src cicada
+    list_container : container_tt
+    list_container = container_cc {
+      fun_t = list_t
+      map (fun, list) = {
+        case list {
+          null_t => null_c
+          cons_t => cons_c (fun (list.car), map (fun, list.cdr))
+        }
+      }
+    }
+    #+end_src
+
+* const
+
+*** const_t
+
+    #+begin_src cicada
+    const_t : type_tt
+    const_t = data {
+      [c, a] : type_tt
+      value : c
+    }
+    #+end_src
+
+*** const_container
+
+    #+begin_src cicada
+    const_container : -- type_tt -> container_tt
+    const_container (c) = container_cc {
+      fun_t = const_t (c)
+
+      map : -- -- a -> b, const_t (c, a) -> const_t (c, b)
+      map (_, x) = x
+    }
+    #+end_src
+
+* monad
+
+*** monad_tt
+
+    #+begin_src cicada
+    monad_tt : type_ttt
+    monad_tt = data <: [container_tt] {
+      pure : -- t -> fun_t (t)
+      bind : -- fun_t (a), -- a -> fun_t (b) -> fun_t (b)
+    }
+    #+end_src
+
+*** monad_tt.compose
+
+    #+begin_src cicada
+    monad_tt.compose :
+      -- -- a -> fun_t (b)
+         -- b -> fun_t (c)
+      -> -- a -> fun_t (c)
+    monad_tt.compose (f, g) = lambda [a] {
+      bind (f (a), g)
+    }
+    #+end_src
+
+*** monad_tt.flatten
+
+    #+begin_src cicada
+    monad_tt.flatten :
+      -- fun_t (fun_t (a))
+      -> fun_t (a)
+    monad_tt.flatten (m) = bind (m, lambda {})
+    #+end_src
+
+*** list_monad
+
+    #+begin_src cicada
+    list_monad : monad_tt
+    list_monad = monad_cc {
+      pure (x) = cons_c (x null_c)
+      bind (list fun) = {
+        case list {
+          null_t => null_c
+          cons_t => list_append (fun (list.car), bind (list.cdr, fun))
+        }
+      }
+    }
+    #+end_src
+
+* maybe
+
+*** maybe_t
+
+    #+begin_src cicada
+    maybe_t : type_tt
+    maybe_t = data :> [none_t just_t] {
+      t : type_tt
+    }
+
+    none_t : type_tt
+    none_t = data {
+      t : type_tt
+    }
+
+    just_t : type_tt
+    just_t = data {
+      t : type_tt
+      value : t
+    }
+    #+end_src
+
+*** maybe_container
+
+    #+begin_src cicada
+    maybe_container : container_tt
+    maybe_container = container_cc {
+      fun_t = maybe_t
+      map (fun, maybe) = {
+        case maybe {
+          none_t => none_c
+          just_t => just_c (fun (maybe.value))
+        }
+      }
+    }
+    #+end_src
+
+*** maybe_monad
+
+    #+begin_src cicada
+    maybe_monad : monad_tt
+    maybe_monad = monad_cc {
+      pure = just_c
+      bind (maybe, fun) = {
+        case maybe {
+          none_t => none_c
+          just_t => fun (maybe.value)
+        }
+      }
+    }
+    #+end_src
+
+* state
+
+*** state_t
+
+    #+begin_src cicada
+    state_t : -- type_tt, type_tt -> type_tt
+    state_t (s, a) = -- s -> * [s, a]
+    #+end_src
+
+*** state_monad
+
+    #+begin_src cicada
+    state_monad : -- type_tt -> monad_tt
+    state_monad (s) = monad_cc {
+      fun_t = state_t (s)
+
+      map : -- -- a -> b
+               state_t (s, a)
+            -> state_t (s, b)
+      map : -- -- a -> b
+               -- s -> * [s, a]
+            -> -- s -> * [s, b]
+      map (f, m) = lambda [s] {
+        * [1st (m (s)),
+           f (2nd (m (s)))]
+      }
+
+      pure : -- t -> state_t (s, t)
+      pure : -- t -> -- s -> * [s, t]
+      pure (v) = lambda [s] {
+        * [s, v]
+      }
+
+      bind : -- fun_t (a), -- a -> fun_t (b) -> fun_t (b)
+      bind : -- state_t (s, a), -- a -> state_t (s, b) -> state_t (s, b)
+      bind : -- -- s -> * [s, a]
+                -- a -> -- s -> * [s, b]
+             -> -- s -> * [s, b]
+      bind (m, f) = lambda [s] {
+        f (2st (m (s))) (1st (m (s)))
+      }
+    }
+    #+end_src
+
+* tree
+
+*** tree_t
+
+    #+begin_src cicada
+    tree_t : type_tt
+    tree_t = data :> [leaf_t, branch_t] {
+      t : type_tt
+    }
+
+    leaf_t : type_tt
+    leaf_t = data {
+      t : type_tt
+      value : t
+    }
+
+    branch_t : type_tt
+    branch_t = data {
+      t : type_tt
+      [left, right] : tree_t (t)
+    }
+    #+end_src
+
+*** tree_container
+
+    #+begin_src cicada
+    tree_container : container_tt
+    tree_container = container_cc {
+      fun_t = tree_t
+      map (fun, tree) = {
+        case tree {
+          leaf_t => leaf_c (fun (tree.value))
+          branch_t => branch_c (
+            map (fun, tree.left),
+            map (fun, tree.right))
+        }
+      }
+    }
+    #+end_src
+
+*** tree_zip
+
+    #+begin_src cicada
+    tree_zip :
+      -- tree_t (a)
+         tree_t (b)
+      -> maybe_t (tree_t (* [a, b]))
+    tree_zip (x, y) = {
+      case [x, y]
+        [leaf_t, leaf_t] =>
+          pure (leaf_c (* [x.value, y.value]))
+        [branch_t, branch_t] => do {
+          left <- tree_zip (x.left, y.left)
+          right <- tree_zip (x.right, y.right)
+          pure (branch_c (left right))
+        }
+        [_, _] none_c
+    }
+    #+end_src
+
+*** tree_numbering
+
+    #+begin_src cicada
+    tree_numbering :
+      -- tree_t (t)
+      -> state_t (nat_t, tree_t (nat_t))
+    tree_numbering (tree) = {
+      case tree {
+        leaf_t => lambda [n] {
+          * [nat_inc (n), leaf_c (n)]
+        }
+        branch_t => do {
+          left <- tree_numbering (tree.left)
+          right <- tree_numbering (tree.right)
+          pure (branch_c (left, right))
+        }
+      }
+    }
+    #+end_src
+
+* int
+
+*** [todo] int_t
+
+*** [todo] mod_t
+
+*** gcd_t
+
+    #+begin_src cicada
+    gcd_t : type_tt
+    gcd_t = data :> [zero_gcd_t mod_gcd_t] {
+      [x, y, d] : int_t
+    }
+
+    zero_gcd_t : type_tt
+    zero_gcd_t = data {
+      [x, y, d] : int_t
+      y = zero_c
+      x = d
+    }
+
+    mod_gcd_t : type_tt
+    mod_gcd_t = data {
+      [x, y, d] : int_t
+      gcd : gcd_t (z, x, d)
+      mod : mod_t (z, x, y)
+    }
+    #+end_src
+
+* set_category
+
+*** [todo] set_tt
+
+    #+begin_src cicada
+    note {
+      The set theory of Errett Bishop.
+    }
+
+    set_tt : type_ttt
+    set_tt = data {
+      element_t : type_tt
+      eqv_t : -> element_t, element_t -> type_tt
+    }
+    #+end_src
+
+*** set_morphism_tt
+
+    #+begin_src cicada
+    set_morphism_tt : type_ttt
+    set_morphism_tt = data {
+      ante : type_tt
+      succ : type_tt
+
+      morphism : -- ante -> succ
+    }
+    #+end_src
+
+*** set_morphism_eqv_tt
+
+    #+begin_src cicada
+    set_morphism_eqv_tt : type_ttt
+    set_morphism_eqv_tt = data {
+      lhs : set_morphism_tt (a, b)
+      rhs : set_morphism_tt (a, b)
+
+      morphism_eqv :
+        -- x : a
+        -> eqv_t (lhs.morphism (x), rhs.morphism (x))
+    }
+    #+end_src
+
+*** set_category
+
+    #+begin_src cicada
+    set_category : category_ttt
+    set_category = category_ccc {
+      object_tt = type_tt
+
+      arrow_tt (a, b) = set_morphism_tt (a, b)
+
+      arrow_eqv_tt (lhs, rhs) = set_morphism_eqv_tt (lhs, rhs)
+
+      identity = set_morphism_cc {
+        morphism = nop
+      }
+
+      compose (f, g) = set_morphism_cc {
+        morphism = | [f.morphism, g.morphism]
+      }
+
+      identity_neutral_left (_) = set_morphism_eqv_cc {
+        morphism_eqv (_) = eqv_c
+      }
+
+      identity_neutral_right (_) = set_morphism_eqv_cc {
+        morphism_eqv (_) = eqv_c
+      }
+
+      compose_associative (_, _, _) = set_morphism_eqv_cc {
+        morphism_eqv (_) = eqv_c
+      }
+    }
+    #+end_src
+
+* preorder_category
+
+*** preorder_morphism_tt
+
+    #+begin_src cicada
+    preorder_morphism_tt : type_ttt
+    preorder_morphism_tt = data {
+      ante : preorder_tt
+      succ : preorder_tt
+
+      morphism : -- ante.element_t -> succ.element_t
+
+      morphism_respect_pre_relation :
+        -- ante.pre_t (x, y)
+        -> succ.pre_t (morphism (x), morphism (y))
+    }
+    #+end_src
+
+*** preorder_morphism_eqv_tt
+
+    #+begin_src cicada
+    preorder_morphism_eqv_tt : type_ttt
+    preorder_morphism_eqv_tt = data {
+      lhs : preorder_morphism_tt (a, b)
+      rhs : preorder_morphism_tt (a, b)
+
+      morphism_eqv :
+        -- x : a.element_t
+        -> eqv_t (lhs.morphism (x), rhs.morphism (x))
+    }
+    #+end_src
+
+*** preorder_category
+
+    #+begin_src cicada
+    preorder_category : category_ttt
+    preorder_category = category_ccc {
+      object_tt : type_ttt
+      object_tt = preorder_tt
+
+      arrow_tt : -- preorder_tt, preorder_tt -> type_ttt
+      arrow_tt (a, b) = preorder_morphism_tt (a, b)
+
+      arrow_eqv_tt :
+        -- preorder_morphism_tt (a, b)
+           preorder_morphism_tt (a, b)
+        -> type_ttt
+      arrow_eqv_tt (lhs, rhs) = preorder_morphism_eqv_tt (lhs, rhs)
+
+      identity :
+        -- a :: preorder_tt
+        -> preorder_morphism_tt (a, a)
+      identity = preorder_morphism_cc {
+        morphism = nop
+        morphism_respect_pre_relation = nop
+      }
+
+      compose :
+        -- preorder_morphism_tt (a, b)
+           preorder_morphism_tt (b, c)
+        -> preorder_morphism_tt (a, c)
+      compose (f, g) = preorder_morphism_cc {
+        morphism = | [f.morphism, g.morphism]
+        morphism_respect_pre_relation = {
+          | [f.morphism_respect_pre_relation
+             g.morphism_respect_pre_relation]
+        }
+      }
+
+      identity_neutral_left (f) = preorder_morphism_eqv_cc {
+        morphism_eqv (_) = eqv_c
+      }
+
+      identity_neutral_right (f) = preorder_morphism_eqv_cc {
+        morphism_eqv (_) = eqv_c
+      }
+
+      compose_associative (f, g, h) = preorder_morphism_eqv_cc {
+        morphism_eqv (_) = eqv_c
+      }
+    }
+    #+end_src
+
+* category_category
+
+*** functor_ttt
+
+    - a functor between two categories is a natural_construction
+      of the structure of [ante : category_ttt]
+      in the structure of [succ : category_ttt]
+
+    #+begin_src cicada
+    functor_ttt : type_tttt
+    functor_ttt = data {
+      ante : category_ttt
+      succ : category_ttt
+
+      object_map :
+        -- ante.object_tt
+        -> succ.object_tt
+
+      arrow_map :
+        -- ante.arrow_tt (a, b)
+        -> succ.arrow_tt (object_map (a), object_map (b))
+
+      arrow_map_respect_compose :
+        -- f : ante.arrow_tt (a, b)
+           g : ante.arrow_tt (b, c)
+        -> succ.arrow_eqv_tt (
+             arrow_map (ante.compose (f, g))
+             succ.compose (arrow_map (f), arrow_map (g)))
+
+      arrow_map_respect_identity :
+        -- a :: ante.object_tt
+        -> succ.arrow_eqv_tt (
+             arrow_map (ante.identity (a))
+             succ.identity (object_map (a)))
+    }
+    #+end_src
+
+*** natural_transformation_ttt
+
+    - a natural_transformation is a level up map,
+      which maps objects to arrows, and arrows to squares.
+
+    #+begin_src cicada
+    natural_transformation_ttt : type_tttt
+    natural_transformation_ttt = data {
+      lhs : functor_ttt (ante, succ)
+      rhs : functor_ttt (ante, succ)
+
+      ante succ :: object_ttt
+
+      component :
+        -- a : ante.object_tt
+        -> succ.arrow_tt (lhs.object_map (a), rhs.object_map (a))
+
+      transformation :
+        -- f : ante.arrow_tt (a, b)
+        -> succ.arrow_eqv_tt (
+             succ.compose (component (a), rhs.arrow_map (f))
+             succ.compose (lhs.arrow_map (f), component (b)))
+    }
+    #+end_src
+
+*** natural_isomorphism_ttt
+
+    #+begin_src cicada
+    natural_isomorphism_ttt : type_tttt
+    natural_isomorphism_ttt = data <: [natural_transformation_ttt] {
+      isomorphic_component :
+        -- a : ante.object_tt
+        -> succ.isomorphic_tt (iso = component (a))
+    }
+    #+end_src
+
+*** [todo] category_category
+
+    #+begin_src cicada
+    category_category : category_tttt
+    category_category = category_cccc {
+      object_ttt : category_tttt
+      object_ttt = category_ttt
+
+      arrow_ttt :
+        -- category_ttt, category_ttt
+        -> type_tttt
+      arrow_ttt (a, b) = functor_ttt (a, b)
+
+      arrow_eqv_ttt :
+        -- functor_ttt (a, b)
+           functor_ttt (a, b)
+        -> type_tttt
+      arrow_eqv_ttt (lhs, rhs) = natural_isomorphism_ttt (lhs, rhs)
+
+      identity : -- a :: category_ttt -> functor_ttt (a, a)
+      identity = functor_ccc {
+        ante = a
+        succ = a
+        [todo]
+      }
+
+      compose :
+        -- functor_ttt (a, b)
+           functor_ttt (b, c)
+        -> functor_ttt (a, c)
+      compose =
+        [todo]
+
+
+      identity_neutral_left :
+        -- f : functor_ttt (a, b)
+        -> natural_isomorphism_ttt (f, compose (identity, f))
+      identity_neutral_left =
+        [todo]
+
+      identity_neutral_right :
+        -- f : functor_ttt (a, b)
+        -> natural_isomorphism_ttt (f, compose (f, identity))
+      identity_neutral_right =
+        [todo]
+
+      compose_associative :
+        -- f : functor_ttt (a, b)
+           g : functor_ttt (b, c)
+           h : functor_ttt (c, d)
+        -> natural_isomorphism_ttt (
+             compose (f, compose (g, h))
+             compose (compose (f, g), h))
+      compose_associative =
+        [todo]
+    }
+    #+end_src
