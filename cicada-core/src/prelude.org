@@ -2,53 +2,77 @@
 
 * [note]
 
-*** * [] -- tuple-type
+*** product-type and sum-type
 
-    - literal tuple-type -- * [<type>, ...]
+    |              | literal syntax  | inhabit              |
+    |--------------+-----------------+----------------------|
+    | product-type | * [<type>, ...] | * [<data>, ...]      |
+    | sum-type     | + [<type>, ...] | <data> : <type>, ... |
 
-    - inhabit by literal tuple -- * [<data>, ...]
+*** record-type, union-type and inherit-type
 
-*** + [] -- union-type
+    |              | definition syntax                    |
+    |--------------+--------------------------------------|
+    | data-type    | data { ... }                         |
+    | union-type   | union [<sub-type>, ...] { ... }      |
+    | inherit-type | inherit [<super-type>, ...>] { ... } |
 
-    - literal union-type -- + [<type>, ...]
+***** data-type
 
-    - we do not have literal union-data,
-      the union-type is inhabited by [<data> : <type>] and so on
+      - it bound to a named type-constructor for the data-type
+        and specify a record with named and typed fields
 
-*** data {...} -- named record-type
+      - a data-type is a partly inhabited record
 
-    - a type is a partly inhabited record
+      - a data is a fully inhabited record
 
-    - a data is a fully inhabited record
+      - for example :
+        cons-t (t)
+        cons-c (car, cdr)
 
-    - for example :
-      cons-t (t)
-      cons-c (car, cdr)
-
-    - constructor call syntax :
+***** constructor call syntax
 
       - <name>-c (<data>, ...) -- call-with-order
 
-      - <name>-c (<field> = <data>, ...) -- call-with-field
+      - <name>-c (<field> = <data>, ...) -- call-with-field-name
 
-*** data :> [<sub-type>, ...] {...} -- summing sub-types
+***** union-type
 
-    - if declares same fields,
-      and names a type-constructor for the sum-type.
+      - it bound to a named type-constructor for the union-type
+        and specify a record with named and typed fields
 
-    - type-constructor of each data-type
-      must have the same declared fields and types
+      - sub-type-relation
+        <union-type> :> <sub-type>
 
-    - it can be viewed as disjoin-union,
-      because data-types in the list are disjoin.
+      - type-constructor of each sub-types
+        must have the same fields and types
 
-*** data <: [<super-type>, ...] {...} -- inheriting super-types
+      - each data of its sub-types will inhabit the union-type
 
-    - [c1 <: c2] means c1 inherit c2 's fields,
-      thus c1 is more special then c2,
-      because c1 has more interface functions than c2.
+      - it can be viewed as disjoin-union,
+        because data-types in the list are disjoin.
 
-    - whatever data inhabits c1 also inhabits c2.
+***** inherit-type
+
+      - it bound to a named type-constructor for the union-type
+        and specify a list of fields
+
+      - sub-type-relation
+        <inherit-type> <: <super-type>
+
+      - an inherit-type is a data-type
+        that include its super-types records
+
+      - each data of the inherit-type
+        will also inhabit all its super-types
+
+***** sub-type-relation
+
+      - `c1 <: c2` means c1 inherit c2 's fields,
+        thus c1 is more special then c2,
+        because c1 has more interface functions than c2.
+
+      - whatever data inhabits c1 also inhabits c2.
 
 *** :: -- implicit arguments
 
@@ -61,7 +85,8 @@
 
       - the value must be constructed by the function.
         but normal function call syntax will not return the value.
-        use explicit (with-details (<name> ...) ...) to get all details.
+        use explicit (with-details (<name> ...) ...)
+        to get all details.
 
 *** level of universe
 
@@ -94,20 +119,21 @@
 
 ***** level table
 
-      | 0 | data, object           |
-      |---+------------------------|
-      | 1 | <name>-t, data-type    |
-      |   | union-type, tuple-type |
-      |---+------------------------|
-      | 2 | type-tt, category-tt   |
-      |---+------------------------|
-      | 3 | type-ttt, category-ttt |
+      | 0 | data, object                  |
+      |---+-------------------------------|
+      | 1 | <name>-t, data-type, sum-type |
+      |   | union-type, product-type      |
+      |---+-------------------------------|
+      | 2 | type-tt, category-tt          |
+      |---+-------------------------------|
+      | 3 | type-ttt, category-ttt        |
 
 ***** builtin level polymorphism
 
       - we can not really afford to
         split category-t* to category-t and category-tt,
-        because we have to redefined so many types along category-t.
+        because we have to redefined so many types
+        along the change of category-t.
 
       - instead we assume that when a type is define in one level,
         it is defined for all levels.
@@ -134,7 +160,8 @@
 
 ***** [todo] implicit generic-ness of haskell type-class
 
-      - by maintain a map from type-constructor to class-like types.
+      - by maintain a map
+        from type-constructor to class-like types.
 
       - something like the template of c++.
 
@@ -144,7 +171,7 @@
 
     #+begin_src cicada
     void-t : type-tt
-    void-t = data :> [] { }
+    void-t = union [] { }
     #+end_src
 
 *** absurd
@@ -175,7 +202,7 @@
 
     #+begin_src cicada
     bool-t : type-tt
-    bool-t = data :> [true-t, false-t] { }
+    bool-t = union [true-t, false-t] { }
 
     true-t : type-tt
     true-t = data { }
@@ -226,7 +253,7 @@
 
     #+begin_src cicada
     nat-t : type-tt
-    nat-t = data :> [zero-t, succ-t] { }
+    nat-t = union [zero-t, succ-t] { }
 
     zero-t : type-tt
     zero-t = data { }
@@ -292,7 +319,7 @@
 
     #+begin_src cicada
     nat-even-t : type-tt
-    nat-even-t = data :> [zero-even-t, even-plus-two-even-t] {
+    nat-even-t = union [zero-even-t, even-plus-two-even-t] {
       nat : nat-t
     }
 
@@ -361,7 +388,8 @@
     nat-add-zero-commutative (x) = {
       case x {
         zero-t => eqv-c
-        succ-t => eqv-apply (succ-c, nat-add-zero-commutative (x.prev))
+        succ-t => eqv-apply (
+          succ-c, nat-add-zero-commutative (x.prev))
       }
     }
     #+end_src
@@ -406,7 +434,7 @@
 
     #+begin_src cicada
     list-t : type-tt
-    list-t = data :> [null-t, cons-t] {
+    list-t = union [null-t, cons-t] {
       t : type-tt
     }
 
@@ -454,7 +482,9 @@
     list-map (fun, list) = {
       case list {
         null-t => list
-        cons-t => cons-c (fun (list.car), list-map (fun, list.cdr))
+        cons-t => cons-c (
+          fun (list.car),
+          list-map (fun, list.cdr))
       }
     }
     #+end_src
@@ -479,7 +509,7 @@
 
     #+begin_src cicada
     list-length-t : type-tt
-    list-length-t = data :> [zero-length-t succ-length-t] {
+    list-length-t = union [zero-length-t succ-length-t] {
       list : list-t (t)
       length : nat-t
     }
@@ -517,7 +547,7 @@
 
     #+begin_src cicada
     list-append-t : type-tt
-    list-append-t = data :> [zero-append-t, succ-append-t] {
+    list-append-t = union [zero-append-t, succ-append-t] {
       [ante, succ, result] : list-t (t)
     }
 
@@ -543,7 +573,7 @@
 
     #+begin_src cicada
     vect-t : type-tt
-    vect-t = data :> [null-vect-t cons-vect-tt] {
+    vect-t = union [null-vect-t cons-vect-tt] {
       t : type-tt
       length : nat-t
     }
@@ -627,7 +657,7 @@
 
     #+begin_src cicada
     partial-order-tt : type-ttt
-    partial-order-tt = data <: [preorder-tt] {
+    partial-order-tt = inherit [preorder-tt] {
       element-eqv-t :
         -- element-t
            element-t
@@ -644,7 +674,7 @@
 
     #+begin_src cicada
     eqv-relation-tt : type-ttt
-    eqv-relation-tt = data <: [preorder-tt] {
+    eqv-relation-tt = inherit [preorder-tt] {
       pre-symmetric :
         -- pre-t (a, b)
         -> pre-t (b, a)
@@ -655,7 +685,7 @@
 
     #+begin_src cicada
     total-order-tt : type-ttt
-    total-order-tt = data <: [partial-order-tt] {
+    total-order-tt = inherit [partial-order-tt] {
       pre-connex :
         -- [a, b] : element-t
         -> + [pre-t (a, b), pre-t (b, a)]
@@ -706,7 +736,10 @@
     category-ttt = data {
       object-tt : type-ttt
       arrow-tt : -- object-tt object-tt -> type-ttt
-      arrow-eqv-tt : -- arrow-tt (a, b), arrow-tt (a, b) -> type-ttt
+      arrow-eqv-tt :
+        -- arrow-tt (a, b)
+           arrow-tt (a, b)
+        -> type-ttt
 
       identity : -- a :: object-tt -> arrow-tt (a, a)
 
@@ -746,8 +779,10 @@
         [lhs, rhs] : object-tt
         iso : arrow-tt (lhs, rhs)
         inv : arrow-tt (rhs, lhs)
-        iso-inv-identity : arrow-eqv-tt (compose (iso, inv), identity)
-        inv-iso-identity : arrow-eqv-tt (compose (inv, iso), identity)
+        iso-inv-identity :
+          arrow-eqv-tt (compose (iso, inv), identity)
+        inv-iso-identity :
+          arrow-eqv-tt (compose (inv, iso), identity)
       }
       #+end_src
 
@@ -769,7 +804,7 @@
 
       #+begin_src cicada
       category-ttt.terminal-tt : type-ttt
-      category-ttt.terminal-tt = data <: [terminal-candidate-tt] {
+      category-ttt.terminal-tt = inherit [terminal-candidate-tt] {
         terminal : object-tt
         factorizer :
           -- cand : object-tt
@@ -790,7 +825,7 @@
       }
 
       category-ttt.product-tt : type-ttt
-      category-ttt.product-tt = data <: [product-candidate-tt] {
+      category-ttt.product-tt = inherit [product-candidate-tt] {
         factorizer :
           -- cand : product-candidate-tt (fst, snd)
           -> factor : arrow-tt (cand.product, product)
@@ -822,7 +857,7 @@
       }
 
       category-ttt.sum-tt : type-ttt
-      category-ttt.sum-tt = data <: [sum-candidate-tt] {
+      category-ttt.sum-tt = inherit [sum-candidate-tt] {
         factorizer :
           -- cand : sum-candidate-tt (fst, snd)
           -> factor : arrow-tt (sum, cand.sum)
@@ -968,7 +1003,7 @@
 
     #+begin_src cicada
     product-closed-category-ttt : type-tttt
-    product-closed-category-ttt = data <: [category-ttt] {
+    product-closed-category-ttt = inherit [category-ttt] {
       product :
         -- [a, b] : object-tt
         -> p : object-tt
@@ -1010,7 +1045,7 @@
     }
 
     category-ttt.exponential-tt : type-ttt
-    category-ttt.exponential-tt = data <: [exponential-candidate-tt] {
+    category-ttt.exponential-tt = inherit [exponential-candidate-tt] {
       factorizer :
         -- cand : exponential-candidate-tt (ante, succ)
         -> factor : arrow-tt (cand.exponential, exponential)
@@ -1223,7 +1258,7 @@
 
     #+begin_src cicada
     nat-lteq-t : type-tt
-    nat-lteq-t = data :> [zero-lteq-t, succ-lteq-t] {
+    nat-lteq-t = union [zero-lteq-t, succ-lteq-t] {
       [l, r] : nat-t
     }
 
@@ -1345,7 +1380,7 @@
 
     #+begin_src cicada
     groupoid-tt : type-ttt
-    groupoid-tt = data <: [category-tt] {
+    groupoid-tt = inherit [category-tt] {
       inverse : -- f : arrow-tt (a, b) -> isomorphic-tt (a, b, f)
     }
     #+end_src
@@ -1478,7 +1513,7 @@
 
     #+begin_src cicada
     monad-tt : type-ttt
-    monad-tt = data <: [container-tt] {
+    monad-tt = inherit [container-tt] {
       pure : -- t -> fun-t (t)
       bind : -- fun-t (a), -- a -> fun-t (b) -> fun-t (b)
     }
@@ -1526,7 +1561,7 @@
 
     #+begin_src cicada
     maybe-t : type-tt
-    maybe-t = data :> [none-t just-t] {
+    maybe-t = union [none-t just-t] {
       t : type-tt
     }
 
@@ -1622,7 +1657,7 @@
 
     #+begin_src cicada
     tree-t : type-tt
-    tree-t = data :> [leaf-t, branch-t] {
+    tree-t = union [leaf-t, branch-t] {
       t : type-tt
     }
 
@@ -1706,7 +1741,7 @@
 
     #+begin_src cicada
     gcd-t : type-tt
-    gcd-t = data :> [zero-gcd-t mod-gcd-t] {
+    gcd-t = union [zero-gcd-t mod-gcd-t] {
       [x, y, d] : int-t
     }
 
@@ -1949,7 +1984,7 @@
 
     #+begin_src cicada
     natural-isomorphism-ttt : type-tttt
-    natural-isomorphism-ttt = data <: [natural-transformation-ttt] {
+    natural-isomorphism-ttt = inherit [natural-transformation-ttt] {
       isomorphic-component :
         -- a : ante.object-tt
         -> succ.isomorphic-tt (iso = component (a))
