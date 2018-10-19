@@ -1,5 +1,7 @@
 # Cicada Language
 
+[![Build Status](https://travis-ci.org/cicada-lang/cicada.svg?branch=master)](https://travis-ci.org/cicada-lang/cicada)
+
 ## Welcome
 
 - A language with fulfilling type system to model category theory.
