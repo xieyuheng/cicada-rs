@@ -9,7 +9,7 @@
     | product-type | * [<type> ...] | * [<data> ...]      |
     | sum-type     | + [<type> ...] | <data> : <type> ... |
 
-*** record-type union-type and inherit-type
+*** record-type, union-type and inherit-type
 
     |              | definition syntax                   |
     |--------------+-------------------------------------|
@@ -32,36 +32,38 @@
 
 ***** constructor call syntax
 
-      - <name>-c (<data> ...) -- call-with-order
+      - call-with-order :
+        <name>-c (<data> ...)
 
-      - <name>-c (<field> = <data> ...) -- call-with-field-name
+      - call-with-field-name :
+        <name>-c {<field> = <data> ...}
 
 ***** union-type
 
       - it bound to a named type-constructor for the union-type
-        and specify a record with named and typed fields
+        and specify a list of fields
 
       - sub-type-relation
         <union-type> :> <sub-type>
 
       - type-constructor of each sub-types
-        must have the same fields and types
+        must include these fields and types
 
-      - each data of its sub-types will inhabit the union-type
+      - each data of any of its sub-types
+        will inhabit the union-type
 
       - it can be viewed as disjoin-union,
         because data-types in the list are disjoin.
 
 ***** inherit-type
 
-      - it bound to a named type-constructor for the union-type
+      - it bound to a named type-constructor for the inherit-type
         and specify a list of fields
 
       - sub-type-relation
         <inherit-type> <: <super-type>
 
-      - an inherit-type is a data-type
-        that include its super-types records
+      - an inherit-type includes its super-types records
 
       - each data of the inherit-type
         will also inhabit all its super-types
@@ -77,16 +79,13 @@
 *** :: -- implicit arguments
 
     - in arguments :
-
       - the value of the argument will be inferred.
-        use call-with-field syntax to give explicit value.
+      - use call-with-field-name syntax to give explicit value.
 
     - in return values :
-
       - the value must be constructed by the function.
         but normal function call syntax will not return the value.
-        use explicit (with-details (<name> ...) ...)
-        to get all details.
+      - use explicit `with-details` to get all details.
 
 *** level of universe
 
