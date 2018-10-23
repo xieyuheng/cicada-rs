@@ -1,5 +1,9 @@
 #+title: prelude
 
+* [todo-stack]
+
+  - no with-details -- to simplify expression syntax
+
 * [note]
 
 *** product-type and sum-type
@@ -268,9 +272,9 @@
     #+begin_src cicada
     nat-add : -- nat-t nat-t -> nat-t
     nat-add (x y) = {
-      case x {
-        zero-t => y
-        succ-t => succ-c (nat-add (x.prev y))
+      case [x] {
+        [zero-t] => y
+        [succ-t] => succ-c (nat-add (x.prev y))
       }
     }
     #+end_src
@@ -280,9 +284,9 @@
     #+begin_src cicada
     nat-mul : -- nat-t nat-t -> nat-t
     nat-mul (x y) = {
-      case x {
-        zero-t => zero-c
-        succ-t => nat-add (y nat-mul (x.prev y))
+      case [x] {
+        [zero-t] => zero-c
+        [succ-t] => nat-add (y nat-mul (x.prev y))
       }
     }
     #+end_src
@@ -292,9 +296,9 @@
     #+begin_src cicada
     nat-factorial : -- nat-t -> nat-t
     nat-factorial (x) = {
-      case x {
-        zero-t => succ-c (zero-c)
-        succ-t => nat-mul (x nat-factorial (x.prev))
+      case [x] {
+        [zero-t] => succ-c (zero-c)
+        [succ-t] => nat-mul (x nat-factorial (x.prev))
       }
     }
     #+end_src
@@ -304,11 +308,11 @@
     #+begin_src cicada
     nat-even-p : -- nat-t -> bool-t
     nat-even-p (x) = {
-      case x {
-        zero-t => true-c
-        succ-t => case x.prev {
-          zero-t => false-c
-          succ-t => nat-even-p (x.prev.prev)
+      case [x] {
+        [zero-t] => true-c
+        [succ-t] => case x.prev {
+          [zero-t] => false-c
+          [succ-t] => nat-even-p (x.prev.prev)
         }
       }
     }
@@ -352,9 +356,9 @@
            nat-add (nat-add (x y) z)
            nat-add (x nat-add (y z)))
     nat-add-associative (x y z) = {
-      case x {
-        zero-t => eqv-c
-        succ-t => eqv-apply (
+      case [x] {
+        [zero-t] => eqv-c
+        [succ-t] => eqv-apply (
           succ-c nat-add-associative (x.prev y z))
       }
     }
@@ -368,9 +372,9 @@
       -> eqv-t (
            nat-add (x y)
            nat-add (y x))
-    nat-add-commutative (x y) = case x {
-      zero-t => nat-add-zero-commutative (y)
-      succ-t => eqv-compose (
+    nat-add-commutative (x y) = case [x] {
+      [zero-t] => nat-add-zero-commutative (y)
+      [succ-t] => eqv-compose (
         eqv-apply (succ-c nat-add-commutative (x.prev y))
         nat-add-succ-commutative (y x.prev))
     }
@@ -385,9 +389,9 @@
            nat-add (zero-c x)
            nat-add (x zero-c))
     nat-add-zero-commutative (x) = {
-      case x {
-        zero-t => eqv-c
-        succ-t => eqv-apply (
+      case [x] {
+        [zero-t] => eqv-c
+        [succ-t] => eqv-apply (
           succ-c nat-add-zero-commutative (x.prev))
       }
     }
@@ -402,9 +406,9 @@
            nat-add (succ-c (x) y)
            succ-c (nat-add (x y)))
     nat-add-succ-commutative-1 (x y) = {
-      case x {
-        zero-t => eqv-c
-        succ-t => eqv-apply (
+      case [x] {
+        [zero-t] => eqv-c
+        [succ-t] => eqv-apply (
           succ-c nat-add-succ-commutative-1 (x.prev y))
       }
     }
@@ -419,9 +423,9 @@
            nat-add (y succ-c (x))
            succ-c (nat-add (x y)))
     nat-add-succ-commutative-2 (x y) = {
-      case x {
-        zero-t => eqv-c
-        succ-t => eqv-apply (
+      case [x] {
+        [zero-t] => eqv-c
+        [succ-t] => eqv-apply (
           succ-c nat-add-succ-commutative-2 (x.prev y))
       }
     }
@@ -455,9 +459,9 @@
     #+begin_src cicada
     list-length : -- list-t (t) -> nat-t
     list-length (list) = {
-      case list {
-        null-t => zero-c
-        cons-t => succ-c (list-length (list.cdr))
+      case [list] {
+        [null-t] => zero-c
+        [cons-t] => succ-c (list-length (list.cdr))
       }
     }
     #+end_src
@@ -467,9 +471,9 @@
     #+begin_src cicada
     list-append : -- list-t (t) list-t (t) -> list-t (t)
     list-append (ante succ) = {
-      case ante {
-        null-t => succ
-        cons-t => cons-c (ante.car list-append (ante.cdr succ))
+      case [ante] {
+        [null-t] => succ
+        [cons-t] => cons-c (ante.car list-append (ante.cdr succ))
       }
     }
     #+end_src
@@ -479,9 +483,9 @@
     #+begin_src cicada
     list-map : -- -- a -> b list-t (a) -> list-t (b)
     list-map (fun list) = {
-      case list {
-        null-t => list
-        cons-t => cons-c (
+      case [list] {
+        [null-t] => list
+        [cons-t] => cons-c (
           fun (list.car)
           list-map (fun list.cdr))
       }
@@ -493,13 +497,14 @@
     #+begin_src cicada
     list-remove-first : -- t list-t (t) -> list-t (t)
     list-remove-first (x list) = {
-      case list {
-        null-t => list
-        cons-t =>
-          if eq-p (list.car x)
-            list.cdr
-          else
-            cons-c (list.car list-remove-first (list.cdr x))
+      case [list] {
+        [null-t] => list
+        [cons-t] => case [eq-p (list.car x)] {
+            [true-t] => list.cdr
+            [false-t] => cons-c (
+              list.car
+              list-remove-first (list.cdr x))
+        }
       }
     }
     #+end_src
@@ -602,9 +607,9 @@
          vect-t (t n)
       -> vect-t (t nat-add (m n))
     vect-append (ante succ) = {
-      case ante {
-        null-vect-t => succ
-        cons-vect-t => cons-vect-c (
+      case [ante] {
+        [null-vect-t] => succ
+        [cons-vect-t] => cons-vect-c (
           ante.car vect-append (ante.cdr succ))
       }
     }
@@ -615,9 +620,9 @@
     #+begin_src cicada
     vect-map : -- -- a -> b vect-t (a n) -> vect-t (a n)
     vect-map (fun list) = {
-      case list {
-        null-vect-t => list
-        cons-vect-t => cons-vect-c (
+      case [list] {
+        [null-vect-t] => list
+        [cons-vect-t] => cons-vect-c (
           fun (list.car) vect-map (fun list.cdr))
       }
     }
@@ -1019,16 +1024,17 @@
       -> arrow-tt (product (a c) product (b d))
     product-closed-category-ttt.product-arrow (f g) = {
       with-details product (a c)
-        p <- product-relation
+        p <= product-relation
       with-details product (b d)
-        q <- product-relation
+        q <= product-relation
       q.factorizer (
-        product-candidate-cc (
+        product-candidate-cc {
           fst = b
           snd = d
           product = product (a c)
           fst-projection = compose (p.fst-projection f)
-          snd-projection = compose (p.fst-projection g)))
+          snd-projection = compose (p.fst-projection g)
+        })
     }
     #+end_src
 
@@ -1044,7 +1050,9 @@
     }
 
     category-ttt.exponential-tt : type-ttt
-    category-ttt.exponential-tt = inherit [exponential-candidate-tt] {
+    category-ttt.exponential-tt = inherit [
+      exponential-candidate-tt
+    ] {
       factorizer :
         -- cand : exponential-candidate-tt (ante succ)
         -> factor : arrow-tt (cand.exponential exponential)
@@ -1289,9 +1297,9 @@
     #+begin_src cicada
     nat-lteq-reflexive : -- n : nat-t -> nat-lteq-t (n n)
     nat-lteq-reflexive (n) = {
-      case n {
-        zero-t => zero-lteq-c
-        succ-t => succ-lteq-c (nat-lteq-reflexive (n.prev))
+      case [n] {
+        [zero-t] => zero-lteq-c
+        [succ-t] => succ-lteq-c (nat-lteq-reflexive (n.prev))
       }
     }
     #+end_src
@@ -1304,9 +1312,9 @@
          nat-lteq-t (b c)
       -> nat-lteq-t (a c)
     nat-lteq-transitive (x y) = {
-      case x {
-        zero-lteq-t => zero-lteq-c
-        succ-lteq-t => succ-lteq-c (nat-lteq-transitive (x.prev y.prev))
+      case [x] {
+        [zero-lteq-t] => zero-lteq-c
+        [succ-lteq-t] => succ-lteq-c (nat-lteq-transitive (x.prev y.prev))
       }
     }
     #+end_src
@@ -1346,17 +1354,17 @@
       compose = nat-lteq-transitive
 
       identity-neutral-left (x) = {
-        case x {
-          zero-lteq-t => eqv-c
-          succ-lteq-t => eqv-apply (
+        case [x] {
+          [zero-lteq-t] => eqv-c
+          [succ-lteq-t] => eqv-apply (
             succ-lteq-c identity-neutral-left (x.prev))
         }
       }
 
       identity-neutral-righ (x) = {
-        case x {
-          zero-lteq-t => eqv-c
-          succ-lteq-t => eqv-apply (
+        case [x] {
+          [zero-lteq-t] => eqv-c
+          [succ-lteq-t] => eqv-apply (
             succ-lteq-c identity-neutral-righ (x.prev))
         }
       }
@@ -1474,9 +1482,9 @@
     list-container = container-cc {
       fun-t = list-t
       map (fun list) = {
-        case list {
-          null-t => null-c
-          cons-t => cons-c (fun (list.car) map (fun list.cdr))
+        case [list] {
+          [null-t] => null-c
+          [cons-t] => cons-c (fun (list.car) map (fun list.cdr))
         }
       }
     }
@@ -1536,7 +1544,7 @@
     monad-tt.flatten :
       -- fun-t (fun-t (a))
       -> fun-t (a)
-    monad-tt.flatten (m) = bind (m lambda {})
+    monad-tt.flatten (m) = bind (m lambda [] {})
     #+end_src
 
 *** list-monad
@@ -1546,9 +1554,9 @@
     list-monad = monad-cc {
       pure (x) = cons-c (x null-c)
       bind (list fun) = {
-        case list {
-          null-t => null-c
-          cons-t => list-append (fun (list.car) bind (list.cdr fun))
+        case [list] {
+          [null-t] => null-c
+          [cons-t] => list-append (fun (list.car) bind (list.cdr fun))
         }
       }
     }
@@ -1583,9 +1591,9 @@
     maybe-container = container-cc {
       fun-t = maybe-t
       map (fun maybe) = {
-        case maybe {
-          none-t => none-c
-          just-t => just-c (fun (maybe.value))
+        case [maybe] {
+          [none-t] => none-c
+          [just-t] => just-c (fun (maybe.value))
         }
       }
     }
@@ -1598,9 +1606,9 @@
     maybe-monad = monad-cc {
       pure = just-c
       bind (maybe fun) = {
-        case maybe {
-          none-t => none-c
-          just-t => fun (maybe.value)
+        case [maybe] {
+          [none-t] => none-c
+          [just-t] => fun (maybe.value)
         }
       }
     }
@@ -1680,9 +1688,9 @@
     tree-container = container-cc {
       fun-t = tree-t
       map (fun tree) = {
-        case tree {
-          leaf-t => leaf-c (fun (tree.value))
-          branch-t => branch-c (
+        case [tree] {
+          [leaf-t] => leaf-c (fun (tree.value))
+          [branch-t] => branch-c (
             map (fun tree.left)
             map (fun tree.right))
         }
@@ -1698,15 +1706,16 @@
          tree-t (b)
       -> maybe-t (tree-t (* [a b]))
     tree-zip (x y) = {
-      case [x y]
+      case [x y] {
         [leaf-t leaf-t] =>
           pure (leaf-c (* [x.value y.value]))
         [branch-t branch-t] => do {
-          left <- tree-zip (x.left y.left)
-          right <- tree-zip (x.right y.right)
+          left <= tree-zip (x.left y.left)
+          right <= tree-zip (x.right y.right)
           pure (branch-c (left right))
         }
         [- -] => none-c
+      }
     }
     #+end_src
 
@@ -1717,13 +1726,13 @@
       -- tree-t (t)
       -> state-t (nat-t tree-t (nat-t))
     tree-numbering (tree) = {
-      case tree {
-        leaf-t => lambda [n] {
+      case [tree] {
+        [leaf-t] => lambda [n] {
           * [nat-inc (n) leaf-c (n)]
         }
-        branch-t => do {
-          left <- tree-numbering (tree.left)
-          right <- tree-numbering (tree.right)
+        [branch-t] => do {
+          left <= tree-numbering (tree.left)
+          right <= tree-numbering (tree.right)
           pure (branch-c (left right))
         }
       }
