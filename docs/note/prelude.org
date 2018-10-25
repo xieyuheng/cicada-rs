@@ -10,16 +10,16 @@
 
     |              | literal syntax | inhabit             |
     |--------------+----------------+---------------------|
-    | product-type | * [<type> ...] | * [<data> ...]      |
-    | sum-type     | + [<type> ...] | <data> : <type> ... |
+    | product-type | * (<type> ...) | * (<data> ...)      |
+    | sum-type     | + (<type> ...) | <data> : <type> ... |
 
 *** record-type, union-type and inherit-type
 
     |              | definition syntax                   |
     |--------------+-------------------------------------|
     | data-type    | data { ... }                        |
-    | union-type   | union [<sub-type> ...] { ... }      |
-    | inherit-type | inherit [<super-type> ...>] { ... } |
+    | union-type   | union (<sub-type> ...) { ... }      |
+    | inherit-type | inherit (<super-type> ...>) { ... } |
 
 ***** data-type
 
@@ -102,12 +102,12 @@
 ***** level rule
 
       #+begin_src cicada
-      level (* [<type> ...]) = max [level (<type>) ...]
+      level (list-mul ([<type> ...])) = max ([level (<type>) ...])
 
-      level (+ [<type> ...]) = max [level (<type>) ...]
+      level (list-add ([<type> ...])) = max ([level (<type>) ...])
 
       level (-- <type> ... -> <result-type>) =
-        max [level (<type>) ... level (<result-type>)]
+        max ([level (<type>) ... level (<result-type>)])
       #+end_src
 
 ***** level examples
@@ -115,8 +115,8 @@
       | 0                 | 1       | 2        |
       |-------------------+---------+----------|
       | nat-t             | type-tt | type-ttt |
-      | * [nat-t nat-t]   | type-tt | type-ttt |
-      | + [bool-t nat-t]  | type-tt | type-ttt |
+      | * (nat-t nat-t)   | type-tt | type-ttt |
+      | + (bool-t nat-t)  | type-tt | type-ttt |
       | -- nat-t -> nat-t | type-tt | type-ttt |
       | list-t            | type-tt | type-ttt |
 
@@ -174,7 +174,7 @@
 
     #+begin_src cicada
     void-t : type-tt
-    void-t = union [] { }
+    void-t = union () { }
     #+end_src
 
 *** absurd
@@ -205,7 +205,7 @@
 
     #+begin_src cicada
     bool-t : type-tt
-    bool-t = union [true-t false-t] { }
+    bool-t = union (true-t false-t) { }
 
     true-t : type-tt
     true-t = data { }
@@ -256,7 +256,7 @@
 
     #+begin_src cicada
     nat-t : type-tt
-    nat-t = union [zero-t succ-t] { }
+    nat-t = union (zero-t succ-t) { }
 
     zero-t : type-tt
     zero-t = data { }
@@ -272,9 +272,9 @@
     #+begin_src cicada
     nat-add : -- nat-t nat-t -> nat-t
     nat-add (x y) = {
-      case [x] {
-        [zero-t] => y
-        [succ-t] => succ-c (nat-add (x.prev y))
+      case (x) {
+        zero-t => y
+        succ-t => succ-c (nat-add (x.prev y))
       }
     }
     #+end_src
@@ -284,9 +284,9 @@
     #+begin_src cicada
     nat-mul : -- nat-t nat-t -> nat-t
     nat-mul (x y) = {
-      case [x] {
-        [zero-t] => zero-c
-        [succ-t] => nat-add (y nat-mul (x.prev y))
+      case (x) {
+        zero-t => zero-c
+        succ-t => nat-add (y nat-mul (x.prev y))
       }
     }
     #+end_src
@@ -296,9 +296,9 @@
     #+begin_src cicada
     nat-factorial : -- nat-t -> nat-t
     nat-factorial (x) = {
-      case [x] {
-        [zero-t] => succ-c (zero-c)
-        [succ-t] => nat-mul (x nat-factorial (x.prev))
+      case (x) {
+        zero-t => succ-c (zero-c)
+        succ-t => nat-mul (x nat-factorial (x.prev))
       }
     }
     #+end_src
@@ -308,11 +308,11 @@
     #+begin_src cicada
     nat-even-p : -- nat-t -> bool-t
     nat-even-p (x) = {
-      case [x] {
-        [zero-t] => true-c
-        [succ-t] => case x.prev {
-          [zero-t] => false-c
-          [succ-t] => nat-even-p (x.prev.prev)
+      case (x) {
+        zero-t => true-c
+        succ-t => case (x.prev) {
+          zero-t => false-c
+          succ-t => nat-even-p (x.prev.prev)
         }
       }
     }
@@ -322,7 +322,7 @@
 
     #+begin_src cicada
     nat-even-t : type-tt
-    nat-even-t = union [zero-even-t even-plus-two-even-t] {
+    nat-even-t = union (zero-even-t even-plus-two-even-t) {
       nat : nat-t
     }
 
@@ -356,9 +356,9 @@
            nat-add (nat-add (x y) z)
            nat-add (x nat-add (y z)))
     nat-add-associative (x y z) = {
-      case [x] {
-        [zero-t] => eqv-c
-        [succ-t] => eqv-apply (
+      case (x) {
+        zero-t => eqv-c
+        succ-t => eqv-apply (
           succ-c nat-add-associative (x.prev y z))
       }
     }
@@ -372,9 +372,9 @@
       -> eqv-t (
            nat-add (x y)
            nat-add (y x))
-    nat-add-commutative (x y) = case [x] {
-      [zero-t] => nat-add-zero-commutative (y)
-      [succ-t] => eqv-compose (
+    nat-add-commutative (x y) = case (x) {
+      zero-t => nat-add-zero-commutative (y)
+      succ-t => eqv-compose (
         eqv-apply (succ-c nat-add-commutative (x.prev y))
         nat-add-succ-commutative (y x.prev))
     }
@@ -389,9 +389,9 @@
            nat-add (zero-c x)
            nat-add (x zero-c))
     nat-add-zero-commutative (x) = {
-      case [x] {
-        [zero-t] => eqv-c
-        [succ-t] => eqv-apply (
+      case (x) {
+        zero-t => eqv-c
+        succ-t => eqv-apply (
           succ-c nat-add-zero-commutative (x.prev))
       }
     }
@@ -406,9 +406,9 @@
            nat-add (succ-c (x) y)
            succ-c (nat-add (x y)))
     nat-add-succ-commutative-1 (x y) = {
-      case [x] {
-        [zero-t] => eqv-c
-        [succ-t] => eqv-apply (
+      case (x) {
+        zero-t => eqv-c
+        succ-t => eqv-apply (
           succ-c nat-add-succ-commutative-1 (x.prev y))
       }
     }
@@ -423,9 +423,9 @@
            nat-add (y succ-c (x))
            succ-c (nat-add (x y)))
     nat-add-succ-commutative-2 (x y) = {
-      case [x] {
-        [zero-t] => eqv-c
-        [succ-t] => eqv-apply (
+      case (x) {
+        zero-t => eqv-c
+        succ-t => eqv-apply (
           succ-c nat-add-succ-commutative-2 (x.prev y))
       }
     }
@@ -437,7 +437,7 @@
 
     #+begin_src cicada
     list-t : type-tt
-    list-t = union [null-t cons-t] {
+    list-t = union (null-t cons-t) {
       t : type-tt
     }
 
@@ -459,9 +459,9 @@
     #+begin_src cicada
     list-length : -- list-t (t) -> nat-t
     list-length (list) = {
-      case [list] {
-        [null-t] => zero-c
-        [cons-t] => succ-c (list-length (list.cdr))
+      case (list) {
+        null-t => zero-c
+        cons-t => succ-c (list-length (list.cdr))
       }
     }
     #+end_src
@@ -471,9 +471,9 @@
     #+begin_src cicada
     list-append : -- list-t (t) list-t (t) -> list-t (t)
     list-append (ante succ) = {
-      case [ante] {
-        [null-t] => succ
-        [cons-t] => cons-c (ante.car list-append (ante.cdr succ))
+      case (ante) {
+        null-t => succ
+        cons-t => cons-c (ante.car list-append (ante.cdr succ))
       }
     }
     #+end_src
@@ -483,9 +483,9 @@
     #+begin_src cicada
     list-map : -- -- a -> b list-t (a) -> list-t (b)
     list-map (fun list) = {
-      case [list] {
-        [null-t] => list
-        [cons-t] => cons-c (
+      case (list) {
+        null-t => list
+        cons-t => cons-c (
           fun (list.car)
           list-map (fun list.cdr))
       }
@@ -497,13 +497,13 @@
     #+begin_src cicada
     list-remove-first : -- t list-t (t) -> list-t (t)
     list-remove-first (x list) = {
-      case [list] {
-        [null-t] => list
-        [cons-t] => case [eq-p (list.car x)] {
-            [true-t] => list.cdr
-            [false-t] => cons-c (
-              list.car
-              list-remove-first (list.cdr x))
+      case (list) {
+        null-t => list
+        cons-t => case (eq-p (list.car x)) {
+          true-t => list.cdr
+          false-t => cons-c (
+            list.car
+            list-remove-first (list.cdr x))
         }
       }
     }
@@ -513,7 +513,7 @@
 
     #+begin_src cicada
     list-length-t : type-tt
-    list-length-t = union [zero-length-t succ-length-t] {
+    list-length-t = union (zero-length-t succ-length-t) {
       list : list-t (t)
       length : nat-t
     }
@@ -551,7 +551,7 @@
 
     #+begin_src cicada
     list-append-t : type-tt
-    list-append-t = union [zero-append-t succ-append-t] {
+    list-append-t = union (zero-append-t succ-append-t) {
       [ante succ result] : list-t (t)
     }
 
@@ -577,7 +577,7 @@
 
     #+begin_src cicada
     vect-t : type-tt
-    vect-t = union [null-vect-t cons-vect-tt] {
+    vect-t = union (null-vect-t cons-vect-tt) {
       t : type-tt
       length : nat-t
     }
@@ -607,9 +607,9 @@
          vect-t (t n)
       -> vect-t (t nat-add (m n))
     vect-append (ante succ) = {
-      case [ante] {
-        [null-vect-t] => succ
-        [cons-vect-t] => cons-vect-c (
+      case (ante) {
+        null-vect-t => succ
+        cons-vect-t => cons-vect-c (
           ante.car vect-append (ante.cdr succ))
       }
     }
@@ -620,9 +620,9 @@
     #+begin_src cicada
     vect-map : -- -- a -> b vect-t (a n) -> vect-t (a n)
     vect-map (fun list) = {
-      case [list] {
-        [null-vect-t] => list
-        [cons-vect-t] => cons-vect-c (
+      case (list) {
+        null-vect-t => list
+        cons-vect-t => cons-vect-c (
           fun (list.car) vect-map (fun list.cdr))
       }
     }
@@ -661,7 +661,7 @@
 
     #+begin_src cicada
     partial-order-tt : type-ttt
-    partial-order-tt = inherit [preorder-tt] {
+    partial-order-tt = inherit (preorder-tt) {
       element-eqv-t :
         -- element-t
            element-t
@@ -678,7 +678,7 @@
 
     #+begin_src cicada
     eqv-relation-tt : type-ttt
-    eqv-relation-tt = inherit [preorder-tt] {
+    eqv-relation-tt = inherit (preorder-tt) {
       pre-symmetric :
         -- pre-t (a b)
         -> pre-t (b a)
@@ -689,10 +689,10 @@
 
     #+begin_src cicada
     total-order-tt : type-ttt
-    total-order-tt = inherit [partial-order-tt] {
+    total-order-tt = inherit (partial-order-tt) {
       pre-connex :
         -- [a b] : element-t
-        -> + [pre-t (a b) pre-t (b a)]
+        -> + (pre-t (a b) pre-t (b a))
     }
     #+end_src
 
@@ -709,10 +709,10 @@
       condition-t : -- t -> type-tt
 
       unique-proof :
-        * [condition-t (value)
+        * (condition-t (value)
            -- another : t
               condition-t (another)
-           -> underlying-eqv-t (value another)]
+           -> underlying-eqv-t (value another))
     }
     #+end_src
 
@@ -808,7 +808,7 @@
 
       #+begin_src cicada
       category-ttt.terminal-tt : type-ttt
-      category-ttt.terminal-tt = inherit [terminal-candidate-tt] {
+      category-ttt.terminal-tt = inherit (terminal-candidate-tt) {
         terminal : object-tt
         factorizer :
           -- cand : object-tt
@@ -829,7 +829,7 @@
       }
 
       category-ttt.product-tt : type-ttt
-      category-ttt.product-tt = inherit [product-candidate-tt] {
+      category-ttt.product-tt = inherit (product-candidate-tt) {
         factorizer :
           -- cand : product-candidate-tt (fst snd)
           -> factor : arrow-tt (cand.product product)
@@ -861,7 +861,7 @@
       }
 
       category-ttt.sum-tt : type-ttt
-      category-ttt.sum-tt = inherit [sum-candidate-tt] {
+      category-ttt.sum-tt = inherit (sum-candidate-tt) {
         factorizer :
           -- cand : sum-candidate-tt (fst snd)
           -> factor : arrow-tt (sum cand.sum)
@@ -969,35 +969,35 @@
       #+begin_src cicada
       category-product : -- category-ttt category-ttt -> category-ttt
       category-product (#1 #2) = category-ccc {
-        object-tt = * [#1.object-tt #2.object-tt]
+        object-tt = * (#1.object-tt #2.object-tt)
 
         arrow-tt (a b) =
-          * [#1.arrow-tt (a.1 b.1)
-             #2.arrow-tt (a.2 b.2)]
+          * (#1.arrow-tt (a.1 b.1)
+             #2.arrow-tt (a.2 b.2))
 
         arrow-eqv-tt (lhs rhs) =
-          * [#1.arrow-eqv-tt (lhs.1 rhs.1)
-             #2.arrow-eqv-tt (lhs.2 rhs.2)]
+          * (#1.arrow-eqv-tt (lhs.1 rhs.1)
+             #2.arrow-eqv-tt (lhs.2 rhs.2))
 
         identity =
-          * [#1.identity
-             #2.identity]
+          * (#1.identity
+             #2.identity)
 
         compose (f g) =
-          * [#1.compose (f.1 g.1)
-             #2.compose (f.2 g.2)]
+          * (#1.compose (f.1 g.1)
+             #2.compose (f.2 g.2))
 
         identity-neutral-left (f) =
-          * [#1.identity-neutral-left (f.1)
-             #2.identity-neutral-left (f.2)]
+          * (#1.identity-neutral-left (f.1)
+             #2.identity-neutral-left (f.2))
 
         identity-neutral-right (f) =
-          * [#1.identity-neutral-right (f.1)
-             #2.identity-neutral-right (f.2)]
+          * (#1.identity-neutral-right (f.1)
+             #2.identity-neutral-right (f.2))
 
         compose-associative (f g h) =
-          * [#1.compose-associative (f.1 g.1 h.1)
-             #2.compose-associative (f.2 g.2 h.2)]
+          * (#1.compose-associative (f.1 g.1 h.1)
+             #2.compose-associative (f.2 g.2 h.2))
       }
       #+end_src
 
@@ -1007,7 +1007,7 @@
 
     #+begin_src cicada
     product-closed-category-ttt : type-tttt
-    product-closed-category-ttt = inherit [category-ttt] {
+    product-closed-category-ttt = inherit (category-ttt) {
       product :
         -- [a b] : object-tt
         -> p : object-tt
@@ -1050,9 +1050,9 @@
     }
 
     category-ttt.exponential-tt : type-ttt
-    category-ttt.exponential-tt = inherit [
+    category-ttt.exponential-tt = inherit (
       exponential-candidate-tt
-    ] {
+    ) {
       factorizer :
         -- cand : exponential-candidate-tt (ante succ)
         -> factor : arrow-tt (cand.exponential exponential)
@@ -1265,7 +1265,7 @@
 
     #+begin_src cicada
     nat-lteq-t : type-tt
-    nat-lteq-t = union [zero-lteq-t succ-lteq-t] {
+    nat-lteq-t = union (zero-lteq-t succ-lteq-t) {
       [l r] : nat-t
     }
 
@@ -1297,9 +1297,9 @@
     #+begin_src cicada
     nat-lteq-reflexive : -- n : nat-t -> nat-lteq-t (n n)
     nat-lteq-reflexive (n) = {
-      case [n] {
-        [zero-t] => zero-lteq-c
-        [succ-t] => succ-lteq-c (nat-lteq-reflexive (n.prev))
+      case (n) {
+        zero-t => zero-lteq-c
+        succ-t => succ-lteq-c (nat-lteq-reflexive (n.prev))
       }
     }
     #+end_src
@@ -1312,9 +1312,9 @@
          nat-lteq-t (b c)
       -> nat-lteq-t (a c)
     nat-lteq-transitive (x y) = {
-      case [x] {
-        [zero-lteq-t] => zero-lteq-c
-        [succ-lteq-t] => succ-lteq-c (nat-lteq-transitive (x.prev y.prev))
+      case (x) {
+        zero-lteq-t => zero-lteq-c
+        succ-lteq-t => succ-lteq-c (nat-lteq-transitive (x.prev y.prev))
       }
     }
     #+end_src
@@ -1331,10 +1331,10 @@
     #+begin_src cicada
     nat-archimedean-property :
       -- x : nat-t
-      -> * [y : nat-t
-            nat-lt-t (x y)]
+      -> * (y : nat-t
+            nat-lt-t (x y))
     nat-archimedean-property x =
-      * [succ-c (x) nat-lteq-reflexive (succ-c (x))]
+      * (succ-c (x) nat-lteq-reflexive (succ-c (x)))
     #+end_src
 
 *** nat-order-category
@@ -1354,23 +1354,23 @@
       compose = nat-lteq-transitive
 
       identity-neutral-left (x) = {
-        case [x] {
-          [zero-lteq-t] => eqv-c
-          [succ-lteq-t] => eqv-apply (
+        case (x) {
+          zero-lteq-t => eqv-c
+          succ-lteq-t => eqv-apply (
             succ-lteq-c identity-neutral-left (x.prev))
         }
       }
 
       identity-neutral-righ (x) = {
-        case [x] {
-          [zero-lteq-t] => eqv-c
-          [succ-lteq-t] => eqv-apply (
+        case (x) {
+          zero-lteq-t => eqv-c
+          succ-lteq-t => eqv-apply (
             succ-lteq-c identity-neutral-righ (x.prev))
         }
       }
 
       compose-associative (f g h) = {
-        case [f g h] {
+        case (f g h) {
           [zero-lteq-t - -] => eqv-c
           [succ-lteq-t succ-lteq-t succ-lteq-t] =>
             eqv-apply (
@@ -1387,7 +1387,7 @@
 
     #+begin_src cicada
     groupoid-tt : type-ttt
-    groupoid-tt = inherit [category-tt] {
+    groupoid-tt = inherit (category-tt) {
       inverse : -- f : arrow-tt (a b) -> isomorphic-tt (a b f)
     }
     #+end_src
@@ -1482,9 +1482,9 @@
     list-container = container-cc {
       fun-t = list-t
       map (fun list) = {
-        case [list] {
-          [null-t] => null-c
-          [cons-t] => cons-c (fun (list.car) map (fun list.cdr))
+        case (list) {
+          null-t => null-c
+          cons-t => cons-c (fun (list.car) map (fun list.cdr))
         }
       }
     }
@@ -1520,7 +1520,7 @@
 
     #+begin_src cicada
     monad-tt : type-ttt
-    monad-tt = inherit [container-tt] {
+    monad-tt = inherit (container-tt) {
       pure : -- t -> fun-t (t)
       bind : -- fun-t (a) -- a -> fun-t (b) -> fun-t (b)
     }
@@ -1533,7 +1533,7 @@
       -- -- a -> fun-t (b)
          -- b -> fun-t (c)
       -> -- a -> fun-t (c)
-    monad-tt.compose (f g) = lambda [a] {
+    monad-tt.compose (f g) = lambda (a) {
       bind (f (a) g)
     }
     #+end_src
@@ -1544,7 +1544,7 @@
     monad-tt.flatten :
       -- fun-t (fun-t (a))
       -> fun-t (a)
-    monad-tt.flatten (m) = bind (m lambda [] {})
+    monad-tt.flatten (m) = bind (m lambda () {})
     #+end_src
 
 *** list-monad
@@ -1554,9 +1554,9 @@
     list-monad = monad-cc {
       pure (x) = cons-c (x null-c)
       bind (list fun) = {
-        case [list] {
-          [null-t] => null-c
-          [cons-t] => list-append (fun (list.car) bind (list.cdr fun))
+        case (list) {
+          null-t => null-c
+          cons-t => list-append (fun (list.car) bind (list.cdr fun))
         }
       }
     }
@@ -1568,7 +1568,7 @@
 
     #+begin_src cicada
     maybe-t : type-tt
-    maybe-t = union [none-t just-t] {
+    maybe-t = union (none-t just-t) {
       t : type-tt
     }
 
@@ -1591,9 +1591,9 @@
     maybe-container = container-cc {
       fun-t = maybe-t
       map (fun maybe) = {
-        case [maybe] {
-          [none-t] => none-c
-          [just-t] => just-c (fun (maybe.value))
+        case (maybe) {
+          none-t => none-c
+          just-t => just-c (fun (maybe.value))
         }
       }
     }
@@ -1606,9 +1606,9 @@
     maybe-monad = monad-cc {
       pure = just-c
       bind (maybe fun) = {
-        case [maybe] {
-          [none-t] => none-c
-          [just-t] => fun (maybe.value)
+        case (maybe) {
+          none-t => none-c
+          just-t => fun (maybe.value)
         }
       }
     }
@@ -1620,7 +1620,7 @@
 
     #+begin_src cicada
     state-t : -- type-tt type-tt -> type-tt
-    state-t (s a) = -- s -> * [s a]
+    state-t (s a) = -- s -> * (s a)
     #+end_src
 
 *** state-monad
@@ -1634,25 +1634,25 @@
                state-t (s a)
             -> state-t (s b)
       map : -- -- a -> b
-               -- s -> * [s a]
-            -> -- s -> * [s b]
-      map (f m) = lambda [s] {
-        * [1st (m (s))
-           f (2nd (m (s)))]
+               -- s -> * (s a)
+            -> -- s -> * (s b)
+      map (f m) = lambda (s) {
+        * (1st (m (s))
+           f (2nd (m (s))))
       }
 
       pure : -- t -> state-t (s t)
-      pure : -- t -> -- s -> * [s t]
-      pure (v) = lambda [s] {
-        * [s v]
+      pure : -- t -> -- s -> * (s t)
+      pure (v) = lambda (s) {
+        * (s v)
       }
 
       bind : -- fun-t (a) -- a -> fun-t (b) -> fun-t (b)
       bind : -- state-t (s a) -- a -> state-t (s b) -> state-t (s b)
-      bind : -- -- s -> * [s a]
-                -- a -> -- s -> * [s b]
-             -> -- s -> * [s b]
-      bind (m f) = lambda [s] {
+      bind : -- -- s -> * (s a)
+                -- a -> -- s -> * (s b)
+             -> -- s -> * (s b)
+      bind (m f) = lambda (s) {
         f (2st (m (s))) (1st (m (s)))
       }
     }
@@ -1664,7 +1664,7 @@
 
     #+begin_src cicada
     tree-t : type-tt
-    tree-t = union [leaf-t branch-t] {
+    tree-t = union (leaf-t branch-t) {
       t : type-tt
     }
 
@@ -1688,9 +1688,9 @@
     tree-container = container-cc {
       fun-t = tree-t
       map (fun tree) = {
-        case [tree] {
-          [leaf-t] => leaf-c (fun (tree.value))
-          [branch-t] => branch-c (
+        case (tree) {
+          leaf-t => leaf-c (fun (tree.value))
+          branch-t => branch-c (
             map (fun tree.left)
             map (fun tree.right))
         }
@@ -1704,11 +1704,11 @@
     tree-zip :
       -- tree-t (a)
          tree-t (b)
-      -> maybe-t (tree-t (* [a b]))
+      -> maybe-t (tree-t (* (a b)))
     tree-zip (x y) = {
-      case [x y] {
+      case (x y) {
         [leaf-t leaf-t] =>
-          pure (leaf-c (* [x.value y.value]))
+          pure (leaf-c (* (x.value y.value)))
         [branch-t branch-t] => do {
           left <= tree-zip (x.left y.left)
           right <= tree-zip (x.right y.right)
@@ -1726,11 +1726,11 @@
       -- tree-t (t)
       -> state-t (nat-t tree-t (nat-t))
     tree-numbering (tree) = {
-      case [tree] {
-        [leaf-t] => lambda [n] {
-          * [nat-inc (n) leaf-c (n)]
+      case (tree) {
+        leaf-t => lambda (n) {
+          * (nat-inc (n) leaf-c (n))
         }
-        [branch-t] => do {
+        branch-t => do {
           left <= tree-numbering (tree.left)
           right <= tree-numbering (tree.right)
           pure (branch-c (left right))
@@ -1749,7 +1749,7 @@
 
     #+begin_src cicada
     gcd-t : type-tt
-    gcd-t = union [zero-gcd-t mod-gcd-t] {
+    gcd-t = union (zero-gcd-t mod-gcd-t) {
       [x y d] : int-t
     }
 
@@ -1826,7 +1826,7 @@
       }
 
       compose (f g) = set-morphism-cc {
-        morphism = | [f.morphism g.morphism]
+        morphism = | (f.morphism g.morphism)
       }
 
       identity-neutral-left (-) = set-morphism-eqv-cc {
@@ -1905,10 +1905,10 @@
            preorder-morphism-tt (b c)
         -> preorder-morphism-tt (a c)
       compose (f g) = preorder-morphism-cc {
-        morphism = | [f.morphism g.morphism]
+        morphism = | (f.morphism g.morphism)
         morphism-respect-pre-relation = {
-          | [f.morphism-respect-pre-relation
-             g.morphism-respect-pre-relation]
+          | (f.morphism-respect-pre-relation
+             g.morphism-respect-pre-relation)
         }
       }
 
@@ -1992,7 +1992,7 @@
 
     #+begin_src cicada
     natural-isomorphism-ttt : type-tttt
-    natural-isomorphism-ttt = inherit [natural-transformation-ttt] {
+    natural-isomorphism-ttt = inherit (natural-transformation-ttt) {
       isomorphic-component :
         -- a : ante.object-tt
         -> succ.isomorphic-tt (iso = component (a))
