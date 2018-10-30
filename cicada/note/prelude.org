@@ -175,7 +175,7 @@
 
     #+begin_src cicada
     void-t : type-tt
-    void-t = union () { }
+    void-t = union () {}
     #+end_src
 
 *** absurd
@@ -190,7 +190,7 @@
 
     #+begin_src cicada
     unit-t : type-tt
-    unit-t = data { }
+    unit-t = data {}
     #+end_src
 
 *** unit
@@ -206,13 +206,13 @@
 
     #+begin_src cicada
     bool-t : type-tt
-    bool-t = union (true-t false-t) { }
+    bool-t = union (true-t false-t) {}
 
     true-t : type-tt
-    true-t = data { }
+    true-t = data {}
 
     false-t : type-tt
-    false-t = data { }
+    false-t = data {}
     #+end_src
 
 * eqv
@@ -257,15 +257,35 @@
 
     #+begin_src cicada
     nat-t : type-tt
-    nat-t = union (zero-t succ-t) { }
+    nat-t = union (zero-t succ-t) {}
 
     zero-t : type-tt
-    zero-t = data { }
+    zero-t = data {}
 
     succ-t : type-tt
     succ-t = data {
       prev : nat-t
     }
+    #+end_src
+
+*** example
+
+    #+begin_src cicada
+    zero-t
+    % zero-c
+
+    succ-t
+    % succ-c (zero-c)
+
+    succ-t (zero-c)
+    % succ-c
+
+    nat-t
+    % zero-c
+
+    nat-t
+    % succ-c (zero-c)
+
     #+end_src
 
 *** nat-add
@@ -438,7 +458,10 @@
 
     #+begin_src cicada
     list-t : type-tt
-    list-t = union (null-t cons-t) {
+    list-t = union (
+      null-t
+      cons-t
+    ) {
       t : type-tt
     }
 
@@ -453,6 +476,42 @@
       car : t
       cdr : list-t (t)
     }
+    #+end_src
+
+*** example
+
+    #+begin_src cicada
+    type-tt
+    % null-t (t)
+    % null-c
+
+    type-tt
+    % null-t
+    % null-c (t)
+
+    type-tt
+    % cons-t (t)
+    % cons-c (x y)
+
+    type-tt
+    % cons-t
+    % cons-c (t x y)
+
+    type-tt
+    % cons-t (t x)
+    % cons-c (y)
+
+    type-tt
+    % list-t (t)
+    % null-c
+
+    type-tt
+    % list-t (t)
+    % cons-c (x y)
+
+    type-tt
+    % list-t (nat-t)
+    % cons-c (zero-c null-c)
     #+end_src
 
 *** list-length
@@ -514,7 +573,10 @@
 
     #+begin_src cicada
     list-length-t : type-tt
-    list-length-t = union (zero-length-t succ-length-t) {
+    list-length-t = union (
+      zero-length-t
+      succ-length-t
+    ) {
       list : list-t (t)
       length : nat-t
     }
@@ -522,19 +584,37 @@
     zero-length-t : type-tt
     zero-length-t = data {
       list : list-t (t)
-      length : nat-t
       list = null-c
+      length : nat-t
       length = zero-c
     }
 
     succ-length-t : type-tt
     succ-length-t = data {
       list : list-t (t)
+      list = cons-c (x l)
       length : nat-t
-      prev : list-length-t (list length)
-      list = cons-c (x list)
-      length = succ-c (length)
+      length = succ-c (n)
+      prev : list-length-t (l n)
     }
+    #+end_src
+
+*** example
+
+    #+begin_src cicada
+    list-length-t (null-c zero-c)
+    % zero-length-c ()
+
+    list-length-t (
+      cons-c (null-c null-c)
+      succ-c (zero-c))
+    % succ-length-c (zero-length-c)
+
+    list-length-t (
+      cons-c (null-c cons-c (null-c null-c))
+      succ-c (succ-c (zero-c)))
+    % succ-length-c (succ-length-c (zero-length-c))
+
     #+end_src
 
 *** [note] `append` in prolog

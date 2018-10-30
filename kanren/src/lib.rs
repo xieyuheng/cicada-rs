@@ -23,7 +23,9 @@ use mexp_parser::{
 #[derive (Debug)]
 #[derive (PartialEq, Eq)]
 pub enum Exp {
-    Var { id: Uuid },
-    Str { string: String },
-    Data {  },
+    DVar { id: Uuid, name: String },
+    TVar { id: Uuid, name: String },
+    Type { level: usize },
+    TypeCons {  },
+    DataCons {  },
 }
