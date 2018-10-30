@@ -2,9 +2,7 @@
 
 [![Build Status](https://travis-ci.com/xieyuheng/cicada.svg?branch=master)](https://travis-ci.com/xieyuheng/cicada)
 
-## Welcome
-
-Welcome to my inner universe
+## Welcome Welcome Welcome
 
 ## Contributing
 
