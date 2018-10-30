@@ -5,6 +5,8 @@
 #![allow (unused_macros)]
 
 use std::sync::Arc;
+use std::collections::HashMap;
+use uuid::Uuid;
 use error_report::{
     Span,
     ErrorMsg,
@@ -16,3 +18,12 @@ use mexp_parser::{
     Mexp,
     Arg,
 };
+
+#[derive (Clone)]
+#[derive (Debug)]
+#[derive (PartialEq, Eq)]
+pub enum Exp {
+    Var { id: Uuid },
+    Str { string: String },
+    Data {  },
+}
