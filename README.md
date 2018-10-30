@@ -1,14 +1,10 @@
 # Cicada Language
 
-[![Build Status](https://travis-ci.com/cicada-lang/cicada.svg?branch=master)](https://travis-ci.com/cicada-lang/cicada)
+[![Build Status](https://travis-ci.com/xieyuheng/cicada.svg?branch=master)](https://travis-ci.com/xieyuheng/cicada)
 
 ## Welcome
 
-I am Xie, welcome to my inner universe.
-
-- fulfilling type system -- the symmetry in sub-type relation
-- category theory -- the art of abstraction
-- ancient wisdom of Aristotle -- the intuition of continuum
+Welcome to my inner universe.
 
 ## Contributing
 
