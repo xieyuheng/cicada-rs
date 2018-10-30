@@ -1,6 +1,6 @@
 # Cicada Language
 
-[![Build Status](https://travis-ci.org/cicada-lang/cicada.svg?branch=master)](https://travis-ci.org/cicada-lang/cicada)
+[![Build Status](https://travis-ci.com/cicada-lang/cicada.svg?branch=master)](https://travis-ci.com/cicada-lang/cicada)
 
 ## Welcome
 
