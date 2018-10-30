@@ -4,7 +4,7 @@
 
 ## Welcome
 
-Welcome to my inner universe.
+Welcome to my inner universe
 
 ## Contributing
 
