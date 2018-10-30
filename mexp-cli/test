@@ -1,0 +1,37 @@
+#!/usr/bin/env bash
+
+cd mexp-examples
+
+check-valid-mexp () {
+    echo "<check-valid-mexp>"
+    for FILE in $(ls . | grep "\.mexp")
+    do
+        echo "> $FILE"
+        mexp $FILE
+    done
+    echo "</check-valid-mexp>"
+    echo ""
+}
+
+error-report-on-wrong-mexp () {
+    echo "<error-report-on-wrong-mexp>"
+    for FILE in $(ls wrong | grep "\.mexp")
+    do
+        echo "> $FILE"
+        mexp wrong/$FILE
+    done
+    echo "</error-report-on-wrong-mexp>"
+    echo ""
+}
+
+check-valid-mexp
+error-report-on-wrong-mexp
+
+# main () {
+#     for TASK in $@
+#     do
+#         $TASK
+#     done
+# }
+
+# main $@

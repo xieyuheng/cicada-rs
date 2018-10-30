@@ -1,0 +1,126 @@
+(= const-exp-t  (data num))
+(= zero-p-exp-t (data exp1))
+(= if-exp-t     (data exp1 exp2 exp3))
+(= diff-exp-t   (data exp1 exp2))
+(= var-exp-t    (data var))
+(= let-exp-t    (data var exp1 body))
+
+(= exp-t
+   (union
+     [const-exp-t
+      zero-p-exp-t
+      if-exp-t
+      diff-exp-t
+      var-exp-t
+      let-exp-t]))
+
+(= num-val-t  (data num))
+(= bool-val-t (data bool))
+
+(= val-t
+   (union
+     [num-val-t
+      bool-val-t]))
+
+(= null-env-t (data))
+(= cons-env-t (data var val rest))
+
+(= env-t
+   (union
+     [null-env-t
+      cons-env-t]))
+
+(= (env-apply var env)
+   (case env
+     (null-env-t
+       (orz ("- env-apply fail")
+            ("  can not find var : {}" (repr var))))
+     (cons-env-t
+       (if (eq env.var var)
+         env.val
+         (env-apply var env.rest)))))
+
+(= init-env
+   (cons-env-c 'i (num-val-c 1)
+     (cons-env-c 'v (num-val-c 5)
+       (cons-env-c 'x (num-val-c 10)
+         null-env-c))))
+
+(= (program-eval exp)
+   (eval exp init-env))
+
+(= (eval exp env)
+   (case exp
+     (const-exp-t
+       (num-val-c exp.num))
+     (zero-p-exp-t
+       (bool-val-c
+         (eq (eval exp.exp1 env)
+             (num-val-c 0))))
+     (if-exp-t
+       val = (eval exp.exp1 env)
+       (if val.bool
+         (eval exp.exp2 env)
+         (eval exp.exp3 env)))
+     (diff-exp-t
+       val1 = (eval exp.exp1 env)
+       val2 = (eval exp.exp2 env)
+       (num-val-c
+         (sub val1.num
+              val2.num)))
+     (var-exp-t
+       (env-apply exp.var env))
+     (let-exp-t
+       (= new-env
+          (cons-env-c
+            exp.var (eval exp.exp1 env) env))
+       (eval exp.body new-env))))
+
+(note about syntax
+  123 -- const-exp-t
+  (diff ... ...) -- diff-exp-t
+  (if ... ... ...) -- if-exp-t
+  (zero-p ...) -- zero-p-exp-t
+  :var -- var-exp-t
+  (let :var ... ...) -- let-exp-t)
+
+(= (parse sexp)
+   (case sexp
+     (str-t (str-parse sexp))
+     (cons-t (cons-parse sexp))
+     (_ (orz ("- parse fail")
+             ("  can not parse sexp : {}" (sexp-repr sexp))))))
+
+(= (str-parse str)
+   (cond
+     [(num-str-p str)
+      (const-exp-c (str-to-num str))]
+     [(local-str-p str)
+      (var-exp-c str)]
+     [else
+      (orz ("- str-parse fail")
+           ("  can not parse str : {}" str))]))
+
+(= (local-str-p str)
+   (eq (str-head str) ":"))
+
+(= (cons-parse sexp)
+   head = sexp.car
+   body = sexp.cdr
+   (cond [(eq head 'zero-p)
+          (zero-p-exp-c
+            body.car)]
+         [(eq head 'if)
+          (if-exp-c
+            body.car
+            body.cdr.car
+            body.cdr.cdr.car)]
+         [(eq head 'diff)
+          (diff-exp-c
+            body.car
+            body.cdr.car)]
+         [(eq head 'let)
+          (let-exp-c
+            body.car
+            body.cdr.car
+            body.cdr.cdr.car)]))

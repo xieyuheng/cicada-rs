@@ -1,0 +1,16 @@
+mexp:str  = { quotation ('"') }
+mexp:char = { quotation ('\'') }
+mexp:sym  = { symbol? }
+mexp:dot   = { [ mexp:sym mexp:dot mexp:apply ] '.' mexp:sym }
+mexp:apply = { [ mexp:sym mexp:dot mexp:apply ] arg }
+mexp:array = { '[' list (mexp) ']' }
+mexp:arrow = { "--" list (mexp) "->" mexp }
+mexp:infix       = { mexp op? mexp }
+mexp:infix-apply = { mexp op? arg }
+
+arg:tuple = { '(' list (mexp) ')' }
+arg:block = { '{' list (mexp) '}' }
+
+list : -- Gr -> Gr
+list:null (t) = {}
+list:cons (t) = { t list (t) }
