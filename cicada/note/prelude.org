@@ -628,11 +628,40 @@
     }
     #+end_src
 
+*** cicada without type
+
+    #+begin_src cicada
+    list-append-t = union (
+      zero-append-t
+      succ-append-t
+    ) {
+      ante = ?
+      succ = ?
+      result = ?
+    }
+
+    zero-append-t = data {
+      ante = null-c
+      succ = ?
+      result = succ
+    }
+
+    succ-append-t = data {
+      ante = cons-c (car cdr)
+      succ = ?
+      result = cons-c (car result-cdr)
+      prev : list-append-t (cdr succ result-cdr)
+    }
+    #+end_src
+
 *** list-append-t
 
     #+begin_src cicada
     list-append-t : type-tt
-    list-append-t = union (zero-append-t succ-append-t) {
+    list-append-t = union (
+      zero-append-t
+      succ-append-t
+    ) {
       [ante succ result] : list-t (t)
     }
 

@@ -29,33 +29,33 @@ impl Term {
 #[derive (Clone)]
 #[derive (Debug)]
 #[derive (PartialEq)]
-pub struct Substitution {
+pub struct World {
     map: HashMap <Uuid, Term>,
 }
 
-impl Substitution {
+impl World {
     fn new () -> Self {
-        Substitution {
+        World {
             map: HashMap::new (),
         }
     }
 }
 
-impl Substitution {
-    fn extend (&self, var: &Uuid, term: Term) -> Substitution {
+impl World {
+    fn extend (&self, var: &Uuid, term: Term) -> World {
         let mut map = self.map.clone ();
         map.insert (var.clone (), term);
-        Substitution { map }
+        World { map }
     }
 }
 
-impl Substitution {
+impl World {
     fn find (&self, var: &Uuid) -> Option <&Term> {
         self.map.get (var)
     }
 }
 
-impl Substitution {
+impl World {
     fn walk (&self, term: &Term) -> Term {
         match term {
             Term::Var (var) => {
@@ -70,12 +70,12 @@ impl Substitution {
     }
 }
 
-impl Substitution {
+impl World {
     fn unify (
         &self,
         u: &Term,
         v: &Term,
-    ) -> Option <Substitution> {
+    ) -> Option <World> {
         let u = self.walk (u);
         let v = self.walk (v);
         match (u, v) {
@@ -92,11 +92,11 @@ impl Substitution {
                 if us.len () != vs.len () {
                     return None;
                 }
-                let mut subst = self.clone ();
+                let mut world = self.clone ();
                 for (u, v) in us.iter () .zip (vs.iter ()) {
-                    subst = subst.unify (u, v)?;
+                    world = world.unify (u, v)?;
                 }
-                Some (subst)
+                Some (world)
             }
             (u, v) => {
                 if u == v {
@@ -112,25 +112,10 @@ impl Substitution {
 #[derive (Clone)]
 #[derive (Debug)]
 #[derive (PartialEq)]
-pub struct State {
-    subst: Substitution,
-}
-
-impl State {
-    fn new () -> Self {
-        State {
-            subst: Substitution::new (),
-        }
-    }
-}
-
-#[derive (Clone)]
-#[derive (Debug)]
-#[derive (PartialEq)]
 pub enum Stream {
     Null,
     More {
-        state: State,
+        world: World,
         next: Box <Stream>,
     },
 }
@@ -142,10 +127,10 @@ impl Stream {
 }
 
 impl Stream {
-    fn unit (state: State) -> Stream {
+    fn unit (world: World) -> Stream {
         let next = Stream::mzero ();
         Stream::More {
-            state,
+            world,
             next: Box::new (next),
         }
     }
@@ -154,13 +139,10 @@ impl Stream {
 fn eqo (
     u: Term,
     v: Term,
-) -> impl Fn (State) -> Stream {
-    move |state| {
-        if let Some (subst) = state.subst.unify (&u, &v) {
-            let new_state = State {
-                subst,
-            };
-            Stream::unit (new_state)
+) -> impl Fn (World) -> Stream {
+    move |init_world| {
+        if let Some (world) = init_world.unify (&u, &v) {
+            Stream::unit (world)
         } else {
             Stream::mzero ()
         }
@@ -168,32 +150,32 @@ fn eqo (
 }
 
 fn disj (
-    g1: fn (State) -> Stream,
-    g2: fn (State) -> Stream,
-) -> impl Fn (State) -> Stream {
-    move |state| {
-        mplus (g1 (state.clone ()), g2 (state))
+    g1: fn (World) -> Stream,
+    g2: fn (World) -> Stream,
+) -> impl Fn (World) -> Stream {
+    move |world| {
+        mplus (g1 (world.clone ()), g2 (world))
     }
 }
 
 fn conj (
-    g1: fn (State) -> Stream,
-    g2: fn (State) -> Stream,
-) -> impl Fn (State) -> Stream {
-    move |state| {
-        let s1 = g1 (state);
+    g1: fn (World) -> Stream,
+    g2: fn (World) -> Stream,
+) -> impl Fn (World) -> Stream {
+    move |world| {
+        let s1 = g1 (world);
         bind (s1, g2)
     }
 }
 
 fn mplus (s1: Stream, s2: Stream) -> Stream {
     if let Stream::More {
-        state,
+        world,
         next,
     } = s1 {
         let next = mplus (s2, *next);
         Stream::More {
-            state,
+            world,
             next: Box::new (next),
         }
     } else {
@@ -203,13 +185,13 @@ fn mplus (s1: Stream, s2: Stream) -> Stream {
 
 fn bind (
     s: Stream,
-    g: fn (State) -> Stream,
+    g: fn (World) -> Stream,
 ) -> Stream {
     if let Stream::More {
-        state,
+        world,
         next,
     } = s {
-        mplus (g (state), bind (*next, g))
+        mplus (g (world), bind (*next, g))
     } else {
         Stream::mzero ()
     }
@@ -217,14 +199,14 @@ fn bind (
 
 #[test]
 fn test_unify () {
-    let subst = Substitution::new ();
+    let world = World::new ();
     let v = Term::var ();
     let u = Term::var ();
-    subst.unify (&v, &u) .unwrap ();
-    subst.unify (&u, &u) .unwrap ();
-    subst.unify (&v, &v) .unwrap ();
+    world.unify (&v, &u) .unwrap ();
+    world.unify (&u, &u) .unwrap ();
+    world.unify (&v, &v) .unwrap ();
     let bye = Term::str ("bye");
-    let world = Term::str ("world");
+    let love = Term::str ("love");
     let vec1 = Term::Vec (vec! [
         v.clone (),
         bye.clone (),
@@ -233,24 +215,24 @@ fn test_unify () {
     let vec2 = Term::Vec (vec! [
         u.clone (),
         bye.clone (),
-        world.clone (),
+        love.clone (),
     ]);
-    let subst = subst.unify (&vec1, &vec2) .unwrap ();
-    assert_eq! (2, subst.map.len ());
+    let world = world.unify (&vec1, &vec2) .unwrap ();
+    assert_eq! (2, world.map.len ());
 }
 
 #[test]
 fn test_goal () {
     let x = Term::var ();
-    let y = Term::var ();
     let hi = Term::str ("hi");
-    let bye = Term::str ("bye");
-    let world = Term::str ("world");
     let a = eqo (x.clone (), hi.clone ());
+    // let y = Term::var ();
+    // let bye = Term::str ("bye");
+    // let love = Term::str ("love");
     // let b1 = eqo (y.clone (), bye.clone ());
-    // let b2 = eqo (y.clone (), world.clone ());
+    // let b2 = eqo (y.clone (), love.clone ());
     //// closure in rust is hopeless
     // let b = disj (b1, b2);
     // let g = conj (a, b);
-    println! ("{:?}", a (State::new ()));
+    println! ("{:?}", a (World::new ()));
 }
