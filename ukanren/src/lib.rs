@@ -111,10 +111,11 @@ impl Subst {
 }
 
 #[derive (Clone)]
-#[derive (Debug)]
-#[derive (PartialEq)]
 pub enum Stream {
     Null,
+    Lazy {
+        fun: Arc <Fn () -> Stream>,
+    },
     More {
         subst: Subst,
         next: Box <Stream>,
@@ -170,17 +171,26 @@ fn conj (
 }
 
 fn mplus (s1: Stream, s2: Stream) -> Stream {
-    if let Stream::More {
-        subst,
-        next,
-    } = s1 {
-        let next = mplus (s2, *next);
+    match s1 {
         Stream::More {
             subst,
-            next: Box::new (next),
+            next,
+        } => {
+            let next = mplus (s2, *next);
+            Stream::More {
+                subst,
+                next: Box::new (next),
+            }
         }
-    } else {
-        s2
+        Stream::Lazy { fun } => {
+            Stream::Lazy {
+                fun: Arc::new (
+                    move || mplus (fun (), s2.clone ())),
+            }
+        }
+        Stream::Null => {
+            s2
+        }
     }
 }
 
@@ -188,13 +198,22 @@ fn bind (
     s: Stream,
     g: Arc <Fn (Subst) -> Stream>,
 ) -> Stream {
-    if let Stream::More {
-        subst,
-        next,
-    } = s {
-        mplus (g (subst), bind (*next, g))
-    } else {
-        Stream::mzero ()
+    match s {
+        Stream::More {
+            subst,
+            next,
+        } => {
+            mplus (g (subst), bind (*next, g))
+        }
+        Stream::Lazy { fun } => {
+            Stream::Lazy {
+                fun: Arc::new (
+                    move || bind (fun (), g.clone ()))
+            }
+        }
+        Stream::Null => {
+            Stream::mzero ()
+        }
     }
 }
 
@@ -222,15 +241,55 @@ fn test_unify () {
     assert_eq! (2, subst.map.len ());
 }
 
+fn hi (subst: Subst) -> Stream {
+    eqo (Term::var (),
+         Term::str ("hi"))
+        (subst)
+}
+
+macro_rules! rec_apply {
+    ( $fun:ident, $( $x:ident ),* $(,)* ) => {{
+        Arc::new (move |subst| {
+            $( let $x = $x.clone (); )*
+            Stream::Lazy {
+                fun: Arc::new (move || {
+                    $( let $x = $x.clone (); )*
+                    fives ($( $x ),*) (subst.clone ())
+                })
+            }
+        })
+    }};
+}
+
+fn fives (x: Term) -> Arc <Fn (Subst) -> Stream> {
+    disj (eqo (x.clone (), Term::str ("5")),
+          rec_apply! (fives, x))
+}
+
+// fn fives (x: Term) -> Arc <Fn (Subst) -> Stream> {
+//     disj (eqo (x.clone (), Term::str ("5")),
+//           Arc::new (move |subst| {
+//               let x = x.clone ();
+//               Stream::Lazy {
+//                   fun: Arc::new (move || {
+//                       let x = x.clone ();
+//                       fives (x) (subst.clone ())
+//                   }
+//                   )
+//               }
+//           }))
+// }
+
 #[test]
 fn test_goal () {
-    let x = Term::var ();
     let y = Term::var ();
-    let hi = Term::str ("hi");
-    let bye = Term::str ("bye");
-    let love = Term::str ("love");
-    let g = conj (eqo (x.clone (), hi.clone ()),
-                  disj (eqo (y.clone (), bye.clone ()),
-                        eqo (y.clone (), love.clone ())));
-    println! ("{:?}", g (Subst::new ()));
+    let z = Term::var ();
+    let g = conj (
+        Arc::new (hi),
+        disj (
+            eqo (y.clone (), Term::str ("bye")),
+            eqo (y.clone (), Term::str ("love"))));
+    let h = fives (z);
+    g (Subst::new ());
+    h (Subst::new ());
 }
