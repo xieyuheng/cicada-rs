@@ -15,6 +15,9 @@
       - sharing data
       - and do side effects on data
 
+    - x -
+      ok lets just do WAM
+
 * prolog
 
 *** feature
@@ -25,6 +28,7 @@
     #![allow (unused_parens)]
     #![allow (dead_code)]
     #![allow (unused_macros)]
+    #![allow (non_camel_case_types)]
     #+end_src
 
 *** use
@@ -33,6 +37,19 @@
     use std::sync::Arc;
     use std::collections::HashMap;
     use uuid::Uuid;
+    #+end_src
+
+* Heap
+
+*** Heap
+
+    #+begin_src rust
+    #[derive (Clone)]
+    #[derive (Debug)]
+    #[derive (PartialEq)]
+    pub struct Heap {
+        memory: Vec <Term>,
+    }
     #+end_src
 
 * Term
@@ -44,32 +61,31 @@
     #[derive (Debug)]
     #[derive (PartialEq)]
     pub enum Term {
-       Relation (RelationTerm),
-       Var      (VarTerm),
+        Struct {
+            addr: usize,
+        },
+        Funtor {
+            name: String,
+            arity: usize,
+        },
+        Ref {
+            addr: usize,
+        },
     }
     #+end_src
 
-*** RelationTerm
+* Ins
+
+*** Ins
 
     #+begin_src rust
     #[derive (Clone)]
     #[derive (Debug)]
     #[derive (PartialEq)]
-    pub struct RelationTerm {
-        name: String,
-        arity: usize,
-        arg_vec: Vec <Term>,
-    }
-    #+end_src
-
-*** VarTerm
-
-    #+begin_src rust
-    #[derive (Clone)]
-    #[derive (Debug)]
-    #[derive (PartialEq)]
-    pub struct VarTerm {
-        bind: Option <Arc <Term>>,
+    pub enum Ins {
+        PUT_STRUCTURE {},//f=n Xi
+        SET_VARIABLE {},//Xi
+        SET_VALUE {},//Xi
     }
     #+end_src
 
