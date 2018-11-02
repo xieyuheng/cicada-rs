@@ -34,6 +34,7 @@ pub enum Mexp <'a> {
     Arrow { span: Span,
             ante: Vec <Mexp <'a>>,
             ret: Arc <Mexp <'a>> },
+    /// infix are all left-associative
     Infix {
         span: Span,
         op: &'a str,
@@ -529,7 +530,8 @@ impl <'a> SyntaxTable {
 impl Default for SyntaxTable {
     fn default () -> Self {
         SyntaxTable::new ()
-            .op ("=") .op (":")
+            .op ("=")
+            .op (":") .op ("::")
             .op ("=>") .op ("<=")
     }
 }

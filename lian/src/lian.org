@@ -1,6 +1,20 @@
 #+property: tangle lib.rs
 #+title: lian
 
+* [note]
+
+*** native heap
+
+    - x -
+      can we use native heap, instead of using a array as heap ?
+      because ad hoc heap is not safe and need a GC
+
+    - k -
+      maybe not
+      because the VM need to both
+      - sharing data
+      - and do side effects on data
+
 * prolog
 
 *** feature
@@ -19,4 +33,50 @@
     use std::sync::Arc;
     use std::collections::HashMap;
     use uuid::Uuid;
+    #+end_src
+
+* Term
+
+*** Term
+
+    #+begin_src rust
+    #[derive (Clone)]
+    #[derive (Debug)]
+    #[derive (PartialEq)]
+    pub enum Term {
+       Relation (RelationTerm),
+       Var      (VarTerm),
+    }
+    #+end_src
+
+*** RelationTerm
+
+    #+begin_src rust
+    #[derive (Clone)]
+    #[derive (Debug)]
+    #[derive (PartialEq)]
+    pub struct RelationTerm {
+        name: String,
+        arity: usize,
+        arg_vec: Vec <Term>,
+    }
+    #+end_src
+
+*** VarTerm
+
+    #+begin_src rust
+    #[derive (Clone)]
+    #[derive (Debug)]
+    #[derive (PartialEq)]
+    pub struct VarTerm {
+        bind: Option <Arc <Term>>,
+    }
+    #+end_src
+
+* Query
+
+*** Query
+
+    #+begin_src rust
+
     #+end_src
