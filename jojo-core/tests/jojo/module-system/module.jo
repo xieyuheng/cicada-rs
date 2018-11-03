@@ -1,0 +1,37 @@
+(= super-z 100)
+
+(= a (module
+       (= x 1)
+       (= y 2)
+       (= (identity x) x)
+       (assert (eq super-z 100))
+       (= next-z (inc super-z))
+       (= a (module
+              (assert (eq super-z 100))
+              (assert (eq next-z (inc 100)))
+              (= little-z (inc next-z))))))
+
+(= b (module
+       (= x 1)
+       (= y 2)
+       (= (identity x) x)
+       (assert (eq super-z 100))
+       (= next-z (inc super-z))
+       (= b (module
+              (assert (eq super-z 100))
+              (assert (eq next-z (inc 100)))
+              (= little-z (inc next-z))))))
+
+(assert (not (eq a b)))
+(assert (not (eq a.a b.b)))
+
+(assert (eq a.x b.x))
+(assert (eq a.y b.y))
+(assert (not (eq a.identity b.identity)))
+(assert (eq (a.identity 1) (b.identity 1)))
+
+(assert (eq a.next-z (inc super-z)))
+(assert (eq a.a.little-z (inc (inc super-z))))
+
+(assert (eq b.next-z (inc super-z)))
+(assert (eq b.b.little-z (inc (inc super-z))))

@@ -1,0 +1,243 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+"http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en">
+<head>
+<!-- 2018-09-21 Fri 21:29 -->
+<meta http-equiv="Content-Type" content="text/html;charset=utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>1-1 The Elements of Pprogramming</title>
+<meta name="generator" content="Org-mode" />
+<link rel="stylesheet" href="css/org-page.css"/>
+<script type="text/javascript">
+/*
+@licstart  The following is the entire license notice for the
+JavaScript code in this tag.
+
+Copyright (C) 2012-2013 Free Software Foundation, Inc.
+
+The JavaScript code in this tag is free software: you can
+redistribute it and/or modify it under the terms of the GNU
+General Public License (GNU GPL) as published by the Free Software
+Foundation, either version 3 of the License, or (at your option)
+any later version.  The code is distributed WITHOUT ANY WARRANTY;
+without even the implied warranty of MERCHANTABILITY or FITNESS
+FOR A PARTICULAR PURPOSE.  See the GNU GPL for more details.
+
+As additional permission under GNU GPL version 3 section 7, you
+may distribute non-source (e.g., minimized or compacted) forms of
+that code without the copy of the GNU GPL normally required by
+section 4, provided you include this license notice and a URL
+through which recipients can access the Corresponding Source.
+
+
+@licend  The above is the entire license notice
+for the JavaScript code in this tag.
+*/
+<!--/*--><![CDATA[/*><!--*/
+ function CodeHighlightOn(elem, id)
+ {
+   var target = document.getElementById(id);
+   if(null != target) {
+     elem.cacheClassElem = elem.className;
+     elem.cacheClassTarget = target.className;
+     target.className = "code-highlighted";
+     elem.className   = "code-highlighted";
+   }
+ }
+ function CodeHighlightOff(elem, id)
+ {
+   var target = document.getElementById(id);
+   if(elem.cacheClassElem)
+     elem.className = elem.cacheClassElem;
+   if(elem.cacheClassTarget)
+     target.className = elem.cacheClassTarget;
+ }
+/*]]>*///-->
+</script>
+</head>
+<body>
+<div id="content">
+<h1 class="title">1-1 The Elements of Pprogramming</h1>
+<div id="table-of-contents">
+<h2>overview</h2>
+<div id="text-table-of-contents">
+<ul>
+<li><a href="#orga69728d">1-1-1 Expressions</a></li>
+<li><a href="#org77d3129">1-1-2 Naming and the Environment</a></li>
+<li><a href="#org3cde31d">1-1-3 Evaluating Combinations</a></li>
+<li><a href="#orgfc8856c">1-1-4 Compound Procedures</a></li>
+<li><a href="#orga02818">1-1-5 The Substitution Model for Procedure Application</a></li>
+<li><a href="#org4e688d6">1-1-6 Conditional Expressions and Predicates</a></li>
+<li><a href="#orgd5489be">1-1-7 Example: Square Roots by Newton's Method</a></li>
+<li><a href="#org9e963b6">1-1-8 Procedures as Black-Box Abstractions</a></li>
+</ul>
+</div>
+</div>
+
+<div id="outline-container-orga69728d" class="outline-2">
+<h2 id="orga69728d">1-1-1 Expressions</h2>
+<div class="outline-text-2" id="text-orga69728d">
+<div class="org-src-container">
+
+<pre class="src src-jojo">(add 137 349)
+(sub 1000 334)
+(mul 5 99)
+(div 10 5)
+(add 2.7 10)
+(add (mul 3 5) (sub 10 6))
+</pre>
+</div>
+</div>
+</div>
+
+<div id="outline-container-org77d3129" class="outline-2">
+<h2 id="org77d3129">1-1-2 Naming and the Environment</h2>
+<div class="outline-text-2" id="text-org77d3129">
+<div class="org-src-container">
+
+<pre class="src src-jojo">size <span style="color: #DFAF8F;">=</span> 2
+size
+(mul 5 size)
+
+pi <span style="color: #DFAF8F;">=</span> 3.14159
+radius <span style="color: #DFAF8F;">=</span> 10
+(mul pi (mul radius radius))
+
+circumference <span style="color: #DFAF8F;">=</span> (mul 2 (mul pi radius))
+circumference
+</pre>
+</div>
+</div>
+</div>
+
+<div id="outline-container-org3cde31d" class="outline-2">
+<h2 id="org3cde31d">1-1-3 Evaluating Combinations</h2>
+<div class="outline-text-2" id="text-org3cde31d">
+<div class="org-src-container">
+
+<pre class="src src-jojo">(mul (add 2 (mul 4 6)) (add 3 (add 5 7)))
+</pre>
+</div>
+</div>
+</div>
+
+<div id="outline-container-orgfc8856c" class="outline-2">
+<h2 id="orgfc8856c">1-1-4 Compound Procedures</h2>
+<div class="outline-text-2" id="text-orgfc8856c">
+<div class="org-src-container">
+
+<pre class="src src-jojo">(square x) <span style="color: #DFAF8F;">=</span> (mul x x)
+(square 21)
+(square (add 2 5))
+(square (square 3))
+
+(sum-of-squares x y) <span style="color: #DFAF8F;">=</span> (add (square x) (square y))
+(sum-of-squares 3 4)
+</pre>
+</div>
+</div>
+</div>
+
+<div id="outline-container-orga02818" class="outline-2">
+<h2 id="orga02818">1-1-5 The Substitution Model for Procedure Application</h2>
+<div class="outline-text-2" id="text-orga02818">
+<div class="org-src-container">
+
+<pre class="src src-jojo">(sum-of-squares 6 10)
+(add (square 6) (square 10))
+(add 36 100)
+136
+</pre>
+</div>
+</div>
+</div>
+
+<div id="outline-container-org4e688d6" class="outline-2">
+<h2 id="org4e688d6">1-1-6 Conditional Expressions and Predicates</h2>
+<div class="outline-text-2" id="text-org4e688d6">
+<div class="org-src-container">
+
+<pre class="src src-jojo">(<span style="color: #DFAF8F;">=</span> (abs x)
+   (<span style="color: #F0DFAF; font-weight: bold;">cond</span> [(gt x 0) x]
+         [(eq x 0) 0]
+         [(lt x 0) (neg x)]))
+
+(<span style="color: #DFAF8F;">=</span> (abs x)
+   (<span style="color: #F0DFAF; font-weight: bold;">cond</span> [(lt x 0) (neg x)]
+         [<span style="color: #7CB8BB;">else</span> x]))
+
+(abs x) <span style="color: #DFAF8F;">=</span> (<span style="color: #F0DFAF; font-weight: bold;">if</span> (lt x 0) (neg x) x)
+
+(gteq x y) <span style="color: #DFAF8F;">=</span> (or (gt x y) (eq x y))
+
+(gteq x y) <span style="color: #DFAF8F;">=</span> (not (lt x y))
+
+(<span style="color: #F0DFAF; font-weight: bold;">note</span> Exercise 1.4
+  (a-plus-abs-b a b) <span style="color: #DFAF8F;">=</span> ((<span style="color: #F0DFAF; font-weight: bold;">if</span> (gt b 0) add sub) a b))
+
+(<span style="color: #F0DFAF; font-weight: bold;">note</span> Exercise 1.5
+  (p) <span style="color: #DFAF8F;">=</span> (p)
+  (t x y) <span style="color: #DFAF8F;">=</span> (<span style="color: #F0DFAF; font-weight: bold;">if</span> (eq x 0) 0 y)
+  (t 0 (p)))
+</pre>
+</div>
+</div>
+</div>
+
+<div id="outline-container-orgd5489be" class="outline-2">
+<h2 id="orgd5489be">1-1-7 Example: Square Roots by Newton's Method</h2>
+<div class="outline-text-2" id="text-orgd5489be">
+<div class="org-src-container">
+
+<pre class="src src-jojo">(average x y) <span style="color: #DFAF8F;">=</span> (div (add x y) 2)
+
+(<span style="color: #DFAF8F;">=</span> (sqrt-iter guess x)
+   (<span style="color: #F0DFAF; font-weight: bold;">if</span> (good-enough-p guess x)
+     guess
+     (sqrt-iter (improve guess x) x)))
+
+(improve guess x) <span style="color: #DFAF8F;">=</span> (average guess (div x guess))
+(good-enough-p guess x) <span style="color: #DFAF8F;">=</span> (lt (abs (sub (square guess) x)) 0.001)
+(sqrt x) <span style="color: #DFAF8F;">=</span> (sqrt-iter 1 x)
+
+(sqrt 9)
+(sqrt (add 100 37))
+(square (sqrt 1000))
+</pre>
+</div>
+</div>
+</div>
+
+<div id="outline-container-org9e963b6" class="outline-2">
+<h2 id="org9e963b6">1-1-8 Procedures as Black-Box Abstractions</h2>
+<div class="outline-text-2" id="text-org9e963b6">
+<div class="org-src-container">
+
+<pre class="src src-jojo">(square x) <span style="color: #DFAF8F;">=</span> (num-exp (double (num-ln x)))
+(double x) <span style="color: #DFAF8F;">=</span> (add x x)
+(square (sqrt 1000))
+
+(<span style="color: #DFAF8F;">=</span> (sqrt-iter guess x)
+   (<span style="color: #DFAF8F;">=</span> (good-enough-p guess)
+      (lt (abs (sub (square guess) x)) 0.001))
+   (<span style="color: #DFAF8F;">=</span> (improve guess)
+      (average guess (div x guess)))
+   (<span style="color: #F0DFAF; font-weight: bold;">if</span> (good-enough-p guess)
+     guess
+     (sqrt-iter (improve guess) x)))
+
+(sqrt 9)
+(sqrt (add 100 37))
+(square (sqrt 1000))
+</pre>
+</div>
+</div>
+</div>
+</div>
+<div id="postamble" class="status">
+<p class="date">Created: 2018-09-21 Fri 21:29</p>
+<p class="validation"><a href="http://validator.w3.org/check?uri=referer">Validate</a></p>
+</div>
+</body>
+</html>

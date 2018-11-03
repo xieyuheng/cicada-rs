@@ -1,0 +1,21 @@
+;; (= f (letrec [(x 1)
+;;               (y 1)]
+;;        (add x y)))
+
+;; (assert (eq f 2))
+
+(= (num-list-sum list)
+   (letrec
+     [(iter (lambda [list sum]
+              (println list)
+              (println sum)
+              (println iter)
+              (case list
+                (null-t sum)
+                (cons-t (iter (cdr list)
+                              (add (car list) sum))))))]
+     (iter list 0)))
+
+(println (num-list-sum '(1 2 3 4)))
+
+;; (assert (eq (num-list-sum '(1 2 3 4)) 10))

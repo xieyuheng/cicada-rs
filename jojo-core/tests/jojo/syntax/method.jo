@@ -1,0 +1,24 @@
+(= zero-t (data))
+(= succ-t (data prev))
+
+(= zero (zero-c))
+(= one (succ-c zero))
+(= two (succ-c one))
+(= three (succ-c two))
+(= four (succ-c three))
+
+;; method
+
+(= (succ-t.inc self)
+   (succ-c self))
+
+(assert (eq (one.inc) two))
+(assert (eq (two.inc) three))
+
+;; associated function
+
+(= (null-t.cons x)
+   (cons x null))
+
+(assert (eq (null-t.cons null)
+            (cons null null)))

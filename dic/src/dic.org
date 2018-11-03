@@ -1,0 +1,605 @@
+#+property: tangle lib.rs
+#+title: dic
+
+* feature
+
+  #+begin_src rust
+  #![allow (unused_parens)]
+  #+end_src
+
+* use
+
+  #+begin_src rust
+  use std::collections::HashMap;
+  use std::slice;
+  use std::vec;
+  #+end_src
+
+* Entry
+
+  #+begin_src rust
+  #[derive (Clone)]
+  #[derive (Debug)]
+  #[derive (PartialEq)]
+  pub struct Entry <T> {
+      pub name: String,
+      pub value: Option <T>,
+  }
+  #+end_src
+
+* Dic
+
+  #+begin_src rust
+  #[derive (Clone)]
+  #[derive (Debug)]
+  #[derive (PartialEq)]
+  pub struct Dic <T> {
+      index_map: HashMap <String, usize>,
+      entry_vector: Vec <Entry <T>>,
+  }
+
+  impl <T> Dic <T> {
+      pub fn new () -> Dic <T> {
+          Dic {
+              index_map: HashMap::new (),
+              entry_vector: Vec::new (),
+          }
+      }
+
+      pub fn len (&self) -> usize {
+          self.entry_vector.len ()
+      }
+
+      pub fn lack (&self) -> usize {
+          let mut n = 0;
+          for entry in &self.entry_vector {
+              if let None = &entry.value {
+                  n += 1;
+              }
+          }
+          n
+      }
+
+      pub fn idx (&self, index: usize) -> &Entry <T> {
+          &self.entry_vector [index]
+      }
+
+      pub fn idx_set_value (&mut self, index: usize, value: Option <T>) {
+          self.entry_vector [index] .value = value;
+      }
+
+      pub fn has_name (&self, name: &str) -> bool {
+          self.index_map.contains_key (name)
+      }
+
+      pub fn ins (&mut self, name: &str, value: Option <T>) -> usize {
+          if self.has_name (name) {
+              eprintln! ("- Dic::ins");
+              eprintln! ("  dic already has name : {}", name);
+              panic! ("Dic fatal error");
+          };
+          let index = self.len ();
+          let entry = Entry { name: name.to_string (), value };
+          self.entry_vector.push (entry);
+          self.index_map.insert (name.to_string (), index);
+          index
+      }
+
+      pub fn set (&mut self, name: &str, value: Option <T>) {
+          if let Some (index) = self.index_map.get (name) {
+              self.idx_set_value (*index, value);
+          } else {
+              eprintln! ("- Dic::set");
+              eprintln! ("  dic does not have name : {}", name);
+              panic! ("Dic::set fail!");
+          }
+      }
+
+      pub fn get_index (&self, name: &str) -> Option <usize> {
+          if let Some (index) = self.index_map.get (name) {
+              Some (*index)
+          } else {
+              None
+          }
+      }
+
+      pub fn get (&self, name: &str) -> Option <&T> {
+          if let Some (index) = self.index_map.get (name) {
+              let entry = self.idx (*index);
+              if let Some (value) = &entry.value {
+                  Some (value)
+              } else {
+                  None
+              }
+          } else {
+              None
+          }
+      }
+
+      pub fn eat (&mut self, x: T) {
+          for entry in &mut self.entry_vector {
+              if let None = entry.value {
+                  entry.value = Some (x);
+                  return;
+              }
+          }
+          panic! ("Dic::eat fail!");
+      }
+  }
+  #+end_src
+
+* From for Dic
+
+  #+begin_src rust
+  impl <'a, T> From <Vec <(&'a str, T)>> for Dic <T> {
+      fn from (vec: Vec <(&'a str, T)>) -> Dic <T> {
+          let mut dic = Dic::new ();
+          for kv in vec {
+              dic.ins (kv.0, Some (kv.1));
+          }
+          dic
+      }
+  }
+
+  impl <T> From <Vec <(String, T)>> for Dic <T> {
+      fn from (vec: Vec <(String, T)>) -> Dic <T> {
+          let mut dic = Dic::new ();
+          for kv in vec {
+              dic.ins (&kv.0, Some (kv.1));
+          }
+          dic
+      }
+  }
+
+  impl <'a, T> From <Vec <&'a str>> for Dic <T> {
+      fn from (vec: Vec <&'a str>) -> Dic <T> {
+          let mut dic = Dic::new ();
+          for name in vec {
+              dic.ins (name, None);
+          }
+          dic
+      }
+  }
+
+  impl <T> From <Vec <String>> for Dic <T> {
+      fn from (vec: Vec <String>) -> Dic <T> {
+          let mut dic = Dic::new ();
+          for name in vec {
+              dic.ins (&name, None);
+          }
+          dic
+      }
+  }
+  #+end_src
+
+* iter
+
+  #+begin_src rust
+  pub struct Iter <'a, T: 'a> {
+      slice_iter: slice::Iter <'a, Entry <T>>,
+  }
+
+  impl <'a, T: 'a> Iterator for Iter <'a, T> {
+      type Item = (&'a str, &'a T);
+
+      fn next (&mut self) -> Option <Self::Item> {
+          while let Some (entry) = self.slice_iter.next () {
+              if let Some (value) = &entry.value {
+                  return Some((&entry.name, value));
+              }
+          }
+          None
+      }
+  }
+
+  impl <T> Dic <T> {
+      pub fn iter (&self) -> Iter <T> {
+          Iter {
+              slice_iter: self.entry_vector[..].iter ()
+          }
+      }
+  }
+  #+end_src
+
+* into_iter
+
+  #+begin_src rust
+  pub struct IntoIter <T> {
+      vec_into_iter: vec::IntoIter <Entry <T>>,
+  }
+
+  impl <T> Iterator for IntoIter <T> {
+      type Item = (String, T);
+
+      fn next (&mut self) -> Option <Self::Item> {
+          while let Some (entry) = self.vec_into_iter.next () {
+              if let Some (value) = entry.value {
+                  return Some((entry.name, value));
+              }
+          }
+          None
+      }
+  }
+
+  impl <T> Dic <T> {
+      pub fn into_iter (self) -> IntoIter <T> {
+          IntoIter {
+              vec_into_iter: self.entry_vector.into_iter ()
+          }
+      }
+  }
+  #+end_src
+
+* keys
+
+  #+begin_src rust
+  pub struct Keys <'a, T: 'a> {
+      slice_iter: slice::Iter <'a, Entry <T>>,
+  }
+
+  impl <'a, T: 'a> Iterator for Keys <'a, T> {
+      type Item = &'a str;
+
+      fn next (&mut self) -> Option <Self::Item> {
+          while let Some (entry) = self.slice_iter.next () {
+              if entry.value.is_some () {
+                  return Some(&entry.name);
+              }
+          }
+          None
+      }
+  }
+
+  impl <T> Dic <T> {
+      pub fn keys (&self) -> Keys <T> {
+          Keys {
+              slice_iter: self.entry_vector[..].iter ()
+          }
+      }
+  }
+  #+end_src
+
+* values
+
+  #+begin_src rust
+  pub struct Values <'a, T: 'a> {
+      slice_iter: slice::Iter <'a, Entry <T>>,
+  }
+
+  impl <'a, T: 'a> Iterator for Values <'a, T> {
+      type Item = &'a T;
+
+      fn next (&mut self) -> Option <Self::Item> {
+          while let Some (entry) = self.slice_iter.next () {
+              if let Some (value) = &entry.value {
+                  return Some(value);
+              }
+          }
+          None
+      }
+  }
+
+  impl <T> Dic <T> {
+      pub fn values (&self) -> Values <T> {
+          Values {
+              slice_iter: self.entry_vector[..].iter ()
+          }
+      }
+  }
+  #+end_src
+
+* entries
+
+  #+begin_src rust
+  pub struct Entries <'a, T: 'a> {
+      slice_iter: slice::Iter <'a, Entry <T>>,
+  }
+
+  impl <'a, T: 'a> Iterator for Entries <'a, T> {
+      type Item = &'a Entry <T>;
+
+      fn next (&mut self) -> Option <Self::Item> {
+          self.slice_iter.next ()
+      }
+  }
+
+  impl <T> Dic <T> {
+      pub fn entries (&self) -> Entries <T> {
+          Entries {
+              slice_iter: self.entry_vector[..].iter ()
+          }
+      }
+  }
+  #+end_src
+
+* test
+
+*** test_dic
+
+    #+begin_src rust
+    #[test]
+    fn test_dic () {
+        let mut dic: Dic <Vec <isize>> = Dic::new ();
+        assert_eq! (0, dic.len ());
+
+        let index = dic.ins ("key1", Some (vec! [1, 1, 1]));
+        assert_eq! (0, index);
+        assert_eq! (index, dic.get_index ("key1") .unwrap ());
+        assert_eq! (1, dic.len ());
+        assert! (dic.has_name ("key1"));
+        assert! (! dic.has_name ("non-key"));
+        let entry = dic.idx (0);
+        assert_eq! (entry.name, "key1");
+        assert_eq! (entry.value, Some (vec! [1, 1, 1]));
+
+        let index = dic.ins ("key2", Some (vec! [2, 2, 2]));
+        assert_eq! (1, index);
+        assert_eq! (index, dic.get_index ("key2") .unwrap ());
+        assert_eq! (2, dic.len ());
+        assert! (dic.has_name ("key2"));
+        let entry = dic.idx (1);
+        assert_eq! (entry.name, "key2");
+        assert_eq! (entry.value, Some (vec! [2, 2, 2]));
+
+        assert_eq! (dic.get ("key1"), Some (&vec! [1, 1, 1]));
+        assert_eq! (dic.get ("key2"), Some (&vec! [2, 2, 2]));
+
+        dic.set ("key1", Some (vec! [2, 2, 2]));
+        assert_eq! (dic.get ("key1"), Some (&vec! [2, 2, 2]));
+        assert_eq! (2, dic.len ());
+        assert_eq! (0, dic.lack ());
+
+        dic.set ("key2", None);
+        assert_eq! (dic.get ("key2"), None);
+        assert_eq! (2, dic.len ());
+        assert_eq! (1, dic.lack ());
+
+        dic.eat (vec! [6, 6, 6]);
+        assert_eq! (dic.get ("key2"), Some (&vec! [6, 6, 6]));
+
+        dic.set ("key1", None);
+        assert_eq! (dic.get ("key1"), None);
+
+        dic.eat (vec! [7, 7, 7]);
+        assert_eq! (dic.get ("key1"), Some (&vec! [7, 7, 7]));
+
+        dic.set ("key1", None);
+        dic.set ("key2", None);
+        dic.eat (vec! [6, 6, 6]);
+        dic.eat (vec! [7, 7, 7]);
+        assert_eq! (dic.get ("key1"), Some (&vec! [6, 6, 6]));
+        assert_eq! (dic.get ("key2"), Some (&vec! [7, 7, 7]));
+    }
+    #+end_src
+
+*** test_dic_panic
+
+    #+begin_src rust
+    #[test]
+    #[should_panic]
+    fn test_dic_panic () {
+        let mut dic: Dic <Vec <isize>> = Dic::new ();
+        assert_eq! (0, dic.len ());
+
+        dic.ins ("key1", Some (vec! [1, 1, 1]));
+        dic.ins ("key1", Some (vec! [2, 2, 2]));
+    }
+    #+end_src
+
+*** test_from
+
+    #+begin_src rust
+    #[test]
+    fn test_from () {
+        let dic = Dic::from (vec! [
+            ("x", 0),
+            ("y", 1),
+            ("z", 2),
+        ]);
+        assert_eq! (dic.get ("x"), Some (&0));
+        assert_eq! (dic.get ("y"), Some (&1));
+        assert_eq! (dic.get ("z"), Some (&2));
+        assert_eq! (dic.get ("_"), None);
+
+
+        let dic = Dic::from (vec! [
+            (String::from ("x"), 0),
+            (String::from ("y"), 1),
+            (String::from ("z"), 2),
+        ]);
+        assert_eq! (dic.get ("x"), Some (&0));
+        assert_eq! (dic.get ("y"), Some (&1));
+        assert_eq! (dic.get ("z"), Some (&2));
+        assert_eq! (dic.get ("_"), None);
+
+        let dic: Dic <usize> = Dic::from (vec! [
+            "x",
+            "y",
+            "z",
+        ]);
+        assert! (dic.has_name ("x"));
+        assert! (dic.has_name ("y"));
+        assert! (dic.has_name ("z"));
+        assert! (! dic.has_name ("_"));
+        assert_eq! (dic.get ("x"), None);
+        assert_eq! (dic.get ("y"), None);
+        assert_eq! (dic.get ("z"), None);
+        assert_eq! (dic.get ("_"), None);
+
+        let dic: Dic <usize> = Dic::from (vec! [
+            String::from ("x"),
+            String::from ("y"),
+            String::from ("z"),
+        ]);
+        assert! (dic.has_name ("x"));
+        assert! (dic.has_name ("y"));
+        assert! (dic.has_name ("z"));
+        assert! (! dic.has_name ("_"));
+        assert_eq! (dic.get ("x"), None);
+        assert_eq! (dic.get ("y"), None);
+        assert_eq! (dic.get ("z"), None);
+        assert_eq! (dic.get ("_"), None);
+    }
+    #+end_src
+
+*** test_iter
+
+    #+begin_src rust
+    #[test]
+    fn test_iter () {
+        let dic = Dic::from (vec! [
+            ("x", 0),
+            ("y", 1),
+            ("z", 2),
+        ]);
+        let mut iter = dic.iter ();
+        assert_eq! (iter.next (), Some (("x", &0)));
+        assert_eq! (iter.next (), Some (("y", &1)));
+        assert_eq! (iter.next (), Some (("z", &2)));
+        assert_eq! (iter.next (), None);
+
+        // skip None
+        let mut dic = Dic::from (vec! [
+            ("x", 0),
+            ("y", 1),
+            ("z", 2),
+        ]);
+        dic.set ("y", None);
+        let mut iter = dic.iter ();
+        assert_eq! (iter.next (), Some (("x", &0)));
+        assert_eq! (iter.next (), Some (("z", &2)));
+        assert_eq! (iter.next (), None);
+    }
+    #+end_src
+
+*** test_into_iter
+
+    #+begin_src rust
+    #[test]
+    fn test_into_iter () {
+        let dic = Dic::from (vec! [
+            ("x", 0),
+            ("y", 1),
+            ("z", 2),
+        ]);
+        let mut into_iter = dic.into_iter ();
+        assert_eq! (into_iter.next (), Some ((String::from ("x"), 0)));
+        assert_eq! (into_iter.next (), Some ((String::from ("y"), 1)));
+        assert_eq! (into_iter.next (), Some ((String::from ("z"), 2)));
+        assert_eq! (into_iter.next (), None);
+
+        // skip None
+        let mut dic = Dic::from (vec! [
+            ("x", 0),
+            ("y", 1),
+            ("z", 2),
+        ]);
+        dic.set ("y", None);
+        let mut into_iter = dic.into_iter ();
+        assert_eq! (into_iter.next (), Some ((String::from ("x"), 0)));
+        assert_eq! (into_iter.next (), Some ((String::from ("z"), 2)));
+        assert_eq! (into_iter.next (), None);
+    }
+    #+end_src
+
+*** test_keys
+
+    #+begin_src rust
+    #[test]
+    fn test_keys () {
+        let dic = Dic::from (vec! [
+            ("x", 0),
+            ("y", 1),
+            ("z", 2),
+        ]);
+        let mut iter = dic.keys ();
+        assert_eq! (iter.next (), Some ("x"));
+        assert_eq! (iter.next (), Some ("y"));
+        assert_eq! (iter.next (), Some ("z"));
+        assert_eq! (iter.next (), None);
+
+        // skip None
+        let mut dic = Dic::from (vec! [
+            ("x", 0),
+            ("y", 1),
+            ("z", 2),
+        ]);
+        dic.set ("y", None);
+        let mut iter = dic.keys ();
+        assert_eq! (iter.next (), Some ("x"));
+        assert_eq! (iter.next (), Some ("z"));
+        assert_eq! (iter.next (), None);
+    }
+    #+end_src
+
+*** test_values
+
+    #+begin_src rust
+    #[test]
+    fn test_values () {
+        let dic = Dic::from (vec! [
+            ("x", 0),
+            ("y", 1),
+            ("z", 2),
+        ]);
+        let mut iter = dic.values ();
+        assert_eq! (iter.next (), Some (&0));
+        assert_eq! (iter.next (), Some (&1));
+        assert_eq! (iter.next (), Some (&2));
+        assert_eq! (None, iter.next ());
+
+        // skip None
+        let mut dic = Dic::from (vec! [
+            ("x", 0),
+            ("y", 1),
+            ("z", 2),
+        ]);
+        dic.set ("y", None);
+        let mut iter = dic.values ();
+        assert_eq! (iter.next (), Some (&0));
+        assert_eq! (iter.next (), Some (&2));
+        assert_eq! (None, iter.next ());
+    }
+    #+end_src
+
+*** test_entries
+
+    #+begin_src rust
+    #[test]
+    fn test_entries () {
+        let dic = Dic::from (vec! [
+            ("x", 0),
+            ("y", 1),
+            ("z", 2),
+        ]);
+
+        fn new_entry <T> (
+            name: &str,
+            value: Option <T>,
+        ) -> Entry <T> {
+            Entry {
+                name: name.to_string (),
+                value,
+            }
+        }
+
+        let mut iter = dic.entries ();
+        assert_eq! (iter.next (), Some (&new_entry ("x", Some (0))));
+        assert_eq! (iter.next (), Some (&new_entry ("y", Some (1))));
+        assert_eq! (iter.next (), Some (&new_entry ("z", Some (2))));
+        assert_eq! (iter.next (), None);
+
+        // None in Entry
+        let mut dic = Dic::from (vec! [
+            ("x", 0),
+            ("y", 1),
+            ("z", 2),
+        ]);
+        dic.set ("y", None);
+        let mut iter = dic.entries ();
+        assert_eq! (iter.next (), Some (&new_entry ("x", Some (0))));
+        assert_eq! (iter.next (), Some (&new_entry ("y", None)));
+        assert_eq! (iter.next (), Some (&new_entry ("z", Some (2))));
+        assert_eq! (iter.next (), None);
+    }
+    #+end_src

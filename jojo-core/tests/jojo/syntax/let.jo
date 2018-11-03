@@ -1,0 +1,24 @@
+(assert
+  (eq ((lambda [x]
+         ((lambda [y]
+            (cons x y))
+          2))
+       1)
+      (cons 1 2)))
+
+(assert
+  (eq (let [(x 1)]
+        (cons x x))
+      (cons 1 1)))
+
+(assert
+  (eq (let [(x 1)
+            (y 2)]
+        (cons x y))
+      (cons 1 2)))
+
+(assert
+  (eq (let [(x 1)
+            (y (cons x x))]
+        (cons y y))
+      (cons (cons 1 1) (cons 1 1))))
