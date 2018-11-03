@@ -1,6 +1,6 @@
 #+property: tangle lib.rs
 #+title: lian
-- use global name space to handle recursion
+- use global name space for goal -- to handle recursion
 - test_mexp
 * prolog
 
@@ -62,125 +62,211 @@
     }
     #+end_src
 
-* Subst
+* Env
 
-*** Subst
+*** Env
 
     #+begin_src rust
     #[derive (Clone)]
     #[derive (Debug)]
     #[derive (PartialEq)]
-    pub enum Subst {
-        Null,
-        Cons {
-           var: VarTerm,
-           term: Term,
-           next: Arc <Subst>,
-        },
+    pub struct Env {
+        pub relation_dic: RelationDic,
+        pub subst: Subst,
     }
     #+end_src
 
-*** Subst::new
+*** Env::new
 
     #+begin_src rust
-    impl Subst {
+    impl Env {
         fn new () -> Self {
-            Subst::Null
-        }
-    }
-    #+end_src
-
-*** Subst::find
-
-    #+begin_src rust
-    impl Subst {
-        pub fn find (&self, var: &VarTerm) -> Option <&Term> {
-            match self {
-                Subst::Null => None,
-                Subst::Cons {
-                    var: first, term, next,
-                } => {
-                    if first == var {
-                        Some (term)
-                    } else {
-                        next.find (var)
-                    }
-                }
+            Env {
+                relation_dic: RelationDic::Null,
+                subst: Subst::new (),
             }
         }
     }
     #+end_src
 
-*** Subst::walk
+*** RelationDic
 
-    #+begin_src rust
-    impl Subst {
-        pub fn walk (&self, term: &Term) -> Term {
-            match term {
-                Term::Var (var) => {
-                    if let Some (new_term) = self.find (var) {
-                        self.walk (new_term)
-                    } else {
-                        term.clone ()
-                    }
-                }
-                _ => term.clone ()
-            }
-        }
-    }
-    #+end_src
+***** RelationDic
 
-*** Subst::unify
+      #+begin_src rust
+      #[derive (Clone)]
+      #[derive (Debug)]
+      #[derive (PartialEq)]
+      pub enum RelationDic {
+          Null,
+          Cons {
+              relation_name: String,
+              relation: Relation,
+              next: Arc <RelationDic>,
+          },
+      }
+      #+end_src
 
-    #+begin_src rust
-    impl Subst {
-        pub fn unify (
-            &self,
-            u: &Term,
-            v: &Term,
-        ) -> Option <Subst> {
-            let u = self.walk (u);
-            let v = self.walk (v);
-            match (u, v) {
-                (Term::Var (u),
-                 Term::Var (v),
-                ) if u == v => {
-                    Some (self.clone ())
-                }
-                (Term::Var (u), v) => {
-                    Some (Subst::Cons {
-                        var: u,
-                        term: v,
-                        next: Arc::new (self.clone ()),
-                    })
-                }
-                (u, Term::Var (v)) => {
-                    Some (Subst::Cons {
-                        var: v,
-                        term: u,
-                        next: Arc::new (self.clone ()),
-                    })
-                }
-                (Term::Tuple (ut),
-                 Term::Tuple (vt),
-                ) => {
-                    if ut.head != vt.head {
-                        return None;
-                    }
-                    if ut.body.len () != vt.body.len () {
-                        return None;
-                    }
-                    let mut subst = self.clone ();
-                    let zip = ut.body.iter () .zip (vt.body.iter ());
-                    for (u, v) in zip {
-                        subst = subst.unify (u, v)?;
-                    }
-                    Some (subst)
-                }
-            }
-        }
-    }
-    #+end_src
+***** RelationDic::new
+
+      #+begin_src rust
+      impl RelationDic {
+          fn new () -> Self {
+              RelationDic::Null
+          }
+      }
+      #+end_src
+
+*** [todo] Relation
+
+***** Relation
+
+      #+begin_src rust
+      #[derive (Clone)]
+      #[derive (Debug)]
+      #[derive (PartialEq)]
+      pub struct Relation {
+
+      }
+      #+end_src
+
+*** Choice
+
+***** Choice
+
+      #+begin_src rust
+      #[derive (Clone)]
+      #[derive (Debug)]
+      #[derive (PartialEq)]
+      pub struct Choice {
+          body: Vec <Goal>,
+      }
+      #+end_src
+
+*** Subst
+
+***** Subst
+
+      #+begin_src rust
+      #[derive (Clone)]
+      #[derive (Debug)]
+      #[derive (PartialEq)]
+      pub enum Subst {
+          Null,
+          Cons {
+             var: VarTerm,
+             term: Term,
+             next: Arc <Subst>,
+          },
+      }
+      #+end_src
+
+***** Subst::new
+
+      #+begin_src rust
+      impl Subst {
+          fn new () -> Self {
+              Subst::Null
+          }
+      }
+      #+end_src
+
+***** Subst::cons
+
+      #+begin_src rust
+      impl Subst {
+          fn cons (&self, var: VarTerm, term: Term) -> Self {
+              Subst::Cons {
+                  var, term,
+                  next: Arc::new (self.clone ()),
+              }
+          }
+      }
+      #+end_src
+
+***** Subst::find
+
+      #+begin_src rust
+      impl Subst {
+          pub fn find (&self, var: &VarTerm) -> Option <&Term> {
+              match self {
+                  Subst::Null => None,
+                  Subst::Cons {
+                      var: first, term, next,
+                  } => {
+                      if first == var {
+                          Some (term)
+                      } else {
+                          next.find (var)
+                      }
+                  }
+              }
+          }
+      }
+      #+end_src
+
+***** Subst::walk
+
+      #+begin_src rust
+      impl Subst {
+          pub fn walk (&self, term: &Term) -> Term {
+              match term {
+                  Term::Var (var) => {
+                      if let Some (new_term) = self.find (var) {
+                          self.walk (new_term)
+                      } else {
+                          term.clone ()
+                      }
+                  }
+                  _ => term.clone ()
+              }
+          }
+      }
+      #+end_src
+
+***** Subst::unify
+
+      #+begin_src rust
+      impl Subst {
+          pub fn unify (
+              &self,
+              u: &Term,
+              v: &Term,
+          ) -> Option <Subst> {
+              let u = self.walk (u);
+              let v = self.walk (v);
+              match (u, v) {
+                  (Term::Var (u),
+                   Term::Var (v),
+                  ) if u == v => {
+                      Some (self.clone ())
+                  }
+                  (Term::Var (u), v) => {
+                      Some (self.cons (u, v))
+                  }
+                  (u, Term::Var (v)) => {
+                      Some (self.cons (v, u))
+                  }
+                  (Term::Tuple (ut),
+                   Term::Tuple (vt),
+                  ) => {
+                      if ut.head != vt.head {
+                          return None;
+                      }
+                      if ut.body.len () != vt.body.len () {
+                          return None;
+                      }
+                      let mut subst = self.clone ();
+                      let zip = ut.body.iter () .zip (vt.body.iter ());
+                      for (u, v) in zip {
+                          subst = subst.unify (u, v)?;
+                      }
+                      Some (subst)
+                  }
+              }
+          }
+      }
+      #+end_src
 
 * Goal
 
@@ -210,24 +296,27 @@
 
     #+begin_src rust
     impl Goal {
-        pub fn apply (&self, subst: Subst) -> Stream {
+        pub fn apply (&self, env: Env) -> Stream {
             match self {
                 Goal::Eqo { u, v } => {
                     if let Some (
-                        new_subst
-                    ) = subst.unify (&u, &v) {
-                        unit (new_subst)
+                        subst
+                    ) = env.subst.unify (&u, &v) {
+                        unit (Env {
+                            subst,
+                            ..env
+                        })
                     } else {
                         mzero ()
                     }
                 }
                 Goal::Disj { g1, g2 } => {
                     mplus (
-                        g1.apply (subst.clone ()),
-                        g2.apply (subst))
+                        g1.apply (env.clone ()),
+                        g2.apply (env))
                 }
                 Goal::Conj { g1, g2 } => {
-                    bind (g1.apply (subst), g2)
+                    bind (g1.apply (env), g2)
                 }
             }
         }
@@ -239,7 +328,7 @@
 *** Stream
 
     #+begin_src rust
-    type Stream = Box <Iterator <Item = Subst>>;
+    type Stream = Box <Iterator <Item = Env>>;
     #+end_src
 
 *** mzero
@@ -253,8 +342,8 @@
 *** unit
 
     #+begin_src rust
-    fn unit (subst: Subst) -> Stream {
-        Box::new (vec! [subst] .into_iter ())
+    fn unit (env: Env) -> Stream {
+        Box::new (vec! [env] .into_iter ())
     }
     #+end_src
 
@@ -262,8 +351,8 @@
 
     #+begin_src rust
     fn mplus (mut s1: Stream, s2: Stream) -> Stream {
-        if let Some (subst) = s1.next () {
-            Box::new (unit (subst) .chain (s2) .chain (s1))
+        if let Some (env) = s1.next () {
+            Box::new (unit (env) .chain (s2) .chain (s1))
         } else {
             s2
         }
@@ -274,8 +363,8 @@
 
     #+begin_src rust
     fn bind (mut s: Stream, g: &Goal) -> Stream {
-        if let Some (subst) = s.next () {
-            mplus (g.apply (subst), bind (s, g))
+        if let Some (env) = s.next () {
+            mplus (g.apply (env), bind (s, g))
         } else {
             mzero ()
         }
@@ -339,10 +428,10 @@
     fn test_unify () {
         let u = var ("u");
         let v = var ("v");
-        let subst = Subst::new () .unify (
+        let env = Env::new () .subst.unify (
             &tuple ("tuple", vec! [u.clone (), v.clone ()]),
             &tuple ("tuple", vec! [v.clone (), tuple ("hi", vec! [])]));
-        println! ("{:?}", subst.unwrap ());
+        println! ("{:?}", env.unwrap ());
     }
     #+end_src
 
@@ -356,8 +445,8 @@
             disj (eqo (var ("v"), tuple ("bye", vec! [])),
                   eqo (var ("w"), tuple ("hi", vec! [])))
         );
-        for subst in g.apply (Subst::new ()) {
-            println! ("- {:?}", subst);
+        for env in g.apply (Env::new ()) {
+            println! ("- {:?}", env);
         }
     }
     #+end_src

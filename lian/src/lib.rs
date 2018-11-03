@@ -37,6 +37,55 @@ pub struct TupleTerm {
 #[derive (Clone)]
 #[derive (Debug)]
 #[derive (PartialEq)]
+pub struct Env {
+    pub relation_dic: RelationDic,
+    pub subst: Subst,
+}
+
+impl Env {
+    fn new () -> Self {
+        Env {
+            relation_dic: RelationDic::Null,
+            subst: Subst::new (),
+        }
+    }
+}
+
+#[derive (Clone)]
+#[derive (Debug)]
+#[derive (PartialEq)]
+pub enum RelationDic {
+    Null,
+    Cons {
+        relation_name: String,
+        relation: Relation,
+        next: Arc <RelationDic>,
+    },
+}
+
+impl RelationDic {
+    fn new () -> Self {
+        RelationDic::Null
+    }
+}
+
+#[derive (Clone)]
+#[derive (Debug)]
+#[derive (PartialEq)]
+pub struct Relation {
+
+}
+
+#[derive (Clone)]
+#[derive (Debug)]
+#[derive (PartialEq)]
+pub struct Choice {
+    body: Vec <Goal>,
+}
+
+#[derive (Clone)]
+#[derive (Debug)]
+#[derive (PartialEq)]
 pub enum Subst {
     Null,
     Cons {
@@ -49,6 +98,15 @@ pub enum Subst {
 impl Subst {
     fn new () -> Self {
         Subst::Null
+    }
+}
+
+impl Subst {
+    fn cons (&self, var: VarTerm, term: Term) -> Self {
+        Subst::Cons {
+            var, term,
+            next: Arc::new (self.clone ()),
+        }
     }
 }
 
@@ -99,18 +157,10 @@ impl Subst {
                 Some (self.clone ())
             }
             (Term::Var (u), v) => {
-                Some (Subst::Cons {
-                    var: u,
-                    term: v,
-                    next: Arc::new (self.clone ()),
-                })
+                Some (self.cons (u, v))
             }
             (u, Term::Var (v)) => {
-                Some (Subst::Cons {
-                    var: v,
-                    term: u,
-                    next: Arc::new (self.clone ()),
-                })
+                Some (self.cons (v, u))
             }
             (Term::Tuple (ut),
              Term::Tuple (vt),
@@ -151,50 +201,53 @@ pub enum Goal {
 }
 
 impl Goal {
-    pub fn apply (&self, subst: Subst) -> Stream {
+    pub fn apply (&self, env: Env) -> Stream {
         match self {
             Goal::Eqo { u, v } => {
                 if let Some (
-                    new_subst
-                ) = subst.unify (&u, &v) {
-                    unit (new_subst)
+                    subst
+                ) = env.subst.unify (&u, &v) {
+                    unit (Env {
+                        subst,
+                        ..env
+                    })
                 } else {
                     mzero ()
                 }
             }
             Goal::Disj { g1, g2 } => {
                 mplus (
-                    g1.apply (subst.clone ()),
-                    g2.apply (subst))
+                    g1.apply (env.clone ()),
+                    g2.apply (env))
             }
             Goal::Conj { g1, g2 } => {
-                bind (g1.apply (subst), g2)
+                bind (g1.apply (env), g2)
             }
         }
     }
 }
 
-type Stream = Box <Iterator <Item = Subst>>;
+type Stream = Box <Iterator <Item = Env>>;
 
 fn mzero () -> Stream {
     Box::new (Vec::new () .into_iter ())
 }
 
-fn unit (subst: Subst) -> Stream {
-    Box::new (vec! [subst] .into_iter ())
+fn unit (env: Env) -> Stream {
+    Box::new (vec! [env] .into_iter ())
 }
 
 fn mplus (mut s1: Stream, s2: Stream) -> Stream {
-    if let Some (subst) = s1.next () {
-        Box::new (unit (subst) .chain (s2) .chain (s1))
+    if let Some (env) = s1.next () {
+        Box::new (unit (env) .chain (s2) .chain (s1))
     } else {
         s2
     }
 }
 
 fn bind (mut s: Stream, g: &Goal) -> Stream {
-    if let Some (subst) = s.next () {
-        mplus (g.apply (subst), bind (s, g))
+    if let Some (env) = s.next () {
+        mplus (g.apply (env), bind (s, g))
     } else {
         mzero ()
     }
@@ -230,10 +283,10 @@ fn conj (g1: Arc <Goal>, g2: Arc <Goal>) -> Arc <Goal> {
 fn test_unify () {
     let u = var ("u");
     let v = var ("v");
-    let subst = Subst::new () .unify (
+    let env = Env::new () .subst.unify (
         &tuple ("tuple", vec! [u.clone (), v.clone ()]),
         &tuple ("tuple", vec! [v.clone (), tuple ("hi", vec! [])]));
-    println! ("{:?}", subst.unwrap ());
+    println! ("{:?}", env.unwrap ());
 }
 
 #[test]
@@ -243,8 +296,8 @@ fn test_goal () {
         disj (eqo (var ("v"), tuple ("bye", vec! [])),
               eqo (var ("w"), tuple ("hi", vec! [])))
     );
-    for subst in g.apply (Subst::new ()) {
-        println! ("- {:?}", subst);
+    for env in g.apply (Env::new ()) {
+        println! ("- {:?}", env);
     }
 }
 
