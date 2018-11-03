@@ -47,6 +47,12 @@ pub enum Subst {
 }
 
 impl Subst {
+    fn new () -> Self {
+        Subst::Null
+    }
+}
+
+impl Subst {
     pub fn find (&self, var: &VarTerm) -> Option <&Term> {
         match self {
             Subst::Null => None,
@@ -194,59 +200,55 @@ fn bind (mut s: Stream, g: &Goal) -> Stream {
     }
 }
 
+fn var (s: &str) -> Term {
+    Term::Var (VarTerm {
+        name: s.to_string (),
+        id: Uuid::new_v4 (),
+    })
+}
+
+fn tuple (h: &str, vec: Vec <Term>) -> Term {
+    Term::Tuple (TupleTerm {
+        head: h.to_string (),
+        body: vec,
+    })
+}
+
+fn eqo (u: Term, v: Term) -> Arc <Goal> {
+    Arc::new (Goal::Eqo { u, v })
+}
+
+fn disj (g1: Arc <Goal>, g2: Arc <Goal>) -> Arc <Goal> {
+    Arc::new (Goal::Disj { g1, g2 })
+}
+
+fn conj (g1: Arc <Goal>, g2: Arc <Goal>) -> Arc <Goal> {
+    Arc::new (Goal::Conj { g1, g2 })
+}
+
 #[test]
 fn test_unify () {
-    let subst = Subst::Null;
-    let u = Term::Var (VarTerm {
-        name: "u".to_string (),
-        id: Uuid::new_v4 (),
-    });
-    let v = Term::Var (VarTerm {
-        name: "v".to_string (),
-        id: Uuid::new_v4 (),
-    });
-    let subst = subst.unify (&u, &v);
-    println! ("{:?}", subst);
+    let u = var ("u");
+    let v = var ("v");
+    let subst = Subst::new () .unify (
+        &tuple ("tuple", vec! [u.clone (), v.clone ()]),
+        &tuple ("tuple", vec! [v.clone (), tuple ("hi", vec! [])]));
+    println! ("{:?}", subst.unwrap ());
 }
 
 #[test]
 fn test_goal () {
-    let subst = Subst::Null;
-    let g = Goal::Conj {
-        g1: Arc::new (Goal::Eqo {
-            u: Term::Var (VarTerm {
-                name: "u".to_string (),
-                id: Uuid::new_v4 (),
-            }),
-            v: Term::Tuple (TupleTerm {
-                head: "love".to_string (),
-                body: Vec::new (),
-            }),
-        }),
-        g2: Arc::new (Goal::Disj {
-            g1: Arc::new (Goal::Eqo {
-                u: Term::Var (VarTerm {
-                    name: "v".to_string (),
-                    id: Uuid::new_v4 (),
-                }),
-                v: Term::Tuple (TupleTerm {
-                    head: "bye".to_string (),
-                    body: Vec::new (),
-                }),
-            }),
-            g2: Arc::new (Goal::Eqo {
-                u: Term::Var (VarTerm {
-                    name: "w".to_string (),
-                    id: Uuid::new_v4 (),
-                }),
-                v: Term::Tuple (TupleTerm {
-                    head: "hi".to_string (),
-                    body: Vec::new (),
-                }),
-            }),
-        })
-    };
-    for subst in g.apply (subst) {
-        println! ("{:?}", subst);
+    let g = conj (
+        eqo (var ("u"), tuple ("love", vec! [])),
+        disj (eqo (var ("v"), tuple ("bye", vec! [])),
+              eqo (var ("w"), tuple ("hi", vec! [])))
+    );
+    for subst in g.apply (Subst::new ()) {
+        println! ("- {:?}", subst);
     }
+}
+
+#[test]
+fn test_mexp () {
+
 }
