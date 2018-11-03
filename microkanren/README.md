@@ -2,7 +2,7 @@
 
 Jason's microkanren in rust
 
-Not a fan of rust's function types and macro system ?
-- see [Lian][lian] for Yoneda embedding version
+Not a fan of rust's function types ?
+- see [Lian][lian] for the use of Yoneda embedding
 
 [lian]: ../lian/README.md
