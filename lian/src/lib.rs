@@ -126,8 +126,6 @@ impl Subst {
     }
 }
 
-
-
 #[derive (Clone)]
 #[derive (Debug)]
 #[derive (PartialEq)]
@@ -147,7 +145,7 @@ pub enum Goal {
 }
 
 impl Goal {
-    pub fn apply (&self, subst: Subst) -> Searching {
+    pub fn apply (&self, subst: Subst) -> Stream {
         match self {
             Goal::Eqo { u, v } => {
                 if let Some (
@@ -170,17 +168,17 @@ impl Goal {
     }
 }
 
-type Searching = Box <Iterator <Item = Subst>>;
+type Stream = Box <Iterator <Item = Subst>>;
 
-fn mzero () -> Searching {
+fn mzero () -> Stream {
     Box::new (Vec::new () .into_iter ())
 }
 
-fn unit (subst: Subst) -> Searching {
+fn unit (subst: Subst) -> Stream {
     Box::new (vec! [subst] .into_iter ())
 }
 
-fn mplus (mut s1: Searching, s2: Searching) -> Searching {
+fn mplus (mut s1: Stream, s2: Stream) -> Stream {
     if let Some (subst) = s1.next () {
         Box::new (unit (subst) .chain (s2) .chain (s1))
     } else {
@@ -188,7 +186,7 @@ fn mplus (mut s1: Searching, s2: Searching) -> Searching {
     }
 }
 
-fn bind (mut s: Searching, g: &Goal) -> Searching {
+fn bind (mut s: Stream, g: &Goal) -> Stream {
     if let Some (subst) = s.next () {
         mplus (g.apply (subst), bind (s, g))
     } else {
