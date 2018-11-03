@@ -1,4 +1,4 @@
-#![allow(unused_parens)]
+#![allow (unused_parens)]
 
 use std::collections::HashMap;
 use std::slice;

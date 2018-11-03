@@ -1,13 +1,11 @@
 # JoJo's Bizarre Programming Adventure
 
-[![Build Status](https://travis-ci.com/xieyuheng/jojo.svg?branch=master)](https://travis-ci.com/xieyuheng/jojo)
-
 ------
 
-> DIO: ZA WARUDO is full of languages without good type system, we don't need anymore!  
-> JOJO: Just one more!  
-> DIO: Do you care about HUMANITY! JOJO?  
-> JOJO: I REJECT MY HUMANITY, DIO!  
+> DIO: ZA WARUDO is full of languages without good type system, we don't need anymore!
+> JOJO: Just one more!
+> DIO: Do you care about HUMANITY! JOJO?
+> JOJO: I REJECT MY HUMANITY, DIO!
 
 ------
 
@@ -90,11 +88,3 @@ With *nightly* rust toolchain :
   (simpson-integral cube 0 1 100)
   (div 1 4))
 ```
-
-## CODE OF CONDUCT
-
-[Contributor Covenant Code of Conduct](CODE-OF-CONDUCT.md)
-
-## LICENSE
-
-[GPLv3](LICENSE)
