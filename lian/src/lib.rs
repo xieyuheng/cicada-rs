@@ -9,6 +9,7 @@
 use std::vec;
 use std::sync::Arc;
 use uuid::Uuid;
+use dict::Dict;
 
 #[derive (Clone)]
 #[derive (Debug)]
@@ -38,49 +39,51 @@ pub struct TupleTerm {
 #[derive (Debug)]
 #[derive (PartialEq)]
 pub struct Env {
-    pub relation_dic: RelationDic,
+    pub relation_dict: Dict <Dict <Choice>>,
     pub subst: Subst,
 }
+
+pub type Relation = Dict <Choice>;
+pub type Choice = Vec <Goal>;
 
 impl Env {
     fn new () -> Self {
         Env {
-            relation_dic: RelationDic::Null,
+            relation_dict: Dict::new (),
             subst: Subst::new (),
         }
     }
 }
 
-#[derive (Clone)]
-#[derive (Debug)]
-#[derive (PartialEq)]
-pub enum RelationDic {
-    Null,
-    Cons {
-        relation_name: String,
-        relation: Relation,
-        next: Arc <RelationDic>,
-    },
-}
-
-impl RelationDic {
-    fn new () -> Self {
-        RelationDic::Null
+impl Env {
+    fn define_choice (
+        &self,
+        relation_name: &str,
+        choice_name: &str,
+        choice: Choice,
+    ) -> Self {
+        if let Some (
+            choice_dict
+        ) = self.relation_dict.find (relation_name) {
+            Env {
+                relation_dict: self.relation_dict.insert (
+                    relation_name,
+                    choice_dict.insert (
+                        choice_name,
+                        choice)),
+                subst: self.subst.clone (),
+            }
+        } else {
+            Env {
+                relation_dict: self.relation_dict.extend (
+                    relation_name,
+                    Dict::unit (
+                        choice_name,
+                        choice)),
+                subst: self.subst.clone (),
+            }
+        }
     }
-}
-
-#[derive (Clone)]
-#[derive (Debug)]
-#[derive (PartialEq)]
-pub struct Relation {
-
-}
-
-#[derive (Clone)]
-#[derive (Debug)]
-#[derive (PartialEq)]
-pub struct Choice {
-    body: Vec <Goal>,
 }
 
 #[derive (Clone)]
@@ -102,7 +105,7 @@ impl Subst {
 }
 
 impl Subst {
-    fn cons (&self, var: VarTerm, term: Term) -> Self {
+    fn ext (&self, var: VarTerm, term: Term) -> Self {
         Subst::Cons {
             var, term,
             next: Arc::new (self.clone ()),
@@ -157,10 +160,10 @@ impl Subst {
                 Some (self.clone ())
             }
             (Term::Var (u), v) => {
-                Some (self.cons (u, v))
+                Some (self.ext (u, v))
             }
             (u, Term::Var (v)) => {
-                Some (self.cons (v, u))
+                Some (self.ext (v, u))
             }
             (Term::Tuple (ut),
              Term::Tuple (vt),
@@ -198,6 +201,13 @@ pub enum Goal {
         g1: Arc <Goal>,
         g2: Arc <Goal>,
     },
+    Relation {
+        relation_name: String,
+    },
+    Choice {
+        relation_name: String,
+        choice_name: String,
+    },
 }
 
 impl Goal {
@@ -222,6 +232,23 @@ impl Goal {
             }
             Goal::Conj { g1, g2 } => {
                 bind (g1.apply (env), g2)
+            }
+            Goal::Relation {
+                relation_name,
+            } => {
+                if let Some (
+                    choice_dict
+                ) = env.relation_dict.find (relation_name) {
+                    unimplemented! ()
+                } else {
+                    mzero ()
+                }
+            }
+            Goal::Choice {
+                relation_name,
+                choice_name,
+            } => {
+                unimplemented! ()
             }
         }
     }

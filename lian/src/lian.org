@@ -2,6 +2,7 @@
 #+title: lian
 - use global name space for goal -- to handle recursion
 - test_mexp
+- error report in Goal::apply
 * prolog
 
 *** feature
@@ -22,6 +23,7 @@
     use std::vec;
     use std::sync::Arc;
     use uuid::Uuid;
+    use dict::Dict;
     #+end_src
 
 * Term
@@ -71,9 +73,12 @@
     #[derive (Debug)]
     #[derive (PartialEq)]
     pub struct Env {
-        pub relation_dic: RelationDic,
+        pub relation_dict: Dict <Dict <Choice>>,
         pub subst: Subst,
     }
+
+    pub type Relation = Dict <Choice>;
+    pub type Choice = Vec <Goal>;
     #+end_src
 
 *** Env::new
@@ -82,66 +87,47 @@
     impl Env {
         fn new () -> Self {
             Env {
-                relation_dic: RelationDic::Null,
+                relation_dict: Dict::new (),
                 subst: Subst::new (),
             }
         }
     }
     #+end_src
 
-*** RelationDic
+*** Env::define_choice
 
-***** RelationDic
-
-      #+begin_src rust
-      #[derive (Clone)]
-      #[derive (Debug)]
-      #[derive (PartialEq)]
-      pub enum RelationDic {
-          Null,
-          Cons {
-              relation_name: String,
-              relation: Relation,
-              next: Arc <RelationDic>,
-          },
-      }
-      #+end_src
-
-***** RelationDic::new
-
-      #+begin_src rust
-      impl RelationDic {
-          fn new () -> Self {
-              RelationDic::Null
-          }
-      }
-      #+end_src
-
-*** [todo] Relation
-
-***** Relation
-
-      #+begin_src rust
-      #[derive (Clone)]
-      #[derive (Debug)]
-      #[derive (PartialEq)]
-      pub struct Relation {
-
-      }
-      #+end_src
-
-*** Choice
-
-***** Choice
-
-      #+begin_src rust
-      #[derive (Clone)]
-      #[derive (Debug)]
-      #[derive (PartialEq)]
-      pub struct Choice {
-          body: Vec <Goal>,
-      }
-      #+end_src
+    #+begin_src rust
+    impl Env {
+        fn define_choice (
+            &self,
+            relation_name: &str,
+            choice_name: &str,
+            choice: Choice,
+        ) -> Self {
+            if let Some (
+                choice_dict
+            ) = self.relation_dict.find (relation_name) {
+                Env {
+                    relation_dict: self.relation_dict.insert (
+                        relation_name,
+                        choice_dict.insert (
+                            choice_name,
+                            choice)),
+                    subst: self.subst.clone (),
+                }
+            } else {
+                Env {
+                    relation_dict: self.relation_dict.extend (
+                        relation_name,
+                        Dict::unit (
+                            choice_name,
+                            choice)),
+                    subst: self.subst.clone (),
+                }
+            }
+        }
+    }
+    #+end_src
 
 *** Subst
 
@@ -171,11 +157,11 @@
       }
       #+end_src
 
-***** Subst::cons
+***** Subst::ext
 
       #+begin_src rust
       impl Subst {
-          fn cons (&self, var: VarTerm, term: Term) -> Self {
+          fn ext (&self, var: VarTerm, term: Term) -> Self {
               Subst::Cons {
                   var, term,
                   next: Arc::new (self.clone ()),
@@ -242,10 +228,10 @@
                       Some (self.clone ())
                   }
                   (Term::Var (u), v) => {
-                      Some (self.cons (u, v))
+                      Some (self.ext (u, v))
                   }
                   (u, Term::Var (v)) => {
-                      Some (self.cons (v, u))
+                      Some (self.ext (v, u))
                   }
                   (Term::Tuple (ut),
                    Term::Tuple (vt),
@@ -289,6 +275,13 @@
             g1: Arc <Goal>,
             g2: Arc <Goal>,
         },
+        Relation {
+            relation_name: String,
+        },
+        Choice {
+            relation_name: String,
+            choice_name: String,
+        },
     }
     #+end_src
 
@@ -317,6 +310,23 @@
                 }
                 Goal::Conj { g1, g2 } => {
                     bind (g1.apply (env), g2)
+                }
+                Goal::Relation {
+                    relation_name,
+                } => {
+                    if let Some (
+                        choice_dict
+                    ) = env.relation_dict.find (relation_name) {
+                        unimplemented! ()
+                    } else {
+                        mzero ()
+                    }
+                }
+                Goal::Choice {
+                    relation_name,
+                    choice_name,
+                } => {
+                    unimplemented! ()
                 }
             }
         }
