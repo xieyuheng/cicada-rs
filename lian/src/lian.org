@@ -1,5 +1,6 @@
 #+property: tangle lib.rs
 #+title: lian
+- dup
 - test_mexp
 - error report in Goal::apply
 * prolog
@@ -236,7 +237,28 @@
     #[derive (PartialEq)]
     pub struct Conj {
         head: Vec <Term>,
-        body: Vec <TupleTerm>,
+        body: Vec <Call>,
+    }
+    #+end_src
+
+* Call
+
+*** Call
+
+    #+begin_src rust
+    #[derive (Clone)]
+    #[derive (Debug)]
+    #[derive (PartialEq)]
+    pub enum Call {
+        Disj {
+            disj_name: String,
+            args: Vec <Term>,
+        },
+        Conj {
+            disj_name: String,
+            conj_name: String,
+            args: Vec <Term>,
+        },
     }
     #+end_src
 
@@ -253,17 +275,26 @@
     }
     #+end_src
 
-*** [todo] Wissen::query
+*** Wissen::query
 
     #+begin_src rust
     impl Wissen {
         fn query <'a> (
             &'a self,
-            tuple_term: &TupleTerm
+            disj_name: &str,
+            args: Vec <Term>,
         ) -> Solving <'a> {
+            let disj = self.disj_dic.get (disj_name) .unwrap ();
+            let frame = Frame {
+                disj_name: disj_name.to_string (),
+                disj: disj.clone (),
+                args: args,
+                index: 0,
+                backup_subst: Subst::new (),
+            };
             Solving {
                 wissen: self,
-                trace: Vec::new (),
+                trace: vec! [frame],
                 subst: Subst::new (),
             }
         }
@@ -292,8 +323,9 @@
     #[derive (Debug)]
     #[derive (PartialEq)]
     pub struct Frame {
-        name: String,
+        disj_name: String,
         disj: Disj,
+        args: Vec <Term>,
         index: usize,
         backup_subst: Subst,
     }

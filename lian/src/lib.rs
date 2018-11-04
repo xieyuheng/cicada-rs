@@ -163,7 +163,22 @@ pub struct Disj {
 #[derive (PartialEq)]
 pub struct Conj {
     head: Vec <Term>,
-    body: Vec <TupleTerm>,
+    body: Vec <Call>,
+}
+
+#[derive (Clone)]
+#[derive (Debug)]
+#[derive (PartialEq)]
+pub enum Call {
+    Disj {
+        disj_name: String,
+        args: Vec <Term>,
+    },
+    Conj {
+        disj_name: String,
+        conj_name: String,
+        args: Vec <Term>,
+    },
 }
 
 #[derive (Clone)]
@@ -176,11 +191,20 @@ pub struct Wissen {
 impl Wissen {
     fn query <'a> (
         &'a self,
-        tuple_term: &TupleTerm
+        disj_name: &str,
+        args: Vec <Term>,
     ) -> Solving <'a> {
+        let disj = self.disj_dic.get (disj_name) .unwrap ();
+        let frame = Frame {
+            disj_name: disj_name.to_string (),
+            disj: disj.clone (),
+            args: args,
+            index: 0,
+            backup_subst: Subst::new (),
+        };
         Solving {
             wissen: self,
-            trace: Vec::new (),
+            trace: vec! [frame],
             subst: Subst::new (),
         }
     }
@@ -199,8 +223,9 @@ pub struct Solving <'a> {
 #[derive (Debug)]
 #[derive (PartialEq)]
 pub struct Frame {
-    name: String,
+    disj_name: String,
     disj: Disj,
+    args: Vec <Term>,
     index: usize,
     backup_subst: Subst,
 }
