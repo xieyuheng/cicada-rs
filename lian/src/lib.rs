@@ -1,12 +1,10 @@
 #![feature (uniform_paths)]
-#![feature (bind_by_move_pattern_guards)]
 
 #![allow (unused_parens)]
 #![allow (dead_code)]
 #![allow (unused_macros)]
 #![allow (non_camel_case_types)]
 
-use std::vec;
 use std::sync::Arc;
 use uuid::Uuid;
 use dic::Dic;
@@ -72,7 +70,7 @@ impl Subst {
 }
 
 impl Subst {
-    fn ext (&self, var: VarTerm, term: Term) -> Self {
+    fn extend (&self, var: VarTerm, term: Term) -> Self {
         Subst::Cons {
             var, term,
             next: Arc::new (self.clone ()),
@@ -127,10 +125,10 @@ impl Subst {
                 Some (self.clone ())
             }
             (Term::Var (u), v) => {
-                Some (self.ext (u, v))
+                Some (self.extend (u, v))
             }
             (u, Term::Var (v)) => {
-                Some (self.ext (v, u))
+                Some (self.extend (v, u))
             }
             (Term::Tuple (ut),
              Term::Tuple (vt),
@@ -155,202 +153,68 @@ impl Subst {
 #[derive (Clone)]
 #[derive (Debug)]
 #[derive (PartialEq)]
-pub enum Relation {
-    Disj (Vec <ConjRelation>),
-    Conj (ConjRelation),
-}
-
-impl Relation {
-    fn apply (&self, term_vec: &Vec <Term>) -> Arc <Goal> {
-        match self {
-            Relation::Disj (body) => {
-                let mut goal = Goal::zero ();
-                for conj_relation in body {
-                    goal = Goal::disj (
-                        goal,
-                        conj_relation.apply (term_vec))
-                }
-                goal
-            }
-            Relation::Conj (conj_relation) => {
-                conj_relation.apply (term_vec)
-            }
-        }
-    }
+pub struct Disj {
+    conj_dic: Dic <Conj>,
 }
 
 #[derive (Clone)]
 #[derive (Debug)]
 #[derive (PartialEq)]
-pub struct ConjRelation {
+pub struct Conj {
     head: Vec <Term>,
     body: Vec <TupleTerm>,
 }
 
-impl ConjRelation {
-    fn apply (&self, term_vec: &Vec <Term>) -> Arc <Goal> {
-        let mut goal = Goal::unit ();
-        let zip = self.head.iter () .zip (term_vec.iter ());
-        for (u, v) in zip {
-            let g = Goal::eqo (u.clone (), v.clone ());
-            goal = Goal::conj (goal, g)
+#[derive (Clone)]
+#[derive (Debug)]
+#[derive (PartialEq)]
+pub struct Wissen {
+    disj_dic: Dic <Disj>,
+}
+
+impl Wissen {
+    fn query <'a> (
+        &'a self,
+        tuple_term: &TupleTerm
+    ) -> Solving <'a> {
+        Solving {
+            wissen: self,
+            trace: Vec::new (),
+            subst: Subst::new (),
         }
-        for term in &self.body {
-            // println! ("- term = {:?}", term);
-            // println! ("- self = {:?}", self);
-            let g = Arc::new (Goal::Call (term.clone ()));
-            goal = Goal::conj (goal, g)
-        }
-        goal
     }
 }
 
 #[derive (Clone)]
 #[derive (Debug)]
 #[derive (PartialEq)]
-pub enum Goal {
-    Zero,
-    Unit,
-    Eqo (Term, Term),
-    Disj (Arc <Goal>, Arc <Goal>),
-    Conj (Arc <Goal>, Arc <Goal>),
-    Call (TupleTerm),
+pub struct Solving <'a> {
+    wissen: &'a Wissen,
+    trace: Vec <Frame>,
+    subst: Subst,
 }
 
-impl Goal {
-    pub fn apply (
-        &self,
-        relation_dic: &Dic <Relation>,
-        subst: Subst,
-    ) -> Stream {
-        match self {
-            Goal::Zero => {
-                mzero ()
-            }
-            Goal::Unit => {
-                unit (subst)
-            }
-            Goal::Eqo (u, v) => {
-                if let Some (
-                    new_subst
-                ) = subst.unify (&u, &v) {
-                    unit (new_subst)
-                } else {
-                    mzero ()
-                }
-            }
-            Goal::Disj (g1, g2) => {
-                mplus (
-                    g1.apply (relation_dic, subst.clone ()),
-                    g2.apply (relation_dic, subst))
-            }
-            Goal::Conj (g1, g2) => {
-                bind (
-                    g1.apply (relation_dic, subst),
-                    g2,
-                    relation_dic)
-            }
-            Goal::Call (TupleTerm {
-                head,
-                body,
-            }) => {
-                if let Some (
-                    relation
-                ) = relation_dic.get (&head) {
-                    let goal = relation.apply (body);
-                    goal.apply (relation_dic, subst)
-                } else {
-                    mzero ()
-                }
-            }
-        }
+#[derive (Clone)]
+#[derive (Debug)]
+#[derive (PartialEq)]
+pub struct Frame {
+    name: String,
+    disj: Disj,
+    index: usize,
+    backup_subst: Subst,
+}
+
+impl <'a> Solving <'a> {
+    fn next_subst (&mut self) -> Option <Subst> {
+        unimplemented! ()
     }
-}
-
-impl Goal {
-    fn zero () -> Arc <Goal> {
-        Arc::new (Goal::Zero)
-    }
-}
-
-impl Goal {
-    fn unit () -> Arc <Goal> {
-        Arc::new (Goal::Unit)
-    }
-}
-
-impl Goal {
-    fn eqo (u: Term, v: Term) -> Arc <Goal> {
-        Arc::new (Goal::Eqo (u, v))
-    }
-}
-
-impl Goal {
-    fn disj (g1: Arc <Goal>, g2: Arc <Goal>) -> Arc <Goal> {
-        Arc::new (Goal::Disj (g1, g2))
-    }
-}
-
-impl Goal {
-    fn conj (g1: Arc <Goal>, g2: Arc <Goal>) -> Arc <Goal> {
-        Arc::new (Goal::Conj (g1, g2))
-    }
-}
-
-impl Goal {
-    fn call (name: &str, body: Vec <Term>) -> Arc <Goal> {
-        Arc::new (Goal::Call (TupleTerm {
-            head: name.to_string (),
-            body,
-        }))
-    }
-}
-
-type Stream = Box <Iterator <Item = Subst>>;
-
-fn mzero () -> Stream {
-    Box::new (Vec::new () .into_iter ())
-}
-
-fn unit (subst: Subst) -> Stream {
-    Box::new (vec! [subst] .into_iter ())
-}
-
-fn mplus (mut s1: Stream, s2: Stream) -> Stream {
-    if let Some (subst) = s1.next () {
-        Box::new (unit (subst) .chain (s2) .chain (s1))
-    } else {
-        s2
-    }
-}
-
-fn bind (
-    mut stream: Stream,
-    goal: &Goal,
-    relation_dic: &Dic <Relation>,
-) -> Stream {
-    if let Some (subst) = stream.next () {
-        mplus (goal.apply (relation_dic, subst),
-               bind (stream, goal, relation_dic))
-    } else {
-        mzero ()
-    }
-}
-
-fn query (
-    relation_dic: &Dic <Relation>,
-    relation: &Relation,
-    term_vec: &Vec <Term>,
-) -> Stream {
-    let goal = relation.apply (term_vec);
-    goal.apply (relation_dic, Subst::new ())
 }
 
 #[test]
 fn test_unify () {
     let u = Term::var ("u");
     let v = Term::var ("v");
-    let _subst = Subst::new () .unify (
+    let subst = Subst::new () .unify (
         &Term::tuple ("tuple", vec! [
             u.clone (),
             v.clone (),
@@ -359,68 +223,7 @@ fn test_unify () {
             v.clone (),
             Term::tuple ("hi", vec! []),
         ]));
-    // println! ("{:?}", subst.unwrap ());
-}
-
-#[test]
-fn test_goal () {
-    let goal = Goal::conj (
-        Goal::eqo (
-            Term::var ("u"),
-            Term::tuple ("love", vec! [])),
-        Goal::disj (
-            Goal::eqo (
-                Term::var ("v"),
-                Term::tuple ("bye", vec! [])),
-            Goal::eqo (
-                Term::var ("w"),
-                Term::tuple ("hi", vec! []))));
-    let relation_dic = Dic::new ();
-    for _subst in goal.apply (&relation_dic, Subst::new ()) {
-        // println! ("- {:?}", subst);
-    }
-}
-
-#[test]
-fn test_query () {
-    // fives-t:five (five-c)
-    // fives-t:more (x) { fives-t (x) }
-    let x = Term::var ("x");
-    let relation = Relation::Disj (
-        vec! [
-            ConjRelation {
-                head: vec! [Term::tuple ("five-c", vec! [])],
-                body: vec! [],
-            },
-            ConjRelation {
-                head: vec! [x.clone ()],
-                body: vec! [
-                    TupleTerm {
-                        head: "fives-t".to_string (),
-                        body: vec! [x.clone ()],
-                    },
-                ],
-            },
-        ]);
-    let _relation = Relation::Conj (
-        ConjRelation {
-            head: vec! [Term::tuple ("five-c", vec! [])],
-            body: vec! [],
-        });
-    let mut relation_dic = Dic::new ();
-    relation_dic.ins ("fives-t", Some (relation.clone ()));
-    let term_vec = vec! [Term::var ("u")];
-    // let stream = query (
-    //     &relation_dic,
-    //     &relation,
-    //     &term_vec);
-    // for subst in stream {
-    //     println! ("- {:?}", subst);
-    // }
-
-    let _goal = relation.apply (&term_vec);
-    // println! ("- goal = {:?}", goal);
-    // goal.apply (&relation_dic, Subst::new ());
+    println! ("{:?}", subst.unwrap ());
 }
 
 #[test]
