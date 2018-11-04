@@ -1,4 +1,5 @@
 #![feature (uniform_paths)]
+#![feature (bind_by_move_pattern_guards)]
 
 #![allow (unused_parens)]
 #![allow (dead_code)]
