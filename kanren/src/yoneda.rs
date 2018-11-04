@@ -1,11 +1,3 @@
-#![feature (uniform_paths)]
-#![feature (bind_by_move_pattern_guards)]
-
-#![allow (unused_parens)]
-#![allow (dead_code)]
-#![allow (unused_macros)]
-#![allow (non_camel_case_types)]
-
 use std::vec;
 use std::sync::Arc;
 use uuid::Uuid;
