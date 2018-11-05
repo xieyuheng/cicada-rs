@@ -544,7 +544,7 @@ fn test_list_append () {
     let mut proving = wissen.prove (query);
     let mut counter = 10;
     while let Some (subst) = proving.next_subst () {
-        // counter -= 1;
+        counter -= 1;
         if counter > 0 {
             println! ("- append : {:#?}", subst);
         } else {
