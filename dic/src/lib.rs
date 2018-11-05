@@ -6,7 +6,7 @@ use std::vec;
 
 #[derive (Clone)]
 #[derive (Debug)]
-#[derive (PartialEq)]
+#[derive (PartialEq, Eq)]
 pub struct Entry <T> {
     pub name: String,
     pub value: Option <T>,
@@ -14,7 +14,7 @@ pub struct Entry <T> {
 
 #[derive (Clone)]
 #[derive (Debug)]
-#[derive (PartialEq)]
+#[derive (PartialEq, Eq)]
 pub struct Dic <T> {
     index_map: HashMap <String, usize>,
     entry_vector: Vec <Entry <T>>,

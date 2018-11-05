@@ -115,7 +115,7 @@ impl Term {
 
 #[derive (Clone)]
 #[derive (Debug)]
-#[derive (PartialEq)]
+#[derive (PartialEq, Eq, Hash)]
 pub enum Subst {
     Null,
     Cons {
@@ -216,7 +216,7 @@ impl Subst {
 #[derive (Debug)]
 #[derive (PartialEq, Eq, Hash)]
 pub enum Prop {
-    Disj (Vec <Prop>),
+    Disj (Vec <String>),
     Conj (Vec <Term>, Vec <Query>),
 }
 
@@ -226,13 +226,8 @@ impl Prop {
         var_map: &mut HashMap <VarTerm, VarTerm>,
     ) -> Prop {
         match self {
-            Prop::Disj (prop_vec) => {
-                let mut new_prop_vec = Vec::new ();
-                for prop in prop_vec {
-                    new_prop_vec.push (
-                        prop.duplicate (var_map));
-                }
-                Prop::Disj (new_prop_vec)
+            Prop::Disj (_name_vec) => {
+                self.clone ()
             }
             Prop::Conj (args, query_vec) => {
                 let mut new_args = Vec::new ();
@@ -255,6 +250,52 @@ impl Prop {
     fn fresh (&self) -> Prop {
         let mut var_map = HashMap::new ();
         self.duplicate (&mut var_map)
+    }
+}
+
+impl Prop {
+    fn apply (
+        self,
+        args: &Vec <Term>,
+        mut subst: Subst,
+    ) -> Option <(Vec <Vec <Arc <Query>>>, Subst)> {
+        match self {
+            Prop::Disj (name_vec) => {
+                let mut query_matrix = Vec::new ();
+                for name in name_vec {
+                    let query = Arc::new (Query {
+                        name: name,
+                        args: args.clone (),
+                    });
+                    query_matrix.push (vec! [query]);
+                }
+                Some ((query_matrix, subst))
+            }
+            Prop::Conj (terms, query_vec) => {
+                if args.len () != terms.len () {
+                    eprintln! ("- [warning] Prop::apply");
+                    eprintln! ("  arity mismatch");
+                    return None;
+                }
+                let zip = args.iter () .zip (terms.iter ());
+                for (u, v) in zip {
+                    if let Some (
+                        new_subst
+                    ) = subst.unify (u, v) {
+                        subst = new_subst;
+                    } else {
+                        return None;
+                    }
+                }
+                let query_matrix = vec! [
+                    query_vec
+                        .into_iter ()
+                        .map (|x| Arc::new (x))
+                        .collect ()
+                ];
+                Some ((query_matrix, subst))
+            }
+        }
     }
 }
 
@@ -285,9 +326,21 @@ impl Query {
 
 #[derive (Clone)]
 #[derive (Debug)]
-#[derive (PartialEq)]
+#[derive (PartialEq, Eq)]
 pub struct Wissen {
     prop_dic: Dic <Prop>,
+}
+
+impl Wissen {
+    fn find_prop (&self, name: &str) -> Option <Prop> {
+        if let Some (
+            prop
+        ) = self.prop_dic.get (name) {
+            Some (prop.fresh ())
+        } else {
+            None
+        }
+    }
 }
 
 impl Wissen {
@@ -295,43 +348,98 @@ impl Wissen {
         &'a self,
         query: Query,
     ) -> Proving <'a> {
-        let trace = Trace {
-            subst: Subst::new (),
-            query_vec: vec! [Arc::new (query)],
-        };
-        let mut queue = VecDeque::new ();
-        queue.push_back (trace);
-        Proving {
+        let proof = Proof {
             wissen: self,
-            queue,
+            subst: Subst::new (),
+            query_queue: vec! [Arc::new (query)] .into (),
+        };
+        Proving {
+            proof_queue: vec! [proof] .into (),
         }
     }
 }
 
 #[derive (Clone)]
 #[derive (Debug)]
-#[derive (PartialEq)]
+#[derive (PartialEq, Eq)]
 pub struct Proving <'a> {
-    wissen: &'a Wissen,
-    queue: VecDeque <Trace>,
-}
-
-#[derive (Clone)]
-#[derive (Debug)]
-#[derive (PartialEq)]
-pub struct Trace {
-    subst: Subst,
-    query_vec: Vec <Arc <Query>>,
+    proof_queue: VecDeque <Proof <'a>>,
 }
 
 impl <'a> Proving <'a> {
     fn next_subst (&mut self) -> Option <Subst> {
-        if let Some (frame) = self.queue.pop_front () {
-            unimplemented!()
+        while let Some (
+            proof
+        ) = self.proof_queue.pop_front () {
+            // println! ("proof = {:?}", proof);
+            // println! ("self = {:?}", self);
+            match proof.step () {
+                ProofStep::Finished (subst) => {
+                    return Some (subst);
+                }
+                ProofStep::MoreTodo (proof_queue) => {
+                    for proof in proof_queue {
+                        // self.proof_queue.push_front (proof);
+                        self.proof_queue.push_back (proof);
+                    }
+                }
+                ProofStep::Fail => {}
+            }
+        }
+        return None;
+    }
+}
+
+#[derive (Clone)]
+#[derive (Debug)]
+#[derive (PartialEq, Eq)]
+pub struct Proof <'a> {
+    wissen: &'a Wissen,
+    subst: Subst,
+    query_queue: VecDeque <Arc <Query>>,
+}
+
+impl <'a> Proof <'a> {
+    fn step (mut self) -> ProofStep <'a> {
+        if let Some (query) = self.query_queue.pop_front () {
+            if let Some (
+                prop
+            ) = self.wissen.find_prop (&query.name) {
+                let mut proof_queue = VecDeque::new ();
+                if let Some (
+                    (query_matrix, new_subst)
+                ) = prop.apply (&query.args, self.subst.clone ()) {
+                    for query_vec in query_matrix {
+                        let mut proof = self.clone ();
+                        proof.subst = new_subst.clone ();
+                        let rev = query_vec.into_iter () .rev ();
+                        for query in rev {
+                            proof.query_queue.push_front (query);
+                        }
+                        proof_queue.push_back (proof);
+                    }
+                    ProofStep::MoreTodo (proof_queue)
+                } else {
+                    ProofStep::Fail
+                }
+            } else {
+                eprintln! ("- [warning] Proof::step");
+                eprintln! ("  undefined prop : {}", query.name);
+                ProofStep::Fail
+            }
         } else {
-            None
+            ProofStep::Finished (self.subst)
         }
     }
+}
+
+#[derive (Clone)]
+#[derive (Debug)]
+#[derive (PartialEq, Eq)]
+pub enum ProofStep <'a> {
+    Finished (Subst),
+    MoreTodo (VecDeque <Proof <'a>>),
+    Fail,
 }
 
 #[test]
@@ -339,15 +447,110 @@ fn test_unify () {
     let u = Term::var ("u");
     let v = Term::var ("v");
     let subst = Subst::new () .unify (
-        &Term::tuple ("tuple", vec! [
+        &Term::tuple ("pair-c", vec! [
             u.clone (),
             v.clone (),
         ]),
-        &Term::tuple ("tuple", vec! [
+        &Term::tuple ("pair-c", vec! [
             v.clone (),
             Term::tuple ("hi", vec! []),
         ]));
-    println! ("{:#?}", subst.unwrap ());
+    println! ("- unify : {:#?}", subst.unwrap ());
+}
+
+#[test]
+fn test_love () {
+    let mut wissen = Wissen {
+        prop_dic: Dic::new (),
+    };
+    let prop = Prop::Conj (
+        vec! [Term::tuple ("you", vec! [])],
+        vec! []);
+    wissen.prop_dic.ins ("love-t", Some (prop));
+    let query = Query {
+        name: "love-t".to_string (),
+        args: vec! [Term::var ("u")],
+    };
+    let mut proving = wissen.prove (query);
+    while let Some (subst) = proving.next_subst () {
+        println! ("- love : {:#?}", subst);
+    }
+}
+
+// list-append-t = disj (
+//     zero-append-t
+//     succ-append-t
+// ) {}
+// zero-append-t = conj (null-c succ succ) {}
+// succ-append-t = conj (
+//     cons-c (car cdr)
+//     succ
+//     cons-c (car o-cdr)
+// ) {
+//     list-append-t (cdr succ o-cdr)
+// }
+
+#[test]
+fn test_list_append () {
+    let mut wissen = Wissen {
+        prop_dic: Dic::new (),
+    };
+    let list_append_t = Prop::Disj (
+        vec! [
+            "zero-append-t".to_string (),
+            "succ-append-t".to_string (),
+        ]);
+    wissen.prop_dic.ins ("list-append-t", Some (list_append_t));
+    let succ = Term::var ("succ");
+    let zero_append_t = Prop::Conj (
+        vec! [
+            Term::tuple ("null-c", vec! []),
+            succ.clone (),
+            succ
+        ],
+        vec! []);
+    wissen.prop_dic.ins ("zero-append-t", Some (zero_append_t));
+    let car = Term::var ("car");
+    let cdr = Term::var ("cdr");
+    let succ = Term::var ("succ");
+    let o_cdr = Term::var ("o-cdr");
+    let succ_append_t = Prop::Conj (
+        vec! [
+            Term::tuple ("cons-c",
+                         vec! [car.clone (),
+                               cdr.clone ()]),
+            succ.clone (),
+            Term::tuple ("cons-c",
+                         vec! [car,
+                               o_cdr.clone ()]),
+        ],
+        vec! [
+            Query {
+                name: "list-append-t".to_string (),
+                args: vec! [
+                    cdr,
+                    succ,
+                    o_cdr,
+                ],
+            }
+        ]);
+    wissen.prop_dic.ins ("succ-append-t", Some (succ_append_t));
+    let query = Query {
+        name: "list-append-t".to_string (),
+        args: vec! [Term::var ("x"),
+                    Term::var ("y"),
+                    Term::var ("z")],
+    };
+    let mut proving = wissen.prove (query);
+    let mut counter = 10;
+    while let Some (subst) = proving.next_subst () {
+        // counter -= 1;
+        if counter > 0 {
+            println! ("- append : {:#?}", subst);
+        } else {
+            break;
+        }
+    }
 }
 
 #[test]
