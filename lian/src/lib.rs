@@ -480,7 +480,7 @@ fn test_love () {
 // list-append-t = disj (
 //     zero-append-t
 //     succ-append-t
-// ) {}
+// ) {} []
 // zero-append-t = conj (null-c succ succ) {}
 // succ-append-t = conj (
 //     cons-c (car cdr)
