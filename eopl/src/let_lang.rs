@@ -2,8 +2,11 @@ use std::sync::Arc;
 use error_report::{
     Span,
     ErrorMsg,
-    ErrorCtx,
     ErrorInCtx,
+};
+#[cfg (test)]
+use error_report::{
+    ErrorCtx,
 };
 use mexp_parser::{
     SyntaxTable,
@@ -15,12 +18,18 @@ use mexp_parser::{
 #[derive (Debug)]
 #[derive (PartialEq)]
 pub enum Exp {
-    Const { num: isize },
-    ZeroP { exp1: Arc <Exp> },
-    If { exp1: Arc <Exp>, exp2: Arc <Exp>, exp3: Arc <Exp> },
-    Diff { exp1: Arc <Exp>, exp2: Arc <Exp> },
-    Var { var: Var },
-    Let { var: Var, exp1: Arc <Exp>, body: Arc <Exp> },
+    Const { span: Span, num: isize },
+    ZeroP { span: Span, exp1: Arc <Exp> },
+    If { span: Span,
+         exp1: Arc <Exp>,
+         exp2: Arc <Exp>,
+         exp3: Arc <Exp> },
+    Diff { span: Span,
+           exp1: Arc <Exp>,
+           exp2: Arc <Exp> },
+    Var { span: Span, var: Var },
+    Let { span: Span, var: Var, exp1: Arc <Exp>,
+          body: Arc <Exp> },
 }
 
 pub type Var = String;
@@ -53,7 +62,8 @@ fn mexp_to_const_exp <'a> (
     } = mexp {
         if num_symbol_p (symbol) {
             let num = symbol.parse::<isize> () .unwrap ();
-            Ok (Exp::Const { num })
+            let span = span.clone ();
+            Ok (Exp::Const { span, num })
         } else {
             ErrorInCtx::new ()
                 .head ("unknown symbol")
@@ -78,7 +88,8 @@ fn mexp_to_var_exp <'a> (
     } = mexp {
         if var_symbol_p (symbol) {
             let var = symbol.to_string ();
-            Ok (Exp::Var { var })
+            let span = span.clone ();
+            Ok (Exp::Var { span, var })
         } else {
             ErrorInCtx::new ()
                 .head ("unknown symbol")
@@ -114,6 +125,7 @@ fn mexp_to_zero_p_exp <'a> (
                     let mexp = body.pop () .unwrap ();
                     let exp1 = mexp_to_exp (&mexp)?;
                     Ok (Exp::ZeroP {
+                        span: apply_span.clone (),
                         exp1: Arc::new (exp1),
                     })
                 } else {
@@ -162,6 +174,7 @@ fn mexp_to_diff_exp <'a> (
                     let mexp = body.pop () .unwrap ();
                     let exp1 = mexp_to_exp (&mexp)?;
                     Ok (Exp::Diff {
+                        span: apply_span.clone (),
                         exp1: Arc::new (exp1),
                         exp2: Arc::new (exp2),
                     })
@@ -213,6 +226,7 @@ fn mexp_to_if_exp <'a> (
                     let mexp = body.pop () .unwrap ();
                     let exp1 = mexp_to_exp (&mexp)?;
                     Ok (Exp::If {
+                        span: apply_span.clone (),
                         exp1: Arc::new (exp1),
                         exp2: Arc::new (exp2),
                         exp3: Arc::new (exp3),
@@ -273,6 +287,7 @@ fn mexp_to_let_exp <'a> (
                             } => {
                                 let exp1 = mexp_to_exp (&rhs)?;
                                 Ok (Exp::Let {
+                                    span: apply_span.clone (),
                                     var: symbol.to_string (),
                                     exp1: Arc::new (exp1),
                                     body: Arc::new (exp2),
@@ -359,14 +374,19 @@ pub enum Env {
 }
 
 impl Env {
-    pub fn apply (&self, var: &Var) -> Val {
+    pub fn apply (
+        &self,
+        var: &Var,
+    ) -> Result <Val, ErrorInCtx> {
         match self {
             Env::Null {} => {
-                panic! ("Env::apply fail");
+                ErrorInCtx::new ()
+                    .head ("Env::apply fail")
+                    .wrap_in_err ()
             }
             Env::Cons { var: head, val, rest } => {
                 if head == var {
-                    val.clone ()
+                    Ok (val.clone ())
                 } else {
                     rest.apply (var)
                 }
@@ -376,50 +396,63 @@ impl Env {
 }
 
 impl Env {
-    pub fn eval (&self, exp: &Exp) -> Val {
+    pub fn eval (
+        &self,
+        exp: &Exp,
+    ) -> Result <Val, ErrorInCtx> {
         match exp {
-            Exp::Const { num } => {
-                Val::Num { num: *num }
+            Exp::Const { num, .. } => {
+                Ok (Val::Num { num: *num })
             }
-            Exp::ZeroP { exp1 } => {
+            Exp::ZeroP { exp1, .. } => {
                 let boolean = {
-                    self.eval (exp1) == Val::Num { num: 0 }
+                    self.eval (exp1)? == Val::Num { num: 0 }
                 };
-                Val::Bool { boolean }
+                Ok (Val::Bool { boolean })
             }
-            Exp::If { exp1, exp2, exp3 } => {
-                if let Val::Bool { boolean } = self.eval (exp1) {
+            Exp::If { exp1, exp2, exp3, span } => {
+                if let Val::Bool { boolean } = self.eval (exp1)? {
                     if boolean {
                         self.eval (exp2)
                     } else {
                         self.eval (exp3)
                     }
                 } else {
-                    panic! ("eval Exp:If fail")
+                    ErrorInCtx::new ()
+                        .head ("eval Exp:If fail")
+                        .span (span.clone ())
+                        .wrap_in_err ()
                 }
             }
-            Exp::Diff { exp1, exp2 } => {
-                let num1 = if let Val::Num { num }
-                = self.eval (exp1) {
+            Exp::Diff { exp1, exp2, span } => {
+                let num1 = if let Val::Num {
+                    num
+                } = self.eval (exp1)? {
                     num
                 } else {
-                    panic! ("eval Exp::Diff fail")
+                    return ErrorInCtx::new ()
+                        .head ("eval Exp::Diff fail")
+                        .span (span.clone ())
+                        .wrap_in_err ();
                 };
-                let num2 = if let Val::Num { num }
-                = self.eval (exp2) {
+                let num2 = if let Val::Num {
+                    num
+                } = self.eval (exp2)? {
                     num
                 } else {
-                    panic! ("eval Exp::Diff fail")
+                    return ErrorInCtx::new ()
+                        .head ("eval Exp::Diff fail")
+                        .wrap_in_err ();
                 };
-                Val::Num { num: num1 - num2 }
+                Ok (Val::Num { num: num1 - num2 })
             }
-            Exp::Var { var } => {
+            Exp::Var { var, .. } => {
                 self.apply (var)
             }
-            Exp::Let { var, exp1, body } => {
+            Exp::Let { var, exp1, body, .. } => {
                 let new_env = Env::Cons {
                     var: var.clone (),
-                    val: self.eval (exp1),
+                    val: self.eval (exp1)?,
                     rest: Arc::new (self.clone ()),
                 };
                 new_env.eval (body)
@@ -440,7 +473,8 @@ diff (3 1)
 zero-p (1)
 zero-p (0)
 
-if { zero-p (1)
+if {
+  zero-p (1)
   0
   666
 }
@@ -452,7 +486,8 @@ let {
 
 let {
   y = diff (x 3)
-  if { zero-p (y)
+  if {
+    zero-p (y)
     0
     666
   }
@@ -481,16 +516,24 @@ fn test_env_eval () {
     let input = EXAMPLE_CODE;
     let env = Env::Null {};
     let env = Env::Cons {
-       var: "x".to_string (),
-       val: Val::Num { num: 6 },
-       rest: Arc::new (env),
+        var: "x".to_string (),
+        val: Val::Num { num: 6 },
+        rest: Arc::new (env),
     };
 
     match str_to_exp_vec (input) {
         Ok (exp_vec) => {
             for exp in exp_vec {
-                let val = env.eval (&exp);
-                println! ("> {:?}\n{:?}", exp, val);
+                match env.eval (&exp) {
+                    Ok (val) => {
+                        println! ("> {:?}\n{:?}", exp, val);
+                    }
+                    Err (error) => {
+                        error.report (
+                            ErrorCtx::new ()
+                                .body (input))
+                    }
+                }
             }
         }
         Err (error) => {
