@@ -59,7 +59,7 @@
     }
     #+end_src
 
-*** mexp_to_exp
+*** exp_from_mexp
 
 ***** num_symbol_p
 
@@ -77,60 +77,30 @@
       }
       #+end_src
 
-***** mexp_to_const_exp
+***** exp_from_sym_mexp
 
       #+begin_src rust
-      fn mexp_to_const_exp <'a> (
-          mexp: &Mexp <'a>,
+      fn exp_from_sym_mexp <'a> (
+          mexp: Mexp <'a>,
       ) -> Result <Exp, ErrorInCtx> {
           if let Mexp::Sym {
               span,
-              symbol
+              symbol,
           } = mexp {
               if num_symbol_p (symbol) {
                   let num = symbol.parse::<isize> () .unwrap ();
                   Ok (Exp::Const { num })
-              } else {
-                  ErrorInCtx::new ()
-                      .head ("unknown symbol")
-                      .span (span.clone ())
-                      .wrap_in_err ()
-              }
-          } else {
-              ErrorInCtx::new ()
-                  .head ("unknown mexp")
-                  .span (mexp.span ())
-                  .note (note_about_mexp_syntax_of_exp ())
-                  .wrap_in_err ()
-          }
-      }
-      #+end_src
-
-***** mexp_to_var_exp
-
-      #+begin_src rust
-      fn mexp_to_var_exp <'a> (
-          mexp: &Mexp <'a>,
-      ) -> Result <Exp, ErrorInCtx> {
-          if let Mexp::Sym {
-              span,
-              symbol
-          } = mexp {
-              if var_symbol_p (symbol) {
+              } else if var_symbol_p (symbol) {
                   let var = symbol.to_string ();
                   Ok (Exp::Var { var })
               } else {
                   ErrorInCtx::new ()
                       .head ("unknown symbol")
-                      .span (span.clone ())
+                      .span (span)
                       .wrap_in_err ()
               }
           } else {
-              ErrorInCtx::new ()
-                  .head ("unknown mexp")
-                  .span (mexp.span ())
-                  .note (note_about_mexp_syntax_of_exp ())
-                  .wrap_in_err ()
+              panic! ("exp_from_sym_mexp")
           }
       }
       #+end_src
@@ -139,24 +109,23 @@
 
       #+begin_src rust
       fn exp_from_apply_tuple_arg <'a> (
-          mexp: &Mexp <'a>,
+          mexp: Mexp <'a>,
       ) -> Result <Exp, ErrorInCtx> {
           if let Mexp::Apply {
               span: apply_span,
               head,
               arg: Arg::Tuple {
                   span: arg_span,
-                  body,
+                  mut body,
               },
           } = mexp {
-              match **head {
+              match &*head {
                   Mexp::Sym {
                       symbol: "zero-p", ..
                   } => {
                       if body.len () == 1 {
-                          let mut body = body.clone ();
                           let mexp = body.pop () .unwrap ();
-                          let exp1 = mexp_to_exp (&mexp)?;
+                          let exp1 = exp_from_mexp (mexp)?;
                           Ok (Exp::ZeroP {
                               exp1: Arc::new (exp1),
                           })
@@ -164,7 +133,7 @@
                           ErrorInCtx::new ()
                               .head ("wrong arity of `zero-p`")
                               .line ("the arity should be 1")
-                              .span (arg_span.clone ())
+                              .span (arg_span)
                               .wrap_in_err ()
                       }
                   }
@@ -172,11 +141,10 @@
                       symbol: "diff", ..
                   } => {
                       if body.len () == 2 {
-                          let mut body = body.clone ();
                           let mexp = body.pop () .unwrap ();
-                          let exp2 = mexp_to_exp (&mexp)?;
+                          let exp2 = exp_from_mexp (mexp)?;
                           let mexp = body.pop () .unwrap ();
-                          let exp1 = mexp_to_exp (&mexp)?;
+                          let exp1 = exp_from_mexp (mexp)?;
                           Ok (Exp::Diff {
                               exp1: Arc::new (exp1),
                               exp2: Arc::new (exp2),
@@ -185,156 +153,48 @@
                           ErrorInCtx::new ()
                               .head ("wrong arity of `diff`")
                               .line ("the arity should be 2")
-                              .span (arg_span.clone ())
+                              .span (arg_span)
                               .wrap_in_err ()
                       }
                   }
                   _ => {
                       ErrorInCtx::new ()
                           .head ("unknown apply")
-                          .span (apply_span.clone ())
+                          .span (apply_span)
                           .wrap_in_err ()
                   }
               }
           } else {
-              ErrorInCtx::new ()
-                  .head ("unknown mexp")
-                  .span (mexp.span ())
-                  .note (note_about_mexp_syntax_of_exp ())
-                  .wrap_in_err ()
+              panic! ("exp_from_apply_tuple_arg")
           }
       }
       #+end_src
 
-***** mexp_to_zero_p_exp
+***** exp_from_apply_block_arg
 
       #+begin_src rust
-      fn mexp_to_zero_p_exp <'a> (
-          mexp: &Mexp <'a>,
-      ) -> Result <Exp, ErrorInCtx> {
-          if let Mexp::Apply {
-              span: apply_span,
-              head,
-              arg: Arg::Tuple {
-                  span: arg_span,
-                  body,
-              },
-          } = mexp {
-              match **head {
-                  Mexp::Sym {
-                      symbol: "zero-p", ..
-                  } => {
-                      if body.len () == 1 {
-                          let mut body = body.clone ();
-                          let mexp = body.pop () .unwrap ();
-                          let exp1 = mexp_to_exp (&mexp)?;
-                          Ok (Exp::ZeroP {
-                              exp1: Arc::new (exp1),
-                          })
-                      } else {
-                          ErrorInCtx::new ()
-                              .head ("wrong arity of `zero-p`")
-                              .line ("the arity should be 1")
-                              .span (arg_span.clone ())
-                              .wrap_in_err ()
-                      }
-                  }
-                  _ => {
-                      ErrorInCtx::new ()
-                          .head ("unknown apply")
-                          .span (apply_span.clone ())
-                          .wrap_in_err ()
-                  }
-              }
-          } else {
-              ErrorInCtx::new ()
-                  .head ("unknown mexp")
-                  .span (mexp.span ())
-                  .note (note_about_mexp_syntax_of_exp ())
-                  .wrap_in_err ()
-          }
-      }
-      #+end_src
-
-***** mexp_to_diff_exp
-
-      #+begin_src rust
-      fn mexp_to_diff_exp <'a> (
-          mexp: &Mexp <'a>,
-      ) -> Result <Exp, ErrorInCtx> {
-          if let Mexp::Apply {
-              span: apply_span,
-              head,
-              arg: Arg::Tuple {
-                  span: arg_span,
-                  body,
-              },
-          } = mexp {
-              match **head {
-                  Mexp::Sym {
-                      symbol: "diff", ..
-                  } => {
-                      if body.len () == 2 {
-                          let mut body = body.clone ();
-                          let mexp = body.pop () .unwrap ();
-                          let exp2 = mexp_to_exp (&mexp)?;
-                          let mexp = body.pop () .unwrap ();
-                          let exp1 = mexp_to_exp (&mexp)?;
-                          Ok (Exp::Diff {
-                              exp1: Arc::new (exp1),
-                              exp2: Arc::new (exp2),
-                          })
-                      } else {
-                          ErrorInCtx::new ()
-                              .head ("wrong arity of `diff`")
-                              .line ("the arity should be 2")
-                              .span (arg_span.clone ())
-                              .wrap_in_err ()
-                      }
-                  }
-                  _ => {
-                      ErrorInCtx::new ()
-                          .head ("unknown apply")
-                          .span (apply_span.clone ())
-                          .wrap_in_err ()
-                  }
-              }
-          } else {
-              ErrorInCtx::new ()
-                  .head ("unknown mexp")
-                  .span (mexp.span ())
-                  .note (note_about_mexp_syntax_of_exp ())
-                  .wrap_in_err ()
-          }
-      }
-      #+end_src
-
-***** mexp_to_if_exp
-
-      #+begin_src rust
-      fn mexp_to_if_exp <'a> (
-          mexp: &Mexp <'a>,
+      fn exp_from_apply_block_arg <'a> (
+          mexp: Mexp <'a>,
       ) -> Result <Exp, ErrorInCtx> {
           if let Mexp::Apply {
               span: apply_span,
               head,
               arg: Arg::Block {
                   span: arg_span,
-                  body,
+                  mut body,
               },
           } = mexp {
-              match **head {
+              match &*head {
                   Mexp::Sym {
                       symbol: "if", ..
                   } => {
                       if body.len () == 3 {
-                          let mut body = body.clone ();
                           let mexp = body.pop () .unwrap ();
-                          let exp3 = mexp_to_exp (&mexp)?;
+                          let exp3 = exp_from_mexp (mexp)?;
                           let mexp = body.pop () .unwrap ();
-                          let exp2 = mexp_to_exp (&mexp)?;
+                          let exp2 = exp_from_mexp (mexp)?;
                           let mexp = body.pop () .unwrap ();
-                          let exp1 = mexp_to_exp (&mexp)?;
+                          let exp1 = exp_from_mexp (mexp)?;
                           Ok (Exp::If {
                               exp1: Arc::new (exp1),
                               exp2: Arc::new (exp2),
@@ -344,49 +204,16 @@
                           ErrorInCtx::new ()
                               .head ("syntax error in `if {}`")
                               .line ("there must be 3 <exp> in `{}`")
-                              .span (arg_span.clone ())
+                              .span (arg_span)
                               .wrap_in_err ()
                       }
                   }
-                  _ => {
-                      ErrorInCtx::new ()
-                          .head ("unknown apply")
-                          .span (apply_span.clone ())
-                          .wrap_in_err ()
-                  }
-              }
-          } else {
-              ErrorInCtx::new ()
-                  .head ("unknown mexp")
-                  .span (mexp.span ())
-                  .note (note_about_mexp_syntax_of_exp ())
-                  .wrap_in_err ()
-          }
-      }
-      #+end_src
-
-***** mexp_to_let_exp
-
-      #+begin_src rust
-      fn mexp_to_let_exp <'a> (
-          mexp: &Mexp <'a>,
-      ) -> Result <Exp, ErrorInCtx> {
-          if let Mexp::Apply {
-              span: apply_span,
-              head,
-              arg: Arg::Block {
-                  span: arg_span,
-                  body,
-              },
-          } = mexp {
-              match **head {
                   Mexp::Sym {
                       symbol: "let", ..
                   } => {
                       if body.len () == 2 {
-                          let mut body = body.clone ();
                           let mexp = body.pop () .unwrap ();
-                          let exp2 = mexp_to_exp (&mexp)?;
+                          let exp2 = exp_from_mexp (mexp)?;
                           let mexp = body.pop () .unwrap ();
                           match mexp {
                               Mexp::Infix {
@@ -398,7 +225,8 @@
                                       span: _var_span,
                                       symbol,
                                   } => {
-                                      let exp1 = mexp_to_exp (&rhs)?;
+                                      let exp1 = exp_from_mexp (
+                                          (*rhs).clone ())?;
                                       Ok (Exp::Let {
                                           var: symbol.to_string (),
                                           exp1: Arc::new (exp1),
@@ -425,54 +253,62 @@
                           ErrorInCtx::new ()
                               .head ("syntax error in `let {}`")
                               .line ("there must be 2 <exp> in `{}`")
-                              .span (arg_span.clone ())
+                              .span (arg_span)
                               .wrap_in_err ()
                       }
                   }
                   _ => {
                       ErrorInCtx::new ()
                           .head ("unknown apply")
-                          .span (apply_span.clone ())
+                          .span (apply_span)
                           .wrap_in_err ()
                   }
               }
           } else {
-              ErrorInCtx::new ()
-                  .head ("unknown mexp")
-                  .span (mexp.span ())
-                  .note (note_about_mexp_syntax_of_exp ())
-                  .wrap_in_err ()
+              panic! ("exp_from_apply_block_arg")
           }
       }
       #+end_src
 
-***** mexp_to_exp
+***** exp_from_mexp
 
       #+begin_src rust
-      pub fn mexp_to_exp <'a> (
-          mexp: &Mexp <'a>,
+      pub fn exp_from_mexp <'a> (
+          mexp: Mexp <'a>,
       ) -> Result <Exp, ErrorInCtx> {
-          mexp_to_const_exp (mexp)
-              .or (mexp_to_var_exp (mexp))
-              .or (mexp_to_zero_p_exp (mexp))
-              .or (mexp_to_diff_exp (mexp))
-              .or (mexp_to_zero_p_exp (mexp))
-              .or (mexp_to_if_exp (mexp))
-              .or (mexp_to_let_exp (mexp))
+          match mexp {
+              Mexp::Sym { ..
+              } => exp_from_sym_mexp (mexp),
+              Mexp::Apply {
+                  arg: Arg::Tuple { .. },
+                  ..
+              } => exp_from_apply_tuple_arg (mexp),
+              Mexp::Apply {
+                  arg: Arg::Block { .. },
+                  ..
+              } => exp_from_apply_block_arg (mexp),
+              _ => {
+                  ErrorInCtx::new ()
+                      .head ("unknown mexp")
+                      .span (mexp.span ())
+                      .note (note_about_mexp_syntax_of_exp ())
+                      .wrap_in_err ()
+              }
+          }
       }
       #+end_src
 
-*** str_to_exp_vec
+*** exp_vec_from_str
 
     #+begin_src rust
-    pub fn str_to_exp_vec (
+    pub fn exp_vec_from_str (
         s: &str,
     ) -> Result <Vec <Exp>, ErrorInCtx> {
         let syntax_table = SyntaxTable::default ();
         let mexp_vec = syntax_table.parse (s)?;
         let mut exp_vec = Vec::new ();
-        for mexp in &mexp_vec {
-            exp_vec.push (mexp_to_exp (mexp)?);
+        for mexp in mexp_vec {
+            exp_vec.push (exp_from_mexp (mexp)?);
         }
         Ok (exp_vec)
     }
@@ -601,7 +437,8 @@
     zero-p (1)
     zero-p (0)
 
-    if { zero-p (1)
+    if {
+      zero-p (1)
       0
       666
     }
@@ -613,7 +450,8 @@
 
     let {
       y = diff (x 3)
-      if { zero-p (y)
+      if {
+        zero-p (y)
         0
         666
       }
@@ -621,13 +459,13 @@
     ";
     #+end_src
 
-*** test_str_to_exp_vec
+*** test_exp_vec_from_str
 
     #+begin_src rust
     #[test]
-    fn test_str_to_exp_vec () {
+    fn test_exp_vec_from_str () {
         let input = EXAMPLE_CODE;
-        match str_to_exp_vec (input) {
+        match exp_vec_from_str (input) {
             Ok (exp_vec) => {
                 for exp in exp_vec {
                     println! ("- exp = {:?}", exp);
@@ -655,7 +493,7 @@
            rest: Arc::new (env),
         };
 
-        match str_to_exp_vec (input) {
+        match exp_vec_from_str (input) {
             Ok (exp_vec) => {
                 for exp in exp_vec {
                     let val = env.eval (&exp);
