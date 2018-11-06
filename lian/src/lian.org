@@ -1,6 +1,6 @@
 #+property: tangle lib.rs
 #+title: lian
-- Wissen::to_string
+
 - Proving::step_by_step -- with report
 - Deduction
 - test_mexp
@@ -611,6 +611,23 @@
             Proving {
                 proof_queue: vec! [proof] .into (),
             }
+        }
+    }
+    #+end_src
+
+*** Wissen::to_string
+
+    #+begin_src rust
+    impl ToString for Wissen {
+        fn to_string (&self) -> String {
+            let mut s = String::new ();
+            for (name, prop) in self.prop_dic.iter () {
+                s += name;
+                s += " = ";
+                s += &prop.to_string ();
+                s += "\n";
+            }
+            format! ("<wissen>\n{}</wissen>\n", s)
         }
     }
     #+end_src

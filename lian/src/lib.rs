@@ -454,6 +454,19 @@ impl Wissen {
     }
 }
 
+impl ToString for Wissen {
+    fn to_string (&self) -> String {
+        let mut s = String::new ();
+        for (name, prop) in self.prop_dic.iter () {
+            s += name;
+            s += " = ";
+            s += &prop.to_string ();
+            s += "\n";
+        }
+        format! ("<wissen>\n{}</wissen>\n", s)
+    }
+}
+
 #[derive (Clone)]
 #[derive (Debug)]
 #[derive (PartialEq, Eq)]
