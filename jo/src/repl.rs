@@ -5,8 +5,8 @@ use linefeed as lf;
 
 type CharVec = Vec <char>;
 
-static NEW_PROMPT: &'static str = ">>> ";
-static BRA_PROMPT: &'static str = "... ";
+static NEW_PROMPT: &'static str = "> ";
+static BRA_PROMPT: &'static str = ". ";
 
 fn new_env () -> jojo::Env {
     let mut env = jojo::Env::new ();

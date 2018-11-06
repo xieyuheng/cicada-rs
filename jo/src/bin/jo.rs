@@ -10,7 +10,7 @@ fn main () -> io::Result <()> {
         .arg (cmd::Arg::with_name ("FILE")
               .help ("Paths to script files")
               .multiple (true))
-        .after_help ("REPL:  type `jojo` to run the repl")
+        .after_help ("REPL:  type `jo` to run the repl")
         .get_matches ();
     if matches.occurrences_of ("FILE") == 0 {
         jo::repl::repl ()
