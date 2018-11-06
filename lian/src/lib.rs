@@ -13,6 +13,19 @@ use std::collections::HashMap;
 use uuid::Uuid;
 use dic::Dic;
 
+fn vec_to_string <T> (vec: &Vec <T>, delimiter: &str) -> String
+where T : ToString {
+    let mut s = String::new ();
+    for x in vec {
+        s += &x.to_string ();
+        s += delimiter;
+    }
+    for _ in 0 .. delimiter.len () {
+        s.pop ();
+    }
+    s
+}
+
 #[derive (Clone)]
 #[derive (Debug)]
 #[derive (PartialEq, Eq, Hash)]
@@ -27,6 +40,14 @@ pub enum Term {
 pub struct VarTerm {
     name: String,
     id: Id,
+}
+
+impl ToString for VarTerm {
+    fn to_string (&self) -> String {
+        // format! ("{}#{}", self.name, self.id.to_string ())
+        // format! ("{}", self.name)
+        format! ("{}#{}", self.name, &self.id.to_string () [0..2])
+    }
 }
 
 #[derive (Clone)]
@@ -47,7 +68,7 @@ impl fmt::Debug for Id {
 
 impl ToString for Id {
     fn to_string (&self) -> String {
-        format! ("{}", id.0)
+        format! ("{}", self.0)
     }
 }
 
@@ -57,6 +78,19 @@ impl ToString for Id {
 pub struct TupleTerm {
     head: String,
     body: Vec <Term>,
+}
+
+impl ToString for TupleTerm {
+    fn to_string (&self) -> String {
+        if self.body.len () == 0 {
+            format! ("{}", self.head)
+        } else {
+            format! (
+                "{} ({})",
+                self.head,
+                vec_to_string (&self.body, " "))
+        }
+    }
 }
 
 impl Term {
@@ -122,26 +156,8 @@ impl Term {
 impl ToString for Term {
     fn to_string (&self) -> String {
         match self {
-            Term::Var (VarTerm {
-                name, id,
-            }) => {
-                format! ("{}#{}", name, id.to_string ())
-            }
-            Term::Tuple (TupleTerm {
-                head, body,
-            }) => {
-                if body.len () == 0 {
-                    format! ("{}", head)
-                } else {
-                    let mut s = format! ("{}", head);
-                    s += " (";
-                    for term in body {
-                        s += &term.to_string ();
-                    }
-                    s += ")";
-                    s
-                }
-            }
+            Term::Var (var) => var.to_string (),
+            Term::Tuple (tuple) => tuple.to_string (),
         }
     }
 }
@@ -254,8 +270,11 @@ impl ToString for Subst {
             term,
             next,
         } = subst {
-
-            subst = next;
+            s += &var.to_string ();
+            s += " = ";
+            s += &term.to_string ();
+            s += "\n";
+            subst = (*next) .clone ();
         }
         s
     }
@@ -348,6 +367,24 @@ impl Prop {
     }
 }
 
+impl ToString for Prop {
+    fn to_string (&self) -> String {
+        match self {
+            Prop::Disj (name_vec) => {
+                format! (
+                    "disj ({})",
+                    vec_to_string (&name_vec, " "))
+            }
+            Prop::Conj (terms, query_vec) => {
+                format! (
+                    "conj ({}) {{{}}}",
+                    vec_to_string (&terms, " "),
+                    vec_to_string (&query_vec, " "))
+            }
+        }
+    }
+}
+
 #[derive (Clone)]
 #[derive (Debug)]
 #[derive (PartialEq, Eq, Hash)]
@@ -370,6 +407,15 @@ impl Query {
             name: self.name.clone (),
             args: new_args,
         }
+    }
+}
+
+impl ToString for Query {
+    fn to_string (&self) -> String {
+        format! (
+            "{} ({})",
+            self.name,
+            vec_to_string (&self.args, " "))
     }
 }
 
@@ -502,9 +548,9 @@ fn test_unify () {
         ]),
         &Term::tuple ("pair-c", vec! [
             v.clone (),
-            Term::tuple ("hi", vec! []),
-        ]));
-    println! ("- unify : {:#?}", subst.unwrap ());
+            Term::tuple ("hi-c", vec! []),
+        ])) .unwrap ();
+    println! ("- unify : \n{}", subst.to_string ());
 }
 
 #[test]
@@ -513,7 +559,7 @@ fn test_love () {
         prop_dic: Dic::new (),
     };
     let prop = Prop::Conj (
-        vec! [Term::tuple ("you", vec! [])],
+        vec! [Term::tuple ("you-c", vec! [])],
         vec! []);
     wissen.prop_dic.ins ("love-t", Some (prop));
     let query = Query {
@@ -522,7 +568,7 @@ fn test_love () {
     };
     let mut proving = wissen.prove (query);
     while let Some (subst) = proving.next_subst () {
-        println! ("- love : {:#?}", subst);
+        println! ("- love : \n{}", subst.to_string ());
     }
 }
 
@@ -595,7 +641,7 @@ fn test_list_append () {
     while let Some (subst) = proving.next_subst () {
         counter -= 1;
         if counter > 0 {
-            println! ("- append : {:#?}", subst);
+            println! ("- append : \n{}", subst.to_string ());
         } else {
             break;
         }

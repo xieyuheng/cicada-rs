@@ -1,7 +1,5 @@
 #+property: tangle lib.rs
 #+title: lian
-- Prop::to_string
-- Query::to_string
 - Wissen::to_string
 - Proof::to_string
 - Proving::step_by_step -- with report
@@ -31,6 +29,25 @@
     use std::collections::HashMap;
     use uuid::Uuid;
     use dic::Dic;
+    #+end_src
+
+* utility
+
+*** vec_to_string
+
+    #+begin_src rust
+    fn vec_to_string <T> (vec: &Vec <T>, delimiter: &str) -> String
+    where T : ToString {
+        let mut s = String::new ();
+        for x in vec {
+            s += &x.to_string ();
+            s += delimiter;
+        }
+        for _ in 0 .. delimiter.len () {
+            s.pop ();
+        }
+        s
+    }
     #+end_src
 
 * Term
@@ -64,7 +81,9 @@
     #+begin_src rust
     impl ToString for VarTerm {
         fn to_string (&self) -> String {
-            format! ("{}#{}", self.name, self.id.to_string ())
+            // format! ("{}#{}", self.name, self.id.to_string ())
+            // format! ("{}", self.name)
+            format! ("{}#{}", self.name, &self.id.to_string () [0..2])
         }
     }
     #+end_src
@@ -127,13 +146,10 @@
             if self.body.len () == 0 {
                 format! ("{}", self.head)
             } else {
-                let mut s = format! ("{}", self.head);
-                s += " (";
-                for term in self.body {
-                    s += &term.to_string ();
-                }
-                s += ")";
-                s
+                format! (
+                    "{} ({})",
+                    self.head,
+                    vec_to_string (&self.body, " "))
             }
         }
     }
@@ -369,7 +385,7 @@
                 s += " = ";
                 s += &term.to_string ();
                 s += "\n";
-                subst = next;
+                subst = (*next) .clone ();
             }
             s
         }
@@ -481,6 +497,28 @@
     }
     #+end_src
 
+*** Prop::to_string
+
+    #+begin_src rust
+    impl ToString for Prop {
+        fn to_string (&self) -> String {
+            match self {
+                Prop::Disj (name_vec) => {
+                    format! (
+                        "disj ({})",
+                        vec_to_string (&name_vec, " "))
+                }
+                Prop::Conj (terms, query_vec) => {
+                    format! (
+                        "conj ({}) {{{}}}",
+                        vec_to_string (&terms, " "),
+                        vec_to_string (&query_vec, " "))
+                }
+            }
+        }
+    }
+    #+end_src
+
 * Query
 
 *** Query
@@ -512,6 +550,19 @@
                 name: self.name.clone (),
                 args: new_args,
             }
+        }
+    }
+    #+end_src
+
+*** Query::to_string
+
+    #+begin_src rust
+    impl ToString for Query {
+        fn to_string (&self) -> String {
+            format! (
+                "{} ({})",
+                self.name,
+                vec_to_string (&self.args, " "))
         }
     }
     #+end_src
@@ -688,9 +739,9 @@
             ]),
             &Term::tuple ("pair-c", vec! [
                 v.clone (),
-                Term::tuple ("hi", vec! []),
-            ]));
-        println! ("- unify : {:#?}", subst.unwrap ());
+                Term::tuple ("hi-c", vec! []),
+            ])) .unwrap ();
+        println! ("- unify : \n{}", subst.to_string ());
     }
     #+end_src
 
@@ -703,7 +754,7 @@
             prop_dic: Dic::new (),
         };
         let prop = Prop::Conj (
-            vec! [Term::tuple ("you", vec! [])],
+            vec! [Term::tuple ("you-c", vec! [])],
             vec! []);
         wissen.prop_dic.ins ("love-t", Some (prop));
         let query = Query {
@@ -712,7 +763,7 @@
         };
         let mut proving = wissen.prove (query);
         while let Some (subst) = proving.next_subst () {
-            println! ("- love : {:#?}", subst);
+            println! ("- love : \n{}", subst.to_string ());
         }
     }
     #+end_src
@@ -789,7 +840,7 @@
         while let Some (subst) = proving.next_subst () {
             counter -= 1;
             if counter > 0 {
-                println! ("- append : {:#?}", subst);
+                println! ("- append : \n{}", subst.to_string ());
             } else {
                 break;
             }
