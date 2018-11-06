@@ -1,6 +1,6 @@
 #+property: tangle lib.rs
-#+title: lian
-- lian-cli -- do not use linefeed crate this time
+#+title: Wissen
+- fix test and pub
 - Deduction
 * prolog
 
@@ -34,9 +34,12 @@
         ErrorCtx,
     };
     use mexp::{
-        SyntaxTable,
         Mexp,
         Arg,
+    };
+    #[cfg (test)]
+    use mexp::{
+        SyntaxTable,
     };
     #+end_src
 
@@ -432,6 +435,42 @@
                 subst = (*next) .clone ();
             }
             s
+        }
+    }
+    #+end_src
+
+*** Subst::null_p
+
+    #+begin_src rust
+    impl Subst {
+        pub fn null_p (&self) -> bool {
+            &Subst::Null == self
+        }
+    }
+    #+end_src
+
+*** Subst::cons_p
+
+    #+begin_src rust
+    impl Subst {
+        pub fn cons_p (&self) -> bool {
+            &Subst::Null != self
+        }
+    }
+    #+end_src
+
+*** Subst::len
+
+    #+begin_src rust
+    impl Subst {
+        pub fn len (&self) -> usize {
+            let mut len = 0;
+            let mut subst = self;
+            while let Subst::Cons { next, .. } = subst {
+                len += 1;
+                subst = &next;
+            }
+            len
         }
     }
     #+end_src
@@ -1228,7 +1267,7 @@
                 v.clone (),
                 Term::tuple ("hi-c", vec! []),
             ])) .unwrap ();
-        println! ("- unify : \n{}", subst.to_string ());
+        assert_eq! (subst.len (), 2);
     }
     #+end_src
 
@@ -1247,9 +1286,12 @@
             args: vec! [Term::var ("u")],
         };
         let mut proving = wissen.prove (&query);
-        while let Some (subst) = proving.next_subst () {
-            println! ("- love : \n{}", subst.to_string ());
-        }
+        assert_eq! (
+            proving.next_subst () .unwrap () .len (),
+            1);
+        assert_eq! (
+            proving.next_subst (),
+            None);
     }
     #+end_src
 
@@ -1328,8 +1370,10 @@
                         Term::var ("z")],
         };
         let mut proving = wissen.prove (&query);
-        for subst in proving.take_subst (6) {
-            println! ("- append : \n{}", subst.to_string ());
+        let subst_vec = proving.take_subst (100);
+        assert_eq! (subst_vec.len (), 100);
+        for subst in subst_vec {
+            assert! (subst.cons_p ());
         }
     }
     #+end_src
@@ -1352,8 +1396,10 @@
         for statement in &statement_vec {
             if let Statement::Query (query) = statement {
                 let mut proving = wissen.prove (query);
-                for subst in proving.take_subst (6) {
-                    println! ("- mexp =\n{}", subst.to_string ());
+                let subst_vec = proving.take_subst (100);
+                assert_eq! (subst_vec.len (), 100);
+                for subst in subst_vec {
+                    assert! (subst.cons_p ());
                 }
             }
         }

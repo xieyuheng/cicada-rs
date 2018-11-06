@@ -21,9 +21,12 @@ use error_report::{
     ErrorCtx,
 };
 use mexp::{
-    SyntaxTable,
     Mexp,
     Arg,
+};
+#[cfg (test)]
+use mexp::{
+    SyntaxTable,
 };
 
 fn vec_to_string <T> (vec: &Vec <T>, delimiter: &str) -> String
@@ -317,6 +320,30 @@ impl ToString for Subst {
             subst = (*next) .clone ();
         }
         s
+    }
+}
+
+impl Subst {
+    pub fn null_p (&self) -> bool {
+        &Subst::Null == self
+    }
+}
+
+impl Subst {
+    pub fn cons_p (&self) -> bool {
+        &Subst::Null != self
+    }
+}
+
+impl Subst {
+    pub fn len (&self) -> usize {
+        let mut len = 0;
+        let mut subst = self;
+        while let Subst::Cons { next, .. } = subst {
+            len += 1;
+            subst = &next;
+        }
+        len
     }
 }
 
@@ -953,7 +980,7 @@ fn test_unify () {
             v.clone (),
             Term::tuple ("hi-c", vec! []),
         ])) .unwrap ();
-    println! ("- unify : \n{}", subst.to_string ());
+    assert_eq! (subst.len (), 2);
 }
 
 #[test]
@@ -968,9 +995,12 @@ fn test_love () {
         args: vec! [Term::var ("u")],
     };
     let mut proving = wissen.prove (&query);
-    while let Some (subst) = proving.next_subst () {
-        println! ("- love : \n{}", subst.to_string ());
-    }
+    assert_eq! (
+        proving.next_subst () .unwrap () .len (),
+        1);
+    assert_eq! (
+        proving.next_subst (),
+        None);
 }
 
 #[cfg (test)]
@@ -1041,8 +1071,10 @@ fn test_list_append () {
                     Term::var ("z")],
     };
     let mut proving = wissen.prove (&query);
-    for subst in proving.take_subst (6) {
-        println! ("- append : \n{}", subst.to_string ());
+    let subst_vec = proving.take_subst (100);
+    assert_eq! (subst_vec.len (), 100);
+    for subst in subst_vec {
+        assert! (subst.cons_p ());
     }
 }
 
@@ -1061,8 +1093,10 @@ fn test_mexp () -> Result <(), ErrorInCtx> {
     for statement in &statement_vec {
         if let Statement::Query (query) = statement {
             let mut proving = wissen.prove (query);
-            for subst in proving.take_subst (6) {
-                println! ("- mexp =\n{}", subst.to_string ());
+            let subst_vec = proving.take_subst (100);
+            assert_eq! (subst_vec.len (), 100);
+            for subst in subst_vec {
+                assert! (subst.cons_p ());
             }
         }
     }
