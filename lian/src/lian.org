@@ -1,6 +1,5 @@
 #+property: tangle lib.rs
 #+title: lian
-- Subst::to_string
 - Prop::to_string
 - Query::to_string
 - Wissen::to_string
@@ -60,6 +59,16 @@
     }
     #+end_src
 
+*** VarTerm::to_string
+
+    #+begin_src rust
+    impl ToString for VarTerm {
+        fn to_string (&self) -> String {
+            format! ("{}#{}", self.name, self.id.to_string ())
+        }
+    }
+    #+end_src
+
 *** Id
 
     #+begin_src rust
@@ -93,7 +102,7 @@
     #+begin_src rust
     impl ToString for Id {
         fn to_string (&self) -> String {
-            format! ("{}", id.0)
+            format! ("{}", self.0)
         }
     }
     #+end_src
@@ -107,6 +116,26 @@
     pub struct TupleTerm {
         head: String,
         body: Vec <Term>,
+    }
+    #+end_src
+
+*** TupleTerm
+
+    #+begin_src rust
+    impl ToString for TupleTerm {
+        fn to_string (&self) -> String {
+            if self.body.len () == 0 {
+                format! ("{}", self.head)
+            } else {
+                let mut s = format! ("{}", self.head);
+                s += " (";
+                for term in self.body {
+                    s += &term.to_string ();
+                }
+                s += ")";
+                s
+            }
+        }
     }
     #+end_src
 
@@ -192,26 +221,8 @@
     impl ToString for Term {
         fn to_string (&self) -> String {
             match self {
-                Term::Var (VarTerm {
-                    name, id,
-                }) => {
-                    format! ("{}#{}", name, id.to_string ())
-                }
-                Term::Tuple (TupleTerm {
-                    head, body,
-                }) => {
-                    if body.len () == 0 {
-                        format! ("{}", head)
-                    } else {
-                        let mut s = format! ("{}", head);
-                        s += " (";
-                        for term in body {
-                            s += &term.to_string ();
-                        }
-                        s += ")";
-                        s
-                    }
-                }
+                Term::Var (var) => var.to_string (),
+                Term::Tuple (tuple) => tuple.to_string (),
             }
         }
     }
@@ -338,6 +349,29 @@
                     Some (subst)
                 }
             }
+        }
+    }
+    #+end_src
+
+*** Subst::to_string
+
+    #+begin_src rust
+    impl ToString for Subst {
+        fn to_string (&self) -> String {
+            let mut s = String::new ();
+            let mut subst = self.clone ();
+            while let Subst::Cons {
+                var,
+                term,
+                next,
+            } = subst {
+                s += &var.to_string ();
+                s += " = ";
+                s += &term.to_string ();
+                s += "\n";
+                subst = next;
+            }
+            s
         }
     }
     #+end_src

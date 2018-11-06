@@ -245,6 +245,22 @@ impl Subst {
     }
 }
 
+impl ToString for Subst {
+    fn to_string (&self) -> String {
+        let mut s = String::new ();
+        let mut subst = self.clone ();
+        while let Subst::Cons {
+            var,
+            term,
+            next,
+        } = subst {
+
+            subst = next;
+        }
+        s
+    }
+}
+
 #[derive (Clone)]
 #[derive (Debug)]
 #[derive (PartialEq, Eq, Hash)]
