@@ -110,38 +110,26 @@ fn mexp_to_zero_p_exp <'a> (
 ) -> Result <Exp, ErrorInCtx> {
     if let Mexp::Apply {
         span: apply_span,
-        head,
+        head: box Mexp::Sym {
+            symbol: "zero-p", ..
+        },
         arg: Arg::Tuple {
             span: arg_span,
             body,
         },
     } = mexp {
-        match **head {
-            Mexp::Sym {
-                symbol: "zero-p", ..
-            } => {
-                if body.len () == 1 {
-                    let mut body = body.clone ();
-                    let mexp = body.pop () .unwrap ();
-                    let exp1 = mexp_to_exp (&mexp)?;
-                    Ok (Exp::ZeroP {
-                        span: apply_span.clone (),
-                        exp1: Arc::new (exp1),
-                    })
-                } else {
-                    ErrorInCtx::new ()
-                        .head ("wrong arity of `zero-p`")
-                        .line ("the arity should be 1")
-                        .span (arg_span.clone ())
-                        .wrap_in_err ()
-                }
-            }
-            _ => {
-                ErrorInCtx::new ()
-                    .head ("unknown apply")
-                    .span (apply_span.clone ())
-                    .wrap_in_err ()
-            }
+        if let [mexp1] = &body[..] {
+            let exp1 = mexp_to_exp (mexp1)?;
+            Ok (Exp::ZeroP {
+                span: apply_span.clone (),
+                exp1: Arc::new (exp1),
+            })
+        } else {
+            ErrorInCtx::new ()
+                .head ("wrong arity of `zero-p`")
+                .line ("the arity should be 1")
+                .span (arg_span.clone ())
+                .wrap_in_err ()
         }
     } else {
         ErrorInCtx::new ()
@@ -157,41 +145,28 @@ fn mexp_to_diff_exp <'a> (
 ) -> Result <Exp, ErrorInCtx> {
     if let Mexp::Apply {
         span: apply_span,
-        head,
+        head: box Mexp::Sym {
+            symbol: "diff", ..
+        },
         arg: Arg::Tuple {
             span: arg_span,
             body,
         },
     } = mexp {
-        match **head {
-            Mexp::Sym {
-                symbol: "diff", ..
-            } => {
-                if body.len () == 2 {
-                    let mut body = body.clone ();
-                    let mexp = body.pop () .unwrap ();
-                    let exp2 = mexp_to_exp (&mexp)?;
-                    let mexp = body.pop () .unwrap ();
-                    let exp1 = mexp_to_exp (&mexp)?;
-                    Ok (Exp::Diff {
-                        span: apply_span.clone (),
-                        exp1: Arc::new (exp1),
-                        exp2: Arc::new (exp2),
-                    })
-                } else {
-                    ErrorInCtx::new ()
-                        .head ("wrong arity of `diff`")
-                        .line ("the arity should be 2")
-                        .span (arg_span.clone ())
-                        .wrap_in_err ()
-                }
-            }
-            _ => {
-                ErrorInCtx::new ()
-                    .head ("unknown apply")
-                    .span (apply_span.clone ())
-                    .wrap_in_err ()
-            }
+        if let [mexp1, mexp2] = &body[..] {
+            let exp1 = mexp_to_exp (&mexp1)?;
+            let exp2 = mexp_to_exp (&mexp2)?;
+            Ok (Exp::Diff {
+                span: apply_span.clone (),
+                exp1: Arc::new (exp1),
+                exp2: Arc::new (exp2),
+            })
+        } else {
+            ErrorInCtx::new ()
+                .head ("wrong arity of `diff`")
+                .line ("the arity should be 2")
+                .span (arg_span.clone ())
+                .wrap_in_err ()
         }
     } else {
         ErrorInCtx::new ()
@@ -207,44 +182,30 @@ fn mexp_to_if_exp <'a> (
 ) -> Result <Exp, ErrorInCtx> {
     if let Mexp::Apply {
         span: apply_span,
-        head,
+        head: box Mexp::Sym {
+            symbol: "if", ..
+        },
         arg: Arg::Block {
             span: arg_span,
             body,
         },
     } = mexp {
-        match **head {
-            Mexp::Sym {
-                symbol: "if", ..
-            } => {
-                if body.len () == 3 {
-                    let mut body = body.clone ();
-                    let mexp = body.pop () .unwrap ();
-                    let exp3 = mexp_to_exp (&mexp)?;
-                    let mexp = body.pop () .unwrap ();
-                    let exp2 = mexp_to_exp (&mexp)?;
-                    let mexp = body.pop () .unwrap ();
-                    let exp1 = mexp_to_exp (&mexp)?;
-                    Ok (Exp::If {
-                        span: apply_span.clone (),
-                        exp1: Arc::new (exp1),
-                        exp2: Arc::new (exp2),
-                        exp3: Arc::new (exp3),
-                    })
-                } else {
-                    ErrorInCtx::new ()
-                        .head ("syntax error in `if {}`")
-                        .line ("there must be 3 <exp> in `{}`")
-                        .span (arg_span.clone ())
-                        .wrap_in_err ()
-                }
-            }
-            _ => {
-                ErrorInCtx::new ()
-                    .head ("unknown apply")
-                    .span (apply_span.clone ())
-                    .wrap_in_err ()
-            }
+        if let [mexp1, mexp2, mexp3] = &body[..] {
+            let exp1 = mexp_to_exp (&mexp1)?;
+            let exp2 = mexp_to_exp (&mexp2)?;
+            let exp3 = mexp_to_exp (&mexp3)?;
+            Ok (Exp::If {
+                span: apply_span.clone (),
+                exp1: Arc::new (exp1),
+                exp2: Arc::new (exp2),
+                exp3: Arc::new (exp3),
+            })
+        } else {
+            ErrorInCtx::new ()
+                .head ("syntax error in `if {}`")
+                .line ("there must be 3 <exp> in `{}`")
+                .span (arg_span.clone ())
+                .wrap_in_err ()
         }
     } else {
         ErrorInCtx::new ()
@@ -260,69 +221,40 @@ fn mexp_to_let_exp <'a> (
 ) -> Result <Exp, ErrorInCtx> {
     if let Mexp::Apply {
         span: apply_span,
-        head,
+        head: box Mexp::Sym {
+            symbol: "let", ..
+        },
         arg: Arg::Block {
             span: arg_span,
             body,
         },
     } = mexp {
-        match **head {
-            Mexp::Sym {
-                symbol: "let", ..
-            } => {
-                if body.len () == 2 {
-                    let mut body = body.clone ();
-                    let mexp = body.pop () .unwrap ();
-                    let exp2 = mexp_to_exp (&mexp)?;
-                    let mexp = body.pop () .unwrap ();
-                    match mexp {
-                        Mexp::Infix {
-                            span: _infix_span,
-                            op: "=",
-                            lhs, rhs,
-                        } => match &*lhs {
-                            Mexp::Sym {
-                                span: _var_span,
-                                symbol,
-                            } => {
-                                let exp1 = mexp_to_exp (&rhs)?;
-                                Ok (Exp::Let {
-                                    span: apply_span.clone (),
-                                    var: symbol.to_string (),
-                                    exp1: Arc::new (exp1),
-                                    body: Arc::new (exp2),
-                                })
-                            }
-                            _ => {
-                                ErrorInCtx::new ()
-                                    .head ("syntax error in `let {}`")
-                                    .line ("the first <exp> in `{}` must be `<exp:var> = <exp>`")
-                                    .span (lhs.span ())
-                                    .wrap_in_err ()
-                            }
-                        }
-                        _ => {
-                            ErrorInCtx::new ()
-                                .head ("syntax error in `let {}`")
-                                .line ("the first <exp> in `{}` must be `<exp:var> = <exp>`")
-                                .span (mexp.span ())
-                                .wrap_in_err ()
-                        }
-                    }
-                } else {
-                    ErrorInCtx::new ()
-                        .head ("syntax error in `let {}`")
-                        .line ("there must be 2 <exp> in `{}`")
-                        .span (arg_span.clone ())
-                        .wrap_in_err ()
-                }
-            }
-            _ => {
-                ErrorInCtx::new ()
-                    .head ("unknown apply")
-                    .span (apply_span.clone ())
-                    .wrap_in_err ()
-            }
+        if let [
+            Mexp::Infix {
+                span: _infix_span,
+                op: "=",
+                lhs: box Mexp::Sym {
+                    span: _var_span,
+                    symbol,
+                },
+                rhs,
+            },
+            mexp2,
+        ] = &body[..] {
+            let exp2 = mexp_to_exp (&mexp2)?;
+            let exp1 = mexp_to_exp (&rhs)?;
+            Ok (Exp::Let {
+                span: apply_span.clone (),
+                var: symbol.to_string (),
+                exp1: Arc::new (exp1),
+                body: Arc::new (exp2),
+            })
+        } else {
+            ErrorInCtx::new ()
+                .head ("syntax error in `let {}`")
+                .line ("there must be 2 <exp> in `{}`")
+                .span (arg_span.clone ())
+                .wrap_in_err ()
         }
     } else {
         ErrorInCtx::new ()
