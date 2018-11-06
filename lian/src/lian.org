@@ -1,9 +1,8 @@
 #+property: tangle lib.rs
 #+title: lian
-
-- Proving::step_by_step -- with report
-- Deduction
+- mexp
 - test_mexp
+- Deduction
 - lian-cli -- do not use linefeed crate this time
 * prolog
 
@@ -28,6 +27,20 @@
     use std::collections::HashMap;
     use uuid::Uuid;
     use dic::Dic;
+    use error_report::{
+        Span,
+        ErrorMsg,
+        ErrorInCtx,
+    };
+    #[cfg (test)]
+    use error_report::{
+        ErrorCtx,
+    };
+    use mexp::{
+        SyntaxTable,
+        Mexp,
+        Arg,
+    };
     #+end_src
 
 * utility
@@ -44,6 +57,19 @@
         }
         for _ in 0 .. delimiter.len () {
             s.pop ();
+        }
+        s
+    }
+    #+end_src
+
+*** vec_to_lines
+
+    #+begin_src rust
+    fn vec_to_lines <T> (vec: &Vec <T>) -> String
+    where T : ToString {
+        let mut s = vec_to_string (vec, "\n");
+        if ! s.is_empty () {
+            s += "\n";
         }
         s
     }
@@ -509,9 +535,15 @@
                 }
                 Prop::Conj (terms, query_vec) => {
                     format! (
-                        "conj ({}) {{{}}}",
+                        "conj ({}) {}",
                         vec_to_string (&terms, " "),
-                        vec_to_string (&query_vec, " "))
+                        if query_vec.len () == 0 {
+                            format! ("{{}}")
+                        } else {
+                            format! (
+                                "{{ {} }}",
+                                vec_to_string (&query_vec, " "))
+                        })
                 }
             }
         }
@@ -632,6 +664,96 @@
     }
     #+end_src
 
+*** Wissen::define
+
+    #+begin_src rust
+    impl Wissen {
+        fn define <'a> (
+            &mut self,
+            mexp: &Mexp <'a>,
+        ) -> Result <(), ErrorInCtx> {
+            unimplemented! ()
+        }
+    }
+    #+end_src
+
+*** mexp_to_prop
+
+***** [note] grammar of Lian
+
+      #+begin_src rust
+      // Statement:DefineProp = { prop-name? "=" Prop }
+      // Statement:Query = { Query }
+
+      // Prop:Disj = {
+      //     "disj" '('
+      //         list-of (prop-name?)
+      //    ')'
+      // }
+      // Prop:Conj = {
+      //     "conj" '('
+      //         list-of (Term)
+      //    ')' '{'
+      //         list-of (Query)
+      //    '}'
+      // }
+
+      // Term:Var = {
+      //     var-name? "#" id?
+      // }
+      // Term:Tuple = {
+      //     tuple-name? '('
+      //         list-of (Term)
+      //     ')'
+      // }
+
+      // Query:Tuple = {
+      //     prop-name? '('
+      //         list-of (Term)
+      //     ')'
+      // }
+      #+end_src
+
+***** note_about_mexp_syntax_of_prop
+
+      #+begin_src rust
+      fn note_about_mexp_syntax_of_prop () -> ErrorMsg {
+          ErrorMsg::new ()
+              .head (r#"grammar of Prop"#)
+      }
+      #+end_src
+
+***** mexp_to_disj_prop
+
+      #+begin_src rust
+      fn mexp_to_disj_prop <'a> (
+          mexp: &Mexp <'a>,
+      ) -> Result <Prop, ErrorInCtx> {
+          unimplemented! ()
+      }
+      #+end_src
+
+***** mexp_to_conj_prop
+
+      #+begin_src rust
+      fn mexp_to_conj_prop <'a> (
+          mexp: &Mexp <'a>,
+      ) -> Result <Prop, ErrorInCtx> {
+          unimplemented! ()
+      }
+      #+end_src
+
+***** mexp_to_prop
+
+      #+begin_src rust
+      fn mexp_to_prop <'a> (
+          mexp: &Mexp <'a>,
+      ) -> Result <Prop, ErrorInCtx> {
+          mexp_to_disj_prop (mexp)
+              .or (mexp_to_conj_prop (mexp))
+      }
+      #+end_src
+
 * Proving
 
 *** Proving
@@ -653,15 +775,15 @@
             while let Some (
                 proof
             ) = self.proof_queue.pop_front () {
-                // println! ("proof = {:?}", proof);
-                // println! ("self = {:?}", self);
+                // println! (
+                //     "- Proving::next_subst = {}",
+                //     proof.to_string ());
                 match proof.step () {
                     ProofStep::Finished (subst) => {
                         return Some (subst);
                     }
                     ProofStep::MoreTodo (proof_queue) => {
                         for proof in proof_queue {
-                            // self.proof_queue.push_front (proof);
                             self.proof_queue.push_back (proof);
                         }
                     }
@@ -737,10 +859,12 @@
                 .collect ();
             format! (
                 "<proof>\n\
-                - query_queue =\n{}\
-                - subst = \n{}\
+                <query_queue>\n\
+                {}</query_queue>\n\
+                <subst>\n\
+                {}</subst>\n\
                 </proof>\n",
-                vec_to_string (query_vec, "\n"),
+                vec_to_lines (query_vec),
                 self.subst.to_string ())
         }
     }
@@ -873,6 +997,7 @@
         };
         let mut proving = wissen.prove (query);
         let mut counter = 10;
+        println! ("- wissen = {}", wissen.to_string ());
         while let Some (subst) = proving.next_subst () {
             counter -= 1;
             if counter > 0 {

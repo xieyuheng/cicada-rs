@@ -12,6 +12,20 @@ use std::collections::VecDeque;
 use std::collections::HashMap;
 use uuid::Uuid;
 use dic::Dic;
+use error_report::{
+    Span,
+    ErrorMsg,
+    ErrorInCtx,
+};
+#[cfg (test)]
+use error_report::{
+    ErrorCtx,
+};
+use mexp::{
+    SyntaxTable,
+    Mexp,
+    Arg,
+};
 
 fn vec_to_string <T> (vec: &Vec <T>, delimiter: &str) -> String
 where T : ToString {
@@ -22,6 +36,15 @@ where T : ToString {
     }
     for _ in 0 .. delimiter.len () {
         s.pop ();
+    }
+    s
+}
+
+fn vec_to_lines <T> (vec: &Vec <T>) -> String
+where T : ToString {
+    let mut s = vec_to_string (vec, "\n");
+    if ! s.is_empty () {
+        s += "\n";
     }
     s
 }
@@ -377,9 +400,15 @@ impl ToString for Prop {
             }
             Prop::Conj (terms, query_vec) => {
                 format! (
-                    "conj ({}) {{{}}}",
+                    "conj ({}) {}",
                     vec_to_string (&terms, " "),
-                    vec_to_string (&query_vec, " "))
+                    if query_vec.len () == 0 {
+                        format! ("{{}}")
+                    } else {
+                        format! (
+                            "{{ {} }}",
+                            vec_to_string (&query_vec, " "))
+                    })
             }
         }
     }
@@ -467,6 +496,69 @@ impl ToString for Wissen {
     }
 }
 
+impl Wissen {
+    fn define <'a> (
+        &mut self,
+        mexp: &Mexp <'a>,
+    ) -> Result <(), ErrorInCtx> {
+        unimplemented! ()
+    }
+}
+
+// Statement:DefineProp = { prop-name? "=" Prop }
+
+// Prop:Disj = {
+//     "disj" '('
+//         list-of (prop-name?)
+//    ')'
+// }
+// Prop:Conj = {
+//     "conj" '('
+//         list-of (Term)
+//    ')' '{'
+//         list-of (Query)
+//    '}'
+// }
+
+// Term:Var = {
+//     var-name? "#" id?
+// }
+// Term:Tuple = {
+//     tuple-name? '('
+//         list-of (Term)
+//     ')'
+// }
+
+// Query:Tuple = {
+//     prop-name? '('
+//         list-of (Term)
+//     ')'
+// }
+
+fn note_about_mexp_syntax_of_prop () -> ErrorMsg {
+    ErrorMsg::new ()
+        .head (r#"grammar of Prop"#)
+}
+
+fn mexp_to_disj_prop <'a> (
+    mexp: &Mexp <'a>,
+) -> Result <Prop, ErrorInCtx> {
+    unimplemented! ()
+}
+
+fn mexp_to_conj_prop <'a> (
+    mexp: &Mexp <'a>,
+) -> Result <Prop, ErrorInCtx> {
+    unimplemented! ()
+}
+
+fn mexp_to_prop <'a> (
+    mexp: &Mexp <'a>,
+) -> Result <Prop, ErrorInCtx> {
+    mexp_to_disj_prop (mexp)
+        .or (mexp_to_conj_prop (mexp))
+}
+
 #[derive (Clone)]
 #[derive (Debug)]
 #[derive (PartialEq, Eq)]
@@ -479,15 +571,15 @@ impl <'a> Proving <'a> {
         while let Some (
             proof
         ) = self.proof_queue.pop_front () {
-            // println! ("proof = {:?}", proof);
-            // println! ("self = {:?}", self);
+            // println! (
+            //     "- Proving::next_subst = {}",
+            //     proof.to_string ());
             match proof.step () {
                 ProofStep::Finished (subst) => {
                     return Some (subst);
                 }
                 ProofStep::MoreTodo (proof_queue) => {
                     for proof in proof_queue {
-                        // self.proof_queue.push_front (proof);
                         self.proof_queue.push_back (proof);
                     }
                 }
@@ -549,10 +641,12 @@ impl <'a> ToString for Proof <'a> {
             .collect ();
         format! (
             "<proof>\n\
-            - query_queue =\n{}\
-            - subst = \n{}\
+            <query_queue>\n\
+            {}</query_queue>\n\
+            <subst>\n\
+            {}</subst>\n\
             </proof>\n",
-            vec_to_string (query_vec, "\n"),
+            vec_to_lines (query_vec),
             self.subst.to_string ())
     }
 }
@@ -667,6 +761,7 @@ fn test_list_append () {
     };
     let mut proving = wissen.prove (query);
     let mut counter = 10;
+    println! ("- wissen = {}", wissen.to_string ());
     while let Some (subst) = proving.next_subst () {
         counter -= 1;
         if counter > 0 {
