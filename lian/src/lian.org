@@ -1,6 +1,5 @@
 #+property: tangle lib.rs
 #+title: lian
-- Term::to_string
 - Subst::to_string
 - Prop::to_string
 - Query::to_string
@@ -85,6 +84,16 @@
     impl fmt::Debug for Id {
         fn fmt (&self, f: &mut fmt::Formatter) -> fmt::Result {
             write! (f, "{}", self.0)
+        }
+    }
+    #+end_src
+
+*** Id::to_string
+
+    #+begin_src rust
+    impl ToString for Id {
+        fn to_string (&self) -> String {
+            format! ("{}", id.0)
         }
     }
     #+end_src
@@ -182,7 +191,28 @@
     #+begin_src rust
     impl ToString for Term {
         fn to_string (&self) -> String {
-        unimplemented! ()
+            match self {
+                Term::Var (VarTerm {
+                    name, id,
+                }) => {
+                    format! ("{}#{}", name, id.to_string ())
+                }
+                Term::Tuple (TupleTerm {
+                    head, body,
+                }) => {
+                    if body.len () == 0 {
+                        format! ("{}", head)
+                    } else {
+                        let mut s = format! ("{}", head);
+                        s += " (";
+                        for term in body {
+                            s += &term.to_string ();
+                        }
+                        s += ")";
+                        s
+                    }
+                }
+            }
         }
     }
     #+end_src

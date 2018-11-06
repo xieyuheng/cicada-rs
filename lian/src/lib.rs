@@ -45,6 +45,12 @@ impl fmt::Debug for Id {
     }
 }
 
+impl ToString for Id {
+    fn to_string (&self) -> String {
+        format! ("{}", id.0)
+    }
+}
+
 #[derive (Clone)]
 #[derive (Debug)]
 #[derive (PartialEq, Eq, Hash)]
@@ -115,7 +121,28 @@ impl Term {
 
 impl ToString for Term {
     fn to_string (&self) -> String {
-    unimplemented! ()
+        match self {
+            Term::Var (VarTerm {
+                name, id,
+            }) => {
+                format! ("{}#{}", name, id.to_string ())
+            }
+            Term::Tuple (TupleTerm {
+                head, body,
+            }) => {
+                if body.len () == 0 {
+                    format! ("{}", head)
+                } else {
+                    let mut s = format! ("{}", head);
+                    s += " (";
+                    for term in body {
+                        s += &term.to_string ();
+                    }
+                    s += ")";
+                    s
+                }
+            }
+        }
     }
 }
 
