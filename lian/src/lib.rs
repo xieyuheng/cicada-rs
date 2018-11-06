@@ -528,6 +528,22 @@ impl <'a> Proof <'a> {
     }
 }
 
+impl <'a> ToString for Proof <'a> {
+    fn to_string (&self) -> String {
+        let query_vec: &Vec <Query> = &self.query_queue
+            .iter ()
+            .map (|x| (**x) .clone ())
+            .collect ();
+        format! (
+            "<proof>\n\
+            - query_queue =\n{}\
+            - subst = \n{}\
+            </proof>\n",
+            vec_to_string (query_vec, "\n"),
+            self.subst.to_string ())
+    }
+}
+
 #[derive (Clone)]
 #[derive (Debug)]
 #[derive (PartialEq, Eq)]

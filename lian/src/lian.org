@@ -1,7 +1,6 @@
 #+property: tangle lib.rs
 #+title: lian
 - Wissen::to_string
-- Proof::to_string
 - Proving::step_by_step -- with report
 - Deduction
 - test_mexp
@@ -138,7 +137,7 @@
     }
     #+end_src
 
-*** TupleTerm
+*** TupleTerm::to_string
 
     #+begin_src rust
     impl ToString for TupleTerm {
@@ -706,6 +705,26 @@
             } else {
                 ProofStep::Finished (self.subst)
             }
+        }
+    }
+    #+end_src
+
+*** Proof::to_string
+
+    #+begin_src rust
+    impl <'a> ToString for Proof <'a> {
+        fn to_string (&self) -> String {
+            let query_vec: &Vec <Query> = &self.query_queue
+                .iter ()
+                .map (|x| (**x) .clone ())
+                .collect ();
+            format! (
+                "<proof>\n\
+                - query_queue =\n{}\
+                - subst = \n{}\
+                </proof>\n",
+                vec_to_string (query_vec, "\n"),
+                self.subst.to_string ())
         }
     }
     #+end_src
