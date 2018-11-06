@@ -113,6 +113,12 @@ impl Term {
     }
 }
 
+impl ToString for Term {
+    fn to_string (&self) -> String {
+    unimplemented! ()
+    }
+}
+
 #[derive (Clone)]
 #[derive (Debug)]
 #[derive (PartialEq, Eq, Hash)]

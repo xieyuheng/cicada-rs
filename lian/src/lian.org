@@ -1,8 +1,15 @@
 #+property: tangle lib.rs
 #+title: lian
 - Term::to_string
-- Term::to_string_no_id
+- Subst::to_string
+- Prop::to_string
+- Query::to_string
+- Wissen::to_string
+- Proof::to_string
+- Proving::step_by_step -- with report
+- Deduction
 - test_mexp
+- lian-cli -- do not use linefeed crate this time
 * prolog
 
 *** feature
@@ -166,6 +173,16 @@
         fn fresh (&self) -> Term {
             let mut var_map = HashMap::new ();
             self.duplicate (&mut var_map)
+        }
+    }
+    #+end_src
+
+*** Term::to_string
+
+    #+begin_src rust
+    impl ToString for Term {
+        fn to_string (&self) -> String {
+        unimplemented! ()
         }
     }
     #+end_src
