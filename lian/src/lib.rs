@@ -1,10 +1,9 @@
 #![feature (uniform_paths)]
 #![feature (bind_by_move_pattern_guards)]
+#![feature (box_patterns)]
+#![feature (box_syntax)]
 
-#![allow (unused_parens)]
 #![allow (dead_code)]
-#![allow (unused_macros)]
-#![allow (non_camel_case_types)]
 
 use std::fmt;
 use std::sync::Arc;
@@ -681,30 +680,22 @@ fn mexp_to_disj_prop <'a> (
     mexp: &Mexp <'a>,
 ) -> Result <Prop, ErrorInCtx> {
     if let Mexp::Apply {
-        head,
+        head: box Mexp::Sym {
+            symbol: "disj",
+            ..
+        },
         arg: Arg::Tuple {
             body,
             ..
         },
         ..
     } = mexp {
-        if let Mexp::Sym {
-            symbol: "disj",
-            ..
-        } = **head {
-            let mut prop_name_vec = Vec::new ();
-            for mexp in body {
-                let prop_name = mexp_to_prop_name (mexp)?;
-                prop_name_vec.push (prop_name);
-            }
-            Ok (Prop::Disj (prop_name_vec))
-        } else {
-            ErrorInCtx::new ()
-                .head ("unknown mexp")
-                .span (mexp.span ())
-                .note (note_about_mexp_syntax_of_prop ())
-                .wrap_in_err ()
+        let mut prop_name_vec = Vec::new ();
+        for mexp in body {
+            let prop_name = mexp_to_prop_name (&mexp)?;
+            prop_name_vec.push (prop_name);
         }
+        Ok (Prop::Disj (prop_name_vec))
     } else {
         ErrorInCtx::new ()
             .head ("unknown mexp")
@@ -713,6 +704,43 @@ fn mexp_to_disj_prop <'a> (
             .wrap_in_err ()
     }
 }
+
+// fn mexp_to_disj_prop <'a> (
+//     mexp: &Mexp <'a>,
+// ) -> Result <Prop, ErrorInCtx> {
+//     if let Mexp::Apply {
+//         head,
+//         arg: Arg::Tuple {
+//             body,
+//             ..
+//         },
+//         ..
+//     } = mexp {
+//         if let Mexp::Sym {
+//             symbol: "disj",
+//             ..
+//         } = **head {
+//             let mut prop_name_vec = Vec::new ();
+//             for mexp in body {
+//                 let prop_name = mexp_to_prop_name (mexp)?;
+//                 prop_name_vec.push (prop_name);
+//             }
+//             Ok (Prop::Disj (prop_name_vec))
+//         } else {
+//             ErrorInCtx::new ()
+//                 .head ("unknown mexp")
+//                 .span (mexp.span ())
+//                 .note (note_about_mexp_syntax_of_prop ())
+//                 .wrap_in_err ()
+//         }
+//     } else {
+//         ErrorInCtx::new ()
+//             .head ("unknown mexp")
+//             .span (mexp.span ())
+//             .note (note_about_mexp_syntax_of_prop ())
+//             .wrap_in_err ()
+//     }
+// }
 
 fn mexp_to_conj_prop <'a> (
     mexp: &Mexp <'a>,

@@ -1,10 +1,6 @@
 #![feature (uniform_paths)]
 #![feature (range_contains)]
 
-#![allow (unused_parens)]
-#![allow (dead_code)]
-#![allow (unused_macros)]
-
 use std::collections::VecDeque;
 use std::cmp;
 use ansi_term::{

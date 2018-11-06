@@ -4,7 +4,6 @@
 
 #![allow (unused_parens)]
 #![allow (unused_imports)]
-#![allow (unused_macros)]
 #![allow (dead_code)]
 
 use std::collections::HashSet;
