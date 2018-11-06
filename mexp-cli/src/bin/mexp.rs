@@ -3,7 +3,7 @@ use std::fs;
 use std::io;
 use clap as cmd;
 use error_report::{
-    ErrorMsg,
+    // ErrorMsg,
     ErrorCtx,
 };
 use mexp::{
@@ -18,8 +18,8 @@ fn main () -> io::Result <()> {
         .version (cmd::crate_version! ())
         .arg (cmd::Arg::with_name ("FILE")
               .required (true))
-        .arg (cmd::Arg::with_name ("--self")
-              .long ("--self")
+        .arg (cmd::Arg::with_name ("--mexp")
+              .long ("--mexp")
               .group ("FORMAT")
               .help ("output to mexp format itself"))
         .arg (cmd::Arg::with_name ("--tree")
@@ -50,7 +50,7 @@ fn main () -> io::Result <()> {
             if result.is_ok () {
                 let mexp_vec = result.unwrap ();
                 for mexp in mexp_vec {
-                    if matches.is_present ("--self") {
+                    if matches.is_present ("--mexp") {
                         if matches.is_present ("--compact") {
                             output += &mexp.to_string ();
                             output += "\n";
