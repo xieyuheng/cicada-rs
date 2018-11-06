@@ -2,10 +2,10 @@
 
 ------
 
-> DIO: ZA WARUDO is full of languages without good type system, we don't need anymore!
-> JOJO: Just one more!
-> DIO: Do you care about HUMANITY! JOJO?
-> JOJO: I REJECT MY HUMANITY, DIO!
+> DIO: ZA WARUDO is full of languages without good type system, we don't need anymore!  
+> JOJO: Just one more!  
+> DIO: Do you care about HUMANITY! JOJO?  
+> JOJO: I REJECT MY HUMANITY, DIO!  
 
 ------
 
@@ -29,7 +29,7 @@ See [jojo-history](http://github.com/xieyuheng/jojo-history) for history of this
 
 With *nightly* rust toolchain :
 
-`cargo install jojo-cli --git https://github.com/xieyuheng/jojo`
+`cargo install jo --git https://github.com/xieyuheng/cicada`
 
 ## Examples
 
