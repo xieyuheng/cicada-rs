@@ -12,7 +12,7 @@ use std::collections::HashMap;
 use uuid::Uuid;
 use dic::Dic;
 use error_report::{
-    Span,
+    // Span,
     ErrorMsg,
     ErrorInCtx,
 };
@@ -61,14 +61,23 @@ pub enum Term {
 #[derive (PartialEq, Eq, Hash)]
 pub struct VarTerm {
     name: String,
-    id: Id,
+    id: Option <Id>,
 }
 
 impl ToString for VarTerm {
     fn to_string (&self) -> String {
-        // format! ("{}#{}", self.name, self.id.to_string ())
-        // format! ("{}", self.name)
-        format! ("{}#{}", self.name, &self.id.to_string () [0..2])
+        if let Some (id) = &self.id {
+            // format! (
+            //     "{}#{}",
+            //     self.name,
+            //     id.to_string ())
+            format! (
+                "{}#{}",
+                self.name,
+                &id.to_string () [0..2])
+        } else {
+            format! ("{}", self.name)
+        }
     }
 }
 
@@ -119,7 +128,16 @@ impl Term {
     fn var (s: &str) -> Term {
         Term::Var (VarTerm {
             name: s.to_string (),
-            id: Id::new (),
+            id: Some (Id::new ()),
+        })
+    }
+}
+
+impl Term {
+    fn var_no_id (s: &str) -> Term {
+        Term::Var (VarTerm {
+            name: s.to_string (),
+            id: None,
         })
     }
 }
@@ -145,7 +163,7 @@ impl Term {
                 } else {
                     let new_var = VarTerm {
                         name: var.name.clone (),
-                        id: Id::new (),
+                        id: Some (Id::new ()),
                     };
                     var_map.insert (
                         var.clone (),
@@ -499,10 +517,7 @@ impl ToString for Wissen {
 #[derive (Debug)]
 #[derive (PartialEq, Eq)]
 pub enum Statement {
-    DefineProp {
-        prop_name: String,
-        prop: Prop,
-    },
+    DefineProp (String, Prop),
     Query (Query),
 }
 
@@ -655,7 +670,7 @@ fn mexp_to_prop_name <'a> (
         } else {
             ErrorInCtx::new ()
                 .line ("expecting prop name")
-                .line ("prop name must end with `-t`")
+                .line ("which must end with `-t`")
                 .line (&format! ("but found : {}", symbol))
                 .span (mexp.span ())
                 .note (note_about_mexp_syntax_of_prop ())
@@ -668,12 +683,6 @@ fn mexp_to_prop_name <'a> (
             .span (mexp.span ())
             .wrap_in_err ()
     }
-}
-
-fn mexp_vec_to_query_vec <'a> (
-    mexp_vec: &Vec <Mexp <'a>>,
-) -> Result <Vec <Query>, ErrorInCtx> {
-    unimplemented! ()
 }
 
 fn mexp_to_disj_prop <'a> (
@@ -690,12 +699,7 @@ fn mexp_to_disj_prop <'a> (
         },
         ..
     } = mexp {
-        let mut prop_name_vec = Vec::new ();
-        for mexp in body {
-            let prop_name = mexp_to_prop_name (&mexp)?;
-            prop_name_vec.push (prop_name);
-        }
-        Ok (Prop::Disj (prop_name_vec))
+        Ok (Prop::Disj (mexp_vec_to_prop_name_vec (body)?))
     } else {
         ErrorInCtx::new ()
             .head ("unknown mexp")
@@ -705,94 +709,126 @@ fn mexp_to_disj_prop <'a> (
     }
 }
 
-// fn mexp_to_disj_prop <'a> (
-//     mexp: &Mexp <'a>,
-// ) -> Result <Prop, ErrorInCtx> {
-//     if let Mexp::Apply {
-//         head,
-//         arg: Arg::Tuple {
-//             body,
-//             ..
-//         },
-//         ..
-//     } = mexp {
-//         if let Mexp::Sym {
-//             symbol: "disj",
-//             ..
-//         } = **head {
-//             let mut prop_name_vec = Vec::new ();
-//             for mexp in body {
-//                 let prop_name = mexp_to_prop_name (mexp)?;
-//                 prop_name_vec.push (prop_name);
-//             }
-//             Ok (Prop::Disj (prop_name_vec))
-//         } else {
-//             ErrorInCtx::new ()
-//                 .head ("unknown mexp")
-//                 .span (mexp.span ())
-//                 .note (note_about_mexp_syntax_of_prop ())
-//                 .wrap_in_err ()
-//         }
-//     } else {
-//         ErrorInCtx::new ()
-//             .head ("unknown mexp")
-//             .span (mexp.span ())
-//             .note (note_about_mexp_syntax_of_prop ())
-//             .wrap_in_err ()
-//     }
-// }
+fn mexp_to_query <'a> (
+    mexp: &Mexp <'a>,
+) -> Result <Query, ErrorInCtx> {
+    if let Mexp::Apply {
+        head: box Mexp::Sym {
+            symbol,
+            ..
+        },
+        arg: Arg::Tuple {
+            body,
+            ..
+        },
+        ..
+    } = mexp {
+        if symbol.ends_with ("-t") {
+            Ok (Query {
+                name: symbol.to_string (),
+                args: mexp_vec_to_term_vec (body)?,
+            })
+        } else {
+            ErrorInCtx::new ()
+                .line ("expecting prop name")
+                .line ("which must end with `-t`")
+                .line (&format! ("but found : {}", symbol))
+                .span (mexp.span ())
+                .note (note_about_mexp_syntax_of_prop ())
+                .wrap_in_err ()
+        }
+    } else {
+        ErrorInCtx::new ()
+            .head ("unknown mexp")
+            .span (mexp.span ())
+            .note (note_about_mexp_syntax_of_prop ())
+            .wrap_in_err ()
+    }
+}
+
+fn mexp_to_term <'a> (
+    mexp: &Mexp <'a>,
+) -> Result <Term, ErrorInCtx> {
+    if let Mexp::Apply {
+        head: box Mexp::Sym {
+            symbol,
+            ..
+        },
+        arg: Arg::Tuple {
+            body,
+            ..
+        },
+        ..
+    } = mexp {
+        if symbol.ends_with ("-c") {
+            Ok (Term::tuple (
+                symbol,
+                mexp_vec_to_term_vec (body)?))
+        } else {
+            ErrorInCtx::new ()
+                .line ("expecting tuple name")
+                .line ("which must end with `-c`")
+                .line (&format! ("but found : {}", symbol))
+                .span (mexp.span ())
+                .note (note_about_mexp_syntax_of_prop ())
+                .wrap_in_err ()
+        }
+    } else if let Mexp::Sym {
+        symbol,
+        ..
+    } = mexp {
+        if symbol.ends_with ("-c") {
+            Ok (Term::tuple (symbol, vec! []))
+        } else if symbol.ends_with ("-t") {
+            ErrorInCtx::new ()
+                .line ("expecting tuple name or var")
+                .line ("but found prop name which end with `-t`")
+                .line (&format! ("prop name : {}", symbol))
+                .span (mexp.span ())
+                .note (note_about_mexp_syntax_of_prop ())
+                .wrap_in_err ()
+        } else {
+            Ok (Term::var_no_id (symbol))
+        }
+    } else {
+        ErrorInCtx::new ()
+            .head ("unknown mexp")
+            .span (mexp.span ())
+            .note (note_about_mexp_syntax_of_prop ())
+            .wrap_in_err ()
+    }
+}
 
 fn mexp_to_conj_prop <'a> (
     mexp: &Mexp <'a>,
 ) -> Result <Prop, ErrorInCtx> {
-    unimplemented! ()
-    // if let Mexp::Apply {
-    //     head,
-    //     arg: Arg::Block {
-    //         body: query_vec,
-    //         ..
-    //     },
-    //     ..
-    // } = mexp {
-    //     if let Mexp::Apply {
-    //         head,
-    //         arg: Arg::Tuple {
-    //             body: term_vec,
-    //             ..
-    //         },
-    //         ..
-    //     } = **head {
-    //         if let Mexp::Sym {
-    //             symbol: "conj",
-    //             ..
-    //         } = **head {
-    //             let mut prop_name_vec = Vec::new ();
-    //             for mexp in body {
-    //                 let prop_name = mexp_to_prop_name (mexp)?;
-    //                 prop_name_vec.push (prop_name);
-    //             }
-    //             Ok (Prop::Disj (prop_name_vec))
-    //         } else {
-    //             ErrorInCtx::new ()
-    //                 .head ("unknown mexp")
-    //                 .span (mexp.span ())
-    //                 .note (note_about_mexp_syntax_of_prop ())
-    //                 .wrap_in_err ()
-    //         }
-    //     } else {
-    //         ErrorInCtx::new ()
-    //             .head ("unknown mexp")
-    //             .span (mexp.span ())
-    //             .note (note_about_mexp_syntax_of_prop ())
-    //             .wrap_in_err ()
-    //     }
-    // } else {
-    //     ErrorInCtx::new ()
-    //         .head ("unknown mexp")
-    //         .span (mexp.span ())
-    //         .note (note_about_mexp_syntax_of_prop ())
-    //         .wrap_in_err ()
-    // }
+    if let Mexp::Apply {
+        head: box Mexp::Apply {
+            head: box Mexp::Sym {
+                symbol: "conj",
+                ..
+            },
+            arg: Arg::Tuple {
+                body: body1,
+                ..
+            },
+            ..
+        },
+        arg: Arg::Block {
+            body: body2,
+            ..
+        },
+        ..
+    } = mexp {
+        Ok (Prop::Conj (mexp_vec_to_term_vec (body1)?,
+                        mexp_vec_to_query_vec (body2)?))
+    } else {
+        ErrorInCtx::new ()
+            .head ("unknown mexp")
+            .span (mexp.span ())
+            .note (note_about_mexp_syntax_of_prop ())
+            .wrap_in_err ()
+    }
 }
 
 fn mexp_to_prop <'a> (
@@ -800,6 +836,82 @@ fn mexp_to_prop <'a> (
 ) -> Result <Prop, ErrorInCtx> {
     mexp_to_disj_prop (mexp)
         .or (mexp_to_conj_prop (mexp))
+}
+
+fn mexp_to_statement <'a> (
+    mexp: &Mexp <'a>,
+) -> Result <Statement, ErrorInCtx> {
+    if let Ok (query) = mexp_to_query (mexp) {
+        Ok (Statement::Query (query))
+    } else if let Mexp::Infix {
+        op: "=",
+        lhs: box Mexp::Sym {
+            symbol,
+            ..
+        },
+        rhs,
+        ..
+    } = mexp {
+        if symbol.ends_with ("-t") {
+            Ok (Statement::DefineProp (
+                symbol.to_string (),
+                mexp_to_prop (rhs)?))
+        } else {
+            ErrorInCtx::new ()
+                .line ("expecting prop name")
+                .line ("which must end with `-t`")
+                .line (&format! ("but found : {}", symbol))
+                .span (mexp.span ())
+                .note (note_about_mexp_syntax_of_prop ())
+                .wrap_in_err ()
+        }
+    } else {
+        ErrorInCtx::new ()
+            .head ("unknown mexp")
+            .span (mexp.span ())
+            .note (note_about_mexp_syntax_of_prop ())
+            .wrap_in_err ()
+    }
+}
+
+fn mexp_vec_to_prop_name_vec <'a> (
+    mexp_vec: &Vec <Mexp <'a>>,
+) -> Result <Vec <String>, ErrorInCtx> {
+    let mut vec = Vec::new ();
+    for mexp in mexp_vec {
+        vec.push (mexp_to_prop_name (&mexp)?);
+    }
+    Ok (vec)
+}
+
+fn mexp_vec_to_query_vec <'a> (
+    mexp_vec: &Vec <Mexp <'a>>,
+) -> Result <Vec <Query>, ErrorInCtx> {
+    let mut vec = Vec::new ();
+    for mexp in mexp_vec {
+        vec.push (mexp_to_query (&mexp)?);
+    }
+    Ok (vec)
+}
+
+fn mexp_vec_to_term_vec <'a> (
+    mexp_vec: &Vec <Mexp <'a>>,
+) -> Result <Vec <Term>, ErrorInCtx> {
+    let mut vec = Vec::new ();
+    for mexp in mexp_vec {
+        vec.push (mexp_to_term (&mexp)?);
+    }
+    Ok (vec)
+}
+
+fn mexp_vec_to_statement_vec <'a> (
+    mexp_vec: &Vec <Mexp <'a>>,
+) -> Result <Vec <Statement>, ErrorInCtx> {
+    let mut vec = Vec::new ();
+    for mexp in mexp_vec {
+        vec.push (mexp_to_statement (&mexp)?);
+    }
+    Ok (vec)
 }
 
 #[test]
@@ -840,7 +952,7 @@ fn test_love () {
 // list-append-t = disj (
 //     zero-append-t
 //     succ-append-t
-// ) {} []
+// )
 // zero-append-t = conj (null-c succ succ) {}
 // succ-append-t = conj (
 //     cons-c (car cdr)
@@ -914,7 +1026,29 @@ fn test_list_append () {
     }
 }
 
-#[test]
-fn test_mexp () {
+#[cfg (test)]
+const LIST_APPEND_EXAMPLE: &'static str = "
+list-append-t = disj (
+    zero-append-t
+    succ-append-t
+)
+zero-append-t = conj (null-c succ succ) {}
+succ-append-t = conj (
+    cons-c (car cdr)
+    succ
+    cons-c (car o-cdr)
+) {
+    list-append-t (cdr succ o-cdr)
+}
+";
 
+#[test]
+fn test_mexp () -> Result <(), ErrorInCtx> {
+    let input = LIST_APPEND_EXAMPLE;
+    let syntax_table = SyntaxTable::default ();
+    let mexp_vec = syntax_table.parse (input)?;
+    for statement in mexp_vec.iter () .map (mexp_to_statement) {
+        println! ("- statement = {:?}", statement);
+    }
+    Ok (())
 }
