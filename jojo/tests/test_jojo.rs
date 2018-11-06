@@ -26,7 +26,7 @@ fn visit_dir (
 fn run_all_scripts_in_dir (dir: &Path) -> io::Result <()> {
     visit_dir (dir, &|entry| {
         let path = entry.path ();
-        let _env = jojo_core::load (&path);
+        let _env = jojo::load (&path);
     })
 }
 

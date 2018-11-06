@@ -6,7 +6,7 @@ use error_report::{
     ErrorMsg,
     ErrorCtx,
 };
-use mexp_parser::{
+use mexp::{
     SyntaxTable,
     // Mexp,
 };

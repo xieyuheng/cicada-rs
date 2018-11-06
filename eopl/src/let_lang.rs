@@ -8,7 +8,7 @@ use error_report::{
 use error_report::{
     ErrorCtx,
 };
-use mexp_parser::{
+use mexp::{
     SyntaxTable,
     Mexp,
     Arg,

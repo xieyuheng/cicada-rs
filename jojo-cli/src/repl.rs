@@ -8,9 +8,9 @@ type CharVec = Vec <char>;
 static NEW_PROMPT: &'static str = ">>> ";
 static BRA_PROMPT: &'static str = "... ";
 
-fn new_env () -> jojo_core::Env {
-    let mut env = jojo_core::Env::new ();
-    jojo_core::expose_core (&mut env);
+fn new_env () -> jojo::Env {
+    let mut env = jojo::Env::new ();
+    jojo::expose_core (&mut env);
     env
 }
 
@@ -25,10 +25,10 @@ pub fn repl () -> io::Result<()> {
         code = format! ("{}{}", &code, line);
         match bar_ket_check (&code) {
             Ok (BalanceResult::Balanced) => {
-                let sexp_list = jojo_core::sexp_list_from_code (&code);
+                let sexp_list = jojo::sexp_list_from_code (&code);
                 let result = std::panic::catch_unwind (
                     std::panic::AssertUnwindSafe (|| {
-                        jojo_core::top_sexp_list_repl (&mut env, sexp_list);
+                        jojo::top_sexp_list_repl (&mut env, sexp_list);
                     }));
                 code = String::new ();
                 interface.set_prompt (NEW_PROMPT)?;

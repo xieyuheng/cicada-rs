@@ -13,11 +13,11 @@ fn main () -> io::Result <()> {
         .after_help ("REPL:  type `jojo` to run the repl")
         .get_matches ();
     if matches.occurrences_of ("FILE") == 0 {
-        jojo::repl::repl ()
+        jojo_cli::repl::repl ()
     } else {
         if let Some (paths) = matches.values_of ("FILE") {
             for path in paths {
-                jojo_core::load (Path::new (&path));
+                jojo::load (Path::new (&path));
             }
         }
         Ok (())

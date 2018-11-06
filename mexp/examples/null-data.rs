@@ -1,5 +1,5 @@
 use error_report::ErrorInCtx;
-use mexp_parser::{
+use mexp::{
     SyntaxTable,
     Mexp,
 };
