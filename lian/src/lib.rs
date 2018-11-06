@@ -473,6 +473,14 @@ pub struct Wissen {
 }
 
 impl Wissen {
+    fn new () -> Self {
+        Wissen {
+            prop_dic: Dic::new (),
+        }
+    }
+}
+
+impl Wissen {
     fn find_prop (&self, name: &str) -> Option <Prop> {
         if let Some (
             prop
@@ -487,12 +495,12 @@ impl Wissen {
 impl Wissen {
     fn prove <'a> (
         &'a self,
-        query: Query,
+        query: &Query,
     ) -> Proving <'a> {
         let proof = Proof {
             wissen: self,
             subst: Subst::new (),
-            query_queue: vec! [Arc::new (query)] .into (),
+            query_queue: vec! [Arc::new (query.clone ())] .into (),
         };
         Proving {
             proof_queue: vec! [proof] .into (),
@@ -510,6 +518,12 @@ impl ToString for Wissen {
             s += "\n";
         }
         format! ("<wissen>\n{}</wissen>\n", s)
+    }
+}
+
+impl Wissen {
+    fn define_prop (&mut self, name: &str, prop: &Prop) {
+       self.prop_dic.ins (name, Some (prop.clone ()));
     }
 }
 
@@ -549,6 +563,18 @@ impl <'a> Proving <'a> {
             }
         }
         return None;
+    }
+}
+
+impl <'a> Proving <'a> {
+    fn take_subst (&mut self, n: usize) -> Vec <Subst> {
+        let mut subst_vec = Vec::new ();
+        for _ in 0..n {
+            if let Some (subst) = self.next_subst () {
+                subst_vec.push (subst)
+            }
+        }
+        subst_vec
     }
 }
 
@@ -932,47 +958,48 @@ fn test_unify () {
 
 #[test]
 fn test_love () {
-    let mut wissen = Wissen {
-        prop_dic: Dic::new (),
-    };
+    let mut wissen = Wissen::new ();
     let prop = Prop::Conj (
         vec! [Term::tuple ("you-c", vec! [])],
         vec! []);
-    wissen.prop_dic.ins ("love-t", Some (prop));
+    wissen.define_prop ("love-t", &prop);
     let query = Query {
         name: "love-t".to_string (),
         args: vec! [Term::var ("u")],
     };
-    let mut proving = wissen.prove (query);
+    let mut proving = wissen.prove (&query);
     while let Some (subst) = proving.next_subst () {
         println! ("- love : \n{}", subst.to_string ());
     }
 }
 
-// list-append-t = disj (
-//     zero-append-t
-//     succ-append-t
-// )
-// zero-append-t = conj (null-c succ succ) {}
-// succ-append-t = conj (
-//     cons-c (car cdr)
-//     succ
-//     cons-c (car o-cdr)
-// ) {
-//     list-append-t (cdr succ o-cdr)
-// }
+#[cfg (test)]
+const LIST_APPEND_EXAMPLE: &'static str = "
+list-append-t = disj (
+    zero-append-t
+    succ-append-t
+)
+zero-append-t = conj (null-c succ succ) {}
+succ-append-t = conj (
+    cons-c (car cdr)
+    succ
+    cons-c (car o-cdr)
+) {
+    list-append-t (cdr succ o-cdr)
+}
+
+list-append-t (x y z)
+";
 
 #[test]
 fn test_list_append () {
-    let mut wissen = Wissen {
-        prop_dic: Dic::new (),
-    };
+    let mut wissen = Wissen::new ();
     let list_append_t = Prop::Disj (
         vec! [
             "zero-append-t".to_string (),
             "succ-append-t".to_string (),
         ]);
-    wissen.prop_dic.ins ("list-append-t", Some (list_append_t));
+    wissen.define_prop ("list-append-t", &list_append_t);
     let succ = Term::var ("succ");
     let zero_append_t = Prop::Conj (
         vec! [
@@ -981,7 +1008,7 @@ fn test_list_append () {
             succ
         ],
         vec! []);
-    wissen.prop_dic.ins ("zero-append-t", Some (zero_append_t));
+    wissen.define_prop ("zero-append-t", &zero_append_t);
     let car = Term::var ("car");
     let cdr = Term::var ("cdr");
     let succ = Term::var ("succ");
@@ -1006,49 +1033,38 @@ fn test_list_append () {
                 ],
             }
         ]);
-    wissen.prop_dic.ins ("succ-append-t", Some (succ_append_t));
+    wissen.define_prop ("succ-append-t", &succ_append_t);
     let query = Query {
         name: "list-append-t".to_string (),
         args: vec! [Term::var ("x"),
                     Term::var ("y"),
                     Term::var ("z")],
     };
-    let mut proving = wissen.prove (query);
-    let mut counter = 10;
-    println! ("- wissen = {}", wissen.to_string ());
-    while let Some (subst) = proving.next_subst () {
-        counter -= 1;
-        if counter > 0 {
-            println! ("- append : \n{}", subst.to_string ());
-        } else {
-            break;
-        }
+    let mut proving = wissen.prove (&query);
+    for subst in proving.take_subst (6) {
+        println! ("- append : \n{}", subst.to_string ());
     }
 }
 
-#[cfg (test)]
-const LIST_APPEND_EXAMPLE: &'static str = "
-list-append-t = disj (
-    zero-append-t
-    succ-append-t
-)
-zero-append-t = conj (null-c succ succ) {}
-succ-append-t = conj (
-    cons-c (car cdr)
-    succ
-    cons-c (car o-cdr)
-) {
-    list-append-t (cdr succ o-cdr)
-}
-";
-
 #[test]
 fn test_mexp () -> Result <(), ErrorInCtx> {
+    let mut wissen = Wissen::new ();
     let input = LIST_APPEND_EXAMPLE;
     let syntax_table = SyntaxTable::default ();
     let mexp_vec = syntax_table.parse (input)?;
-    for statement in mexp_vec.iter () .map (mexp_to_statement) {
-        println! ("- statement = {:?}", statement);
+    let statement_vec = mexp_vec_to_statement_vec (&mexp_vec)?;
+    for statement in &statement_vec {
+        if let Statement::DefineProp (name, prop) = statement {
+            wissen.define_prop (name, prop);
+        }
+    }
+    for statement in &statement_vec {
+        if let Statement::Query (query) = statement {
+            let mut proving = wissen.prove (query);
+            for subst in proving.take_subst (6) {
+                println! ("- mexp =\n{}", subst.to_string ());
+            }
+        }
     }
     Ok (())
 }
