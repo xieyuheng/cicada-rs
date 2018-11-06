@@ -506,6 +506,7 @@ impl Wissen {
 }
 
 // Statement:DefineProp = { prop-name? "=" Prop }
+// Statement:Query = { Query }
 
 // Prop:Disj = {
 //     "disj" '('
