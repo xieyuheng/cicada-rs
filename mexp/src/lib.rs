@@ -1,11 +1,12 @@
 #![feature (uniform_paths)]
+#![feature (box_patterns)]
+#![feature (box_syntax)]
 
 #![allow (unused_parens)]
 #![allow (unused_imports)]
 #![allow (unused_macros)]
 #![allow (dead_code)]
 
-use std::sync::Arc;
 use std::collections::HashSet;
 use error_report::{
     Span,
@@ -25,25 +26,25 @@ pub enum Mexp <'a> {
     Char { span: Span, ch: &'a str },
     Sym  { span: Span, symbol: &'a str },
     Dot  { span: Span,
-           head: Arc <Mexp <'a>>,
-           tail: Arc <Mexp <'a>> },
+           head: Box <Mexp <'a>>,
+           tail: Box <Mexp <'a>> },
     Apply { span: Span,
-            head: Arc <Mexp <'a>>,
+            head: Box <Mexp <'a>>,
             arg: Arg <'a> },
     Array { span: Span, body: Vec <Mexp <'a>> },
     Arrow { span: Span,
             ante: Vec <Mexp <'a>>,
-            ret: Arc <Mexp <'a>> },
+            ret: Box <Mexp <'a>> },
     /// infix are all left-associative
     Infix {
         span: Span,
         op: &'a str,
-        lhs: Arc <Mexp <'a>>,
-        rhs: Arc <Mexp <'a>> },
+        lhs: Box <Mexp <'a>>,
+        rhs: Box <Mexp <'a>> },
     InfixApply {
         span: Span,
         op: &'a str,
-        lhs: Arc <Mexp <'a>>,
+        lhs: Box <Mexp <'a>>,
         arg: Arg <'a> },
 }
 
@@ -900,8 +901,8 @@ impl <'a> Parsing <'a> {
                 lo: head.span () .lo,
                 hi: tail.span () .hi,
             },
-            head: Arc::new (head),
-            tail: Arc::new (tail),
+            head: box head,
+            tail: box tail,
         };
         self.result_stack.push (Ok (mexp));
         Ok (())
@@ -918,7 +919,7 @@ impl <'a> Parsing <'a> {
                 lo: head.span () .lo,
                 hi: arg.span () .hi,
             },
-            head: Arc::new (head),
+            head: box head,
             arg,
         };
         self.result_stack.push (Ok (mexp));
@@ -1167,7 +1168,7 @@ impl <'a> Parsing <'a> {
                     let mexp = Mexp::Arrow {
                         span: Span { lo, hi },
                         ante,
-                        ret: Arc::new (ret),
+                        ret: box ret,
                     };
                     self.result_stack.push (Ok (mexp));
                     return Ok (());
@@ -1197,8 +1198,8 @@ impl <'a> Parsing <'a> {
                     hi: rhs.span () .hi,
                 },
                 op: word,
-                lhs: Arc::new (lhs),
-                rhs: Arc::new (rhs),
+                lhs: box lhs,
+                rhs: box rhs,
             };
             self.result_stack.push (Ok (mexp));
             Ok (())
@@ -1227,7 +1228,7 @@ impl <'a> Parsing <'a> {
                     hi: arg.span () .hi,
                 },
                 op: word,
-                lhs: Arc::new (lhs),
+                lhs: box lhs,
                 arg,
             };
             self.result_stack.push (Ok (mexp));

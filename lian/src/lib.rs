@@ -496,68 +496,15 @@ impl ToString for Wissen {
     }
 }
 
-impl Wissen {
-    fn define <'a> (
-        &mut self,
-        mexp: &Mexp <'a>,
-    ) -> Result <(), ErrorInCtx> {
-        unimplemented! ()
-    }
-}
-
-// Statement:DefineProp = { prop-name? "=" Prop }
-// Statement:Query = { Query }
-
-// Prop:Disj = {
-//     "disj" '('
-//         list-of (prop-name?)
-//    ')'
-// }
-// Prop:Conj = {
-//     "conj" '('
-//         list-of (Term)
-//    ')' '{'
-//         list-of (Query)
-//    '}'
-// }
-
-// Term:Var = {
-//     var-name? "#" id?
-// }
-// Term:Tuple = {
-//     tuple-name? '('
-//         list-of (Term)
-//     ')'
-// }
-
-// Query:Tuple = {
-//     prop-name? '('
-//         list-of (Term)
-//     ')'
-// }
-
-fn note_about_mexp_syntax_of_prop () -> ErrorMsg {
-    ErrorMsg::new ()
-        .head (r#"grammar of Prop"#)
-}
-
-fn mexp_to_disj_prop <'a> (
-    mexp: &Mexp <'a>,
-) -> Result <Prop, ErrorInCtx> {
-    unimplemented! ()
-}
-
-fn mexp_to_conj_prop <'a> (
-    mexp: &Mexp <'a>,
-) -> Result <Prop, ErrorInCtx> {
-    unimplemented! ()
-}
-
-fn mexp_to_prop <'a> (
-    mexp: &Mexp <'a>,
-) -> Result <Prop, ErrorInCtx> {
-    mexp_to_disj_prop (mexp)
-        .or (mexp_to_conj_prop (mexp))
+#[derive (Clone)]
+#[derive (Debug)]
+#[derive (PartialEq, Eq)]
+pub enum Statement {
+    DefineProp {
+        prop_name: String,
+        prop: Prop,
+    },
+    Query (Query),
 }
 
 #[derive (Clone)]
@@ -659,6 +606,172 @@ pub enum ProofStep <'a> {
     Finished (Subst),
     MoreTodo (VecDeque <Proof <'a>>),
     Fail,
+}
+
+// Statement::DefineProp = { prop-name? "=" Prop }
+// Statement::Query = { Query }
+
+// Prop::Disj = {
+//     "disj" '('
+//         list (prop-name?)
+//    ')'
+// }
+// Prop::Conj = {
+//     "conj" '('
+//         list (Term)
+//    ')' '{'
+//         list (Query)
+//    '}'
+// }
+
+// Term::Var = {
+//     unique-var-name?
+// }
+// Term::Tuple = {
+//     tuple-name? '('
+//         list (Term)
+//     ')'
+// }
+
+// Query::Tuple = {
+//     prop-name? '('
+//         list (Term)
+//     ')'
+// }
+
+fn note_about_mexp_syntax_of_prop () -> ErrorMsg {
+    ErrorMsg::new ()
+        .head (r#"grammar of Prop"#)
+}
+
+fn mexp_to_prop_name <'a> (
+    mexp: &Mexp <'a>,
+) -> Result <String, ErrorInCtx> {
+    if let Mexp::Sym {
+        symbol,
+        ..
+    } = mexp {
+        if symbol.ends_with ("-t") {
+            Ok (symbol.to_string ())
+        } else {
+            ErrorInCtx::new ()
+                .line ("expecting prop name")
+                .line ("prop name must end with `-t`")
+                .line (&format! ("but found : {}", symbol))
+                .span (mexp.span ())
+                .note (note_about_mexp_syntax_of_prop ())
+                .wrap_in_err ()
+        }
+    } else {
+        ErrorInCtx::new ()
+            .line ("expecting prop name")
+            .line (&format! ("but found : {}", mexp.to_string ()))
+            .span (mexp.span ())
+            .wrap_in_err ()
+    }
+}
+
+fn mexp_vec_to_query_vec <'a> (
+    mexp_vec: &Vec <Mexp <'a>>,
+) -> Result <Vec <Query>, ErrorInCtx> {
+    unimplemented! ()
+}
+
+fn mexp_to_disj_prop <'a> (
+    mexp: &Mexp <'a>,
+) -> Result <Prop, ErrorInCtx> {
+    if let Mexp::Apply {
+        head,
+        arg: Arg::Tuple {
+            body,
+            ..
+        },
+        ..
+    } = mexp {
+        if let Mexp::Sym {
+            symbol: "disj",
+            ..
+        } = **head {
+            let mut prop_name_vec = Vec::new ();
+            for mexp in body {
+                let prop_name = mexp_to_prop_name (mexp)?;
+                prop_name_vec.push (prop_name);
+            }
+            Ok (Prop::Disj (prop_name_vec))
+        } else {
+            ErrorInCtx::new ()
+                .head ("unknown mexp")
+                .span (mexp.span ())
+                .note (note_about_mexp_syntax_of_prop ())
+                .wrap_in_err ()
+        }
+    } else {
+        ErrorInCtx::new ()
+            .head ("unknown mexp")
+            .span (mexp.span ())
+            .note (note_about_mexp_syntax_of_prop ())
+            .wrap_in_err ()
+    }
+}
+
+fn mexp_to_conj_prop <'a> (
+    mexp: &Mexp <'a>,
+) -> Result <Prop, ErrorInCtx> {
+    unimplemented! ()
+    // if let Mexp::Apply {
+    //     head,
+    //     arg: Arg::Block {
+    //         body: query_vec,
+    //         ..
+    //     },
+    //     ..
+    // } = mexp {
+    //     if let Mexp::Apply {
+    //         head,
+    //         arg: Arg::Tuple {
+    //             body: term_vec,
+    //             ..
+    //         },
+    //         ..
+    //     } = **head {
+    //         if let Mexp::Sym {
+    //             symbol: "conj",
+    //             ..
+    //         } = **head {
+    //             let mut prop_name_vec = Vec::new ();
+    //             for mexp in body {
+    //                 let prop_name = mexp_to_prop_name (mexp)?;
+    //                 prop_name_vec.push (prop_name);
+    //             }
+    //             Ok (Prop::Disj (prop_name_vec))
+    //         } else {
+    //             ErrorInCtx::new ()
+    //                 .head ("unknown mexp")
+    //                 .span (mexp.span ())
+    //                 .note (note_about_mexp_syntax_of_prop ())
+    //                 .wrap_in_err ()
+    //         }
+    //     } else {
+    //         ErrorInCtx::new ()
+    //             .head ("unknown mexp")
+    //             .span (mexp.span ())
+    //             .note (note_about_mexp_syntax_of_prop ())
+    //             .wrap_in_err ()
+    //     }
+    // } else {
+    //     ErrorInCtx::new ()
+    //         .head ("unknown mexp")
+    //         .span (mexp.span ())
+    //         .note (note_about_mexp_syntax_of_prop ())
+    //         .wrap_in_err ()
+    // }
+}
+
+fn mexp_to_prop <'a> (
+    mexp: &Mexp <'a>,
+) -> Result <Prop, ErrorInCtx> {
+    mexp_to_disj_prop (mexp)
+        .or (mexp_to_conj_prop (mexp))
 }
 
 #[test]
