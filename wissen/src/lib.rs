@@ -1013,19 +1013,39 @@ impl <'a> Proof <'a> {
 
 impl <'a> Proof <'a> {
     fn converge_deduction_tree (&mut self) {
+        let mut last = self.tree_stack.pop () .unwrap ();
         loop {
-            let last = self.tree_stack.pop () .unwrap ();
-            if last.full_p () && ! self.tree_stack.is_empty () {
-                let mut next = self.tree_stack.pop () .unwrap ();
-                next.body.push (last);
-                self.tree_stack.push (next);
+            if let Some (mut next) = self.tree_stack.pop () {
+                if last.full_p () {
+                    next.body.push (last);
+                    last = next;
+                } else {
+                    self.tree_stack.push (next);
+                    break;
+                }
             } else {
-                self.tree_stack.push (last);
-                return;
+                break;
             }
         }
+        self.tree_stack.push (last);
     }
 }
+
+// impl <'a> Proof <'a> {
+//     fn converge_deduction_tree (&mut self) {
+//         loop {
+//             let last = self.tree_stack.pop () .unwrap ();
+//             if last.full_p () && ! self.tree_stack.is_empty () {
+//                 let mut next = self.tree_stack.pop () .unwrap ();
+//                 next.body.push (last);
+//                 self.tree_stack.push (next);
+//             } else {
+//                 self.tree_stack.push (last);
+//                 return;
+//             }
+//         }
+//     }
+// }
 
 #[derive (Clone)]
 #[derive (Debug)]
