@@ -294,10 +294,18 @@ impl Subst {
                 Some (self.clone ())
             }
             (Term::Var (u), v) => {
-                Some (self.extend (u, v))
+                if self.occur_check (&u, &v) {
+                    None
+                } else {
+                    Some (self.extend (u, v))
+                }
             }
             (u, Term::Var (v)) => {
-                Some (self.extend (v, u))
+                if self.occur_check (&v, &u) {
+                    None
+                } else {
+                    Some (self.extend (v, u))
+                }
             }
             (Term::Tuple (ut),
              Term::Tuple (vt),
@@ -414,6 +422,29 @@ impl Subst {
         let new_subst = Subst::new ();
         let local_subst = new_subst.localize_by_term (&term);
         local_subst.apply (&term)
+    }
+}
+
+impl Subst {
+    pub fn occur_check (
+        &self,
+        var: &VarTerm,
+        term: &Term,
+    ) -> bool {
+        let term = self.walk (term);
+        match term {
+            Term::Var (var1) => {
+                var == &var1
+            }
+            Term::Tuple (tuple) => {
+                for term in &tuple.body {
+                    if self.occur_check (var, term) {
+                        return true;
+                    }
+                }
+                return false;
+            }
+        }
     }
 }
 
