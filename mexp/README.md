@@ -135,3 +135,9 @@ list : -- Gr -> Gr
 list:null (t) = {}
 list:cons (t) = { t list (t) }
 ```
+
+## Getting start on Command Line
+
+With *nightly* rust toolchain :
+
+`cargo install mexp-cli --git https://github.com/xieyuheng/cicada`
