@@ -631,6 +631,11 @@ impl Wissen {
         }
         let proof = Proof {
             wissen: self,
+            tree_stack: vec! [DeductionTree {
+               conj_name: "PROOF".to_string (),
+               arity: query_vec.len (),
+               body: Vec::new (),
+            }],
             subst: Subst::new (),
             query_queue,
         };
@@ -687,6 +692,17 @@ impl Wissen {
                     subst_vec,
                 });
             }
+            if let Statement::Prove (
+                counter, query_vec
+            ) = statement {
+                let mut proving = self.proving (query_vec);
+                let qed_vec = proving.take_qed (*counter);
+                output_vec.push (WissenOutput::Prove {
+                    counter: *counter,
+                    query_vec: query_vec.clone (),
+                    qed_vec,
+                });
+            }
         }
         Ok (output_vec)
     }
@@ -694,14 +710,18 @@ impl Wissen {
 
 #[derive (Clone)]
 #[derive (Debug)]
-#[derive (PartialEq, Eq)]
+#[derive (PartialEq, Eq, Hash)]
 pub enum WissenOutput {
     Query {
         counter: usize,
         query_vec: Vec <Query>,
         subst_vec: Vec <Subst>,
     },
-    Prove {},
+    Prove {
+        counter: usize,
+        query_vec: Vec <Query>,
+        qed_vec: Vec <Qed>,
+    },
 }
 
 fn collect_var_from_query_vec (
@@ -771,8 +791,34 @@ impl ToString for WissenOutput {
                 s += "</query-output>";
                 s
             }
-            WissenOutput::Prove {} => {
-                format! ("")
+            WissenOutput::Prove {
+                counter,
+                query_vec,
+                qed_vec,
+            } => {
+                let mut s = String::new ();
+                s += "<prove-output>\n";
+                s += &vec_to_lines (&query_vec);
+                s += "- expecting ";
+                s += &counter.to_string ();
+                s += " results\n";
+                let var_set = collect_var_from_query_vec (
+                    query_vec);
+                for qed in qed_vec {
+                    s += "<deduction-tree>\n";
+                    s += &qed.deduction_tree.to_string ();
+                    s += "\n";
+                    s += "</deduction-tree>\n";
+                    for var in &var_set {
+                        s += &var.to_string ();
+                        s += " = ";
+                        s += &qed.subst.reify_var (var) .to_string ();
+                        s += "\n";
+                    }
+                    s += "\n";
+                }
+                s += "</prove-output>";
+                s
             }
         }
     }
@@ -780,11 +826,37 @@ impl ToString for WissenOutput {
 
 #[derive (Clone)]
 #[derive (Debug)]
-#[derive (PartialEq, Eq)]
+#[derive (PartialEq, Eq, Hash)]
+pub struct DeductionTree {
+    // there are no position for Disj in the DeductionTree
+    //   because Disj is not constructive -- sort of ~
+    conj_name: String,
+    arity: usize,
+    body: Vec <DeductionTree>,
+}
+
+impl DeductionTree {
+    fn full_p (&self) -> bool {
+        self.body.len () == self.arity
+    }
+}
+
+impl ToString for DeductionTree {
+    fn to_string (&self) -> String {
+        format! (
+            "{} {{ {} }}",
+            self.conj_name,
+            vec_to_string (&self.body, " "))
+    }
+}
+
+#[derive (Clone)]
+#[derive (Debug)]
+#[derive (PartialEq, Eq, Hash)]
 pub enum Statement {
     Prop (String, Prop),
     Query (usize, Vec <Query>),
-    // Prove (usize, Vec <Query>),
+    Prove (usize, Vec <Query>),
 }
 
 #[derive (Clone)]
@@ -795,19 +867,29 @@ pub struct Proving <'a> {
 }
 
 impl <'a> Proving <'a> {
-    pub fn next_subst (&mut self) -> Option <Subst> {
+    pub fn next_qed (&mut self) -> Option <Qed> {
         while let Some (
-            proof
+            mut proof
         ) = self.proof_queue.pop_front () {
-            // println! (
-            //     "- Proving::next_subst = {}",
-            //     proof.to_string ());
             match proof.step () {
-                ProofStep::Finished (subst) => {
-                    return Some (subst);
+                ProofStep::Finished => {
+                    if let Some (
+                        deduction_tree
+                    ) = proof.tree_stack.pop () {
+                        return Some (Qed {
+                            subst: proof.subst,
+                            deduction_tree,
+                        });
+                    } else {
+                        eprintln! ("next_qed");
+                        panic! ("!!!!!!!!!!!!!!!!!!!!!!!!!");
+                    }
                 }
                 ProofStep::MoreTodo (proof_queue) => {
                     for proof in proof_queue {
+                        //// about searching
+                        // push back  |   depth first
+                        // push front | breadth first
                         self.proof_queue.push_back (proof);
                     }
                 }
@@ -820,13 +902,25 @@ impl <'a> Proving <'a> {
 
 impl <'a> Proving <'a> {
     pub fn take_subst (&mut self, n: usize) -> Vec <Subst> {
-        let mut subst_vec = Vec::new ();
+        let mut vec = Vec::new ();
         for _ in 0..n {
-            if let Some (subst) = self.next_subst () {
-                subst_vec.push (subst)
+            if let Some (qed) = self.next_qed () {
+                vec.push (qed.subst)
             }
         }
-        subst_vec
+        vec
+    }
+}
+
+impl <'a> Proving <'a> {
+    pub fn take_qed (&mut self, n: usize) -> Vec <Qed> {
+        let mut vec = Vec::new ();
+        for _ in 0..n {
+            if let Some (qed) = self.next_qed () {
+                vec.push (qed)
+            }
+        }
+        vec
     }
 }
 
@@ -836,24 +930,31 @@ impl <'a> Proving <'a> {
 pub struct Proof <'a> {
     wissen: &'a Wissen,
     subst: Subst,
+    tree_stack: Vec <DeductionTree>,
     query_queue: VecDeque <Arc <Query>>,
 }
 
 impl <'a> Proof <'a> {
-    fn step (mut self) -> ProofStep <'a> {
+    fn step (&mut self) -> ProofStep <'a> {
         if let Some (query) = self.query_queue.pop_front () {
             if let Some (
                 prop
             ) = self.wissen.find_prop (&query.name) {
                 let mut proof_queue = VecDeque::new ();
+                let backup_prop = prop.clone ();
                 if let Some (
                     (query_matrix, new_subst)
                 ) = prop.apply (&query.args, self.subst.clone ()) {
                     for query_vec in query_matrix {
                         let mut proof = self.clone ();
                         proof.subst = new_subst.clone ();
+                        proof.record_deduction_step (
+                            &query,
+                            &backup_prop);
                         let rev = query_vec.into_iter () .rev ();
                         for query in rev {
+                            // the order must be kept
+                            //   to record_deduction_step
                             proof.query_queue.push_front (query);
                         }
                         proof_queue.push_back (proof);
@@ -868,7 +969,7 @@ impl <'a> Proof <'a> {
                 ProofStep::Fail
             }
         } else {
-            ProofStep::Finished (self.subst)
+            ProofStep::Finished
         }
     }
 }
@@ -891,13 +992,65 @@ impl <'a> ToString for Proof <'a> {
     }
 }
 
+impl <'a> Proof <'a> {
+    fn record_deduction_step (
+        &mut self,
+        query: &Query,
+        prop: &Prop,
+    ) {
+        self.converge_deduction_tree ();
+        if let Prop::Conj (
+            _, query_vec
+        ) = prop {
+            let new = DeductionTree {
+                conj_name: query.name.clone (),
+                arity: query_vec.len (),
+                body: Vec::new (),
+            };
+            if let Some (mut old) = self.tree_stack.pop () {
+                old.body.push (new);
+                self.tree_stack.push (old);
+            } else {
+                eprintln! ("- record_deduction_step");
+                eprintln! ("  query = {}", query.to_string ());
+                eprintln! ("  prop = {}", prop.to_string ());
+                panic! ("!!!!!!!!!!!!!!!!!!!!!!!!!");
+            }
+        }
+    }
+}
+
+impl <'a> Proof <'a> {
+    fn converge_deduction_tree (&mut self) {
+        loop {
+            let last = self.tree_stack.pop () .unwrap ();
+            if last.full_p () && ! self.tree_stack.is_empty () {
+                let mut next = self.tree_stack.pop () .unwrap ();
+                next.body.push (last);
+                self.tree_stack.push (next);
+            } else {
+                self.tree_stack.push (last);
+                return;
+            }
+        }
+    }
+}
+
 #[derive (Clone)]
 #[derive (Debug)]
 #[derive (PartialEq, Eq)]
 pub enum ProofStep <'a> {
-    Finished (Subst),
+    Finished,
     MoreTodo (VecDeque <Proof <'a>>),
     Fail,
+}
+
+#[derive (Clone)]
+#[derive (Debug)]
+#[derive (PartialEq, Eq, Hash)]
+pub struct Qed {
+    subst: Subst,
+    deduction_tree: DeductionTree,
 }
 
 const WISSEN_GRAMMAR: &'static str = r#"
@@ -1158,7 +1311,7 @@ fn mexp_to_query_statement <'a> (
             let result = symbol.parse::<usize> ();
             if result.is_err () {
                 return ErrorInCtx::new ()
-                    .line ("fail to parse usize num in query")
+                    .line ("fail to parse usize num in `query`")
                     .line (&format! ("symbol : {}", symbol))
                     .span (mexp.span ())
                     .note (note_about_wissen_grammar ())
@@ -1183,12 +1336,64 @@ fn mexp_to_query_statement <'a> (
     }
 }
 
+fn mexp_to_prove_statement <'a> (
+    mexp: &Mexp <'a>,
+) -> Result <Statement, ErrorInCtx> {
+    if let Mexp::Apply {
+        head: box Mexp::Apply {
+            head: box Mexp::Sym {
+                symbol: "prove",
+                ..
+            },
+            arg: Arg::Tuple {
+                body: body1,
+                ..
+            },
+            ..
+        },
+        arg: Arg::Block {
+            body: body2,
+            ..
+        },
+        ..
+    } = mexp {
+        if let [
+            Mexp::Sym { symbol, .. }
+        ] = &body1 [..] {
+            let result = symbol.parse::<usize> ();
+            if result.is_err () {
+                return ErrorInCtx::new ()
+                    .line ("fail to parse usize num in `prove`")
+                    .line (&format! ("symbol : {}", symbol))
+                    .span (mexp.span ())
+                    .note (note_about_wissen_grammar ())
+                    .wrap_in_err ();
+            }
+            Ok (Statement::Prove (
+                result.unwrap (),
+                mexp_vec_to_query_vec (body2)?))
+        } else {
+            ErrorInCtx::new ()
+                .line ("fail to parse query's first arg")
+                .span (mexp.span ())
+                .note (note_about_wissen_grammar ())
+                .wrap_in_err ()
+        }
+    } else {
+        ErrorInCtx::new ()
+            .head ("syntex error")
+            .span (mexp.span ())
+            .note (note_about_wissen_grammar ())
+            .wrap_in_err ()
+    }
+}
+
 fn mexp_to_statement <'a> (
     mexp: &Mexp <'a>,
 ) -> Result <Statement, ErrorInCtx> {
     mexp_to_prop_statement (mexp)
         .or (mexp_to_query_statement (mexp))
-    // .or (mexp_to_prove_statement (mexp))
+        .or (mexp_to_prove_statement (mexp))
 }
 
 fn mexp_vec_to_prop_name_vec <'a> (
@@ -1259,12 +1464,8 @@ fn test_love () {
         args: vec! [Term::var ("u")],
     };
     let mut proving = wissen.proving (&vec! [query]);
-    assert_eq! (
-        proving.next_subst () .unwrap () .len (),
-        1);
-    assert_eq! (
-        proving.next_subst (),
-        None);
+    assert! (proving.next_qed () .is_some ());
+    assert! (proving.next_qed () .is_none ());
 }
 
 #[test]
