@@ -22,6 +22,7 @@ fn main () {
     let matches = cmd::App::new ("wissen // wis")
         .author (cmd::crate_authors! ())
         .version (cmd::crate_version! ())
+        .setting (cmd::AppSettings::ArgRequiredElseHelp)
         .arg (cmd::Arg::with_name ("FILE")
               .help ("paths to `.wis` files")
               .multiple (true))
