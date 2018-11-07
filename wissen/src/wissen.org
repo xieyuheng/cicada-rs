@@ -1,8 +1,9 @@
 #+property: tangle lib.rs
 #+title: Wissen
+- Subst::localize_by_term
 - reify
 - occur_check
-- Deduction
+- DeductionTree
 - `prove () {}`
 * prolog
 
@@ -126,15 +127,28 @@
     #+begin_src rust
     #[derive (Clone)]
     #[derive (PartialEq, Eq, Hash)]
-    pub struct Id (uuid::adapter::Hyphenated);
+    pub enum Id {
+        Uuid (uuid::adapter::Hyphenated),
+        Local (usize),
+    }
     #+end_src
 
-*** Id::new
+*** Id::uuid
 
     #+begin_src rust
     impl Id {
-        fn new () -> Self {
-            Id (Uuid::new_v4 () .to_hyphenated ())
+        fn uuid () -> Self {
+            Id::Uuid (Uuid::new_v4 () .to_hyphenated ())
+        }
+    }
+    #+end_src
+
+*** Id::local
+
+    #+begin_src rust
+    impl Id {
+        fn local (counter: usize) -> Self {
+            Id::Local (counter)
         }
     }
     #+end_src
@@ -144,7 +158,10 @@
     #+begin_src rust
     impl fmt::Debug for Id {
         fn fmt (&self, f: &mut fmt::Formatter) -> fmt::Result {
-            write! (f, "{}", self.0)
+            match self {
+                Id::Uuid (uuid) => write! (f, "{}", uuid),
+                Id::Local (counter) => write! (f, "{}", counter),
+            }
         }
     }
     #+end_src
@@ -154,7 +171,10 @@
     #+begin_src rust
     impl ToString for Id {
         fn to_string (&self) -> String {
-            format! ("{}", self.0)
+            match self {
+                Id::Uuid (uuid) => format! ("{}", uuid),
+                Id::Local (counter) => format! ("{}", counter),
+            }
         }
     }
     #+end_src
@@ -195,7 +215,7 @@
         fn var (s: &str) -> Term {
             Term::Var (VarTerm {
                 name: s.to_string (),
-                id: Some (Id::new ()),
+                id: Some (Id::uuid ()),
             })
         }
     }
@@ -209,6 +229,19 @@
             Term::Var (VarTerm {
                 name: s.to_string (),
                 id: None,
+            })
+        }
+    }
+    #+end_src
+
+*** Term::var_local
+
+    #+begin_src rust
+    impl Term {
+        fn var_local (s: &str, counter: usize) -> Term {
+            Term::Var (VarTerm {
+                name: s.to_string (),
+                id: Some (Id::local (counter)),
             })
         }
     }
@@ -242,7 +275,7 @@
                     } else {
                         let new_var = VarTerm {
                             name: var.name.clone (),
-                            id: Some (Id::new ()),
+                            id: Some (Id::uuid ()),
                         };
                         var_map.insert (
                             var.clone (),
@@ -470,6 +503,41 @@
                 subst = &next;
             }
             len
+        }
+    }
+    #+end_src
+
+*** Subst::apply
+
+    #+begin_src rust
+    impl Subst {
+        pub fn apply (&self, term: &Term) -> Term {
+            let term = self.walk (term);
+            match term {
+                Term::Var (_) => term,
+                Term::Tuple (TupleTerm {
+                    head,
+                    body,
+                }) => {
+                    let body = body.iter ()
+                        .map (|x| self.apply (x))
+                        .collect ();
+                    Term::Tuple (TupleTerm {
+                        head,
+                        body,
+                    })
+                }
+            }
+        }
+    }
+    #+end_src
+
+*** Subst::localize_by_term
+
+    #+begin_src rust
+    impl Subst {
+        pub fn localize_by_term (&self, term: &Term) -> Subst {
+            unimplemented! ()
         }
     }
     #+end_src
@@ -984,7 +1052,7 @@
     }
     #+end_src
 
-* mexp syntax
+* mexp
 
 *** WISSEN_GRAMMAR
 

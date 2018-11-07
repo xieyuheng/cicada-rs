@@ -83,23 +83,38 @@ impl ToString for VarTerm {
 
 #[derive (Clone)]
 #[derive (PartialEq, Eq, Hash)]
-pub struct Id (uuid::adapter::Hyphenated);
+pub enum Id {
+    Uuid (uuid::adapter::Hyphenated),
+    Local (usize),
+}
 
 impl Id {
-    fn new () -> Self {
-        Id (Uuid::new_v4 () .to_hyphenated ())
+    fn uuid () -> Self {
+        Id::Uuid (Uuid::new_v4 () .to_hyphenated ())
+    }
+}
+
+impl Id {
+    fn local (counter: usize) -> Self {
+        Id::Local (counter)
     }
 }
 
 impl fmt::Debug for Id {
     fn fmt (&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write! (f, "{}", self.0)
+        match self {
+            Id::Uuid (uuid) => write! (f, "{}", uuid),
+            Id::Local (counter) => write! (f, "{}", counter),
+        }
     }
 }
 
 impl ToString for Id {
     fn to_string (&self) -> String {
-        format! ("{}", self.0)
+        match self {
+            Id::Uuid (uuid) => format! ("{}", uuid),
+            Id::Local (counter) => format! ("{}", counter),
+        }
     }
 }
 
@@ -128,7 +143,7 @@ impl Term {
     fn var (s: &str) -> Term {
         Term::Var (VarTerm {
             name: s.to_string (),
-            id: Some (Id::new ()),
+            id: Some (Id::uuid ()),
         })
     }
 }
@@ -138,6 +153,15 @@ impl Term {
         Term::Var (VarTerm {
             name: s.to_string (),
             id: None,
+        })
+    }
+}
+
+impl Term {
+    fn var_local (s: &str, counter: usize) -> Term {
+        Term::Var (VarTerm {
+            name: s.to_string (),
+            id: Some (Id::local (counter)),
         })
     }
 }
@@ -163,7 +187,7 @@ impl Term {
                 } else {
                     let new_var = VarTerm {
                         name: var.name.clone (),
-                        id: Some (Id::new ()),
+                        id: Some (Id::uuid ()),
                     };
                     var_map.insert (
                         var.clone (),
@@ -341,6 +365,33 @@ impl Subst {
             subst = &next;
         }
         len
+    }
+}
+
+impl Subst {
+    pub fn apply (&self, term: &Term) -> Term {
+        let term = self.walk (term);
+        match term {
+            Term::Var (_) => term,
+            Term::Tuple (TupleTerm {
+                head,
+                body,
+            }) => {
+                let body = body.iter ()
+                    .map (|x| self.apply (x))
+                    .collect ();
+                Term::Tuple (TupleTerm {
+                    head,
+                    body,
+                })
+            }
+        }
+    }
+}
+
+impl Subst {
+    pub fn localize_by_term (&self, term: &Term) -> Subst {
+        unimplemented! ()
     }
 }
 
