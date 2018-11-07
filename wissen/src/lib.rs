@@ -998,24 +998,15 @@ impl <'a> Proof <'a> {
         query: &Query,
         prop: &Prop,
     ) {
-        self.converge_deduction_tree ();
         if let Prop::Conj (
             _, query_vec
         ) = prop {
-            let new = DeductionTree {
+            self.tree_stack.push (DeductionTree {
                 conj_name: query.name.clone (),
                 arity: query_vec.len (),
                 body: Vec::new (),
-            };
-            if let Some (mut old) = self.tree_stack.pop () {
-                old.body.push (new);
-                self.tree_stack.push (old);
-            } else {
-                eprintln! ("- record_deduction_step");
-                eprintln! ("  query = {}", query.to_string ());
-                eprintln! ("  prop = {}", prop.to_string ());
-                panic! ("!!!!!!!!!!!!!!!!!!!!!!!!!");
-            }
+            });
+            self.converge_deduction_tree ();
         }
     }
 }
