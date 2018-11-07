@@ -6,18 +6,8 @@
 #![allow (dead_code)]
 
 use std::path::Path;
-use std::collections::VecDeque;
-use std::io;
 use std::fs;
 use clap as cmd;
-use rustyline::{
-    Editor,
-    Config,
-    EditMode,
-    error::{
-        ReadlineError,
-    },
-};
 use error_report::{
     // ErrorMsg,
     ErrorCtx,
@@ -25,93 +15,10 @@ use error_report::{
 };
 use wissen::{
     Wissen,
-    Proving,
+    // WissenOutput,
 };
 
-fn repl (wissen: &mut Wissen) {
-    let config = Config::builder ()
-        .history_ignore_space (true)
-        .edit_mode (EditMode::Emacs)
-        .build ();
-    let mut rl = Editor::<()>::with_config (config);
-    loop {
-        let readline = rl.readline(">> ");
-        match readline {
-            Ok (code) => {
-                match wissen.wis (&code) {
-                    Ok (proving_vec) => {
-                        proving_vec_loop (proving_vec);
-                    }
-                    Err (error) => {
-                        let ctx = ErrorCtx::new ()
-                            .body (&code);
-                        error.report (ctx);
-                    }
-                }
-            },
-            Err (ReadlineError::Interrupted) => {
-                break
-            },
-            Err (ReadlineError::Eof) => {
-                break
-            },
-            Err (err) => {
-                eprintln!("- readline error : {:?}", err);
-                break
-            },
-        }
-    }
-}
-
-fn proving_vec_loop (proving_vec: Vec <Proving>) {
-    if proving_vec.is_empty () {
-        return;
-    }
-    let mut rl = Editor::<()>::new ();
-    let mut queue: VecDeque <Proving> = proving_vec.into ();
-    loop {
-        let readline = rl.readline(".: ");
-        match readline {
-            Ok (command) => {
-                match command.as_str () {
-                    "." => {
-                        if let Some (
-                            mut proving
-                        ) = queue.pop_front () {
-                            if let Some (
-                                subst
-                            ) = proving.next_subst () {
-                                println! ("- {}", subst.to_string ());
-                                queue.push_front (proving);
-                            } else {
-                                println! ("- one proving finished")
-                            }
-                        } else {
-                            break;
-                        }
-                    }
-                    "/" => {
-                        let _proving = queue.pop_front ();
-                        println! ("- drop proving")
-                    }
-                    _ => {}
-                }
-            },
-            Err (ReadlineError::Interrupted) => {
-                break
-            },
-            Err (ReadlineError::Eof) => {
-                break
-            },
-            Err (err) => {
-                eprintln!("- readline error : {:?}", err);
-                break
-            },
-        }
-    }
-}
-
-fn main () -> io::Result <()> {
+fn main () {
     let matches = cmd::App::new ("wissen // wis")
         .author (cmd::crate_authors! ())
         .version (cmd::crate_version! ())
@@ -124,15 +31,17 @@ fn main () -> io::Result <()> {
         for path_str in paths {
             let path = Path::new (path_str);
             if path.is_file () {
-                let code = fs::read_to_string (path)?;
-                match wissen.wis (&code) {
-                    Ok (proving_vec) => {
-                        proving_vec_loop (proving_vec);
+                let input = fs::read_to_string (path) .unwrap ();
+                match wissen.wis (&input) {
+                    Ok (output_vec) => {
+                        for output in output_vec {
+                            println! ("{}", output.to_string ());
+                        }
                     }
                     Err (error) => {
                         let ctx = ErrorCtx::new ()
                             .source (path_str)
-                            .body (&code);
+                            .body (&input);
                         error.report (ctx);
                         std::process::exit (1);
                     }
@@ -144,6 +53,4 @@ fn main () -> io::Result <()> {
             }
         }
     }
-    repl (&mut wissen);
-    Ok (())
 }

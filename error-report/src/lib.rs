@@ -56,6 +56,16 @@ impl ErrorMsg {
 }
 
 impl ErrorMsg {
+    pub fn lines (mut self, lines: &str) -> Self {
+        for line in lines.lines () {
+            let line = line.to_string ();
+            self.line_vec.push (line);
+        }
+        self
+    }
+}
+
+impl ErrorMsg {
     pub fn report (&self) {
         if let Some (head) = &self.head {
             eprintln! ("- {}", head);
@@ -99,6 +109,15 @@ impl ErrorInCtx {
 impl ErrorInCtx {
     pub fn line (mut self, line: &str) -> Self {
         self.msg = self.msg.line (line);
+        self
+    }
+}
+
+impl ErrorInCtx {
+    pub fn lines (mut self, lines: &str) -> Self {
+        for line in lines.lines () {
+            self.msg = self.msg.line (line);
+        }
         self
     }
 }

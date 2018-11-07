@@ -16,10 +16,10 @@ use error_report::{
     ErrorMsg,
     ErrorInCtx,
 };
-// #[cfg (test)]
-// use error_report::{
-//     ErrorCtx,
-// };
+#[cfg (test)]
+use error_report::{
+    ErrorCtx,
+};
 use mexp::{
     SyntaxTable,
     Mexp,
@@ -517,14 +517,18 @@ impl Wissen {
 }
 
 impl Wissen {
-    pub fn prove <'a> (
+    pub fn proving <'a> (
         &'a self,
-        query: &Query,
+        query_vec: &Vec <Query>,
     ) -> Proving <'a> {
+        let mut query_queue = VecDeque::new ();
+        for query in query_vec {
+            query_queue.push_back (Arc::new (query.clone ()))
+        }
         let proof = Proof {
             wissen: self,
             subst: Subst::new (),
-            query_queue: vec! [Arc::new (query.clone ())] .into (),
+            query_queue,
         };
         Proving {
             proof_queue: vec! [proof] .into (),
@@ -546,7 +550,7 @@ impl ToString for Wissen {
 }
 
 impl Wissen {
-    pub fn define_prop (&mut self, name: &str, prop: &Prop) {
+    pub fn prop (&mut self, name: &str, prop: &Prop) {
        self.prop_dic.ins (name, Some (prop.clone ()));
     }
 }
@@ -554,24 +558,65 @@ impl Wissen {
 impl Wissen {
     pub fn wis <'a> (
         &'a mut self,
-        code: &str,
-    ) -> Result <Vec <Proving <'a>>, ErrorInCtx> {
-        let mut proving_vec = Vec::new ();
+        input: &str,
+    ) -> Result <Vec <WissenOutput>, ErrorInCtx> {
         let syntax_table = SyntaxTable::default ();
-        let mexp_vec = syntax_table.parse (code)?;
+        let mexp_vec = syntax_table.parse (input)?;
         let statement_vec = mexp_vec_to_statement_vec (&mexp_vec)?;
         for statement in &statement_vec {
-            if let Statement::DefineProp (name, prop) = statement {
-                self.define_prop (name, prop);
+            if let Statement::Prop (
+                name, prop
+            ) = statement {
+                self.prop (name, prop);
             }
         }
+        let mut output_vec = Vec::new ();
         for statement in &statement_vec {
-            if let Statement::Query (query) = statement {
-                let proving = self.prove (query);
-                proving_vec.push (proving);
+            if let Statement::Query (
+                counter, query_vec
+            ) = statement {
+                let mut proving = self.proving (query_vec);
+                let subst_vec = proving.take_subst (*counter);
+                output_vec.push (WissenOutput::Query {
+                    counter: *counter,
+                    query_vec: query_vec.clone (),
+                    subst_vec,
+                });
             }
         }
-        Ok (proving_vec)
+        Ok (output_vec)
+    }
+}
+
+#[derive (Clone)]
+#[derive (Debug)]
+#[derive (PartialEq, Eq)]
+pub enum WissenOutput {
+    Query {
+        counter: usize,
+        query_vec: Vec <Query>,
+        subst_vec: Vec <Subst>,
+    },
+    Prove {},
+}
+
+impl ToString for WissenOutput {
+    fn to_string (&self) -> String {
+        match self {
+            WissenOutput::Query {
+                counter,
+                query_vec,
+                subst_vec,
+            } => {
+                format! (
+                    "<query-output>\n{}\n{}</query-output>",
+                    vec_to_lines (&query_vec),
+                    vec_to_lines (&subst_vec))
+            }
+            WissenOutput::Prove {} => {
+                format! ("")
+            }
+        }
     }
 }
 
@@ -579,8 +624,9 @@ impl Wissen {
 #[derive (Debug)]
 #[derive (PartialEq, Eq)]
 pub enum Statement {
-    DefineProp (String, Prop),
-    Query (Query),
+    Prop (String, Prop),
+    Query (usize, Vec <Query>),
+    // Prove (usize, Vec <Query>),
 }
 
 #[derive (Clone)]
@@ -696,40 +742,21 @@ pub enum ProofStep <'a> {
     Fail,
 }
 
-// Statement::DefineProp = { prop-name? "=" Prop }
-// Statement::Query = { Query }
+const WISSEN_GRAMMAR: &'static str = r#"
+Statement::Prop = { prop-name? "=" Prop }
+Statement::Query = { "query" '(' num? ')' '{' list (Query) '}' }
+Statement::Prove = { "prove" '(' num? ')' '{' list (Query) '}' }
+Prop::Disj = { "disj" '(' list (prop-name?) ')' }
+Prop::Conj = { "conj" '(' list (Term) ')' '{' list (Query) '}' }
+Term::Var = { unique-var-name? }
+Term::Tuple = { tuple-name? '(' list (Term) ')' }
+Query::Tuple = { prop-name? '(' list (Term) ')' }
+"#;
 
-// Prop::Disj = {
-//     "disj" '('
-//         list (prop-name?)
-//    ')'
-// }
-// Prop::Conj = {
-//     "conj" '('
-//         list (Term)
-//    ')' '{'
-//         list (Query)
-//    '}'
-// }
-
-// Term::Var = {
-//     unique-var-name?
-// }
-// Term::Tuple = {
-//     tuple-name? '('
-//         list (Term)
-//     ')'
-// }
-
-// Query::Tuple = {
-//     prop-name? '('
-//         list (Term)
-//     ')'
-// }
-
-fn note_about_mexp_syntax_of_prop () -> ErrorMsg {
+fn note_about_wissen_grammar () -> ErrorMsg {
     ErrorMsg::new ()
-        .head (r#"grammar of Prop"#)
+        .head ("wissen grammar :")
+        .lines (WISSEN_GRAMMAR)
 }
 
 fn mexp_to_prop_name <'a> (
@@ -747,7 +774,7 @@ fn mexp_to_prop_name <'a> (
                 .line ("which must end with `-t`")
                 .line (&format! ("but found : {}", symbol))
                 .span (mexp.span ())
-                .note (note_about_mexp_syntax_of_prop ())
+                .note (note_about_wissen_grammar ())
                 .wrap_in_err ()
         }
     } else {
@@ -776,9 +803,9 @@ fn mexp_to_disj_prop <'a> (
         Ok (Prop::Disj (mexp_vec_to_prop_name_vec (body)?))
     } else {
         ErrorInCtx::new ()
-            .head ("unknown mexp")
+            .head ("syntex error")
             .span (mexp.span ())
-            .note (note_about_mexp_syntax_of_prop ())
+            .note (note_about_wissen_grammar ())
             .wrap_in_err ()
     }
 }
@@ -808,14 +835,14 @@ fn mexp_to_query <'a> (
                 .line ("which must end with `-t`")
                 .line (&format! ("but found : {}", symbol))
                 .span (mexp.span ())
-                .note (note_about_mexp_syntax_of_prop ())
+                .note (note_about_wissen_grammar ())
                 .wrap_in_err ()
         }
     } else {
         ErrorInCtx::new ()
-            .head ("unknown mexp")
+            .head ("syntex error")
             .span (mexp.span ())
-            .note (note_about_mexp_syntax_of_prop ())
+            .note (note_about_wissen_grammar ())
             .wrap_in_err ()
     }
 }
@@ -844,7 +871,7 @@ fn mexp_to_term <'a> (
                 .line ("which must end with `-c`")
                 .line (&format! ("but found : {}", symbol))
                 .span (mexp.span ())
-                .note (note_about_mexp_syntax_of_prop ())
+                .note (note_about_wissen_grammar ())
                 .wrap_in_err ()
         }
     } else if let Mexp::Sym {
@@ -859,16 +886,16 @@ fn mexp_to_term <'a> (
                 .line ("but found prop name which end with `-t`")
                 .line (&format! ("prop name : {}", symbol))
                 .span (mexp.span ())
-                .note (note_about_mexp_syntax_of_prop ())
+                .note (note_about_wissen_grammar ())
                 .wrap_in_err ()
         } else {
             Ok (Term::var_no_id (symbol))
         }
     } else {
         ErrorInCtx::new ()
-            .head ("unknown mexp")
+            .head ("syntex error")
             .span (mexp.span ())
-            .note (note_about_mexp_syntax_of_prop ())
+            .note (note_about_wissen_grammar ())
             .wrap_in_err ()
     }
 }
@@ -898,9 +925,9 @@ fn mexp_to_conj_prop <'a> (
                         mexp_vec_to_query_vec (body2)?))
     } else {
         ErrorInCtx::new ()
-            .head ("unknown mexp")
+            .head ("syntex error")
             .span (mexp.span ())
-            .note (note_about_mexp_syntax_of_prop ())
+            .note (note_about_wissen_grammar ())
             .wrap_in_err ()
     }
 }
@@ -912,12 +939,10 @@ fn mexp_to_prop <'a> (
         .or (mexp_to_conj_prop (mexp))
 }
 
-fn mexp_to_statement <'a> (
+fn mexp_to_prop_statement <'a> (
     mexp: &Mexp <'a>,
 ) -> Result <Statement, ErrorInCtx> {
-    if let Ok (query) = mexp_to_query (mexp) {
-        Ok (Statement::Query (query))
-    } else if let Mexp::Infix {
+    if let Mexp::Infix {
         op: "=",
         lhs: box Mexp::Sym {
             symbol,
@@ -927,7 +952,7 @@ fn mexp_to_statement <'a> (
         ..
     } = mexp {
         if symbol.ends_with ("-t") {
-            Ok (Statement::DefineProp (
+            Ok (Statement::Prop (
                 symbol.to_string (),
                 mexp_to_prop (rhs)?))
         } else {
@@ -936,16 +961,76 @@ fn mexp_to_statement <'a> (
                 .line ("which must end with `-t`")
                 .line (&format! ("but found : {}", symbol))
                 .span (mexp.span ())
-                .note (note_about_mexp_syntax_of_prop ())
+                .note (note_about_wissen_grammar ())
                 .wrap_in_err ()
         }
     } else {
         ErrorInCtx::new ()
-            .head ("unknown mexp")
+            .head ("syntex error")
             .span (mexp.span ())
-            .note (note_about_mexp_syntax_of_prop ())
+            .note (note_about_wissen_grammar ())
             .wrap_in_err ()
     }
+}
+
+fn mexp_to_query_statement <'a> (
+    mexp: &Mexp <'a>,
+) -> Result <Statement, ErrorInCtx> {
+    if let Mexp::Apply {
+        head: box Mexp::Apply {
+            head: box Mexp::Sym {
+                symbol: "query",
+                ..
+            },
+            arg: Arg::Tuple {
+                body: body1,
+                ..
+            },
+            ..
+        },
+        arg: Arg::Block {
+            body: body2,
+            ..
+        },
+        ..
+    } = mexp {
+        if let [
+            Mexp::Sym { symbol, .. }
+        ] = &body1 [..] {
+            let result = symbol.parse::<usize> ();
+            if result.is_err () {
+                return ErrorInCtx::new ()
+                    .line ("fail to parse usize num in query")
+                    .line (&format! ("symbol : {}", symbol))
+                    .span (mexp.span ())
+                    .note (note_about_wissen_grammar ())
+                    .wrap_in_err ();
+            }
+            Ok (Statement::Query (
+                result.unwrap (),
+                mexp_vec_to_query_vec (body2)?))
+        } else {
+            ErrorInCtx::new ()
+                .line ("fail to parse query's first arg")
+                .span (mexp.span ())
+                .note (note_about_wissen_grammar ())
+                .wrap_in_err ()
+        }
+    } else {
+        ErrorInCtx::new ()
+            .head ("syntex error")
+            .span (mexp.span ())
+            .note (note_about_wissen_grammar ())
+            .wrap_in_err ()
+    }
+}
+
+fn mexp_to_statement <'a> (
+    mexp: &Mexp <'a>,
+) -> Result <Statement, ErrorInCtx> {
+    mexp_to_prop_statement (mexp)
+        .or (mexp_to_query_statement (mexp))
+    // .or (mexp_to_prove_statement (mexp))
 }
 
 fn mexp_vec_to_prop_name_vec <'a> (
@@ -1010,12 +1095,12 @@ fn test_love () {
     let prop = Prop::Conj (
         vec! [Term::tuple ("you-c", vec! [])],
         vec! []);
-    wissen.define_prop ("love-t", &prop);
+    wissen.prop ("love-t", &prop);
     let query = Query {
         name: "love-t".to_string (),
         args: vec! [Term::var ("u")],
     };
-    let mut proving = wissen.prove (&query);
+    let mut proving = wissen.proving (&vec! [query]);
     assert_eq! (
         proving.next_subst () .unwrap () .len (),
         1);
@@ -1023,24 +1108,6 @@ fn test_love () {
         proving.next_subst (),
         None);
 }
-
-#[cfg (test)]
-const LIST_APPEND_EXAMPLE: &'static str = "
-list-append-t = disj (
-    zero-append-t
-    succ-append-t
-)
-zero-append-t = conj (null-c succ succ) {}
-succ-append-t = conj (
-    cons-c (car cdr)
-    succ
-    cons-c (car o-cdr)
-) {
-    list-append-t (cdr succ o-cdr)
-}
-
-list-append-t (x y z)
-";
 
 #[test]
 fn test_list_append () {
@@ -1050,7 +1117,7 @@ fn test_list_append () {
             "zero-append-t".to_string (),
             "succ-append-t".to_string (),
         ]);
-    wissen.define_prop ("list-append-t", &list_append_t);
+    wissen.prop ("list-append-t", &list_append_t);
     let succ = Term::var ("succ");
     let zero_append_t = Prop::Conj (
         vec! [
@@ -1059,7 +1126,7 @@ fn test_list_append () {
             succ
         ],
         vec! []);
-    wissen.define_prop ("zero-append-t", &zero_append_t);
+    wissen.prop ("zero-append-t", &zero_append_t);
     let car = Term::var ("car");
     let cdr = Term::var ("cdr");
     let succ = Term::var ("succ");
@@ -1084,14 +1151,14 @@ fn test_list_append () {
                 ],
             }
         ]);
-    wissen.define_prop ("succ-append-t", &succ_append_t);
+    wissen.prop ("succ-append-t", &succ_append_t);
     let query = Query {
         name: "list-append-t".to_string (),
         args: vec! [Term::var ("x"),
                     Term::var ("y"),
                     Term::var ("z")],
     };
-    let mut proving = wissen.prove (&query);
+    let mut proving = wissen.proving (&vec! [query]);
     let subst_vec = proving.take_subst (100);
     assert_eq! (subst_vec.len (), 100);
     for subst in subst_vec {
@@ -1099,17 +1166,47 @@ fn test_list_append () {
     }
 }
 
+#[cfg (test)]
+const LIST_APPEND_EXAMPLE: &'static str = "
+list-append-t = disj (
+    zero-append-t
+    succ-append-t
+)
+zero-append-t = conj (null-c succ succ) {}
+succ-append-t = conj (
+    cons-c (car cdr)
+    succ
+    cons-c (car o-cdr)
+) {
+    list-append-t (cdr succ o-cdr)
+}
+
+query (10) { list-append-t (x y z) }
+";
+
 #[test]
 fn test_mexp () -> Result <(), ErrorInCtx> {
     let mut wissen = Wissen::new ();
-    let code = LIST_APPEND_EXAMPLE;
-    let mut proving_vec = wissen.wis (code)?;
-    assert_eq! (proving_vec.len (), 1);
-    let mut proving = proving_vec.pop () .unwrap ();
-    let subst_vec = proving.take_subst (100);
-    assert_eq! (subst_vec.len (), 100);
-    for subst in subst_vec {
-        assert! (subst.cons_p ());
+    let input = LIST_APPEND_EXAMPLE;
+    match wissen.wis (input) {
+        Ok (mut output_vec) => {
+            assert_eq! (output_vec.len (), 1);
+            if let WissenOutput::Query {
+                subst_vec, ..
+            } = output_vec.pop () .unwrap () {
+                assert_eq! (subst_vec.len (), 10);
+                for subst in subst_vec {
+                    assert! (subst.cons_p ());
+                }
+            } else {
+                panic! ()
+            }
+        }
+        Err (error) => {
+            let ctx = ErrorCtx::new ()
+                .body (input);
+            error.report (ctx);
+        }
     }
     Ok (())
 }

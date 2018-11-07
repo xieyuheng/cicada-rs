@@ -96,6 +96,20 @@
     }
     #+end_src
 
+*** ErrorMsg::lines
+
+    #+begin_src rust
+    impl ErrorMsg {
+        pub fn lines (mut self, lines: &str) -> Self {
+            for line in lines.lines () {
+                let line = line.to_string ();
+                self.line_vec.push (line);
+            }
+            self
+        }
+    }
+    #+end_src
+
 *** ErrorMsg::report
 
     #+begin_src rust
@@ -161,6 +175,19 @@
     impl ErrorInCtx {
         pub fn line (mut self, line: &str) -> Self {
             self.msg = self.msg.line (line);
+            self
+        }
+    }
+    #+end_src
+
+*** ErrorInCtx::lines
+
+    #+begin_src rust
+    impl ErrorInCtx {
+        pub fn lines (mut self, lines: &str) -> Self {
+            for line in lines.lines () {
+                self.msg = self.msg.line (line);
+            }
             self
         }
     }
