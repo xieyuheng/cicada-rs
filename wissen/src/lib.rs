@@ -9,6 +9,7 @@ use std::fmt;
 use std::sync::Arc;
 use std::collections::VecDeque;
 use std::collections::HashMap;
+use std::collections::HashSet;
 use uuid::Uuid;
 use dic::Dic;
 use error_report::{
@@ -66,18 +67,11 @@ pub struct VarTerm {
 
 impl ToString for VarTerm {
     fn to_string (&self) -> String {
+        let mut s = format! ("{}", self.name);
         if let Some (id) = &self.id {
-            // format! (
-            //     "{}#{}",
-            //     self.name,
-            //     id.to_string ())
-            format! (
-                "{}#{}",
-                self.name,
-                &id.to_string () [0..2])
-        } else {
-            format! ("{}", self.name)
+            s += &format! ("#{}", id.to_string ());
         }
+        s
     }
 }
 
@@ -325,25 +319,6 @@ impl Subst {
     }
 }
 
-impl ToString for Subst {
-    fn to_string (&self) -> String {
-        let mut s = String::new ();
-        let mut subst = self.clone ();
-        while let Subst::Cons {
-            var,
-            term,
-            next,
-        } = subst {
-            s += &var.to_string ();
-            s += " = ";
-            s += &term.to_string ();
-            s += "\n";
-            subst = (*next) .clone ();
-        }
-        s
-    }
-}
-
 impl Subst {
     pub fn null_p (&self) -> bool {
         &Subst::Null == self
@@ -365,6 +340,25 @@ impl Subst {
             subst = &next;
         }
         len
+    }
+}
+
+impl ToString for Subst {
+    fn to_string (&self) -> String {
+        let mut s = String::new ();
+        let mut subst = self.clone ();
+        while let Subst::Cons {
+            var,
+            term,
+            next,
+        } = subst {
+            s += &var.to_string ();
+            s += " = ";
+            s += &term.to_string ();
+            s += "\n";
+            subst = (*next) .clone ();
+        }
+        s
     }
 }
 
@@ -391,7 +385,35 @@ impl Subst {
 
 impl Subst {
     pub fn localize_by_term (&self, term: &Term) -> Subst {
-        unimplemented! ()
+        let term = self.walk (term);
+        match term {
+            Term::Var (var) => {
+                self.extend (
+                    var.clone (),
+                    Term::var_local (
+                        &var.name,
+                        self.len ()))
+            }
+            Term::Tuple (TupleTerm {
+                body, ..
+            }) => {
+                let mut subst = self.clone ();
+                for term in &body {
+                    subst = subst.localize_by_term (term);
+                }
+                subst
+            }
+        }
+    }
+}
+
+impl Subst {
+    pub fn reify_var (&self, var: &VarTerm) -> Term {
+        let term = Term::Var (var.clone ());
+        let term = self.apply (&term);
+        let new_subst = Subst::new ();
+        let local_subst = new_subst.localize_by_term (&term);
+        local_subst.apply (&term)
     }
 }
 
@@ -651,6 +673,45 @@ pub enum WissenOutput {
     Prove {},
 }
 
+fn collect_var_from_query_vec (
+    query_vec: &Vec <Query>
+) -> HashSet <VarTerm> {
+    let mut var_set = HashSet::new ();
+    for query in query_vec {
+        for var in collect_var_from_term_vec (&query.args) {
+            var_set.insert (var);
+        }
+    }
+    var_set
+}
+
+fn collect_var_from_term (
+    term: &Term
+) -> HashSet <VarTerm> {
+    match term {
+        Term::Var (var) => {
+            let mut var_set = HashSet::new ();
+            var_set.insert (var.clone ());
+            var_set
+        }
+        Term::Tuple (tuple) => {
+            collect_var_from_term_vec (&tuple.body)
+        }
+    }
+}
+
+fn collect_var_from_term_vec (
+    term_vec: &Vec <Term>
+) -> HashSet <VarTerm> {
+    let mut var_set = HashSet::new ();
+    for term in term_vec {
+        for var in collect_var_from_term (term) {
+            var_set.insert (var);
+        }
+    }
+    var_set
+}
+
 impl ToString for WissenOutput {
     fn to_string (&self) -> String {
         match self {
@@ -659,10 +720,25 @@ impl ToString for WissenOutput {
                 query_vec,
                 subst_vec,
             } => {
-                format! (
-                    "<query-output>\n{}\n{}</query-output>",
-                    vec_to_lines (&query_vec),
-                    vec_to_lines (&subst_vec))
+                let mut s = String::new ();
+                s += "<query-output>\n";
+                s += &vec_to_lines (&query_vec);
+                s += "- expecting ";
+                s += &counter.to_string ();
+                s += " results\n";
+                let var_set = collect_var_from_query_vec (
+                    query_vec);
+                for subst in subst_vec {
+                    for var in &var_set {
+                        s += &var.to_string ();
+                        s += " = ";
+                        s += &subst.reify_var (var) .to_string ();
+                        s += "\n";
+                    }
+                    s += "\n";
+                }
+                s += "</query-output>";
+                s
             }
             WissenOutput::Prove {} => {
                 format! ("")
