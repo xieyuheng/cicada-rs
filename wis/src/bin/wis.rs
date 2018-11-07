@@ -31,7 +31,7 @@ use wissen::{
 fn repl (wissen: &mut Wissen) {
     let config = Config::builder ()
         .history_ignore_space (true)
-        .edit_mode (EditMode::Vi)
+        .edit_mode (EditMode::Emacs)
         .build ();
     let mut rl = Editor::<()>::with_config (config);
     loop {

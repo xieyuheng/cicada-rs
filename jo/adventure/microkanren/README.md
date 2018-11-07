@@ -1,3 +1,0 @@
-# microkanren
-
-- by Jason

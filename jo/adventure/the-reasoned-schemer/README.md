@@ -1,1 +1,0 @@
-# The Reasoned Schemer
