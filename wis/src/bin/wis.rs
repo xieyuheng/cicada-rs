@@ -6,104 +6,140 @@
 #![allow (dead_code)]
 
 use std::path::Path;
-use std::fs;
+use std::collections::VecDeque;
 use std::io;
+use std::fs;
 use clap as cmd;
+use rustyline::{
+    Editor,
+    error::{
+        ReadlineError,
+    },
+};
 use error_report::{
     // ErrorMsg,
     ErrorCtx,
+    // ErrorInCtx,
 };
-use mexp::{
-    SyntaxTable,
-    Mexp,
+use wissen::{
+    Wissen,
+    Proving,
 };
 
-fn main () {
+static COLORED_PROMPT: &'static str = "\x1b[1;32m>\x1b[0m ";
+
+fn repl (wissen: &mut Wissen) {
+    let mut rl = Editor::<()>::new ();
+    loop {
+        let readline = rl.readline(COLORED_PROMPT);
+        match readline {
+            Ok (code) => {
+                match wissen.wis (&code) {
+                    Ok (proving_vec) => {
+                        proving_vec_loop (proving_vec);
+                    }
+                    Err (error) => {
+                        let ctx = ErrorCtx::new ()
+                            .body (&code);
+                        error.report (ctx);
+                    }
+                }
+            },
+            Err (ReadlineError::Interrupted) => {
+                break
+            },
+            Err (ReadlineError::Eof) => {
+                break
+            },
+            Err (err) => {
+                eprintln!("- readline error : {:?}", err);
+                break
+            },
+        }
+    }
 }
 
-// fn main () -> io::Result <()> {
-//     let matches = cmd::App::new ("wissen")
-//         .setting (cmd::AppSettings::ArgRequiredElseHelp)
-//         .author (cmd::crate_authors! ())
-//         .version (cmd::crate_version! ())
-//         .arg (cmd::Arg::with_name ("FILE")
-//               .required (true))
-//         .arg (cmd::Arg::with_name ("--mexp")
-//               .long ("--mexp")
-//               .group ("FORMAT")
-//               .help ("output to mexp format itself"))
-//         .arg (cmd::Arg::with_name ("--tree")
-//               .long ("--tree")
-//               .group ("FORMAT")
-//               .help ("output to tree format"))
-//         .arg (cmd::Arg::with_name ("--compact")
-//               .long ("--compact")
-//               .help ("compact version of output"))
-//         .arg (cmd::Arg::with_name ("--output")
-//               .long ("--output")
-//               .short ("-o")
-//               .value_name ("FILE")
-//               .requires ("FORMAT")
-//               .takes_value (true))
-//         .get_matches ();
+fn proving_vec_loop (proving_vec: Vec <Proving>) {
+    if proving_vec.is_empty () {
+        return;
+    }
+    let mut rl = Editor::<()>::new ();
+    let mut queue: VecDeque <Proving> = proving_vec.into ();
+    loop {
+        let readline = rl.readline(".: ");
+        match readline {
+            Ok (command) => {
+                match command.as_str () {
+                    "." => {
+                        if let Some (
+                            mut proving
+                        ) = queue.pop_front () {
+                            if let Some (
+                                subst
+                            ) = proving.next_subst () {
+                                println! ("- {}", subst.to_string ());
+                                queue.push_front (proving);
+                            } else {
+                                println! ("- one proving finished")
+                            }
+                        } else {
+                            break;
+                        }
+                    }
+                    "/" => {
+                        let _proving = queue.pop_front ();
+                        println! ("- drop proving")
+                    }
+                    _ => {}
+                }
+            },
+            Err (ReadlineError::Interrupted) => {
+                break
+            },
+            Err (ReadlineError::Eof) => {
+                break
+            },
+            Err (err) => {
+                eprintln!("- readline error : {:?}", err);
+                break
+            },
+        }
+    }
+}
 
-//     let mut output = String::new ();
-
-//     if let Some (path_str) = matches.value_of ("FILE") {
-//         let path = Path::new (path_str);
-//         if path.is_file () {
-//             let input = fs::read_to_string (path)?;
-//             let syntax_table = SyntaxTable::new ()
-//                 .op ("=") .op (":")
-//                 .op ("=>") .op ("<=");
-//             let result = syntax_table.parse (&input);
-//             if result.is_ok () {
-//                 let mexp_vec = result.unwrap ();
-//                 for mexp in mexp_vec {
-//                     if matches.is_present ("--mexp") {
-//                         if matches.is_present ("--compact") {
-//                             output += &mexp.to_string ();
-//                             output += "\n";
-//                         } else {
-//                             output += &mexp.to_pretty_string ();
-//                             output += "\n";
-//                         }
-//                     } else if matches.is_present ("--tree") {
-//                         if matches.is_present ("--compact") {
-//                             output += &mexp.to_tree_format ();
-//                             output += "\n";
-//                         } else {
-//                             output += &mexp.to_pretty_tree_format ();
-//                             output += "\n";
-//                         }
-//                     }
-//                 }
-//             } else {
-//                 let error = result.unwrap_err ();
-//                 let ctx = ErrorCtx::new ()
-//                     .source (path_str)
-//                     .body (&input);
-//                 error.report (ctx);
-//                 std::process::exit (1);
-//             }
-//         } else {
-//             eprintln! ("- input path is not to a file");
-//             eprintln! ("  path = {:?}", path);
-//             std::process::exit (1);
-//         }
-//     }
-
-//     if let Some (path_str) = matches.value_of ("--output") {
-//         let path = Path::new (path_str);
-//         if let Err (error) = fs::write (path, output) {
-//             eprintln! ("- output fail");
-//             eprintln! ("  path = {:?}", path);
-//             eprintln! ("  error = {}", error);
-//             std::process::exit (1);
-//         }
-//     } else {
-//         print! ("{}", output);
-//     }
-
-//     Ok (())
-// }
+fn main () -> io::Result <()> {
+    let matches = cmd::App::new ("wissen // wis")
+        .author (cmd::crate_authors! ())
+        .version (cmd::crate_version! ())
+        .arg (cmd::Arg::with_name ("FILE")
+              .help ("paths to `.wis` files")
+              .multiple (true))
+        .get_matches ();
+    let mut wissen = Wissen::new ();
+    if let Some (paths) = matches.values_of ("FILE") {
+        for path_str in paths {
+            let path = Path::new (path_str);
+            if path.is_file () {
+                let code = fs::read_to_string (path)?;
+                match wissen.wis (&code) {
+                    Ok (proving_vec) => {
+                        proving_vec_loop (proving_vec);
+                    }
+                    Err (error) => {
+                        let ctx = ErrorCtx::new ()
+                            .source (path_str)
+                            .body (&code);
+                        error.report (ctx);
+                        std::process::exit (1);
+                    }
+                }
+            } else {
+                eprintln! ("- input path is not to a file");
+                eprintln! ("  path = {:?}", path);
+                std::process::exit (1);
+            }
+        }
+    }
+    repl (&mut wissen);
+    Ok (())
+}

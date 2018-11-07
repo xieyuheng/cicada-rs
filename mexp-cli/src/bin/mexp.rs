@@ -43,9 +43,7 @@ fn main () -> io::Result <()> {
         let path = Path::new (path_str);
         if path.is_file () {
             let input = fs::read_to_string (path)?;
-            let syntax_table = SyntaxTable::new ()
-                .op ("=") .op (":")
-                .op ("=>") .op ("<=");
+            let syntax_table = SyntaxTable::default ();
             let result = syntax_table.parse (&input);
             if result.is_ok () {
                 let mexp_vec = result.unwrap ();

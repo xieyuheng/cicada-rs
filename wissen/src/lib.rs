@@ -16,17 +16,14 @@ use error_report::{
     ErrorMsg,
     ErrorInCtx,
 };
-#[cfg (test)]
-use error_report::{
-    ErrorCtx,
-};
-use mexp::{
-    Mexp,
-    Arg,
-};
-#[cfg (test)]
+// #[cfg (test)]
+// use error_report::{
+//     ErrorCtx,
+// };
 use mexp::{
     SyntaxTable,
+    Mexp,
+    Arg,
 };
 
 fn vec_to_string <T> (vec: &Vec <T>, delimiter: &str) -> String
@@ -500,7 +497,7 @@ pub struct Wissen {
 }
 
 impl Wissen {
-    fn new () -> Self {
+    pub fn new () -> Self {
         Wissen {
             prop_dic: Dic::new (),
         }
@@ -520,7 +517,7 @@ impl Wissen {
 }
 
 impl Wissen {
-    fn prove <'a> (
+    pub fn prove <'a> (
         &'a self,
         query: &Query,
     ) -> Proving <'a> {
@@ -549,8 +546,32 @@ impl ToString for Wissen {
 }
 
 impl Wissen {
-    fn define_prop (&mut self, name: &str, prop: &Prop) {
+    pub fn define_prop (&mut self, name: &str, prop: &Prop) {
        self.prop_dic.ins (name, Some (prop.clone ()));
+    }
+}
+
+impl Wissen {
+    pub fn wis <'a> (
+        &'a mut self,
+        code: &str,
+    ) -> Result <Vec <Proving <'a>>, ErrorInCtx> {
+        let mut proving_vec = Vec::new ();
+        let syntax_table = SyntaxTable::default ();
+        let mexp_vec = syntax_table.parse (code)?;
+        let statement_vec = mexp_vec_to_statement_vec (&mexp_vec)?;
+        for statement in &statement_vec {
+            if let Statement::DefineProp (name, prop) = statement {
+                self.define_prop (name, prop);
+            }
+        }
+        for statement in &statement_vec {
+            if let Statement::Query (query) = statement {
+                let proving = self.prove (query);
+                proving_vec.push (proving);
+            }
+        }
+        Ok (proving_vec)
     }
 }
 
@@ -570,7 +591,7 @@ pub struct Proving <'a> {
 }
 
 impl <'a> Proving <'a> {
-    fn next_subst (&mut self) -> Option <Subst> {
+    pub fn next_subst (&mut self) -> Option <Subst> {
         while let Some (
             proof
         ) = self.proof_queue.pop_front () {
@@ -594,7 +615,7 @@ impl <'a> Proving <'a> {
 }
 
 impl <'a> Proving <'a> {
-    fn take_subst (&mut self, n: usize) -> Vec <Subst> {
+    pub fn take_subst (&mut self, n: usize) -> Vec <Subst> {
         let mut subst_vec = Vec::new ();
         for _ in 0..n {
             if let Some (subst) = self.next_subst () {
@@ -1081,24 +1102,14 @@ fn test_list_append () {
 #[test]
 fn test_mexp () -> Result <(), ErrorInCtx> {
     let mut wissen = Wissen::new ();
-    let input = LIST_APPEND_EXAMPLE;
-    let syntax_table = SyntaxTable::default ();
-    let mexp_vec = syntax_table.parse (input)?;
-    let statement_vec = mexp_vec_to_statement_vec (&mexp_vec)?;
-    for statement in &statement_vec {
-        if let Statement::DefineProp (name, prop) = statement {
-            wissen.define_prop (name, prop);
-        }
-    }
-    for statement in &statement_vec {
-        if let Statement::Query (query) = statement {
-            let mut proving = wissen.prove (query);
-            let subst_vec = proving.take_subst (100);
-            assert_eq! (subst_vec.len (), 100);
-            for subst in subst_vec {
-                assert! (subst.cons_p ());
-            }
-        }
+    let code = LIST_APPEND_EXAMPLE;
+    let mut proving_vec = wissen.wis (code)?;
+    assert_eq! (proving_vec.len (), 1);
+    let mut proving = proving_vec.pop () .unwrap ();
+    let subst_vec = proving.take_subst (100);
+    assert_eq! (subst_vec.len (), 100);
+    for subst in subst_vec {
+        assert! (subst.cons_p ());
     }
     Ok (())
 }
