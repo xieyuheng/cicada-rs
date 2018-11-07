@@ -1,6 +1,5 @@
 #+property: tangle wis.rs
 #+title: wis
-- a prolog like simple repl first
 - learn from SQL for interface design
 * prolog
 
@@ -25,6 +24,8 @@
     use clap as cmd;
     use rustyline::{
         Editor,
+        Config,
+        EditMode,
         error::{
             ReadlineError,
         },
@@ -44,7 +45,11 @@
 
   #+begin_src rust
   fn repl (wissen: &mut Wissen) {
-      let mut rl = Editor::<()>::new ();
+      let config = Config::builder ()
+          .history_ignore_space (true)
+          .edit_mode (EditMode::Emacs)
+          .build ();
+      let mut rl = Editor::<()>::with_config (config);
       loop {
           let readline = rl.readline(">> ");
           match readline {

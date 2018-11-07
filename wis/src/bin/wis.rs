@@ -12,6 +12,8 @@ use std::fs;
 use clap as cmd;
 use rustyline::{
     Editor,
+    Config,
+    EditMode,
     error::{
         ReadlineError,
     },
@@ -26,12 +28,14 @@ use wissen::{
     Proving,
 };
 
-static COLORED_PROMPT: &'static str = "\x1b[1;32m>\x1b[0m ";
-
 fn repl (wissen: &mut Wissen) {
-    let mut rl = Editor::<()>::new ();
+    let config = Config::builder ()
+        .history_ignore_space (true)
+        .edit_mode (EditMode::Vi)
+        .build ();
+    let mut rl = Editor::<()>::with_config (config);
     loop {
-        let readline = rl.readline(COLORED_PROMPT);
+        let readline = rl.readline(">> ");
         match readline {
             Ok (code) => {
                 match wissen.wis (&code) {
