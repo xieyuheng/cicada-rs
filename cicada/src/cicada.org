@@ -1,6 +1,6 @@
 #+property: tangle lib.rs
 #+title: cicada
-- test_unify
+- Subst::to_string -- to be used in test
 - Term::to_value -- with error_report
 - Wissen::den
 - Wissen::check
@@ -180,6 +180,45 @@
     pub struct Var {
         name: String,
         id: Option <Id>,
+    }
+    #+end_src
+
+*** Var::new
+
+    #+begin_src rust
+    impl Var {
+        fn new (s: &str) -> Self {
+            Var {
+                name: s.to_string (),
+                id: Some (Id::uuid ()),
+            }
+        }
+    }
+    #+end_src
+
+*** Var::no_id
+
+    #+begin_src rust
+    impl Var {
+        fn no_id (s: &str) -> Self {
+            Var {
+                name: s.to_string (),
+                id: None,
+            }
+        }
+    }
+    #+end_src
+
+*** Var::var_local
+
+    #+begin_src rust
+    impl Var {
+        fn local (s: &str, counter: usize) -> Self {
+            Var {
+                name: s.to_string (),
+                id: Some (Id::local (counter)),
+            }
+        }
     }
     #+end_src
 
@@ -451,6 +490,24 @@
     }
     #+end_src
 
+*** Subst::len
+
+    #+begin_src rust
+    impl Subst {
+        pub fn len (&self) -> usize {
+            let mut len = 0;
+            let mut subst = self;
+            while let Subst::Cons (
+                _var, _value, next
+            ) = subst {
+                len += 1;
+                subst = &next;
+            }
+            len
+        }
+    }
+    #+end_src
+
 * Den
 
 *** Den
@@ -479,11 +536,24 @@
 
 * test
 
-*** [todo] test_unify
+*** test_unify
 
     #+begin_src rust
     #[test]
     fn test_unify () {
-
+        let u = Value::Var (Var::new ("u"));
+        let v = Value::Var (Var::new ("v"));
+        let subst = Subst::new () .unify (
+            &Value::Data ("cons-c" .to_string (), vec! [
+                ("car", u.clone ()),
+                ("cdr", v.clone ()),
+            ] .into ()),
+            &Value::Data ("cons-c" .to_string (), vec! [
+                ("car", v.clone ()),
+                ("cdr", Value::Data ("unit-c" .to_string (),
+                                     Dic::new ())),
+            ] .into ())) .unwrap ();
+        // println! ("{}", subst.to_string ());
+        assert_eq! (subst.len (), 2);
     }
     #+end_src

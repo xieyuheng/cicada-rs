@@ -75,6 +75,33 @@ pub struct Var {
     id: Option <Id>,
 }
 
+impl Var {
+    fn new (s: &str) -> Self {
+        Var {
+            name: s.to_string (),
+            id: Some (Id::uuid ()),
+        }
+    }
+}
+
+impl Var {
+    fn no_id (s: &str) -> Self {
+        Var {
+            name: s.to_string (),
+            id: None,
+        }
+    }
+}
+
+impl Var {
+    fn local (s: &str, counter: usize) -> Self {
+        Var {
+            name: s.to_string (),
+            id: Some (Id::local (counter)),
+        }
+    }
+}
+
 impl ToString for Var {
     fn to_string (&self) -> String {
         let mut s = format! ("{}", self.name);
@@ -283,6 +310,20 @@ impl Subst {
     }
 }
 
+impl Subst {
+    pub fn len (&self) -> usize {
+        let mut len = 0;
+        let mut subst = self;
+        while let Subst::Cons (
+            _var, _value, next
+        ) = subst {
+            len += 1;
+            subst = &next;
+        }
+        len
+    }
+}
+
 #[derive (Clone)]
 #[derive (Debug)]
 #[derive (PartialEq, Eq)]
@@ -293,5 +334,18 @@ pub enum Den {
 
 #[test]
 fn test_unify () {
-
+    let u = Value::Var (Var::new ("u"));
+    let v = Value::Var (Var::new ("v"));
+    let subst = Subst::new () .unify (
+        &Value::Data ("cons-c" .to_string (), vec! [
+            ("car", u.clone ()),
+            ("cdr", v.clone ()),
+        ] .into ()),
+        &Value::Data ("cons-c" .to_string (), vec! [
+            ("car", v.clone ()),
+            ("cdr", Value::Data ("unit-c" .to_string (),
+                                 Dic::new ())),
+        ] .into ())) .unwrap ();
+    // println! ("{}", subst.to_string ());
+    assert_eq! (subst.len (), 2);
 }
