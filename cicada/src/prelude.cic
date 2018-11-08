@@ -1,62 +1,52 @@
-bool-t : type-tt
 bool-t = disj (true-t false-t) {}
 
-true-t : type-tt
 true-t = conj {}
 
-false-t : type-tt
 false-t = conj {}
 
-nat-t : type-tt
 nat-t = disj (zero-t succ-t) {}
 
-zero-t : type-tt
 zero-t = conj {}
 
-succ-t : type-tt
 succ-t = conj {
   prev : nat-t
 }
 
-nat-even-t : type-tt
-nat-even-t = disj (zero-even-t even-plus-two-even-t) {
+nat-even-t = disj (
+  zero-even-t
+  even-plus-two-even-t
+) {
   nat : nat-t
 }
 
-zero-even-t : type-tt
 zero-even-t = conj {
   nat : nat-t
   nat = zero-c
 }
 
-even-plus-two-even-t : type-tt
 even-plus-two-even-t = conj {
   nat : nat-t
   prev : nat-even-t (m)
   nat = succ-c (succ-c (m))
 }
 
-list-t : type-tt
 list-t = disj (
   null-t
   cons-t
 ) {
-  t : type-tt
+  t : type
 }
 
-null-t : type-tt
 null-t = conj {
-  t : type-tt
+  t : type
 }
 
-cons-t : type-tt
 cons-t = conj {
-  t : type-tt
+  t : type
   car : t
   cdr : list-t (t)
 }
 
-list-length-t : type-tt
 list-length-t = disj (
   zero-length-t
   succ-length-t
@@ -65,7 +55,6 @@ list-length-t = disj (
   length : nat-t
 }
 
-zero-length-t : type-tt
 zero-length-t = conj {
   list : list-t (t)
   length : nat-t
@@ -73,17 +62,14 @@ zero-length-t = conj {
   length = zero-c
 }
 
-succ-length-t : type-tt
 succ-length-t = conj {
   list : list-t (t)
   length : nat-t
   prev : list-length-t (l n)
   list = cons-c (x l)
   length = succ-c (n)
-
 }
 
-list-append-t : type-tt
 list-append-t = disj (
   zero-append-t
   succ-append-t
@@ -91,14 +77,12 @@ list-append-t = disj (
   [ante succ result] : list-t (t)
 }
 
-zero-append-t : type-tt
 zero-append-t = conj {
   [ante succ result] : list-t (t)
   ante = null-c
   result = succ
 }
 
-succ-append-t : type-tt
 succ-append-t = conj {
   [ante succ result] : list-t (t)
   prev : list-append-t (cdr succ result-cdr)
@@ -106,22 +90,22 @@ succ-append-t = conj {
   result = cons-c (car result-cdr)
 }
 
-vect-t : type-tt
-vect-t = disj (null-vect-t cons-vect-tt) {
-  t : type-tt
+vect-t = disj (
+  null-vect-t
+  cons-vect-tt
+) {
+  t : type
   length : nat-t
 }
 
-null-vect-t : type-tt
 null-vect-t = conj {
-  t : type-tt
+  t : type
   length : nat-t
   length = zero-c
 }
 
-cons-vect-t : type-tt
 cons-vect-t = conj {
-  t : type-tt
+  t : type
   length : nat-t
   car : t
   cdr : vect-t (t n)

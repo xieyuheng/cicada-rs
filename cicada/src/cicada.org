@@ -1,22 +1,26 @@
 #+property: tangle lib.rs
 #+title: cicada
-- Subst::unify
-- Term::to_data
+- Subst::unify -- for Data
+- Term::to_data -- with error_report
 - Wissen::den
+- Wissen::check
 * [note]
 
-*** data-constructor & type-constructor
+*** Cons & Prop
 
-    - we can use a data-constructor
-      only when its corresponding type-constructor is defined
+    - Cons -- data-constructor
+    - Prop -- type-constructor
 
-*** default-record
+    - Den::Disj is definition of Prop
+    - Den::Conj is definition of Prop and Cons
 
-    - a data-constructor already has default-record in it
-      which are specified by the definition of its type-constructor
+*** Data
 
-    - when a data-constructor is applied
-      its default record is unified with its args
+    - Cons::to_data will get a Data with default-record
+      the default-record of Cons is specified by its definition
+
+    - during Cons::to_data
+      its default-record is unified with its args
 
     - this is like runtime assertion in prolog
 
@@ -25,12 +29,12 @@
     - type-check is simply to check that
       the equation in `data` has a solution
 
-    - `union` -- exporting equations
-      `inherit` -- importing equations
+    - `disj` -- exporting equations
+      `heir` -- importing equations
 
 *** recursion
 
-    - define all type-constructors and then check them
+    - define all Den first and then check them
 
 *** logic-var
 
@@ -46,16 +50,16 @@
 
 *** proving
 
-    - a type-constructor applied to args is a prop to be proved
+    - Prop is to be proved
 
-    - `union` type-constructor is disj
-      to prove it is to dispatch it
+    - to prove a Prop defined by Den::Disj
+      is to dispatch it
 
-    - `data` type-constructor is conj
-      to prove it we unify args withs fields
-      and we also need to prove remaining not closed fields
+    - to prove a Prop defined by Den::Conj
+      we unify args withs fields
+      and we also need to prove remaining Prop in Data
 
-    - `inherit` is just like `data`
+    - `heir` is just like `data`
 
 *** Grammar
 

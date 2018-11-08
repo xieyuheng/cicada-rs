@@ -294,14 +294,14 @@ impl Subst {
                 Some (self.clone ())
             }
             (Term::Var (u), v) => {
-                if self.occur_check (&u, &v) {
+                if self.var_occur_p (&u, &v) {
                     None
                 } else {
                     Some (self.extend (u, v))
                 }
             }
             (u, Term::Var (v)) => {
-                if self.occur_check (&v, &u) {
+                if self.var_occur_p (&v, &u) {
                     None
                 } else {
                     Some (self.extend (v, u))
@@ -426,7 +426,7 @@ impl Subst {
 }
 
 impl Subst {
-    pub fn occur_check (
+    pub fn var_occur_p (
         &self,
         var: &Var,
         term: &Term,
@@ -438,7 +438,7 @@ impl Subst {
             }
             Term::Cons (cons) => {
                 for term in &cons.body {
-                    if self.occur_check (var, term) {
+                    if self.var_occur_p (var, term) {
                         return true;
                     }
                 }
