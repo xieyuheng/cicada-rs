@@ -6,7 +6,10 @@
 *** bool-t
 
     #+begin_src cicada
-    bool-t = disj (true-t false-t) {}
+    bool-t = disj (
+        true-t
+        false-t
+    ) {}
 
     true-t = conj {}
 
@@ -18,12 +21,15 @@
 *** nat-t
 
     #+begin_src cicada
-    nat-t = disj (zero-t succ-t) {}
+    nat-t = disj (
+        zero-t
+        succ-t
+    ) {}
 
     zero-t = conj {}
 
     succ-t = conj {
-      prev : nat-t
+        prev : nat-t
     }
     #+end_src
 
@@ -31,21 +37,21 @@
 
     #+begin_src cicada
     nat-even-t = disj (
-      zero-even-t
-      even-plus-two-even-t
+        zero-even-t
+        even-plus-two-even-t
     ) {
-      nat : nat-t
+        nat : nat-t
     }
 
     zero-even-t = conj {
-      nat : nat-t
-      nat = zero-c
+        nat : nat-t
+        nat = zero-c
     }
 
     even-plus-two-even-t = conj {
-      nat : nat-t
-      prev : nat-even-t (m)
-      nat = succ-c (succ-c (m))
+        nat : nat-t
+        prev : nat-even-t (m)
+        nat = succ-c (succ-c (m))
     }
     #+end_src
 
@@ -55,20 +61,20 @@
 
     #+begin_src cicada
     list-t = disj (
-      null-t
-      cons-t
+        null-t
+        cons-t
     ) {
-      t : type
+        t : type
     }
 
     null-t = conj {
-      t : type
+        t : type
     }
 
     cons-t = conj {
-      t : type
-      car : t
-      cdr : list-t (t)
+        t : type
+        car : t
+        cdr : list-t (t)
     }
     #+end_src
 
@@ -76,26 +82,26 @@
 
     #+begin_src cicada
     list-length-t = disj (
-      zero-length-t
-      succ-length-t
+        zero-length-t
+        succ-length-t
     ) {
-      list : list-t (t)
-      length : nat-t
+        list : list-t (t)
+        length : nat-t
     }
 
     zero-length-t = conj {
-      list : list-t (t)
-      length : nat-t
-      list = null-c
-      length = zero-c
+        list : list-t (t)
+        length : nat-t
+        list = null-c
+        length = zero-c
     }
 
     succ-length-t = conj {
-      list : list-t (t)
-      length : nat-t
-      prev : list-length-t (l n)
-      list = cons-c (x l)
-      length = succ-c (n)
+        list : list-t (t)
+        length : nat-t
+        prev : list-length-t (l n)
+        list = cons-c (x l)
+        length = succ-c (n)
     }
     #+end_src
 
@@ -103,23 +109,23 @@
 
     #+begin_src cicada
     list-append-t = disj (
-      zero-append-t
-      succ-append-t
+        zero-append-t
+        succ-append-t
     ) {
-      [ante succ result] : list-t (t)
+        [ante succ result] : list-t (t)
     }
 
     zero-append-t = conj {
-      [ante succ result] : list-t (t)
-      ante = null-c
-      result = succ
+        [ante succ result] : list-t (t)
+        ante = null-c
+        result = succ
     }
 
     succ-append-t = conj {
-      [ante succ result] : list-t (t)
-      prev : list-append-t (cdr succ result-cdr)
-      ante = cons-c (car cdr)
-      result = cons-c (car result-cdr)
+        [ante succ result] : list-t (t)
+        prev : list-append-t (cdr succ result-cdr)
+        ante = cons-c (car cdr)
+        result = cons-c (car result-cdr)
     }
     #+end_src
 
@@ -129,24 +135,24 @@
 
     #+begin_src cicada
     vect-t = disj (
-      null-vect-t
-      cons-vect-tt
+        null-vect-t
+        cons-vect-tt
     ) {
-      t : type
-      length : nat-t
+        t : type
+        length : nat-t
     }
 
     null-vect-t = conj {
-      t : type
-      length : nat-t
-      length = zero-c
+        t : type
+        length : nat-t
+        length = zero-c
     }
 
     cons-vect-t = conj {
-      t : type
-      length : nat-t
-      car : t
-      cdr : vect-t (t n)
-      length = succ-c (n)
+        t : type
+        length : nat-t
+        car : t
+        cdr : vect-t (t n)
+        length = succ-c (n)
     }
     #+end_src
