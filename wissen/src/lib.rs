@@ -53,8 +53,116 @@ where T : ToString {
 #[derive (Debug)]
 #[derive (PartialEq, Eq, Hash)]
 pub enum Term {
-    Var   (Var),
-    Tuple (Tuple),
+    Var (Var),
+    Cons (Cons),
+}
+
+#[derive (Clone)]
+#[derive (Debug)]
+#[derive (PartialEq, Eq, Hash)]
+pub struct Cons {
+    head: String,
+    body: Vec <Term>,
+}
+
+impl ToString for Cons {
+    fn to_string (&self) -> String {
+        if self.body.len () == 0 {
+            format! ("{}", self.head)
+        } else {
+            format! (
+                "{} ({})",
+                self.head,
+                vec_to_string (&self.body, " "))
+        }
+    }
+}
+
+impl Term {
+    fn var (s: &str) -> Term {
+        Term::Var (Var {
+            name: s.to_string (),
+            id: Some (Id::uuid ()),
+        })
+    }
+}
+
+impl Term {
+    fn var_no_id (s: &str) -> Term {
+        Term::Var (Var {
+            name: s.to_string (),
+            id: None,
+        })
+    }
+}
+
+impl Term {
+    fn var_local (s: &str, counter: usize) -> Term {
+        Term::Var (Var {
+            name: s.to_string (),
+            id: Some (Id::local (counter)),
+        })
+    }
+}
+
+impl Term {
+    fn cons (h: &str, vec: Vec <Term>) -> Term {
+        Term::Cons (Cons {
+            head: h.to_string (),
+            body: vec,
+        })
+    }
+}
+
+impl Term {
+    fn duplicate (
+        &self,
+        var_map: &mut HashMap <Var, Var>,
+    ) -> Term {
+        match self {
+            Term::Var (var) => {
+                if let Some (dup_var) = var_map.get (var) {
+                    Term::Var (dup_var.clone ())
+                } else {
+                    let new_var = Var {
+                        name: var.name.clone (),
+                        id: Some (Id::uuid ()),
+                    };
+                    var_map.insert (
+                        var.clone (),
+                        new_var.clone ());
+                    Term::Var (new_var)
+                }
+            }
+            Term::Cons (cons) => {
+                let mut new_cons = Cons {
+                    head: cons.head.clone (),
+                    body: Vec::new (),
+                };
+                for term in &cons.body {
+                    new_cons.body.push (
+                        term.duplicate (var_map));
+                }
+                Term::Cons (new_cons)
+            }
+        }
+    }
+}
+
+impl Term {
+    fn fresh (&self) -> Term {
+        let mut var_map = HashMap::new ();
+        self.duplicate (&mut var_map)
+    }
+}
+
+impl ToString for Term {
+    fn to_string (&self) -> String {
+        match self {
+            Term::Var (var) => var.to_string (),
+            Term::Cons (cons) => cons.to_string (),
+        }
+    }
 }
 
 #[derive (Clone)]
@@ -108,114 +216,6 @@ impl ToString for Id {
         match self {
             Id::Uuid (uuid) => format! ("{}", uuid),
             Id::Local (counter) => format! ("{}", counter),
-        }
-    }
-}
-
-#[derive (Clone)]
-#[derive (Debug)]
-#[derive (PartialEq, Eq, Hash)]
-pub struct Tuple {
-    head: String,
-    body: Vec <Term>,
-}
-
-impl ToString for Tuple {
-    fn to_string (&self) -> String {
-        if self.body.len () == 0 {
-            format! ("{}", self.head)
-        } else {
-            format! (
-                "{} ({})",
-                self.head,
-                vec_to_string (&self.body, " "))
-        }
-    }
-}
-
-impl Term {
-    fn var (s: &str) -> Term {
-        Term::Var (Var {
-            name: s.to_string (),
-            id: Some (Id::uuid ()),
-        })
-    }
-}
-
-impl Term {
-    fn var_no_id (s: &str) -> Term {
-        Term::Var (Var {
-            name: s.to_string (),
-            id: None,
-        })
-    }
-}
-
-impl Term {
-    fn var_local (s: &str, counter: usize) -> Term {
-        Term::Var (Var {
-            name: s.to_string (),
-            id: Some (Id::local (counter)),
-        })
-    }
-}
-
-impl Term {
-    fn tuple (h: &str, vec: Vec <Term>) -> Term {
-        Term::Tuple (Tuple {
-            head: h.to_string (),
-            body: vec,
-        })
-    }
-}
-
-impl Term {
-    fn duplicate (
-        &self,
-        var_map: &mut HashMap <Var, Var>,
-    ) -> Term {
-        match self {
-            Term::Var (var) => {
-                if let Some (dup_var) = var_map.get (var) {
-                    Term::Var (dup_var.clone ())
-                } else {
-                    let new_var = Var {
-                        name: var.name.clone (),
-                        id: Some (Id::uuid ()),
-                    };
-                    var_map.insert (
-                        var.clone (),
-                        new_var.clone ());
-                    Term::Var (new_var)
-                }
-            }
-            Term::Tuple (tuple) => {
-                let mut new_tuple = Tuple {
-                    head: tuple.head.clone (),
-                    body: Vec::new (),
-                };
-                for term in &tuple.body {
-                    new_tuple.body.push (
-                        term.duplicate (var_map));
-                }
-                Term::Tuple (new_tuple)
-            }
-        }
-    }
-}
-
-impl Term {
-    fn fresh (&self) -> Term {
-        let mut var_map = HashMap::new ();
-        self.duplicate (&mut var_map)
-    }
-}
-
-impl ToString for Term {
-    fn to_string (&self) -> String {
-        match self {
-            Term::Var (var) => var.to_string (),
-            Term::Tuple (tuple) => tuple.to_string (),
         }
     }
 }
@@ -307,8 +307,8 @@ impl Subst {
                     Some (self.extend (v, u))
                 }
             }
-            (Term::Tuple (ut),
-             Term::Tuple (vt),
+            (Term::Cons (ut),
+             Term::Cons (vt),
             ) => {
                 if ut.head != vt.head {
                     return None;
@@ -375,14 +375,14 @@ impl Subst {
         let term = self.walk (term);
         match term {
             Term::Var (_) => term,
-            Term::Tuple (Tuple {
+            Term::Cons (Cons {
                 head,
                 body,
             }) => {
                 let body = body.iter ()
                     .map (|x| self.apply (x))
                     .collect ();
-                Term::Tuple (Tuple {
+                Term::Cons (Cons {
                     head,
                     body,
                 })
@@ -402,7 +402,7 @@ impl Subst {
                         &var.name,
                         self.len ()))
             }
-            Term::Tuple (Tuple {
+            Term::Cons (Cons {
                 body, ..
             }) => {
                 let mut subst = self.clone ();
@@ -436,8 +436,8 @@ impl Subst {
             Term::Var (var1) => {
                 var == &var1
             }
-            Term::Tuple (tuple) => {
-                for term in &tuple.body {
+            Term::Cons (cons) => {
+                for term in &cons.body {
                     if self.occur_check (var, term) {
                         return true;
                     }
@@ -451,65 +451,65 @@ impl Subst {
 #[derive (Clone)]
 #[derive (Debug)]
 #[derive (PartialEq, Eq, Hash)]
-pub enum Prop {
+pub enum Den {
     Disj (Vec <String>),
-    Conj (Vec <Term>, Vec <Query>),
+    Conj (Vec <Term>, Vec <Prop>),
 }
 
-impl Prop {
+impl Den {
     fn duplicate (
         &self,
         var_map: &mut HashMap <Var, Var>,
-    ) -> Prop {
+    ) -> Den {
         match self {
-            Prop::Disj (_name_vec) => {
+            Den::Disj (_name_vec) => {
                 self.clone ()
             }
-            Prop::Conj (args, query_vec) => {
+            Den::Conj (args, prop_vec) => {
                 let mut new_args = Vec::new ();
                 for arg in args {
                     new_args.push (
                         arg.duplicate (var_map))
                 }
-                let mut new_query_vec = Vec::new ();
-                for query in query_vec {
-                    new_query_vec.push (
-                        query.duplicate (var_map))
+                let mut new_prop_vec = Vec::new ();
+                for prop in prop_vec {
+                    new_prop_vec.push (
+                        prop.duplicate (var_map))
                 }
-                Prop::Conj (new_args, new_query_vec)
+                Den::Conj (new_args, new_prop_vec)
             }
         }
     }
 }
 
-impl Prop {
-    fn fresh (&self) -> Prop {
+impl Den {
+    fn fresh (&self) -> Den {
         let mut var_map = HashMap::new ();
         self.duplicate (&mut var_map)
     }
 }
 
-impl Prop {
+impl Den {
     fn apply (
         self,
         args: &Vec <Term>,
         mut subst: Subst,
-    ) -> Option <(Vec <Vec <Arc <Query>>>, Subst)> {
+    ) -> Option <(Vec <Vec <Arc <Prop>>>, Subst)> {
         match self {
-            Prop::Disj (name_vec) => {
-                let mut query_matrix = Vec::new ();
+            Den::Disj (name_vec) => {
+                let mut prop_matrix = Vec::new ();
                 for name in name_vec {
-                    let query = Arc::new (Query {
+                    let prop = Arc::new (Prop {
                         name: name,
                         args: args.clone (),
                     });
-                    query_matrix.push (vec! [query]);
+                    prop_matrix.push (vec! [prop]);
                 }
-                Some ((query_matrix, subst))
+                Some ((prop_matrix, subst))
             }
-            Prop::Conj (terms, query_vec) => {
+            Den::Conj (terms, prop_vec) => {
                 if args.len () != terms.len () {
-                    eprintln! ("- [warning] Prop::apply");
+                    eprintln! ("- [warning] Den::apply");
                     eprintln! ("  arity mismatch");
                     return None;
                 }
@@ -523,36 +523,36 @@ impl Prop {
                         return None;
                     }
                 }
-                let query_matrix = vec! [
-                    query_vec
+                let prop_matrix = vec! [
+                    prop_vec
                         .into_iter ()
                         .map (|x| Arc::new (x))
                         .collect ()
                 ];
-                Some ((query_matrix, subst))
+                Some ((prop_matrix, subst))
             }
         }
     }
 }
 
-impl ToString for Prop {
+impl ToString for Den {
     fn to_string (&self) -> String {
         match self {
-            Prop::Disj (name_vec) => {
+            Den::Disj (name_vec) => {
                 format! (
                     "disj ({})",
                     vec_to_string (&name_vec, " "))
             }
-            Prop::Conj (terms, query_vec) => {
+            Den::Conj (terms, prop_vec) => {
                 format! (
                     "conj ({}) {}",
                     vec_to_string (&terms, " "),
-                    if query_vec.len () == 0 {
+                    if prop_vec.len () == 0 {
                         format! ("{{}}")
                     } else {
                         format! (
                             "{{ {} }}",
-                            vec_to_string (&query_vec, " "))
+                            vec_to_string (&prop_vec, " "))
                     })
             }
         }
@@ -562,29 +562,29 @@ impl ToString for Prop {
 #[derive (Clone)]
 #[derive (Debug)]
 #[derive (PartialEq, Eq, Hash)]
-pub struct Query {
+pub struct Prop {
     name: String,
     args: Vec <Term>,
 }
 
-impl Query {
+impl Prop {
     fn duplicate (
         &self,
         var_map: &mut HashMap <Var, Var>,
-    ) -> Query {
+    ) -> Prop {
         let mut new_args = Vec::new ();
         for arg in &self.args {
             new_args.push (
                 arg.duplicate (var_map));
         }
-        Query {
+        Prop {
             name: self.name.clone (),
             args: new_args,
         }
     }
 }
 
-impl ToString for Query {
+impl ToString for Prop {
     fn to_string (&self) -> String {
         format! (
             "{} ({})",
@@ -597,23 +597,23 @@ impl ToString for Query {
 #[derive (Debug)]
 #[derive (PartialEq, Eq)]
 pub struct Wissen {
-    prop_dic: Dic <Prop>,
+    den_dic: Dic <Den>,
 }
 
 impl Wissen {
     pub fn new () -> Self {
         Wissen {
-            prop_dic: Dic::new (),
+            den_dic: Dic::new (),
         }
     }
 }
 
 impl Wissen {
-    fn find_prop (&self, name: &str) -> Option <Prop> {
+    fn find_den (&self, name: &str) -> Option <Den> {
         if let Some (
-            prop
-        ) = self.prop_dic.get (name) {
-            Some (prop.fresh ())
+            den
+        ) = self.den_dic.get (name) {
+            Some (den.fresh ())
         } else {
             None
         }
@@ -623,21 +623,21 @@ impl Wissen {
 impl Wissen {
     pub fn proving <'a> (
         &'a self,
-        query_vec: &Vec <Query>,
+        prop_vec: &Vec <Prop>,
     ) -> Proving <'a> {
-        let mut query_queue = VecDeque::new ();
-        for query in query_vec {
-            query_queue.push_back (Arc::new (query.clone ()))
+        let mut prop_queue = VecDeque::new ();
+        for prop in prop_vec {
+            prop_queue.push_back (Arc::new (prop.clone ()))
         }
         let proof = Proof {
             wissen: self,
             tree_stack: vec! [DeductionTree {
                conj_name: "PROOF".to_string (),
-               arity: query_vec.len (),
+               arity: prop_vec.len (),
                body: Vec::new (),
             }],
             subst: Subst::new (),
-            query_queue,
+            prop_queue,
         };
         Proving {
             proof_queue: vec! [proof] .into (),
@@ -648,10 +648,10 @@ impl Wissen {
 impl ToString for Wissen {
     fn to_string (&self) -> String {
         let mut s = String::new ();
-        for (name, prop) in self.prop_dic.iter () {
+        for (name, den) in self.den_dic.iter () {
             s += name;
             s += " = ";
-            s += &prop.to_string ();
+            s += &den.to_string ();
             s += "\n";
         }
         format! ("<wissen>\n{}</wissen>\n", s)
@@ -659,8 +659,8 @@ impl ToString for Wissen {
 }
 
 impl Wissen {
-    pub fn prop (&mut self, name: &str, prop: &Prop) {
-       self.prop_dic.ins (name, Some (prop.clone ()));
+    pub fn den (&mut self, name: &str, den: &Den) {
+       self.den_dic.ins (name, Some (den.clone ()));
     }
 }
 
@@ -673,33 +673,33 @@ impl Wissen {
         let mexp_vec = syntax_table.parse (input)?;
         let statement_vec = mexp_vec_to_statement_vec (&mexp_vec)?;
         for statement in &statement_vec {
-            if let Statement::Prop (
-                name, prop
+            if let Statement::Den (
+                name, den
             ) = statement {
-                self.prop (name, prop);
+                self.den (name, den);
             }
         }
         let mut output_vec = Vec::new ();
         for statement in &statement_vec {
             if let Statement::Query (
-                counter, query_vec
+                counter, prop_vec
             ) = statement {
-                let mut proving = self.proving (query_vec);
+                let mut proving = self.proving (prop_vec);
                 let subst_vec = proving.take_subst (*counter);
                 output_vec.push (WissenOutput::Query {
                     counter: *counter,
-                    query_vec: query_vec.clone (),
+                    prop_vec: prop_vec.clone (),
                     subst_vec,
                 });
             }
             if let Statement::Prove (
-                counter, query_vec
+                counter, prop_vec
             ) = statement {
-                let mut proving = self.proving (query_vec);
+                let mut proving = self.proving (prop_vec);
                 let qed_vec = proving.take_qed (*counter);
                 output_vec.push (WissenOutput::Prove {
                     counter: *counter,
-                    query_vec: query_vec.clone (),
+                    prop_vec: prop_vec.clone (),
                     qed_vec,
                 });
             }
@@ -714,22 +714,22 @@ impl Wissen {
 pub enum WissenOutput {
     Query {
         counter: usize,
-        query_vec: Vec <Query>,
+        prop_vec: Vec <Prop>,
         subst_vec: Vec <Subst>,
     },
     Prove {
         counter: usize,
-        query_vec: Vec <Query>,
+        prop_vec: Vec <Prop>,
         qed_vec: Vec <Qed>,
     },
 }
 
-fn collect_var_from_query_vec (
-    query_vec: &Vec <Query>
+fn collect_var_from_prop_vec (
+    prop_vec: &Vec <Prop>
 ) -> HashSet <Var> {
     let mut var_set = HashSet::new ();
-    for query in query_vec {
-        for var in collect_var_from_term_vec (&query.args) {
+    for prop in prop_vec {
+        for var in collect_var_from_term_vec (&prop.args) {
             var_set.insert (var);
         }
     }
@@ -745,8 +745,8 @@ fn collect_var_from_term (
             var_set.insert (var.clone ());
             var_set
         }
-        Term::Tuple (tuple) => {
-            collect_var_from_term_vec (&tuple.body)
+        Term::Cons (cons) => {
+            collect_var_from_term_vec (&cons.body)
         }
     }
 }
@@ -768,17 +768,17 @@ impl ToString for WissenOutput {
         match self {
             WissenOutput::Query {
                 counter,
-                query_vec,
+                prop_vec,
                 subst_vec,
             } => {
                 let mut s = String::new ();
-                s += "<query-output>\n";
-                s += &vec_to_lines (&query_vec);
+                s += "<prop-output>\n";
+                s += &vec_to_lines (&prop_vec);
                 s += "- expecting ";
                 s += &counter.to_string ();
                 s += " results\n";
-                let var_set = collect_var_from_query_vec (
-                    query_vec);
+                let var_set = collect_var_from_prop_vec (
+                    prop_vec);
                 for subst in subst_vec {
                     for var in &var_set {
                         s += &var.to_string ();
@@ -788,22 +788,22 @@ impl ToString for WissenOutput {
                     }
                     s += "\n";
                 }
-                s += "</query-output>";
+                s += "</prop-output>";
                 s
             }
             WissenOutput::Prove {
                 counter,
-                query_vec,
+                prop_vec,
                 qed_vec,
             } => {
                 let mut s = String::new ();
                 s += "<prove-output>\n";
-                s += &vec_to_lines (&query_vec);
+                s += &vec_to_lines (&prop_vec);
                 s += "- expecting ";
                 s += &counter.to_string ();
                 s += " results\n";
-                let var_set = collect_var_from_query_vec (
-                    query_vec);
+                let var_set = collect_var_from_prop_vec (
+                    prop_vec);
                 for qed in qed_vec {
                     s += "<deduction-tree>\n";
                     s += &qed.deduction_tree.to_string ();
@@ -854,9 +854,9 @@ impl ToString for DeductionTree {
 #[derive (Debug)]
 #[derive (PartialEq, Eq, Hash)]
 pub enum Statement {
-    Prop (String, Prop),
-    Query (usize, Vec <Query>),
-    Prove (usize, Vec <Query>),
+    Den (String, Den),
+    Query (usize, Vec <Prop>),
+    Prove (usize, Vec <Prop>),
 }
 
 #[derive (Clone)]
@@ -931,31 +931,31 @@ pub struct Proof <'a> {
     wissen: &'a Wissen,
     subst: Subst,
     tree_stack: Vec <DeductionTree>,
-    query_queue: VecDeque <Arc <Query>>,
+    prop_queue: VecDeque <Arc <Prop>>,
 }
 
 impl <'a> Proof <'a> {
     fn step (&mut self) -> ProofStep <'a> {
-        if let Some (query) = self.query_queue.pop_front () {
+        if let Some (prop) = self.prop_queue.pop_front () {
             if let Some (
-                prop
-            ) = self.wissen.find_prop (&query.name) {
+                den
+            ) = self.wissen.find_den (&prop.name) {
                 let mut proof_queue = VecDeque::new ();
-                let backup_prop = prop.clone ();
+                let backup_den = den.clone ();
                 if let Some (
-                    (query_matrix, new_subst)
-                ) = prop.apply (&query.args, self.subst.clone ()) {
-                    for query_vec in query_matrix {
+                    (prop_matrix, new_subst)
+                ) = den.apply (&prop.args, self.subst.clone ()) {
+                    for prop_vec in prop_matrix {
                         let mut proof = self.clone ();
                         proof.subst = new_subst.clone ();
                         proof.record_deduction_step (
-                            &query,
-                            &backup_prop);
-                        let rev = query_vec.into_iter () .rev ();
-                        for query in rev {
+                            &prop,
+                            &backup_den);
+                        let rev = prop_vec.into_iter () .rev ();
+                        for prop in rev {
                             // the order must be kept
                             //   to record_deduction_step
-                            proof.query_queue.push_front (query);
+                            proof.prop_queue.push_front (prop);
                         }
                         proof_queue.push_back (proof);
                     }
@@ -965,7 +965,7 @@ impl <'a> Proof <'a> {
                 }
             } else {
                 eprintln! ("- [warning] Proof::step");
-                eprintln! ("  undefined prop : {}", query.name);
+                eprintln! ("  undefined den : {}", prop.name);
                 ProofStep::Fail
             }
         } else {
@@ -976,18 +976,18 @@ impl <'a> Proof <'a> {
 
 impl <'a> ToString for Proof <'a> {
     fn to_string (&self) -> String {
-        let query_vec: &Vec <Query> = &self.query_queue
+        let prop_vec: &Vec <Prop> = &self.prop_queue
             .iter ()
             .map (|x| (**x) .clone ())
             .collect ();
         format! (
             "<proof>\n\
-            <query_queue>\n\
-            {}</query_queue>\n\
+            <prop_queue>\n\
+            {}</prop_queue>\n\
             <subst>\n\
             {}</subst>\n\
             </proof>\n",
-            vec_to_lines (query_vec),
+            vec_to_lines (prop_vec),
             self.subst.to_string ())
     }
 }
@@ -995,15 +995,15 @@ impl <'a> ToString for Proof <'a> {
 impl <'a> Proof <'a> {
     fn record_deduction_step (
         &mut self,
-        query: &Query,
         prop: &Prop,
+        den: &Den,
     ) {
-        if let Prop::Conj (
-            _, query_vec
-        ) = prop {
+        if let Den::Conj (
+            _, prop_vec
+        ) = den {
             self.tree_stack.push (DeductionTree {
-                conj_name: query.name.clone (),
-                arity: query_vec.len (),
+                conj_name: prop.name.clone (),
+                arity: prop_vec.len (),
                 body: Vec::new (),
             });
             self.converge_deduction_tree ();
@@ -1065,14 +1065,14 @@ pub struct Qed {
 }
 
 const WISSEN_GRAMMAR: &'static str = r#"
-Statement::Prop = { prop-name? "=" Prop }
-Statement::Query = { "query" '(' num? ')' '{' list (Query) '}' }
-Statement::Prove = { "prove" '(' num? ')' '{' list (Query) '}' }
-Prop::Disj = { "disj" '(' list (prop-name?) ')' }
-Prop::Conj = { "conj" '(' list (Term) ')' '{' list (Query) '}' }
+Statement::Den = { den-name? "=" Den }
+Statement::Query = { "query" '(' num? ')' '{' list (Prop) '}' }
+Statement::Prove = { "prove" '(' num? ')' '{' list (Prop) '}' }
+Den::Disj = { "disj" '(' list (den-name?) ')' }
+Den::Conj = { "conj" '(' list (Term) ')' '{' list (Prop) '}' }
 Term::Var = { unique-var-name? }
-Term::Tuple = { tuple-name? '(' list (Term) ')' }
-Query::Tuple = { prop-name? '(' list (Term) ')' }
+Term::Cons = { cons-name? '(' list (Term) ')' }
+Prop::Cons = { den-name? '(' list (Term) ')' }
 "#;
 
 fn note_about_wissen_grammar () -> ErrorMsg {
@@ -1081,7 +1081,7 @@ fn note_about_wissen_grammar () -> ErrorMsg {
         .lines (WISSEN_GRAMMAR)
 }
 
-fn mexp_to_prop_name <'a> (
+fn mexp_to_den_name <'a> (
     mexp: &Mexp <'a>,
 ) -> Result <String, ErrorInCtx> {
     if let Mexp::Sym {
@@ -1092,7 +1092,7 @@ fn mexp_to_prop_name <'a> (
             Ok (symbol.to_string ())
         } else {
             ErrorInCtx::new ()
-                .line ("expecting prop name")
+                .line ("expecting den name")
                 .line ("which must end with `-t`")
                 .line (&format! ("but found : {}", symbol))
                 .span (mexp.span ())
@@ -1101,16 +1101,16 @@ fn mexp_to_prop_name <'a> (
         }
     } else {
         ErrorInCtx::new ()
-            .line ("expecting prop name")
+            .line ("expecting den name")
             .line (&format! ("but found : {}", mexp.to_string ()))
             .span (mexp.span ())
             .wrap_in_err ()
     }
 }
 
-fn mexp_to_disj_prop <'a> (
+fn mexp_to_disj_den <'a> (
     mexp: &Mexp <'a>,
-) -> Result <Prop, ErrorInCtx> {
+) -> Result <Den, ErrorInCtx> {
     if let Mexp::Apply {
         head: box Mexp::Sym {
             symbol: "disj",
@@ -1122,7 +1122,7 @@ fn mexp_to_disj_prop <'a> (
         },
         ..
     } = mexp {
-        Ok (Prop::Disj (mexp_vec_to_prop_name_vec (body)?))
+        Ok (Den::Disj (mexp_vec_to_den_name_vec (body)?))
     } else {
         ErrorInCtx::new ()
             .head ("syntex error")
@@ -1132,9 +1132,9 @@ fn mexp_to_disj_prop <'a> (
     }
 }
 
-fn mexp_to_query <'a> (
+fn mexp_to_prop <'a> (
     mexp: &Mexp <'a>,
-) -> Result <Query, ErrorInCtx> {
+) -> Result <Prop, ErrorInCtx> {
     if let Mexp::Apply {
         head: box Mexp::Sym {
             symbol,
@@ -1147,13 +1147,13 @@ fn mexp_to_query <'a> (
         ..
     } = mexp {
         if symbol.ends_with ("-t") {
-            Ok (Query {
+            Ok (Prop {
                 name: symbol.to_string (),
                 args: mexp_vec_to_term_vec (body)?,
             })
         } else {
             ErrorInCtx::new ()
-                .line ("expecting prop name")
+                .line ("expecting den name")
                 .line ("which must end with `-t`")
                 .line (&format! ("but found : {}", symbol))
                 .span (mexp.span ())
@@ -1184,12 +1184,12 @@ fn mexp_to_term <'a> (
         ..
     } = mexp {
         if symbol.ends_with ("-c") {
-            Ok (Term::tuple (
+            Ok (Term::cons (
                 symbol,
                 mexp_vec_to_term_vec (body)?))
         } else {
             ErrorInCtx::new ()
-                .line ("expecting tuple name")
+                .line ("expecting cons name")
                 .line ("which must end with `-c`")
                 .line (&format! ("but found : {}", symbol))
                 .span (mexp.span ())
@@ -1201,12 +1201,12 @@ fn mexp_to_term <'a> (
         ..
     } = mexp {
         if symbol.ends_with ("-c") {
-            Ok (Term::tuple (symbol, vec! []))
+            Ok (Term::cons (symbol, vec! []))
         } else if symbol.ends_with ("-t") {
             ErrorInCtx::new ()
-                .line ("expecting tuple name or var")
-                .line ("but found prop name which end with `-t`")
-                .line (&format! ("prop name : {}", symbol))
+                .line ("expecting cons name or var")
+                .line ("but found den name which end with `-t`")
+                .line (&format! ("den name : {}", symbol))
                 .span (mexp.span ())
                 .note (note_about_wissen_grammar ())
                 .wrap_in_err ()
@@ -1222,9 +1222,9 @@ fn mexp_to_term <'a> (
     }
 }
 
-fn mexp_to_conj_prop <'a> (
+fn mexp_to_conj_den <'a> (
     mexp: &Mexp <'a>,
-) -> Result <Prop, ErrorInCtx> {
+) -> Result <Den, ErrorInCtx> {
     if let Mexp::Apply {
         head: box Mexp::Apply {
             head: box Mexp::Sym {
@@ -1243,8 +1243,8 @@ fn mexp_to_conj_prop <'a> (
         },
         ..
     } = mexp {
-        Ok (Prop::Conj (mexp_vec_to_term_vec (body1)?,
-                        mexp_vec_to_query_vec (body2)?))
+        Ok (Den::Conj (mexp_vec_to_term_vec (body1)?,
+                        mexp_vec_to_prop_vec (body2)?))
     } else {
         ErrorInCtx::new ()
             .head ("syntex error")
@@ -1254,14 +1254,14 @@ fn mexp_to_conj_prop <'a> (
     }
 }
 
-fn mexp_to_prop <'a> (
+fn mexp_to_den <'a> (
     mexp: &Mexp <'a>,
-) -> Result <Prop, ErrorInCtx> {
-    mexp_to_disj_prop (mexp)
-        .or (mexp_to_conj_prop (mexp))
+) -> Result <Den, ErrorInCtx> {
+    mexp_to_disj_den (mexp)
+        .or (mexp_to_conj_den (mexp))
 }
 
-fn mexp_to_prop_statement <'a> (
+fn mexp_to_den_statement <'a> (
     mexp: &Mexp <'a>,
 ) -> Result <Statement, ErrorInCtx> {
     if let Mexp::Infix {
@@ -1274,12 +1274,12 @@ fn mexp_to_prop_statement <'a> (
         ..
     } = mexp {
         if symbol.ends_with ("-t") {
-            Ok (Statement::Prop (
+            Ok (Statement::Den (
                 symbol.to_string (),
-                mexp_to_prop (rhs)?))
+                mexp_to_den (rhs)?))
         } else {
             ErrorInCtx::new ()
-                .line ("expecting prop name")
+                .line ("expecting den name")
                 .line ("which must end with `-t`")
                 .line (&format! ("but found : {}", symbol))
                 .span (mexp.span ())
@@ -1295,7 +1295,7 @@ fn mexp_to_prop_statement <'a> (
     }
 }
 
-fn mexp_to_query_statement <'a> (
+fn mexp_to_prop_statement <'a> (
     mexp: &Mexp <'a>,
 ) -> Result <Statement, ErrorInCtx> {
     if let Mexp::Apply {
@@ -1322,7 +1322,7 @@ fn mexp_to_query_statement <'a> (
             let result = symbol.parse::<usize> ();
             if result.is_err () {
                 return ErrorInCtx::new ()
-                    .line ("fail to parse usize num in `query`")
+                    .line ("fail to parse usize num in `prop`")
                     .line (&format! ("symbol : {}", symbol))
                     .span (mexp.span ())
                     .note (note_about_wissen_grammar ())
@@ -1330,10 +1330,10 @@ fn mexp_to_query_statement <'a> (
             }
             Ok (Statement::Query (
                 result.unwrap (),
-                mexp_vec_to_query_vec (body2)?))
+                mexp_vec_to_prop_vec (body2)?))
         } else {
             ErrorInCtx::new ()
-                .line ("fail to parse query's first arg")
+                .line ("fail to parse prop's first arg")
                 .span (mexp.span ())
                 .note (note_about_wissen_grammar ())
                 .wrap_in_err ()
@@ -1382,10 +1382,10 @@ fn mexp_to_prove_statement <'a> (
             }
             Ok (Statement::Prove (
                 result.unwrap (),
-                mexp_vec_to_query_vec (body2)?))
+                mexp_vec_to_prop_vec (body2)?))
         } else {
             ErrorInCtx::new ()
-                .line ("fail to parse query's first arg")
+                .line ("fail to parse prop's first arg")
                 .span (mexp.span ())
                 .note (note_about_wissen_grammar ())
                 .wrap_in_err ()
@@ -1402,27 +1402,27 @@ fn mexp_to_prove_statement <'a> (
 fn mexp_to_statement <'a> (
     mexp: &Mexp <'a>,
 ) -> Result <Statement, ErrorInCtx> {
-    mexp_to_prop_statement (mexp)
-        .or (mexp_to_query_statement (mexp))
+    mexp_to_den_statement (mexp)
+        .or (mexp_to_prop_statement (mexp))
         .or (mexp_to_prove_statement (mexp))
 }
 
-fn mexp_vec_to_prop_name_vec <'a> (
+fn mexp_vec_to_den_name_vec <'a> (
     mexp_vec: &Vec <Mexp <'a>>,
 ) -> Result <Vec <String>, ErrorInCtx> {
     let mut vec = Vec::new ();
     for mexp in mexp_vec {
-        vec.push (mexp_to_prop_name (&mexp)?);
+        vec.push (mexp_to_den_name (&mexp)?);
     }
     Ok (vec)
 }
 
-fn mexp_vec_to_query_vec <'a> (
+fn mexp_vec_to_prop_vec <'a> (
     mexp_vec: &Vec <Mexp <'a>>,
-) -> Result <Vec <Query>, ErrorInCtx> {
+) -> Result <Vec <Prop>, ErrorInCtx> {
     let mut vec = Vec::new ();
     for mexp in mexp_vec {
-        vec.push (mexp_to_query (&mexp)?);
+        vec.push (mexp_to_prop (&mexp)?);
     }
     Ok (vec)
 }
@@ -1452,13 +1452,13 @@ fn test_unify () {
     let u = Term::var ("u");
     let v = Term::var ("v");
     let subst = Subst::new () .unify (
-        &Term::tuple ("pair-c", vec! [
+        &Term::cons ("pair-c", vec! [
             u.clone (),
             v.clone (),
         ]),
-        &Term::tuple ("pair-c", vec! [
+        &Term::cons ("pair-c", vec! [
             v.clone (),
-            Term::tuple ("hi-c", vec! []),
+            Term::cons ("hi-c", vec! []),
         ])) .unwrap ();
     assert_eq! (subst.len (), 2);
 }
@@ -1466,15 +1466,15 @@ fn test_unify () {
 #[test]
 fn test_love () {
     let mut wissen = Wissen::new ();
-    let prop = Prop::Conj (
-        vec! [Term::tuple ("you-c", vec! [])],
+    let den = Den::Conj (
+        vec! [Term::cons ("you-c", vec! [])],
         vec! []);
-    wissen.prop ("love-t", &prop);
-    let query = Query {
+    wissen.den ("love-t", &den);
+    let prop = Prop {
         name: "love-t".to_string (),
         args: vec! [Term::var ("u")],
     };
-    let mut proving = wissen.proving (&vec! [query]);
+    let mut proving = wissen.proving (&vec! [prop]);
     assert! (proving.next_qed () .is_some ());
     assert! (proving.next_qed () .is_none ());
 }
@@ -1482,37 +1482,37 @@ fn test_love () {
 #[test]
 fn test_list_append () {
     let mut wissen = Wissen::new ();
-    let list_append_t = Prop::Disj (
+    let list_append_t = Den::Disj (
         vec! [
             "zero-append-t".to_string (),
             "succ-append-t".to_string (),
         ]);
-    wissen.prop ("list-append-t", &list_append_t);
+    wissen.den ("list-append-t", &list_append_t);
     let succ = Term::var ("succ");
-    let zero_append_t = Prop::Conj (
+    let zero_append_t = Den::Conj (
         vec! [
-            Term::tuple ("null-c", vec! []),
+            Term::cons ("null-c", vec! []),
             succ.clone (),
             succ
         ],
         vec! []);
-    wissen.prop ("zero-append-t", &zero_append_t);
+    wissen.den ("zero-append-t", &zero_append_t);
     let car = Term::var ("car");
     let cdr = Term::var ("cdr");
     let succ = Term::var ("succ");
     let o_cdr = Term::var ("o-cdr");
-    let succ_append_t = Prop::Conj (
+    let succ_append_t = Den::Conj (
         vec! [
-            Term::tuple ("cons-c",
+            Term::cons ("cons-c",
                          vec! [car.clone (),
                                cdr.clone ()]),
             succ.clone (),
-            Term::tuple ("cons-c",
+            Term::cons ("cons-c",
                          vec! [car,
                                o_cdr.clone ()]),
         ],
         vec! [
-            Query {
+            Prop {
                 name: "list-append-t".to_string (),
                 args: vec! [
                     cdr,
@@ -1521,14 +1521,14 @@ fn test_list_append () {
                 ],
             }
         ]);
-    wissen.prop ("succ-append-t", &succ_append_t);
-    let query = Query {
+    wissen.den ("succ-append-t", &succ_append_t);
+    let prop = Prop {
         name: "list-append-t".to_string (),
         args: vec! [Term::var ("x"),
                     Term::var ("y"),
                     Term::var ("z")],
     };
-    let mut proving = wissen.proving (&vec! [query]);
+    let mut proving = wissen.proving (&vec! [prop]);
     let subst_vec = proving.take_subst (100);
     assert_eq! (subst_vec.len (), 100);
     for subst in subst_vec {

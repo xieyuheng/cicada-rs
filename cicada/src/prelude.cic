@@ -68,18 +68,19 @@ list-length-t = disj (
 zero-length-t : type-tt
 zero-length-t = conj {
   list : list-t (t)
-  list = null-c
   length : nat-t
+  list = null-c
   length = zero-c
 }
 
 succ-length-t : type-tt
 succ-length-t = conj {
   list : list-t (t)
-  list = cons-c (x l)
   length : nat-t
-  length = succ-c (n)
   prev : list-length-t (l n)
+  list = cons-c (x l)
+  length = succ-c (n)
+
 }
 
 list-append-t : type-tt
