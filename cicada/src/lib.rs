@@ -56,6 +56,7 @@ pub enum Term {
     Var (Span, Var),
     Cons (Span, String, Arg),
     Prop (Span, String, Arg),
+    TypeOfType,
 }
 
 #[derive (Clone)]
@@ -127,6 +128,7 @@ impl ToString for Id {
 pub enum Data {
     Var (Var),
     Data (String, Dic <Data>),
+    TypeOfType,
 }
 
 #[derive (Clone)]

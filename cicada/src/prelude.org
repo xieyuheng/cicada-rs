@@ -64,17 +64,17 @@
         null-t
         cons-t
     ) {
-        t : type
+        ty : type
     }
 
     null-t = conj {
-        t : type
+        ty : type
     }
 
     cons-t = conj {
-        t : type
-        car : t
-        cdr : list-t (t)
+        ty : type
+        car : ty
+        cdr : list-t (ty)
     }
     #+end_src
 
@@ -138,21 +138,21 @@
         null-vect-t
         cons-vect-tt
     ) {
-        t : type
+        ty : type
         length : nat-t
     }
 
     null-vect-t = conj {
-        t : type
+        ty : type
         length : nat-t
         length = zero-c
     }
 
     cons-vect-t = conj {
-        t : type
+        ty : type
         length : nat-t
-        car : t
-        cdr : vect-t (t n)
+        car : ty
+        cdr : vect-t (ty n)
         length = succ-c (n)
     }
     #+end_src
