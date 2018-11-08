@@ -1,7 +1,7 @@
 #+property: tangle lib.rs
 #+title: cicada
-- Subst::unify -- for Data
-- Term::to_data -- with error_report
+- test_unify
+- Term::to_value -- with error_report
 - Wissen::den
 - Wissen::check
 * [note]
@@ -14,13 +14,14 @@
     - Den::Disj is definition of Prop
     - Den::Conj is definition of Prop and Cons
 
-*** Data
+*** Value
 
-    - Cons::to_data will get a Data with default-record
-      the default-record of Cons is specified by its definition
+    - Cons::to_value will give a Value
+      part of the Value is pre-defined which is specified by
+      the definition of the Cons -- the definition of its Den::Conj
 
-    - during Cons::to_data
-      its default-record is unified with its args
+    - during Cons::to_value
+      its pre-defined is unified with its args
 
     - this is like runtime assertion in prolog
 
@@ -54,7 +55,7 @@
 
     - to prove a Prop defined by Den::Conj
       we unify args withs fields
-      and we also need to prove remaining Prop in Data
+      and we also need to prove remaining Prop in Value
 
     - `heir` is just like `data`
 
@@ -253,17 +254,17 @@
     }
     #+end_src
 
-* Data
+* Value
 
-*** Data
+*** Value
 
     #+begin_src rust
     #[derive (Clone)]
     #[derive (Debug)]
     #[derive (PartialEq, Eq)]
-    pub enum Data {
+    pub enum Value {
         Var (Var),
-        Data (String, Dic <Data>),
+        Data (String, Dic <Value>),
         TypeOfType,
     }
     #+end_src
@@ -278,7 +279,175 @@
     #[derive (PartialEq, Eq)]
     pub enum Subst {
         Null,
-        Cons (Var, Data, Arc <Subst>),
+        Cons (Var, Value, Arc <Subst>),
+    }
+    #+end_src
+
+*** Subst::new
+
+    #+begin_src rust
+    impl Subst {
+        fn new () -> Self {
+            Subst::Null
+        }
+    }
+    #+end_src
+
+*** Subst::extend
+
+    #+begin_src rust
+    impl Subst {
+        fn extend (&self, var: Var, value: Value) -> Self {
+            Subst::Cons (var, value, Arc::new (self.clone ()))
+        }
+    }
+    #+end_src
+
+*** Subst::find
+
+    #+begin_src rust
+    impl Subst {
+        pub fn find (&self, var: &Var) -> Option <&Value> {
+            match self {
+                Subst::Null => None,
+                Subst::Cons (
+                    var1, value, next,
+                ) => {
+                    if var1 == var {
+                        Some (value)
+                    } else {
+                        next.find (var)
+                    }
+                }
+            }
+        }
+    }
+    #+end_src
+
+*** Subst::walk
+
+    #+begin_src rust
+    impl Subst {
+        pub fn walk (&self, value: &Value) -> Value {
+            match value {
+                Value::Var (var) => {
+                    if let Some (new_value) = self.find (var) {
+                        self.walk (new_value)
+                    } else {
+                        value.clone ()
+                    }
+                }
+                _ => value.clone ()
+            }
+        }
+    }
+    #+end_src
+
+*** Subst::unify
+
+    #+begin_src rust
+    impl Subst {
+        pub fn unify (
+            &self,
+            u: &Value,
+            v: &Value,
+        ) -> Option <Subst> {
+            let u = self.walk (u);
+            let v = self.walk (v);
+            match (u, v) {
+                (Value::Var (u),
+                 Value::Var (v),
+                ) if u == v => {
+                    Some (self.clone ())
+                }
+                (Value::Var (u), v) => {
+                    if self.var_occur_p (&u, &v) {
+                        None
+                    } else {
+                        Some (self.extend (u, v))
+                    }
+                }
+                (u, Value::Var (v)) => {
+                    if self.var_occur_p (&v, &u) {
+                        None
+                    } else {
+                        Some (self.extend (v, u))
+                    }
+                }
+                (Value::Data (u_name, u_dic),
+                 Value::Data (v_name, v_dic),
+                ) => {
+                    if u_name != v_name {
+                        return None;
+                    }
+                    if u_dic.len () != v_dic.len () {
+                        return None;
+                    }
+                    let mut subst = self.clone ();
+                    let zip = u_dic.entries () .zip (v_dic.entries ());
+                    for (u_entry, v_entry) in zip {
+                        if u_entry.name != v_entry.name {
+                            eprintln! ("- [warning] Subst::unify");
+                            eprintln! ("  dic mismatch");
+                            eprintln! ("  u_name = {}", u_name);
+                            eprintln! ("  v_name = {}", v_name);
+                            eprintln! ("  u_entry.name = {}", u_entry.name);
+                            eprintln! ("  v_entry.name = {}", v_entry.name);
+                            return None;
+                        } else {
+                            if let (
+                                Some (u_value),
+                                Some (v_value),
+                            ) = (&u_entry.value, &v_entry.value) {
+                                subst = subst.unify (
+                                    u_value,
+                                    v_value)?;
+                            } else {
+                                return None
+                            }
+                        }
+                    }
+                    Some (subst)
+                }
+                (u, v) => {
+                    if u == v {
+                        Some (self.clone ())
+                    } else {
+                        None
+                    }
+                }
+            }
+        }
+    }
+    #+end_src
+
+*** Subst::var_occur_p
+
+    #+begin_src rust
+    impl Subst {
+        pub fn var_occur_p (
+            &self,
+            var: &Var,
+            value: &Value,
+        ) -> bool {
+            let value = self.walk (value);
+            match value {
+                Value::Var (var1) => {
+                    var == &var1
+                }
+                Value::Data (_name, dic) => {
+                    for value in dic.values () {
+                        if self.var_occur_p (var, value) {
+                            return true;
+                        }
+                    }
+                    return false;
+                }
+                _ => {
+                    false
+                }
+            }
+        }
     }
     #+end_src
 
@@ -309,3 +478,12 @@
 * syntax
 
 * test
+
+*** [todo] test_unify
+
+    #+begin_src rust
+    #[test]
+    fn test_unify () {
+
+    }
+    #+end_src
