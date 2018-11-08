@@ -47,7 +47,7 @@
                tail: Box <Mexp <'a>> },
         Apply { span: Span,
                 head: Box <Mexp <'a>>,
-                arg: Arg <'a> },
+                arg: MexpArg <'a> },
         Array { span: Span, body: Vec <Mexp <'a>> },
         Arrow { span: Span,
                 ante: Vec <Mexp <'a>>,
@@ -62,7 +62,7 @@
             span: Span,
             op: &'a str,
             lhs: Box <Mexp <'a>>,
-            arg: Arg <'a> },
+            arg: MexpArg <'a> },
     }
     #+end_src
 
@@ -86,39 +86,39 @@
     }
     #+end_src
 
-*** Arg
+*** MexpArg
 
     #+begin_src rust
     #[derive (Clone)]
     #[derive (Debug)]
     #[derive (PartialEq)]
-    pub enum Arg <'a> {
+    pub enum MexpArg <'a> {
         Tuple { span: Span, body: Vec <Mexp <'a>> },
         Block { span: Span, body: Vec <Mexp <'a>> },
     }
     #+end_src
 
-*** Arg::span
+*** MexpArg::span
 
     #+begin_src rust
-    impl <'a> Arg <'a> {
+    impl <'a> MexpArg <'a> {
         pub fn span (&self) -> Span {
             match self {
-                Arg::Tuple { span, .. } => span.clone (),
-                Arg::Block { span, .. } => span.clone (),
+                MexpArg::Tuple { span, .. } => span.clone (),
+                MexpArg::Block { span, .. } => span.clone (),
             }
         }
     }
     #+end_src
 
-*** Arg::body
+*** MexpArg::body
 
     #+begin_src rust
-    impl <'a> Arg <'a> {
+    impl <'a> MexpArg <'a> {
         pub fn body (&self) -> Vec <Mexp <'a>> {
             match self {
-                Arg::Tuple { body, .. } => body.clone (),
-                Arg::Block { body, .. } => body.clone (),
+                MexpArg::Tuple { body, .. } => body.clone (),
+                MexpArg::Block { body, .. } => body.clone (),
             }
         }
     }
@@ -176,17 +176,17 @@
       }
       #+end_src
 
-***** Arg::to_string
+***** MexpArg::to_string
 
       #+begin_src rust
-      impl <'a> ToString for Arg <'a> {
+      impl <'a> ToString for MexpArg <'a> {
           fn to_string (&self) -> String {
               match self {
-                  Arg::Tuple { body, .. } => {
+                  MexpArg::Tuple { body, .. } => {
                       format! ("({})",
                                mexp_vec_to_string (&body))
                   }
-                  Arg::Block { body, .. } => {
+                  MexpArg::Block { body, .. } => {
                       if body.is_empty () {
                           format! ("{{}}")
                       } else {
@@ -334,13 +334,13 @@
       }
       #+end_src
 
-***** Arg::to_tree_format
+***** MexpArg::to_tree_format
 
       #+begin_src rust
-      impl <'a> Arg <'a> {
+      impl <'a> MexpArg <'a> {
           pub fn to_tree_format (&self) -> String {
               match self {
-                  Arg::Tuple { body, .. } => {
+                  MexpArg::Tuple { body, .. } => {
                       let mut s = String::new ();
                       s += "arg:tuple ";
                       s += "{ ";
@@ -351,7 +351,7 @@
                       s += "}";
                       s
                   }
-                  Arg::Block { body, .. } => {
+                  MexpArg::Block { body, .. } => {
                       let mut s = String::new ();
                       s += "arg:block ";
                       s += "{ ";
@@ -393,7 +393,7 @@
 
 ***** [todo] more smart pretty printer
 
-      - break Arg::Tuple when a line will be too long to fit
+      - break MexpArg::Tuple when a line will be too long to fit
 
 ***** Mexp::to_pretty_string
 
@@ -470,17 +470,17 @@
       }
       #+end_src
 
-***** Arg::to_string_indent
+***** MexpArg::to_string_indent
 
       #+begin_src rust
-      impl <'a> Arg <'a> {
+      impl <'a> MexpArg <'a> {
           fn to_string_indent (&self, level: usize) -> String {
               match self {
-                  Arg::Tuple { body, .. } => {
+                  MexpArg::Tuple { body, .. } => {
                       format! ("({})",
                                mexp_vec_to_string (&body))
                   }
-                  Arg::Block { body, .. } => {
+                  MexpArg::Block { body, .. } => {
                       if body.is_empty () {
                           format! ("{{}}")
                       } else {
@@ -1147,16 +1147,16 @@
       impl <'a> Parsing <'a> {
           fn get_arg (
               &mut self,
-          ) -> Result <Arg <'a>, ErrorInCtx> {
+          ) -> Result <MexpArg <'a>, ErrorInCtx> {
               match self.token_vec.get (self.cursor) {
                   Some (Token::Char { ch: '(', .. }) => {
                       let (body, span) = self.get_body_and_span ()?;
-                      let arg = Arg::Tuple { span, body };
+                      let arg = MexpArg::Tuple { span, body };
                       Ok (arg)
                   }
                   Some (Token::Char { ch: '{', .. }) => {
                       let (body, span) = self.get_body_and_span ()?;
-                      let arg = Arg::Block { span, body };
+                      let arg = MexpArg::Block { span, body };
                       Ok (arg)
                   }
                   Some (token) => {

@@ -11,7 +11,7 @@ use error_report::{
 use mexp::{
     SyntaxTable,
     Mexp,
-    Arg,
+    MexpArg,
 };
 
 #[derive (Clone)]
@@ -113,7 +113,7 @@ fn mexp_to_zero_p_exp <'a> (
         head: box Mexp::Sym {
             symbol: "zero-p", ..
         },
-        arg: Arg::Tuple {
+        arg: MexpArg::Tuple {
             span: arg_span,
             body,
         },
@@ -148,7 +148,7 @@ fn mexp_to_diff_exp <'a> (
         head: box Mexp::Sym {
             symbol: "diff", ..
         },
-        arg: Arg::Tuple {
+        arg: MexpArg::Tuple {
             span: arg_span,
             body,
         },
@@ -185,7 +185,7 @@ fn mexp_to_if_exp <'a> (
         head: box Mexp::Sym {
             symbol: "if", ..
         },
-        arg: Arg::Block {
+        arg: MexpArg::Block {
             span: arg_span,
             body,
         },
@@ -224,7 +224,7 @@ fn mexp_to_let_exp <'a> (
         head: box Mexp::Sym {
             symbol: "let", ..
         },
-        arg: Arg::Block {
+        arg: MexpArg::Block {
             span: arg_span,
             body,
         },

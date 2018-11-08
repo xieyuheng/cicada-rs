@@ -29,7 +29,7 @@ pub enum Mexp <'a> {
            tail: Box <Mexp <'a>> },
     Apply { span: Span,
             head: Box <Mexp <'a>>,
-            arg: Arg <'a> },
+            arg: MexpArg <'a> },
     Array { span: Span, body: Vec <Mexp <'a>> },
     Arrow { span: Span,
             ante: Vec <Mexp <'a>>,
@@ -44,7 +44,7 @@ pub enum Mexp <'a> {
         span: Span,
         op: &'a str,
         lhs: Box <Mexp <'a>>,
-        arg: Arg <'a> },
+        arg: MexpArg <'a> },
 }
 
 impl <'a> Mexp <'a> {
@@ -66,25 +66,25 @@ impl <'a> Mexp <'a> {
 #[derive (Clone)]
 #[derive (Debug)]
 #[derive (PartialEq)]
-pub enum Arg <'a> {
+pub enum MexpArg <'a> {
     Tuple { span: Span, body: Vec <Mexp <'a>> },
     Block { span: Span, body: Vec <Mexp <'a>> },
 }
 
-impl <'a> Arg <'a> {
+impl <'a> MexpArg <'a> {
     pub fn span (&self) -> Span {
         match self {
-            Arg::Tuple { span, .. } => span.clone (),
-            Arg::Block { span, .. } => span.clone (),
+            MexpArg::Tuple { span, .. } => span.clone (),
+            MexpArg::Block { span, .. } => span.clone (),
         }
     }
 }
 
-impl <'a> Arg <'a> {
+impl <'a> MexpArg <'a> {
     pub fn body (&self) -> Vec <Mexp <'a>> {
         match self {
-            Arg::Tuple { body, .. } => body.clone (),
-            Arg::Block { body, .. } => body.clone (),
+            MexpArg::Tuple { body, .. } => body.clone (),
+            MexpArg::Block { body, .. } => body.clone (),
         }
     }
 }
@@ -135,14 +135,14 @@ impl <'a> ToString for Mexp <'a> {
     }
 }
 
-impl <'a> ToString for Arg <'a> {
+impl <'a> ToString for MexpArg <'a> {
     fn to_string (&self) -> String {
         match self {
-            Arg::Tuple { body, .. } => {
+            MexpArg::Tuple { body, .. } => {
                 format! ("({})",
                          mexp_vec_to_string (&body))
             }
-            Arg::Block { body, .. } => {
+            MexpArg::Block { body, .. } => {
                 if body.is_empty () {
                     format! ("{{}}")
                 } else {
@@ -279,10 +279,10 @@ impl <'a> Mexp <'a> {
     }
 }
 
-impl <'a> Arg <'a> {
+impl <'a> MexpArg <'a> {
     pub fn to_tree_format (&self) -> String {
         match self {
-            Arg::Tuple { body, .. } => {
+            MexpArg::Tuple { body, .. } => {
                 let mut s = String::new ();
                 s += "arg:tuple ";
                 s += "{ ";
@@ -293,7 +293,7 @@ impl <'a> Arg <'a> {
                 s += "}";
                 s
             }
-            Arg::Block { body, .. } => {
+            MexpArg::Block { body, .. } => {
                 let mut s = String::new ();
                 s += "arg:block ";
                 s += "{ ";
@@ -385,14 +385,14 @@ impl <'a> Mexp <'a> {
     }
 }
 
-impl <'a> Arg <'a> {
+impl <'a> MexpArg <'a> {
     fn to_string_indent (&self, level: usize) -> String {
         match self {
-            Arg::Tuple { body, .. } => {
+            MexpArg::Tuple { body, .. } => {
                 format! ("({})",
                          mexp_vec_to_string (&body))
             }
-            Arg::Block { body, .. } => {
+            MexpArg::Block { body, .. } => {
                 if body.is_empty () {
                     format! ("{{}}")
                 } else {
@@ -929,16 +929,16 @@ impl <'a> Parsing <'a> {
 impl <'a> Parsing <'a> {
     fn get_arg (
         &mut self,
-    ) -> Result <Arg <'a>, ErrorInCtx> {
+    ) -> Result <MexpArg <'a>, ErrorInCtx> {
         match self.token_vec.get (self.cursor) {
             Some (Token::Char { ch: '(', .. }) => {
                 let (body, span) = self.get_body_and_span ()?;
-                let arg = Arg::Tuple { span, body };
+                let arg = MexpArg::Tuple { span, body };
                 Ok (arg)
             }
             Some (Token::Char { ch: '{', .. }) => {
                 let (body, span) = self.get_body_and_span ()?;
-                let arg = Arg::Block { span, body };
+                let arg = MexpArg::Block { span, body };
                 Ok (arg)
             }
             Some (token) => {

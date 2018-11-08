@@ -42,7 +42,7 @@
     use mexp::{
         SyntaxTable,
         Mexp,
-        Arg,
+        MexpArg,
     };
     #+end_src
 
@@ -87,27 +87,27 @@
     #[derive (Debug)]
     #[derive (PartialEq, Eq, Hash)]
     pub enum Term {
-        Var   (VarTerm),
-        Tuple (TupleTerm),
+        Var   (Var),
+        Tuple (Tuple),
     }
     #+end_src
 
-*** VarTerm
+*** Var
 
     #+begin_src rust
     #[derive (Clone)]
     #[derive (Debug)]
     #[derive (PartialEq, Eq, Hash)]
-    pub struct VarTerm {
+    pub struct Var {
         name: String,
         id: Option <Id>,
     }
     #+end_src
 
-*** VarTerm::to_string
+*** Var::to_string
 
     #+begin_src rust
-    impl ToString for VarTerm {
+    impl ToString for Var {
         fn to_string (&self) -> String {
             let mut s = format! ("{}", self.name);
             if let Some (id) = &self.id {
@@ -175,22 +175,22 @@
     }
     #+end_src
 
-*** TupleTerm
+*** Tuple
 
     #+begin_src rust
     #[derive (Clone)]
     #[derive (Debug)]
     #[derive (PartialEq, Eq, Hash)]
-    pub struct TupleTerm {
+    pub struct Tuple {
         head: String,
         body: Vec <Term>,
     }
     #+end_src
 
-*** TupleTerm::to_string
+*** Tuple::to_string
 
     #+begin_src rust
-    impl ToString for TupleTerm {
+    impl ToString for Tuple {
         fn to_string (&self) -> String {
             if self.body.len () == 0 {
                 format! ("{}", self.head)
@@ -209,7 +209,7 @@
     #+begin_src rust
     impl Term {
         fn var (s: &str) -> Term {
-            Term::Var (VarTerm {
+            Term::Var (Var {
                 name: s.to_string (),
                 id: Some (Id::uuid ()),
             })
@@ -222,7 +222,7 @@
     #+begin_src rust
     impl Term {
         fn var_no_id (s: &str) -> Term {
-            Term::Var (VarTerm {
+            Term::Var (Var {
                 name: s.to_string (),
                 id: None,
             })
@@ -235,7 +235,7 @@
     #+begin_src rust
     impl Term {
         fn var_local (s: &str, counter: usize) -> Term {
-            Term::Var (VarTerm {
+            Term::Var (Var {
                 name: s.to_string (),
                 id: Some (Id::local (counter)),
             })
@@ -248,7 +248,7 @@
     #+begin_src rust
     impl Term {
         fn tuple (h: &str, vec: Vec <Term>) -> Term {
-            Term::Tuple (TupleTerm {
+            Term::Tuple (Tuple {
                 head: h.to_string (),
                 body: vec,
             })
@@ -262,14 +262,14 @@
     impl Term {
         fn duplicate (
             &self,
-            var_map: &mut HashMap <VarTerm, VarTerm>,
+            var_map: &mut HashMap <Var, Var>,
         ) -> Term {
             match self {
                 Term::Var (var) => {
                     if let Some (dup_var) = var_map.get (var) {
                         Term::Var (dup_var.clone ())
                     } else {
-                        let new_var = VarTerm {
+                        let new_var = Var {
                             name: var.name.clone (),
                             id: Some (Id::uuid ()),
                         };
@@ -280,7 +280,7 @@
                     }
                 }
                 Term::Tuple (tuple) => {
-                    let mut new_tuple = TupleTerm {
+                    let mut new_tuple = Tuple {
                         head: tuple.head.clone (),
                         body: Vec::new (),
                     };
@@ -330,7 +330,7 @@
     pub enum Subst {
         Null,
         Cons {
-           var: VarTerm,
+           var: Var,
            term: Term,
            next: Arc <Subst>,
         },
@@ -351,7 +351,7 @@
 
     #+begin_src rust
     impl Subst {
-        fn extend (&self, var: VarTerm, term: Term) -> Self {
+        fn extend (&self, var: Var, term: Term) -> Self {
             Subst::Cons {
                 var, term,
                 next: Arc::new (self.clone ()),
@@ -364,7 +364,7 @@
 
     #+begin_src rust
     impl Subst {
-        pub fn find (&self, var: &VarTerm) -> Option <&Term> {
+        pub fn find (&self, var: &Var) -> Option <&Term> {
             match self {
                 Subst::Null => None,
                 Subst::Cons {
@@ -519,14 +519,14 @@
             let term = self.walk (term);
             match term {
                 Term::Var (_) => term,
-                Term::Tuple (TupleTerm {
+                Term::Tuple (Tuple {
                     head,
                     body,
                 }) => {
                     let body = body.iter ()
                         .map (|x| self.apply (x))
                         .collect ();
-                    Term::Tuple (TupleTerm {
+                    Term::Tuple (Tuple {
                         head,
                         body,
                     })
@@ -550,7 +550,7 @@
                             &var.name,
                             self.len ()))
                 }
-                Term::Tuple (TupleTerm {
+                Term::Tuple (Tuple {
                     body, ..
                 }) => {
                     let mut subst = self.clone ();
@@ -568,7 +568,7 @@
 
     #+begin_src rust
     impl Subst {
-        pub fn reify_var (&self, var: &VarTerm) -> Term {
+        pub fn reify_var (&self, var: &Var) -> Term {
             let term = Term::Var (var.clone ());
             let term = self.apply (&term);
             let new_subst = Subst::new ();
@@ -584,7 +584,7 @@
     impl Subst {
         pub fn occur_check (
             &self,
-            var: &VarTerm,
+            var: &Var,
             term: &Term,
         ) -> bool {
             let term = self.walk (term);
@@ -625,7 +625,7 @@
     impl Prop {
         fn duplicate (
             &self,
-            var_map: &mut HashMap <VarTerm, VarTerm>,
+            var_map: &mut HashMap <Var, Var>,
         ) -> Prop {
             match self {
                 Prop::Disj (_name_vec) => {
@@ -758,7 +758,7 @@
     impl Query {
         fn duplicate (
             &self,
-            var_map: &mut HashMap <VarTerm, VarTerm>,
+            var_map: &mut HashMap <Var, Var>,
         ) -> Query {
             let mut new_args = Vec::new ();
             for arg in &self.args {
@@ -956,7 +956,7 @@
     #+begin_src rust
     fn collect_var_from_query_vec (
         query_vec: &Vec <Query>
-    ) -> HashSet <VarTerm> {
+    ) -> HashSet <Var> {
         let mut var_set = HashSet::new ();
         for query in query_vec {
             for var in collect_var_from_term_vec (&query.args) {
@@ -972,7 +972,7 @@
     #+begin_src rust
     fn collect_var_from_term (
         term: &Term
-    ) -> HashSet <VarTerm> {
+    ) -> HashSet <Var> {
         match term {
             Term::Var (var) => {
                 let mut var_set = HashSet::new ();
@@ -991,7 +991,7 @@
     #+begin_src rust
     fn collect_var_from_term_vec (
         term_vec: &Vec <Term>
-    ) -> HashSet <VarTerm> {
+    ) -> HashSet <Var> {
         let mut var_set = HashSet::new ();
         for term in term_vec {
             for var in collect_var_from_term (term) {
@@ -1446,7 +1446,7 @@
                 symbol: "disj",
                 ..
             },
-            arg: Arg::Tuple {
+            arg: MexpArg::Tuple {
                 body,
                 ..
             },
@@ -1474,7 +1474,7 @@
                 symbol,
                 ..
             },
-            arg: Arg::Tuple {
+            arg: MexpArg::Tuple {
                 body,
                 ..
             },
@@ -1515,7 +1515,7 @@
                 symbol,
                 ..
             },
-            arg: Arg::Tuple {
+            arg: MexpArg::Tuple {
                 body,
                 ..
             },
@@ -1573,13 +1573,13 @@
                     symbol: "conj",
                     ..
                 },
-                arg: Arg::Tuple {
+                arg: MexpArg::Tuple {
                     body: body1,
                     ..
                 },
                 ..
             },
-            arg: Arg::Block {
+            arg: MexpArg::Block {
                 body: body2,
                 ..
             },
@@ -1658,13 +1658,13 @@
                     symbol: "query",
                     ..
                 },
-                arg: Arg::Tuple {
+                arg: MexpArg::Tuple {
                     body: body1,
                     ..
                 },
                 ..
             },
-            arg: Arg::Block {
+            arg: MexpArg::Block {
                 body: body2,
                 ..
             },
@@ -1714,13 +1714,13 @@
                     symbol: "prove",
                     ..
                 },
-                arg: Arg::Tuple {
+                arg: MexpArg::Tuple {
                     body: body1,
                     ..
                 },
                 ..
             },
-            arg: Arg::Block {
+            arg: MexpArg::Block {
                 body: body2,
                 ..
             },

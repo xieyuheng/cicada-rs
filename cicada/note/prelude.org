@@ -627,32 +627,6 @@
     }
     #+end_src
 
-*** cicada without type
-
-    #+begin_src cicada
-    list-append-t = union (
-      zero-append-t
-      succ-append-t
-    ) {
-      ante = ?
-      succ = ?
-      result = ?
-    }
-
-    zero-append-t = data {
-      ante = null-c
-      succ = ?
-      result = succ
-    }
-
-    succ-append-t = data {
-      ante = cons-c (car cdr)
-      succ = ?
-      result = cons-c (car result-cdr)
-      prev : list-append-t (cdr succ result-cdr)
-    }
-    #+end_src
-
 *** list-append-t
 
     #+begin_src cicada
@@ -1580,7 +1554,7 @@
     container-tt : type-ttt
     container-tt = data {
       fun-t : -- type-tt -> type-tt
-      map : -- -- a -> b fun-tt (a) -> fun-t (b)
+      map : -- -- a -> b fun-t (a) -> fun-t (b)
     }
     #+end_src
 
