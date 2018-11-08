@@ -14,22 +14,20 @@
     | product-type | * (<type> ...) | * (<data> ...)      |
     | sum-type     | + (<type> ...) | <data> : <type> ... |
 
-*** record-type, union-type and inherit-type
+*** conj-type, disj-type and heir-type
 
-    |              | definition syntax                   |
-    |--------------+-------------------------------------|
-    | data-type    | data { ... }                        |
-    | union-type   | union (<sub-type> ...) { ... }      |
-    | inherit-type | inherit (<super-type> ...>) { ... } |
+    |           | definition syntax                |
+    |-----------+----------------------------------|
+    | conj-type | conj { ... }                     |
+    | disj-type | disj (<sub-type> ...) { ... }    |
+    | heir-type | heir (<super-type> ...>) { ... } |
 
-***** data-type
+***** conj-type
 
-      - it bound to a named type-constructor for the data-type
+      - it bound to a named type-constructor for the conj-type
         and specify a record with named and typed fields
 
-      - a data-type is a partly inhabited record
-
-      - a data is a fully inhabited record
+      - a conj-type is a partly inhabited record
 
       - for example :
         cons-t (t)
@@ -43,34 +41,31 @@
       - call-with-field-name :
         <name>-c {<field> = <data> ...}
 
-***** union-type
+***** disj-type
 
-      - it bound to a named type-constructor for the union-type
+      - it bound to a named type-constructor for the disj-type
         and specify a list of fields
 
       - sub-type-relation
-        <union-type> :> <sub-type>
+        <disj-type> :> <sub-type>
 
       - type-constructor of each sub-types
         must include these fields and types
 
       - each data of any of its sub-types
-        will inhabit the union-type
+        will inhabit the disj-type
 
-      - it can be viewed as disjoin-union,
-        because data-types in the list are disjoin.
+***** heir-type
 
-***** inherit-type
-
-      - it bound to a named type-constructor for the inherit-type
+      - it bound to a named type-constructor for the heir-type
         and specify a list of fields
 
       - sub-type-relation
-        <inherit-type> <: <super-type>
+        <heir-type> <: <super-type>
 
-      - an inherit-type includes its super-types records
+      - an heir-type includes its super-types records
 
-      - each data of the inherit-type
+      - each data of the heir-type
         will also inhabit all its super-types
 
 ***** sub-type-relation
@@ -126,7 +121,7 @@
       | 0 | data object                 |
       |---+-----------------------------|
       | 1 | <name>-t data-type sum-type |
-      |   | union-type product-type     |
+      |   | disj-type product-type     |
       |---+-----------------------------|
       | 2 | type-tt category-tt         |
       |---+-----------------------------|
@@ -175,7 +170,7 @@
 
     #+begin_src cicada
     void-t : type-tt
-    void-t = union () {}
+    void-t = disj () {}
     #+end_src
 
 *** absurd
@@ -190,7 +185,7 @@
 
     #+begin_src cicada
     unit-t : type-tt
-    unit-t = data {}
+    unit-t = conj {}
     #+end_src
 
 *** unit
@@ -206,13 +201,13 @@
 
     #+begin_src cicada
     bool-t : type-tt
-    bool-t = union (true-t false-t) {}
+    bool-t = disj (true-t false-t) {}
 
     true-t : type-tt
-    true-t = data {}
+    true-t = conj {}
 
     false-t : type-tt
-    false-t = data {}
+    false-t = conj {}
     #+end_src
 
 * eqv
@@ -221,7 +216,7 @@
 
     #+begin_src cicada
     eqv-t : type-tt
-    eqv-t = data {
+    eqv-t = conj {
       [lhs rhs] : t
       lhs = rhs
     }
@@ -257,13 +252,13 @@
 
     #+begin_src cicada
     nat-t : type-tt
-    nat-t = union (zero-t succ-t) {}
+    nat-t = disj (zero-t succ-t) {}
 
     zero-t : type-tt
-    zero-t = data {}
+    zero-t = conj {}
 
     succ-t : type-tt
-    succ-t = data {
+    succ-t = conj {
       prev : nat-t
     }
     #+end_src
@@ -342,18 +337,18 @@
 
     #+begin_src cicada
     nat-even-t : type-tt
-    nat-even-t = union (zero-even-t even-plus-two-even-t) {
+    nat-even-t = disj (zero-even-t even-plus-two-even-t) {
       nat : nat-t
     }
 
     zero-even-t : type-tt
-    zero-even-t = data {
+    zero-even-t = conj {
       nat : nat-t
       nat = zero-c
     }
 
     even-plus-two-even-t : type-tt
-    even-plus-two-even-t = data {
+    even-plus-two-even-t = conj {
       nat : nat-t
       prev : nat-even-t (m)
       nat = succ-c (succ-c (m))
@@ -457,7 +452,7 @@
 
     #+begin_src cicada
     list-t : type-tt
-    list-t = union (
+    list-t = disj (
       null-t
       cons-t
     ) {
@@ -465,12 +460,12 @@
     }
 
     null-t : type-tt
-    null-t = data {
+    null-t = conj {
       t : type-tt
     }
 
     cons-t : type-tt
-    cons-t = data {
+    cons-t = conj {
       t : type-tt
       car : t
       cdr : list-t (t)
@@ -572,7 +567,7 @@
 
     #+begin_src cicada
     list-length-t : type-tt
-    list-length-t = union (
+    list-length-t = disj (
       zero-length-t
       succ-length-t
     ) {
@@ -581,7 +576,7 @@
     }
 
     zero-length-t : type-tt
-    zero-length-t = data {
+    zero-length-t = conj {
       list : list-t (t)
       list = null-c
       length : nat-t
@@ -589,7 +584,7 @@
     }
 
     succ-length-t : type-tt
-    succ-length-t = data {
+    succ-length-t = conj {
       list : list-t (t)
       list = cons-c (x l)
       length : nat-t
@@ -631,7 +626,7 @@
 
     #+begin_src cicada
     list-append-t : type-tt
-    list-append-t = union (
+    list-append-t = disj (
       zero-append-t
       succ-append-t
     ) {
@@ -639,14 +634,14 @@
     }
 
     zero-append-t : type-tt
-    zero-append-t = data {
+    zero-append-t = conj {
       [ante succ result] : list-t (t)
       ante = null-c
       result = succ
     }
 
     succ-append-t : type-tt
-    succ-append-t = data {
+    succ-append-t = conj {
       [ante succ result] : list-t (t)
       prev : list-append-t (cdr succ result-cdr)
       ante = cons-c (car cdr)
@@ -660,20 +655,20 @@
 
     #+begin_src cicada
     vect-t : type-tt
-    vect-t = union (null-vect-t cons-vect-tt) {
+    vect-t = disj (null-vect-t cons-vect-tt) {
       t : type-tt
       length : nat-t
     }
 
     null-vect-t : type-tt
-    null-vect-t = data {
+    null-vect-t = conj {
       t : type-tt
       length : nat-t
       length = zero-c
     }
 
     cons-vect-t : type-tt
-    cons-vect-t = data {
+    cons-vect-t = conj {
       t : type-tt
       length : nat-t
       car : t
@@ -722,7 +717,7 @@
     }
 
     preorder-tt : type-ttt
-    preorder-tt = data {
+    preorder-tt = conj {
       element-t : type-tt
 
       pre-t :
@@ -744,7 +739,7 @@
 
     #+begin_src cicada
     partial-order-tt : type-ttt
-    partial-order-tt = inherit (preorder-tt) {
+    partial-order-tt = heir (preorder-tt) {
       element-eqv-t :
         -- element-t
            element-t
@@ -761,7 +756,7 @@
 
     #+begin_src cicada
     eqv-relation-tt : type-ttt
-    eqv-relation-tt = inherit (preorder-tt) {
+    eqv-relation-tt = heir (preorder-tt) {
       pre-symmetric :
         -- pre-t (a b)
         -> pre-t (b a)
@@ -772,7 +767,7 @@
 
     #+begin_src cicada
     total-order-tt : type-ttt
-    total-order-tt = inherit (partial-order-tt) {
+    total-order-tt = heir (partial-order-tt) {
       pre-connex :
         -- [a b] : element-t
         -> + (pre-t (a b) pre-t (b a))
@@ -785,7 +780,7 @@
 
     #+begin_src cicada
     unique-tt : type-ttt
-    unique-tt = data {
+    unique-tt = conj {
       t : type-tt
       value : t
       underlying-eqv-t : -- t t -> type-tt
@@ -820,7 +815,7 @@
 
     #+begin_src cicada
     category-ttt : type-tttt
-    category-ttt = data {
+    category-ttt = conj {
       object-tt : type-ttt
       arrow-tt : -- object-tt object-tt -> type-ttt
       arrow-eqv-tt :
@@ -862,7 +857,7 @@
 
       #+begin_src cicada
       category-ttt.isomorphic-tt : type-ttt
-      category-ttt.isomorphic-tt = data {
+      category-ttt.isomorphic-tt = conj {
         [lhs rhs] : object-tt
         iso : arrow-tt (lhs rhs)
         inv : arrow-tt (rhs lhs)
@@ -879,7 +874,7 @@
 
       #+begin_src cicada
       category-ttt.initial-tt : type-ttt
-      category-ttt.initial-tt = data {
+      category-ttt.initial-tt = conj {
         initial : object-tt
         factorizer :
           -- cand : object-tt
@@ -891,7 +886,7 @@
 
       #+begin_src cicada
       category-ttt.terminal-tt : type-ttt
-      category-ttt.terminal-tt = inherit (terminal-candidate-tt) {
+      category-ttt.terminal-tt = heir (terminal-candidate-tt) {
         terminal : object-tt
         factorizer :
           -- cand : object-tt
@@ -903,7 +898,7 @@
 
       #+begin_src cicada
       category-ttt.product-candidate-tt : type-ttt
-      category-ttt.product-candidate-tt = data {
+      category-ttt.product-candidate-tt = conj {
         fst : object-tt
         snd : object-tt
         product : object-tt
@@ -912,7 +907,7 @@
       }
 
       category-ttt.product-tt : type-ttt
-      category-ttt.product-tt = inherit (product-candidate-tt) {
+      category-ttt.product-tt = heir (product-candidate-tt) {
         factorizer :
           -- cand : product-candidate-tt (fst snd)
           -> factor : arrow-tt (cand.product product)
@@ -935,7 +930,7 @@
 
       #+begin_src cicada
       category-ttt.sum-candidate-tt : type-ttt
-      category-ttt.sum-candidate-tt = data {
+      category-ttt.sum-candidate-tt = conj {
         fst : object-tt
         snd : object-tt
         sum : object-tt
@@ -944,7 +939,7 @@
       }
 
       category-ttt.sum-tt : type-ttt
-      category-ttt.sum-tt = inherit (sum-candidate-tt) {
+      category-ttt.sum-tt = heir (sum-candidate-tt) {
         factorizer :
           -- cand : sum-candidate-tt (fst snd)
           -> factor : arrow-tt (sum cand.sum)
@@ -1090,7 +1085,7 @@
 
     #+begin_src cicada
     product-closed-category-ttt : type-tttt
-    product-closed-category-ttt = inherit (category-ttt) {
+    product-closed-category-ttt = heir (category-ttt) {
       product :
         -- [a b] : object-tt
         -> p : object-tt
@@ -1125,7 +1120,7 @@
 
     #+begin_src cicada
     product-closed-category-ttt.exponential-candidate-tt : type-ttt
-    product-closed-category-ttt.exponential-candidate-tt = data {
+    product-closed-category-ttt.exponential-candidate-tt = conj {
       ante : object-tt
       succ : object-tt
       exponential : object-tt
@@ -1133,7 +1128,7 @@
     }
 
     category-ttt.exponential-tt : type-ttt
-    category-ttt.exponential-tt = inherit (
+    category-ttt.exponential-tt = heir (
       exponential-candidate-tt
     ) {
       factorizer :
@@ -1159,7 +1154,7 @@
 
     #+begin_src cicada
     void-arrow-t : type-tt
-    void-arrow-t = data {
+    void-arrow-t = conj {
       [ante succ] : void-t
     }
     #+end_src
@@ -1168,7 +1163,7 @@
 
     #+begin_src cicada
     void-arrow-eqv-t : type-tt
-    void-arrow-eqv-t = data {
+    void-arrow-eqv-t = conj {
       [lhs rhs] : void-arrow-t (a b)
     }
     #+end_src
@@ -1219,7 +1214,7 @@
     }
 
     graph-tt : type-ttt
-    graph-tt = data {
+    graph-tt = conj {
       node-t : type-tt
       edge-t : -- node-t node-t -> type-tt
     }
@@ -1237,7 +1232,7 @@
     }
 
     graph-tt.node-path-t : type-tt
-    graph-tt.node-path-t = data {
+    graph-tt.node-path-t = conj {
       [start end] : node-t
       node : node-t
       start = node
@@ -1245,13 +1240,13 @@
     }
 
     graph-tt.edge-path-t : type-tt
-    graph-tt.edge-path-t = data {
+    graph-tt.edge-path-t = conj {
       [start end] : node-t
       edge : edge-t (start end)
     }
 
     graph-tt.link-path-t : type-tt
-    graph-tt.link-path-t = data {
+    graph-tt.link-path-t = conj {
       [start end] : node-t
       first : path-t (start middle)
       next : path-t (middle end)
@@ -1271,7 +1266,7 @@
     }
 
     graph-tt.refl-path-eqv-t : type-tt
-    graph-tt.refl-path-eqv-t = data {
+    graph-tt.refl-path-eqv-t = conj {
       [lhs rhs] : path-t (a b)
       p : path-t (a b)
       lhs = p
@@ -1279,7 +1274,7 @@
     }
 
     graph-tt.node-left-path-eqv-t : type-tt
-    graph-tt.node-left-path-eqv-t = data {
+    graph-tt.node-left-path-eqv-t = conj {
       [lhs rhs] : path-t (a b)
       p : path-t (a b)
       lhs = p
@@ -1287,7 +1282,7 @@
     }
 
     graph-tt.node-right-path-eqv-t : type-tt
-    graph-tt.node-right-path-eqv-t = data {
+    graph-tt.node-right-path-eqv-t = conj {
       [lhs rhs] : path-t (a b)
       p : path-t (a b)
       lhs = p
@@ -1295,7 +1290,7 @@
     }
 
     graph-tt.associative-path-eqv-t : type-tt
-    graph-tt.associative-path-eqv-t = data {
+    graph-tt.associative-path-eqv-t = conj {
       [lhs rhs] : path-t (a b)
       p : path-t (a b)
       q : path-t (b c)
@@ -1348,19 +1343,19 @@
 
     #+begin_src cicada
     nat-lteq-t : type-tt
-    nat-lteq-t = union (zero-lteq-t succ-lteq-t) {
+    nat-lteq-t = disj (zero-lteq-t succ-lteq-t) {
       [l r] : nat-t
     }
 
 
     zero-lteq-t : type-tt
-    zero-lteq-t = data {
+    zero-lteq-t = conj {
       [l r] : nat-t
       l = zero-c
     }
 
     succ-lteq-t : type-tt
-    succ-lteq-t = data {
+    succ-lteq-t = conj {
       [l r] : nat-t
       prev : nat-lteq-t (x y)
       l = succ-c (x)
@@ -1470,7 +1465,7 @@
 
     #+begin_src cicada
     groupoid-tt : type-ttt
-    groupoid-tt = inherit (category-tt) {
+    groupoid-tt = heir (category-tt) {
       inverse : -- f : arrow-tt (a b) -> isomorphic-tt (a b f)
     }
     #+end_src
@@ -1483,7 +1478,7 @@
 
     #+begin_src cicada
     monoid-tt : type-ttt
-    monoid-tt = data {
+    monoid-tt = conj {
       element-t : type-tt
 
       element-eqv-t :
@@ -1552,7 +1547,7 @@
     }
 
     container-tt : type-ttt
-    container-tt = data {
+    container-tt = conj {
       fun-t : -- type-tt -> type-tt
       map : -- -- a -> b fun-t (a) -> fun-t (b)
     }
@@ -1579,7 +1574,7 @@
 
     #+begin_src cicada
     const-t : type-tt
-    const-t = data {
+    const-t = conj {
       [c a] : type-tt
       value : c
     }
@@ -1603,7 +1598,7 @@
 
     #+begin_src cicada
     monad-tt : type-ttt
-    monad-tt = inherit (container-tt) {
+    monad-tt = heir (container-tt) {
       pure : -- t -> fun-t (t)
       bind : -- fun-t (a) -- a -> fun-t (b) -> fun-t (b)
     }
@@ -1651,17 +1646,17 @@
 
     #+begin_src cicada
     maybe-t : type-tt
-    maybe-t = union (none-t just-t) {
+    maybe-t = disj (none-t just-t) {
       t : type-tt
     }
 
     none-t : type-tt
-    none-t = data {
+    none-t = conj {
       t : type-tt
     }
 
     just-t : type-tt
-    just-t = data {
+    just-t = conj {
       t : type-tt
       value : t
     }
@@ -1747,18 +1742,18 @@
 
     #+begin_src cicada
     tree-t : type-tt
-    tree-t = union (leaf-t branch-t) {
+    tree-t = disj (leaf-t branch-t) {
       t : type-tt
     }
 
     leaf-t : type-tt
-    leaf-t = data {
+    leaf-t = conj {
       t : type-tt
       value : t
     }
 
     branch-t : type-tt
-    branch-t = data {
+    branch-t = conj {
       t : type-tt
       [left right] : tree-t (t)
     }
@@ -1832,19 +1827,19 @@
 
     #+begin_src cicada
     gcd-t : type-tt
-    gcd-t = union (zero-gcd-t mod-gcd-t) {
+    gcd-t = disj (zero-gcd-t mod-gcd-t) {
       [x y d] : int-t
     }
 
     zero-gcd-t : type-tt
-    zero-gcd-t = data {
+    zero-gcd-t = conj {
       [x y d] : int-t
       y = zero-c
       x = d
     }
 
     mod-gcd-t : type-tt
-    mod-gcd-t = data {
+    mod-gcd-t = conj {
       [x y d] : int-t
       gcd : gcd-t (z x d)
       mod : mod-t (z x y)
@@ -1861,7 +1856,7 @@
     }
 
     set-tt : type-ttt
-    set-tt = data {
+    set-tt = conj {
       element-t : type-tt
       eqv-t : -> element-t element-t -> type-tt
     }
@@ -1871,7 +1866,7 @@
 
     #+begin_src cicada
     set-morphism-tt : type-ttt
-    set-morphism-tt = data {
+    set-morphism-tt = conj {
       ante : type-tt
       succ : type-tt
 
@@ -1883,7 +1878,7 @@
 
     #+begin_src cicada
     set-morphism-eqv-tt : type-ttt
-    set-morphism-eqv-tt = data {
+    set-morphism-eqv-tt = conj {
       lhs : set-morphism-tt (a b)
       rhs : set-morphism-tt (a b)
 
@@ -1932,7 +1927,7 @@
 
     #+begin_src cicada
     preorder-morphism-tt : type-ttt
-    preorder-morphism-tt = data {
+    preorder-morphism-tt = conj {
       ante : preorder-tt
       succ : preorder-tt
 
@@ -1948,7 +1943,7 @@
 
     #+begin_src cicada
     preorder-morphism-eqv-tt : type-ttt
-    preorder-morphism-eqv-tt = data {
+    preorder-morphism-eqv-tt = conj {
       lhs : preorder-morphism-tt (a b)
       rhs : preorder-morphism-tt (a b)
 
@@ -2019,7 +2014,7 @@
 
     #+begin_src cicada
     functor-ttt : type-tttt
-    functor-ttt = data {
+    functor-ttt = conj {
       ante : category-ttt
       succ : category-ttt
 
@@ -2053,7 +2048,7 @@
 
     #+begin_src cicada
     natural-transformation-ttt : type-tttt
-    natural-transformation-ttt = data {
+    natural-transformation-ttt = conj {
       lhs : functor-ttt (ante succ)
       rhs : functor-ttt (ante succ)
 
@@ -2075,7 +2070,7 @@
 
     #+begin_src cicada
     natural-isomorphism-ttt : type-tttt
-    natural-isomorphism-ttt = inherit (natural-transformation-ttt) {
+    natural-isomorphism-ttt = heir (natural-transformation-ttt) {
       isomorphic-component :
         -- a : ante.object-tt
         -> succ.isomorphic-tt (iso = component (a))
