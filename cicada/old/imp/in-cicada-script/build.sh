@@ -2,7 +2,7 @@
 
 test ()
 {
-    ./tangle.js
+    tangle .
     time cicada-script cicada-language.cs
 }
 
