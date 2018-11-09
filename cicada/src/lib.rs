@@ -49,6 +49,32 @@ where T : ToString {
     s
 }
 
+fn dic_to_string <T> (dic: &Dic <T>) -> String
+where T : ToString {
+    let mut s = String::new ();
+    for (k, v) in dic.iter () {
+        s += &k.to_string ();
+        s += " = ";
+        s += &v.to_string ();
+        s += ", ";
+    }
+    for _ in 0 .. ", ".len () {
+        s.pop ();
+    }
+    s
+}
+
+fn add_tag (tag: &str, input: String) -> String {
+    let start = tag;
+    let end = &tag[1 .. tag.len () - 1];
+    let end = format! ("</{}>", end);
+    if input.is_empty () {
+        format! ("{}{}", start, end)
+    } else {
+        format! ("{}\n{}{}\n", start, input, end)
+    }
+}
+
 #[derive (Clone)]
 #[derive (Debug)]
 #[derive (PartialEq, Eq)]
@@ -156,6 +182,25 @@ pub enum Value {
     Var (Var),
     Data (String, Dic <Value>),
     TypeOfType,
+}
+
+impl ToString for Value {
+    fn to_string (&self) -> String {
+        match self {
+            Value::Var (var) => var.to_string (),
+            Value::Data (name, dic) => {
+                if dic.len () == 0 {
+                    format! ("{}", name)
+                } else {
+                    format! (
+                        "{} {{ {} }}",
+                        name,
+                        &dic_to_string (dic))
+                }
+            }
+            Value::TypeOfType => "type".to_string (),
+        }
+    }
 }
 
 #[derive (Clone)]
@@ -324,6 +369,23 @@ impl Subst {
     }
 }
 
+impl ToString for Subst {
+    fn to_string (&self) -> String {
+        let mut s = String::new ();
+        let mut subst = self.clone ();
+        while let Subst::Cons (
+            var, value, next,
+        ) = subst {
+            s += &var.to_string ();
+            s += " = ";
+            s += &value.to_string ();
+            s += "\n";
+            subst = (*next) .clone ();
+        }
+        add_tag ("<subst>", s)
+    }
+}
+
 #[derive (Clone)]
 #[derive (Debug)]
 #[derive (PartialEq, Eq)]
@@ -346,6 +408,6 @@ fn test_unify () {
             ("cdr", Value::Data ("unit-c" .to_string (),
                                  Dic::new ())),
         ] .into ())) .unwrap ();
-    // println! ("{}", subst.to_string ());
+    println! ("{}", subst.to_string ());
     assert_eq! (subst.len (), 2);
 }

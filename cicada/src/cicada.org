@@ -1,8 +1,8 @@
 #+property: tangle lib.rs
 #+title: cicada
-- Subst::to_string -- to be used in test
 - Term::to_value -- with error_report
 - Wissen::den
+- Wissen::to_string -- to be used in test
 - Wissen::check
 * [note]
 
@@ -138,6 +138,40 @@
             s += "\n";
         }
         s
+    }
+    #+end_src
+
+*** dic_to_string
+
+    #+begin_src rust
+    fn dic_to_string <T> (dic: &Dic <T>) -> String
+    where T : ToString {
+        let mut s = String::new ();
+        for (k, v) in dic.iter () {
+            s += &k.to_string ();
+            s += " = ";
+            s += &v.to_string ();
+            s += ", ";
+        }
+        for _ in 0 .. ", ".len () {
+            s.pop ();
+        }
+        s
+    }
+    #+end_src
+
+*** add_tag
+
+    #+begin_src rust
+    fn add_tag (tag: &str, input: String) -> String {
+        let start = tag;
+        let end = &tag[1 .. tag.len () - 1];
+        let end = format! ("</{}>", end);
+        if input.is_empty () {
+            format! ("{}{}", start, end)
+        } else {
+            format! ("{}\n{}{}\n", start, input, end)
+        }
     }
     #+end_src
 
@@ -305,6 +339,29 @@
         Var (Var),
         Data (String, Dic <Value>),
         TypeOfType,
+    }
+    #+end_src
+
+*** Value::to_string
+
+    #+begin_src rust
+    impl ToString for Value {
+        fn to_string (&self) -> String {
+            match self {
+                Value::Var (var) => var.to_string (),
+                Value::Data (name, dic) => {
+                    if dic.len () == 0 {
+                        format! ("{}", name)
+                    } else {
+                        format! (
+                            "{} {{ {} }}",
+                            name,
+                            &dic_to_string (dic))
+                    }
+                }
+                Value::TypeOfType => "type".to_string (),
+            }
+        }
     }
     #+end_src
 
@@ -508,6 +565,27 @@
     }
     #+end_src
 
+*** Subst::to_string
+
+    #+begin_src rust
+    impl ToString for Subst {
+        fn to_string (&self) -> String {
+            let mut s = String::new ();
+            let mut subst = self.clone ();
+            while let Subst::Cons (
+                var, value, next,
+            ) = subst {
+                s += &var.to_string ();
+                s += " = ";
+                s += &value.to_string ();
+                s += "\n";
+                subst = (*next) .clone ();
+            }
+            add_tag ("<subst>", s)
+        }
+    }
+    #+end_src
+
 * Den
 
 *** Den
@@ -553,7 +631,7 @@
                 ("cdr", Value::Data ("unit-c" .to_string (),
                                      Dic::new ())),
             ] .into ())) .unwrap ();
-        // println! ("{}", subst.to_string ());
+        println! ("{}", subst.to_string ());
         assert_eq! (subst.len (), 2);
     }
     #+end_src
