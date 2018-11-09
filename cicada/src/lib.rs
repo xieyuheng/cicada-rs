@@ -27,6 +27,8 @@ use mexp::{
     MexpArg,
 };
 
+pub type Rec <T> = Vec <(String, T)>;
+
 fn vec_to_string <T> (vec: &Vec <T>, delimiter: &str) -> String
 where T : ToString {
     let mut s = String::new ();
@@ -82,7 +84,7 @@ pub enum Term {
     Var (Span, Var),
     Cons (Span, String, Arg),
     Prop (Span, String, Arg),
-    TypeOfType,
+    TypeOfType (Span),
 }
 
 #[derive (Clone)]
@@ -90,7 +92,7 @@ pub enum Term {
 #[derive (PartialEq, Eq)]
 pub enum Arg {
     Vec (Vec <Term>),
-    Dic (Dic <Term>),
+    Rec (Rec <Term>),
 }
 
 #[derive (Clone)]
@@ -390,8 +392,501 @@ impl ToString for Subst {
 #[derive (Debug)]
 #[derive (PartialEq, Eq)]
 pub enum Den {
-    Disj (Vec <String>, Dic <Term>),
-    Conj (Dic <Term>),
+    Disj (Vec <String>, Rec <Term>),
+    Conj (Rec <Term>),
+}
+
+#[derive (Clone)]
+#[derive (Debug)]
+#[derive (PartialEq, Eq)]
+pub struct Wissen {
+    den_dic: Dic <Den>,
+}
+
+impl Wissen {
+    pub fn den (&mut self, name: &str, den: &Den) {
+       self.den_dic.ins (name, Some (den.clone ()));
+    }
+}
+
+impl Wissen {
+    pub fn wis <'a> (
+        &'a mut self,
+        input: &str,
+    ) -> Result <Vec <WissenOutput>, ErrorInCtx> {
+        let syntax_table = SyntaxTable::default ();
+        let mexp_vec = syntax_table.parse (input)?;
+        let statement_vec = mexp_vec_to_statement_vec (&mexp_vec)?;
+        for statement in &statement_vec {
+            if let Statement::Den (
+                name, den
+            ) = statement {
+                self.den (name, den);
+            }
+        }
+        let mut output_vec = Vec::new ();
+        Ok (output_vec)
+    }
+}
+
+#[derive (Clone)]
+#[derive (Debug)]
+#[derive (PartialEq, Eq)]
+pub struct WissenOutput;
+
+#[derive (Clone)]
+#[derive (Debug)]
+#[derive (PartialEq, Eq)]
+pub enum Statement {
+    Den (String, Den),
+    PlaceHolder,
+    // Query (usize, Vec <Prop>),
+    // Prove (usize, Vec <Prop>),
+}
+
+const GRAMMAR: &'static str = r#"
+Statement::Den = { prop-name? "=" Den }
+Den::Disj = { "disj" '(' list (prop-name?) ')' Arg::Rec }
+Den::Conj = { "conj" Arg::Rec }
+Term::Var = { var-name? }
+Term::Cons = { cons-name? Arg }
+Term::Prop = { prop-name? Arg }
+Arg::Vec = { '(' list (Term) ')' }
+Arg::Rec = { '{' list (Binding) '}' }
+Binding::Term = { field-name? "=" Term }
+"#;
+
+fn note_about_grammar () -> ErrorMsg {
+    ErrorMsg::new ()
+        .head ("grammar :")
+        .lines (GRAMMAR)
+}
+
+fn var_symbol_p (symbol: &str) -> bool {
+    (symbol.len () == 1 ||
+     symbol.starts_with (":"))
+}
+
+fn cons_name_symbol_p (symbol: &str) -> bool {
+    (! var_symbol_p (symbol) &&
+     symbol.ends_with ("-c"))
+}
+
+fn prop_name_symbol_p (symbol: &str) -> bool {
+    (! var_symbol_p (symbol) &&
+     symbol.ends_with ("-t"))
+}
+
+fn type_of_type_symbol_p (symbol: &str) -> bool {
+    symbol == "type"
+}
+
+fn field_name_symbol_p (symbol: &str) -> bool {
+    (! var_symbol_p (symbol) &&
+     ! cons_name_symbol_p (symbol) &&
+     ! prop_name_symbol_p (symbol) &&
+     ! type_of_type_symbol_p (symbol))
+}
+
+fn mexp_to_prop_name <'a> (
+    mexp: &Mexp <'a>,
+) -> Result <String, ErrorInCtx> {
+    if let Mexp::Sym {
+        symbol,
+        ..
+    } = mexp {
+        if prop_name_symbol_p (symbol) {
+            Ok (symbol.to_string ())
+        } else {
+            ErrorInCtx::new ()
+                .line ("expecting prop name")
+                .line ("which must end with `-t`")
+                .line (&format! ("symbol = {}", symbol))
+                .span (mexp.span ())
+                .note (note_about_grammar ())
+                .wrap_in_err ()
+        }
+    } else {
+        ErrorInCtx::new ()
+            .line ("expecting prop name")
+            .line (&format! ("mexp = {}", mexp.to_string ()))
+            .span (mexp.span ())
+            .wrap_in_err ()
+    }
+}
+
+fn mexp_to_var_term <'a> (
+    mexp: &Mexp <'a>,
+) -> Result <Term, ErrorInCtx> {
+    if let Mexp::Sym {
+        span,
+        symbol,
+    } = mexp {
+        if var_symbol_p (symbol) {
+            Ok (Term::Var (
+                span.clone (),
+                Var::no_id (symbol)))
+        } else {
+            ErrorInCtx::new ()
+                .head ("syntex error")
+                .line ("expecting var symbol")
+                .line (&format! ("symbol = {}", symbol))
+                .span (mexp.span ())
+                .note (note_about_grammar ())
+                .wrap_in_err ()
+        }
+    } else {
+        ErrorInCtx::new ()
+            .head ("syntex error")
+            .span (mexp.span ())
+            .note (note_about_grammar ())
+            .wrap_in_err ()
+    }
+}
+
+fn mexp_arg_to_arg <'a> (
+    mexp_arg: &MexpArg <'a>,
+) -> Result <Arg, ErrorInCtx> {
+    match mexp_arg {
+        MexpArg::Tuple { body, .. } => {
+            Ok (Arg::Vec (mexp_vec_to_term_vec (body)?))
+        }
+        MexpArg::Block { body, .. } => {
+            Ok (Arg::Rec (mexp_vec_to_term_rec (body)?))
+        }
+    }
+}
+
+fn mexp_to_cons_term <'a> (
+    mexp: &Mexp <'a>,
+) -> Result <Term, ErrorInCtx> {
+    if let Mexp::Apply {
+        head: box Mexp::Sym {
+            symbol,
+            ..
+        },
+        arg,
+        ..
+    } = mexp {
+        if cons_name_symbol_p (symbol) {
+            Ok (Term::Cons (
+                mexp.span (),
+                symbol.to_string (),
+                mexp_arg_to_arg (arg)?))
+        } else {
+            ErrorInCtx::new ()
+                .line ("expecting cons name symbol")
+                .line ("which must end with `-c`")
+                .line (&format! ("symbol = {}", symbol))
+                .span (mexp.span ())
+                .note (note_about_grammar ())
+                .wrap_in_err ()
+        }
+    } else if let Mexp::Sym {
+        symbol,
+        span,
+    } = mexp {
+        if cons_name_symbol_p (symbol) {
+            Ok (Term::Cons (
+                span.clone (),
+                symbol.to_string (),
+                Arg::Rec (Rec::new ())))
+        } else {
+            ErrorInCtx::new ()
+                .line ("expecting cons name symbol")
+                .line ("which must end with `-c`")
+                .line (&format! ("symbol = {}", symbol))
+                .span (mexp.span ())
+                .note (note_about_grammar ())
+                .wrap_in_err ()
+        }
+    } else {
+        ErrorInCtx::new ()
+            .head ("syntex error")
+            .span (mexp.span ())
+            .note (note_about_grammar ())
+            .wrap_in_err ()
+    }
+}
+
+fn mexp_to_prop_term <'a> (
+    mexp: &Mexp <'a>,
+) -> Result <Term, ErrorInCtx> {
+    if let Mexp::Apply {
+        head: box Mexp::Sym {
+            symbol,
+            ..
+        },
+        arg,
+        ..
+    } = mexp {
+        if prop_name_symbol_p (symbol) {
+            Ok (Term::Prop (
+                mexp.span (),
+                symbol.to_string (),
+                mexp_arg_to_arg (arg)?))
+        } else {
+            ErrorInCtx::new ()
+                .line ("expecting prop name symbol")
+                .line ("which must end with `-t`")
+                .line (&format! ("symbol = {}", symbol))
+                .span (mexp.span ())
+                .note (note_about_grammar ())
+                .wrap_in_err ()
+        }
+    } else if let Mexp::Sym {
+        symbol,
+        span,
+    } = mexp {
+        if prop_name_symbol_p (symbol) {
+            Ok (Term::Prop (
+                span.clone (),
+                symbol.to_string (),
+                Arg::Rec (Rec::new ())))
+        } else {
+            ErrorInCtx::new ()
+                .line ("expecting prop name symbol")
+                .line ("which must end with `-t`")
+                .line (&format! ("symbol = {}", symbol))
+                .span (mexp.span ())
+                .note (note_about_grammar ())
+                .wrap_in_err ()
+        }
+    } else {
+        ErrorInCtx::new ()
+            .head ("syntex error")
+            .span (mexp.span ())
+            .note (note_about_grammar ())
+            .wrap_in_err ()
+    }
+}
+
+fn mexp_to_type_of_type_term <'a> (
+    mexp: &Mexp <'a>,
+) -> Result <Term, ErrorInCtx> {
+    if let Mexp::Sym {
+        span,
+        symbol,
+    } = mexp {
+        if type_of_type_symbol_p (symbol) {
+            Ok (Term::TypeOfType (span.clone ()))
+        } else {
+            ErrorInCtx::new ()
+                .head ("syntex error")
+                .line ("expecting type-of-type symbol")
+                .line (&format! ("symbol = {}", symbol))
+                .span (mexp.span ())
+                .note (note_about_grammar ())
+                .wrap_in_err ()
+        }
+    } else {
+        ErrorInCtx::new ()
+            .head ("syntex error")
+            .span (mexp.span ())
+            .note (note_about_grammar ())
+            .wrap_in_err ()
+    }
+}
+
+fn mexp_to_term <'a> (
+    mexp: &Mexp <'a>,
+) -> Result <Term, ErrorInCtx> {
+    mexp_to_var_term (mexp)
+        .or (mexp_to_cons_term (mexp))
+        .or (mexp_to_prop_term (mexp))
+        .or (mexp_to_type_of_type_term (mexp))
+}
+
+fn mexp_vec_to_term_vec <'a> (
+    mexp_vec: &Vec <Mexp <'a>>,
+) -> Result <Vec <Term>, ErrorInCtx> {
+    let mut vec = Vec::new ();
+    for mexp in mexp_vec {
+        vec.push (mexp_to_term (&mexp)?);
+    }
+    Ok (vec)
+}
+
+fn mexp_to_field_name <'a> (
+    mexp: &Mexp <'a>,
+) -> Result <String, ErrorInCtx> {
+    if let Mexp::Sym {
+        symbol,
+        ..
+    } = mexp {
+        if field_name_symbol_p (symbol) {
+            Ok (symbol.to_string ())
+        } else {
+            ErrorInCtx::new ()
+                .line ("expecting field name symbol")
+                .line (&format! ("symbol = {}", symbol))
+                .span (mexp.span ())
+                .note (note_about_grammar ())
+                .wrap_in_err ()
+        }
+    } else {
+        ErrorInCtx::new ()
+            .line ("expecting prop name")
+            .line (&format! ("mexp = {}", mexp.to_string ()))
+            .span (mexp.span ())
+            .wrap_in_err ()
+    }
+}
+
+fn mexp_to_name_term_pair <'a> (
+    mexp: &Mexp <'a>,
+) -> Result <(String, Term), ErrorInCtx> {
+    if let Mexp::Infix {
+        op: "=",
+        rhs,
+        lhs,
+        ..
+    } = mexp {
+        Ok ((mexp_to_field_name (rhs)?,
+             mexp_to_term (lhs)?))
+    } else {
+        ErrorInCtx::new ()
+            .head ("syntex error")
+            .span (mexp.span ())
+            .note (note_about_grammar ())
+            .wrap_in_err ()
+    }
+}
+
+fn mexp_vec_to_term_rec <'a> (
+    mexp_vec: &Vec <Mexp <'a>>,
+) -> Result <Rec <Term>, ErrorInCtx> {
+    let mut rec = Rec::new ();
+    for mexp in mexp_vec {
+        rec.push (mexp_to_name_term_pair (&mexp)?);
+    }
+    Ok (rec)
+}
+
+fn mexp_to_disj_den <'a> (
+    mexp: &Mexp <'a>,
+) -> Result <Den, ErrorInCtx> {
+    if let Mexp::Apply {
+        head: box Mexp::Apply {
+            head: box Mexp::Sym {
+                symbol: "disj",
+                ..
+            },
+            arg: MexpArg::Tuple {
+                body: body1,
+                ..
+            },
+            ..
+        },
+        arg: MexpArg::Block {
+            body: body2,
+            ..
+        },
+        ..
+    } = mexp {
+        Ok (Den::Disj (
+            mexp_vec_to_prop_name_vec (body1)?,
+            mexp_vec_to_term_rec (body2)?))
+    } else {
+        ErrorInCtx::new ()
+            .head ("syntex error")
+            .span (mexp.span ())
+            .note (note_about_grammar ())
+            .wrap_in_err ()
+    }
+}
+
+fn mexp_to_conj_den <'a> (
+    mexp: &Mexp <'a>,
+) -> Result <Den, ErrorInCtx> {
+    if let Mexp::Apply {
+            head: box Mexp::Sym {
+                symbol: "conj",
+                ..
+            },
+            arg: MexpArg::Tuple {
+                body,
+                ..
+            },
+            ..
+        } = mexp {
+        Ok (Den::Conj (mexp_vec_to_term_rec (body)?))
+    } else {
+        ErrorInCtx::new ()
+            .head ("syntex error")
+            .span (mexp.span ())
+            .note (note_about_grammar ())
+            .wrap_in_err ()
+    }
+}
+
+fn mexp_to_den <'a> (
+    mexp: &Mexp <'a>,
+) -> Result <Den, ErrorInCtx> {
+    mexp_to_disj_den (mexp)
+        .or (mexp_to_conj_den (mexp))
+}
+
+fn mexp_to_den_statement <'a> (
+    mexp: &Mexp <'a>,
+) -> Result <Statement, ErrorInCtx> {
+    if let Mexp::Infix {
+        op: "=",
+        lhs: box Mexp::Sym {
+            symbol,
+            ..
+        },
+        rhs,
+        ..
+    } = mexp {
+        if prop_name_symbol_p (symbol) {
+            Ok (Statement::Den (
+                symbol.to_string (),
+                mexp_to_den (rhs)?))
+        } else {
+            ErrorInCtx::new ()
+                .line ("expecting prop name")
+                .line ("which must end with `-t`")
+                .line (&format! ("symbol = {}", symbol))
+                .span (mexp.span ())
+                .note (note_about_grammar ())
+                .wrap_in_err ()
+        }
+    } else {
+        ErrorInCtx::new ()
+            .head ("syntex error")
+            .span (mexp.span ())
+            .note (note_about_grammar ())
+            .wrap_in_err ()
+    }
+}
+
+fn mexp_to_statement <'a> (
+    mexp: &Mexp <'a>,
+) -> Result <Statement, ErrorInCtx> {
+    mexp_to_den_statement (mexp)
+        // .or (mexp_to_prop_statement (mexp))
+        // .or (mexp_to_prove_statement (mexp))
+}
+
+fn mexp_vec_to_prop_name_vec <'a> (
+    mexp_vec: &Vec <Mexp <'a>>,
+) -> Result <Vec <String>, ErrorInCtx> {
+    let mut vec = Vec::new ();
+    for mexp in mexp_vec {
+        vec.push (mexp_to_prop_name (&mexp)?);
+    }
+    Ok (vec)
+}
+
+fn mexp_vec_to_statement_vec <'a> (
+    mexp_vec: &Vec <Mexp <'a>>,
+) -> Result <Vec <Statement>, ErrorInCtx> {
+    let mut vec = Vec::new ();
+    for mexp in mexp_vec {
+        vec.push (mexp_to_statement (&mexp)?);
+    }
+    Ok (vec)
 }
 
 #[test]

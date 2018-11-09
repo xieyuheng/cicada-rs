@@ -51,7 +51,7 @@ where T : ToString {
 
 #[derive (Clone)]
 #[derive (Debug)]
-#[derive (PartialEq, Eq, Hash)]
+#[derive (PartialEq, Eq)]
 pub enum Term {
     Var (Var),
     Cons (Cons),
@@ -59,7 +59,7 @@ pub enum Term {
 
 #[derive (Clone)]
 #[derive (Debug)]
-#[derive (PartialEq, Eq, Hash)]
+#[derive (PartialEq, Eq)]
 pub struct Cons {
     head: String,
     body: Vec <Term>,
@@ -222,7 +222,7 @@ impl ToString for Id {
 
 #[derive (Clone)]
 #[derive (Debug)]
-#[derive (PartialEq, Eq, Hash)]
+#[derive (PartialEq, Eq)]
 pub enum Subst {
     Null,
     Cons {
@@ -450,7 +450,7 @@ impl Subst {
 
 #[derive (Clone)]
 #[derive (Debug)]
-#[derive (PartialEq, Eq, Hash)]
+#[derive (PartialEq, Eq)]
 pub enum Den {
     Disj (Vec <String>),
     Conj (Vec <Term>, Vec <Prop>),
@@ -561,7 +561,7 @@ impl ToString for Den {
 
 #[derive (Clone)]
 #[derive (Debug)]
-#[derive (PartialEq, Eq, Hash)]
+#[derive (PartialEq, Eq)]
 pub struct Prop {
     name: String,
     args: Vec <Term>,
@@ -710,7 +710,7 @@ impl Wissen {
 
 #[derive (Clone)]
 #[derive (Debug)]
-#[derive (PartialEq, Eq, Hash)]
+#[derive (PartialEq, Eq)]
 pub enum WissenOutput {
     Query {
         counter: usize,
@@ -826,7 +826,7 @@ impl ToString for WissenOutput {
 
 #[derive (Clone)]
 #[derive (Debug)]
-#[derive (PartialEq, Eq, Hash)]
+#[derive (PartialEq, Eq)]
 pub struct DeductionTree {
     // there are no position for Disj in the DeductionTree
     //   because Disj is not constructive -- sort of ~
@@ -852,7 +852,7 @@ impl ToString for DeductionTree {
 
 #[derive (Clone)]
 #[derive (Debug)]
-#[derive (PartialEq, Eq, Hash)]
+#[derive (PartialEq, Eq)]
 pub enum Statement {
     Den (String, Den),
     Query (usize, Vec <Prop>),
@@ -965,7 +965,7 @@ impl <'a> Proof <'a> {
                 }
             } else {
                 eprintln! ("- [warning] Proof::step");
-                eprintln! ("  undefined den : {}", prop.name);
+                eprintln! ("  undefined den = {}", prop.name);
                 ProofStep::Fail
             }
         } else {
@@ -1058,13 +1058,13 @@ pub enum ProofStep <'a> {
 
 #[derive (Clone)]
 #[derive (Debug)]
-#[derive (PartialEq, Eq, Hash)]
+#[derive (PartialEq, Eq)]
 pub struct Qed {
     subst: Subst,
     deduction_tree: DeductionTree,
 }
 
-const WISSEN_GRAMMAR: &'static str = r#"
+const GRAMMAR: &'static str = r#"
 Statement::Den = { den-name? "=" Den }
 Statement::Query = { "query" '(' num? ')' '{' list (Prop) '}' }
 Statement::Prove = { "prove" '(' num? ')' '{' list (Prop) '}' }
@@ -1075,13 +1075,13 @@ Term::Cons = { cons-name? '(' list (Term) ')' }
 Prop::Cons = { den-name? '(' list (Term) ')' }
 "#;
 
-fn note_about_wissen_grammar () -> ErrorMsg {
+fn note_about_grammar () -> ErrorMsg {
     ErrorMsg::new ()
-        .head ("wissen grammar :")
-        .lines (WISSEN_GRAMMAR)
+        .head ("grammar :")
+        .lines (GRAMMAR)
 }
 
-fn mexp_to_den_name <'a> (
+fn mexp_to_prop_name <'a> (
     mexp: &Mexp <'a>,
 ) -> Result <String, ErrorInCtx> {
     if let Mexp::Sym {
@@ -1092,42 +1092,18 @@ fn mexp_to_den_name <'a> (
             Ok (symbol.to_string ())
         } else {
             ErrorInCtx::new ()
-                .line ("expecting den name")
+                .line ("expecting prop name")
                 .line ("which must end with `-t`")
-                .line (&format! ("but found : {}", symbol))
+                .line (&format! ("symbol = {}", symbol))
                 .span (mexp.span ())
-                .note (note_about_wissen_grammar ())
+                .note (note_about_grammar ())
                 .wrap_in_err ()
         }
     } else {
         ErrorInCtx::new ()
-            .line ("expecting den name")
-            .line (&format! ("but found : {}", mexp.to_string ()))
+            .line ("expecting prop name")
+            .line (&format! ("mexp = {}", mexp.to_string ()))
             .span (mexp.span ())
-            .wrap_in_err ()
-    }
-}
-
-fn mexp_to_disj_den <'a> (
-    mexp: &Mexp <'a>,
-) -> Result <Den, ErrorInCtx> {
-    if let Mexp::Apply {
-        head: box Mexp::Sym {
-            symbol: "disj",
-            ..
-        },
-        arg: MexpArg::Tuple {
-            body,
-            ..
-        },
-        ..
-    } = mexp {
-        Ok (Den::Disj (mexp_vec_to_den_name_vec (body)?))
-    } else {
-        ErrorInCtx::new ()
-            .head ("syntex error")
-            .span (mexp.span ())
-            .note (note_about_wissen_grammar ())
             .wrap_in_err ()
     }
 }
@@ -1153,18 +1129,18 @@ fn mexp_to_prop <'a> (
             })
         } else {
             ErrorInCtx::new ()
-                .line ("expecting den name")
+                .line ("expecting prop name")
                 .line ("which must end with `-t`")
-                .line (&format! ("but found : {}", symbol))
+                .line (&format! ("symbol = {}", symbol))
                 .span (mexp.span ())
-                .note (note_about_wissen_grammar ())
+                .note (note_about_grammar ())
                 .wrap_in_err ()
         }
     } else {
         ErrorInCtx::new ()
             .head ("syntex error")
             .span (mexp.span ())
-            .note (note_about_wissen_grammar ())
+            .note (note_about_grammar ())
             .wrap_in_err ()
     }
 }
@@ -1191,9 +1167,9 @@ fn mexp_to_term <'a> (
             ErrorInCtx::new ()
                 .line ("expecting cons name")
                 .line ("which must end with `-c`")
-                .line (&format! ("but found : {}", symbol))
+                .line (&format! ("symbol = {}", symbol))
                 .span (mexp.span ())
-                .note (note_about_wissen_grammar ())
+                .note (note_about_grammar ())
                 .wrap_in_err ()
         }
     } else if let Mexp::Sym {
@@ -1205,10 +1181,10 @@ fn mexp_to_term <'a> (
         } else if symbol.ends_with ("-t") {
             ErrorInCtx::new ()
                 .line ("expecting cons name or var")
-                .line ("but found den name which end with `-t`")
-                .line (&format! ("den name : {}", symbol))
+                .line ("but found prop name which end with `-t`")
+                .line (&format! ("symbol = {}", symbol))
                 .span (mexp.span ())
-                .note (note_about_wissen_grammar ())
+                .note (note_about_grammar ())
                 .wrap_in_err ()
         } else {
             Ok (Term::var_no_id (symbol))
@@ -1217,7 +1193,31 @@ fn mexp_to_term <'a> (
         ErrorInCtx::new ()
             .head ("syntex error")
             .span (mexp.span ())
-            .note (note_about_wissen_grammar ())
+            .note (note_about_grammar ())
+            .wrap_in_err ()
+    }
+}
+
+fn mexp_to_disj_den <'a> (
+    mexp: &Mexp <'a>,
+) -> Result <Den, ErrorInCtx> {
+    if let Mexp::Apply {
+        head: box Mexp::Sym {
+            symbol: "disj",
+            ..
+        },
+        arg: MexpArg::Tuple {
+            body,
+            ..
+        },
+        ..
+    } = mexp {
+        Ok (Den::Disj (mexp_vec_to_prop_name_vec (body)?))
+    } else {
+        ErrorInCtx::new ()
+            .head ("syntex error")
+            .span (mexp.span ())
+            .note (note_about_grammar ())
             .wrap_in_err ()
     }
 }
@@ -1249,7 +1249,7 @@ fn mexp_to_conj_den <'a> (
         ErrorInCtx::new ()
             .head ("syntex error")
             .span (mexp.span ())
-            .note (note_about_wissen_grammar ())
+            .note (note_about_grammar ())
             .wrap_in_err ()
     }
 }
@@ -1279,18 +1279,18 @@ fn mexp_to_den_statement <'a> (
                 mexp_to_den (rhs)?))
         } else {
             ErrorInCtx::new ()
-                .line ("expecting den name")
+                .line ("expecting prop name")
                 .line ("which must end with `-t`")
-                .line (&format! ("but found : {}", symbol))
+                .line (&format! ("symbol = {}", symbol))
                 .span (mexp.span ())
-                .note (note_about_wissen_grammar ())
+                .note (note_about_grammar ())
                 .wrap_in_err ()
         }
     } else {
         ErrorInCtx::new ()
             .head ("syntex error")
             .span (mexp.span ())
-            .note (note_about_wissen_grammar ())
+            .note (note_about_grammar ())
             .wrap_in_err ()
     }
 }
@@ -1323,9 +1323,9 @@ fn mexp_to_prop_statement <'a> (
             if result.is_err () {
                 return ErrorInCtx::new ()
                     .line ("fail to parse usize num in `prop`")
-                    .line (&format! ("symbol : {}", symbol))
+                    .line (&format! ("symbol = {}", symbol))
                     .span (mexp.span ())
-                    .note (note_about_wissen_grammar ())
+                    .note (note_about_grammar ())
                     .wrap_in_err ();
             }
             Ok (Statement::Query (
@@ -1335,14 +1335,14 @@ fn mexp_to_prop_statement <'a> (
             ErrorInCtx::new ()
                 .line ("fail to parse prop's first arg")
                 .span (mexp.span ())
-                .note (note_about_wissen_grammar ())
+                .note (note_about_grammar ())
                 .wrap_in_err ()
         }
     } else {
         ErrorInCtx::new ()
             .head ("syntex error")
             .span (mexp.span ())
-            .note (note_about_wissen_grammar ())
+            .note (note_about_grammar ())
             .wrap_in_err ()
     }
 }
@@ -1375,9 +1375,9 @@ fn mexp_to_prove_statement <'a> (
             if result.is_err () {
                 return ErrorInCtx::new ()
                     .line ("fail to parse usize num in `prove`")
-                    .line (&format! ("symbol : {}", symbol))
+                    .line (&format! ("symbol = {}", symbol))
                     .span (mexp.span ())
-                    .note (note_about_wissen_grammar ())
+                    .note (note_about_grammar ())
                     .wrap_in_err ();
             }
             Ok (Statement::Prove (
@@ -1387,14 +1387,14 @@ fn mexp_to_prove_statement <'a> (
             ErrorInCtx::new ()
                 .line ("fail to parse prop's first arg")
                 .span (mexp.span ())
-                .note (note_about_wissen_grammar ())
+                .note (note_about_grammar ())
                 .wrap_in_err ()
         }
     } else {
         ErrorInCtx::new ()
             .head ("syntex error")
             .span (mexp.span ())
-            .note (note_about_wissen_grammar ())
+            .note (note_about_grammar ())
             .wrap_in_err ()
     }
 }
@@ -1407,12 +1407,12 @@ fn mexp_to_statement <'a> (
         .or (mexp_to_prove_statement (mexp))
 }
 
-fn mexp_vec_to_den_name_vec <'a> (
+fn mexp_vec_to_prop_name_vec <'a> (
     mexp_vec: &Vec <Mexp <'a>>,
 ) -> Result <Vec <String>, ErrorInCtx> {
     let mut vec = Vec::new ();
     for mexp in mexp_vec {
-        vec.push (mexp_to_den_name (&mexp)?);
+        vec.push (mexp_to_prop_name (&mexp)?);
     }
     Ok (vec)
 }
