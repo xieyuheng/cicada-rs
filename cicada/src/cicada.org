@@ -1,7 +1,6 @@
 #+property: tangle lib.rs
 #+title: cicada
-- Wissen::wis
-- Wissen::to_string -- to be used in test
+- Wissen::to_string -- to be used in test_wis
 - Term::to_value -- with error_report
 - Wissen::type_check
 * [note]
@@ -98,12 +97,6 @@
     };
     #+end_src
 
-* type alias
-
-  #+begin_src rust
-  pub type Rec <T> = Vec <(String, T)>;
-  #+end_src
-
 * utility
 
 *** vec_to_string
@@ -182,6 +175,7 @@
         Var (Span, Var),
         Cons (Span, String, Arg),
         Prop (Span, String, Arg),
+        FieldRef (Span, String),
         TypeOfType (Span),
     }
     #+end_src
@@ -194,7 +188,19 @@
     #[derive (PartialEq, Eq)]
     pub enum Arg {
         Vec (Vec <Term>),
-        Rec (Rec <Term>),
+        Rec (Vec <Binding>),
+    }
+    #+end_src
+
+*** Binding
+
+    #+begin_src rust
+    #[derive (Clone)]
+    #[derive (Debug)]
+    #[derive (PartialEq, Eq)]
+    pub enum Binding {
+        EqualTo (String, Term),
+        Inhabit (String, Term),
     }
     #+end_src
 
@@ -590,8 +596,8 @@
     #[derive (Debug)]
     #[derive (PartialEq, Eq)]
     pub enum Den {
-        Disj (Vec <String>, Rec <Term>),
-        Conj (Rec <Term>),
+        Disj (Vec <String>, Vec <Binding>),
+        Conj (Vec <Binding>),
     }
     #+end_src
 
@@ -605,6 +611,18 @@
     #[derive (PartialEq, Eq)]
     pub struct Wissen {
         den_dic: Dic <Den>,
+    }
+    #+end_src
+
+*** Wissen::new
+
+    #+begin_src rust
+    impl Wissen {
+        pub fn new () -> Self {
+            Wissen {
+                den_dic: Dic::new (),
+            }
+        }
     }
     #+end_src
 
@@ -819,6 +837,39 @@
     }
     #+end_src
 
+*** mexp_to_field_ref_term
+
+    #+begin_src rust
+    fn mexp_to_field_ref_term <'a> (
+        mexp: &Mexp <'a>,
+    ) -> Result <Term, ErrorInCtx> {
+        if let Mexp::Sym {
+            span,
+            symbol,
+        } = mexp {
+            if field_name_symbol_p (symbol) {
+                Ok (Term::FieldRef (
+                    span.clone (),
+                    symbol.to_string ()))
+            } else {
+                ErrorInCtx::new ()
+                    .head ("syntex error")
+                    .line ("expecting field name symbol")
+                    .line (&format! ("symbol = {}", symbol))
+                    .span (mexp.span ())
+                    .note (note_about_grammar ())
+                    .wrap_in_err ()
+            }
+        } else {
+            ErrorInCtx::new ()
+                .head ("syntex error")
+                .span (mexp.span ())
+                .note (note_about_grammar ())
+                .wrap_in_err ()
+        }
+    }
+    #+end_src
+
 *** mexp_arg_to_arg
 
     #+begin_src rust
@@ -830,7 +881,7 @@
                 Ok (Arg::Vec (mexp_vec_to_term_vec (body)?))
             }
             MexpArg::Block { body, .. } => {
-                Ok (Arg::Rec (mexp_vec_to_term_rec (body)?))
+                Ok (Arg::Rec (mexp_vec_to_binding_vec (body)?))
             }
         }
     }
@@ -872,7 +923,7 @@
                 Ok (Term::Cons (
                     span.clone (),
                     symbol.to_string (),
-                    Arg::Rec (Rec::new ())))
+                    Arg::Rec (Vec::new ())))
             } else {
                 ErrorInCtx::new ()
                     .line ("expecting cons name symbol")
@@ -928,7 +979,7 @@
                 Ok (Term::Prop (
                     span.clone (),
                     symbol.to_string (),
-                    Arg::Rec (Rec::new ())))
+                    Arg::Rec (Vec::new ())))
             } else {
                 ErrorInCtx::new ()
                     .line ("expecting prop name symbol")
@@ -988,6 +1039,7 @@
         mexp_to_var_term (mexp)
             .or (mexp_to_cons_term (mexp))
             .or (mexp_to_prop_term (mexp))
+            .or (mexp_to_field_ref_term (mexp))
             .or (mexp_to_type_of_type_term (mexp))
     }
     #+end_src
@@ -1036,20 +1088,34 @@
     }
     #+end_src
 
-*** mexp_to_name_term_pair
+*** mexp_to_binding
 
     #+begin_src rust
-    fn mexp_to_name_term_pair <'a> (
+    fn mexp_to_binding <'a> (
         mexp: &Mexp <'a>,
-    ) -> Result <(String, Term), ErrorInCtx> {
+    ) -> Result <Binding, ErrorInCtx> {
         if let Mexp::Infix {
-            op: "=",
-            rhs,
-            lhs,
+            op,
+            lhs, rhs,
             ..
         } = mexp {
-            Ok ((mexp_to_field_name (rhs)?,
-                 mexp_to_term (lhs)?))
+            if op == &"=" {
+                Ok (Binding::EqualTo (
+                    mexp_to_field_name (lhs)?,
+                    mexp_to_term (rhs)?))
+            } else if op == &":" {
+                Ok (Binding::Inhabit (
+                    mexp_to_field_name (lhs)?,
+                    mexp_to_term (rhs)?))
+            } else {
+                ErrorInCtx::new ()
+                    .line ("expecting binding infix op")
+                    .line ("which might be `=` or `:`")
+                    .line (&format! ("op = {}", op))
+                    .span (mexp.span ())
+                    .note (note_about_grammar ())
+                    .wrap_in_err ()
+            }
         } else {
             ErrorInCtx::new ()
                 .head ("syntex error")
@@ -1060,17 +1126,17 @@
     }
     #+end_src
 
-*** mexp_vec_to_term_rec
+*** mexp_vec_to_binding_vec
 
     #+begin_src rust
-    fn mexp_vec_to_term_rec <'a> (
+    fn mexp_vec_to_binding_vec <'a> (
         mexp_vec: &Vec <Mexp <'a>>,
-    ) -> Result <Rec <Term>, ErrorInCtx> {
-        let mut rec = Rec::new ();
+    ) -> Result <Vec <Binding>, ErrorInCtx> {
+        let mut vec = Vec::new ();
         for mexp in mexp_vec {
-            rec.push (mexp_to_name_term_pair (&mexp)?);
+            vec.push (mexp_to_binding (&mexp)?);
         }
-        Ok (rec)
+        Ok (vec)
     }
     #+end_src
 
@@ -1100,7 +1166,7 @@
         } = mexp {
             Ok (Den::Disj (
                 mexp_vec_to_prop_name_vec (body1)?,
-                mexp_vec_to_term_rec (body2)?))
+                mexp_vec_to_binding_vec (body2)?))
         } else {
             ErrorInCtx::new ()
                 .head ("syntex error")
@@ -1122,13 +1188,13 @@
                     symbol: "conj",
                     ..
                 },
-                arg: MexpArg::Tuple {
+                arg: MexpArg::Block {
                     body,
                     ..
                 },
                 ..
             } = mexp {
-            Ok (Den::Conj (mexp_vec_to_term_rec (body)?))
+            Ok (Den::Conj (mexp_vec_to_binding_vec (body)?))
         } else {
             ErrorInCtx::new ()
                 .head ("syntex error")
@@ -1228,6 +1294,14 @@
     }
     #+end_src
 
+* prelude
+
+*** PRELUDE
+
+    #+begin_src rust
+    const PRELUDE: &'static str = include_str! ("prelude.cic");
+    #+end_src
+
 * test
 
 *** test_unify
@@ -1249,5 +1323,26 @@
             ] .into ())) .unwrap ();
         println! ("{}", subst.to_string ());
         assert_eq! (subst.len (), 2);
+    }
+    #+end_src
+
+*** test_wis
+
+    #+begin_src rust
+    #[test]
+    fn test_wis () {
+        let mut wissen = Wissen::new ();
+        let input = PRELUDE;
+        match wissen.wis (input) {
+            Ok (mut output_vec) => {
+                println! ("output_vec = {:?}", output_vec);
+                println! ("wissen = {:?}", wissen);
+            }
+            Err (error) => {
+                let ctx = ErrorCtx::new ()
+                    .body (input);
+                error.report (ctx);
+            }
+        }
     }
     #+end_src

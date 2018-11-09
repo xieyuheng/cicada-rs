@@ -27,8 +27,6 @@ use mexp::{
     MexpArg,
 };
 
-pub type Rec <T> = Vec <(String, T)>;
-
 fn vec_to_string <T> (vec: &Vec <T>, delimiter: &str) -> String
 where T : ToString {
     let mut s = String::new ();
@@ -84,6 +82,7 @@ pub enum Term {
     Var (Span, Var),
     Cons (Span, String, Arg),
     Prop (Span, String, Arg),
+    FieldRef (Span, String),
     TypeOfType (Span),
 }
 
@@ -92,7 +91,15 @@ pub enum Term {
 #[derive (PartialEq, Eq)]
 pub enum Arg {
     Vec (Vec <Term>),
-    Rec (Rec <Term>),
+    Rec (Vec <Binding>),
+}
+
+#[derive (Clone)]
+#[derive (Debug)]
+#[derive (PartialEq, Eq)]
+pub enum Binding {
+    EqualTo (String, Term),
+    Inhabit (String, Term),
 }
 
 #[derive (Clone)]
@@ -392,8 +399,8 @@ impl ToString for Subst {
 #[derive (Debug)]
 #[derive (PartialEq, Eq)]
 pub enum Den {
-    Disj (Vec <String>, Rec <Term>),
-    Conj (Rec <Term>),
+    Disj (Vec <String>, Vec <Binding>),
+    Conj (Vec <Binding>),
 }
 
 #[derive (Clone)]
@@ -401,6 +408,14 @@ pub enum Den {
 #[derive (PartialEq, Eq)]
 pub struct Wissen {
     den_dic: Dic <Den>,
+}
+
+impl Wissen {
+    pub fn new () -> Self {
+        Wissen {
+            den_dic: Dic::new (),
+        }
+    }
 }
 
 impl Wissen {
@@ -544,6 +559,35 @@ fn mexp_to_var_term <'a> (
     }
 }
 
+fn mexp_to_field_ref_term <'a> (
+    mexp: &Mexp <'a>,
+) -> Result <Term, ErrorInCtx> {
+    if let Mexp::Sym {
+        span,
+        symbol,
+    } = mexp {
+        if field_name_symbol_p (symbol) {
+            Ok (Term::FieldRef (
+                span.clone (),
+                symbol.to_string ()))
+        } else {
+            ErrorInCtx::new ()
+                .head ("syntex error")
+                .line ("expecting field name symbol")
+                .line (&format! ("symbol = {}", symbol))
+                .span (mexp.span ())
+                .note (note_about_grammar ())
+                .wrap_in_err ()
+        }
+    } else {
+        ErrorInCtx::new ()
+            .head ("syntex error")
+            .span (mexp.span ())
+            .note (note_about_grammar ())
+            .wrap_in_err ()
+    }
+}
+
 fn mexp_arg_to_arg <'a> (
     mexp_arg: &MexpArg <'a>,
 ) -> Result <Arg, ErrorInCtx> {
@@ -552,7 +596,7 @@ fn mexp_arg_to_arg <'a> (
             Ok (Arg::Vec (mexp_vec_to_term_vec (body)?))
         }
         MexpArg::Block { body, .. } => {
-            Ok (Arg::Rec (mexp_vec_to_term_rec (body)?))
+            Ok (Arg::Rec (mexp_vec_to_binding_vec (body)?))
         }
     }
 }
@@ -590,7 +634,7 @@ fn mexp_to_cons_term <'a> (
             Ok (Term::Cons (
                 span.clone (),
                 symbol.to_string (),
-                Arg::Rec (Rec::new ())))
+                Arg::Rec (Vec::new ())))
         } else {
             ErrorInCtx::new ()
                 .line ("expecting cons name symbol")
@@ -642,7 +686,7 @@ fn mexp_to_prop_term <'a> (
             Ok (Term::Prop (
                 span.clone (),
                 symbol.to_string (),
-                Arg::Rec (Rec::new ())))
+                Arg::Rec (Vec::new ())))
         } else {
             ErrorInCtx::new ()
                 .line ("expecting prop name symbol")
@@ -694,6 +738,7 @@ fn mexp_to_term <'a> (
     mexp_to_var_term (mexp)
         .or (mexp_to_cons_term (mexp))
         .or (mexp_to_prop_term (mexp))
+        .or (mexp_to_field_ref_term (mexp))
         .or (mexp_to_type_of_type_term (mexp))
 }
 
@@ -733,17 +778,31 @@ fn mexp_to_field_name <'a> (
     }
 }
 
-fn mexp_to_name_term_pair <'a> (
+fn mexp_to_binding <'a> (
     mexp: &Mexp <'a>,
-) -> Result <(String, Term), ErrorInCtx> {
+) -> Result <Binding, ErrorInCtx> {
     if let Mexp::Infix {
-        op: "=",
-        rhs,
-        lhs,
+        op,
+        lhs, rhs,
         ..
     } = mexp {
-        Ok ((mexp_to_field_name (rhs)?,
-             mexp_to_term (lhs)?))
+        if op == &"=" {
+            Ok (Binding::EqualTo (
+                mexp_to_field_name (lhs)?,
+                mexp_to_term (rhs)?))
+        } else if op == &":" {
+            Ok (Binding::Inhabit (
+                mexp_to_field_name (lhs)?,
+                mexp_to_term (rhs)?))
+        } else {
+            ErrorInCtx::new ()
+                .line ("expecting binding infix op")
+                .line ("which might be `=` or `:`")
+                .line (&format! ("op = {}", op))
+                .span (mexp.span ())
+                .note (note_about_grammar ())
+                .wrap_in_err ()
+        }
     } else {
         ErrorInCtx::new ()
             .head ("syntex error")
@@ -753,14 +812,14 @@ fn mexp_to_name_term_pair <'a> (
     }
 }
 
-fn mexp_vec_to_term_rec <'a> (
+fn mexp_vec_to_binding_vec <'a> (
     mexp_vec: &Vec <Mexp <'a>>,
-) -> Result <Rec <Term>, ErrorInCtx> {
-    let mut rec = Rec::new ();
+) -> Result <Vec <Binding>, ErrorInCtx> {
+    let mut vec = Vec::new ();
     for mexp in mexp_vec {
-        rec.push (mexp_to_name_term_pair (&mexp)?);
+        vec.push (mexp_to_binding (&mexp)?);
     }
-    Ok (rec)
+    Ok (vec)
 }
 
 fn mexp_to_disj_den <'a> (
@@ -786,7 +845,7 @@ fn mexp_to_disj_den <'a> (
     } = mexp {
         Ok (Den::Disj (
             mexp_vec_to_prop_name_vec (body1)?,
-            mexp_vec_to_term_rec (body2)?))
+            mexp_vec_to_binding_vec (body2)?))
     } else {
         ErrorInCtx::new ()
             .head ("syntex error")
@@ -804,13 +863,13 @@ fn mexp_to_conj_den <'a> (
                 symbol: "conj",
                 ..
             },
-            arg: MexpArg::Tuple {
+            arg: MexpArg::Block {
                 body,
                 ..
             },
             ..
         } = mexp {
-        Ok (Den::Conj (mexp_vec_to_term_rec (body)?))
+        Ok (Den::Conj (mexp_vec_to_binding_vec (body)?))
     } else {
         ErrorInCtx::new ()
             .head ("syntex error")
@@ -889,6 +948,8 @@ fn mexp_vec_to_statement_vec <'a> (
     Ok (vec)
 }
 
+const PRELUDE: &'static str = include_str! ("prelude.cic");
+
 #[test]
 fn test_unify () {
     let u = Value::Var (Var::new ("u"));
@@ -905,4 +966,21 @@ fn test_unify () {
         ] .into ())) .unwrap ();
     println! ("{}", subst.to_string ());
     assert_eq! (subst.len (), 2);
+}
+
+#[test]
+fn test_wis () {
+    let mut wissen = Wissen::new ();
+    let input = PRELUDE;
+    match wissen.wis (input) {
+        Ok (mut output_vec) => {
+            println! ("output_vec = {:?}", output_vec);
+            println! ("wissen = {:?}", wissen);
+        }
+        Err (error) => {
+            let ctx = ErrorCtx::new ()
+                .body (input);
+            error.report (ctx);
+        }
+    }
 }
