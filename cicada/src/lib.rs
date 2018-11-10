@@ -64,6 +64,18 @@ where T : ToString {
     s
 }
 
+fn dic_to_lines <T> (dic: &Dic <T>) -> String
+where T : ToString {
+    let mut s = String::new ();
+    for (k, v) in dic.iter () {
+        s += &k.to_string ();
+        s += " = ";
+        s += &v.to_string ();
+        s += "\n";
+    }
+    s
+}
+
 fn add_tag (tag: &str, input: String) -> String {
     let start = tag;
     let end = &tag[1 .. tag.len () - 1];
@@ -86,6 +98,30 @@ pub enum Term {
     TypeOfType (Span),
 }
 
+impl ToString for Term {
+    fn to_string (&self) -> String {
+        match self {
+            Term::Var (_span, var) => {
+                var.to_string ()
+            }
+            Term::Cons (_span, name, arg) |
+            Term::Prop (_span, name, arg) => {
+                if arg.is_empty () {
+                    format! ("{}", name)
+                } else {
+                    format! ("{} {}", name, arg.to_string ())
+                }
+            }
+            Term::FieldRef (_span, name) => {
+                format! ("{}", name)
+            }
+            Term::TypeOfType (_span) => {
+                format! ("type")
+            }
+        }
+    }
+}
+
 #[derive (Clone)]
 #[derive (Debug)]
 #[derive (PartialEq, Eq)]
@@ -94,12 +130,49 @@ pub enum Arg {
     Rec (Vec <Binding>),
 }
 
+impl Arg {
+    fn is_empty (&self) -> bool {
+        match self {
+            Arg::Vec (term_vec) => term_vec.is_empty (),
+            Arg::Rec (bind_vec) => bind_vec.is_empty (),
+        }
+    }
+}
+
+impl ToString for Arg {
+    fn to_string (&self) -> String {
+        match self {
+            Arg::Vec (term_vec) => {
+                format! ("({})",
+                         vec_to_string (term_vec, " "))
+            }
+            Arg::Rec (bind_vec) => {
+                format! ("{{ {} }}",
+                         vec_to_string (bind_vec, ", "))
+            }
+        }
+    }
+}
+
 #[derive (Clone)]
 #[derive (Debug)]
 #[derive (PartialEq, Eq)]
 pub enum Binding {
     EqualTo (String, Term),
     Inhabit (String, Term),
+}
+
+impl ToString for Binding {
+    fn to_string (&self) -> String {
+        match self {
+            Binding::EqualTo (name, term) => {
+                format! ("{} = {}", name, term.to_string ())
+            }
+            Binding::Inhabit (name, term) => {
+                format! ("{} : {}", name, term.to_string ())
+            }
+        }
+    }
 }
 
 #[derive (Clone)]
@@ -403,6 +476,31 @@ pub enum Den {
     Conj (Vec <Binding>),
 }
 
+impl ToString for Den {
+    fn to_string (&self) -> String {
+        match self {
+            Den::Disj (name_vec, bind_vec) => {
+                if bind_vec.is_empty () {
+                    format! ("disj ({}) {{}}",
+                             vec_to_string (name_vec, " "))
+                } else {
+                    format! ("disj ({}) {{ {} }}",
+                             vec_to_string (name_vec, " "),
+                             vec_to_string (bind_vec, ", "))
+                }
+            }
+            Den::Conj (bind_vec) => {
+                if bind_vec.is_empty () {
+                    format! ("conj {{}}")
+                } else {
+                    format! ("conj {{ {} }}",
+                             vec_to_string (bind_vec, ", "))
+                }
+            }
+        }
+    }
+}
+
 #[derive (Clone)]
 #[derive (Debug)]
 #[derive (PartialEq, Eq)]
@@ -440,7 +538,14 @@ impl Wissen {
             }
         }
         let mut output_vec = Vec::new ();
+        // ><><><
         Ok (output_vec)
+    }
+}
+
+impl ToString for Wissen {
+    fn to_string (&self) -> String {
+        add_tag ("<wissen>", dic_to_lines (&self.den_dic))
     }
 }
 
@@ -974,8 +1079,7 @@ fn test_wis () {
     let input = PRELUDE;
     match wissen.wis (input) {
         Ok (mut output_vec) => {
-            println! ("output_vec = {:?}", output_vec);
-            println! ("wissen = {:?}", wissen);
+            println! ("{}", wissen.to_string ());
         }
         Err (error) => {
             let ctx = ErrorCtx::new ()
