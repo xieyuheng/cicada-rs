@@ -260,7 +260,7 @@ impl ToString for Id {
 #[derive (PartialEq, Eq)]
 pub enum Value {
     Var (Var),
-    Data (String, Dic <Value>),
+    Data (String, Box <Value>, Dic <Value>),
     TypeOfType,
 }
 
@@ -268,17 +268,21 @@ impl ToString for Value {
     fn to_string (&self) -> String {
         match self {
             Value::Var (var) => var.to_string (),
-            Value::Data (name, dic) => {
-                if dic.len () == 0 {
-                    format! ("{}", name)
+            Value::Data (name, ty, dic) => {
+                if dic.is_empty () {
+                    format! (
+                        "{} : {}",
+                        name,
+                        ty.to_string ())
                 } else {
                     format! (
-                        "{} {{ {} }}",
+                        "{} {{ {} }} : {}",
                         name,
-                        &dic_to_string (dic))
+                        dic_to_string (&dic),
+                        ty.to_string ())
                 }
             }
-            Value::TypeOfType => "type".to_string (),
+            Value::TypeOfType => format! ("type"),
         }
     }
 }
@@ -363,39 +367,15 @@ impl Subst {
                     Some (self.extend (v, u))
                 }
             }
-            (Value::Data (u_name, u_dic),
-             Value::Data (v_name, v_dic),
+            (Value::Data (u_name, u_ty, u_dic),
+             Value::Data (v_name, v_ty, v_dic),
             ) => {
                 if u_name != v_name {
                     return None;
                 }
-                if u_dic.len () != v_dic.len () {
-                    return None;
-                }
-                let mut subst = self.clone ();
-                let zip = u_dic.entries () .zip (v_dic.entries ());
-                for (u_entry, v_entry) in zip {
-                    if u_entry.name != v_entry.name {
-                        eprintln! ("- [warning] Subst::unify");
-                        eprintln! ("  dic mismatch");
-                        eprintln! ("  u_name = {}", u_name);
-                        eprintln! ("  v_name = {}", v_name);
-                        eprintln! ("  u_entry.name = {}", u_entry.name);
-                        eprintln! ("  v_entry.name = {}", v_entry.name);
-                        return None;
-                    } else {
-                        if let (
-                            Some (u_value),
-                            Some (v_value),
-                        ) = (&u_entry.value, &v_entry.value) {
-                            subst = subst.unify (
-                                u_value,
-                                v_value)?;
-                        } else {
-                            return None
-                        }
-                    }
-                }
+                let subst = self;
+                let subst = subst.unify (&u_ty, &v_ty)?;
+                let subst = subst.unify_dic (&u_dic, &v_dic)?;
                 Some (subst)
             }
             (u, v) => {
@@ -410,6 +390,34 @@ impl Subst {
 }
 
 impl Subst {
+    pub fn unify_dic (
+        &self,
+        u_dic: &Dic <Value>,
+        v_dic: &Dic <Value>,
+    ) -> Option <Subst> {
+        let mut subst = self.clone ();
+        let zip = u_dic.entries () .zip (v_dic.entries ());
+        for (u_entry, v_entry) in zip {
+            if u_entry.name != v_entry.name {
+                return None;
+            } else {
+                if let (
+                    Some (u_value),
+                    Some (v_value),
+                ) = (&u_entry.value, &v_entry.value) {
+                    subst = subst.unify (
+                        u_value,
+                        v_value)?;
+                } else {
+                    return None
+                }
+            }
+        }
+        Some (subst)
+    }
+}
+
+impl Subst {
     pub fn var_occur_p (
         &self,
         var: &Var,
@@ -420,7 +428,10 @@ impl Subst {
             Value::Var (var1) => {
                 var == &var1
             }
-            Value::Data (_name, dic) => {
+            Value::Data (_name, ty, dic) => {
+                if self.var_occur_p (var, &ty) {
+                    return true;
+                }
                 for value in dic.values () {
                     if self.var_occur_p (var, value) {
                         return true;
@@ -499,18 +510,18 @@ impl ToString for Den {
     }
 }
 
-impl Den {
-    fn pre_value (&self) -> (Value, Subst) {
-        match self {
-            Den::Disj (name_vec, bind_vec) => {
-                unimplemented! ()
-            }
-            Den::Conj (bind_vec) => {
-                unimplemented! ()
-            }
-        }
-    }
-}
+// impl Den {
+//     fn value_type (&self) -> (ValueType, Subst) {
+//         match self {
+//             Den::Disj (name_vec, bind_vec) => {
+//                 unimplemented! ()
+//             }
+//             Den::Conj (bind_vec) => {
+//                 unimplemented! ()
+//             }
+//         }
+//     }
+// }
 
 #[derive (Clone)]
 #[derive (Debug)]
@@ -1071,16 +1082,27 @@ const PRELUDE: &'static str =
 fn test_unify () {
     let u = Value::Var (Var::new ("u"));
     let v = Value::Var (Var::new ("v"));
+    let cons_t = Value::Var (Var::new ("cons-t"));
+    let unit_t = Value::Var (Var::new ("unit-t"));
     let subst = Subst::new () .unify (
-        &Value::Data ("cons-c" .to_string (), vec! [
-            ("car", u.clone ()),
-            ("cdr", v.clone ()),
-        ] .into ()),
-        &Value::Data ("cons-c" .to_string (), vec! [
-            ("car", v.clone ()),
-            ("cdr", Value::Data ("unit-c" .to_string (),
-                                 Dic::new ())),
-        ] .into ())) .unwrap ();
+        &Value::Data (
+            "cons-c" .to_string (),
+            box cons_t.clone (),
+            vec! [
+                ("car", u.clone ()),
+                ("cdr", v.clone ()),
+            ] .into ()),
+        &Value::Data (
+            "cons-c" .to_string (),
+            box cons_t.clone (),
+            vec! [
+                ("car", v.clone ()),
+                ("cdr", Value::Data (
+                    "unit-c" .to_string (),
+                    box unit_t.clone (),
+                    Dic::new ())),
+            ] .into ()))
+        .unwrap ();
     println! ("{}", subst.to_string ());
     assert_eq! (subst.len (), 2);
 }

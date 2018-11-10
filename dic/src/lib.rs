@@ -32,6 +32,10 @@ impl <T> Dic <T> {
         self.entry_vector.len ()
     }
 
+    pub fn is_empty (&self) -> bool {
+        self.len () == 0
+    }
+
     pub fn lack (&self) -> usize {
         let mut n = 0;
         for entry in &self.entry_vector {

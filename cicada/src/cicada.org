@@ -1,7 +1,6 @@
 #+property: tangle lib.rs
 #+title: cicada
-- fix Value -- Value has both data and type
-- Den::pre_value
+- Den::ty
 - fix Subst::unify -- for sub-type relation
 - Term::value -- with error_report
 - Wissen::type_check -- by Term::value and Subst::unify
@@ -9,58 +8,68 @@
 - Proof::step
 * [note]
 
-*** Cons & Prop
+*** semantic
 
-    - Cons -- data-constructor
-    - Prop -- type-constructor
+***** Cons & Prop
 
-    - Den::Disj is definition of Prop
-    - Den::Conj is definition of Prop and Cons
+      - Cons -- data-constructor
+      - Prop -- type-constructor
 
-*** Value
+      - Den::Disj is definition of Prop
+      - Den::Conj is definition of Prop and Cons
 
-    - Term::value will give a Value
-      part of the Value is pre-defined which is specified by
-      the definition of the Cons -- the definition of its Den::Conj
+***** Value
 
-    - during Term::value
-      its pre-defined is unified with its args
+      - Term::value will give a Value
+        part of the Value is pre-defined which is specified by
+        the definition of the Cons -- the definition of its Den::Conj
 
-    - this is like runtime assertion in prolog
+      - during Term::value
+        its pre-defined is unified with its args
 
-*** type-check
+      - this is like runtime assertion in prolog
 
-    - type-check is simply to check that
-      the equation in `data` has a solution
+***** type-check
 
-    - `disj` -- exporting equations
-      `heir` -- importing equations
+      - type-check is simply to check that
+        the equation in `data` has a solution
 
-*** recursion
+      - `disj` -- exporting equations
+        `heir` -- importing equations
 
-    - define all Den first and then check them
+***** recursion
 
-*** logic-var
+      - define all Den first and then check them
 
-    - single char words are not allowed in global definition
-      and are not allowed as field-name
+***** logic-var
 
-    - single char words are viewed as logic-var
+      - single char words are not allowed in global definition
+        and are not allowed as field-name
 
-    - long logic-var start with `:`
+      - single char words are viewed as logic-var
 
-*** proving
+      - long logic-var start with `:`
 
-    - Prop is to be proved
+***** proving
 
-    - to prove a Prop defined by Den::Disj
-      is to dispatch it
+      - Prop is to be proved
 
-    - to prove a Prop defined by Den::Conj
-      we unify args withs fields
-      and we also need to prove remaining Prop in Value
+      - to prove a Prop defined by Den::Disj
+        is to dispatch it
 
-    - `heir` is just like `data`
+      - to prove a Prop defined by Den::Conj
+        we unify args withs fields
+        and we also need to prove remaining Prop in Value
+
+      - `heir` is just like `data`
+
+*** implementation
+
+***** update-able
+
+      - sum-type in Value is update-able
+        so it must be a Value::Var
+        because only Value::Var is update-able
 
 * prolog
 
@@ -433,7 +442,7 @@
     #[derive (PartialEq, Eq)]
     pub enum Value {
         Var (Var),
-        Data (String, Dic <Value>),
+        Data (String, Box <Value>, Dic <Value>),
         TypeOfType,
     }
     #+end_src
@@ -445,17 +454,21 @@
         fn to_string (&self) -> String {
             match self {
                 Value::Var (var) => var.to_string (),
-                Value::Data (name, dic) => {
-                    if dic.len () == 0 {
-                        format! ("{}", name)
+                Value::Data (name, ty, dic) => {
+                    if dic.is_empty () {
+                        format! (
+                            "{} : {}",
+                            name,
+                            ty.to_string ())
                     } else {
                         format! (
-                            "{} {{ {} }}",
+                            "{} {{ {} }} : {}",
                             name,
-                            &dic_to_string (dic))
+                            dic_to_string (&dic),
+                            ty.to_string ())
                     }
                 }
-                Value::TypeOfType => "type".to_string (),
+                Value::TypeOfType => format! ("type"),
             }
         }
     }
@@ -566,39 +579,15 @@
                         Some (self.extend (v, u))
                     }
                 }
-                (Value::Data (u_name, u_dic),
-                 Value::Data (v_name, v_dic),
+                (Value::Data (u_name, u_ty, u_dic),
+                 Value::Data (v_name, v_ty, v_dic),
                 ) => {
                     if u_name != v_name {
                         return None;
                     }
-                    if u_dic.len () != v_dic.len () {
-                        return None;
-                    }
-                    let mut subst = self.clone ();
-                    let zip = u_dic.entries () .zip (v_dic.entries ());
-                    for (u_entry, v_entry) in zip {
-                        if u_entry.name != v_entry.name {
-                            eprintln! ("- [warning] Subst::unify");
-                            eprintln! ("  dic mismatch");
-                            eprintln! ("  u_name = {}", u_name);
-                            eprintln! ("  v_name = {}", v_name);
-                            eprintln! ("  u_entry.name = {}", u_entry.name);
-                            eprintln! ("  v_entry.name = {}", v_entry.name);
-                            return None;
-                        } else {
-                            if let (
-                                Some (u_value),
-                                Some (v_value),
-                            ) = (&u_entry.value, &v_entry.value) {
-                                subst = subst.unify (
-                                    u_value,
-                                    v_value)?;
-                            } else {
-                                return None
-                            }
-                        }
-                    }
+                    let subst = self;
+                    let subst = subst.unify (&u_ty, &v_ty)?;
+                    let subst = subst.unify_dic (&u_dic, &v_dic)?;
                     Some (subst)
                 }
                 (u, v) => {
@@ -609,6 +598,38 @@
                     }
                 }
             }
+        }
+    }
+    #+end_src
+
+*** Subst::unify_dic
+
+    #+begin_src rust
+    impl Subst {
+        pub fn unify_dic (
+            &self,
+            u_dic: &Dic <Value>,
+            v_dic: &Dic <Value>,
+        ) -> Option <Subst> {
+            let mut subst = self.clone ();
+            let zip = u_dic.entries () .zip (v_dic.entries ());
+            for (u_entry, v_entry) in zip {
+                if u_entry.name != v_entry.name {
+                    return None;
+                } else {
+                    if let (
+                        Some (u_value),
+                        Some (v_value),
+                    ) = (&u_entry.value, &v_entry.value) {
+                        subst = subst.unify (
+                            u_value,
+                            v_value)?;
+                    } else {
+                        return None
+                    }
+                }
+            }
+            Some (subst)
         }
     }
     #+end_src
@@ -627,7 +648,10 @@
                 Value::Var (var1) => {
                     var == &var1
                 }
-                Value::Data (_name, dic) => {
+                Value::Data (_name, ty, dic) => {
+                    if self.var_occur_p (var, &ty) {
+                        return true;
+                    }
                     for value in dic.values () {
                         if self.var_occur_p (var, value) {
                             return true;
@@ -725,11 +749,11 @@
     }
     #+end_src
 
-*** [todo] Den::pre_value
+*** Den::ty
 
     #+begin_src rust
     impl Den {
-        fn pre_value (&self) -> (Value, Subst) {
+        fn ty (&self) -> (Value, Subst) {
             match self {
                 Den::Disj (name_vec, bind_vec) => {
                     unimplemented! ()
@@ -1464,16 +1488,27 @@
     fn test_unify () {
         let u = Value::Var (Var::new ("u"));
         let v = Value::Var (Var::new ("v"));
+        let cons_t = Value::Var (Var::new ("cons-t"));
+        let unit_t = Value::Var (Var::new ("unit-t"));
         let subst = Subst::new () .unify (
-            &Value::Data ("cons-c" .to_string (), vec! [
-                ("car", u.clone ()),
-                ("cdr", v.clone ()),
-            ] .into ()),
-            &Value::Data ("cons-c" .to_string (), vec! [
-                ("car", v.clone ()),
-                ("cdr", Value::Data ("unit-c" .to_string (),
-                                     Dic::new ())),
-            ] .into ())) .unwrap ();
+            &Value::Data (
+                "cons-c" .to_string (),
+                box cons_t.clone (),
+                vec! [
+                    ("car", u.clone ()),
+                    ("cdr", v.clone ()),
+                ] .into ()),
+            &Value::Data (
+                "cons-c" .to_string (),
+                box cons_t.clone (),
+                vec! [
+                    ("car", v.clone ()),
+                    ("cdr", Value::Data (
+                        "unit-c" .to_string (),
+                        box unit_t.clone (),
+                        Dic::new ())),
+                ] .into ()))
+            .unwrap ();
         println! ("{}", subst.to_string ());
         assert_eq! (subst.len (), 2);
     }
