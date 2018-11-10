@@ -91,7 +91,7 @@ fn add_tag (tag: &str, input: String) -> String {
 #[derive (Debug)]
 #[derive (PartialEq, Eq)]
 pub enum Term {
-    Var (Span, Var),
+    Var (Span, String),
     Cons (Span, String, Arg),
     Prop (Span, String, Arg),
     FieldRef (Span, String),
@@ -101,8 +101,8 @@ pub enum Term {
 impl ToString for Term {
     fn to_string (&self) -> String {
         match self {
-            Term::Var (_span, var) => {
-                var.to_string ()
+            Term::Var (_span, name) => {
+                name.clone ()
             }
             Term::Cons (_span, name, arg) |
             Term::Prop (_span, name, arg) => {
@@ -175,28 +175,30 @@ impl ToString for Binding {
     }
 }
 
+impl Term {
+    pub fn value (
+        &self,
+        wissen: &Wissen,
+        subst: &Subst,
+        against: &Value,
+    ) -> Result <Value, ErrorInCtx> {
+        unimplemented! ()
+    }
+}
+
 #[derive (Clone)]
 #[derive (Debug)]
 #[derive (PartialEq, Eq, Hash)]
 pub struct Var {
     name: String,
-    id: Option <Id>,
+    id: Id,
 }
 
 impl Var {
     fn new (s: &str) -> Self {
         Var {
             name: s.to_string (),
-            id: Some (Id::uuid ()),
-        }
-    }
-}
-
-impl Var {
-    fn no_id (s: &str) -> Self {
-        Var {
-            name: s.to_string (),
-            id: None,
+            id: Id::uuid (),
         }
     }
 }
@@ -205,18 +207,14 @@ impl Var {
     fn local (s: &str, counter: usize) -> Self {
         Var {
             name: s.to_string (),
-            id: Some (Id::local (counter)),
+            id: Id::local (counter),
         }
     }
 }
 
 impl ToString for Var {
     fn to_string (&self) -> String {
-        let mut s = format! ("{}", self.name);
-        if let Some (id) = &self.id {
-            s += &format! ("#{}", id.to_string ());
-        }
-        s
+        format! ("{}#{}", self.name, self.id.to_string ())
     }
 }
 
@@ -501,6 +499,19 @@ impl ToString for Den {
     }
 }
 
+impl Den {
+    fn pre_value (&self) -> (Value, Subst) {
+        match self {
+            Den::Disj (name_vec, bind_vec) => {
+                unimplemented! ()
+            }
+            Den::Conj (bind_vec) => {
+                unimplemented! ()
+            }
+        }
+    }
+}
+
 #[derive (Clone)]
 #[derive (Debug)]
 #[derive (PartialEq, Eq)]
@@ -645,7 +656,7 @@ fn mexp_to_var_term <'a> (
         if var_symbol_p (symbol) {
             Ok (Term::Var (
                 span.clone (),
-                Var::no_id (symbol)))
+                symbol.to_string ()))
         } else {
             ErrorInCtx::new ()
                 .head ("syntex error")
@@ -1053,7 +1064,8 @@ fn mexp_vec_to_statement_vec <'a> (
     Ok (vec)
 }
 
-const PRELUDE: &'static str = include_str! ("prelude.cic");
+const PRELUDE: &'static str =
+    include_str! ("prelude.cic");
 
 #[test]
 fn test_unify () {

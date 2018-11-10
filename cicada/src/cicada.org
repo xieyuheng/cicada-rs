@@ -1,7 +1,10 @@
 #+property: tangle lib.rs
 #+title: cicada
-- Term::to_value -- with error_report
-- Wissen::type_check -- by Term::to_value and Subst::unify
+- fix Value -- Value has both data and type
+- Den::pre_value
+- fix Subst::unify -- for sub-type relation
+- Term::value -- with error_report
+- Wissen::type_check -- by Term::value and Subst::unify
 - new DeductionTree
 - Proof::step
 * [note]
@@ -16,11 +19,11 @@
 
 *** Value
 
-    - Term::to_value will give a Value
+    - Term::value will give a Value
       part of the Value is pre-defined which is specified by
       the definition of the Cons -- the definition of its Den::Conj
 
-    - during Term::to_value
+    - during Term::value
       its pre-defined is unified with its args
 
     - this is like runtime assertion in prolog
@@ -189,7 +192,7 @@
     #[derive (Debug)]
     #[derive (PartialEq, Eq)]
     pub enum Term {
-        Var (Span, Var),
+        Var (Span, String),
         Cons (Span, String, Arg),
         Prop (Span, String, Arg),
         FieldRef (Span, String),
@@ -203,8 +206,8 @@
     impl ToString for Term {
         fn to_string (&self) -> String {
             match self {
-                Term::Var (_span, var) => {
-                    var.to_string ()
+                Term::Var (_span, name) => {
+                    name.clone ()
                 }
                 Term::Cons (_span, name, arg) |
                 Term::Prop (_span, name, arg) => {
@@ -298,6 +301,21 @@
     }
     #+end_src
 
+*** [todo] Term::value
+
+    #+begin_src rust
+    impl Term {
+        pub fn value (
+            &self,
+            wissen: &Wissen,
+            subst: &Subst,
+            against: &Value,
+        ) -> Result <Value, ErrorInCtx> {
+            unimplemented! ()
+        }
+    }
+    #+end_src
+
 * Var
 
 *** Var
@@ -308,7 +326,7 @@
     #[derive (PartialEq, Eq, Hash)]
     pub struct Var {
         name: String,
-        id: Option <Id>,
+        id: Id,
     }
     #+end_src
 
@@ -319,20 +337,7 @@
         fn new (s: &str) -> Self {
             Var {
                 name: s.to_string (),
-                id: Some (Id::uuid ()),
-            }
-        }
-    }
-    #+end_src
-
-*** Var::no_id
-
-    #+begin_src rust
-    impl Var {
-        fn no_id (s: &str) -> Self {
-            Var {
-                name: s.to_string (),
-                id: None,
+                id: Id::uuid (),
             }
         }
     }
@@ -345,7 +350,7 @@
         fn local (s: &str, counter: usize) -> Self {
             Var {
                 name: s.to_string (),
-                id: Some (Id::local (counter)),
+                id: Id::local (counter),
             }
         }
     }
@@ -356,11 +361,7 @@
     #+begin_src rust
     impl ToString for Var {
         fn to_string (&self) -> String {
-            let mut s = format! ("{}", self.name);
-            if let Some (id) = &self.id {
-                s += &format! ("#{}", id.to_string ());
-            }
-            s
+            format! ("{}#{}", self.name, self.id.to_string ())
         }
     }
     #+end_src
@@ -724,6 +725,23 @@
     }
     #+end_src
 
+*** [todo] Den::pre_value
+
+    #+begin_src rust
+    impl Den {
+        fn pre_value (&self) -> (Value, Subst) {
+            match self {
+                Den::Disj (name_vec, bind_vec) => {
+                    unimplemented! ()
+                }
+                Den::Conj (bind_vec) => {
+                    unimplemented! ()
+                }
+            }
+        }
+    }
+    #+end_src
+
 * Wissen
 
 *** Wissen
@@ -951,7 +969,7 @@
             if var_symbol_p (symbol) {
                 Ok (Term::Var (
                     span.clone (),
-                    Var::no_id (symbol)))
+                    symbol.to_string ()))
             } else {
                 ErrorInCtx::new ()
                     .head ("syntex error")
@@ -1433,7 +1451,8 @@
 *** PRELUDE
 
     #+begin_src rust
-    const PRELUDE: &'static str = include_str! ("prelude.cic");
+    const PRELUDE: &'static str =
+        include_str! ("prelude.cic");
     #+end_src
 
 * test
