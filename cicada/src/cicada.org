@@ -1,6 +1,6 @@
 #+property: tangle lib.rs
 #+title: cicada
-- Den::ty
+- Den::prop
 - fix Subst::unify -- for sub-type relation
 - Term::value -- with error_report
 - Wissen::type_check -- by Term::value and Subst::unify
@@ -67,9 +67,10 @@
 
 ***** update-able
 
-      - sum-type in Value is update-able
-        so it must be a Value::Var
-        because only Value::Var is update-able
+      - Subst must contains two kinds of binding
+        one for type, one for value
+        to make type binding update-able
+        from disj to its member conj
 
 * prolog
 
@@ -319,115 +320,8 @@
             wissen: &Wissen,
             subst: &Subst,
             against: &Value,
-        ) -> Result <Value, ErrorInCtx> {
+        ) -> Result <(Value, Subst), ErrorInCtx> {
             unimplemented! ()
-        }
-    }
-    #+end_src
-
-* Var
-
-*** Var
-
-    #+begin_src rust
-    #[derive (Clone)]
-    #[derive (Debug)]
-    #[derive (PartialEq, Eq, Hash)]
-    pub struct Var {
-        name: String,
-        id: Id,
-    }
-    #+end_src
-
-*** Var::new
-
-    #+begin_src rust
-    impl Var {
-        fn new (s: &str) -> Self {
-            Var {
-                name: s.to_string (),
-                id: Id::uuid (),
-            }
-        }
-    }
-    #+end_src
-
-*** Var::var_local
-
-    #+begin_src rust
-    impl Var {
-        fn local (s: &str, counter: usize) -> Self {
-            Var {
-                name: s.to_string (),
-                id: Id::local (counter),
-            }
-        }
-    }
-    #+end_src
-
-*** Var::to_string
-
-    #+begin_src rust
-    impl ToString for Var {
-        fn to_string (&self) -> String {
-            format! ("{}#{}", self.name, self.id.to_string ())
-        }
-    }
-    #+end_src
-
-*** Id
-
-    #+begin_src rust
-    #[derive (Clone)]
-    #[derive (PartialEq, Eq, Hash)]
-    pub enum Id {
-        Uuid (uuid::adapter::Hyphenated),
-        Local (usize),
-    }
-    #+end_src
-
-*** Id::uuid
-
-    #+begin_src rust
-    impl Id {
-        fn uuid () -> Self {
-            Id::Uuid (Uuid::new_v4 () .to_hyphenated ())
-        }
-    }
-    #+end_src
-
-*** Id::local
-
-    #+begin_src rust
-    impl Id {
-        fn local (counter: usize) -> Self {
-            Id::Local (counter)
-        }
-    }
-    #+end_src
-
-*** Id::fmt
-
-    #+begin_src rust
-    impl fmt::Debug for Id {
-        fn fmt (&self, f: &mut fmt::Formatter) -> fmt::Result {
-            match self {
-                Id::Uuid (uuid) => write! (f, "{}", uuid),
-                Id::Local (counter) => write! (f, "{}", counter),
-            }
-        }
-    }
-    #+end_src
-
-*** Id::to_string
-
-    #+begin_src rust
-    impl ToString for Id {
-        fn to_string (&self) -> String {
-            match self {
-                Id::Uuid (uuid) => format! ("{}", uuid),
-                Id::Local (counter) => format! ("{}", counter),
-            }
         }
     }
     #+end_src
@@ -442,7 +336,10 @@
     #[derive (PartialEq, Eq)]
     pub enum Value {
         Var (Var),
-        Data (String, Box <Value>, Dic <Value>),
+        TypedVar (TypedVar),
+        Disj (Disj),
+        Conj (Conj),
+        Data (Data),
         TypeOfType,
     }
     #+end_src
@@ -454,25 +351,239 @@
         fn to_string (&self) -> String {
             match self {
                 Value::Var (var) => var.to_string (),
-                Value::Data (name, ty, dic) => {
-                    if dic.is_empty () {
-                        format! (
-                            "{} : {}",
-                            name,
-                            ty.to_string ())
-                    } else {
-                        format! (
-                            "{} {{ {} }} : {}",
-                            name,
-                            dic_to_string (&dic),
-                            ty.to_string ())
-                    }
-                }
+                Value::TypedVar (typed_var) => typed_var.to_string (),
+                Value::Disj (disj) => disj.to_string (),
+                Value::Conj (conj) => conj.to_string (),
+                Value::Data (data) => data.to_string (),
                 Value::TypeOfType => format! ("type"),
             }
         }
     }
     #+end_src
+
+*** Id
+
+***** Id
+
+      #+begin_src rust
+      #[derive (Clone)]
+      #[derive (PartialEq, Eq, Hash)]
+      pub enum Id {
+          Uuid (uuid::adapter::Hyphenated),
+          Local (usize),
+      }
+      #+end_src
+
+***** Id::uuid
+
+      #+begin_src rust
+      impl Id {
+          fn uuid () -> Self {
+              Id::Uuid (Uuid::new_v4 () .to_hyphenated ())
+          }
+      }
+      #+end_src
+
+***** Id::local
+
+      #+begin_src rust
+      impl Id {
+          fn local (counter: usize) -> Self {
+              Id::Local (counter)
+          }
+      }
+      #+end_src
+
+***** Id::fmt
+
+      #+begin_src rust
+      impl fmt::Debug for Id {
+          fn fmt (&self, f: &mut fmt::Formatter) -> fmt::Result {
+              match self {
+                  Id::Uuid (uuid) => write! (f, "{}", uuid),
+                  Id::Local (counter) => write! (f, "{}", counter),
+              }
+          }
+      }
+      #+end_src
+
+***** Id::to_string
+
+      #+begin_src rust
+      impl ToString for Id {
+          fn to_string (&self) -> String {
+              match self {
+                  Id::Uuid (uuid) => format! ("{}", uuid),
+                  Id::Local (counter) => format! ("{}", counter),
+              }
+          }
+      }
+      #+end_src
+
+*** Var
+
+***** Var
+
+      #+begin_src rust
+      #[derive (Clone)]
+      #[derive (Debug)]
+      #[derive (PartialEq, Eq, Hash)]
+      pub struct Var {
+          id: Id,
+          name: String,
+      }
+      #+end_src
+
+***** Var::new
+
+      #+begin_src rust
+      impl Var {
+          fn new (s: &str) -> Self {
+              Var {
+                  id: Id::uuid (),
+                  name: s.to_string (),
+              }
+          }
+      }
+      #+end_src
+
+***** Var::local
+
+      #+begin_src rust
+      impl Var {
+          fn local (s: &str, counter: usize) -> Self {
+              Var {
+                  id: Id::local (counter),
+                  name: s.to_string (),
+              }
+          }
+      }
+      #+end_src
+
+***** Var::to_string
+
+      #+begin_src rust
+      impl ToString for Var {
+          fn to_string (&self) -> String {
+              format! (
+                  "{}#{}",
+                  self.name,
+                  self.id.to_string ())
+          }
+      }
+      #+end_src
+
+*** TypedVar
+
+***** TypedVar
+
+      #+begin_src rust
+      #[derive (Clone)]
+      #[derive (Debug)]
+      #[derive (PartialEq, Eq)]
+      pub struct TypedVar {
+          id: Id,
+          name: String,
+          ty: Box <Value>,
+      }
+      #+end_src
+
+***** TypedVar::to_string
+
+      #+begin_src rust
+      impl ToString for TypedVar {
+          fn to_string (&self) -> String {
+              format! (
+                  "{}#{} : {}",
+                  self.name,
+                  self.id.to_string (),
+                  self.ty.to_string ())
+          }
+      }
+      #+end_src
+
+*** Disj
+
+***** Disj
+
+      #+begin_src rust
+      #[derive (Clone)]
+      #[derive (Debug)]
+      #[derive (PartialEq, Eq)]
+      pub struct Disj {
+          name: String,
+          name_vec: Vec <String>,
+          body: Dic <Value>,
+      }
+      #+end_src
+
+***** Disj::to_string
+
+      #+begin_src rust
+      impl ToString for Disj {
+          fn to_string (&self) -> String {
+              format! (
+                  "{} ({}) {{ {} }}",
+                  self.name,
+                  vec_to_string (&self.name_vec, ", "),
+                  dic_to_string (&self.body))
+          }
+      }
+      #+end_src
+
+*** Conj
+
+***** Conj
+
+      #+begin_src rust
+      #[derive (Clone)]
+      #[derive (Debug)]
+      #[derive (PartialEq, Eq)]
+      pub struct Conj {
+          name: String,
+          body: Dic <Value>,
+      }
+      #+end_src
+
+***** Conj::to_string
+
+      #+begin_src rust
+      impl ToString for Conj {
+          fn to_string (&self) -> String {
+              format! (
+                  "{} {{ {} }}",
+                  self.name,
+                  dic_to_string (&self.body))
+          }
+      }
+      #+end_src
+
+*** Data
+
+***** Data
+
+      #+begin_src rust
+      #[derive (Clone)]
+      #[derive (Debug)]
+      #[derive (PartialEq, Eq)]
+      pub struct Data {
+          name: String,
+          body: Dic <Value>,
+      }
+      #+end_src
+
+***** Data::to_string
+
+      #+begin_src rust
+      impl ToString for Data {
+          fn to_string (&self) -> String {
+              format! (
+                  "{} {{ {} }}",
+                  self.name,
+                  dic_to_string (&self.body))
+          }
+      }
+      #+end_src
 
 * Subst
 
@@ -484,7 +595,8 @@
     #[derive (PartialEq, Eq)]
     pub enum Subst {
         Null,
-        Cons (Var, Value, Arc <Subst>),
+        VarBinding (Var, Value, Arc <Subst>),
+        TypedVarBinding (TypedVar, Value, Arc <Subst>),
     }
     #+end_src
 
@@ -498,30 +610,91 @@
     }
     #+end_src
 
-*** Subst::extend
+*** Subst::bind_var
 
     #+begin_src rust
     impl Subst {
-        fn extend (&self, var: Var, value: Value) -> Self {
-            Subst::Cons (var, value, Arc::new (self.clone ()))
+        fn bind_var (
+            &self,
+            var: Var,
+            value: Value,
+        ) -> Self {
+            Subst::VarBinding (
+                var,
+                value,
+                Arc::new (self.clone ()))
         }
     }
     #+end_src
 
-*** Subst::find
+*** Subst::bind_typed_var
 
     #+begin_src rust
     impl Subst {
-        pub fn find (&self, var: &Var) -> Option <&Value> {
+        fn bind_typed_var (
+            &self,
+            typed_var: TypedVar,
+            value: Value,
+        ) -> Self {
+            Subst::TypedVarBinding (
+                typed_var,
+                value,
+                Arc::new (self.clone ()))
+        }
+    }
+    #+end_src
+
+*** Subst::find_var
+
+    #+begin_src rust
+    impl Subst {
+        pub fn find_var (
+            &self,
+            var: &Var,
+        ) -> Option <&Value> {
             match self {
                 Subst::Null => None,
-                Subst::Cons (
+                Subst::VarBinding (
                     var1, value, next,
                 ) => {
                     if var1 == var {
                         Some (value)
                     } else {
-                        next.find (var)
+                        next.find_var (var)
+                    }
+                }
+                Subst::TypedVarBinding (
+                    _typed_var, _value, next,
+                ) => {
+                    next.find_var (var)
+                }
+            }
+        }
+    }
+    #+end_src
+
+*** Subst::find_typed_var
+
+    #+begin_src rust
+    impl Subst {
+        pub fn find_typed_var (
+            &self,
+            typed_var: &TypedVar,
+        ) -> Option <&Value> {
+            match self {
+                Subst::Null => None,
+                Subst::VarBinding (
+                    _var, _value, next,
+                ) => {
+                    next.find_typed_var (typed_var)
+                }
+                Subst::TypedVarBinding (
+                    typed_var1, value, next,
+                ) => {
+                    if typed_var1 == typed_var {
+                        Some (value)
+                    } else {
+                        next.find_typed_var (typed_var)
                     }
                 }
             }
@@ -536,7 +709,18 @@
         pub fn walk (&self, value: &Value) -> Value {
             match value {
                 Value::Var (var) => {
-                    if let Some (new_value) = self.find (var) {
+                    if let Some (
+                        new_value
+                    ) = self.find_var (var) {
+                        self.walk (new_value)
+                    } else {
+                        value.clone ()
+                    }
+                }
+                Value::TypedVar (typed_var) => {
+                    if let Some (
+                        new_value
+                    ) = self.find_typed_var (typed_var) {
                         self.walk (new_value)
                     } else {
                         value.clone ()
@@ -565,31 +749,46 @@
                 ) if u == v => {
                     Some (self.clone ())
                 }
+                (Value::TypedVar (u),
+                 Value::TypedVar (v),
+                ) if u == v => {
+                    Some (self.clone ())
+                }
                 (Value::Var (u), v) => {
                     if self.var_occur_p (&u, &v) {
                         None
                     } else {
-                        Some (self.extend (u, v))
+                        Some (self.bind_var (u, v))
                     }
                 }
                 (u, Value::Var (v)) => {
                     if self.var_occur_p (&v, &u) {
                         None
                     } else {
-                        Some (self.extend (v, u))
+                        Some (self.bind_var (v, u))
                     }
                 }
-                (Value::Data (u_name, u_ty, u_dic),
-                 Value::Data (v_name, v_ty, v_dic),
-                ) => {
-                    if u_name != v_name {
-                        return None;
+                (Value::TypedVar (u), v) => {
+                    if self.typed_var_occur_p (&u, &v) {
+                        None
+                    } else if self.the_p (&u.ty, &v) {
+                        None
+                    } else {
+                        Some (self.bind_typed_var (u, v))
                     }
-                    let subst = self;
-                    let subst = subst.unify (&u_ty, &v_ty)?;
-                    let subst = subst.unify_dic (&u_dic, &v_dic)?;
-                    Some (subst)
                 }
+                (u, Value::TypedVar (v)) => {
+                    if self.typed_var_occur_p (&v, &u) {
+                        None
+                    } else if self.the_p (&v.ty, &u) {
+                        None
+                    } else {
+                        Some (self.bind_typed_var (v, u))
+                    }
+                }
+                (Value::Data (u),
+                 Value::Data (v),
+                ) => self.unify_data (&u, &v),
                 (u, v) => {
                     if u == v {
                         Some (self.clone ())
@@ -601,6 +800,27 @@
         }
     }
     #+end_src
+
+*** Subst::unify_data
+
+    #+begin_src rust
+    impl Subst {
+        pub fn unify_data (
+            &self,
+            u: &Data,
+            v: &Data,
+        ) -> Option <Subst> {
+            if u.name != v.name {
+                return None;
+            }
+            self.unify_dic (&u.body, &v.body)
+        }
+    }
+    #+end_src
+
+*** [todo] Subst::unify_disj
+
+*** [todo] Subst::unify_conj
 
 *** Subst::unify_dic
 
@@ -634,7 +854,7 @@
     }
     #+end_src
 
-*** Subst::var_occur_p
+*** [todo] Subst::var_occur_p
 
     #+begin_src rust
     impl Subst {
@@ -648,11 +868,8 @@
                 Value::Var (var1) => {
                     var == &var1
                 }
-                Value::Data (_name, ty, dic) => {
-                    if self.var_occur_p (var, &ty) {
-                        return true;
-                    }
-                    for value in dic.values () {
+                Value::Data (data) => {
+                    for value in data.body.values () {
                         if self.var_occur_p (var, value) {
                             return true;
                         }
@@ -667,6 +884,46 @@
     }
     #+end_src
 
+*** [todo] Subst::typed_var_occur_p
+
+    #+begin_src rust
+    impl Subst {
+        pub fn typed_var_occur_p (
+            &self,
+            typed_var: &TypedVar,
+            value: &Value,
+        ) -> bool {
+            let value = self.walk (value);
+            match value {
+                Value::TypedVar (typed_var1) => {
+                    typed_var == &typed_var1
+                }
+                Value::Data (data) => {
+                    for value in data.body.values () {
+                        if self.typed_var_occur_p (typed_var, value) {
+                            return true;
+                        }
+                    }
+                    return false;
+                }
+                _ => {
+                    false
+                }
+            }
+        }
+    }
+    #+end_src
+
+*** [todo] Subst::the_p
+
+    #+begin_src rust
+    impl Subst {
+        pub fn the_p (&self, ty: &Value, value: &Value) -> bool {
+            true
+        }
+    }
+    #+end_src
+
 *** Subst::len
 
     #+begin_src rust
@@ -674,11 +931,22 @@
         pub fn len (&self) -> usize {
             let mut len = 0;
             let mut subst = self;
-            while let Subst::Cons (
-                _var, _value, next
-            ) = subst {
-                len += 1;
-                subst = &next;
+            loop {
+                match subst {
+                    Subst::Null => break,
+                    Subst::VarBinding (
+                        _var, _value, next
+                    ) => {
+                        len += 1;
+                        subst = &next;
+                    }
+                    Subst::TypedVarBinding (
+                        _typed_var, _value, next
+                    ) => {
+                        len += 1;
+                        subst = &next;
+                    }
+                }
             }
             len
         }
@@ -691,15 +959,29 @@
     impl ToString for Subst {
         fn to_string (&self) -> String {
             let mut s = String::new ();
-            let mut subst = self.clone ();
-            while let Subst::Cons (
-                var, value, next,
-            ) = subst {
-                s += &var.to_string ();
-                s += " = ";
-                s += &value.to_string ();
-                s += "\n";
-                subst = (*next) .clone ();
+            let mut subst = self;
+            loop {
+                match subst {
+                    Subst::Null => break,
+                    Subst::VarBinding (
+                        var, value, next
+                    ) => {
+                        s += &var.to_string ();
+                        s += " = ";
+                        s += &value.to_string ();
+                        s += "\n";
+                        subst = &next;
+                    }
+                    Subst::TypedVarBinding (
+                        typed_var, value, next
+                    ) => {
+                        s += &typed_var.to_string ();
+                        s += " = ";
+                        s += &value.to_string ();
+                        s += "\n";
+                        subst = &next;
+                    }
+                }
             }
             add_tag ("<subst>", s)
         }
@@ -749,21 +1031,35 @@
     }
     #+end_src
 
-*** Den::ty
+*** Den::prop
 
     #+begin_src rust
-    impl Den {
-        fn ty (&self) -> (Value, Subst) {
-            match self {
-                Den::Disj (name_vec, bind_vec) => {
-                    unimplemented! ()
-                }
-                Den::Conj (bind_vec) => {
-                    unimplemented! ()
-                }
-            }
-        }
-    }
+    // impl Den {
+    //     fn prop (&self) -> (Value, Subst) {
+    //         match self {
+    //             Den::Disj (name, name_vec, bind_vec) => {
+    //                 let mut subst = Subst::new ();
+    //                 for bind in bind_vec {
+
+    //                 }
+    //                 let disj = Value::Disj (Disj {
+
+    //                 });
+    //                 (disj, subst)
+    //             }
+    //             Den::Conj (name, bind_vec) => {
+    //                 let mut subst = Subst::new ();
+    //                 for bind in bind_vec {
+
+    //                 }
+    //                 let conj = Value::Conj (Conj {
+
+    //                 });
+    //                 (conj, subst)
+    //             }
+    //         }
+    //     }
+    // }
     #+end_src
 
 * Wissen
@@ -1370,7 +1666,8 @@
                 },
                 ..
             } = mexp {
-            Ok (Den::Conj (mexp_vec_to_binding_vec (body)?))
+            Ok (Den::Conj (
+                mexp_vec_to_binding_vec (body)?))
         } else {
             ErrorInCtx::new ()
                 .head ("syntex error")
@@ -1488,26 +1785,24 @@
     fn test_unify () {
         let u = Value::Var (Var::new ("u"));
         let v = Value::Var (Var::new ("v"));
-        let cons_t = Value::Var (Var::new ("cons-t"));
-        let unit_t = Value::Var (Var::new ("unit-t"));
         let subst = Subst::new () .unify (
-            &Value::Data (
-                "cons-c" .to_string (),
-                box cons_t.clone (),
-                vec! [
+            &Value::Data (Data {
+                name: "cons-c" .to_string (),
+                body: vec! [
                     ("car", u.clone ()),
                     ("cdr", v.clone ()),
-                ] .into ()),
-            &Value::Data (
-                "cons-c" .to_string (),
-                box cons_t.clone (),
-                vec! [
+                ] .into ()
+            }),
+            &Value::Data (Data {
+                name: "cons-c" .to_string (),
+                body: vec! [
                     ("car", v.clone ()),
-                    ("cdr", Value::Data (
-                        "unit-c" .to_string (),
-                        box unit_t.clone (),
-                        Dic::new ())),
-                ] .into ()))
+                    ("cdr", Value::Data (Data {
+                        name: "unit-c" .to_string (),
+                        body: Dic::new (),
+                    })),
+                ] .into ()
+            }))
             .unwrap ();
         println! ("{}", subst.to_string ());
         assert_eq! (subst.len (), 2);

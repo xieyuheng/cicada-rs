@@ -181,40 +181,33 @@ impl Term {
         wissen: &Wissen,
         subst: &Subst,
         against: &Value,
-    ) -> Result <Value, ErrorInCtx> {
+    ) -> Result <(Value, Subst), ErrorInCtx> {
         unimplemented! ()
     }
 }
 
 #[derive (Clone)]
 #[derive (Debug)]
-#[derive (PartialEq, Eq, Hash)]
-pub struct Var {
-    name: String,
-    id: Id,
+#[derive (PartialEq, Eq)]
+pub enum Value {
+    Var (Var),
+    TypedVar (TypedVar),
+    Disj (Disj),
+    Conj (Conj),
+    Data (Data),
+    TypeOfType,
 }
 
-impl Var {
-    fn new (s: &str) -> Self {
-        Var {
-            name: s.to_string (),
-            id: Id::uuid (),
-        }
-    }
-}
-
-impl Var {
-    fn local (s: &str, counter: usize) -> Self {
-        Var {
-            name: s.to_string (),
-            id: Id::local (counter),
-        }
-    }
-}
-
-impl ToString for Var {
+impl ToString for Value {
     fn to_string (&self) -> String {
-        format! ("{}#{}", self.name, self.id.to_string ())
+        match self {
+            Value::Var (var) => var.to_string (),
+            Value::TypedVar (typed_var) => typed_var.to_string (),
+            Value::Disj (disj) => disj.to_string (),
+            Value::Conj (conj) => conj.to_string (),
+            Value::Data (data) => data.to_string (),
+            Value::TypeOfType => format! ("type"),
+        }
     }
 }
 
@@ -257,33 +250,108 @@ impl ToString for Id {
 
 #[derive (Clone)]
 #[derive (Debug)]
-#[derive (PartialEq, Eq)]
-pub enum Value {
-    Var (Var),
-    Data (String, Box <Value>, Dic <Value>),
-    TypeOfType,
+#[derive (PartialEq, Eq, Hash)]
+pub struct Var {
+    id: Id,
+    name: String,
 }
 
-impl ToString for Value {
-    fn to_string (&self) -> String {
-        match self {
-            Value::Var (var) => var.to_string (),
-            Value::Data (name, ty, dic) => {
-                if dic.is_empty () {
-                    format! (
-                        "{} : {}",
-                        name,
-                        ty.to_string ())
-                } else {
-                    format! (
-                        "{} {{ {} }} : {}",
-                        name,
-                        dic_to_string (&dic),
-                        ty.to_string ())
-                }
-            }
-            Value::TypeOfType => format! ("type"),
+impl Var {
+    fn new (s: &str) -> Self {
+        Var {
+            id: Id::uuid (),
+            name: s.to_string (),
         }
+    }
+}
+
+impl Var {
+    fn local (s: &str, counter: usize) -> Self {
+        Var {
+            id: Id::local (counter),
+            name: s.to_string (),
+        }
+    }
+}
+
+impl ToString for Var {
+    fn to_string (&self) -> String {
+        format! (
+            "{}#{}",
+            self.name,
+            self.id.to_string ())
+    }
+}
+
+#[derive (Clone)]
+#[derive (Debug)]
+#[derive (PartialEq, Eq)]
+pub struct TypedVar {
+    id: Id,
+    name: String,
+    ty: Box <Value>,
+}
+
+impl ToString for TypedVar {
+    fn to_string (&self) -> String {
+        format! (
+            "{}#{} : {}",
+            self.name,
+            self.id.to_string (),
+            self.ty.to_string ())
+    }
+}
+
+#[derive (Clone)]
+#[derive (Debug)]
+#[derive (PartialEq, Eq)]
+pub struct Disj {
+    name: String,
+    name_vec: Vec <String>,
+    body: Dic <Value>,
+}
+
+impl ToString for Disj {
+    fn to_string (&self) -> String {
+        format! (
+            "{} ({}) {{ {} }}",
+            self.name,
+            vec_to_string (&self.name_vec, ", "),
+            dic_to_string (&self.body))
+    }
+}
+
+#[derive (Clone)]
+#[derive (Debug)]
+#[derive (PartialEq, Eq)]
+pub struct Conj {
+    name: String,
+    body: Dic <Value>,
+}
+
+impl ToString for Conj {
+    fn to_string (&self) -> String {
+        format! (
+            "{} {{ {} }}",
+            self.name,
+            dic_to_string (&self.body))
+    }
+}
+
+#[derive (Clone)]
+#[derive (Debug)]
+#[derive (PartialEq, Eq)]
+pub struct Data {
+    name: String,
+    body: Dic <Value>,
+}
+
+impl ToString for Data {
+    fn to_string (&self) -> String {
+        format! (
+            "{} {{ {} }}",
+            self.name,
+            dic_to_string (&self.body))
     }
 }
 
@@ -292,7 +360,8 @@ impl ToString for Value {
 #[derive (PartialEq, Eq)]
 pub enum Subst {
     Null,
-    Cons (Var, Value, Arc <Subst>),
+    VarBinding (Var, Value, Arc <Subst>),
+    TypedVarBinding (TypedVar, Value, Arc <Subst>),
 }
 
 impl Subst {
@@ -302,22 +371,75 @@ impl Subst {
 }
 
 impl Subst {
-    fn extend (&self, var: Var, value: Value) -> Self {
-        Subst::Cons (var, value, Arc::new (self.clone ()))
+    fn bind_var (
+        &self,
+        var: Var,
+        value: Value,
+    ) -> Self {
+        Subst::VarBinding (
+            var,
+            value,
+            Arc::new (self.clone ()))
     }
 }
 
 impl Subst {
-    pub fn find (&self, var: &Var) -> Option <&Value> {
+    fn bind_typed_var (
+        &self,
+        typed_var: TypedVar,
+        value: Value,
+    ) -> Self {
+        Subst::TypedVarBinding (
+            typed_var,
+            value,
+            Arc::new (self.clone ()))
+    }
+}
+
+impl Subst {
+    pub fn find_var (
+        &self,
+        var: &Var,
+    ) -> Option <&Value> {
         match self {
             Subst::Null => None,
-            Subst::Cons (
+            Subst::VarBinding (
                 var1, value, next,
             ) => {
                 if var1 == var {
                     Some (value)
                 } else {
-                    next.find (var)
+                    next.find_var (var)
+                }
+            }
+            Subst::TypedVarBinding (
+                _typed_var, _value, next,
+            ) => {
+                next.find_var (var)
+            }
+        }
+    }
+}
+
+impl Subst {
+    pub fn find_typed_var (
+        &self,
+        typed_var: &TypedVar,
+    ) -> Option <&Value> {
+        match self {
+            Subst::Null => None,
+            Subst::VarBinding (
+                _var, _value, next,
+            ) => {
+                next.find_typed_var (typed_var)
+            }
+            Subst::TypedVarBinding (
+                typed_var1, value, next,
+            ) => {
+                if typed_var1 == typed_var {
+                    Some (value)
+                } else {
+                    next.find_typed_var (typed_var)
                 }
             }
         }
@@ -328,7 +450,18 @@ impl Subst {
     pub fn walk (&self, value: &Value) -> Value {
         match value {
             Value::Var (var) => {
-                if let Some (new_value) = self.find (var) {
+                if let Some (
+                    new_value
+                ) = self.find_var (var) {
+                    self.walk (new_value)
+                } else {
+                    value.clone ()
+                }
+            }
+            Value::TypedVar (typed_var) => {
+                if let Some (
+                    new_value
+                ) = self.find_typed_var (typed_var) {
                     self.walk (new_value)
                 } else {
                     value.clone ()
@@ -353,31 +486,46 @@ impl Subst {
             ) if u == v => {
                 Some (self.clone ())
             }
+            (Value::TypedVar (u),
+             Value::TypedVar (v),
+            ) if u == v => {
+                Some (self.clone ())
+            }
             (Value::Var (u), v) => {
                 if self.var_occur_p (&u, &v) {
                     None
                 } else {
-                    Some (self.extend (u, v))
+                    Some (self.bind_var (u, v))
                 }
             }
             (u, Value::Var (v)) => {
                 if self.var_occur_p (&v, &u) {
                     None
                 } else {
-                    Some (self.extend (v, u))
+                    Some (self.bind_var (v, u))
                 }
             }
-            (Value::Data (u_name, u_ty, u_dic),
-             Value::Data (v_name, v_ty, v_dic),
-            ) => {
-                if u_name != v_name {
-                    return None;
+            (Value::TypedVar (u), v) => {
+                if self.typed_var_occur_p (&u, &v) {
+                    None
+                } else if self.the_p (&u.ty, &v) {
+                    None
+                } else {
+                    Some (self.bind_typed_var (u, v))
                 }
-                let subst = self;
-                let subst = subst.unify (&u_ty, &v_ty)?;
-                let subst = subst.unify_dic (&u_dic, &v_dic)?;
-                Some (subst)
             }
+            (u, Value::TypedVar (v)) => {
+                if self.typed_var_occur_p (&v, &u) {
+                    None
+                } else if self.the_p (&v.ty, &u) {
+                    None
+                } else {
+                    Some (self.bind_typed_var (v, u))
+                }
+            }
+            (Value::Data (u),
+             Value::Data (v),
+            ) => self.unify_data (&u, &v),
             (u, v) => {
                 if u == v {
                     Some (self.clone ())
@@ -386,6 +534,19 @@ impl Subst {
                 }
             }
         }
+    }
+}
+
+impl Subst {
+    pub fn unify_data (
+        &self,
+        u: &Data,
+        v: &Data,
+    ) -> Option <Subst> {
+        if u.name != v.name {
+            return None;
+        }
+        self.unify_dic (&u.body, &v.body)
     }
 }
 
@@ -428,11 +589,8 @@ impl Subst {
             Value::Var (var1) => {
                 var == &var1
             }
-            Value::Data (_name, ty, dic) => {
-                if self.var_occur_p (var, &ty) {
-                    return true;
-                }
-                for value in dic.values () {
+            Value::Data (data) => {
+                for value in data.body.values () {
                     if self.var_occur_p (var, value) {
                         return true;
                     }
@@ -447,14 +605,57 @@ impl Subst {
 }
 
 impl Subst {
+    pub fn typed_var_occur_p (
+        &self,
+        typed_var: &TypedVar,
+        value: &Value,
+    ) -> bool {
+        let value = self.walk (value);
+        match value {
+            Value::TypedVar (typed_var1) => {
+                typed_var == &typed_var1
+            }
+            Value::Data (data) => {
+                for value in data.body.values () {
+                    if self.typed_var_occur_p (typed_var, value) {
+                        return true;
+                    }
+                }
+                return false;
+            }
+            _ => {
+                false
+            }
+        }
+    }
+}
+
+impl Subst {
+    pub fn the_p (&self, ty: &Value, value: &Value) -> bool {
+        true
+    }
+}
+
+impl Subst {
     pub fn len (&self) -> usize {
         let mut len = 0;
         let mut subst = self;
-        while let Subst::Cons (
-            _var, _value, next
-        ) = subst {
-            len += 1;
-            subst = &next;
+        loop {
+            match subst {
+                Subst::Null => break,
+                Subst::VarBinding (
+                    _var, _value, next
+                ) => {
+                    len += 1;
+                    subst = &next;
+                }
+                Subst::TypedVarBinding (
+                    _typed_var, _value, next
+                ) => {
+                    len += 1;
+                    subst = &next;
+                }
+            }
         }
         len
     }
@@ -463,15 +664,29 @@ impl Subst {
 impl ToString for Subst {
     fn to_string (&self) -> String {
         let mut s = String::new ();
-        let mut subst = self.clone ();
-        while let Subst::Cons (
-            var, value, next,
-        ) = subst {
-            s += &var.to_string ();
-            s += " = ";
-            s += &value.to_string ();
-            s += "\n";
-            subst = (*next) .clone ();
+        let mut subst = self;
+        loop {
+            match subst {
+                Subst::Null => break,
+                Subst::VarBinding (
+                    var, value, next
+                ) => {
+                    s += &var.to_string ();
+                    s += " = ";
+                    s += &value.to_string ();
+                    s += "\n";
+                    subst = &next;
+                }
+                Subst::TypedVarBinding (
+                    typed_var, value, next
+                ) => {
+                    s += &typed_var.to_string ();
+                    s += " = ";
+                    s += &value.to_string ();
+                    s += "\n";
+                    subst = &next;
+                }
+            }
         }
         add_tag ("<subst>", s)
     }
@@ -511,13 +726,27 @@ impl ToString for Den {
 }
 
 // impl Den {
-//     fn value_type (&self) -> (ValueType, Subst) {
+//     fn prop (&self) -> (Value, Subst) {
 //         match self {
-//             Den::Disj (name_vec, bind_vec) => {
-//                 unimplemented! ()
+//             Den::Disj (name, name_vec, bind_vec) => {
+//                 let mut subst = Subst::new ();
+//                 for bind in bind_vec {
+
+//                 }
+//                 let disj = Value::Disj (Disj {
+
+//                 });
+//                 (disj, subst)
 //             }
-//             Den::Conj (bind_vec) => {
-//                 unimplemented! ()
+//             Den::Conj (name, bind_vec) => {
+//                 let mut subst = Subst::new ();
+//                 for bind in bind_vec {
+
+//                 }
+//                 let conj = Value::Conj (Conj {
+
+//                 });
+//                 (conj, subst)
 //             }
 //         }
 //     }
@@ -996,7 +1225,8 @@ fn mexp_to_conj_den <'a> (
             },
             ..
         } = mexp {
-        Ok (Den::Conj (mexp_vec_to_binding_vec (body)?))
+        Ok (Den::Conj (
+            mexp_vec_to_binding_vec (body)?))
     } else {
         ErrorInCtx::new ()
             .head ("syntex error")
@@ -1082,26 +1312,24 @@ const PRELUDE: &'static str =
 fn test_unify () {
     let u = Value::Var (Var::new ("u"));
     let v = Value::Var (Var::new ("v"));
-    let cons_t = Value::Var (Var::new ("cons-t"));
-    let unit_t = Value::Var (Var::new ("unit-t"));
     let subst = Subst::new () .unify (
-        &Value::Data (
-            "cons-c" .to_string (),
-            box cons_t.clone (),
-            vec! [
+        &Value::Data (Data {
+            name: "cons-c" .to_string (),
+            body: vec! [
                 ("car", u.clone ()),
                 ("cdr", v.clone ()),
-            ] .into ()),
-        &Value::Data (
-            "cons-c" .to_string (),
-            box cons_t.clone (),
-            vec! [
+            ] .into ()
+        }),
+        &Value::Data (Data {
+            name: "cons-c" .to_string (),
+            body: vec! [
                 ("car", v.clone ()),
-                ("cdr", Value::Data (
-                    "unit-c" .to_string (),
-                    box unit_t.clone (),
-                    Dic::new ())),
-            ] .into ()))
+                ("cdr", Value::Data (Data {
+                    name: "unit-c" .to_string (),
+                    body: Dic::new (),
+                })),
+            ] .into ()
+        }))
         .unwrap ();
     println! ("{}", subst.to_string ());
     assert_eq! (subst.len (), 2);
