@@ -122,6 +122,42 @@ impl ToString for Term {
     }
 }
 
+impl Term {
+    pub fn value (
+        &self,
+        wissen: &Wissen,
+        subst: &mut Subst,
+        body: &Dic <Value>,
+        var_dic: &mut Dic <Value>,
+    ) -> Result <Value, ErrorInCtx> {
+        match self {
+            Term::Var (_span, name) => {
+                if let Some (value) = var_dic.get (name) {
+                    Ok (value.clone ())
+                } else {
+                    let new_var = Value::Var (Var::new (name));
+                    var_dic.ins (name, Some (new_var.clone ()));
+                    Ok (new_var)
+                }
+            }
+            Term::Cons (_span, name, arg) => {
+                unimplemented! ()
+            }
+            Term::Prop (_span, name, arg) => {
+                let (value, subst) = wissen.get_prop (name) .unwrap ();
+                unimplemented! ()
+            }
+            Term::FieldRef (_span, name) => {
+                let value = body.get (name) .unwrap ();
+                Ok (value.clone ())
+            }
+            Term::TypeOfType (_span) => {
+                Ok (Value::TypeOfType)
+            }
+        }
+    }
+}
+
 #[derive (Clone)]
 #[derive (Debug)]
 #[derive (PartialEq, Eq)]
@@ -134,7 +170,7 @@ impl Arg {
     fn is_empty (&self) -> bool {
         match self {
             Arg::Vec (term_vec) => term_vec.is_empty (),
-            Arg::Rec (bind_vec) => bind_vec.is_empty (),
+            Arg::Rec (binding_vec) => binding_vec.is_empty (),
         }
     }
 }
@@ -143,12 +179,14 @@ impl ToString for Arg {
     fn to_string (&self) -> String {
         match self {
             Arg::Vec (term_vec) => {
-                format! ("({})",
-                         vec_to_string (term_vec, " "))
+                format! (
+                    "({})",
+                    vec_to_string (term_vec, " "))
             }
-            Arg::Rec (bind_vec) => {
-                format! ("{{ {} }}",
-                         vec_to_string (bind_vec, ", "))
+            Arg::Rec (binding_vec) => {
+                format! (
+                    "{{ {} }}",
+                    vec_to_string (binding_vec, ", "))
             }
         }
     }
@@ -175,14 +213,40 @@ impl ToString for Binding {
     }
 }
 
-impl Term {
-    pub fn value (
+impl Binding {
+    fn bind (
         &self,
         wissen: &Wissen,
-        subst: &Subst,
-        against: &Value,
-    ) -> Result <(Value, Subst), ErrorInCtx> {
-        unimplemented! ()
+        subst: &mut Subst,
+        body: &mut Dic <Value>,
+        var_dic: &mut Dic <Value>,
+    ) -> Option <()> {
+        match self {
+            Binding::EqualTo (name, term) => {
+                unimplemented! ()
+            }
+            Binding::Inhabit (name, term) => {
+                let value = term.value (
+                    wissen, subst, body, var_dic,
+                ) .unwrap ();
+                let typed_var = Value::TypedVar (TypedVar {
+                    id: Id::uuid (),
+                    name: name.to_string (),
+                    ty: box value,
+                });
+                if let Some (
+                    old_value
+                ) = body.get (name) {
+                    *subst = subst.append (
+                        subst.unify (
+                            &old_value, &typed_var)?);
+                } else {
+                    var_dic.ins (name, Some (typed_var.clone ()));
+                    body.ins (name, Some (typed_var));
+                }
+                Some (())
+            }
+        }
     }
 }
 
@@ -506,6 +570,7 @@ impl Subst {
                 }
             }
             (Value::TypedVar (u), v) => {
+                // should be more then just
                 if self.typed_var_occur_p (&u, &v) {
                     None
                 } else if self.the_p (&u.ty, &v) {
@@ -525,7 +590,15 @@ impl Subst {
             }
             (Value::Data (u),
              Value::Data (v),
-            ) => self.unify_data (&u, &v),
+            ) => {
+                if u.name != v.name {
+                    return None;
+                }
+                self.unify_dic (&u.body, &v.body)
+            }
+            // ><><><
+            // Value::Disj
+            // Value::Conj
             (u, v) => {
                 if u == v {
                     Some (self.clone ())
@@ -534,19 +607,6 @@ impl Subst {
                 }
             }
         }
-    }
-}
-
-impl Subst {
-    pub fn unify_data (
-        &self,
-        u: &Data,
-        v: &Data,
-    ) -> Option <Subst> {
-        if u.name != v.name {
-            return None;
-        }
-        self.unify_dic (&u.body, &v.body)
     }
 }
 
@@ -661,6 +721,26 @@ impl Subst {
     }
 }
 
+impl Subst {
+    pub fn append (&self, subst: Subst) -> Subst {
+        match self {
+            Subst::Null => { subst }
+            Subst::VarBinding (var, value, next) => {
+                Subst::VarBinding (
+                    var.clone (),
+                    value.clone (),
+                    Arc::new (next.append (subst)))
+            }
+            Subst::TypedVarBinding (typed_var, value, next) => {
+                Subst::TypedVarBinding (
+                    typed_var.clone (),
+                    value.clone (),
+                    Arc::new (next.append (subst)))
+            }
+        }
+    }
+}
+
 impl ToString for Subst {
     fn to_string (&self) -> String {
         let mut s = String::new ();
@@ -703,54 +783,30 @@ pub enum Den {
 impl ToString for Den {
     fn to_string (&self) -> String {
         match self {
-            Den::Disj (name_vec, bind_vec) => {
-                if bind_vec.is_empty () {
-                    format! ("disj ({}) {{}}",
-                             vec_to_string (name_vec, " "))
+            Den::Disj (name_vec, binding_vec) => {
+                if binding_vec.is_empty () {
+                    format! (
+                        "disj ({}) {{}}",
+                        vec_to_string (name_vec, " "))
                 } else {
-                    format! ("disj ({}) {{ {} }}",
-                             vec_to_string (name_vec, " "),
-                             vec_to_string (bind_vec, ", "))
+                    format! (
+                        "disj ({}) {{ {} }}",
+                        vec_to_string (name_vec, " "),
+                        vec_to_string (binding_vec, ", "))
                 }
             }
-            Den::Conj (bind_vec) => {
-                if bind_vec.is_empty () {
+            Den::Conj (binding_vec) => {
+                if binding_vec.is_empty () {
                     format! ("conj {{}}")
                 } else {
-                    format! ("conj {{ {} }}",
-                             vec_to_string (bind_vec, ", "))
+                    format! (
+                        "conj {{ {} }}",
+                        vec_to_string (binding_vec, ", "))
                 }
             }
         }
     }
 }
-
-// impl Den {
-//     fn prop (&self) -> (Value, Subst) {
-//         match self {
-//             Den::Disj (name, name_vec, bind_vec) => {
-//                 let mut subst = Subst::new ();
-//                 for bind in bind_vec {
-
-//                 }
-//                 let disj = Value::Disj (Disj {
-
-//                 });
-//                 (disj, subst)
-//             }
-//             Den::Conj (name, bind_vec) => {
-//                 let mut subst = Subst::new ();
-//                 for bind in bind_vec {
-
-//                 }
-//                 let conj = Value::Conj (Conj {
-
-//                 });
-//                 (conj, subst)
-//             }
-//         }
-//     }
-// }
 
 #[derive (Clone)]
 #[derive (Debug)]
@@ -800,6 +856,49 @@ impl ToString for Wissen {
     }
 }
 
+impl Wissen {
+    fn get_prop (
+        &self,
+        name: &str,
+    ) -> Option <(Value, Subst)> {
+        let den = self.den_dic.get (name) .unwrap ();
+        let mut subst = Subst::new ();
+        let mut body = Dic::new ();
+        let mut var_dic = Dic::new ();
+        match den {
+            Den::Disj (name_vec, binding_vec) => {
+                for binding in binding_vec {
+                    binding.bind (
+                        self,
+                        &mut subst,
+                        &mut body,
+                        &mut var_dic)?;
+                }
+                let disj = Value::Disj (Disj {
+                    name: name.to_string (),
+                    name_vec: name_vec.clone (),
+                    body,
+                });
+                Some ((disj, subst))
+            }
+            Den::Conj (binding_vec) => {
+                for binding in binding_vec {
+                    binding.bind (
+                        self,
+                        &mut subst,
+                        &mut body,
+                        &mut var_dic)?;
+                }
+                let conj = Value::Conj (Conj {
+                    name: name.to_string (),
+                    body,
+                });
+                Some ((conj, subst))
+            }
+        }
+    }
+}
+
 #[derive (Clone)]
 #[derive (Debug)]
 #[derive (PartialEq, Eq)]
@@ -834,8 +933,7 @@ fn note_about_grammar () -> ErrorMsg {
 }
 
 fn var_symbol_p (symbol: &str) -> bool {
-    (symbol.len () == 1 ||
-     symbol.starts_with (":"))
+    symbol.starts_with (":")
 }
 
 fn cons_name_symbol_p (symbol: &str) -> bool {
