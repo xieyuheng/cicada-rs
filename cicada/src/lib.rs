@@ -123,12 +123,33 @@ impl ToString for Term {
 }
 
 impl Term {
+    fn span (&self) -> Span {
+        match self {
+            Term::Var (span, _name) => {
+                span.clone ()
+            }
+            Term::Cons (span, _name, _arg) |
+            Term::Prop (span, _name, _arg) => {
+                span.clone ()
+            }
+            Term::FieldRef (span, _name) => {
+                span.clone ()
+            }
+            Term::TypeOfType (span) => {
+                span.clone ()
+            }
+        }
+    }
+}
+
+impl Term {
     pub fn value (
         &self,
         wissen: &Wissen,
         subst: &mut Subst,
         body: &Dic <Value>,
         var_dic: &mut Dic <Value>,
+        against: Option <&Value>,
     ) -> Result <Value, ErrorInCtx> {
         match self {
             Term::Var (_span, name) => {
@@ -140,12 +161,69 @@ impl Term {
                     Ok (new_var)
                 }
             }
-            Term::Cons (_span, name, arg) => {
-                unimplemented! ()
+            Term::Cons (span, name, arg) => {
+                let (data, s) = wissen.get_new_data (name)?;
+                *subst = subst.append (s);
+                if let Some (old_value) = against {
+                    if let Some (
+                        s
+                    ) = subst.unify (&old_value, &data) {
+                        *subst = subst.append (s);
+                        value_dic_merge_arg (
+                            data.value_dic () .unwrap (), arg,
+                            wissen, subst, body, var_dic)?;
+                        Ok (data)
+                    } else {
+                        return ErrorInCtx::new ()
+                            .head ("Term::value")
+                            .line ("on Term::Cons")
+                            .line ("unification fail")
+                            .line (&format! (
+                                "old_value = {}",
+                                old_value.to_string ()))
+                            .line (&format! (
+                                "data = {}",
+                                data.to_string ()))
+                            .span (span.clone ())
+                            .wrap_in_err ()
+                    }
+                } else {
+                    return ErrorInCtx::new ()
+                        .head ("Term::value")
+                        .line ("on Term::Cons")
+                        .line (&format! ("name = {}", name))
+                        .line ("no against")
+                        .span (span.clone ())
+                        .wrap_in_err ()
+                }
             }
-            Term::Prop (_span, name, arg) => {
-                let (value, subst) = wissen.get_prop (name) .unwrap ();
-                unimplemented! ()
+            Term::Prop (span, name, arg) => {
+                let (prop, s) = wissen.get_prop (name)?;
+                *subst = subst.append (s);
+                if let Some (old_value) = against {
+                    if let Some (
+                        s
+                    ) = subst.unify (&old_value, &prop) {
+                        *subst = subst.append (s);
+                    } else {
+                        return ErrorInCtx::new ()
+                            .head ("Term::value")
+                            .line ("on Term::Prop")
+                            .line ("unification fail")
+                            .line (&format! (
+                                "old_value = {}",
+                                old_value.to_string ()))
+                            .line (&format! (
+                                "prop = {}",
+                                prop.to_string ()))
+                            .span (span.clone ())
+                            .wrap_in_err ()
+                    }
+                }
+                value_dic_merge_arg (
+                    prop.value_dic () .unwrap (), arg,
+                    wissen, subst, body, var_dic)?;
+                Ok (prop)
             }
             Term::FieldRef (_span, name) => {
                 let value = body.get (name) .unwrap ();
@@ -156,6 +234,73 @@ impl Term {
             }
         }
     }
+}
+
+fn value_dic_merge_arg (
+    value_dic: &Dic <Value>,
+    arg: &Arg,
+    wissen: &Wissen,
+    subst: &mut Subst,
+    body: &Dic <Value>,
+    var_dic: &mut Dic <Value>,
+) -> Result <(), ErrorInCtx> {
+    match arg {
+        Arg::Vec (term_vec) => {
+            for term in term_vec {
+                let old_value = value_dic_next_value (
+                    value_dic,
+                    subst.clone ());
+                let value = term.value (
+                    wissen, subst, body, var_dic,
+                    Some (&old_value))?;
+            }
+            Ok (())
+        }
+        Arg::Rec (binding_vec) => {
+            for binding in binding_vec {
+                match binding {
+                    Binding::EqualTo (name, term) => {
+                        if let Some (
+                            old_value
+                        ) = value_dic.get (name) {
+                            let value = term.value (
+                                wissen, subst, body, var_dic,
+                                Some (old_value))?;
+                        } else {
+                            return ErrorInCtx::new ()
+                                .head ("value_dic_merge_arg")
+                                .line ("on Binding::EqualTo")
+                                .line (&format! ("name = {}", name))
+                                .span (term.span ())
+                                .wrap_in_err ()
+                        }
+                    }
+                    Binding::Inhabit (name, term) => {
+                        return ErrorInCtx::new ()
+                            .head ("value_dic_merge_arg")
+                            .line ("on Binding::Inhabit")
+                            .line (&format! ("name = {}", name))
+                            .span (term.span ())
+                            .wrap_in_err ()
+                    }
+                }
+            }
+            Ok (())
+        }
+    }
+}
+
+fn value_dic_next_value (
+    value_dic: &Dic <Value>,
+    subst: Subst,
+) -> Value {
+    for value in value_dic.values () {
+        let value = subst.walk (value);
+        if let Value::TypedVar (_) = value {
+            return value;
+        }
+    }
+    panic! ("value_dic_next_value")
 }
 
 #[derive (Clone)]
@@ -220,34 +365,50 @@ impl Binding {
         subst: &mut Subst,
         body: &mut Dic <Value>,
         var_dic: &mut Dic <Value>,
-    ) -> Option <()> {
+    ) -> Result <(), ErrorInCtx> {
         match self {
             Binding::EqualTo (name, term) => {
-                unimplemented! ()
+                let old_value = body.get (name) .unwrap ();
+                let _value = term.value (
+                    wissen, subst, body, var_dic,
+                    Some (old_value))?;
+                Ok (())
             }
             Binding::Inhabit (name, term) => {
                 let value = term.value (
                     wissen, subst, body, var_dic,
-                ) .unwrap ();
-                let typed_var = Value::TypedVar (TypedVar {
-                    id: Id::uuid (),
-                    name: name.to_string (),
-                    ty: box value,
-                });
+                    None)?;
+                let typed_var = new_typed_var (name, &value);
                 if let Some (
                     old_value
                 ) = body.get (name) {
-                    *subst = subst.append (
-                        subst.unify (
-                            &old_value, &typed_var)?);
+                    if let Some (
+                        new_subst
+                    ) = subst.unify (&old_value, &typed_var) {
+                        *subst = subst.append (new_subst);
+                    } else {
+                        return ErrorInCtx::new ()
+                            .head ("Binding::bind")
+                            .line ("on Binding::Inhabit")
+                            .span (term.span ())
+                            .wrap_in_err ()
+                    }
                 } else {
                     var_dic.ins (name, Some (typed_var.clone ()));
                     body.ins (name, Some (typed_var));
                 }
-                Some (())
+                Ok (())
             }
         }
     }
+}
+
+fn new_typed_var (name: &str, value: &Value) -> Value {
+    Value::TypedVar (TypedVar {
+        id: Id::uuid (),
+        name: name.to_string (),
+        ty: box value.clone (),
+    })
 }
 
 #[derive (Clone)]
@@ -271,6 +432,17 @@ impl ToString for Value {
             Value::Conj (conj) => conj.to_string (),
             Value::Data (data) => data.to_string (),
             Value::TypeOfType => format! ("type"),
+        }
+    }
+}
+
+impl Value {
+    fn value_dic (&self) -> Option <&Dic <Value>> {
+        match self {
+            Value::Disj (disj) => Some (&disj.body),
+            Value::Conj (conj) => Some (&conj.body),
+            Value::Data (data) => Some (&data.body),
+            _ => None,
         }
     }
 }
@@ -306,8 +478,14 @@ impl fmt::Debug for Id {
 impl ToString for Id {
     fn to_string (&self) -> String {
         match self {
-            Id::Uuid (uuid) => format! ("{}", uuid),
-            Id::Local (counter) => format! ("{}", counter),
+            Id::Uuid (uuid) => {
+                // uuid.to_string ()
+                let s = uuid.to_string ();
+                format! ("{}", &s[0 .. 3])
+            }
+            Id::Local (counter) => {
+                format! ("{}", counter)
+            }
         }
     }
 }
@@ -377,11 +555,18 @@ pub struct Disj {
 
 impl ToString for Disj {
     fn to_string (&self) -> String {
-        format! (
-            "{} ({}) {{ {} }}",
-            self.name,
-            vec_to_string (&self.name_vec, ", "),
-            dic_to_string (&self.body))
+        if self.body.is_empty () {
+            format! (
+                "{} ({}) {{}}",
+                self.name,
+                vec_to_string (&self.name_vec, ", "))
+        } else {
+            format! (
+                "{} ({}) {{ {} }}",
+                self.name,
+                vec_to_string (&self.name_vec, ", "),
+                dic_to_string (&self.body))
+        }
     }
 }
 
@@ -395,10 +580,16 @@ pub struct Conj {
 
 impl ToString for Conj {
     fn to_string (&self) -> String {
-        format! (
-            "{} {{ {} }}",
-            self.name,
-            dic_to_string (&self.body))
+        if self.body.is_empty () {
+            format! (
+                "{} {{}}",
+                self.name)
+        } else {
+            format! (
+                "{} {{ {} }}",
+                self.name,
+                dic_to_string (&self.body))
+        }
     }
 }
 
@@ -570,22 +761,25 @@ impl Subst {
                 }
             }
             (Value::TypedVar (u), v) => {
-                // should be more then just
                 if self.typed_var_occur_p (&u, &v) {
                     None
-                } else if self.the_p (&u.ty, &v) {
-                    None
+                } else if let Some (
+                    subst
+                ) = self.unify_type_to_value (&u.ty, &v) {
+                    Some (subst.bind_typed_var (u, v))
                 } else {
-                    Some (self.bind_typed_var (u, v))
+                    None
                 }
             }
             (u, Value::TypedVar (v)) => {
                 if self.typed_var_occur_p (&v, &u) {
                     None
-                } else if self.the_p (&v.ty, &u) {
-                    None
+                } else if let Some (
+                    subst
+                ) = self.unify_type_to_value (&v.ty, &u) {
+                    Some (subst.bind_typed_var (v, u))
                 } else {
-                    Some (self.bind_typed_var (v, u))
+                    None
                 }
             }
             (Value::Data (u),
@@ -597,8 +791,13 @@ impl Subst {
                 self.unify_dic (&u.body, &v.body)
             }
             // ><><><
-            // Value::Disj
-            // Value::Conj
+            // Value::Disj Value::Disj
+            // ><><><
+            // Value::Conj Value::Conj
+            // ><><><
+            // Value::Conj Value::Disj
+            // ><><><
+            // Value::Disj Value::Conj
             (u, v) => {
                 if u == v {
                     Some (self.clone ())
@@ -607,6 +806,75 @@ impl Subst {
                 }
             }
         }
+    }
+}
+
+impl Subst {
+    pub fn unify_type_to_value (
+        &self,
+        t: &Value,
+        v: &Value,
+    ) -> Option <Subst> {
+        let t = self.walk (t);
+        let v = self.walk (v);
+        match (t, v) {
+            (Value::Conj (conj), Value::Data (data)) => {
+                let prop_name = cons_name_to_prop_name (
+                    &data.name);
+                if conj.name != prop_name {
+                    None
+                } else {
+                    self.cover_dic (
+                        &data.body,
+                        &conj.body)
+                }
+            }
+            (Value::Disj (disj), Value::Data (data)) => {
+                let prop_name = cons_name_to_prop_name (
+                    &data.name);
+                let name_set: HashSet <String> = disj.name_vec
+                    .clone ()
+                    .into_iter ()
+                    .collect ();
+                if name_set.contains (&prop_name) {
+                    self.cover_dic (
+                        &data.body,
+                        &disj.body)
+                } else {
+                    None
+                }
+            }
+            (Value::TypeOfType, Value::Disj (..)) => {
+                Some (self.clone ())
+            }
+            (Value::TypeOfType, Value::Conj (..)) => {
+                Some (self.clone ())
+            }
+            (t, Value::TypedVar (v)) => {
+                self.unify (&t, &v.ty)
+            }
+            _ => {
+                None
+            }
+        }
+    }
+}
+
+impl Subst {
+    pub fn cover_dic (
+        &self,
+        large_dic: &Dic <Value>,
+        small_dic: &Dic <Value>,
+    ) -> Option <Subst> {
+        let mut subst = self.clone ();
+        for (name, v) in small_dic.iter () {
+            if let Some (v1) = large_dic.get (name) {
+                subst.unify (v1, v)?;
+            } else {
+                return None;
+            }
+        }
+        Some (subst)
     }
 }
 
@@ -687,12 +955,6 @@ impl Subst {
                 false
             }
         }
-    }
-}
-
-impl Subst {
-    pub fn the_p (&self, ty: &Value, value: &Value) -> bool {
-        true
     }
 }
 
@@ -860,43 +1122,68 @@ impl Wissen {
     fn get_prop (
         &self,
         name: &str,
-    ) -> Option <(Value, Subst)> {
+    ) -> Result <(Value, Subst), ErrorInCtx> {
         let den = self.den_dic.get (name) .unwrap ();
-        let mut subst = Subst::new ();
-        let mut body = Dic::new ();
-        let mut var_dic = Dic::new ();
         match den {
             Den::Disj (name_vec, binding_vec) => {
-                for binding in binding_vec {
-                    binding.bind (
-                        self,
-                        &mut subst,
-                        &mut body,
-                        &mut var_dic)?;
-                }
+                let (body, subst) = new_value_dic (
+                    self, binding_vec)?;
                 let disj = Value::Disj (Disj {
                     name: name.to_string (),
                     name_vec: name_vec.clone (),
                     body,
                 });
-                Some ((disj, subst))
+                Ok ((disj, subst))
             }
             Den::Conj (binding_vec) => {
-                for binding in binding_vec {
-                    binding.bind (
-                        self,
-                        &mut subst,
-                        &mut body,
-                        &mut var_dic)?;
-                }
+                let (body, subst) = new_value_dic (
+                    self, binding_vec)?;
                 let conj = Value::Conj (Conj {
                     name: name.to_string (),
                     body,
                 });
-                Some ((conj, subst))
+                Ok ((conj, subst))
             }
         }
     }
+}
+
+fn cons_name_to_prop_name (cons_name: &str) -> String {
+    let base_name = &cons_name[.. cons_name.len () - 2];
+    format! ("{}-t", base_name)
+}
+
+impl Wissen {
+    fn get_new_data (
+        &self,
+        name: &str,
+    ) -> Result <(Value, Subst), ErrorInCtx> {
+        let prop_name = &cons_name_to_prop_name (name);
+        let (prop, subst) = self.get_prop (prop_name)?;
+        let value_dic = prop.value_dic () .unwrap ();
+        let data = Value::Data (Data {
+            name: name.to_string (),
+            body: value_dic.clone (),
+        });
+        Ok ((data, subst))
+    }
+}
+
+fn new_value_dic (
+    wissen: &Wissen,
+    binding_vec: &Vec <Binding>,
+) -> Result <(Dic <Value>, Subst), ErrorInCtx> {
+    let mut subst = Subst::new ();
+    let mut body = Dic::new ();
+    let mut var_dic = Dic::new ();
+    for binding in binding_vec {
+        binding.bind (
+            wissen,
+            &mut subst,
+            &mut body,
+            &mut var_dic)?;
+    }
+    Ok ((body, subst))
 }
 
 #[derive (Clone)]
@@ -1437,14 +1724,25 @@ fn test_unify () {
 fn test_wis () {
     let mut wissen = Wissen::new ();
     let input = PRELUDE;
+    let ctx = ErrorCtx::new () .body (input);
     match wissen.wis (input) {
         Ok (mut output_vec) => {
             println! ("{}", wissen.to_string ());
         }
         Err (error) => {
-            let ctx = ErrorCtx::new ()
-                .body (input);
-            error.report (ctx);
+            error.report (ctx.clone ());
+        }
+    }
+    for name in wissen.den_dic.keys () {
+        match wissen.get_prop (name) {
+            Ok ((prop, subst)) => {
+                println! ("- prop = {}", prop.to_string ());
+                println! ("- subst = {}", subst.to_string ());
+            }
+            Err (error) => {
+                println! ("- fail on name = {}", name);
+                error.report (ctx.clone ());
+            }
         }
     }
 }
