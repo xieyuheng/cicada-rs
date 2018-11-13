@@ -1,4 +1,4 @@
-# Cicada Language
+# cicada
 
 [![Build Status](https://travis-ci.com/xieyuheng/cicada.svg?branch=master)](https://travis-ci.com/xieyuheng/cicada)
 

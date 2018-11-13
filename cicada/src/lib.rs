@@ -81,7 +81,7 @@ fn add_tag (tag: &str, input: String) -> String {
     let end = &tag[1 .. tag.len () - 1];
     let end = format! ("</{}>", end);
     if input.is_empty () {
-        format! ("{}{}", start, end)
+        format! ("{}{}\n", start, end)
     } else {
         format! ("{}\n{}{}\n", start, input, end)
     }
@@ -603,10 +603,16 @@ pub struct Data {
 
 impl ToString for Data {
     fn to_string (&self) -> String {
-        format! (
-            "{} {{ {} }}",
-            self.name,
-            dic_to_string (&self.body))
+        if self.body.is_empty () {
+            format! (
+                "{} {{}}",
+                self.name)
+        } else {
+            format! (
+                "{} {{ {} }}",
+                self.name,
+                dic_to_string (&self.body))
+        }
     }
 }
 
@@ -1736,8 +1742,10 @@ fn test_wis () {
     for name in wissen.den_dic.keys () {
         match wissen.get_prop (name) {
             Ok ((prop, subst)) => {
-                println! ("- prop = {}", prop.to_string ());
-                println! ("- subst = {}", subst.to_string ());
+                println! (
+                    "<prop>\n{}\n</prop>",
+                    prop.to_string ());
+                println! ("{}", subst.to_string ());
             }
             Err (error) => {
                 println! ("- fail on name = {}", name);
