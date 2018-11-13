@@ -71,7 +71,7 @@ fn main () -> io::Result <()> {
                 let ctx = ErrorCtx::new ()
                     .source (path_str)
                     .body (&input);
-                error.report (ctx);
+                error.print (ctx);
                 std::process::exit (1);
             }
         } else {

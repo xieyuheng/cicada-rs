@@ -66,7 +66,7 @@ impl ErrorMsg {
 }
 
 impl ErrorMsg {
-    pub fn report (&self) {
+    pub fn print (&self) {
         if let Some (head) = &self.head {
             eprintln! ("- {}", head);
         } else {
@@ -77,6 +77,21 @@ impl ErrorMsg {
         }
     }
 }
+
+// impl ErrorMsg {
+//     pub fn report (&self) -> ErrorReport {
+//         let mut s = String::new ();
+//         if let Some (head) = &self.head {
+//             s += &format! ("- {}", head);
+//         } else {
+//             s += &format! ("-");
+//         }
+//         for line in &self.line_vec {
+//             s += &format! ("  {}", line);
+//         }
+//         s
+//     }
+// }
 
 #[derive (Clone)]
 #[derive (Debug)]
@@ -144,24 +159,24 @@ impl ErrorInCtx {
 }
 
 impl <'a> ErrorInCtx {
-    pub fn report (&self, ctx: ErrorCtx <'a>) {
+    pub fn print (&self, ctx: ErrorCtx <'a>) {
         fn print_key (key: &str, color: Color) {
             eprint! ("- {} ", Style::new ()
                      .fg (color)
                      .paint (key));
         }
         print_key ("error", Color::Red);
-        self.msg.report ();
+        self.msg.print ();
         for info in &self.info_vec {
             print_key ("info", Color::Purple);
-            info.report ();
+            info.print ();
         }
         if let Some (span) = &self.span {
-            ctx.report (span.clone ());
+            ctx.print (span.clone ());
         }
         for note in &self.note_vec {
             print_key ("note", Color::Cyan);
-            note.report ();
+            note.print ();
         }
         eprintln! ("");
     }
@@ -205,7 +220,7 @@ impl <'a> ErrorCtx <'a> {
 }
 
 impl <'a> ErrorCtx <'a> {
-    pub fn report (&self, span: Span) {
+    pub fn print (&self, span: Span) {
         let key = Style::new ()
             .fg (Color::Blue)
             .paint ("context");
@@ -325,7 +340,7 @@ cons-t = data {
 ";
 
 #[test]
-fn test_report () {
+fn test_print () {
     let input = EXAMPLE_INPUT;
     let error = ErrorInCtx::new ()
         .head ("no worry")
@@ -341,7 +356,7 @@ fn test_report () {
                .line ("下雨要打伞 雷欧"))
         .note (ErrorMsg::new ()
                .line ("不知道的奥秘万万千千 智慧简单又不简单"));
-    error.report (ErrorCtx::new ()
-                  .source ("fn test_report")
-                  .body (input));
+    error.print (ErrorCtx::new ()
+                 .source ("fn test_print")
+                 .body (input));
 }

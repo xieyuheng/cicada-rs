@@ -1577,7 +1577,7 @@ fn test_mexp () -> Result <(), ErrorInCtx> {
         Err (error) => {
             let ctx = ErrorCtx::new ()
                 .body (input);
-            error.report (ctx);
+            error.print (ctx);
         }
     }
     Ok (())

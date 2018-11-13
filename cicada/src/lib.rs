@@ -1736,7 +1736,7 @@ fn test_wis () {
             println! ("{}", wissen.to_string ());
         }
         Err (error) => {
-            error.report (ctx.clone ());
+            error.print (ctx.clone ());
         }
     }
     for name in wissen.den_dic.keys () {
@@ -1749,7 +1749,7 @@ fn test_wis () {
             }
             Err (error) => {
                 println! ("- fail on name = {}", name);
-                error.report (ctx.clone ());
+                error.print (ctx.clone ());
             }
         }
     }

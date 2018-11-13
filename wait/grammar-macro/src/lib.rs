@@ -223,7 +223,7 @@ pub fn grammar (input: TokenStream) -> TokenStream {
     match grammar_fun (input) {
         Ok (output) => output,
         Err (error) => {
-            error.report ();
+            error.print ();
             panic! ("grammar macro fail");
         }
     }

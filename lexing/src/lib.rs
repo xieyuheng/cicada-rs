@@ -423,9 +423,9 @@ fn test_error () -> Result<(), ErrorInCtx> {
                 .note (ErrorMsg::new ()
                        .head ("no worry")
                        .line ("this is just a testing error"))
-                .report (ErrorCtx::new ()
-                         .source ("in function test_error")
-                         .body (input));
+                .print (ErrorCtx::new ()
+                        .source ("in function test_error")
+                        .body (input));
             true
         } else {
             false

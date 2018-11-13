@@ -436,7 +436,7 @@ fn test_str_to_exp_vec () {
             }
         }
         Err (error) => {
-            error.report (
+            error.print (
                 ErrorCtx::new ()
                     .body (input))
         }
@@ -461,7 +461,7 @@ fn test_env_eval () {
                         println! ("> {:?}\n{:?}", exp, val);
                     }
                     Err (error) => {
-                        error.report (
+                        error.print (
                             ErrorCtx::new ()
                                 .body (input))
                     }
@@ -469,7 +469,7 @@ fn test_env_eval () {
             }
         }
         Err (error) => {
-            error.report (
+            error.print (
                 ErrorCtx::new ()
                     .body (input))
         }

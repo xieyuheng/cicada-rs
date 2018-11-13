@@ -28,11 +28,10 @@ pub fn wis (input: &str) -> String {
             s
         }
         Err (error) => {
-            // let ctx = ErrorCtx::new ()
-            //     .source (path_str)
-            //     .body (&input);
-            // error.report (ctx);
             "<error>".to_string ()
+            // error.report (ErrorCtx::new ()
+            //              .source (path_str)
+            //              .body (&input)) .to_string ()
         }
     }
 }
