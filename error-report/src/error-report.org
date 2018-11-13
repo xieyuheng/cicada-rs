@@ -1,6 +1,6 @@
 #+property: tangle lib.rs
 #+title: error report
-- ErrorReport & ErrorInCtx::report
+- fix report_line -- maybe use extra ^^^^^^ line
 * prolog
 
 *** feature
@@ -127,23 +127,23 @@
     }
     #+end_src
 
-*** [todo] ErrorMsg::report
+*** ErrorMsg::report
 
     #+begin_src rust
-    // impl ErrorMsg {
-    //     pub fn report (&self) -> ErrorReport {
-    //         let mut s = String::new ();
-    //         if let Some (head) = &self.head {
-    //             s += &format! ("- {}", head);
-    //         } else {
-    //             s += &format! ("-");
-    //         }
-    //         for line in &self.line_vec {
-    //             s += &format! ("  {}", line);
-    //         }
-    //         s
-    //     }
-    // }
+    impl ErrorMsg {
+        pub fn report (&self) -> String {
+            let mut s = String::new ();
+            if let Some (head) = &self.head {
+                s += &format! ("- {}\n", head);
+            } else {
+                s += &format! ("-\n");
+            }
+            for line in &self.line_vec {
+                s += &format! ("  {}\n", line);
+            }
+            s
+        }
+    }
     #+end_src
 
 * ErrorInCtx
@@ -273,6 +273,34 @@
     }
     #+end_src
 
+*** ErrorInCtx::report
+
+    #+begin_src rust
+    impl <'a> ErrorInCtx {
+        pub fn report (&self, ctx: ErrorCtx <'a>) -> String {
+            let mut s = String::new ();
+            fn report_key (key: &str) -> String {
+                format! ("- {} ", key)
+            }
+            s += &report_key ("error");
+            s += &self.msg.report ();
+            for info in &self.info_vec {
+                s += &report_key ("info");
+                s += &info.report ();
+            }
+            if let Some (span) = &self.span {
+                s += &ctx.report (span.clone ());
+            }
+            for note in &self.note_vec {
+                s += &report_key ("note");
+                s += &note.report ();
+            }
+            s += "\n";
+            s
+        }
+    }
+    #+end_src
+
 *** ErrorInCtx::wrap_in_err
 
     #+begin_src rust
@@ -361,6 +389,107 @@
     }
     #+end_src
 
+*** print_line
+
+    #+begin_src rust
+    fn print_line (
+        n: usize,
+        width: usize,
+        line: &str,
+        span: Option <Span>,
+    ) {
+        print_line_number_prefix (n, width);
+        if let Some (span) = span {
+            let lo = span.lo;
+            let hi = span.hi;
+            let mid = &line [lo .. hi];
+            let mid = Style::new () .reverse () .paint (mid);
+            eprintln! ("{}{}{}",
+                       &line [.. lo],
+                       mid,
+                       &line [hi ..],);
+        } else {
+            eprintln! ("{}", line);
+        }
+    }
+    #+end_src
+
+*** print_line_number_prefix
+
+    #+begin_src rust
+    fn print_line_number_prefix (n: usize, width: usize) {
+        let prefix = format! ("  {:w$} | ", n, w = width);
+        let prefix = Style::new ()
+            .fg (Color::Blue)
+            .paint (prefix);
+        eprint! ("{}", prefix);
+    }
+    #+end_src
+
+*** ErrorCtx::report
+
+    #+begin_src rust
+    impl <'a> ErrorCtx <'a> {
+        pub fn report (&self, span: Span) -> String {
+            let mut s = String::new ();
+            let key = "context";
+            let source = if let Some (source) = &self.source {
+                source.to_string ()
+            } else {
+                String::new ()
+            };
+            s += &format! ("- {} - {}\n", key, source);
+            if let Some (body) = &self.body {
+                let line_vec: Vec <&str> = body.lines () .collect ();
+                let len = line_vec.len ();
+                let width = format! ("{}", len) .len ();
+                let fringe = 3;
+                let focus = self.focus (line_vec, span, fringe);
+                for (i, line, span) in focus {
+                    let n = i + 1;
+                    s += &report_line (n, width, line, span);
+                }
+            }
+            s
+        }
+    }
+    #+end_src
+
+*** report_line
+
+    #+begin_src rust
+    fn report_line (
+        n: usize,
+        width: usize,
+        line: &str,
+        span: Option <Span>,
+    ) -> String {
+        let mut s = String::new ();
+        s += &report_line_number_prefix (n, width);
+        if let Some (span) = span {
+            let lo = span.lo;
+            let hi = span.hi;
+            let mid = &line [lo .. hi];
+            // let mid = Style::new () .reverse () .paint (mid);
+            s += &format! ("{}{}{}\n",
+                          &line [.. lo],
+                          mid,
+                          &line [hi ..],);
+        } else {
+            s += &format! ("{}\n", line);
+        }
+        s
+    }
+    #+end_src
+
+*** report_line_number_prefix
+
+    #+begin_src rust
+    fn report_line_number_prefix (n: usize, width: usize) -> String {
+        format! ("  {:w$} | ", n, w = width)
+    }
+    #+end_src
+
 *** ErrorCtx::focus
 
     #+begin_src rust
@@ -408,43 +537,6 @@
             }
             focus
         }
-    }
-    #+end_src
-
-*** print_line
-
-    #+begin_src rust
-    fn print_line (
-        n: usize,
-        width: usize,
-        line: &str,
-        span: Option <Span>,
-    ) {
-        print_line_number_prefix (n, width);
-        if let Some (span) = span {
-            let lo = span.lo;
-            let hi = span.hi;
-            let mid = &line [lo .. hi];
-            let mid = Style::new () .reverse () .paint (mid);
-            eprintln! ("{}{}{}",
-                       &line [.. lo],
-                       mid,
-                       &line [hi ..],);
-        } else {
-            eprintln! ("{}", line);
-        }
-    }
-    #+end_src
-
-*** print_line_number_prefix
-
-    #+begin_src rust
-    fn print_line_number_prefix (n: usize, width: usize) {
-        let prefix = format! ("  {:w$} | ", n, w = width);
-        let prefix = Style::new ()
-            .fg (Color::Blue)
-            .paint (prefix);
-        eprint! ("{}", prefix);
     }
     #+end_src
 

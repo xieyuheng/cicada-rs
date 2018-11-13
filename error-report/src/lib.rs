@@ -78,20 +78,20 @@ impl ErrorMsg {
     }
 }
 
-// impl ErrorMsg {
-//     pub fn report (&self) -> ErrorReport {
-//         let mut s = String::new ();
-//         if let Some (head) = &self.head {
-//             s += &format! ("- {}", head);
-//         } else {
-//             s += &format! ("-");
-//         }
-//         for line in &self.line_vec {
-//             s += &format! ("  {}", line);
-//         }
-//         s
-//     }
-// }
+impl ErrorMsg {
+    pub fn report (&self) -> String {
+        let mut s = String::new ();
+        if let Some (head) = &self.head {
+            s += &format! ("- {}\n", head);
+        } else {
+            s += &format! ("-\n");
+        }
+        for line in &self.line_vec {
+            s += &format! ("  {}\n", line);
+        }
+        s
+    }
+}
 
 #[derive (Clone)]
 #[derive (Debug)]
@@ -182,6 +182,30 @@ impl <'a> ErrorInCtx {
     }
 }
 
+impl <'a> ErrorInCtx {
+    pub fn report (&self, ctx: ErrorCtx <'a>) -> String {
+        let mut s = String::new ();
+        fn report_key (key: &str) -> String {
+            format! ("- {} ", key)
+        }
+        s += &report_key ("error");
+        s += &self.msg.report ();
+        for info in &self.info_vec {
+            s += &report_key ("info");
+            s += &info.report ();
+        }
+        if let Some (span) = &self.span {
+            s += &ctx.report (span.clone ());
+        }
+        for note in &self.note_vec {
+            s += &report_key ("note");
+            s += &note.report ();
+        }
+        s += "\n";
+        s
+    }
+}
+
 impl ErrorInCtx {
     pub fn wrap_in_err <T> (self) -> Result <T, Self> {
         Err (self)
@@ -244,6 +268,87 @@ impl <'a> ErrorCtx <'a> {
     }
 }
 
+fn print_line (
+    n: usize,
+    width: usize,
+    line: &str,
+    span: Option <Span>,
+) {
+    print_line_number_prefix (n, width);
+    if let Some (span) = span {
+        let lo = span.lo;
+        let hi = span.hi;
+        let mid = &line [lo .. hi];
+        let mid = Style::new () .reverse () .paint (mid);
+        eprintln! ("{}{}{}",
+                   &line [.. lo],
+                   mid,
+                   &line [hi ..],);
+    } else {
+        eprintln! ("{}", line);
+    }
+}
+
+fn print_line_number_prefix (n: usize, width: usize) {
+    let prefix = format! ("  {:w$} | ", n, w = width);
+    let prefix = Style::new ()
+        .fg (Color::Blue)
+        .paint (prefix);
+    eprint! ("{}", prefix);
+}
+
+impl <'a> ErrorCtx <'a> {
+    pub fn report (&self, span: Span) -> String {
+        let mut s = String::new ();
+        let key = "context";
+        let source = if let Some (source) = &self.source {
+            source.to_string ()
+        } else {
+            String::new ()
+        };
+        s += &format! ("- {} - {}\n", key, source);
+        if let Some (body) = &self.body {
+            let line_vec: Vec <&str> = body.lines () .collect ();
+            let len = line_vec.len ();
+            let width = format! ("{}", len) .len ();
+            let fringe = 3;
+            let focus = self.focus (line_vec, span, fringe);
+            for (i, line, span) in focus {
+                let n = i + 1;
+                s += &report_line (n, width, line, span);
+            }
+        }
+        s
+    }
+}
+
+fn report_line (
+    n: usize,
+    width: usize,
+    line: &str,
+    span: Option <Span>,
+) -> String {
+    let mut s = String::new ();
+    s += &report_line_number_prefix (n, width);
+    if let Some (span) = span {
+        let lo = span.lo;
+        let hi = span.hi;
+        let mid = &line [lo .. hi];
+        // let mid = Style::new () .reverse () .paint (mid);
+        s += &format! ("{}{}{}\n",
+                      &line [.. lo],
+                      mid,
+                      &line [hi ..],);
+    } else {
+        s += &format! ("{}\n", line);
+    }
+    s
+}
+
+fn report_line_number_prefix (n: usize, width: usize) -> String {
+    format! ("  {:w$} | ", n, w = width)
+}
+
 type Focus <'a> = VecDeque <(usize, &'a str, Option <Span>)>;
 
 impl <'a> ErrorCtx <'a> {
@@ -288,35 +393,6 @@ impl <'a> ErrorCtx <'a> {
         }
         focus
     }
-}
-
-fn print_line (
-    n: usize,
-    width: usize,
-    line: &str,
-    span: Option <Span>,
-) {
-    print_line_number_prefix (n, width);
-    if let Some (span) = span {
-        let lo = span.lo;
-        let hi = span.hi;
-        let mid = &line [lo .. hi];
-        let mid = Style::new () .reverse () .paint (mid);
-        eprintln! ("{}{}{}",
-                   &line [.. lo],
-                   mid,
-                   &line [hi ..],);
-    } else {
-        eprintln! ("{}", line);
-    }
-}
-
-fn print_line_number_prefix (n: usize, width: usize) {
-    let prefix = format! ("  {:w$} | ", n, w = width);
-    let prefix = Style::new ()
-        .fg (Color::Blue)
-        .paint (prefix);
-    eprint! ("{}", prefix);
 }
 
 #[cfg (test)]

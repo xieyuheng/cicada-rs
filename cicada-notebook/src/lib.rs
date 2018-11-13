@@ -28,10 +28,8 @@ pub fn wis (input: &str) -> String {
             s
         }
         Err (error) => {
-            "<error>".to_string ()
-            // error.report (ErrorCtx::new ()
-            //              .source (path_str)
-            //              .body (&input)) .to_string ()
+            error.report (ErrorCtx::new ()
+                          .body (&input))
         }
     }
 }

@@ -1,6 +1,6 @@
 #+property: tangle lib.rs
 #+title: cicada notebook
-- with error_report
+
 * prolog
 
 *** feature
@@ -44,10 +44,8 @@
               s
           }
           Err (error) => {
-              "<error>".to_string ()
-              // error.report (ErrorCtx::new ()
-              //              .source (path_str)
-              //              .body (&input)) .to_string ()
+              error.report (ErrorCtx::new ()
+                            .body (&input))
           }
       }
   }
