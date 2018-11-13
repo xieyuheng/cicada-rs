@@ -5,13 +5,17 @@ build () {
     wasm-bindgen ../../target/wasm32-unknown-unknown/debug/cicada_notebook.wasm --out-dir .
 }
 
+update () {
+    cargo update
+    npm install
+}
+
 serve () {
     npx webpack-dev-server
 }
 
-update () {
-    cargo update
-    npm install
+dist () {
+    npx webpack
 }
 
 main () {
