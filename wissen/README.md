@@ -7,6 +7,4 @@ Wissen is an un-typed logic programming language
 
 ## Getting start
 
-With *nightly* rust toolchain :
-
-`cargo install wis --git https://github.com/xieyuheng/cicada`
+`cargo +nightly install wis --git https://github.com/xieyuheng/cicada`
