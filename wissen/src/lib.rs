@@ -825,32 +825,6 @@ impl ToString for WissenOutput {
 #[derive (Clone)]
 #[derive (Debug)]
 #[derive (PartialEq, Eq)]
-pub struct DeductionTree {
-    // there are no position for Disj in the DeductionTree
-    //   because Disj is not constructive -- sort of ~
-    conj_name: String,
-    arity: usize,
-    body: Vec <DeductionTree>,
-}
-
-impl DeductionTree {
-    fn full_p (&self) -> bool {
-        self.body.len () == self.arity
-    }
-}
-
-impl ToString for DeductionTree {
-    fn to_string (&self) -> String {
-        format! (
-            "{} {{ {} }}",
-            self.conj_name,
-            vec_to_string (&self.body, " "))
-    }
-}
-
-#[derive (Clone)]
-#[derive (Debug)]
-#[derive (PartialEq, Eq)]
 pub enum Statement {
     Den (String, Den),
     Query (usize, Vec <Prop>),
@@ -879,8 +853,7 @@ impl <'a> Proving <'a> {
                             deduction_tree,
                         });
                     } else {
-                        eprintln! ("next_qed");
-                        panic! ("!!!!!!!!!!!!!!!!!!!!!!!!!");
+                        panic! ("Proving::next_qed");
                     }
                 }
                 ProofStep::MoreTodo (proof_queue) => {
@@ -1052,6 +1025,32 @@ pub enum ProofStep <'a> {
     Finished,
     MoreTodo (VecDeque <Proof <'a>>),
     Fail,
+}
+
+#[derive (Clone)]
+#[derive (Debug)]
+#[derive (PartialEq, Eq)]
+pub struct DeductionTree {
+    // there are no position for Disj in the DeductionTree
+    //   because Disj is not constructive -- sort of ~
+    conj_name: String,
+    arity: usize,
+    body: Vec <DeductionTree>,
+}
+
+impl DeductionTree {
+    fn full_p (&self) -> bool {
+        self.body.len () == self.arity
+    }
+}
+
+impl ToString for DeductionTree {
+    fn to_string (&self) -> String {
+        format! (
+            "{} {{ {} }}",
+            self.conj_name,
+            vec_to_string (&self.body, " "))
+    }
 }
 
 #[derive (Clone)]

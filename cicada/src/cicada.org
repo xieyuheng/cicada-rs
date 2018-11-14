@@ -1,12 +1,8 @@
 #+property: tangle lib.rs
 #+title: cicada
-- the soundness of Subst::unify need to be proved
-- Wissen::type_check -- by Term::value and Subst::unify
-- new DeductionTree
 - Proof::step
-- how to change two mutual recursive functions
-  to one (non-mutual) recursive function ?
-  - << the seasoned schemer >>
+- Wissen::type_check -- by Term::value and Subst::unify
+- the soundness of Subst::unify need to be proved
 * [note]
 
 *** semantic
@@ -1427,7 +1423,7 @@
     }
     #+end_src
 
-*** [todo] Wissen::wis
+*** Wissen::wis
 
     #+begin_src rust
     impl Wissen {
@@ -1446,7 +1442,17 @@
                 }
             }
             let mut output_vec = Vec::new ();
-            // ><><><
+            for statement in &statement_vec {
+                if let Statement::Prove (
+                    counter, binding_vec
+                ) = statement {
+                    let mut proving = self.proving (binding_vec);
+                    let qed_vec = proving.take_qed (*counter);
+                    output_vec.push (WissenOutput {
+                        qed_vec,
+                    });
+                }
+            }
             Ok (output_vec)
         }
     }
@@ -1546,18 +1552,47 @@
     }
     #+end_src
 
-*** [todo] WissenOutput
+*** Wissen::proving
+
+    #+begin_src rust
+    impl Wissen {
+        pub fn proving <'a> (
+            &'a self,
+            binding_vec: &Vec <Binding>,
+        ) -> Proving <'a> {
+            let (value_dic, subst) = new_value_dic (
+                self, binding_vec) .unwrap ();
+            let root_data = Data {
+                name: "root-c".to_string (),
+                body: value_dic,
+            };
+            let proof = Proof {
+                wissen: self,
+                subst: subst,
+                stack: vec! [ ("root".to_string (), root_data) ],
+                binding_queue: binding_vec .clone () .into (),
+            };
+            Proving {
+                proof_queue: vec! [proof] .into (),
+            }
+        }
+    }
+    #+end_src
+
+*** WissenOutput
 
     #+begin_src rust
     #[derive (Clone)]
     #[derive (Debug)]
     #[derive (PartialEq, Eq)]
-    pub struct WissenOutput;
+    pub struct WissenOutput {
+        qed_vec: Vec <Qed>,
+    }
     #+end_src
 
-* Statement
+*** [todo] WissenOutput::to_string
 
-*** [todo] Statement
+*** Statement
 
     #+begin_src rust
     #[derive (Clone)]
@@ -1565,23 +1600,104 @@
     #[derive (PartialEq, Eq)]
     pub enum Statement {
         Den (String, Den),
-        PlaceHolder,
-        // Query (usize, Vec <Prop>),
-        // Prove (usize, Vec <Prop>),
+        Prove (usize, Vec <Binding>),
     }
     #+end_src
 
 * Proving
 
-*** [todo] Proving
+*** Proving
+
+    #+begin_src rust
+    #[derive (Clone)]
+    #[derive (Debug)]
+    #[derive (PartialEq, Eq)]
+    pub struct Proving <'a> {
+        proof_queue: VecDeque <Proof <'a>>,
+    }
+    #+end_src
+
+*** [todo] Proving::next_qed
+
+    #+begin_src rust
+    impl <'a> Proving <'a> {
+        pub fn next_qed (&mut self) -> Option <Qed> {
+            while let Some (
+                mut proof
+            ) = self.proof_queue.pop_front () {
+                unimplemented! ()
+                // match proof.step () {
+                //     ProofStep::Finished => {
+                //         if let Some (
+                //             deduction_tree
+                //         ) = proof.tree_stack.pop () {
+                //             return Some (Qed {
+                //                 subst: proof.subst,
+                //                 deduction_tree,
+                //             });
+                //         } else {
+                //             panic! ("Proving::next_qed");
+                //         }
+                //     }
+                //     ProofStep::MoreTodo (proof_queue) => {
+                //         for proof in proof_queue {
+                //             //// about searching
+                //             // push back  |   depth first
+                //             // push front | breadth first
+                //             self.proof_queue.push_back (proof);
+                //         }
+                //     }
+                //     ProofStep::Fail => {}
+                // }
+            }
+            return None;
+        }
+    }
+    #+end_src
+
+*** Proving::take_qed
+
+    #+begin_src rust
+    impl <'a> Proving <'a> {
+        pub fn take_qed (&mut self, n: usize) -> Vec <Qed> {
+            let mut vec = Vec::new ();
+            for _ in 0..n {
+                if let Some (qed) = self.next_qed () {
+                    vec.push (qed)
+                }
+            }
+            vec
+        }
+    }
+    #+end_src
 
 * Proof
 
-*** [todo] Proof
+*** Proof
 
-* Qed
+    #+begin_src rust
+    #[derive (Clone)]
+    #[derive (Debug)]
+    #[derive (PartialEq, Eq)]
+    pub struct Proof <'a> {
+        wissen: &'a Wissen,
+        subst: Subst,
+        stack: Vec <(String, Data)>,
+        binding_queue: VecDeque <Binding>,
+    }
+    #+end_src
 
-*** [todo] Qed
+*** Qed
+
+    #+begin_src rust
+    #[derive (Clone)]
+    #[derive (Debug)]
+    #[derive (PartialEq, Eq)]
+    pub struct Qed {
+        subst: Subst,
+        body: Dic <Value>,
+    }
+    #+end_src
 
 * syntax
 
@@ -1590,6 +1706,7 @@
     #+begin_src rust
     const GRAMMAR: &'static str = r#"
     Statement::Den = { prop-name? "=" Den }
+    Statement::Prove = { "prove" '(' num? ')' Arg::Rec }
     Den::Disj = { "disj" '(' list (prop-name?) ')' Arg::Rec }
     Den::Conj = { "conj" Arg::Rec }
     Term::Var = { var-name? }
@@ -2140,15 +2257,71 @@
     }
     #+end_src
 
-*** [todo] mexp_to_statement
+*** mexp_to_prove_statement
+
+    #+begin_src rust
+    fn mexp_to_prove_statement <'a> (
+        mexp: &Mexp <'a>,
+    ) -> Result <Statement, ErrorInCtx> {
+        if let Mexp::Apply {
+            head: box Mexp::Apply {
+                head: box Mexp::Sym {
+                    symbol: "prove",
+                    ..
+                },
+                arg: MexpArg::Tuple {
+                    body: body1,
+                    ..
+                },
+                ..
+            },
+            arg: MexpArg::Block {
+                body: body2,
+                ..
+            },
+            ..
+        } = mexp {
+            if let [
+                Mexp::Sym { symbol, .. }
+            ] = &body1 [..] {
+                let result = symbol.parse::<usize> ();
+                if result.is_err () {
+                    return ErrorInCtx::new ()
+                        .line ("fail to parse usize num in `prove`")
+                        .line (&format! ("symbol = {}", symbol))
+                        .span (mexp.span ())
+                        .note (note_about_grammar ())
+                        .wrap_in_err ();
+                }
+                Ok (Statement::Prove (
+                    result.unwrap (),
+                    mexp_vec_to_binding_vec (body2)?))
+            } else {
+                ErrorInCtx::new ()
+                    .line ("fail to parse prop's first arg")
+                    .span (mexp.span ())
+                    .note (note_about_grammar ())
+                    .wrap_in_err ()
+            }
+        } else {
+            ErrorInCtx::new ()
+                .head ("syntex error")
+                .span (mexp.span ())
+                .note (note_about_grammar ())
+                .wrap_in_err ()
+        }
+    }
+
+    #+end_src
+
+*** mexp_to_statement
 
     #+begin_src rust
     fn mexp_to_statement <'a> (
         mexp: &Mexp <'a>,
     ) -> Result <Statement, ErrorInCtx> {
         mexp_to_den_statement (mexp)
-            // .or (mexp_to_prop_statement (mexp))
-            // .or (mexp_to_prove_statement (mexp))
+            .or (mexp_to_prove_statement (mexp))
     }
     #+end_src
 

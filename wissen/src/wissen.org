@@ -1071,48 +1071,6 @@
     }
     #+end_src
 
-* DeductionTree
-
-*** DeductionTree
-
-    #+begin_src rust
-    #[derive (Clone)]
-    #[derive (Debug)]
-    #[derive (PartialEq, Eq)]
-    pub struct DeductionTree {
-        // there are no position for Disj in the DeductionTree
-        //   because Disj is not constructive -- sort of ~
-        conj_name: String,
-        arity: usize,
-        body: Vec <DeductionTree>,
-    }
-    #+end_src
-
-*** DeductionTree::full_p
-
-    #+begin_src rust
-    impl DeductionTree {
-        fn full_p (&self) -> bool {
-            self.body.len () == self.arity
-        }
-    }
-    #+end_src
-
-*** DeductionTree::to_string
-
-    #+begin_src rust
-    impl ToString for DeductionTree {
-        fn to_string (&self) -> String {
-            format! (
-                "{} {{ {} }}",
-                self.conj_name,
-                vec_to_string (&self.body, " "))
-        }
-    }
-    #+end_src
-
-* Statement
-
 *** Statement
 
     #+begin_src rust
@@ -1157,8 +1115,7 @@
                                 deduction_tree,
                             });
                         } else {
-                            eprintln! ("next_qed");
-                            panic! ("!!!!!!!!!!!!!!!!!!!!!!!!!");
+                            panic! ("Proving::next_qed");
                         }
                     }
                     ProofStep::MoreTodo (proof_queue) => {
@@ -1367,7 +1324,43 @@
     }
     #+end_src
 
-* Qed
+*** DeductionTree
+
+    #+begin_src rust
+    #[derive (Clone)]
+    #[derive (Debug)]
+    #[derive (PartialEq, Eq)]
+    pub struct DeductionTree {
+        // there are no position for Disj in the DeductionTree
+        //   because Disj is not constructive -- sort of ~
+        conj_name: String,
+        arity: usize,
+        body: Vec <DeductionTree>,
+    }
+    #+end_src
+
+*** DeductionTree::full_p
+
+    #+begin_src rust
+    impl DeductionTree {
+        fn full_p (&self) -> bool {
+            self.body.len () == self.arity
+        }
+    }
+    #+end_src
+
+*** DeductionTree::to_string
+
+    #+begin_src rust
+    impl ToString for DeductionTree {
+        fn to_string (&self) -> String {
+            format! (
+                "{} {{ {} }}",
+                self.conj_name,
+                vec_to_string (&self.body, " "))
+        }
+    }
+    #+end_src
 
 *** Qed
 
