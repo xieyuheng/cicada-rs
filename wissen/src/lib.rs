@@ -632,7 +632,7 @@ impl Wissen {
         let proof = Proof {
             wissen: self,
             tree_stack: vec! [DeductionTree {
-               conj_name: "PROOF".to_string (),
+               conj_name: "root".to_string (),
                arity: prop_vec.len (),
                body: Vec::new (),
             }],
@@ -772,23 +772,22 @@ impl ToString for WissenOutput {
                 subst_vec,
             } => {
                 let mut s = String::new ();
-                s += "<prop-output>\n";
-                s += &vec_to_lines (&prop_vec);
-                s += "- expecting ";
-                s += &counter.to_string ();
-                s += " results\n";
+                s += "<query-output>\n";
+                s += "\n";
                 let var_set = collect_var_from_prop_vec (
                     prop_vec);
                 for subst in subst_vec {
+                    s += "<subst>\n";
                     for var in &var_set {
                         s += &var.to_string ();
                         s += " = ";
                         s += &subst.reify_var (var) .to_string ();
                         s += "\n";
                     }
+                    s += "</subst>\n";
                     s += "\n";
                 }
-                s += "</prop-output>";
+                s += "</query-output>";
                 s
             }
             WissenOutput::Prove {
@@ -798,10 +797,7 @@ impl ToString for WissenOutput {
             } => {
                 let mut s = String::new ();
                 s += "<prove-output>\n";
-                s += &vec_to_lines (&prop_vec);
-                s += "- expecting ";
-                s += &counter.to_string ();
-                s += " results\n";
+                s += "\n";
                 let var_set = collect_var_from_prop_vec (
                     prop_vec);
                 for qed in qed_vec {
@@ -809,12 +805,14 @@ impl ToString for WissenOutput {
                     s += &qed.deduction_tree.to_string ();
                     s += "\n";
                     s += "</deduction-tree>\n";
+                    s += "<subst>\n";
                     for var in &var_set {
                         s += &var.to_string ();
                         s += " = ";
                         s += &qed.subst.reify_var (var) .to_string ();
                         s += "\n";
                     }
+                    s += "</subst>\n";
                     s += "\n";
                 }
                 s += "</prove-output>";

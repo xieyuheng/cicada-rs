@@ -1,11 +1,32 @@
 <html>
   <head>
-    <title>cicada notebook</title>
+    <title>cicada-notebook</title>
     <link rel="stylesheet" href="io.css" />
     <script defer src="main.js"></script>
   </head>
   <body>
-    <textarea id="input_buffer">input-buffer</textarea>
-    <textarea id="output_buffer">output-buffer</textarea>
+      <p>The example language is <a href="https://github.com/xieyuheng/cicada/tree/master/wissen">Wissen</a>. Press F2 to run.</p>
+      <textarea id="input_buffer">
+list-append-t = disj (
+    zero-append-t
+    succ-append-t
+)
+
+zero-append-t = conj (null-c succ succ) {}
+
+succ-append-t = conj (
+    cons-c (car cdr)
+    succ
+    cons-c (car o-cdr)
+) {
+    list-append-t (cdr succ o-cdr)
+}
+
+prove (5) {
+    list-append-t (x y cons-c (null-c cons-c (null-c cons-c (null-c))))
+}
+      </textarea>
+      <textarea id="output_buffer">// output
+      </textarea>
   </body>
 </html>
