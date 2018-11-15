@@ -1515,8 +1515,14 @@ impl ToString for Qed {
     fn to_string (&self) -> String {
         let mut s = String::new ();
         s += "<qed>\n";
+        //         s += &Mexp::prettify (
+        //             &dic_to_lines (
+        //                 &self.subst.deep_walk_dic (
+        //                     &self.body)))
+        //             .unwrap ();
         s += &dic_to_lines (
-            &self.subst.deep_walk_dic (&self.body));
+            &self.subst.deep_walk_dic (
+                &self.body));
         // s += &self.subst.to_string ();
         s += "</qed>\n";
         s

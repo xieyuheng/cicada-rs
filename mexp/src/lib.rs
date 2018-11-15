@@ -487,6 +487,7 @@ impl <'a> Mexp <'a> {
         let mut output = String::new ();
         for mexp in mexp_vec {
             output += &mexp.to_pretty_string ();
+            output += "\n";
         }
         Ok (output)
     }
