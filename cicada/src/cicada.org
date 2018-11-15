@@ -1,6 +1,5 @@
 #+property: tangle lib.rs
 #+title: cicada
-- cic
 - Wissen::type_check -- by Term::value and Subst::unify
 * [note]
 
@@ -1944,14 +1943,11 @@
         fn to_string (&self) -> String {
             let mut s = String::new ();
             s += "<qed>\n";
-            //         s += &Mexp::prettify (
-            //             &dic_to_lines (
-            //                 &self.subst.deep_walk_dic (
-            //                     &self.body)))
-            //             .unwrap ();
-            s += &dic_to_lines (
-                &self.subst.deep_walk_dic (
-                    &self.body));
+            s += &Mexp::prettify (
+                &dic_to_lines (
+                    &self.subst.deep_walk_dic (
+                        &self.body)))
+                .unwrap ();
             // s += &self.subst.to_string ();
             s += "</qed>\n";
             s

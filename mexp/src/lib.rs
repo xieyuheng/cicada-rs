@@ -332,7 +332,7 @@ impl <'a> Mexp <'a> {
     }
 }
 
-const INDENT_UNIT: usize = 2;
+const INDENT_UNIT: usize = 4;
 
 fn indent (level: usize) -> String {
    let space = " ";
