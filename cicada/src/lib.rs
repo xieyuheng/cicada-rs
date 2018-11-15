@@ -870,13 +870,13 @@ impl Subst {
                 let name_set: HashSet <String> = disj.name_vec
                     .clone ()
                     .into_iter ()
-                    .collect ();                
+                    .collect ();
                 if ! name_set.contains (&conj.name) {
                     return None;
                 }
                 self.cover_dic (
                     &conj.body,
-                    &disj.body)                
+                    &disj.body)
             }
             (u, v) => {
                 if u == v {
@@ -1111,6 +1111,63 @@ impl ToString for Subst {
             }
         }
         add_tag ("<subst>", s)
+    }
+}
+
+impl Subst {
+    pub fn deep_walk (&self, value: &Value) -> Value {
+        let value = self.walk (value);
+        match value {
+            Value::Var (_) => value,
+            Value::TypedVar (tv) => {
+                Value::TypedVar (TypedVar {
+                    ty: box self.deep_walk (&tv.ty),
+                    ..tv
+                })
+            }
+            Value::Disj (disj) => {
+                Value::Disj (Disj {
+                    body: self.deep_walk_dic (&disj.body),
+                    ..disj
+                })
+            }
+            Value::Conj (conj) => {
+                Value::Conj (Conj {
+                    body: self.deep_walk_dic (&conj.body),
+                    ..conj
+                })
+            }
+            Value::Data (data) => {
+                Value::Data (Data {
+                    body: self.deep_walk_dic (&data.body),
+                    ..data
+                })
+            }
+            Value::TypeOfType => Value::TypeOfType,
+        }
+    }
+}
+
+impl Subst {
+    fn deep_walk_dic (
+        &self,
+        old_dic: &Dic <Value>,
+    ) -> Dic <Value> {
+        let mut new_dic = Dic::new ();
+        for (name, value) in old_dic.iter () {
+            new_dic.ins (name, Some (self.deep_walk (value)));
+        }
+        new_dic
+    }
+}
+
+impl Subst {
+    pub fn reify (&self, value: &Value) -> Value {
+        // let value = self.deep_walk (&value);
+        // let new_subst = Subst::new ();
+        // let local_subst = new_subst.localize_by_value (&value);
+        // local_subst.deep_walk (&value)
+        self.deep_walk (&value)
     }
 }
 
@@ -1458,12 +1515,13 @@ impl ToString for Qed {
     fn to_string (&self) -> String {
         let mut s = String::new ();
         s += "<qed>\n";
-        s += &dic_to_lines (&self.body);
-        s += &self.subst.to_string ();
+        s += &dic_to_lines (
+            &self.subst.deep_walk_dic (&self.body));
+        // s += &self.subst.to_string ();
         s += "</qed>\n";
         s
     }
-}    
+}
 
 const GRAMMAR: &'static str = r#"
 Statement::Den = { prop-name? "=" Den }
@@ -2056,7 +2114,7 @@ fn test_wissen_get_prop () {
             //         "<prop>\n{}\n</prop>",
             //         prop.to_string ());
             //     println! ("{}", subst.to_string ());
-            // }            
+            // }
             Err (error) => {
                 println! ("- fail on name = {}", name);
                 error.print (ctx.clone ());
@@ -2075,7 +2133,7 @@ fn test_wissen_output () {
         Ok (output_vec) => {
             for output in output_vec {
                 println! ("{}", output.to_string ());
-            } 
+            }
         }
         Err (error) => {
             error.print (ctx.clone ());

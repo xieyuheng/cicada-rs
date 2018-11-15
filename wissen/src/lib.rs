@@ -371,7 +371,7 @@ impl ToString for Subst {
 }
 
 impl Subst {
-    pub fn apply (&self, term: &Term) -> Term {
+    pub fn deep_walk (&self, term: &Term) -> Term {
         let term = self.walk (term);
         match term {
             Term::Var (_) => term,
@@ -380,7 +380,7 @@ impl Subst {
                 body,
             }) => {
                 let body = body.iter ()
-                    .map (|x| self.apply (x))
+                    .map (|x| self.deep_walk (x))
                     .collect ();
                 Term::Cons (Cons {
                     head,
@@ -418,10 +418,10 @@ impl Subst {
 impl Subst {
     pub fn reify_var (&self, var: &Var) -> Term {
         let term = Term::Var (var.clone ());
-        let term = self.apply (&term);
+        let term = self.deep_walk (&term);
         let new_subst = Subst::new ();
         let local_subst = new_subst.localize_by_term (&term);
-        local_subst.apply (&term)
+        local_subst.deep_walk (&term)
     }
 }
 
