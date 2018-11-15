@@ -687,7 +687,6 @@ impl Wissen {
                 let mut proving = self.proving (prop_vec);
                 let subst_vec = proving.take_subst (*counter);
                 output_vec.push (WissenOutput::Query {
-                    counter: *counter,
                     prop_vec: prop_vec.clone (),
                     subst_vec,
                 });
@@ -698,7 +697,6 @@ impl Wissen {
                 let mut proving = self.proving (prop_vec);
                 let qed_vec = proving.take_qed (*counter);
                 output_vec.push (WissenOutput::Prove {
-                    counter: *counter,
                     prop_vec: prop_vec.clone (),
                     qed_vec,
                 });
@@ -713,12 +711,10 @@ impl Wissen {
 #[derive (PartialEq, Eq)]
 pub enum WissenOutput {
     Query {
-        counter: usize,
         prop_vec: Vec <Prop>,
         subst_vec: Vec <Subst>,
     },
     Prove {
-        counter: usize,
         prop_vec: Vec <Prop>,
         qed_vec: Vec <Qed>,
     },
@@ -767,7 +763,6 @@ impl ToString for WissenOutput {
     fn to_string (&self) -> String {
         match self {
             WissenOutput::Query {
-                counter,
                 prop_vec,
                 subst_vec,
             } => {
@@ -791,7 +786,6 @@ impl ToString for WissenOutput {
                 s
             }
             WissenOutput::Prove {
-                counter,
                 prop_vec,
                 qed_vec,
             } => {
@@ -844,7 +838,7 @@ impl <'a> Proving <'a> {
             mut proof
         ) = self.proof_queue.pop_front () {
             match proof.step () {
-                ProofStep::Finished => {
+                ProofStep::One => {
                     if let Some (
                         deduction_tree
                     ) = proof.tree_stack.pop () {
@@ -856,7 +850,7 @@ impl <'a> Proving <'a> {
                         panic! ("Proving::next_qed");
                     }
                 }
-                ProofStep::MoreTodo (proof_queue) => {
+                ProofStep::More (proof_queue) => {
                     for proof in proof_queue {
                         //// about searching
                         // push back  |   depth first
@@ -907,7 +901,9 @@ pub struct Proof <'a> {
 
 impl <'a> Proof <'a> {
     fn step (&mut self) -> ProofStep <'a> {
-        if let Some (prop) = self.prop_queue.pop_front () {
+        if let Some (
+            prop
+        ) = self.prop_queue.pop_front () {
             if let Some (
                 den
             ) = self.wissen.find_den (&prop.name) {
@@ -930,7 +926,7 @@ impl <'a> Proof <'a> {
                         }
                         proof_queue.push_back (proof);
                     }
-                    ProofStep::MoreTodo (proof_queue)
+                    ProofStep::More (proof_queue)
                 } else {
                     ProofStep::Fail
                 }
@@ -940,7 +936,7 @@ impl <'a> Proof <'a> {
                 ProofStep::Fail
             }
         } else {
-            ProofStep::Finished
+            ProofStep::One
         }
     }
 }
@@ -1022,8 +1018,8 @@ impl <'a> Proof <'a> {
 #[derive (Debug)]
 #[derive (PartialEq, Eq)]
 pub enum ProofStep <'a> {
-    Finished,
-    MoreTodo (VecDeque <Proof <'a>>),
+    One,
+    More (VecDeque <Proof <'a>>),
     Fail,
 }
 

@@ -619,6 +619,14 @@ impl ToString for Data {
 #[derive (Clone)]
 #[derive (Debug)]
 #[derive (PartialEq, Eq)]
+pub enum Prop {
+    Disj (Disj),
+    Conj (Conj),
+}
+
+#[derive (Clone)]
+#[derive (Debug)]
+#[derive (PartialEq, Eq)]
 pub enum Subst {
     Null,
     VarBinding (Var, Value, Arc <Subst>),
@@ -1202,27 +1210,30 @@ fn new_value_dic (
     Ok ((body, subst))
 }
 
-impl Wissen {
-    pub fn proving <'a> (
-        &'a self,
-        binding_vec: &Vec <Binding>,
-    ) -> Proving <'a> {
-        let (value_dic, subst) = new_value_dic (
-            self, binding_vec) .unwrap ();
-        let root_data = Data {
-            name: "root-c".to_string (),
-            body: value_dic,
+fn value_dic_to_prop_queue (
+    subst: &Subst,
+    value_dic: &Dic <Value>
+) -> VecDeque <(String, Prop)> {
+    let mut prop_queue = VecDeque::new ();
+    for (name, value) in value_dic.iter () {
+        let value = subst.walk (value);        
+        let prop = match value {
+            Value::Disj (disj) => {
+                prop_queue.push_back ((
+                    name.to_string (),
+                    Prop::Disj (disj)
+                ));
+            }
+            Value::Conj (conj) => {
+                prop_queue.push_back ((
+                    name.to_string (),
+                    Prop::Conj (conj)
+                ));
+            }
+            _ => {}
         };
-        let proof = Proof {
-            wissen: self,
-            subst: subst,
-            stack: vec! [ ("root".to_string (), root_data) ],
-            binding_queue: binding_vec .clone () .into (),
-        };
-        Proving {
-            proof_queue: vec! [proof] .into (),
-        }
     }
+    prop_queue
 }
 
 #[derive (Clone)]
@@ -1240,6 +1251,34 @@ pub enum Statement {
     Prove (usize, Vec <Binding>),
 }
 
+impl Wissen {
+    pub fn proving <'a> (
+        &'a self,
+        binding_vec: &Vec <Binding>,
+    ) -> Proving <'a> {
+        let (value_dic, subst) = new_value_dic (
+            self, binding_vec) .unwrap ();
+        let prop_queue = value_dic_to_prop_queue (
+            &subst,
+            &value_dic);
+        let root_data = Data {
+            name: "root-c".to_string (),
+            body: value_dic,
+        };
+        let proof = Proof {
+            wissen: self,
+            subst: subst,
+            data_stack: vec! [
+                ("root".to_string (), root_data),
+            ],
+            prop_queue: prop_queue,
+        };
+        Proving {
+            proof_queue: vec! [proof] .into (),
+        }
+    }
+}
+
 #[derive (Clone)]
 #[derive (Debug)]
 #[derive (PartialEq, Eq)]
@@ -1252,30 +1291,29 @@ impl <'a> Proving <'a> {
         while let Some (
             mut proof
         ) = self.proof_queue.pop_front () {
-            unimplemented! ()
-            // match proof.step () {
-            //     ProofStep::Finished => {
-            //         if let Some (
-            //             deduction_tree
-            //         ) = proof.tree_stack.pop () {
-            //             return Some (Qed {
-            //                 subst: proof.subst,
-            //                 deduction_tree,
-            //             });
-            //         } else {
-            //             panic! ("Proving::next_qed");
-            //         }
-            //     }
-            //     ProofStep::MoreTodo (proof_queue) => {
-            //         for proof in proof_queue {
-            //             //// about searching
-            //             // push back  |   depth first
-            //             // push front | breadth first
-            //             self.proof_queue.push_back (proof);
-            //         }
-            //     }
-            //     ProofStep::Fail => {}
-            // }
+            match proof.step () {
+                ProofStep::One => {
+                    if let Some (
+                        (_name, data)
+                    ) = proof.data_stack.pop () {
+                        return Some (Qed {
+                            subst: proof.subst,
+                            body: data.body,
+                        });
+                    } else {
+                        panic! ("Proving::next_qed");
+                    }
+                }
+                ProofStep::More (proof_queue) => {
+                    for proof in proof_queue {
+                        //// about searching
+                        // push back  |   depth first
+                        // push front | breadth first
+                        self.proof_queue.push_back (proof);
+                    }
+                }
+                ProofStep::Fail => {}
+            }
         }
         return None;
     }
@@ -1299,8 +1337,29 @@ impl <'a> Proving <'a> {
 pub struct Proof <'a> {
     wissen: &'a Wissen,
     subst: Subst,
-    stack: Vec <(String, Data)>,
-    binding_queue: VecDeque <Binding>,
+    data_stack: Vec <(String, Data)>,
+    prop_queue: VecDeque <(String, Prop)>,
+}
+
+impl <'a> Proof <'a> {
+    fn step (&mut self) -> ProofStep <'a> {
+        if let Some (
+            (name, prop),
+        ) = self.prop_queue.pop_front () {
+            unimplemented! ()
+        } else {
+            ProofStep::One
+        }
+    }
+}
+
+#[derive (Clone)]
+#[derive (Debug)]
+#[derive (PartialEq, Eq)]
+pub enum ProofStep <'a> {
+    One,
+    More (VecDeque <Proof <'a>>),
+    Fail,
 }
 
 #[derive (Clone)]
