@@ -1191,7 +1191,7 @@ impl Wissen {
             if let Statement::Prove (
                 counter, binding_vec
             ) = statement {
-                let mut proving = self.proving (binding_vec);
+                let mut proving = self.proving (binding_vec)?;
                 let qed_vec = proving.take_qed (*counter);
                 output_vec.push (WissenOutput {
                     qed_vec,
@@ -1296,10 +1296,7 @@ fn value_dic_to_tv_vec (
                     Value::Conj (_) => {
                         vec.push (tv);
                     }
-                    _ => {
-                        eprintln! ("- [warning]");
-                        eprintln! ("  value_dic_to_tv_vec");
-                    }
+                    _ => {}
                 }
             }
             _ => {}
@@ -1315,6 +1312,18 @@ pub struct WissenOutput {
     qed_vec: Vec <Qed>,
 }
 
+impl ToString for WissenOutput {
+    fn to_string (&self) -> String {
+        let mut s = String::new ();
+        s += "<wissen-output>\n";
+        for qed in &self.qed_vec {
+            s += &qed.to_string ();
+        }
+        s += "</wissen-output>\n";
+        s
+    }
+}
+
 #[derive (Clone)]
 #[derive (Debug)]
 #[derive (PartialEq, Eq)]
@@ -1327,9 +1336,9 @@ impl Wissen {
     pub fn proving <'a> (
         &'a self,
         binding_vec: &Vec <Binding>,
-    ) -> Proving <'a> {
+    ) -> Result <Proving <'a>, ErrorInCtx> {
         let (value_dic, subst) = new_value_dic (
-            self, binding_vec) .unwrap ();
+            self, binding_vec)?;
         let tv_queue = value_dic_to_tv_vec (
             &subst,
             &value_dic) .into ();
@@ -1339,9 +1348,9 @@ impl Wissen {
             body: value_dic,
             tv_queue,
         };
-        Proving {
+        Ok (Proving {
             proof_queue: vec! [proof] .into (),
-        }
+        })
     }
 }
 
@@ -1444,6 +1453,17 @@ pub struct Qed {
     subst: Subst,
     body: Dic <Value>,
 }
+
+impl ToString for Qed {
+    fn to_string (&self) -> String {
+        let mut s = String::new ();
+        s += "<qed>\n";
+        s += &dic_to_lines (&self.body);
+        s += &self.subst.to_string ();
+        s += "</qed>\n";
+        s
+    }
+}    
 
 const GRAMMAR: &'static str = r#"
 Statement::Den = { prop-name? "=" Den }
@@ -2013,35 +2033,52 @@ fn test_unify () {
             ] .into ()
         }))
         .unwrap ();
-    println! ("{}", subst.to_string ());
+    // println! ("{}", subst.to_string ());
     assert_eq! (subst.len (), 2);
 }
 
 #[test]
-fn test_wis () {
+fn test_wissen_get_prop () {
     let mut wissen = Wissen::new ();
     let input = PRELUDE;
     let ctx = ErrorCtx::new () .body (input);
     match wissen.wis (input) {
-        Ok (mut output_vec) => {
-            println! ("{}", wissen.to_string ());
-        }
+        Ok (_output_vec) => {}
         Err (error) => {
             error.print (ctx.clone ());
         }
     }
     for name in wissen.den_dic.keys () {
         match wissen.get_prop (name) {
-            Ok ((prop, subst)) => {
-                println! (
-                    "<prop>\n{}\n</prop>",
-                    prop.to_string ());
-                println! ("{}", subst.to_string ());
-            }
+            Ok ((_prop, _subst)) => {}
+            // Ok ((prop, subst)) => {
+            //     println! (
+            //         "<prop>\n{}\n</prop>",
+            //         prop.to_string ());
+            //     println! ("{}", subst.to_string ());
+            // }            
             Err (error) => {
                 println! ("- fail on name = {}", name);
                 error.print (ctx.clone ());
+                panic! ("test_wissen_get_prop");
             }
+        }
+    }
+}
+
+#[test]
+fn test_wissen_output () {
+    let mut wissen = Wissen::new ();
+    let input = PRELUDE;
+    let ctx = ErrorCtx::new () .body (input);
+    match wissen.wis (input) {
+        Ok (output_vec) => {
+            for output in output_vec {
+                println! ("{}", output.to_string ());
+            } 
+        }
+        Err (error) => {
+            error.print (ctx.clone ());
         }
     }
 }

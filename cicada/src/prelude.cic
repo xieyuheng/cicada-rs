@@ -123,3 +123,29 @@ cons-vect-t = conj {
     cdr : vect-t (t :n)
     length = succ-c (:n)
 }
+
+prove (3) {
+    nat : nat-t
+}
+
+prove (3) {
+    list : list-t (nat-t)
+}
+
+prove (3) {
+    list : list-t (list-t (nat-t))
+}
+
+prove (3) {
+    zero-even : nat-even-t (zero-c)
+    two-even : nat-even-t (succ-c (succ-c (zero-c)))
+}
+
+prove (3) {
+    null-length : list-length-t (
+        null-c
+        zero-c)
+    length-one : list-length-t (
+        cons-c (nat-t zero-c null-c)
+        succ-c (zero-c))
+}

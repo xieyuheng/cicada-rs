@@ -1,5 +1,7 @@
 #+property: tangle lib.rs
 #+title: cicada
+- reify
+- cic
 - Wissen::type_check -- by Term::value and Subst::unify
 * [note]
 
@@ -745,7 +747,7 @@
     }
     #+end_src
 
-*** [todo] TypedVar::fulfill
+*** TypedVar::fulfill
 
     #+begin_src rust
     impl TypedVar {
@@ -1527,7 +1529,7 @@
                 if let Statement::Prove (
                     counter, binding_vec
                 ) = statement {
-                    let mut proving = self.proving (binding_vec);
+                    let mut proving = self.proving (binding_vec)?;
                     let qed_vec = proving.take_qed (*counter);
                     output_vec.push (WissenOutput {
                         qed_vec,
@@ -1660,10 +1662,7 @@
                         Value::Conj (_) => {
                             vec.push (tv);
                         }
-                        _ => {
-                            eprintln! ("- [warning]");
-                            eprintln! ("  value_dic_to_tv_vec");
-                        }
+                        _ => {}
                     }
                 }
                 _ => {}
@@ -1681,6 +1680,22 @@
     #[derive (PartialEq, Eq)]
     pub struct WissenOutput {
         qed_vec: Vec <Qed>,
+    }
+    #+end_src
+
+*** WissenOutput::to_string 
+
+    #+begin_src rust
+    impl ToString for WissenOutput {
+        fn to_string (&self) -> String {
+            let mut s = String::new ();
+            s += "<wissen-output>\n";
+            for qed in &self.qed_vec {
+                s += &qed.to_string ();
+            }
+            s += "</wissen-output>\n";
+            s
+        }
     }
     #+end_src
 
@@ -1703,9 +1718,9 @@
         pub fn proving <'a> (
             &'a self,
             binding_vec: &Vec <Binding>,
-        ) -> Proving <'a> {
+        ) -> Result <Proving <'a>, ErrorInCtx> {
             let (value_dic, subst) = new_value_dic (
-                self, binding_vec) .unwrap ();
+                self, binding_vec)?;
             let tv_queue = value_dic_to_tv_vec (
                 &subst,
                 &value_dic) .into ();
@@ -1715,9 +1730,9 @@
                 body: value_dic,
                 tv_queue,
             };
-            Proving {
+            Ok (Proving {
                 proof_queue: vec! [proof] .into (),
-            }
+            })
         }
     }
     #+end_src
@@ -1852,6 +1867,21 @@
         subst: Subst,
         body: Dic <Value>,
     }
+    #+end_src
+
+*** Qed::to_string
+
+    #+begin_src rust
+    impl ToString for Qed {
+        fn to_string (&self) -> String {
+            let mut s = String::new ();
+            s += "<qed>\n";
+            s += &dic_to_lines (&self.body);
+            s += &self.subst.to_string ();
+            s += "</qed>\n";
+            s
+        }
+    }    
     #+end_src
 
 * syntax
@@ -2545,39 +2575,59 @@
                 ] .into ()
             }))
             .unwrap ();
-        println! ("{}", subst.to_string ());
+        // println! ("{}", subst.to_string ());
         assert_eq! (subst.len (), 2);
     }
     #+end_src
 
-*** test_wis
+*** test_wissen_get_prop
 
     #+begin_src rust
     #[test]
-    fn test_wis () {
+    fn test_wissen_get_prop () {
         let mut wissen = Wissen::new ();
         let input = PRELUDE;
         let ctx = ErrorCtx::new () .body (input);
         match wissen.wis (input) {
-            Ok (mut output_vec) => {
-                println! ("{}", wissen.to_string ());
-            }
+            Ok (_output_vec) => {}
             Err (error) => {
                 error.print (ctx.clone ());
             }
         }
         for name in wissen.den_dic.keys () {
             match wissen.get_prop (name) {
-                Ok ((prop, subst)) => {
-                    println! (
-                        "<prop>\n{}\n</prop>",
-                        prop.to_string ());
-                    println! ("{}", subst.to_string ());
-                }
+                Ok ((_prop, _subst)) => {}
+                // Ok ((prop, subst)) => {
+                //     println! (
+                //         "<prop>\n{}\n</prop>",
+                //         prop.to_string ());
+                //     println! ("{}", subst.to_string ());
+                // }            
                 Err (error) => {
                     println! ("- fail on name = {}", name);
                     error.print (ctx.clone ());
+                    panic! ("test_wissen_get_prop");
                 }
+            }
+        }
+    }
+    #+end_src
+*** test_wissen_output
+
+    #+begin_src rust
+    #[test]
+    fn test_wissen_output () {
+        let mut wissen = Wissen::new ();
+        let input = PRELUDE;
+        let ctx = ErrorCtx::new () .body (input);
+        match wissen.wis (input) {
+            Ok (output_vec) => {
+                for output in output_vec {
+                    println! ("{}", output.to_string ());
+                } 
+            }
+            Err (error) => {
+                error.print (ctx.clone ());
             }
         }
     }
