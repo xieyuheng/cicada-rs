@@ -378,13 +378,13 @@ impl Binding {
                 let value = term.value (
                     wissen, subst, body, var_dic,
                     None)?;
-                let typed_var = new_typed_var (name, &value);
+                let tv = new_tv (name, &value);
                 if let Some (
                     old_value
                 ) = body.get (name) {
                     if let Some (
                         new_subst
-                    ) = subst.unify (&old_value, &typed_var) {
+                    ) = subst.unify (&old_value, &tv) {
                         *subst = subst.append (new_subst);
                     } else {
                         return ErrorInCtx::new ()
@@ -394,8 +394,8 @@ impl Binding {
                             .wrap_in_err ()
                     }
                 } else {
-                    var_dic.ins (name, Some (typed_var.clone ()));
-                    body.ins (name, Some (typed_var));
+                    var_dic.ins (name, Some (tv.clone ()));
+                    body.ins (name, Some (tv));
                 }
                 Ok (())
             }
@@ -403,7 +403,7 @@ impl Binding {
     }
 }
 
-fn new_typed_var (name: &str, value: &Value) -> Value {
+fn new_tv (name: &str, value: &Value) -> Value {
     Value::TypedVar (TypedVar {
         id: Id::uuid (),
         name: name.to_string (),
@@ -427,7 +427,7 @@ impl ToString for Value {
     fn to_string (&self) -> String {
         match self {
             Value::Var (var) => var.to_string (),
-            Value::TypedVar (typed_var) => typed_var.to_string (),
+            Value::TypedVar (tv) => tv.to_string (),
             Value::Disj (disj) => disj.to_string (),
             Value::Conj (conj) => conj.to_string (),
             Value::Data (data) => data.to_string (),
@@ -532,6 +532,16 @@ pub struct TypedVar {
     id: Id,
     name: String,
     ty: Box <Value>,
+}
+
+impl TypedVar {
+    fn fulfill (
+        &self,
+        wissen: &Wissen,
+        subst: &Subst,
+    ) -> Option <(Vec <Vec <TypedVar>>, Subst)> {
+        unimplemented! ()
+    }
 }
 
 impl ToString for TypedVar {
@@ -645,13 +655,13 @@ impl Subst {
 }
 
 impl Subst {
-    fn bind_typed_var (
+    fn bind_tv (
         &self,
-        typed_var: TypedVar,
+        tv: TypedVar,
         value: Value,
     ) -> Self {
         Subst::TypedVarBinding (
-            typed_var,
+            tv,
             value,
             Arc::new (self.clone ()))
     }
@@ -674,7 +684,7 @@ impl Subst {
                 }
             }
             Subst::TypedVarBinding (
-                _typed_var, _value, next,
+                _tv, _value, next,
             ) => {
                 next.find_var (var)
             }
@@ -683,24 +693,24 @@ impl Subst {
 }
 
 impl Subst {
-    pub fn find_typed_var (
+    pub fn find_tv (
         &self,
-        typed_var: &TypedVar,
+        tv: &TypedVar,
     ) -> Option <&Value> {
         match self {
             Subst::Null => None,
             Subst::VarBinding (
                 _var, _value, next,
             ) => {
-                next.find_typed_var (typed_var)
+                next.find_tv (tv)
             }
             Subst::TypedVarBinding (
-                typed_var1, value, next,
+                tv1, value, next,
             ) => {
-                if typed_var1 == typed_var {
+                if tv1 == tv {
                     Some (value)
                 } else {
-                    next.find_typed_var (typed_var)
+                    next.find_tv (tv)
                 }
             }
         }
@@ -719,10 +729,10 @@ impl Subst {
                     value.clone ()
                 }
             }
-            Value::TypedVar (typed_var) => {
+            Value::TypedVar (tv) => {
                 if let Some (
                     new_value
-                ) = self.find_typed_var (typed_var) {
+                ) = self.find_tv (tv) {
                     self.walk (new_value)
                 } else {
                     value.clone ()
@@ -767,23 +777,23 @@ impl Subst {
                 }
             }
             (Value::TypedVar (u), v) => {
-                if self.typed_var_occur_p (&u, &v) {
+                if self.tv_occur_p (&u, &v) {
                     None
                 } else if let Some (
                     subst
                 ) = self.unify_type_to_value (&u.ty, &v) {
-                    Some (subst.bind_typed_var (u, v))
+                    Some (subst.bind_tv (u, v))
                 } else {
                     None
                 }
             }
             (u, Value::TypedVar (v)) => {
-                if self.typed_var_occur_p (&v, &u) {
+                if self.tv_occur_p (&v, &u) {
                     None
                 } else if let Some (
                     subst
                 ) = self.unify_type_to_value (&v.ty, &u) {
-                    Some (subst.bind_typed_var (v, u))
+                    Some (subst.bind_tv (v, u))
                 } else {
                     None
                 }
@@ -939,19 +949,19 @@ impl Subst {
 }
 
 impl Subst {
-    pub fn typed_var_occur_p (
+    pub fn tv_occur_p (
         &self,
-        typed_var: &TypedVar,
+        tv: &TypedVar,
         value: &Value,
     ) -> bool {
         let value = self.walk (value);
         match value {
-            Value::TypedVar (typed_var1) => {
-                typed_var == &typed_var1
+            Value::TypedVar (tv1) => {
+                tv == &tv1
             }
             Value::Data (data) => {
                 for value in data.body.values () {
-                    if self.typed_var_occur_p (typed_var, value) {
+                    if self.tv_occur_p (tv, value) {
                         return true;
                     }
                 }
@@ -978,7 +988,7 @@ impl Subst {
                     subst = &next;
                 }
                 Subst::TypedVarBinding (
-                    _typed_var, _value, next
+                    _tv, _value, next
                 ) => {
                     len += 1;
                     subst = &next;
@@ -999,9 +1009,9 @@ impl Subst {
                     value.clone (),
                     Arc::new (next.append (subst)))
             }
-            Subst::TypedVarBinding (typed_var, value, next) => {
+            Subst::TypedVarBinding (tv, value, next) => {
                 Subst::TypedVarBinding (
-                    typed_var.clone (),
+                    tv.clone (),
                     value.clone (),
                     Arc::new (next.append (subst)))
             }
@@ -1026,9 +1036,9 @@ impl ToString for Subst {
                     subst = &next;
                 }
                 Subst::TypedVarBinding (
-                    typed_var, value, next
+                    tv, value, next
                 ) => {
-                    s += &typed_var.to_string ();
+                    s += &tv.to_string ();
                     s += " = ";
                     s += &value.to_string ();
                     s += "\n";
@@ -1202,31 +1212,31 @@ fn new_value_dic (
     Ok ((body, subst))
 }
 
-fn value_dic_to_typed_var_queue (
+fn value_dic_to_tv_queue (
     subst: &Subst,
     value_dic: &Dic <Value>
 ) -> VecDeque <TypedVar> {
-    let mut prop_queue = VecDeque::new ();
+    let mut queue = VecDeque::new ();
     for (name, value) in value_dic.iter () {
         let value = subst.walk (value);
         match value {
-            Value::TypedVar (typed_var) => {
-                let ty = subst.walk (&typed_var.ty);
+            Value::TypedVar (tv) => {
+                let ty = subst.walk (&tv.ty);
                 match ty {
                     Value::Disj (_) |
                     Value::Conj (_) => {
-                        prop_queue.push_back (typed_var);
+                        queue.push_back (tv);
                     }
                     _ => {
                         eprintln! ("- [warning]");
-                        eprintln! ("  value_dic_to_typed_var_queue");
+                        eprintln! ("  value_dic_to_tv_queue");
                     }
                 }
             }
             _ => {}
         }
     }
-    prop_queue
+    queue
 }
 
 #[derive (Clone)]
@@ -1251,14 +1261,14 @@ impl Wissen {
     ) -> Proving <'a> {
         let (value_dic, subst) = new_value_dic (
             self, binding_vec) .unwrap ();
-        let typed_var_queue = value_dic_to_typed_var_queue (
+        let tv_queue = value_dic_to_tv_queue (
             &subst,
             &value_dic);
         let proof = Proof {
             wissen: self,
             subst: subst,
             body: value_dic,
-            typed_var_queue,
+            tv_queue,
         };
         Proving {
             proof_queue: vec! [proof] .into (),
@@ -1316,15 +1326,30 @@ pub struct Proof <'a> {
     wissen: &'a Wissen,
     subst: Subst,
     body: Dic <Value>,
-    typed_var_queue: VecDeque <TypedVar>,
+    tv_queue: VecDeque <TypedVar>,
 }
 
 impl <'a> Proof <'a> {
     fn step (&mut self) -> ProofStep <'a> {
         if let Some (
-            typed_var,
-        ) = self.typed_var_queue.pop_front () {
-            unimplemented! ()
+            tv,
+        ) = self.tv_queue.pop_front () {
+            if let Some (
+                (tv_matrix, new_subst)
+            ) = tv.fulfill (&self.wissen, &self.subst) {
+                let mut proof_queue = VecDeque::new ();
+                for tv_vec in tv_matrix {
+                    let mut proof = self.clone ();
+                    proof.subst = new_subst.clone ();
+                    for tv in tv_vec.into_iter () .rev () {
+                        proof.tv_queue.push_front (tv);
+                    }
+                    proof_queue.push_back (proof)
+                }
+                ProofStep::More (proof_queue)
+            } else {
+                ProofStep::Fail
+            }
         } else {
             ProofStep::One (Qed {
                 subst: self.subst.clone (),
