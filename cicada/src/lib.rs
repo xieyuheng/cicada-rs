@@ -8,7 +8,6 @@
 use std::fmt;
 use std::sync::Arc;
 use std::collections::VecDeque;
-use std::collections::HashMap;
 use std::collections::HashSet;
 use uuid::Uuid;
 use dic::Dic;
@@ -163,6 +162,7 @@ impl Term {
             }
             Term::Cons (span, name, arg) => {
                 let (data, s) = wissen.get_new_data (name)?;
+                let data = Value::Data (data);
                 *subst = subst.append (s);
                 if let Some (old_value) = against {
                     if let Some (
@@ -250,7 +250,7 @@ fn value_dic_merge_arg (
                 let old_value = value_dic_next_value (
                     value_dic,
                     subst.clone ());
-                let value = term.value (
+                term.value (
                     wissen, subst, body, var_dic,
                     Some (&old_value))?;
             }
@@ -263,7 +263,7 @@ fn value_dic_merge_arg (
                         if let Some (
                             old_value
                         ) = value_dic.get (name) {
-                            let value = term.value (
+                            term.value (
                                 wissen, subst, body, var_dic,
                                 Some (old_value))?;
                         } else {
@@ -378,7 +378,7 @@ impl Binding {
                 let value = term.value (
                     wissen, subst, body, var_dic,
                     None)?;
-                let tv = new_tv (name, &value);
+                let tv = Value::TypedVar (new_tv (name, &value));
                 if let Some (
                     old_value
                 ) = body.get (name) {
@@ -403,12 +403,12 @@ impl Binding {
     }
 }
 
-fn new_tv (name: &str, value: &Value) -> Value {
-    Value::TypedVar (TypedVar {
+fn new_tv (name: &str, value: &Value) -> TypedVar {
+    TypedVar {
         id: Id::uuid (),
         name: name.to_string (),
         ty: box value.clone (),
-    })
+    }
 }
 
 #[derive (Clone)]
@@ -539,8 +539,48 @@ impl TypedVar {
         &self,
         wissen: &Wissen,
         subst: &Subst,
-    ) -> Option <(Vec <Vec <TypedVar>>, Subst)> {
-        unimplemented! ()
+    ) -> Option <Vec <(Vec <TypedVar>, Subst)>> {
+        match &self.ty {
+            box Value::Disj (disj) => {
+                let mut tv_matrix = Vec::new ();
+                for name in &disj.name_vec {
+                    let (conj, s) = wissen.get_prop (name) .unwrap ();
+                    // ><><><
+                    // can the above prop be disj too ?
+                    let subst = subst.append (s);
+                    let new_tv = new_tv (&self.name, &conj);
+                    if let Some (subst) = subst.unify (
+                        &Value::TypedVar (self.clone ()),
+                        &Value::TypedVar (new_tv.clone ())
+                    ) {
+                        tv_matrix.push ((vec! [new_tv], subst));
+                    }
+                }
+                Some (tv_matrix)
+            }
+            box Value::Conj (conj) => {
+                let mut tv_matrix = Vec::new ();
+                let (data, s) = wissen.get_new_data (&conj.name) .unwrap ();
+                let subst = subst.append (s);
+                if let Some (
+                    subst
+                ) = subst.unify (
+                    &Value::TypedVar (self.clone ()),
+                    &Value::Data (data.clone ()),
+                ) {
+                    let tv_vec = value_dic_to_tv_vec (
+                        &subst,
+                        &data.body);
+                    tv_matrix.push ((tv_vec, subst));
+                    Some (tv_matrix)
+                } else {
+                    None
+                }
+            }
+            _ => {
+                panic! ("TypedVar::fulfill");
+            }
+        }
     }
 }
 
@@ -806,14 +846,38 @@ impl Subst {
                 }
                 self.unify_dic (&u.body, &v.body)
             }
-            // ><><><
-            // Value::Disj Value::Disj
-            // ><><><
-            // Value::Conj Value::Conj
-            // ><><><
-            // Value::Conj Value::Disj
-            // ><><><
-            // Value::Disj Value::Conj
+            (Value::Disj (u),
+             Value::Disj (v),
+            ) => {
+                if u.name != v.name {
+                    return None;
+                }
+                if u.name_vec != v.name_vec {
+                    return None;
+                }
+                self.unify_dic (&u.body, &v.body)
+            }
+            (Value::Conj (u),
+             Value::Conj (v),
+            ) => {
+                if u.name != v.name {
+                    return None;
+                }
+                self.unify_dic (&u.body, &v.body)
+            }
+            (Value::Disj (disj), Value::Conj (conj)) |
+            (Value::Conj (conj), Value::Disj (disj)) => {
+                let name_set: HashSet <String> = disj.name_vec
+                    .clone ()
+                    .into_iter ()
+                    .collect ();                
+                if ! name_set.contains (&conj.name) {
+                    return None;
+                }
+                self.cover_dic (
+                    &conj.body,
+                    &disj.body)                
+            }
             (u, v) => {
                 if u == v {
                     Some (self.clone ())
@@ -882,7 +946,7 @@ impl Subst {
         large_dic: &Dic <Value>,
         small_dic: &Dic <Value>,
     ) -> Option <Subst> {
-        let mut subst = self.clone ();
+        let subst = self.clone ();
         for (name, v) in small_dic.iter () {
             if let Some (v1) = large_dic.get (name) {
                 subst.unify (v1, v)?;
@@ -1179,18 +1243,23 @@ fn cons_name_to_prop_name (cons_name: &str) -> String {
     format! ("{}-t", base_name)
 }
 
+fn prop_name_to_cons_name (cons_name: &str) -> String {
+    let base_name = &cons_name[.. cons_name.len () - 2];
+    format! ("{}-c", base_name)
+}
+
 impl Wissen {
     fn get_new_data (
         &self,
         name: &str,
-    ) -> Result <(Value, Subst), ErrorInCtx> {
+    ) -> Result <(Data, Subst), ErrorInCtx> {
         let prop_name = &cons_name_to_prop_name (name);
         let (prop, subst) = self.get_prop (prop_name)?;
         let value_dic = prop.value_dic () .unwrap ();
-        let data = Value::Data (Data {
+        let data = Data {
             name: name.to_string (),
             body: value_dic.clone (),
-        });
+        };
         Ok ((data, subst))
     }
 }
@@ -1212,12 +1281,12 @@ fn new_value_dic (
     Ok ((body, subst))
 }
 
-fn value_dic_to_tv_queue (
+fn value_dic_to_tv_vec (
     subst: &Subst,
     value_dic: &Dic <Value>
-) -> VecDeque <TypedVar> {
-    let mut queue = VecDeque::new ();
-    for (name, value) in value_dic.iter () {
+) -> Vec <TypedVar> {
+    let mut vec = Vec::new ();
+    for value in value_dic.values () {
         let value = subst.walk (value);
         match value {
             Value::TypedVar (tv) => {
@@ -1225,18 +1294,18 @@ fn value_dic_to_tv_queue (
                 match ty {
                     Value::Disj (_) |
                     Value::Conj (_) => {
-                        queue.push_back (tv);
+                        vec.push (tv);
                     }
                     _ => {
                         eprintln! ("- [warning]");
-                        eprintln! ("  value_dic_to_tv_queue");
+                        eprintln! ("  value_dic_to_tv_vec");
                     }
                 }
             }
             _ => {}
         }
     }
-    queue
+    vec
 }
 
 #[derive (Clone)]
@@ -1261,9 +1330,9 @@ impl Wissen {
     ) -> Proving <'a> {
         let (value_dic, subst) = new_value_dic (
             self, binding_vec) .unwrap ();
-        let tv_queue = value_dic_to_tv_queue (
+        let tv_queue = value_dic_to_tv_vec (
             &subst,
-            &value_dic);
+            &value_dic) .into ();
         let proof = Proof {
             wissen: self,
             subst: subst,
@@ -1335,12 +1404,12 @@ impl <'a> Proof <'a> {
             tv,
         ) = self.tv_queue.pop_front () {
             if let Some (
-                (tv_matrix, new_subst)
+                tv_matrix
             ) = tv.fulfill (&self.wissen, &self.subst) {
                 let mut proof_queue = VecDeque::new ();
-                for tv_vec in tv_matrix {
+                for (tv_vec, new_subst) in tv_matrix {
                     let mut proof = self.clone ();
-                    proof.subst = new_subst.clone ();
+                    proof.subst = new_subst;
                     for tv in tv_vec.into_iter () .rev () {
                         proof.tv_queue.push_front (tv);
                     }
