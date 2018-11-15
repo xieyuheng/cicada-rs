@@ -619,14 +619,6 @@ impl ToString for Data {
 #[derive (Clone)]
 #[derive (Debug)]
 #[derive (PartialEq, Eq)]
-pub enum Prop {
-    Disj (Disj),
-    Conj (Conj),
-}
-
-#[derive (Clone)]
-#[derive (Debug)]
-#[derive (PartialEq, Eq)]
 pub enum Subst {
     Null,
     VarBinding (Var, Value, Arc <Subst>),
@@ -1210,28 +1202,29 @@ fn new_value_dic (
     Ok ((body, subst))
 }
 
-fn value_dic_to_prop_queue (
+fn value_dic_to_typed_var_queue (
     subst: &Subst,
     value_dic: &Dic <Value>
-) -> VecDeque <(String, Prop)> {
+) -> VecDeque <TypedVar> {
     let mut prop_queue = VecDeque::new ();
     for (name, value) in value_dic.iter () {
-        let value = subst.walk (value);        
-        let prop = match value {
-            Value::Disj (disj) => {
-                prop_queue.push_back ((
-                    name.to_string (),
-                    Prop::Disj (disj)
-                ));
-            }
-            Value::Conj (conj) => {
-                prop_queue.push_back ((
-                    name.to_string (),
-                    Prop::Conj (conj)
-                ));
+        let value = subst.walk (value);
+        match value {
+            Value::TypedVar (typed_var) => {
+                let ty = subst.walk (&typed_var.ty);
+                match ty {
+                    Value::Disj (_) |
+                    Value::Conj (_) => {
+                        prop_queue.push_back (typed_var);
+                    }
+                    _ => {
+                        eprintln! ("- [warning]");
+                        eprintln! ("  value_dic_to_typed_var_queue");
+                    }
+                }
             }
             _ => {}
-        };
+        }
     }
     prop_queue
 }
@@ -1258,20 +1251,14 @@ impl Wissen {
     ) -> Proving <'a> {
         let (value_dic, subst) = new_value_dic (
             self, binding_vec) .unwrap ();
-        let prop_queue = value_dic_to_prop_queue (
+        let typed_var_queue = value_dic_to_typed_var_queue (
             &subst,
             &value_dic);
-        let root_data = Data {
-            name: "root-c".to_string (),
-            body: value_dic,
-        };
         let proof = Proof {
             wissen: self,
             subst: subst,
-            data_stack: vec! [
-                ("root".to_string (), root_data),
-            ],
-            prop_queue: prop_queue,
+            body: value_dic,
+            typed_var_queue,
         };
         Proving {
             proof_queue: vec! [proof] .into (),
@@ -1292,17 +1279,8 @@ impl <'a> Proving <'a> {
             mut proof
         ) = self.proof_queue.pop_front () {
             match proof.step () {
-                ProofStep::One => {
-                    if let Some (
-                        (_name, data)
-                    ) = proof.data_stack.pop () {
-                        return Some (Qed {
-                            subst: proof.subst,
-                            body: data.body,
-                        });
-                    } else {
-                        panic! ("Proving::next_qed");
-                    }
+                ProofStep::One (qed) => {
+                    return Some (qed);
                 }
                 ProofStep::More (proof_queue) => {
                     for proof in proof_queue {
@@ -1337,18 +1315,21 @@ impl <'a> Proving <'a> {
 pub struct Proof <'a> {
     wissen: &'a Wissen,
     subst: Subst,
-    data_stack: Vec <(String, Data)>,
-    prop_queue: VecDeque <(String, Prop)>,
+    body: Dic <Value>,
+    typed_var_queue: VecDeque <TypedVar>,
 }
 
 impl <'a> Proof <'a> {
     fn step (&mut self) -> ProofStep <'a> {
         if let Some (
-            (name, prop),
-        ) = self.prop_queue.pop_front () {
+            typed_var,
+        ) = self.typed_var_queue.pop_front () {
             unimplemented! ()
         } else {
-            ProofStep::One
+            ProofStep::One (Qed {
+                subst: self.subst.clone (),
+                body: self.body.clone (),
+            })
         }
     }
 }
@@ -1357,7 +1338,7 @@ impl <'a> Proof <'a> {
 #[derive (Debug)]
 #[derive (PartialEq, Eq)]
 pub enum ProofStep <'a> {
-    One,
+    One (Qed),
     More (VecDeque <Proof <'a>>),
     Fail,
 }

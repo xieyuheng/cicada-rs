@@ -838,17 +838,8 @@ impl <'a> Proving <'a> {
             mut proof
         ) = self.proof_queue.pop_front () {
             match proof.step () {
-                ProofStep::One => {
-                    if let Some (
-                        deduction_tree
-                    ) = proof.tree_stack.pop () {
-                        return Some (Qed {
-                            subst: proof.subst,
-                            deduction_tree,
-                        });
-                    } else {
-                        panic! ("Proving::next_qed");
-                    }
+                ProofStep::One (qed) => {
+                    return Some (qed);
                 }
                 ProofStep::More (proof_queue) => {
                     for proof in proof_queue {
@@ -936,7 +927,11 @@ impl <'a> Proof <'a> {
                 ProofStep::Fail
             }
         } else {
-            ProofStep::One
+            let deduction_tree = self.tree_stack.pop () .unwrap ();
+            ProofStep::One (Qed {
+                subst: self.subst.clone (),
+                deduction_tree,
+            })
         }
     }
 }
@@ -1018,7 +1013,7 @@ impl <'a> Proof <'a> {
 #[derive (Debug)]
 #[derive (PartialEq, Eq)]
 pub enum ProofStep <'a> {
-    One,
+    One (Qed),
     More (VecDeque <Proof <'a>>),
     Fail,
 }
