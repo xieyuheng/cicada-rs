@@ -4,7 +4,8 @@
 
 ## Welcome
 
-cicada is a **dependently-typed** **object-oriented** **logic** programming language, the design goal is to make it intuitive to formalize mathematics theories.
+cicada is a dependently-typed, object-oriented, logic programming language,  
+my design goal is to make it intuitive to formalize mathematics theories.
 
 - uses [mexp][mexp] as meta syntax
 - runs in web browser, with notebook-like UI
