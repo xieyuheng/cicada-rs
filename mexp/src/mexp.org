@@ -1,5 +1,7 @@
 #+property: tangle lib.rs
 #+title: mexp
+- more smart pretty printer
+  - break MexpArg::Tuple when a line will be too long to fit
 - add ';' as function composition
 * prolog
 
@@ -391,10 +393,6 @@
 
 *** to_pretty_string
 
-***** [todo] more smart pretty printer
-
-      - break MexpArg::Tuple when a line will be too long to fit
-
 ***** Mexp::to_pretty_string
 
       #+begin_src rust
@@ -580,6 +578,24 @@
           }
       }
       #+end_src
+
+*** Mexp::prettify
+
+    #+begin_src rust
+    impl <'a> Mexp <'a> {
+        pub fn prettify (
+            input: &str
+        ) -> Result <String, ErrorInCtx> {
+            let syntax_table = SyntaxTable::default ();
+            let mexp_vec = syntax_table.parse (input)?;
+            let mut output = String::new ();
+            for mexp in mexp_vec {
+                output += &mexp.to_pretty_string ();
+            }
+            Ok (output)
+        }
+    }
+    #+end_src
 
 * SyntaxTable
 

@@ -478,6 +478,20 @@ impl <'a> Mexp <'a> {
     }
 }
 
+impl <'a> Mexp <'a> {
+    pub fn prettify (
+        input: &str
+    ) -> Result <String, ErrorInCtx> {
+        let syntax_table = SyntaxTable::default ();
+        let mexp_vec = syntax_table.parse (input)?;
+        let mut output = String::new ();
+        for mexp in mexp_vec {
+            output += &mexp.to_pretty_string ();
+        }
+        Ok (output)
+    }
+}
+
 #[derive (Clone)]
 #[derive (Debug)]
 #[derive (PartialEq)]
