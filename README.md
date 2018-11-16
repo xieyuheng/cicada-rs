@@ -22,7 +22,7 @@ language implementation practice :
 - [eopl](eopl/README.md) -- << Essentials of Programming Languages >>
 - [kanren](kanren/README.md) -- Jason's microkanren and its Yoneda embedding version
 
-useful library and tool :
+useful libraries and tools :
 - [error-report](error-report/README.md) -- error report in context -- for parser and compiler
 - [lexing](lexing/README.md) -- zero copy lexer
 - [mexp](mexp/README.md) -- M-expression parser and command line tools
