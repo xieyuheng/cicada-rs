@@ -513,7 +513,8 @@ impl SyntaxTable {
             .char ('[') .char (']')
             .char ('{') .char ('}')
             .char ('.')
-            .char (';');
+            .char (';')
+            .line_comment_word ("//");
         SyntaxTable {
             op_set: HashSet::new (),
             lex_table,
