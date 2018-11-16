@@ -18,7 +18,7 @@ features :
 contains :
 - [cicada](cicada/README.md) -- the implementation
 - [cic](cic/README.md) -- command line interface
-- [cicada-notebook](cicada-notebook/README.md) -- runs in web browser, with rich UI
+- [cicada-notebook](cicada-notebook/README.md) -- interactive UI
 - [cicada-server] (todo) -- language server
 - [cicada-shell] (todo) -- a script language -- uses tmp file as function's local variable
 
