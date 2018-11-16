@@ -346,12 +346,20 @@
             } else {
                 return ErrorInCtx::new ()
                     .head ("unify_against fail")
-                    .line (&format! (
-                        "old_value = {}",
-                        old_value.to_string ()))
-                    .line (&format! (
-                        "value = {}",
-                        value.to_string ()))
+                    .line (&format! ("old = {}",
+                                     old_value
+                                     .to_string ()))
+                    .line (&format! (">>> = {}",
+                                     subst
+                                     .deep_walk (old_value)
+                                     .to_string ()))
+                    .line (&format! ("new = {}",
+                                     value
+                                     .to_string ()))
+                    .line (&format! (">>> = {}",
+                                     subst
+                                     .deep_walk (value)
+                                     .to_string ()))
                     .span (span.clone ())
                     .wrap_in_err ()
             }
@@ -374,13 +382,23 @@
     ) -> Result <(), ErrorInCtx> {
         match arg {
             Arg::Vec (term_vec) => {
+                let mut queue: VecDeque <Value> = VecDeque::new ();
+                for value in value_dic.values () {
+                    let value = subst.walk (value);
+                    if let Value::TypedVar (_) = value {
+                        queue.push_back (value);
+                    }
+                }
                 for term in term_vec {
-                    let old_value = value_dic_next_value (
-                        value_dic,
-                        subst.clone ());
-                    term.value (
-                        wissen, subst, body, var_dic,
-                        Some (&old_value))?;
+                    if let Some (old_value) = queue.pop_front () {
+                        term.value (
+                            wissen, subst, body, var_dic,
+                            Some (&old_value))?;
+                    } else {
+                        term.value (
+                            wissen, subst, body, var_dic,
+                            None)?;
+                    }
                 }
                 Ok (())
             }
@@ -416,23 +434,6 @@
                 Ok (())
             }
         }
-    }
-    #+end_src
-
-*** value_dic_next_value
-
-    #+begin_src rust
-    fn value_dic_next_value (
-        value_dic: &Dic <Value>,
-        subst: Subst,
-    ) -> Value {
-        for value in value_dic.values () {
-            let value = subst.walk (value);
-            if let Value::TypedVar (_) = value {
-                return value;
-            }
-        }
-        panic! ("value_dic_next_value")
     }
     #+end_src
 
@@ -791,7 +792,7 @@
                             &subst,
                             &data.body);
                         tv_matrix.push ((tv_vec, subst));
-                    } 
+                    }
                     tv_matrix
                 }
                 _ => {
@@ -2662,22 +2663,22 @@
                 error.print (ctx.clone ());
             }
         }
-        // for name in wissen.den_dic.keys () {
-        //     match wissen.get_prop (name) {
-        //         // Ok ((_prop, _subst)) => {}
-        //         Ok ((prop, subst)) => {
-        //             println! (
-        //                 "<prop>\n{}\n</prop>",
-        //                 prop.to_string ());
-        //             // println! ("{}", subst.to_string ());
-        //         }
-        //         Err (error) => {
-        //             println! ("- fail on name = {}", name);
-        //             error.print (ctx.clone ());
-        //             panic! ("test_wissen_get_prop");
-        //         }
-        //     }
-        // }
+        for name in wissen.den_dic.keys () {
+            match wissen.get_prop (name) {
+                Ok ((_prop, _subst)) => {}
+                // Ok ((prop, _subst)) => {
+                //     println! (
+                //         "<prop>\n{}\n</prop>",
+                //         prop.to_string ());
+                //     // println! ("{}", subst.to_string ());
+                // }
+                Err (error) => {
+                    println! ("- fail on name = {}", name);
+                    error.print (ctx.clone ());
+                    panic! ("test_wissen_get_prop");
+                }
+            }
+        }
     }
     #+end_src
 
@@ -2691,8 +2692,8 @@
         let ctx = ErrorCtx::new () .body (input);
         match wissen.wis (input) {
             Ok (output_vec) => {
-                for output in output_vec {
-                    println! ("{}", output.to_string ());
+                for _output in output_vec {
+                    // println! ("{}", output.to_string ());
                 }
             }
             Err (error) => {

@@ -80,26 +80,26 @@ list-append-t = disj (
     zero-append-t
     succ-append-t
 ) {
-    ante : list-t (:t)
-    succ : list-t (:t)
-    result : list-t (:t)
+    ante : list-t 
+    succ : list-t 
+    result : list-t
 }
 
 zero-append-t = conj {
-    ante : list-t (:t)
-    succ : list-t (:t)
-    result : list-t (:t)
+    ante : list-t 
+    succ : list-t 
+    result : list-t
     ante = null-c
     result = succ
 }
 
 succ-append-t = conj {
-    ante : list-t (:t)
-    succ : list-t (:t)
-    result : list-t (:t)
+    ante : list-t 
+    succ : list-t 
+    result : list-t
     prev : list-append-t (:cdr succ :result-cdr)
-    ante = cons-c (:car :cdr)
-    result = cons-c (:car :result-cdr)
+    ante = cons-c { car = :car, cdr = :cdr }
+    result = cons-c { car = :car, cdr = :result-cdr }
 }
 
 vect-t = disj (
