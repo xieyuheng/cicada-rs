@@ -1,12 +1,17 @@
 #+property: tangle lib.rs
 #+title: cicada
 - assertion supports
-  assert {}
-  assert-at-least () {}
-  assert-exactly () {}
+  `assert {}`
+  `assert-at-least () {}`
+  `assert-at-most () {}`
+  `assert-exactly () {}`
+- Wissen::type_check
+- `check {}`
+  to check hand written proofs
+- `query {}`
+  logic programming interface
 - module system with `.` syntax
 - update cicada-notebook
-- Wissen::type_check
 * [note]
 
 *** semantic
@@ -1564,7 +1569,7 @@
         }
     }
     #+end_src
-    
+
 *** Subst::reify
 
     #+begin_src rust
@@ -1573,7 +1578,7 @@
             let value = self.deep_walk (&value);
             let new_subst = Subst::new ();
             let local_subst = new_subst.localize_by_value (&value);
-            local_subst.deep_walk (&value)            
+            local_subst.deep_walk (&value)
         }
     }
     #+end_src
@@ -1885,7 +1890,7 @@
                 }
                 s += "</proofs>\n";
             }
-            s 
+            s
         }
     }
     #+end_src

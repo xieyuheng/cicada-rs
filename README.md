@@ -4,15 +4,23 @@
 
 ## Welcome
 
-cicada is a dependently-typed, object-oriented, logic programming language,  
-my design goal is to make it intuitive to formalize mathematics theories.
+cicada is a programming language
 
+aims :
+- intuitive to formalize mathematics theories
+
+features :
+- dependently-typed
+- object-oriented
+- logic programming interface
 - uses M-expression as meta syntax
-- runs in web browser, with notebook-like UI
 
-## Getting Start
-
-`cargo +nightly install cic --git https://github.com/xieyuheng/cicada`
+contains :
+- [cicada](cicada/README.md) -- the implementation
+- [cic](cic/README.md) -- command line interface
+- [cicada-notebook](cicada-notebook/README.md) -- runs in web browser, with rich UI
+- [cicada-server] (todo) -- language server
+- [cicada-shell] (todo) -- a script language -- uses tmp file as function's local variable
 
 ## This Repo Also Contains ...
 
@@ -26,8 +34,7 @@ useful libraries and tools :
 - [error-report](error-report/README.md) -- error report in context -- for parser and compiler
 - [lexing](lexing/README.md) -- zero copy lexer
 - [mexp](mexp/README.md) -- M-expression parser and command line tools
-- [shell] (todo) -- a shell script language uses tmp file as function's local variable
-- [parsing] (todo) -- a parser generator with type system
+- [parsing] (todo) -- a parser generator with type system -- specifies `.gr` and `.tr` formats
 
 ## Contributing
 

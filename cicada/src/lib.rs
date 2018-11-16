@@ -1231,7 +1231,7 @@ impl Subst {
         let value = self.deep_walk (&value);
         let new_subst = Subst::new ();
         let local_subst = new_subst.localize_by_value (&value);
-        local_subst.deep_walk (&value)            
+        local_subst.deep_walk (&value)
     }
 }
 
@@ -1475,7 +1475,7 @@ impl ToString for WissenOutput {
             }
             s += "</proofs>\n";
         }
-        s 
+        s
     }
 }
 
