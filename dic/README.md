@@ -1,7 +1,3 @@
-# Dic -- dictionary for rust
+# dictionary // dic
 
-------
-
-- hashmap with insertion order and uses string as key.
-
-------
+hashmap with insertion order and uses string as key
