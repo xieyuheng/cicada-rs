@@ -1,10 +1,6 @@
-# cicada
-
 [![Build Status](https://travis-ci.com/xieyuheng/cicada.svg?branch=master)](https://travis-ci.com/xieyuheng/cicada)
 
-## Welcome
-
-cicada is a programming language
+## Cicada Language
 
 aims :
 - intuitive to formalize mathematics theories
@@ -43,10 +39,10 @@ We use Collective Code Construction Contract (a.k.a. C4) as our collaboration pr
 - [The C4 RFC](https://rfc.zeromq.org/spec:42/C4)
 - [Style Guide](STYLE-GUIDE.md)
 
-## CODE OF CONDUCT
+## Code Of Conduct
 
 [Contributor Covenant Code of Conduct](CODE-OF-CONDUCT.md)
 
-## LICENSE
+## License
 
 [GPLv3](LICENSE)
