@@ -28,7 +28,7 @@
         ErrorCtx,
     };
     use lexing::{
-        CharTable, Token,
+        LexTable, Token,
     };
     #+end_src
 
@@ -608,7 +608,7 @@
     #[derive (PartialEq)]
     pub struct SyntaxTable {
        pub op_set: HashSet <String>,
-       pub char_table: CharTable,
+       pub lex_table: LexTable,
     }
     #+end_src
 
@@ -617,7 +617,7 @@
     #+begin_src rust
     impl SyntaxTable {
         pub fn new () -> Self {
-            let char_table = CharTable::new ()
+            let lex_table = LexTable::new ()
                 .quotation_mark ('"')
                 .quotation_mark ('\'')
                 .space (' ')
@@ -630,7 +630,7 @@
                 .char (';');
             SyntaxTable {
                 op_set: HashSet::new (),
-                char_table,
+                lex_table,
             }
         }
     }
@@ -657,7 +657,7 @@
             let parsing = Parsing {
                 cursor: 0,
                 syntax_table: self.clone (),
-                token_vec: self.char_table.lex (input)?,
+                token_vec: self.lex_table.lex (input)?,
                 result_stack: Vec::new (),
             };
             parsing.run ()
@@ -1574,10 +1574,10 @@
         let mexp = mexp_vec.pop () .unwrap ();
         // println! ("- {}", mexp.to_tree_format ());
         if ! lexing::token_vec_eq (
-            &syntax_table.char_table
+            &syntax_table.lex_table
                 .lex (&mexp.to_string ())
                 .unwrap (),
-            &syntax_table.char_table
+            &syntax_table.lex_table
                 .lex (sentence)
                 .unwrap (),
         ) {
@@ -1601,10 +1601,10 @@
         assert! (mexp_vec.len () == 1);
         let mexp = mexp_vec.pop () .unwrap ();
         if ! lexing::token_vec_eq (
-            &syntax_table.char_table
+            &syntax_table.lex_table
                 .lex (&mexp.to_tree_format ())
                 .unwrap (),
-            &syntax_table.char_table
+            &syntax_table.lex_table
                 .lex (tree_format)
                 .unwrap (),
         ) {

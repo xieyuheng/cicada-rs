@@ -50,69 +50,84 @@ impl <'a> Token <'a> {
 #[derive (Clone)]
 #[derive (Debug)]
 #[derive (PartialEq, Eq)]
-pub struct CharTable {
+pub struct LexTable {
     pub quotation_mark_set: HashSet <char>,
     pub space_set: HashSet <char>,
     pub char_set: HashSet <char>,
+    pub line_comment_word_set: HashSet <String>,
 }
 
-impl CharTable {
+impl LexTable {
     pub fn new () -> Self {
-        CharTable {
+        LexTable {
             quotation_mark_set: HashSet::new (),
             space_set: HashSet::new (),
             char_set: HashSet::new (),
+            line_comment_word_set: HashSet::new (),
         }
     }
 }
 
-impl CharTable {
+impl LexTable {
     pub fn quotation_mark (mut self, ch: char) -> Self {
         self.quotation_mark_set.insert (ch);
         self
     }
 }
 
-impl CharTable {
+impl LexTable {
+    pub fn quotation_mark_p (&self, ch: char) -> bool {
+        self.quotation_mark_set.contains (&ch)
+    }
+}
+
+impl LexTable {
     pub fn space (mut self, ch: char) -> Self {
         self.space_set.insert (ch);
         self
     }
 }
 
-impl CharTable {
+impl LexTable {
+    pub fn space_p (&self, ch: char) -> bool {
+        self.space_set.contains (&ch)
+    }
+}
+
+impl LexTable {
     pub fn char (mut self, ch: char) -> Self {
         self.char_set.insert (ch);
         self
     }
 }
 
-impl CharTable {
+impl LexTable {
     pub fn char_p (&self, ch: char) -> bool {
         self.char_set.contains (&ch)
     }
 }
 
-impl CharTable {
-    pub fn space_p (&self, ch: char) -> bool {
-        self.space_set.contains (&ch)
+impl LexTable {
+    pub fn line_comment_word (mut self, word: &str) -> Self {
+        self.line_comment_word_set.insert (word.to_string ());
+        self
     }
 }
 
-impl CharTable {
-    pub fn quotation_mark_p (&self, ch: char) -> bool {
-        self.quotation_mark_set.contains (&ch)
+impl LexTable {
+    pub fn line_comment_word_p (&self, word: &str) -> bool {
+        self.line_comment_word_set.contains (word)
     }
 }
 
-impl <'a> CharTable {
+impl <'a> LexTable {
     pub fn lex (
         &self,
         input: &'a str,
     ) -> Result <Vec <Token <'a>>, ErrorInCtx> {
         let lexing = Lexing {
             cursor: 0,
-            char_table: self.clone (),
+            lex_table: self.clone (),
             token_vec: Vec::new (),
             input,
         };
@@ -126,7 +141,7 @@ impl <'a> CharTable {
 struct Lexing <'a> {
     cursor: usize,
     input: &'a str,
-    char_table: CharTable,
+    lex_table: LexTable,
     token_vec: Vec <Token <'a>>,
 }
 
@@ -140,6 +155,14 @@ impl <'a> Lexing <'a> {
                 return Ok (self.token_vec);
             }
             self.next_token ()?;
+            if let Some (Token::Word {
+                word, ..
+            }) = self.token_vec.last () {
+                if self.lex_table.line_comment_word_p (word) {
+                    self.token_vec.pop ();
+                    self.ignore_rest_line ();
+                }
+            }
         }
     }
 }
@@ -155,7 +178,7 @@ impl <'a> Lexing <'a> {
         loop {
             let progress = &self.input [self.cursor ..];
             if let Some (ch) = progress.chars () .next () {
-                if self.char_table.space_p (ch) {
+                if self.lex_table.space_p (ch) {
                     self.cursor += ch.len_utf8 ();
                 } else {
                     return;
@@ -167,18 +190,37 @@ impl <'a> Lexing <'a> {
     }
 }
 
+impl <'a> Lexing <'a> {
+    fn ignore_rest_line (&mut self) {
+        loop {
+            let progress = &self.input [self.cursor ..];
+            if let Some (ch) = progress.chars () .next () {
+                if ch == '\n' {
+                    self.cursor += ch.len_utf8 ();
+                    return;
+                } else {
+                    self.cursor += ch.len_utf8 ();
+                }
+            } else {
+                return;
+            }
+        }
+    }
+}
+
 // assumptions :
 // - Lexing is not finished_p
 // - spaces are ignored
+// - line comments are ignored
 impl <'a> Lexing <'a> {
     fn next_token (
         &mut self,
     ) -> Result <(), ErrorInCtx> {
         let progress = &self.input [self.cursor ..];
         if let Some (ch) = progress.chars () .next () {
-            if self.char_table.char_p (ch) {
+            if self.lex_table.char_p (ch) {
                 self.next_char (ch)
-            } else if self.char_table.quotation_mark_p (ch) {
+            } else if self.lex_table.quotation_mark_p (ch) {
                 self.next_quote (ch)
             } else {
                 self.next_word ()
@@ -244,11 +286,11 @@ impl <'a> Lexing <'a> {
         loop {
             let progress = &self.input [self.cursor ..];
             if let Some (ch) = progress.chars () .next () {
-                if self.char_table.space_p (ch) {
+                if self.lex_table.space_p (ch) {
                     return;
-                } else if self.char_table.char_p (ch) {
+                } else if self.lex_table.char_p (ch) {
                     return;
-                } else if self.char_table.quotation_mark_p (ch) {
+                } else if self.lex_table.quotation_mark_p (ch) {
                     return;
                 } else {
                     self.cursor += ch.len_utf8 ();
@@ -342,12 +384,12 @@ pub fn token_vec_eq <'a> (
 
 #[test]
 fn test_lexing () -> Result<(), ErrorInCtx> {
-    let char_table = CharTable::new ()
+    let lex_table = LexTable::new ()
         .quotation_mark ('"')
         .space ('\n') .space ('\t') .space (' ')
         .char (';');
     let input = r#"aa "sss" c;"#;
-    let token_vec = char_table.lex (input)?;
+    let token_vec = lex_table.lex (input)?;
     let mut iter = token_vec.iter ();
     assert_eq! (iter.next () .unwrap (), &Token::Word {
         span: Span { lo: 0, hi: 2 },
@@ -372,11 +414,11 @@ fn test_lexing () -> Result<(), ErrorInCtx> {
 
 #[test]
 fn test_lexing_unicode () -> Result<(), ErrorInCtx> {
-    let char_table = CharTable::new ()
+    let lex_table = LexTable::new ()
         .space ('\n') .space ('\t') .space (' ')
         .char ('「') .char ('」');
     let input = r#"子游曰「敢問其方」"#;
-    let token_vec = char_table.lex (input)?;
+    let token_vec = lex_table.lex (input)?;
     let mut iter = token_vec.iter ();
     assert! (
         if let Some (Token::Word { word, .. }) = iter.next () {
@@ -412,13 +454,13 @@ fn test_lexing_unicode () -> Result<(), ErrorInCtx> {
 
 #[test]
 fn test_error () -> Result<(), ErrorInCtx> {
-    let char_table = CharTable::new ()
+    let lex_table = LexTable::new ()
         .quotation_mark ('"')
         .space ('\n') .space ('\t') .space (' ')
         .char (';');
     let input = r#"aa "sss c;"#;
     assert! (
-        if let Err (error) = char_table.lex (input) {
+        if let Err (error) = lex_table.lex (input) {
             error
                 .note (ErrorMsg::new ()
                        .head ("no worry")
@@ -436,12 +478,12 @@ fn test_error () -> Result<(), ErrorInCtx> {
 
 #[test]
 fn test_escape () -> Result<(), ErrorInCtx> {
-    let char_table = CharTable::new ()
+    let lex_table = LexTable::new ()
         .quotation_mark ('"')
         .space ('\n') .space ('\t') .space (' ')
         .char (';');
     let input = r#"aa "s\"" c;"#;
-    let token_vec = char_table.lex (input)?;
+    let token_vec = lex_table.lex (input)?;
     let mut iter = token_vec.iter ();
     assert_eq! (iter.next () .unwrap (), &Token::Word {
         span: Span { lo: 0, hi: 2 },
@@ -462,12 +504,12 @@ fn test_escape () -> Result<(), ErrorInCtx> {
     });
     assert_eq! (iter.next (), None);
 
-    let char_table = CharTable::new ()
+    let lex_table = LexTable::new ()
         .quotation_mark ('"')
         .quotation_mark ('\'')
         .space ('\n') .space ('\t') .space (' ');
     let input = r#"'\''"#;
-    let token_vec = char_table.lex (input)?;
+    let token_vec = lex_table.lex (input)?;
     let mut iter = token_vec.iter ();
     assert_eq! (iter.next () .unwrap (), &Token::Quotation {
         span: Span { lo: 0, hi: 4 },
@@ -480,13 +522,13 @@ fn test_escape () -> Result<(), ErrorInCtx> {
 
 #[test]
 fn test_equality () -> Result<(), ErrorInCtx> {
-    let char_table = CharTable::new ()
+    let lex_table = LexTable::new ()
         .quotation_mark ('"')
         .space ('\n') .space ('\t') .space (' ')
         .char (';');
     assert! (token_vec_eq (
-        &char_table.lex (r#"aa    "sss" c;"#)?,
-        &char_table.lex (r#"aa "sss" c;"#)?,
+        &lex_table.lex (r#"aa    "sss" c;"#)?,
+        &lex_table.lex (r#"aa "sss" c;"#)?,
     ));
     Ok (())
 }

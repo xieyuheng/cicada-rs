@@ -14,7 +14,7 @@ use error_report::{
     ErrorCtx,
 };
 use lexing::{
-    CharTable, Token,
+    LexTable, Token,
 };
 
 #[derive (Clone)]
@@ -498,12 +498,12 @@ impl <'a> Mexp <'a> {
 #[derive (PartialEq)]
 pub struct SyntaxTable {
    pub op_set: HashSet <String>,
-   pub char_table: CharTable,
+   pub lex_table: LexTable,
 }
 
 impl SyntaxTable {
     pub fn new () -> Self {
-        let char_table = CharTable::new ()
+        let lex_table = LexTable::new ()
             .quotation_mark ('"')
             .quotation_mark ('\'')
             .space (' ')
@@ -516,7 +516,7 @@ impl SyntaxTable {
             .char (';');
         SyntaxTable {
             op_set: HashSet::new (),
-            char_table,
+            lex_table,
         }
     }
 }
@@ -535,7 +535,7 @@ impl <'a> SyntaxTable {
         let parsing = Parsing {
             cursor: 0,
             syntax_table: self.clone (),
-            token_vec: self.char_table.lex (input)?,
+            token_vec: self.lex_table.lex (input)?,
             result_stack: Vec::new (),
         };
         parsing.run ()
@@ -1304,10 +1304,10 @@ fn assert_parse_mexp_sentence (sentence: &str) {
     let mexp = mexp_vec.pop () .unwrap ();
     // println! ("- {}", mexp.to_tree_format ());
     if ! lexing::token_vec_eq (
-        &syntax_table.char_table
+        &syntax_table.lex_table
             .lex (&mexp.to_string ())
             .unwrap (),
-        &syntax_table.char_table
+        &syntax_table.lex_table
             .lex (sentence)
             .unwrap (),
     ) {
@@ -1327,10 +1327,10 @@ fn assert_parse_mexp_to_tree_format (
     assert! (mexp_vec.len () == 1);
     let mexp = mexp_vec.pop () .unwrap ();
     if ! lexing::token_vec_eq (
-        &syntax_table.char_table
+        &syntax_table.lex_table
             .lex (&mexp.to_tree_format ())
             .unwrap (),
-        &syntax_table.char_table
+        &syntax_table.lex_table
             .lex (tree_format)
             .unwrap (),
     ) {

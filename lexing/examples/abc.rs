@@ -1,13 +1,13 @@
 use error_report::{ Span, ErrorInCtx };
-use lexing::{ CharTable, Token };
+use lexing::{ LexTable, Token };
 
 fn main () -> Result<(), ErrorInCtx> {
-    let char_table = CharTable::new ()
+    let lex_table = LexTable::new ()
         .quotation_mark ('"')
         .space ('\n') .space ('\t') .space (' ')
         .char (';');
     let input = r#"a "b" c;"#;
-    let token_vec = char_table.lex (input)?;
+    let token_vec = lex_table.lex (input)?;
     let mut iter = token_vec.iter ();
     assert_eq! (iter.next () .unwrap (), &Token::Word {
         span: Span { lo: 0, hi: 1 },
