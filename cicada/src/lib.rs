@@ -1270,9 +1270,9 @@ impl Wissen {
         let mut output_vec = Vec::new ();
         for statement in &statement_vec {
             if let Statement::Prove (
-                counter, binding_vec
+                counter, prop_term
             ) = statement {
-                let mut proving = self.proving (binding_vec)?;
+                let mut proving = self.proving (prop_term)?;
                 let qed_vec = proving.take_qed (*counter);
                 output_vec.push (WissenOutput {
                     qed_vec,
@@ -1362,6 +1362,22 @@ fn new_value_dic (
     Ok ((body, subst))
 }
 
+fn new_value (
+    wissen: &Wissen,
+    term: &Term,
+) -> Result <(Value, Subst), ErrorInCtx> {
+    let mut subst = Subst::new ();
+    let mut body = Dic::new ();
+    let mut var_dic = Dic::new ();
+    let value = term.value (
+            wissen,
+            &mut subst,
+            &mut body,
+            &mut var_dic,
+            None)?;        
+    Ok ((value, subst))
+}
+
 fn value_dic_to_tv_vec (
     subst: &Subst,
     value_dic: &Dic <Value>
@@ -1410,28 +1426,23 @@ impl ToString for WissenOutput {
 #[derive (PartialEq, Eq)]
 pub enum Statement {
     Den (String, Den),
-    Prove (usize, Vec <Binding>),
+    Prove (usize, Term),
 }
 
 impl Wissen {
     pub fn proving <'a> (
         &'a self,
-        binding_vec: &Vec <Binding>,
+        prop_term: &Term,
     ) -> Result <Proving <'a>, ErrorInCtx> {
-        let (value_dic, subst) = new_value_dic (
-            self, binding_vec)?;
-        // println! (
-        //     "proving => {}",
-        //     dic_to_lines (
-        //         &subst.deep_walk_dic (
-        //             &value_dic)));
-        let tv_queue = value_dic_to_tv_vec (
-            &subst,
-            &value_dic) .into ();
+        let (value, subst) = new_value (
+            self, prop_term)?;
+        let mut tv_queue = VecDeque::new ();
+        let root_tv = new_tv ("root", &value);
+        tv_queue.push_back (root_tv.clone ());
         let proof = Proof {
             wissen: self,
             subst: subst,
-            body: value_dic,
+            root: Value::TypedVar (root_tv),
             tv_queue,
         };
         Ok (Proving {
@@ -1488,7 +1499,7 @@ impl <'a> Proving <'a> {
 pub struct Proof <'a> {
     wissen: &'a Wissen,
     subst: Subst,
-    body: Dic <Value>,
+    root: Value,
     tv_queue: VecDeque <TypedVar>,
 }
 
@@ -1511,7 +1522,7 @@ impl <'a> Proof <'a> {
         } else {
             ProofStep::Qed (Qed {
                 subst: self.subst.clone (),
-                body: self.body.clone (),
+                root: self.root.clone (),
             })
         }
     }
@@ -1530,7 +1541,7 @@ pub enum ProofStep <'a> {
 #[derive (PartialEq, Eq)]
 pub struct Qed {
     subst: Subst,
-    body: Dic <Value>,
+    root: Value,
 }
 
 impl ToString for Qed {
@@ -1538,9 +1549,8 @@ impl ToString for Qed {
         let mut s = String::new ();
         s += "<qed>\n";
         s += &Mexp::prettify (
-            &dic_to_lines (
-                &self.subst.deep_walk_dic (
-                    &self.body)))
+            &self.subst.deep_walk (&self.root)
+                .to_string ())
             .unwrap ();
         // s += &self.subst.to_string ();
         s += "</qed>\n";
@@ -1550,7 +1560,7 @@ impl ToString for Qed {
 
 const GRAMMAR: &'static str = r#"
 Statement::Den = { prop-name? "=" Den }
-Statement::Prove = { "prove" '(' num? ')' Arg::Rec }
+Statement::Prove = { "prove" '(' num? ')' Term::Prop }
 Den::Disj = { "disj" '(' list (prop-name?) ')' Arg::Rec }
 Den::Conj = { "conj" Arg::Rec }
 Term::Var = { var-name? }
@@ -2043,12 +2053,22 @@ fn mexp_to_prove_statement <'a> (
                     .note (note_about_grammar ())
                     .wrap_in_err ();
             }
-            Ok (Statement::Prove (
-                result.unwrap (),
-                mexp_vec_to_binding_vec (body2)?))
+            if let [
+                prop_mexp
+            ] = &body2 [..] {
+                Ok (Statement::Prove (
+                    result.unwrap (),
+                    mexp_to_prop_term (prop_mexp)?))
+            } else {
+                ErrorInCtx::new ()
+                    .line ("fail to parse `prove`'s body arg")
+                    .span (mexp.span ())
+                    .note (note_about_grammar ())
+                    .wrap_in_err ()
+            }
         } else {
             ErrorInCtx::new ()
-                .line ("fail to parse prop's first arg")
+                .line ("fail to parse `prove`'s first arg")
                 .span (mexp.span ())
                 .note (note_about_grammar ())
                 .wrap_in_err ()

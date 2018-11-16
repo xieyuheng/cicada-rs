@@ -159,55 +159,58 @@
 
   #+begin_src cicada
   prove (3) {
-      bool : bool-t
+      bool-t
   }
 
   prove (3) {
-      nat : nat-t
+      nat-t
   }
 
   prove (3) {
-      list : list-t (nat-t)
+      list-t (nat-t)
   }
 
   prove (3) {
-      list : list-t (list-t (nat-t))
+      list-t (list-t (nat-t))
   }
 
   prove (3) {
-      zero-even : nat-even-t (zero-c)
-      two-even : nat-even-t (succ-c (succ-c (zero-c)))
+      nat-even-t (zero-c)
   }
 
   prove (3) {
-      null-length : list-length-t (
+      nat-even-t (succ-c (succ-c (zero-c)))
+  }
+
+  prove (3) {
+      list-length-t (
           null-c
           zero-c)
   }
 
   prove (3) {
-      length-one : list-length-t {
+      list-length-t {
           list = cons-c (nat-t zero-c null-c)
           length = succ-c (zero-c)
       }
   }
 
   prove (3) {
-      length-two : list-length-t {
+      list-length-t {
           list = cons-c (nat-t zero-c cons-c (zero-c null-c))
           length = succ-c (succ-c (zero-c))
       }
   }
 
   prove (3) {
-      list-length : list-length-t {
+      list-length-t {
           list = cons-c (nat-t zero-c cons-c (zero-c null-c))
           length = :n
       }
   }
 
   prove (3) {
-      list-length : list-length-t {
+      list-length-t {
           list = :l
           length = :n
       }
