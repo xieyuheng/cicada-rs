@@ -1268,14 +1268,25 @@ impl Wissen {
             }
         }
         let mut output_vec = Vec::new ();
+        let mut output_counter = 0;
         for statement in &statement_vec {
             if let Statement::Prove (
                 counter, prop_term
             ) = statement {
+                output_counter += 1;
                 let mut proving = self.proving (prop_term)?;
-                let qed_vec = proving.take_qed (*counter);
                 output_vec.push (WissenOutput {
-                    qed_vec,
+                    name: "#".to_string () + &output_counter.to_string (),
+                    qed_vec: proving.take_qed (*counter),
+                });
+            }
+            if let Statement::NamedProve (
+                name, counter, prop_term
+            ) = statement {
+                let mut proving = self.proving (prop_term)?;
+                output_vec.push (WissenOutput {
+                    name: name.to_string (),
+                    qed_vec: proving.take_qed (*counter),
                 });
             }
         }
@@ -1374,7 +1385,7 @@ fn new_value (
             &mut subst,
             &mut body,
             &mut var_dic,
-            None)?;        
+            None)?;
     Ok ((value, subst))
 }
 
@@ -1406,18 +1417,25 @@ fn value_dic_to_tv_vec (
 #[derive (Debug)]
 #[derive (PartialEq, Eq)]
 pub struct WissenOutput {
+    name: String,
     qed_vec: Vec <Qed>,
 }
 
 impl ToString for WissenOutput {
     fn to_string (&self) -> String {
         let mut s = String::new ();
-        s += "<proofs>\n";
-        for qed in &self.qed_vec {
-            s += &qed.to_string ();
+        s += &self.name;
+        s += " = ";
+        if self.qed_vec.len () == 0 {
+            s += "<proofs></proofs>\n";
+        } else {
+            s += "<proofs>\n";
+            for qed in &self.qed_vec {
+                s += &qed.to_string ();
+            }
+            s += "</proofs>\n";
         }
-        s += "</proofs>\n";
-        s
+        s 
     }
 }
 
@@ -1427,6 +1445,7 @@ impl ToString for WissenOutput {
 pub enum Statement {
     Den (String, Den),
     Prove (usize, Term),
+    NamedProve (String, usize, Term),
 }
 
 impl Wissen {
@@ -1546,21 +1565,17 @@ pub struct Qed {
 
 impl ToString for Qed {
     fn to_string (&self) -> String {
-        let mut s = String::new ();
-        s += "<qed>\n";
-        s += &Mexp::prettify (
+        Mexp::prettify (
             &self.subst.deep_walk (&self.root)
                 .to_string ())
-            .unwrap ();
-        // s += &self.subst.to_string ();
-        s += "</qed>\n";
-        s
+            .unwrap ()
     }
 }
 
 const GRAMMAR: &'static str = r#"
 Statement::Den = { prop-name? "=" Den }
 Statement::Prove = { "prove" '(' num? ')' Term::Prop }
+Statement::NamedProve = { field-name? "=" "prove" '(' num? ')' Term::Prop }
 Den::Disj = { "disj" '(' list (prop-name?) ')' Arg::Rec }
 Den::Conj = { "conj" Arg::Rec }
 Term::Var = { var-name? }
@@ -2083,11 +2098,83 @@ fn mexp_to_prove_statement <'a> (
 }
 
 
+fn mexp_to_named_prove_statement <'a> (
+    mexp: &Mexp <'a>,
+) -> Result <Statement, ErrorInCtx> {
+    if let Mexp::Infix {
+        op: "=",
+        lhs: box Mexp::Sym {
+            symbol: name,
+            ..
+        },
+        rhs: box Mexp::Apply {
+            head: box Mexp::Apply {
+                head: box Mexp::Sym {
+                    symbol: "prove",
+                    ..
+                },
+                arg: MexpArg::Tuple {
+                    body: body1,
+                    ..
+                },
+                ..
+            },
+            arg: MexpArg::Block {
+                body: body2,
+                ..
+            },
+            ..
+        },
+        ..
+    } = mexp {
+        if let [
+            Mexp::Sym { symbol, .. }
+        ] = &body1 [..] {
+            let result = symbol.parse::<usize> ();
+            if result.is_err () {
+                return ErrorInCtx::new ()
+                    .line ("fail to parse usize num in `prove`")
+                    .line (&format! ("symbol = {}", symbol))
+                    .span (mexp.span ())
+                    .note (note_about_grammar ())
+                    .wrap_in_err ();
+            }
+            if let [
+                prop_mexp
+            ] = &body2 [..] {
+                Ok (Statement::NamedProve (
+                    name.to_string (),
+                    result.unwrap (),
+                    mexp_to_prop_term (prop_mexp)?))
+            } else {
+                ErrorInCtx::new ()
+                    .line ("fail to parse `prove`'s body arg")
+                    .span (mexp.span ())
+                    .note (note_about_grammar ())
+                    .wrap_in_err ()
+            }
+        } else {
+            ErrorInCtx::new ()
+                .line ("fail to parse `prove`'s first arg")
+                .span (mexp.span ())
+                .note (note_about_grammar ())
+                .wrap_in_err ()
+        }
+    } else {
+        ErrorInCtx::new ()
+            .head ("syntex error")
+            .span (mexp.span ())
+            .note (note_about_grammar ())
+            .wrap_in_err ()
+    }
+}
+
 fn mexp_to_statement <'a> (
     mexp: &Mexp <'a>,
 ) -> Result <Statement, ErrorInCtx> {
     mexp_to_den_statement (mexp)
         .or (mexp_to_prove_statement (mexp))
+        .or (mexp_to_named_prove_statement (mexp))
 }
 
 fn mexp_vec_to_prop_name_vec <'a> (
