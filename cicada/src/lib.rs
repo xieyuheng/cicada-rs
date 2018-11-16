@@ -163,9 +163,9 @@ impl Term {
                 }
             }
             Term::Cons (span, name, arg) => {
-                let (data, s) = wissen.get_new_data (name)?;
+                let (data, new_subst) = wissen.get_new_data (name)?;
                 let data = Value::Data (data);
-                *subst = subst.append (s);
+                *subst = new_subst.union (subst);
                 if against.is_none () {
                     return ErrorInCtx::new ()
                         .head ("Term::value")
@@ -182,8 +182,8 @@ impl Term {
                 Ok (data)
             }
             Term::Prop (span, name, arg) => {
-                let (prop, s) = wissen.get_prop (name)?;
-                *subst = subst.append (s);
+                let (prop, new_subst) = wissen.get_prop (name)?;
+                *subst = new_subst.union (subst);
                 unify_against (&prop, against, subst, span)?;
                 value_dic_merge_arg (
                     prop.value_dic () .unwrap (), arg,
@@ -212,9 +212,9 @@ fn unify_against (
 ) -> Result <(), ErrorInCtx> {
     if let Some (old_value) = against {
         if let Some (
-            s
+            new_subst
         ) = subst.unify (&old_value, &value) {
-            *subst = subst.append (s);
+            *subst = new_subst.union (subst);
             Ok (())
         } else {
             return ErrorInCtx::new ()
@@ -387,7 +387,7 @@ impl Binding {
                     if let Some (
                         new_subst
                     ) = subst.unify (&old_value, &tv) {
-                        *subst = subst.append (new_subst);
+                        *subst = new_subst.union (subst);
                     } else {
                         return ErrorInCtx::new ()
                             .head ("Binding::bind")
@@ -547,10 +547,10 @@ impl TypedVar {
             Value::Disj (disj) => {
                 let mut tv_matrix = Vec::new ();
                 for name in &disj.name_vec {
-                    let (conj, s) = wissen.get_prop (name) .unwrap ();
+                    let (conj, new_subst) = wissen.get_prop (name) .unwrap ();
                     // ><><><
                     // can the above prop be disj too ?
-                    let subst = subst.append (s);
+                    let subst = new_subst.union (subst);
                     let new_tv = new_tv (&self.name, &conj);
                     if let Some (subst) = subst.unify (
                         &Value::TypedVar (self.clone ()),
@@ -563,8 +563,8 @@ impl TypedVar {
             }
             Value::Conj (conj) => {
                 let mut tv_matrix = Vec::new ();
-                let (data, s) = wissen.get_new_data (&conj.name) .unwrap ();
-                let subst = subst.append (s);
+                let (data, new_subst) = wissen.get_new_data (&conj.name) .unwrap ();
+                let subst = new_subst.union (subst);
                 if let Some (subst) = subst.unify (
                     &Value::TypedVar (self.clone ()),
                     &Value::Data (data.clone ()),
@@ -753,6 +753,103 @@ impl Subst {
                 }
             }
         }
+    }
+}
+
+impl Subst {
+    pub fn len (&self) -> usize {
+        let mut len = 0;
+        let mut subst = self;
+        loop {
+            match subst {
+                Subst::Null => break,
+                Subst::VarBinding (
+                    _var, _value, next
+                ) => {
+                    len += 1;
+                    subst = &next;
+                }
+                Subst::TypedVarBinding (
+                    _tv, _value, next
+                ) => {
+                    len += 1;
+                    subst = &next;
+                }
+            }
+        }
+        len
+    }
+}
+
+impl Subst {
+    fn reverse_union (&self, subst: &Subst) -> Subst {
+        let mut subst = subst.clone ();
+        let mut ante = self;
+        loop {
+            match ante {
+                Subst::Null => {
+                    return subst;
+                }
+                Subst::VarBinding (var, value, next) => {
+                    subst = Subst::VarBinding (
+                        var.clone (),
+                        value.clone (),
+                        Arc::new (subst));
+                    ante = next;
+                }
+                Subst::TypedVarBinding (tv, value, next) => {
+                    subst = Subst::TypedVarBinding (
+                        tv.clone (),
+                        value.clone (),
+                        Arc::new (subst));
+                    ante = next;
+                }
+            }
+        }
+    }
+}
+
+impl Subst {
+    fn reverse (&self) -> Subst {
+        self.reverse_union (&Subst::new ())
+    }
+}
+
+impl Subst {
+    pub fn union (&self, subst: &Subst) -> Subst {
+        let ante = self.reverse ();
+        ante.reverse_union (subst)
+    }
+}
+
+impl ToString for Subst {
+    fn to_string (&self) -> String {
+        let mut s = String::new ();
+        let mut subst = self;
+        loop {
+            match subst {
+                Subst::Null => break,
+                Subst::VarBinding (
+                    var, value, next
+                ) => {
+                    s += &var.to_string ();
+                    s += " = ";
+                    s += &value.to_string ();
+                    s += "\n";
+                    subst = &next;
+                }
+                Subst::TypedVarBinding (
+                    tv, value, next
+                ) => {
+                    s += &tv.to_string ();
+                    s += " = ";
+                    s += &value.to_string ();
+                    s += "\n";
+                    subst = &next;
+                }
+            }
+        }
+        add_tag ("<subst>", s)
     }
 }
 
@@ -1030,82 +1127,6 @@ impl Subst {
                 false
             }
         }
-    }
-}
-
-impl Subst {
-    pub fn len (&self) -> usize {
-        let mut len = 0;
-        let mut subst = self;
-        loop {
-            match subst {
-                Subst::Null => break,
-                Subst::VarBinding (
-                    _var, _value, next
-                ) => {
-                    len += 1;
-                    subst = &next;
-                }
-                Subst::TypedVarBinding (
-                    _tv, _value, next
-                ) => {
-                    len += 1;
-                    subst = &next;
-                }
-            }
-        }
-        len
-    }
-}
-
-impl Subst {
-    pub fn append (&self, subst: Subst) -> Subst {
-        match self {
-            Subst::Null => { subst }
-            Subst::VarBinding (var, value, next) => {
-                Subst::VarBinding (
-                    var.clone (),
-                    value.clone (),
-                    Arc::new (next.append (subst)))
-            }
-            Subst::TypedVarBinding (tv, value, next) => {
-                Subst::TypedVarBinding (
-                    tv.clone (),
-                    value.clone (),
-                    Arc::new (next.append (subst)))
-            }
-        }
-    }
-}
-
-impl ToString for Subst {
-    fn to_string (&self) -> String {
-        let mut s = String::new ();
-        let mut subst = self;
-        loop {
-            match subst {
-                Subst::Null => break,
-                Subst::VarBinding (
-                    var, value, next
-                ) => {
-                    s += &var.to_string ();
-                    s += " = ";
-                    s += &value.to_string ();
-                    s += "\n";
-                    subst = &next;
-                }
-                Subst::TypedVarBinding (
-                    tv, value, next
-                ) => {
-                    s += &tv.to_string ();
-                    s += " = ";
-                    s += &value.to_string ();
-                    s += "\n";
-                    subst = &next;
-                }
-            }
-        }
-        add_tag ("<subst>", s)
     }
 }
 

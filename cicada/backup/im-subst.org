@@ -1,0 +1,149 @@
+* Subst -- im
+
+*** Subst
+
+    #+begin_src rust
+    use im::{
+        hashmap::{
+            HashMap,
+        },
+    };
+
+    #[derive (Clone)]
+    #[derive (Debug)]
+    #[derive (PartialEq, Eq)]
+    pub struct Subst {
+        var_map: HashMap <(Id, String), Value>,
+        tv_map:  HashMap <(Id, String), Value>,
+    }
+    #+end_src
+
+*** Subst::new
+
+    #+begin_src rust
+    impl Subst {
+        pub fn new () -> Self {
+            Subst {
+                var_map: HashMap::new (),
+                tv_map: HashMap::new (),
+            }
+        }
+    }
+    #+end_src
+
+*** Subst::bind_var
+
+    #+begin_src rust
+    impl Subst {
+        fn bind_var (
+            &self,
+            var: Var,
+            value: Value,
+        ) -> Self {
+            Subst {
+                var_map: self.var_map.update (
+                    (var.id, var.name),
+                    value),
+                ..self.clone ()
+            }
+        }
+    }
+    #+end_src
+
+*** Subst::bind_tv
+
+    #+begin_src rust
+    impl Subst {
+        fn bind_tv (
+            &self,
+            tv: TypedVar,
+            value: Value,
+        ) -> Self {
+            Subst {
+                tv_map: self.tv_map.update (
+                    (tv.id, tv.name),
+                    value),
+                ..self.clone ()
+            }
+        }
+    }
+    #+end_src
+
+*** Subst::find_var
+
+    #+begin_src rust
+    impl Subst {
+        pub fn find_var (
+            &self,
+            var: &Var,
+        ) -> Option <&Value> {
+            self.var_map.get (&(var.id.clone (),
+                                var.name.clone ()))
+        }
+    }
+    #+end_src
+
+*** Subst::find_tv
+
+    #+begin_src rust
+    impl Subst {
+        pub fn find_tv (
+            &self,
+            tv: &TypedVar,
+        ) -> Option <&Value> {
+            self.tv_map.get (&(tv.id.clone (),
+                               tv.name.clone ()))
+        }
+    }
+    #+end_src
+
+*** Subst::len 
+
+    #+begin_src rust
+    impl Subst {
+        pub fn len (&self) -> usize {
+            self.var_map.len () + self.tv_map.len ()
+        }
+    }
+    #+end_src
+
+*** Subst::union
+
+    #+begin_src rust
+    impl Subst {
+        pub fn union (&self, subst: &Subst) -> Subst {
+            Subst {
+                var_map: self.var_map.clone () .union (subst.var_map.clone ()),
+                tv_map: self.tv_map.clone () .union (subst.tv_map.clone ()),
+            }
+        }
+    }
+    #+end_src
+
+*** Subst::to_string 
+
+    #+begin_src rust
+    impl ToString for Subst {
+        fn to_string (&self) -> String {
+            let mut s = String::new ();
+            for ((id, name), value) in &self.tv_map {
+                s += name;
+                s += "#";
+                s += &id.to_string ();
+                s += " = ";
+                s += &value.to_string ();
+                s += "\n";
+            }
+            for ((id, name), value) in &self.var_map {
+                s += name;
+                s += "#";
+                s += &id.to_string ();
+                s += " = ";
+                s += &value.to_string ();
+                s += "\n";
+            }        
+            add_tag ("<subst>", s)
+        }
+    }
+    #+end_src
+    

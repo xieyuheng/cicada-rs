@@ -200,9 +200,16 @@
   }
 
   prove (3) {
-      length-wrong : list-length-t {
-          list = cons-c (nat-t zero-c null-c)
-          length = succ-c (succ-c (zero-c))
+      list-length : list-length-t {
+          list = cons-c (nat-t zero-c cons-c (zero-c null-c))
+          length = :n
+      }
+  }
+
+  prove (3) {
+      list-length : list-length-t {
+          list = :l
+          length = :n
       }
   }
   #+end_src
