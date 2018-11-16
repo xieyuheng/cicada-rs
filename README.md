@@ -7,12 +7,25 @@
 cicada is a dependently-typed, object-oriented, logic programming language,  
 my design goal is to make it intuitive to formalize mathematics theories.
 
-- uses [mexp][mexp] as meta syntax
+- uses [mexp](mexp/README.md) as meta syntax
 - runs in web browser, with notebook-like UI
 
 ## Getting Start
 
 `cargo +nightly install cic --git https://github.com/xieyuheng/cicada`
+
+## This Repo Also Contains ...
+
+language implementation practice :
+- [jojo](jojo/README.md) -- a dynamic language with sexp meta syntax
+- [wissen](wissen/README.md) -- an un-typed logic programming language
+- [eopl](eopl/README.md) -- << Essentials of Programming Languages >>
+- [kanren](kanren/README.md) -- Jason's microkanren and its Yoneda embedding version
+
+useful library :
+- [error-report](error-report/README.md) -- error report in context -- for parser and compiler
+- [lexing](lexing/README.md) -- zero copy lexer
+- [mexp](mexp/README.md) -- M-expression parser and command line tools
 
 ## Contributing
 
@@ -28,5 +41,3 @@ We use Collective Code Construction Contract (a.k.a. C4) as our collaboration pr
 ## LICENSE
 
 [GPLv3](LICENSE)
-
-[mexp]: mexp/README.md
