@@ -1,0 +1,233 @@
+* Subst
+
+*** Subst
+
+    #+begin_src rust
+    #[derive (Clone)]
+    #[derive (Debug)]
+    #[derive (PartialEq, Eq)]
+    pub enum Subst {
+        Null,
+        VarBinding (Var, Value, Arc <Subst>),
+        TypedVarBinding (TypedVar, Value, Arc <Subst>),
+    }
+    #+end_src
+
+*** Subst::new
+
+    #+begin_src rust
+    impl Subst {
+        fn new () -> Self {
+            Subst::Null
+        }
+    }
+    #+end_src
+
+*** Subst::bind_var
+
+    #+begin_src rust
+    impl Subst {
+        fn bind_var (
+            &self,
+            var: Var,
+            value: Value,
+        ) -> Self {
+            Subst::VarBinding (
+                var,
+                value,
+                Arc::new (self.clone ()))
+        }
+    }
+    #+end_src
+
+*** Subst::bind_tv
+
+    #+begin_src rust
+    impl Subst {
+        fn bind_tv (
+            &self,
+            tv: TypedVar,
+            value: Value,
+        ) -> Self {
+            Subst::TypedVarBinding (
+                tv,
+                value,
+                Arc::new (self.clone ()))
+        }
+    }
+    #+end_src
+
+*** Subst::find_var
+
+    #+begin_src rust
+    impl Subst {
+        pub fn find_var (
+            &self,
+            var: &Var,
+        ) -> Option <&Value> {
+            match self {
+                Subst::Null => None,
+                Subst::VarBinding (
+                    var1, value, next,
+                ) => {
+                    if var1 == var {
+                        Some (value)
+                    } else {
+                        next.find_var (var)
+                    }
+                }
+                Subst::TypedVarBinding (
+                    _tv, _value, next,
+                ) => {
+                    next.find_var (var)
+                }
+            }
+        }
+    }
+    #+end_src
+
+*** Subst::find_tv
+
+    #+begin_src rust
+    impl Subst {
+        pub fn find_tv (
+            &self,
+            tv: &TypedVar,
+        ) -> Option <&Value> {
+            match self {
+                Subst::Null => None,
+                Subst::VarBinding (
+                    _var, _value, next,
+                ) => {
+                    next.find_tv (tv)
+                }
+                Subst::TypedVarBinding (
+                    tv1, value, next,
+                ) => {
+                    if tv1 == tv {
+                        Some (value)
+                    } else {
+                        next.find_tv (tv)
+                    }
+                }
+            }
+        }
+    }
+    #+end_src
+
+*** Subst::len
+
+    #+begin_src rust
+    impl Subst {
+        pub fn len (&self) -> usize {
+            let mut len = 0;
+            let mut subst = self;
+            loop {
+                match subst {
+                    Subst::Null => break,
+                    Subst::VarBinding (
+                        _var, _value, next
+                    ) => {
+                        len += 1;
+                        subst = &next;
+                    }
+                    Subst::TypedVarBinding (
+                        _tv, _value, next
+                    ) => {
+                        len += 1;
+                        subst = &next;
+                    }
+                }
+            }
+            len
+        }
+    }
+    #+end_src
+
+*** Subst::reverse_union
+
+    #+begin_src rust
+    impl Subst {
+        fn reverse_union (&self, subst: &Subst) -> Subst {
+            let mut subst = subst.clone ();
+            let mut ante = self;
+            loop {
+                match ante {
+                    Subst::Null => {
+                        return subst;
+                    }
+                    Subst::VarBinding (var, value, next) => {
+                        subst = Subst::VarBinding (
+                            var.clone (),
+                            value.clone (),
+                            Arc::new (subst));
+                        ante = next;
+                    }
+                    Subst::TypedVarBinding (tv, value, next) => {
+                        subst = Subst::TypedVarBinding (
+                            tv.clone (),
+                            value.clone (),
+                            Arc::new (subst));
+                        ante = next;
+                    }
+                }
+            }
+        }
+    }
+    #+end_src
+
+*** Subst::reverse
+
+    #+begin_src rust
+    impl Subst {
+        fn reverse (&self) -> Subst {
+            self.reverse_union (&Subst::new ())
+        }
+    }
+    #+end_src
+
+*** Subst::union
+
+    #+begin_src rust
+    impl Subst {
+        pub fn union (&self, subst: &Subst) -> Subst {
+            let ante = self.reverse ();
+            ante.reverse_union (subst)
+        }
+    }
+    #+end_src
+
+*** Subst::to_string
+
+    #+begin_src rust
+    impl ToString for Subst {
+        fn to_string (&self) -> String {
+            let mut s = String::new ();
+            let mut subst = self;
+            loop {
+                match subst {
+                    Subst::Null => break,
+                    Subst::VarBinding (
+                        var, value, next
+                    ) => {
+                        s += &var.to_string ();
+                        s += " = ";
+                        s += &value.to_string ();
+                        s += "\n";
+                        subst = &next;
+                    }
+                    Subst::TypedVarBinding (
+                        tv, value, next
+                    ) => {
+                        s += &tv.to_string ();
+                        s += " = ";
+                        s += &value.to_string ();
+                        s += "\n";
+                        subst = &next;
+                    }
+                }
+            }
+            add_tag ("<subst>", s)
+        }
+    }
+    #+end_src

@@ -670,8 +670,8 @@ impl ToString for Data {
 #[derive (PartialEq, Eq)]
 pub enum Subst {
     Null,
-    VarBinding (Var, Value, Arc <Subst>),
-    TypedVarBinding (TypedVar, Value, Arc <Subst>),
+    VarBinding (Id, String, Value, Arc <Subst>),
+    TypedVarBinding (Id, String, Value, Arc <Subst>),
 }
 
 impl Subst {
@@ -687,7 +687,8 @@ impl Subst {
         value: Value,
     ) -> Self {
         Subst::VarBinding (
-            var,
+            var.id.clone (),
+            var.name.clone (),
             value,
             Arc::new (self.clone ()))
     }
@@ -700,7 +701,8 @@ impl Subst {
         value: Value,
     ) -> Self {
         Subst::TypedVarBinding (
-            tv,
+            tv.id.clone (),
+            tv.name.clone (),
             value,
             Arc::new (self.clone ()))
     }
@@ -714,16 +716,16 @@ impl Subst {
         match self {
             Subst::Null => None,
             Subst::VarBinding (
-                var1, value, next,
+                id1, name1, value, next,
             ) => {
-                if var1 == var {
+                if id1 == &var.id && name1 == &var.name {
                     Some (value)
                 } else {
                     next.find_var (var)
                 }
             }
             Subst::TypedVarBinding (
-                _tv, _value, next,
+                _id, _name , _value, next,
             ) => {
                 next.find_var (var)
             }
@@ -739,14 +741,14 @@ impl Subst {
         match self {
             Subst::Null => None,
             Subst::VarBinding (
-                _var, _value, next,
+                _id, _name, _value, next,
             ) => {
                 next.find_tv (tv)
             }
             Subst::TypedVarBinding (
-                tv1, value, next,
+                id1, name1, value, next,
             ) => {
-                if tv1 == tv {
+                if id1 == &tv.id && name1 == &tv.name {
                     Some (value)
                 } else {
                     next.find_tv (tv)
@@ -764,13 +766,13 @@ impl Subst {
             match subst {
                 Subst::Null => break,
                 Subst::VarBinding (
-                    _var, _value, next
+                    _id, _name, _value, next
                 ) => {
                     len += 1;
                     subst = &next;
                 }
                 Subst::TypedVarBinding (
-                    _tv, _value, next
+                    _id, _name, _value, next
                 ) => {
                     len += 1;
                     subst = &next;
@@ -790,16 +792,18 @@ impl Subst {
                 Subst::Null => {
                     return subst;
                 }
-                Subst::VarBinding (var, value, next) => {
+                Subst::VarBinding (id, name, value, next) => {
                     subst = Subst::VarBinding (
-                        var.clone (),
+                        id.clone (),
+                        name.clone (),
                         value.clone (),
                         Arc::new (subst));
                     ante = next;
                 }
-                Subst::TypedVarBinding (tv, value, next) => {
+                Subst::TypedVarBinding (id, name, value, next) => {
                     subst = Subst::TypedVarBinding (
-                        tv.clone (),
+                        id.clone (),
+                        name.clone (),
                         value.clone (),
                         Arc::new (subst));
                     ante = next;
@@ -830,18 +834,22 @@ impl ToString for Subst {
             match subst {
                 Subst::Null => break,
                 Subst::VarBinding (
-                    var, value, next
+                    id, name, value, next
                 ) => {
-                    s += &var.to_string ();
+                    s += &name;
+                    s += "#";
+                    s += &id.to_string ();
                     s += " = ";
                     s += &value.to_string ();
                     s += "\n";
                     subst = &next;
                 }
                 Subst::TypedVarBinding (
-                    tv, value, next
+                    id, name, value, next
                 ) => {
-                    s += &tv.to_string ();
+                    s += &name;
+                    s += "#";
+                    s += &id.to_string ();
                     s += " = ";
                     s += &value.to_string ();
                     s += "\n";
@@ -2148,8 +2156,8 @@ fn test_wissen_output () {
     let ctx = ErrorCtx::new () .body (input);
     match wissen.wis (input) {
         Ok (output_vec) => {
-            for _output in output_vec {
-                // println! ("{}", output.to_string ());
+            for output in output_vec {
+                println! ("{}", output.to_string ());
             }
         }
         Err (error) => {
