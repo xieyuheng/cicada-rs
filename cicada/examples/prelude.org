@@ -106,22 +106,22 @@
       zero-append-t
       succ-append-t
   ) {
-      ante : list-t 
-      succ : list-t 
+      ante : list-t
+      succ : list-t
       result : list-t
   }
 
   zero-append-t = conj {
-      ante : list-t 
-      succ : list-t 
+      ante : list-t
+      succ : list-t
       result : list-t
       ante = null-c
       result = succ
   }
 
   succ-append-t = conj {
-      ante : list-t 
-      succ : list-t 
+      ante : list-t
+      succ : list-t
       result : list-t
       prev : list-append-t (:cdr succ :result-cdr)
       ante = cons-c { car = :car, cdr = :cdr }
@@ -186,7 +186,21 @@
   }
 
   prove (3) {
+      length-one : list-length-t {
+          list = cons-c (nat-t zero-c null-c)
+          length = succ-c (zero-c)
+      }
+  }
+
+  prove (3) {
       length-two : list-length-t {
+          list = cons-c (nat-t zero-c cons-c (zero-c null-c))
+          length = succ-c (succ-c (zero-c))
+      }
+  }
+
+  prove (3) {
+      length-wrong : list-length-t {
           list = cons-c (nat-t zero-c null-c)
           length = succ-c (succ-c (zero-c))
       }
