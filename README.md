@@ -22,12 +22,10 @@ language implementation practice :
 - [eopl](eopl/README.md) -- << Essentials of Programming Languages >>
 - [kanren](kanren/README.md) -- Jason's microkanren and its Yoneda embedding version
 
-useful library :
+useful library and tool :
 - [error-report](error-report/README.md) -- error report in context -- for parser and compiler
 - [lexing](lexing/README.md) -- zero copy lexer
 - [mexp](mexp/README.md) -- M-expression parser and command line tools
-
-useful tool :
 - [shell] (todo) -- a shell script language uses tmp file as function's local variable
 - [parsing] (todo) -- a parser generator with type system
 

@@ -1412,11 +1412,11 @@ pub struct WissenOutput {
 impl ToString for WissenOutput {
     fn to_string (&self) -> String {
         let mut s = String::new ();
-        s += "<wissen-output>\n";
+        s += "<proofs>\n";
         for qed in &self.qed_vec {
             s += &qed.to_string ();
         }
-        s += "</wissen-output>\n";
+        s += "</proofs>\n";
         s
     }
 }
