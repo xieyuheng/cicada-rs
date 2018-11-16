@@ -71,8 +71,8 @@ zero-length-t = conj {
 succ-length-t = conj {
     list : list-t (:t)
     length : nat-t
-    prev : list-length-t (:l :n)
-    list = cons-c (:x :l)
+    prev : list-length-t { list = :cdr, length = :n }
+    list = cons-c { t = :t, car = :x, cdr = :cdr }
     length = succ-c (:n)
 }
 
@@ -125,6 +125,10 @@ cons-vect-t = conj {
 }
 
 prove (3) {
+    bool : bool-t
+}
+
+prove (3) {
     nat : nat-t
 }
 
@@ -145,7 +149,11 @@ prove (3) {
     null-length : list-length-t (
         null-c
         zero-c)
-    length-one : list-length-t (
-        cons-c (nat-t zero-c null-c)
-        succ-c (zero-c))
+}
+
+prove (3) {
+    length-two : list-length-t {
+        list = cons-c (nat-t zero-c null-c)
+        length = succ-c (succ-c (zero-c))
+    }
 }

@@ -151,12 +151,14 @@ impl Term {
         against: Option <&Value>,
     ) -> Result <Value, ErrorInCtx> {
         match self {
-            Term::Var (_span, name) => {
+            Term::Var (span, name) => {
                 if let Some (value) = var_dic.get (name) {
+                    unify_against (value, against, subst, span)?;
                     Ok (value.clone ())
                 } else {
                     let new_var = Value::Var (Var::new (name));
                     var_dic.ins (name, Some (new_var.clone ()));
+                    unify_against (&new_var, against, subst, span)?;
                     Ok (new_var)
                 }
             }
@@ -164,30 +166,7 @@ impl Term {
                 let (data, s) = wissen.get_new_data (name)?;
                 let data = Value::Data (data);
                 *subst = subst.append (s);
-                if let Some (old_value) = against {
-                    if let Some (
-                        s
-                    ) = subst.unify (&old_value, &data) {
-                        *subst = subst.append (s);
-                        value_dic_merge_arg (
-                            data.value_dic () .unwrap (), arg,
-                            wissen, subst, body, var_dic)?;
-                        Ok (data)
-                    } else {
-                        return ErrorInCtx::new ()
-                            .head ("Term::value")
-                            .line ("on Term::Cons")
-                            .line ("unification fail")
-                            .line (&format! (
-                                "old_value = {}",
-                                old_value.to_string ()))
-                            .line (&format! (
-                                "data = {}",
-                                data.to_string ()))
-                            .span (span.clone ())
-                            .wrap_in_err ()
-                    }
-                } else {
+                if against.is_none () {
                     return ErrorInCtx::new ()
                         .head ("Term::value")
                         .line ("on Term::Cons")
@@ -196,43 +175,61 @@ impl Term {
                         .span (span.clone ())
                         .wrap_in_err ()
                 }
+                unify_against (&data, against, subst, span)?;
+                value_dic_merge_arg (
+                    data.value_dic () .unwrap (), arg,
+                    wissen, subst, body, var_dic)?;
+                Ok (data)
             }
             Term::Prop (span, name, arg) => {
                 let (prop, s) = wissen.get_prop (name)?;
                 *subst = subst.append (s);
-                if let Some (old_value) = against {
-                    if let Some (
-                        s
-                    ) = subst.unify (&old_value, &prop) {
-                        *subst = subst.append (s);
-                    } else {
-                        return ErrorInCtx::new ()
-                            .head ("Term::value")
-                            .line ("on Term::Prop")
-                            .line ("unification fail")
-                            .line (&format! (
-                                "old_value = {}",
-                                old_value.to_string ()))
-                            .line (&format! (
-                                "prop = {}",
-                                prop.to_string ()))
-                            .span (span.clone ())
-                            .wrap_in_err ()
-                    }
-                }
+                unify_against (&prop, against, subst, span)?;
                 value_dic_merge_arg (
                     prop.value_dic () .unwrap (), arg,
                     wissen, subst, body, var_dic)?;
                 Ok (prop)
             }
-            Term::FieldRef (_span, name) => {
-                let value = body.get (name) .unwrap ();
-                Ok (value.clone ())
+            Term::FieldRef (span, name) => {
+                let value = body.get (name) .unwrap () .clone ();
+                unify_against (&value, against, subst, span)?;
+                Ok (value)
             }
-            Term::TypeOfType (_span) => {
-                Ok (Value::TypeOfType)
+            Term::TypeOfType (span) => {
+                let value = Value::TypeOfType;
+                unify_against (&value, against, subst, span)?;
+                Ok (value)
             }
         }
+    }
+}
+
+fn unify_against (
+    value: &Value,
+    against: Option <&Value>,
+    subst: &mut Subst,
+    span: &Span,
+) -> Result <(), ErrorInCtx> {
+    if let Some (old_value) = against {
+        if let Some (
+            s
+        ) = subst.unify (&old_value, &value) {
+            *subst = subst.append (s);
+            Ok (())
+        } else {
+            return ErrorInCtx::new ()
+                .head ("unify_against fail")
+                .line (&format! (
+                    "old_value = {}",
+                    old_value.to_string ()))
+                .line (&format! (
+                    "value = {}",
+                    value.to_string ()))
+                .span (span.clone ())
+                .wrap_in_err ()
+        }
+    } else {
+        Ok (())
     }
 }
 
@@ -539,9 +536,10 @@ impl TypedVar {
         &self,
         wissen: &Wissen,
         subst: &Subst,
-    ) -> Option <Vec <(Vec <TypedVar>, Subst)>> {
-        match &self.ty {
-            box Value::Disj (disj) => {
+    ) -> Vec <(Vec <TypedVar>, Subst)> {
+        let ty = subst.deep_walk (&self.ty);
+        match ty {
+            Value::Disj (disj) => {
                 let mut tv_matrix = Vec::new ();
                 for name in &disj.name_vec {
                     let (conj, s) = wissen.get_prop (name) .unwrap ();
@@ -556,15 +554,13 @@ impl TypedVar {
                         tv_matrix.push ((vec! [new_tv], subst));
                     }
                 }
-                Some (tv_matrix)
+                tv_matrix
             }
-            box Value::Conj (conj) => {
+            Value::Conj (conj) => {
                 let mut tv_matrix = Vec::new ();
                 let (data, s) = wissen.get_new_data (&conj.name) .unwrap ();
                 let subst = subst.append (s);
-                if let Some (
-                    subst
-                ) = subst.unify (
+                if let Some (subst) = subst.unify (
                     &Value::TypedVar (self.clone ()),
                     &Value::Data (data.clone ()),
                 ) {
@@ -572,10 +568,8 @@ impl TypedVar {
                         &subst,
                         &data.body);
                     tv_matrix.push ((tv_vec, subst));
-                    Some (tv_matrix)
-                } else {
-                    None
-                }
+                } 
+                tv_matrix
             }
             _ => {
                 panic! ("TypedVar::fulfill");
@@ -816,24 +810,17 @@ impl Subst {
                     Some (self.bind_var (v, u))
                 }
             }
-            (Value::TypedVar (u), v) => {
-                if self.tv_occur_p (&u, &v) {
+            (Value::TypedVar (tv), v) |
+            (v, Value::TypedVar (tv)) => {
+                if self.tv_occur_p (&tv, &v) {
                     None
                 } else if let Some (
                     subst
-                ) = self.unify_type_to_value (&u.ty, &v) {
-                    Some (subst.bind_tv (u, v))
-                } else {
-                    None
-                }
-            }
-            (u, Value::TypedVar (v)) => {
-                if self.tv_occur_p (&v, &u) {
-                    None
-                } else if let Some (
-                    subst
-                ) = self.unify_type_to_value (&v.ty, &u) {
-                    Some (subst.bind_tv (v, u))
+                ) = self.unify_type_to_value (&tv.ty, &v) {
+                    // println! ("- here");
+                    // println! ("  tv = {}", tv.to_string ());
+                    // println! ("  v = {}", v.to_string ());
+                    Some (subst.bind_tv (tv, v))
                 } else {
                     None
                 }
@@ -877,6 +864,9 @@ impl Subst {
                 self.cover_dic (
                     &conj.body,
                     &disj.body)
+            }
+            (Value::TypeOfType, Value::TypeOfType) => {
+                Some (self.clone ())
             }
             (u, v) => {
                 if u == v {
@@ -946,10 +936,10 @@ impl Subst {
         large_dic: &Dic <Value>,
         small_dic: &Dic <Value>,
     ) -> Option <Subst> {
-        let subst = self.clone ();
+        let mut subst = self.clone ();
         for (name, v) in small_dic.iter () {
             if let Some (v1) = large_dic.get (name) {
-                subst.unify (v1, v)?;
+                subst = subst.unify (v1, v)?;
             } else {
                 return None;
             }
@@ -1396,6 +1386,11 @@ impl Wissen {
     ) -> Result <Proving <'a>, ErrorInCtx> {
         let (value_dic, subst) = new_value_dic (
             self, binding_vec)?;
+        // println! (
+        //     "proving => {}",
+        //     dic_to_lines (
+        //         &subst.deep_walk_dic (
+        //             &value_dic)));
         let tv_queue = value_dic_to_tv_vec (
             &subst,
             &value_dic) .into ();
@@ -1424,7 +1419,7 @@ impl <'a> Proving <'a> {
             mut proof
         ) = self.proof_queue.pop_front () {
             match proof.step () {
-                ProofStep::One (qed) => {
+                ProofStep::Qed (qed) => {
                     return Some (qed);
                 }
                 ProofStep::More (proof_queue) => {
@@ -1435,7 +1430,6 @@ impl <'a> Proving <'a> {
                         self.proof_queue.push_back (proof);
                     }
                 }
-                ProofStep::Fail => {}
             }
         }
         return None;
@@ -1469,24 +1463,19 @@ impl <'a> Proof <'a> {
         if let Some (
             tv,
         ) = self.tv_queue.pop_front () {
-            if let Some (
-                tv_matrix
-            ) = tv.fulfill (&self.wissen, &self.subst) {
-                let mut proof_queue = VecDeque::new ();
-                for (tv_vec, new_subst) in tv_matrix {
-                    let mut proof = self.clone ();
-                    proof.subst = new_subst;
-                    for tv in tv_vec.into_iter () .rev () {
-                        proof.tv_queue.push_front (tv);
-                    }
-                    proof_queue.push_back (proof)
+            let tv_matrix = tv.fulfill (&self.wissen, &self.subst);
+            let mut proof_queue = VecDeque::new ();
+            for (tv_vec, new_subst) in tv_matrix {
+                let mut proof = self.clone ();
+                proof.subst = new_subst;
+                for tv in tv_vec.into_iter () .rev () {
+                    proof.tv_queue.push_front (tv);
                 }
-                ProofStep::More (proof_queue)
-            } else {
-                ProofStep::Fail
+                proof_queue.push_back (proof)
             }
+            ProofStep::More (proof_queue)
         } else {
-            ProofStep::One (Qed {
+            ProofStep::Qed (Qed {
                 subst: self.subst.clone (),
                 body: self.body.clone (),
             })
@@ -1498,9 +1487,8 @@ impl <'a> Proof <'a> {
 #[derive (Debug)]
 #[derive (PartialEq, Eq)]
 pub enum ProofStep <'a> {
-    One (Qed),
+    Qed (Qed),
     More (VecDeque <Proof <'a>>),
-    Fail,
 }
 
 #[derive (Clone)]
@@ -2069,7 +2057,7 @@ fn mexp_vec_to_statement_vec <'a> (
 }
 
 const PRELUDE: &'static str =
-    include_str! ("prelude.cic");
+    include_str! ("../examples/prelude.cic");
 
 #[test]
 fn test_unify () {
@@ -2109,22 +2097,22 @@ fn test_wissen_get_prop () {
             error.print (ctx.clone ());
         }
     }
-    for name in wissen.den_dic.keys () {
-        match wissen.get_prop (name) {
-            Ok ((_prop, _subst)) => {}
-            // Ok ((prop, subst)) => {
-            //     println! (
-            //         "<prop>\n{}\n</prop>",
-            //         prop.to_string ());
-            //     println! ("{}", subst.to_string ());
-            // }
-            Err (error) => {
-                println! ("- fail on name = {}", name);
-                error.print (ctx.clone ());
-                panic! ("test_wissen_get_prop");
-            }
-        }
-    }
+    // for name in wissen.den_dic.keys () {
+    //     match wissen.get_prop (name) {
+    //         // Ok ((_prop, _subst)) => {}
+    //         Ok ((prop, subst)) => {
+    //             println! (
+    //                 "<prop>\n{}\n</prop>",
+    //                 prop.to_string ());
+    //             // println! ("{}", subst.to_string ());
+    //         }
+    //         Err (error) => {
+    //             println! ("- fail on name = {}", name);
+    //             error.print (ctx.clone ());
+    //             panic! ("test_wissen_get_prop");
+    //         }
+    //     }
+    // }
 }
 
 #[test]
