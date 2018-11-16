@@ -34,15 +34,14 @@ useful libraries and tools :
 
 ## Contributing
 
-We use Collective Code Construction Contract (a.k.a. C4) as our collaboration protocol.
-
+We enforce C4 as collaboration protocol :
 - [The C4 RFC](https://rfc.zeromq.org/spec:42/C4)
 - [Style Guide](STYLE-GUIDE.md)
 
 ## Code Of Conduct
 
-[Contributor Covenant Code of Conduct](CODE-OF-CONDUCT.md)
+- [Contributor Covenant Code of Conduct](CODE-OF-CONDUCT.md)
 
 ## License
 
-[GPLv3](LICENSE)
+- [GPLv3](LICENSE)
