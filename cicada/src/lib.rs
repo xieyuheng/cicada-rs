@@ -670,8 +670,8 @@ impl ToString for Data {
 #[derive (PartialEq, Eq)]
 pub enum Subst {
     Null,
-    VarBinding (Id, String, Value, Arc <Subst>),
-    TypedVarBinding (Id, String, Value, Arc <Subst>),
+    VarBinding (Var, Value, Arc <Subst>),
+    TypedVarBinding (TypedVar, Value, Arc <Subst>),
 }
 
 impl Subst {
@@ -687,8 +687,7 @@ impl Subst {
         value: Value,
     ) -> Self {
         Subst::VarBinding (
-            var.id.clone (),
-            var.name.clone (),
+            var,
             value,
             Arc::new (self.clone ()))
     }
@@ -701,8 +700,7 @@ impl Subst {
         value: Value,
     ) -> Self {
         Subst::TypedVarBinding (
-            tv.id.clone (),
-            tv.name.clone (),
+            tv,
             value,
             Arc::new (self.clone ()))
     }
@@ -716,16 +714,16 @@ impl Subst {
         match self {
             Subst::Null => None,
             Subst::VarBinding (
-                id1, name1, value, next,
+                var1, value, next,
             ) => {
-                if id1 == &var.id && name1 == &var.name {
+                if var1 == var {
                     Some (value)
                 } else {
                     next.find_var (var)
                 }
             }
             Subst::TypedVarBinding (
-                _id, _name , _value, next,
+                _tv, _value, next,
             ) => {
                 next.find_var (var)
             }
@@ -741,14 +739,14 @@ impl Subst {
         match self {
             Subst::Null => None,
             Subst::VarBinding (
-                _id, _name, _value, next,
+                _var, _value, next,
             ) => {
                 next.find_tv (tv)
             }
             Subst::TypedVarBinding (
-                id1, name1, value, next,
+                tv1, value, next,
             ) => {
-                if id1 == &tv.id && name1 == &tv.name {
+                if tv1 == tv {
                     Some (value)
                 } else {
                     next.find_tv (tv)
@@ -766,13 +764,13 @@ impl Subst {
             match subst {
                 Subst::Null => break,
                 Subst::VarBinding (
-                    _id, _name, _value, next
+                    _var, _value, next
                 ) => {
                     len += 1;
                     subst = &next;
                 }
                 Subst::TypedVarBinding (
-                    _id, _name, _value, next
+                    _tv, _value, next
                 ) => {
                     len += 1;
                     subst = &next;
@@ -792,18 +790,16 @@ impl Subst {
                 Subst::Null => {
                     return subst;
                 }
-                Subst::VarBinding (id, name, value, next) => {
+                Subst::VarBinding (var, value, next) => {
                     subst = Subst::VarBinding (
-                        id.clone (),
-                        name.clone (),
+                        var.clone (),
                         value.clone (),
                         Arc::new (subst));
                     ante = next;
                 }
-                Subst::TypedVarBinding (id, name, value, next) => {
+                Subst::TypedVarBinding (tv, value, next) => {
                     subst = Subst::TypedVarBinding (
-                        id.clone (),
-                        name.clone (),
+                        tv.clone (),
                         value.clone (),
                         Arc::new (subst));
                     ante = next;
@@ -834,22 +830,18 @@ impl ToString for Subst {
             match subst {
                 Subst::Null => break,
                 Subst::VarBinding (
-                    id, name, value, next
+                    var, value, next
                 ) => {
-                    s += &name;
-                    s += "#";
-                    s += &id.to_string ();
+                    s += &var.to_string ();
                     s += " = ";
                     s += &value.to_string ();
                     s += "\n";
                     subst = &next;
                 }
                 Subst::TypedVarBinding (
-                    id, name, value, next
+                    tv, value, next
                 ) => {
-                    s += &name;
-                    s += "#";
-                    s += &id.to_string ();
+                    s += &tv.to_string ();
                     s += " = ";
                     s += &value.to_string ();
                     s += "\n";
@@ -1186,12 +1178,60 @@ impl Subst {
 }
 
 impl Subst {
+    pub fn localize_by_value (&self, value: &Value) -> Subst {
+        let value = self.walk (value);
+        match value {
+            Value::Var (var) => {
+                self.bind_var (
+                    var.clone (),
+                    Value::Var (Var {
+                        id: Id::local (self.len ()),
+                        name: var.name.clone (),
+                    }))
+            }
+            Value::TypedVar (tv) => {
+                self.bind_tv (
+                    tv.clone (),
+                    Value::TypedVar (TypedVar {
+                        id: Id::local (self.len ()),
+                        name: tv.name.clone (),
+                        ty: tv.ty.clone (),
+                    }))
+            }
+            Value::Disj (disj) => {
+                let mut subst = self.clone ();
+                for value in disj.body.values () {
+                    subst = subst.localize_by_value (value);
+                }
+                subst
+            }
+            Value::Conj (conj) => {
+                let mut subst = self.clone ();
+                for value in conj.body.values () {
+                    subst = subst.localize_by_value (value);
+                }
+                subst
+            }
+            Value::Data (data) => {
+                let mut subst = self.clone ();
+                for value in data.body.values () {
+                    subst = subst.localize_by_value (value);
+                }
+                subst
+            }
+            Value::TypeOfType => {
+                self.clone ()
+            }
+        }
+    }
+}
+
+impl Subst {
     pub fn reify (&self, value: &Value) -> Value {
-        // let value = self.deep_walk (&value);
-        // let new_subst = Subst::new ();
-        // let local_subst = new_subst.localize_by_value (&value);
-        // local_subst.deep_walk (&value)
-        self.deep_walk (&value)
+        let value = self.deep_walk (&value);
+        let new_subst = Subst::new ();
+        let local_subst = new_subst.localize_by_value (&value);
+        local_subst.deep_walk (&value)            
     }
 }
 
@@ -1566,7 +1606,7 @@ pub struct Qed {
 impl ToString for Qed {
     fn to_string (&self) -> String {
         Mexp::prettify (
-            &self.subst.deep_walk (&self.root)
+            &self.subst.reify (&self.root)
                 .to_string ())
             .unwrap ()
     }
