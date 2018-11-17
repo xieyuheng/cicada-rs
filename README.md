@@ -7,8 +7,8 @@ aims :
 
 features :
 - dependently-typed
-- object-oriented
 - logic programming interface
+- with inheriting and subtype
 - uses M-expression as meta syntax
 
 contains :
