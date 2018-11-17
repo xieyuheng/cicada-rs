@@ -14,9 +14,8 @@ features :
 contains :
 - [cicada](cicada/README.md) -- the implementation
 - [cic](cic/README.md) -- command line interface
+- [cicada-wasm](cicada-wasm/README.md) -- cicada as wasm module
 - [cicada-notebook](cicada-notebook/README.md) -- interactive UI
-- [cicada-server] (todo) -- a language server -- uses git as backend store
-- [cicada-shell] (todo) -- a scripting language -- uses tmp file as function's local variable
 
 ## This Repo Also Contains ...
 

@@ -991,7 +991,7 @@ impl Subst {
         let v = self.walk (v);
         match (t, v) {
             (Value::Conj (conj), Value::Data (data)) => {
-                let prop_name = cons_name_to_prop_name (
+                let prop_name = name_to_prop_name (
                     &data.name);
                 if conj.name != prop_name {
                     None
@@ -1002,7 +1002,7 @@ impl Subst {
                 }
             }
             (Value::Disj (disj), Value::Data (data)) => {
-                let prop_name = cons_name_to_prop_name (
+                let prop_name = name_to_prop_name (
                     &data.name);
                 let name_set: HashSet <String> = disj.name_vec
                     .clone ()
@@ -1294,12 +1294,14 @@ impl ToString for Obj {
 #[derive (PartialEq, Eq)]
 pub struct Module {
     obj_dic: Dic <Obj>,
+    module_source: String,
 }
 
 impl Module {
     pub fn new () -> Self {
         Module {
             obj_dic: Dic::new (),
+            module_source: String::new (),
         }
     }
 }
@@ -1330,19 +1332,19 @@ impl Module {
     ) -> Result <(), ErrorInCtx> {
         let syntax_table = SyntaxTable::default ();
         let mexp_vec = syntax_table.parse (input)?;
-        let statement_vec = mexp_vec_to_statement_vec (&mexp_vec)?;
-        for statement in &statement_vec {
-            if let Statement::Prop (
+        let def_vec = mexp_vec_to_def_vec (&mexp_vec)?;
+        for def in &def_vec {
+            if let Def::Prop (
                 name, obj
-            ) = statement {
+            ) = def {
                 self.define (name, obj)?;
             }
         }
         let mut output_counter = 0;
-        for statement in &statement_vec {
-            if let Statement::Prove (
+        for def in &def_vec {
+            if let Def::NamelessProve (
                 counter, prop_term
-            ) = statement {
+            ) = def {
                 output_counter += 1;
                 let mut proving = self.proving (prop_term)?;
                 let name = "#".to_string () +
@@ -1350,9 +1352,9 @@ impl Module {
                 let qed_vec = proving.take_qed (*counter);
                 self.define (&name, &Obj::Qeds (qed_vec))?;
             }
-            if let Statement::NamedProve (
+            if let Def::Prove (
                 name, counter, prop_term
-            ) = statement {
+            ) = def {
                 let mut proving = self.proving (prop_term)?;
                 let qed_vec = proving.take_qed (*counter);
                 self.define (name, &Obj::Qeds (qed_vec))?;
@@ -1424,12 +1426,12 @@ impl Module {
     }
 }
 
-fn cons_name_to_prop_name (cons_name: &str) -> String {
+fn name_to_prop_name (cons_name: &str) -> String {
     let base_name = &cons_name[.. cons_name.len () - 2];
     format! ("{}-t", base_name)
 }
 
-fn prop_name_to_cons_name (cons_name: &str) -> String {
+fn name_to_cons_name (cons_name: &str) -> String {
     let base_name = &cons_name[.. cons_name.len () - 2];
     format! ("{}-c", base_name)
 }
@@ -1439,11 +1441,11 @@ impl Module {
         &self,
         name: &str,
     ) -> Result <(Data, Subst), ErrorInCtx> {
-        let prop_name = &cons_name_to_prop_name (name);
+        let prop_name = &name_to_prop_name (name);
         let (prop, subst) = self.get_prop (prop_name)?;
         let value_dic = prop.value_dic () .unwrap ();
         let data = Data {
-            name: name.to_string (),
+            name: name_to_cons_name (name),
             body: value_dic.clone (),
         };
         Ok ((data, subst))
@@ -1510,10 +1512,10 @@ fn value_dic_to_tv_vec (
 #[derive (Clone)]
 #[derive (Debug)]
 #[derive (PartialEq, Eq)]
-pub enum Statement {
+pub enum Def {
     Prop (String, Obj),
-    Prove (usize, Term),
-    NamedProve (String, usize, Term),
+    NamelessProve (usize, Term),
+    Prove (String, usize, Term),
 }
 
 impl Module {
@@ -1641,16 +1643,25 @@ impl ToString for Qed {
 }
 
 const GRAMMAR: &'static str = r#"
-Statement::Prop = { prop-name? "=" [ Obj::Disj Obj::Conj ] }
-Statement::Prove = { "prove" '(' num? ')' Term::Prop }
-Statement::NamedProve = { field-name? "=" "prove" '(' num? ')' Term::Prop }
+Def::Prop = { prop-name? "=" [ Obj::Disj Obj::Conj ] }
+Def::Module = { module-name? "=" Module }
+Def::NamelessProve = { "prove" '(' num? ')' Term::Prop }
+Def::Prove = { prove-name? "=" "prove" '(' num? ')' Term::Prop }
+
+Module::Module = { "module" '{' list (Def) '}' }
+Module::load = { "load" '(' path? '); }
+Module::Download = { "download" '(' url? ')' }
+
 Obj::Disj = { "disj" '(' list (prop-name?) ')' Arg::Rec }
 Obj::Conj = { "conj" Arg::Rec }
+
 Term::Var = { var-name? }
 Term::Cons = { cons-name? Arg }
 Term::Prop = { prop-name? Arg }
+
 Arg::Vec = { '(' list (Term) ')' }
 Arg::Rec = { '{' list (Binding) '}' }
+
 Binding::Term = { field-name? "=" Term }
 "#;
 
@@ -2069,9 +2080,9 @@ fn mexp_to_prop_obj <'a> (
         .or (mexp_to_conj_obj (mexp))
 }
 
-fn mexp_to_prop_statement <'a> (
+fn mexp_to_prop_def <'a> (
     mexp: &Mexp <'a>,
-) -> Result <Statement, ErrorInCtx> {
+) -> Result <Def, ErrorInCtx> {
     if let Mexp::Infix {
         op: "=",
         lhs: box Mexp::Sym {
@@ -2082,7 +2093,7 @@ fn mexp_to_prop_statement <'a> (
         ..
     } = mexp {
         if prop_name_symbol_p (symbol) {
-            Ok (Statement::Prop (
+            Ok (Def::Prop (
                 symbol.to_string (),
                 mexp_to_prop_obj (rhs)?))
         } else {
@@ -2103,9 +2114,9 @@ fn mexp_to_prop_statement <'a> (
     }
 }
 
-fn mexp_to_prove_statement <'a> (
+fn mexp_to_prove_def <'a> (
     mexp: &Mexp <'a>,
-) -> Result <Statement, ErrorInCtx> {
+) -> Result <Def, ErrorInCtx> {
     if let Mexp::Apply {
         head: box Mexp::Apply {
             head: box Mexp::Sym {
@@ -2139,7 +2150,7 @@ fn mexp_to_prove_statement <'a> (
             if let [
                 prop_mexp
             ] = &body2 [..] {
-                Ok (Statement::Prove (
+                Ok (Def::NamelessProve (
                     result.unwrap (),
                     mexp_to_prop_term (prop_mexp)?))
             } else {
@@ -2166,9 +2177,9 @@ fn mexp_to_prove_statement <'a> (
 }
 
 
-fn mexp_to_named_prove_statement <'a> (
+fn mexp_to_named_prove_def <'a> (
     mexp: &Mexp <'a>,
-) -> Result <Statement, ErrorInCtx> {
+) -> Result <Def, ErrorInCtx> {
     if let Mexp::Infix {
         op: "=",
         lhs: box Mexp::Sym {
@@ -2210,7 +2221,7 @@ fn mexp_to_named_prove_statement <'a> (
             if let [
                 prop_mexp
             ] = &body2 [..] {
-                Ok (Statement::NamedProve (
+                Ok (Def::Prove (
                     name.to_string (),
                     result.unwrap (),
                     mexp_to_prop_term (prop_mexp)?))
@@ -2237,12 +2248,12 @@ fn mexp_to_named_prove_statement <'a> (
     }
 }
 
-fn mexp_to_statement <'a> (
+fn mexp_to_def <'a> (
     mexp: &Mexp <'a>,
-) -> Result <Statement, ErrorInCtx> {
-    mexp_to_prop_statement (mexp)
-        .or (mexp_to_prove_statement (mexp))
-        .or (mexp_to_named_prove_statement (mexp))
+) -> Result <Def, ErrorInCtx> {
+    mexp_to_prop_def (mexp)
+        .or (mexp_to_prove_def (mexp))
+        .or (mexp_to_named_prove_def (mexp))
 }
 
 fn mexp_vec_to_prop_name_vec <'a> (
@@ -2255,12 +2266,12 @@ fn mexp_vec_to_prop_name_vec <'a> (
     Ok (vec)
 }
 
-fn mexp_vec_to_statement_vec <'a> (
+fn mexp_vec_to_def_vec <'a> (
     mexp_vec: &Vec <Mexp <'a>>,
-) -> Result <Vec <Statement>, ErrorInCtx> {
+) -> Result <Vec <Def>, ErrorInCtx> {
     let mut vec = Vec::new ();
     for mexp in mexp_vec {
-        vec.push (mexp_to_statement (&mexp)?);
+        vec.push (mexp_to_def (&mexp)?);
     }
     Ok (vec)
 }
