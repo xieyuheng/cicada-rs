@@ -14,8 +14,8 @@ use error_report::{
     // ErrorInCtx,
 };
 use cicada::{
-    Wissen,
-    // WissenOutput,
+    Module,
+    // ModuleOutput,
 };
 
 fn main () {
@@ -27,13 +27,13 @@ fn main () {
               .help ("paths to `.cic` files")
               .multiple (true))
         .get_matches ();
-    let mut wissen = Wissen::new ();
+    let mut module = Module::new ();
     if let Some (paths) = matches.values_of ("FILE") {
         for path_str in paths {
             let path = Path::new (path_str);
             if path.is_file () {
                 let input = fs::read_to_string (path) .unwrap ();
-                match wissen.wis (&input) {
+                match module.run (&input) {
                     Ok (output_vec) => {
                         for output in output_vec {
                             println! ("{}", output.to_string ());

@@ -144,7 +144,7 @@ impl Term {
 impl Term {
     pub fn value (
         &self,
-        wissen: &Wissen,
+        module: &Module,
         subst: &mut Subst,
         body: &Dic <Value>,
         var_dic: &mut Dic <Value>,
@@ -163,7 +163,7 @@ impl Term {
                 }
             }
             Term::Cons (span, name, arg) => {
-                let (data, new_subst) = wissen.get_new_data (name)?;
+                let (data, new_subst) = module.get_new_data (name)?;
                 let data = Value::Data (data);
                 *subst = new_subst.union (subst);
                 if against.is_none () {
@@ -178,16 +178,16 @@ impl Term {
                 unify_against (&data, against, subst, span)?;
                 value_dic_merge_arg (
                     data.value_dic () .unwrap (), arg,
-                    wissen, subst, body, var_dic)?;
+                    module, subst, body, var_dic)?;
                 Ok (data)
             }
             Term::Prop (span, name, arg) => {
-                let (prop, new_subst) = wissen.get_prop (name)?;
+                let (prop, new_subst) = module.get_prop (name)?;
                 *subst = new_subst.union (subst);
                 unify_against (&prop, against, subst, span)?;
                 value_dic_merge_arg (
                     prop.value_dic () .unwrap (), arg,
-                    wissen, subst, body, var_dic)?;
+                    module, subst, body, var_dic)?;
                 Ok (prop)
             }
             Term::FieldRef (span, name) => {
@@ -244,7 +244,7 @@ fn unify_against (
 fn value_dic_merge_arg (
     value_dic: &Dic <Value>,
     arg: &Arg,
-    wissen: &Wissen,
+    module: &Module,
     subst: &mut Subst,
     body: &Dic <Value>,
     var_dic: &mut Dic <Value>,
@@ -261,11 +261,11 @@ fn value_dic_merge_arg (
             for term in term_vec {
                 if let Some (old_value) = queue.pop_front () {
                     term.value (
-                        wissen, subst, body, var_dic,
+                        module, subst, body, var_dic,
                         Some (&old_value))?;
                 } else {
                     term.value (
-                        wissen, subst, body, var_dic,
+                        module, subst, body, var_dic,
                         None)?;
                 }
             }
@@ -279,7 +279,7 @@ fn value_dic_merge_arg (
                             old_value
                         ) = value_dic.get (name) {
                             term.value (
-                                wissen, subst, body, var_dic,
+                                module, subst, body, var_dic,
                                 Some (old_value))?;
                         } else {
                             return ErrorInCtx::new ()
@@ -363,7 +363,7 @@ impl ToString for Binding {
 impl Binding {
     fn bind (
         &self,
-        wissen: &Wissen,
+        module: &Module,
         subst: &mut Subst,
         body: &mut Dic <Value>,
         var_dic: &mut Dic <Value>,
@@ -372,13 +372,13 @@ impl Binding {
             Binding::EqualTo (name, term) => {
                 let old_value = body.get (name) .unwrap ();
                 let _value = term.value (
-                    wissen, subst, body, var_dic,
+                    module, subst, body, var_dic,
                     Some (old_value))?;
                 Ok (())
             }
             Binding::Inhabit (name, term) => {
                 let value = term.value (
-                    wissen, subst, body, var_dic,
+                    module, subst, body, var_dic,
                     None)?;
                 let tv = Value::TypedVar (new_tv (name, &value));
                 if let Some (
@@ -539,7 +539,7 @@ pub struct TypedVar {
 impl TypedVar {
     fn fulfill (
         &self,
-        wissen: &Wissen,
+        module: &Module,
         subst: &Subst,
     ) -> Vec <(Vec <TypedVar>, Subst)> {
         let ty = subst.deep_walk (&self.ty);
@@ -547,7 +547,7 @@ impl TypedVar {
             Value::Disj (disj) => {
                 let mut tv_matrix = Vec::new ();
                 for name in &disj.name_vec {
-                    let (conj, new_subst) = wissen.get_prop (name) .unwrap ();
+                    let (conj, new_subst) = module.get_prop (name) .unwrap ();
                     // ><><><
                     // can the above prop be disj too ?
                     let subst = new_subst.union (subst);
@@ -563,7 +563,7 @@ impl TypedVar {
             }
             Value::Conj (conj) => {
                 let mut tv_matrix = Vec::new ();
-                let (data, new_subst) = wissen.get_new_data (&conj.name) .unwrap ();
+                let (data, new_subst) = module.get_new_data (&conj.name) .unwrap ();
                 let subst = new_subst.union (subst);
                 if let Some (subst) = subst.unify (
                     &Value::TypedVar (self.clone ()),
@@ -1274,29 +1274,29 @@ impl ToString for Den {
 #[derive (Clone)]
 #[derive (Debug)]
 #[derive (PartialEq, Eq)]
-pub struct Wissen {
+pub struct Module {
     den_dic: Dic <Den>,
 }
 
-impl Wissen {
+impl Module {
     pub fn new () -> Self {
-        Wissen {
+        Module {
             den_dic: Dic::new (),
         }
     }
 }
 
-impl Wissen {
+impl Module {
     pub fn den (&mut self, name: &str, den: &Den) {
        self.den_dic.ins (name, Some (den.clone ()));
     }
 }
 
-impl Wissen {
-    pub fn wis <'a> (
+impl Module {
+    pub fn run <'a> (
         &'a mut self,
         input: &str,
-    ) -> Result <Vec <WissenOutput>, ErrorInCtx> {
+    ) -> Result <Vec <ModuleOutput>, ErrorInCtx> {
         let syntax_table = SyntaxTable::default ();
         let mexp_vec = syntax_table.parse (input)?;
         let statement_vec = mexp_vec_to_statement_vec (&mexp_vec)?;
@@ -1315,7 +1315,7 @@ impl Wissen {
             ) = statement {
                 output_counter += 1;
                 let mut proving = self.proving (prop_term)?;
-                output_vec.push (WissenOutput {
+                output_vec.push (ModuleOutput {
                     name: "#".to_string () + &output_counter.to_string (),
                     qed_vec: proving.take_qed (*counter),
                 });
@@ -1324,7 +1324,7 @@ impl Wissen {
                 name, counter, prop_term
             ) = statement {
                 let mut proving = self.proving (prop_term)?;
-                output_vec.push (WissenOutput {
+                output_vec.push (ModuleOutput {
                     name: name.to_string (),
                     qed_vec: proving.take_qed (*counter),
                 });
@@ -1334,13 +1334,13 @@ impl Wissen {
     }
 }
 
-impl ToString for Wissen {
+impl ToString for Module {
     fn to_string (&self) -> String {
-        add_tag ("<wissen>", dic_to_lines (&self.den_dic))
+        add_tag ("<module>", dic_to_lines (&self.den_dic))
     }
 }
 
-impl Wissen {
+impl Module {
     fn get_prop (
         &self,
         name: &str,
@@ -1380,7 +1380,7 @@ fn prop_name_to_cons_name (cons_name: &str) -> String {
     format! ("{}-c", base_name)
 }
 
-impl Wissen {
+impl Module {
     fn get_new_data (
         &self,
         name: &str,
@@ -1397,7 +1397,7 @@ impl Wissen {
 }
 
 fn new_value_dic (
-    wissen: &Wissen,
+    module: &Module,
     binding_vec: &Vec <Binding>,
 ) -> Result <(Dic <Value>, Subst), ErrorInCtx> {
     let mut subst = Subst::new ();
@@ -1405,7 +1405,7 @@ fn new_value_dic (
     let mut var_dic = Dic::new ();
     for binding in binding_vec {
         binding.bind (
-            wissen,
+            module,
             &mut subst,
             &mut body,
             &mut var_dic)?;
@@ -1414,14 +1414,14 @@ fn new_value_dic (
 }
 
 fn new_value (
-    wissen: &Wissen,
+    module: &Module,
     term: &Term,
 ) -> Result <(Value, Subst), ErrorInCtx> {
     let mut subst = Subst::new ();
     let mut body = Dic::new ();
     let mut var_dic = Dic::new ();
     let value = term.value (
-            wissen,
+            module,
             &mut subst,
             &mut body,
             &mut var_dic,
@@ -1456,12 +1456,12 @@ fn value_dic_to_tv_vec (
 #[derive (Clone)]
 #[derive (Debug)]
 #[derive (PartialEq, Eq)]
-pub struct WissenOutput {
+pub struct ModuleOutput {
     name: String,
     qed_vec: Vec <Qed>,
 }
 
-impl ToString for WissenOutput {
+impl ToString for ModuleOutput {
     fn to_string (&self) -> String {
         let mut s = String::new ();
         s += &self.name;
@@ -1488,7 +1488,7 @@ pub enum Statement {
     NamedProve (String, usize, Term),
 }
 
-impl Wissen {
+impl Module {
     pub fn proving <'a> (
         &'a self,
         prop_term: &Term,
@@ -1499,7 +1499,7 @@ impl Wissen {
         let root_tv = new_tv ("root", &value);
         tv_queue.push_back (root_tv.clone ());
         let proof = Proof {
-            wissen: self,
+            module: self,
             subst: subst,
             root: Value::TypedVar (root_tv),
             tv_queue,
@@ -1556,7 +1556,7 @@ impl <'a> Proving <'a> {
 #[derive (Debug)]
 #[derive (PartialEq, Eq)]
 pub struct Proof <'a> {
-    wissen: &'a Wissen,
+    module: &'a Module,
     subst: Subst,
     root: Value,
     tv_queue: VecDeque <TypedVar>,
@@ -1567,7 +1567,7 @@ impl <'a> Proof <'a> {
         if let Some (
             tv,
         ) = self.tv_queue.pop_front () {
-            let tv_matrix = tv.fulfill (&self.wissen, &self.subst);
+            let tv_matrix = tv.fulfill (&self.module, &self.subst);
             let mut proof_queue = VecDeque::new ();
             for (tv_vec, new_subst) in tv_matrix {
                 let mut proof = self.clone ();
@@ -2268,18 +2268,18 @@ fn test_unify () {
 }
 
 #[test]
-fn test_wissen_get_prop () {
-    let mut wissen = Wissen::new ();
+fn test_module_get_prop () {
+    let mut module = Module::new ();
     let input = PRELUDE;
     let ctx = ErrorCtx::new () .body (input);
-    match wissen.wis (input) {
+    match module.run (input) {
         Ok (_output_vec) => {}
         Err (error) => {
             error.print (ctx.clone ());
         }
     }
-    for name in wissen.den_dic.keys () {
-        match wissen.get_prop (name) {
+    for name in module.den_dic.keys () {
+        match module.get_prop (name) {
             Ok ((_prop, _subst)) => {}
             // Ok ((prop, _subst)) => {
             //     println! (
@@ -2290,18 +2290,18 @@ fn test_wissen_get_prop () {
             Err (error) => {
                 println! ("- fail on name = {}", name);
                 error.print (ctx.clone ());
-                panic! ("test_wissen_get_prop");
+                panic! ("test_module_get_prop");
             }
         }
     }
 }
 
 #[test]
-fn test_wissen_output () {
-    let mut wissen = Wissen::new ();
+fn test_module_output () {
+    let mut module = Module::new ();
     let input = PRELUDE;
     let ctx = ErrorCtx::new () .body (input);
-    match wissen.wis (input) {
+    match module.run (input) {
         Ok (output_vec) => {
             for output in output_vec {
                 println! ("{}", output.to_string ());
