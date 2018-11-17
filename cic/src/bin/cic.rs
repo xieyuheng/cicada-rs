@@ -15,7 +15,6 @@ use error_report::{
 };
 use cicada::{
     Module,
-    // ModuleOutput,
 };
 
 fn main () {
@@ -34,10 +33,8 @@ fn main () {
             if path.is_file () {
                 let input = fs::read_to_string (path) .unwrap ();
                 match module.run (&input) {
-                    Ok (output_vec) => {
-                        for output in output_vec {
-                            println! ("{}", output.to_string ());
-                        }
+                    Ok (()) => {
+                        println! ("{}", module.report_qeds ());
                     }
                     Err (error) => {
                         let ctx = ErrorCtx::new ()

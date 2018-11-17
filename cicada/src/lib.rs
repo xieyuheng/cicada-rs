@@ -1238,15 +1238,17 @@ impl Subst {
 #[derive (Clone)]
 #[derive (Debug)]
 #[derive (PartialEq, Eq)]
-pub enum Den {
+pub enum Obj {
     Disj (Vec <String>, Vec <Binding>),
     Conj (Vec <Binding>),
+    Module (Module),
+    Qeds (Vec <Qed>),
 }
 
-impl ToString for Den {
+impl ToString for Obj {
     fn to_string (&self) -> String {
         match self {
-            Den::Disj (name_vec, binding_vec) => {
+            Obj::Disj (name_vec, binding_vec) => {
                 if binding_vec.is_empty () {
                     format! (
                         "disj ({}) {{}}",
@@ -1258,7 +1260,7 @@ impl ToString for Den {
                         vec_to_string (binding_vec, ", "))
                 }
             }
-            Den::Conj (binding_vec) => {
+            Obj::Conj (binding_vec) => {
                 if binding_vec.is_empty () {
                     format! ("conj {{}}")
                 } else {
@@ -1266,6 +1268,22 @@ impl ToString for Den {
                         "conj {{ {} }}",
                         vec_to_string (binding_vec, ", "))
                 }
+            }
+            Obj::Module (module) => {
+                module.to_string ()
+            }
+            Obj::Qeds (qed_vec) => {
+                let mut s = String::new ();
+                if qed_vec.len () == 0 {
+                    s += "<QEDs></QEDs>\n";
+                } else {
+                    s += "<QEDs>\n";
+                    for qed in qed_vec {
+                        s += &qed.to_string ();
+                    }
+                    s += "</QEDs>\n";
+                }
+                s
             }
         }
     }
@@ -1275,20 +1293,33 @@ impl ToString for Den {
 #[derive (Debug)]
 #[derive (PartialEq, Eq)]
 pub struct Module {
-    den_dic: Dic <Den>,
+    obj_dic: Dic <Obj>,
 }
 
 impl Module {
     pub fn new () -> Self {
         Module {
-            den_dic: Dic::new (),
+            obj_dic: Dic::new (),
         }
     }
 }
 
 impl Module {
-    pub fn den (&mut self, name: &str, den: &Den) {
-       self.den_dic.ins (name, Some (den.clone ()));
+    pub fn define (
+        &mut self,
+        name: &str,
+        obj: &Obj,
+    ) -> Result <(), ErrorInCtx> {
+        if self.obj_dic.has_name (name) {
+            ErrorInCtx::new ()
+                .head ("Module::define")
+                .line ("name already defined")
+                .line (&format! ("name = {}", name))
+                .wrap_in_err ()
+        } else {
+            self.obj_dic.ins (name, Some (obj.clone ()));
+            Ok (())
+        }
     }
 }
 
@@ -1296,18 +1327,17 @@ impl Module {
     pub fn run <'a> (
         &'a mut self,
         input: &str,
-    ) -> Result <Vec <ModuleOutput>, ErrorInCtx> {
+    ) -> Result <(), ErrorInCtx> {
         let syntax_table = SyntaxTable::default ();
         let mexp_vec = syntax_table.parse (input)?;
         let statement_vec = mexp_vec_to_statement_vec (&mexp_vec)?;
         for statement in &statement_vec {
-            if let Statement::Den (
-                name, den
+            if let Statement::Prop (
+                name, obj
             ) = statement {
-                self.den (name, den);
+                self.define (name, obj)?;
             }
         }
-        let mut output_vec = Vec::new ();
         let mut output_counter = 0;
         for statement in &statement_vec {
             if let Statement::Prove (
@@ -1315,28 +1345,41 @@ impl Module {
             ) = statement {
                 output_counter += 1;
                 let mut proving = self.proving (prop_term)?;
-                output_vec.push (ModuleOutput {
-                    name: "#".to_string () + &output_counter.to_string (),
-                    qed_vec: proving.take_qed (*counter),
-                });
+                let name = "#".to_string () +
+                    &output_counter.to_string ();
+                let qed_vec = proving.take_qed (*counter);
+                self.define (&name, &Obj::Qeds (qed_vec))?;
             }
             if let Statement::NamedProve (
                 name, counter, prop_term
             ) = statement {
                 let mut proving = self.proving (prop_term)?;
-                output_vec.push (ModuleOutput {
-                    name: name.to_string (),
-                    qed_vec: proving.take_qed (*counter),
-                });
+                let qed_vec = proving.take_qed (*counter);
+                self.define (name, &Obj::Qeds (qed_vec))?;
             }
         }
-        Ok (output_vec)
+        Ok (())
     }
 }
 
 impl ToString for Module {
     fn to_string (&self) -> String {
-        add_tag ("<module>", dic_to_lines (&self.den_dic))
+        add_tag ("<module>", dic_to_lines (&self.obj_dic))
+    }
+}
+
+impl Module {
+    pub fn report_qeds (&self) -> String {
+        let mut s = String::new ();
+        for (name, obj) in self.obj_dic.iter () {
+            if let Obj::Qeds (_) = obj {
+                s += name;
+                s += " = ";
+                s += &obj.to_string ();
+                s += "\n";
+            }
+        }
+        s
     }
 }
 
@@ -1345,9 +1388,8 @@ impl Module {
         &self,
         name: &str,
     ) -> Result <(Value, Subst), ErrorInCtx> {
-        let den = self.den_dic.get (name) .unwrap ();
-        match den {
-            Den::Disj (name_vec, binding_vec) => {
+        match self.obj_dic.get (name) {
+            Some (Obj::Disj (name_vec, binding_vec)) => {
                 let (body, subst) = new_value_dic (
                     self, binding_vec)?;
                 let disj = Value::Disj (Disj {
@@ -1357,7 +1399,7 @@ impl Module {
                 });
                 Ok ((disj, subst))
             }
-            Den::Conj (binding_vec) => {
+            Some (Obj::Conj (binding_vec)) => {
                 let (body, subst) = new_value_dic (
                     self, binding_vec)?;
                 let conj = Value::Conj (Conj {
@@ -1365,6 +1407,18 @@ impl Module {
                     body,
                 });
                 Ok ((conj, subst))
+            }
+            Some (_) => {
+                ErrorInCtx::new ()
+                    .head ("Module::get_prop")
+                    .line ("name is not bound to Disj or Conj")
+                    .line (&format! ("name = {}", name))
+                    .wrap_in_err ()            }
+            None => {
+                ErrorInCtx::new ()
+                    .head ("Module::get_prop")
+                    .line (&format! ("undefined name = {}", name))
+                    .wrap_in_err ()
             }
         }
     }
@@ -1456,34 +1510,8 @@ fn value_dic_to_tv_vec (
 #[derive (Clone)]
 #[derive (Debug)]
 #[derive (PartialEq, Eq)]
-pub struct ModuleOutput {
-    name: String,
-    qed_vec: Vec <Qed>,
-}
-
-impl ToString for ModuleOutput {
-    fn to_string (&self) -> String {
-        let mut s = String::new ();
-        s += &self.name;
-        s += " = ";
-        if self.qed_vec.len () == 0 {
-            s += "<proofs></proofs>\n";
-        } else {
-            s += "<proofs>\n";
-            for qed in &self.qed_vec {
-                s += &qed.to_string ();
-            }
-            s += "</proofs>\n";
-        }
-        s
-    }
-}
-
-#[derive (Clone)]
-#[derive (Debug)]
-#[derive (PartialEq, Eq)]
 pub enum Statement {
-    Den (String, Den),
+    Prop (String, Obj),
     Prove (usize, Term),
     NamedProve (String, usize, Term),
 }
@@ -1613,11 +1641,11 @@ impl ToString for Qed {
 }
 
 const GRAMMAR: &'static str = r#"
-Statement::Den = { prop-name? "=" Den }
+Statement::Prop = { prop-name? "=" [ Obj::Disj Obj::Conj ] }
 Statement::Prove = { "prove" '(' num? ')' Term::Prop }
 Statement::NamedProve = { field-name? "=" "prove" '(' num? ')' Term::Prop }
-Den::Disj = { "disj" '(' list (prop-name?) ')' Arg::Rec }
-Den::Conj = { "conj" Arg::Rec }
+Obj::Disj = { "disj" '(' list (prop-name?) ')' Arg::Rec }
+Obj::Conj = { "conj" Arg::Rec }
 Term::Var = { var-name? }
 Term::Cons = { cons-name? Arg }
 Term::Prop = { prop-name? Arg }
@@ -1976,9 +2004,9 @@ fn mexp_vec_to_binding_vec <'a> (
     Ok (vec)
 }
 
-fn mexp_to_disj_den <'a> (
+fn mexp_to_disj_obj <'a> (
     mexp: &Mexp <'a>,
-) -> Result <Den, ErrorInCtx> {
+) -> Result <Obj, ErrorInCtx> {
     if let Mexp::Apply {
         head: box Mexp::Apply {
             head: box Mexp::Sym {
@@ -1997,7 +2025,7 @@ fn mexp_to_disj_den <'a> (
         },
         ..
     } = mexp {
-        Ok (Den::Disj (
+        Ok (Obj::Disj (
             mexp_vec_to_prop_name_vec (body1)?,
             mexp_vec_to_binding_vec (body2)?))
     } else {
@@ -2009,9 +2037,9 @@ fn mexp_to_disj_den <'a> (
     }
 }
 
-fn mexp_to_conj_den <'a> (
+fn mexp_to_conj_obj <'a> (
     mexp: &Mexp <'a>,
-) -> Result <Den, ErrorInCtx> {
+) -> Result <Obj, ErrorInCtx> {
     if let Mexp::Apply {
             head: box Mexp::Sym {
                 symbol: "conj",
@@ -2023,7 +2051,7 @@ fn mexp_to_conj_den <'a> (
             },
             ..
         } = mexp {
-        Ok (Den::Conj (
+        Ok (Obj::Conj (
             mexp_vec_to_binding_vec (body)?))
     } else {
         ErrorInCtx::new ()
@@ -2034,14 +2062,14 @@ fn mexp_to_conj_den <'a> (
     }
 }
 
-fn mexp_to_den <'a> (
+fn mexp_to_prop_obj <'a> (
     mexp: &Mexp <'a>,
-) -> Result <Den, ErrorInCtx> {
-    mexp_to_disj_den (mexp)
-        .or (mexp_to_conj_den (mexp))
+) -> Result <Obj, ErrorInCtx> {
+    mexp_to_disj_obj (mexp)
+        .or (mexp_to_conj_obj (mexp))
 }
 
-fn mexp_to_den_statement <'a> (
+fn mexp_to_prop_statement <'a> (
     mexp: &Mexp <'a>,
 ) -> Result <Statement, ErrorInCtx> {
     if let Mexp::Infix {
@@ -2054,9 +2082,9 @@ fn mexp_to_den_statement <'a> (
         ..
     } = mexp {
         if prop_name_symbol_p (symbol) {
-            Ok (Statement::Den (
+            Ok (Statement::Prop (
                 symbol.to_string (),
-                mexp_to_den (rhs)?))
+                mexp_to_prop_obj (rhs)?))
         } else {
             ErrorInCtx::new ()
                 .line ("expecting prop name")
@@ -2212,7 +2240,7 @@ fn mexp_to_named_prove_statement <'a> (
 fn mexp_to_statement <'a> (
     mexp: &Mexp <'a>,
 ) -> Result <Statement, ErrorInCtx> {
-    mexp_to_den_statement (mexp)
+    mexp_to_prop_statement (mexp)
         .or (mexp_to_prove_statement (mexp))
         .or (mexp_to_named_prove_statement (mexp))
 }
@@ -2273,24 +2301,26 @@ fn test_module_get_prop () {
     let input = PRELUDE;
     let ctx = ErrorCtx::new () .body (input);
     match module.run (input) {
-        Ok (_output_vec) => {}
+        Ok (()) => {}
         Err (error) => {
             error.print (ctx.clone ());
         }
     }
-    for name in module.den_dic.keys () {
-        match module.get_prop (name) {
-            Ok ((_prop, _subst)) => {}
-            // Ok ((prop, _subst)) => {
-            //     println! (
-            //         "<prop>\n{}\n</prop>",
-            //         prop.to_string ());
-            //     // println! ("{}", subst.to_string ());
-            // }
-            Err (error) => {
-                println! ("- fail on name = {}", name);
-                error.print (ctx.clone ());
-                panic! ("test_module_get_prop");
+    for name in module.obj_dic.keys () {
+        if name.ends_with ("-t") {
+            match module.get_prop (name) {
+                Ok ((_prop, _subst)) => {}
+                // Ok ((prop, _subst)) => {
+                //     println! (
+                //         "<prop>\n{}\n</prop>",
+                //         prop.to_string ());
+                //     // println! ("{}", subst.to_string ());
+                // }
+                Err (error) => {
+                    println! ("- fail on name = {}", name);
+                    error.print (ctx.clone ());
+                    panic! ("test_module_get_prop");
+                }
             }
         }
     }
@@ -2302,10 +2332,8 @@ fn test_module_output () {
     let input = PRELUDE;
     let ctx = ErrorCtx::new () .body (input);
     match module.run (input) {
-        Ok (output_vec) => {
-            for output in output_vec {
-                println! ("{}", output.to_string ());
-            }
+        Ok (()) => {
+            println! ("{}", module.report_qeds ());
         }
         Err (error) => {
             error.print (ctx.clone ());
