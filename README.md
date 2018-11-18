@@ -14,7 +14,6 @@ features :
 contains :
 - [cicada](cicada/README.md) -- the implementation
 - [cic](cic/README.md) -- command line interface
-- [cicada-wasm](cicada-wasm/README.md) -- cicada as wasm module
 - [cicada-notebook](cicada-notebook/README.md) -- interactive UI
 
 ## This Repo Also Contains ...

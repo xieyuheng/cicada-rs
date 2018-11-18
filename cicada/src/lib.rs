@@ -1275,7 +1275,7 @@ impl ToString for Obj {
             Obj::Qeds (qed_vec) => {
                 let mut s = String::new ();
                 if qed_vec.len () == 0 {
-                    s += "<QEDs></QEDs>\n";
+                    s += "<QEDs/>\n";
                 } else {
                     s += "<QEDs>\n";
                     for qed in qed_vec {
@@ -1294,14 +1294,13 @@ impl ToString for Obj {
 #[derive (PartialEq, Eq)]
 pub struct Module {
     obj_dic: Dic <Obj>,
-    module_source: String,
+    // module_source: String,
 }
 
 impl Module {
     pub fn new () -> Self {
         Module {
             obj_dic: Dic::new (),
-            module_source: String::new (),
         }
     }
 }
@@ -1647,10 +1646,6 @@ Def::Prop = { prop-name? "=" [ Obj::Disj Obj::Conj ] }
 Def::Module = { module-name? "=" Module }
 Def::NamelessProve = { "prove" '(' num? ')' Term::Prop }
 Def::Prove = { prove-name? "=" "prove" '(' num? ')' Term::Prop }
-
-Module::Module = { "module" '{' list (Def) '}' }
-Module::load = { "load" '(' path? '); }
-Module::Download = { "download" '(' url? ')' }
 
 Obj::Disj = { "disj" '(' list (prop-name?) ')' Arg::Rec }
 Obj::Conj = { "conj" Arg::Rec }
