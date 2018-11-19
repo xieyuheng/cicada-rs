@@ -1,6 +1,6 @@
 [![Build Status](https://travis-ci.com/xieyuheng/cicada.svg?branch=master)](https://travis-ci.com/xieyuheng/cicada)
 
-## Cicada Language // 蟬語
+# Cicada Language // 蟬語
 
 aims :
 - intuitive to formalize mathematics theories
