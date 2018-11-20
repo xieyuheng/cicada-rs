@@ -14,11 +14,8 @@ use dic::Dic;
 use error_report::{
     Span,
     ErrorMsg,
-    ErrorInCtx,
-};
-#[cfg (test)]
-use error_report::{
     ErrorCtx,
+    ErrorInCtx,
 };
 use mexp::{
     SyntaxTable,
@@ -1298,7 +1295,15 @@ impl ToString for SearchRes {
             }
             s += "}\n";
         }
-        s
+        match Mexp::prettify (&s) {
+            Ok (output) => output,
+            Err (error) => {
+                let ctx = ErrorCtx::new ()
+                    .body (&s);
+                error.print (ctx);
+                panic! ("SearchRes::to_string")
+            }
+        }
     }
 }
 
@@ -1651,10 +1656,7 @@ pub struct Qed {
 
 impl ToString for Qed {
     fn to_string (&self) -> String {
-        Mexp::prettify (
-            &self.subst.reify (&self.root)
-                .to_string ())
-            .unwrap ()
+        self.subst.reify (&self.root) .to_string ()
     }
 }
 

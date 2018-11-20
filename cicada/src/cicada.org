@@ -1,9 +1,7 @@
 #+property: tangle lib.rs
 #+title: cicada
-
+- update cicada-notebook -- typescript and react
 * [todo]
-
-  - update cicada-notebook -- typescript
 
   - programming interface
     a typed functional interface -- ts or standalone ?
@@ -114,11 +112,8 @@
     use error_report::{
         Span,
         ErrorMsg,
-        ErrorInCtx,
-    };
-    #[cfg (test)]
-    use error_report::{
         ErrorCtx,
+        ErrorInCtx,
     };
     use mexp::{
         SyntaxTable,
@@ -1647,7 +1642,7 @@
     }
     #+end_src
 
-* interface
+* interface datatype
 
 *** SearchRes
 
@@ -1675,7 +1670,15 @@
                 }
                 s += "}\n";
             }
-            s
+            match Mexp::prettify (&s) {
+                Ok (output) => output,
+                Err (error) => {
+                    let ctx = ErrorCtx::new ()
+                        .body (&s);
+                    error.print (ctx);
+                    panic! ("SearchRes::to_string")
+                }
+            }
         }
     }
     #+end_src
@@ -2126,10 +2129,7 @@
     #+begin_src rust
     impl ToString for Qed {
         fn to_string (&self) -> String {
-            Mexp::prettify (
-                &self.subst.reify (&self.root)
-                    .to_string ())
-                .unwrap ()
+            self.subst.reify (&self.root) .to_string ()
         }
     }
     #+end_src
