@@ -1242,7 +1242,7 @@ pub enum Obj {
     Disj (Vec <String>, Vec <Binding>),
     Conj (Vec <Binding>),
     Module (Module),
-    Qeds (Vec <Qed>),
+    SearchRes (SearchRes),
 }
 
 impl ToString for Obj {
@@ -1272,20 +1272,33 @@ impl ToString for Obj {
             Obj::Module (module) => {
                 module.to_string ()
             }
-            Obj::Qeds (qed_vec) => {
-                let mut s = String::new ();
-                if qed_vec.len () == 0 {
-                    s += "<QEDs/>\n";
-                } else {
-                    s += "<QEDs>\n";
-                    for qed in qed_vec {
-                        s += &qed.to_string ();
-                    }
-                    s += "</QEDs>\n";
-                }
-                s
+            Obj::SearchRes (res) => {
+                res.to_string ()
             }
         }
+    }
+}
+
+#[derive (Clone)]
+#[derive (Debug)]
+#[derive (PartialEq, Eq)]
+pub struct SearchRes {
+    qed_vec: Vec <Qed>,
+}
+
+impl ToString for SearchRes {
+    fn to_string (&self) -> String {
+        let mut s = String::new ();
+        if self.qed_vec.len () == 0 {
+            s += "$search-res-c {}\n";
+        } else {
+            s += "$search-res-c {\n";
+            for qed in &self.qed_vec {
+                s += &qed.to_string ();
+            }
+            s += "}\n";
+        }
+        s
     }
 }
 
@@ -1341,7 +1354,7 @@ impl Module {
         }
         let mut output_counter = 0;
         for def in &def_vec {
-            if let Def::NamelessProve (
+            if let Def::NamelessSearch (
                 counter, prop_term
             ) = def {
                 output_counter += 1;
@@ -1349,14 +1362,18 @@ impl Module {
                 let name = "#".to_string () +
                     &output_counter.to_string ();
                 let qed_vec = proving.take_qed (*counter);
-                self.define (&name, &Obj::Qeds (qed_vec))?;
+                self.define (&name, &Obj::SearchRes (SearchRes {
+                    qed_vec
+                }))?;
             }
-            if let Def::Prove (
+            if let Def::Search (
                 name, counter, prop_term
             ) = def {
                 let mut proving = self.proving (prop_term)?;
                 let qed_vec = proving.take_qed (*counter);
-                self.define (name, &Obj::Qeds (qed_vec))?;
+                self.define (name, &Obj::SearchRes (SearchRes {
+                    qed_vec
+                }))?;
             }
         }
         Ok (())
@@ -1373,7 +1390,7 @@ impl Module {
     pub fn report_qeds (&self) -> String {
         let mut s = String::new ();
         for (name, obj) in self.obj_dic.iter () {
-            if let Obj::Qeds (_) = obj {
+            if let Obj::SearchRes (_) = obj {
                 s += name;
                 s += " = ";
                 s += &obj.to_string ();
@@ -1513,8 +1530,8 @@ fn value_dic_to_tv_vec (
 #[derive (PartialEq, Eq)]
 pub enum Def {
     Prop (String, Obj),
-    NamelessProve (usize, Term),
-    Prove (String, usize, Term),
+    NamelessSearch (usize, Term),
+    Search (String, usize, Term),
 }
 
 impl Module {
@@ -1527,14 +1544,14 @@ impl Module {
         let mut tv_queue = VecDeque::new ();
         let root_tv = new_tv ("root", &value);
         tv_queue.push_back (root_tv.clone ());
-        let proof = Proof {
-            module: self,
+        let deduction = Deduction {
             subst: subst,
             root: Value::TypedVar (root_tv),
             tv_queue,
         };
         Ok (Proving {
-            proof_queue: vec! [proof] .into (),
+            module: self,
+            deduction_queue: vec! [deduction] .into (),
         })
     }
 }
@@ -1543,24 +1560,25 @@ impl Module {
 #[derive (Debug)]
 #[derive (PartialEq, Eq)]
 pub struct Proving <'a> {
-    proof_queue: VecDeque <Proof <'a>>,
+    module: &'a Module,
+    deduction_queue: VecDeque <Deduction>,
 }
 
 impl <'a> Proving <'a> {
     pub fn next_qed (&mut self) -> Option <Qed> {
         while let Some (
-            mut proof
-        ) = self.proof_queue.pop_front () {
-            match proof.step () {
-                ProofStep::Qed (qed) => {
+            mut deduction
+        ) = self.deduction_queue.pop_front () {
+            match deduction.step (self.module) {
+                DeductionStep::Qed (qed) => {
                     return Some (qed);
                 }
-                ProofStep::More (proof_queue) => {
-                    for proof in proof_queue {
+                DeductionStep::More (deduction_queue) => {
+                    for deduction in deduction_queue {
                         //// about searching
                         // push back  |   depth first
                         // push front | breadth first
-                        self.proof_queue.push_back (proof);
+                        self.deduction_queue.push_back (deduction);
                     }
                 }
             }
@@ -1584,31 +1602,30 @@ impl <'a> Proving <'a> {
 #[derive (Clone)]
 #[derive (Debug)]
 #[derive (PartialEq, Eq)]
-pub struct Proof <'a> {
-    module: &'a Module,
+pub struct Deduction {
     subst: Subst,
     root: Value,
     tv_queue: VecDeque <TypedVar>,
 }
 
-impl <'a> Proof <'a> {
-    fn step (&mut self) -> ProofStep <'a> {
+impl Deduction {
+    fn step (&mut self, module: &Module) -> DeductionStep {
         if let Some (
             tv,
         ) = self.tv_queue.pop_front () {
-            let tv_matrix = tv.fulfill (&self.module, &self.subst);
-            let mut proof_queue = VecDeque::new ();
+            let tv_matrix = tv.fulfill (module, &self.subst);
+            let mut deduction_queue = VecDeque::new ();
             for (tv_vec, new_subst) in tv_matrix {
-                let mut proof = self.clone ();
-                proof.subst = new_subst;
+                let mut deduction = self.clone ();
+                deduction.subst = new_subst;
                 for tv in tv_vec.into_iter () .rev () {
-                    proof.tv_queue.push_front (tv);
+                    deduction.tv_queue.push_front (tv);
                 }
-                proof_queue.push_back (proof)
+                deduction_queue.push_back (deduction)
             }
-            ProofStep::More (proof_queue)
+            DeductionStep::More (deduction_queue)
         } else {
-            ProofStep::Qed (Qed {
+            DeductionStep::Qed (Qed {
                 subst: self.subst.clone (),
                 root: self.root.clone (),
             })
@@ -1619,9 +1636,9 @@ impl <'a> Proof <'a> {
 #[derive (Clone)]
 #[derive (Debug)]
 #[derive (PartialEq, Eq)]
-pub enum ProofStep <'a> {
+pub enum DeductionStep {
     Qed (Qed),
-    More (VecDeque <Proof <'a>>),
+    More (VecDeque <Deduction>),
 }
 
 #[derive (Clone)]
@@ -1644,8 +1661,8 @@ impl ToString for Qed {
 const GRAMMAR: &'static str = r#"
 Def::Prop = { prop-name? "=" [ Obj::Disj Obj::Conj ] }
 Def::Module = { module-name? "=" Module }
-Def::NamelessProve = { "prove" '(' num? ')' Term::Prop }
-Def::Prove = { prove-name? "=" "prove" '(' num? ')' Term::Prop }
+Def::NamelessSearch = { "search!" '(' num? ')' Term::Prop }
+Def::Search = { obj-name? "=" "search!" '(' num? ')' Term::Prop }
 
 Obj::Disj = { "disj" '(' list (prop-name?) ')' Arg::Rec }
 Obj::Conj = { "conj" Arg::Rec }
@@ -2109,13 +2126,13 @@ fn mexp_to_prop_def <'a> (
     }
 }
 
-fn mexp_to_prove_def <'a> (
+fn mexp_to_search_def <'a> (
     mexp: &Mexp <'a>,
 ) -> Result <Def, ErrorInCtx> {
     if let Mexp::Apply {
         head: box Mexp::Apply {
             head: box Mexp::Sym {
-                symbol: "prove",
+                symbol: "search!",
                 ..
             },
             arg: MexpArg::Tuple {
@@ -2136,7 +2153,7 @@ fn mexp_to_prove_def <'a> (
             let result = symbol.parse::<usize> ();
             if result.is_err () {
                 return ErrorInCtx::new ()
-                    .line ("fail to parse usize num in `prove`")
+                    .line ("fail to parse usize num in `search!`")
                     .line (&format! ("symbol = {}", symbol))
                     .span (mexp.span ())
                     .note (note_about_grammar ())
@@ -2145,19 +2162,19 @@ fn mexp_to_prove_def <'a> (
             if let [
                 prop_mexp
             ] = &body2 [..] {
-                Ok (Def::NamelessProve (
+                Ok (Def::NamelessSearch (
                     result.unwrap (),
                     mexp_to_prop_term (prop_mexp)?))
             } else {
                 ErrorInCtx::new ()
-                    .line ("fail to parse `prove`'s body arg")
+                    .line ("fail to parse `search!`'s body arg")
                     .span (mexp.span ())
                     .note (note_about_grammar ())
                     .wrap_in_err ()
             }
         } else {
             ErrorInCtx::new ()
-                .line ("fail to parse `prove`'s first arg")
+                .line ("fail to parse `search!`'s first arg")
                 .span (mexp.span ())
                 .note (note_about_grammar ())
                 .wrap_in_err ()
@@ -2172,7 +2189,7 @@ fn mexp_to_prove_def <'a> (
 }
 
 
-fn mexp_to_named_prove_def <'a> (
+fn mexp_to_named_search_def <'a> (
     mexp: &Mexp <'a>,
 ) -> Result <Def, ErrorInCtx> {
     if let Mexp::Infix {
@@ -2184,7 +2201,7 @@ fn mexp_to_named_prove_def <'a> (
         rhs: box Mexp::Apply {
             head: box Mexp::Apply {
                 head: box Mexp::Sym {
-                    symbol: "prove",
+                    symbol: "search!",
                     ..
                 },
                 arg: MexpArg::Tuple {
@@ -2207,7 +2224,7 @@ fn mexp_to_named_prove_def <'a> (
             let result = symbol.parse::<usize> ();
             if result.is_err () {
                 return ErrorInCtx::new ()
-                    .line ("fail to parse usize num in `prove`")
+                    .line ("fail to parse usize num in `search!`")
                     .line (&format! ("symbol = {}", symbol))
                     .span (mexp.span ())
                     .note (note_about_grammar ())
@@ -2216,20 +2233,20 @@ fn mexp_to_named_prove_def <'a> (
             if let [
                 prop_mexp
             ] = &body2 [..] {
-                Ok (Def::Prove (
+                Ok (Def::Search (
                     name.to_string (),
                     result.unwrap (),
                     mexp_to_prop_term (prop_mexp)?))
             } else {
                 ErrorInCtx::new ()
-                    .line ("fail to parse `prove`'s body arg")
+                    .line ("fail to parse `search!`'s body arg")
                     .span (mexp.span ())
                     .note (note_about_grammar ())
                     .wrap_in_err ()
             }
         } else {
             ErrorInCtx::new ()
-                .line ("fail to parse `prove`'s first arg")
+                .line ("fail to parse `search!`'s first arg")
                 .span (mexp.span ())
                 .note (note_about_grammar ())
                 .wrap_in_err ()
@@ -2247,8 +2264,8 @@ fn mexp_to_def <'a> (
     mexp: &Mexp <'a>,
 ) -> Result <Def, ErrorInCtx> {
     mexp_to_prop_def (mexp)
-        .or (mexp_to_prove_def (mexp))
-        .or (mexp_to_named_prove_def (mexp))
+        .or (mexp_to_search_def (mexp))
+        .or (mexp_to_named_search_def (mexp))
 }
 
 fn mexp_vec_to_prop_name_vec <'a> (
