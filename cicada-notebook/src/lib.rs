@@ -10,22 +10,18 @@ use error_report::{
     ErrorCtx,
     // ErrorInCtx,
 };
-use wissen::{
-    Wissen,
+use cicada::{
+    Module,
     // WissenOutput,
 };
 use wasm_bindgen::prelude::*;
 
 #[wasm_bindgen]
-pub fn wis (input: &str) -> String {
-    let mut wissen = Wissen::new ();
-    let mut s = String::new ();
-    match wissen.wis (input) {
-        Ok (output_vec) => {
-            for output in output_vec {
-                s += &output.to_string ();
-            }
-            s
+pub fn run (input: &str) -> String {
+    let mut module = Module::new ();
+    match module.run (input) {
+        Ok (()) => {
+            module.report_qeds ()
         }
         Err (error) => {
             error.report (ErrorCtx::new ()
