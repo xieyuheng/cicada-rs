@@ -47,7 +47,7 @@ but that it is not the right time for them,
 people are not well educated enough to understand them,  
 thus there are no businesses around them.  
 
-The project must continues,  
+The project must continue,  
 but one shell not expect to earn money from doing so.  
 
 ## Code Of Conduct
