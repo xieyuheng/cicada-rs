@@ -36,6 +36,19 @@ We enforce C4 as collaboration protocol :
 - [The C4 RFC](https://rfc.zeromq.org/spec:42/C4)
 - [Style Guide](STYLE-GUIDE.md)
 
+## Notes
+
+### About Profiting
+
+It is not that language design and  
+formalization of mathematic theories are not meaningful,  
+but that it is not the right time for them,  
+people are not well educated enough to understand them,  
+thus there are no businesses around them.  
+
+The project must continues,  
+but one shell not expect to earn money from doing so.  
+
 ## Code Of Conduct
 
 - [Contributor Covenant Code of Conduct](CODE-OF-CONDUCT.md)
