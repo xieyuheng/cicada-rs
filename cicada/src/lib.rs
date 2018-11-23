@@ -1236,6 +1236,7 @@ impl Subst {
 #[derive (Debug)]
 #[derive (PartialEq, Eq)]
 pub enum Obj {
+    // ImportPath
     Disj (Vec <String>, Vec <Binding>),
     Conj (Vec <Binding>),
     Module (Module),
@@ -1312,7 +1313,7 @@ impl ToString for SearchRes {
 #[derive (PartialEq, Eq)]
 pub struct Module {
     obj_dic: Dic <Obj>,
-    // module_source: String,
+    // source
 }
 
 impl Module {
@@ -1343,6 +1344,42 @@ impl Module {
 }
 
 impl Module {
+    pub fn exe_def <'a> (
+        &'a mut self,
+        index: usize,
+        def: &Def,
+    ) -> Result <(), ErrorInCtx> {
+        match def {
+            Def::Obj (
+                name, obj
+            ) => {
+                self.define (name, obj)
+            }
+            Def::NamelessSearch (
+                counter, prop_term
+            ) => {
+                let mut proving = self.proving (prop_term)?;
+                let name = "#".to_string () +
+                    &index.to_string ();
+                let qed_vec = proving.take_qed (*counter);
+                self.define (&name, &Obj::SearchRes (SearchRes {
+                    qed_vec
+                }))
+            }
+            Def::Search (
+                name, counter, prop_term
+            ) => {
+                let mut proving = self.proving (prop_term)?;
+                let qed_vec = proving.take_qed (*counter);
+                self.define (name, &Obj::SearchRes (SearchRes {
+                    qed_vec
+                }))
+            }
+        }
+    }
+}
+
+impl Module {
     pub fn run <'a> (
         &'a mut self,
         input: &str,
@@ -1350,36 +1387,8 @@ impl Module {
         let syntax_table = SyntaxTable::default ();
         let mexp_vec = syntax_table.parse (input)?;
         let def_vec = mexp_vec_to_def_vec (&mexp_vec)?;
-        for def in &def_vec {
-            if let Def::Prop (
-                name, obj
-            ) = def {
-                self.define (name, obj)?;
-            }
-        }
-        let mut output_counter = 0;
-        for def in &def_vec {
-            if let Def::NamelessSearch (
-                counter, prop_term
-            ) = def {
-                output_counter += 1;
-                let mut proving = self.proving (prop_term)?;
-                let name = "#".to_string () +
-                    &output_counter.to_string ();
-                let qed_vec = proving.take_qed (*counter);
-                self.define (&name, &Obj::SearchRes (SearchRes {
-                    qed_vec
-                }))?;
-            }
-            if let Def::Search (
-                name, counter, prop_term
-            ) = def {
-                let mut proving = self.proving (prop_term)?;
-                let qed_vec = proving.take_qed (*counter);
-                self.define (name, &Obj::SearchRes (SearchRes {
-                    qed_vec
-                }))?;
-            }
+        for (index, def) in def_vec.iter () .enumerate () {
+            self.exe_def (index, def)?;
         }
         Ok (())
     }
@@ -1534,7 +1543,7 @@ fn value_dic_to_tv_vec (
 #[derive (Debug)]
 #[derive (PartialEq, Eq)]
 pub enum Def {
-    Prop (String, Obj),
+    Obj (String, Obj),
     NamelessSearch (usize, Term),
     Search (String, usize, Term),
 }
@@ -1661,13 +1670,14 @@ impl ToString for Qed {
 }
 
 const GRAMMAR: &'static str = r#"
-Def::Prop = { prop-name? "=" [ Obj::Disj Obj::Conj ] }
-Def::Module = { module-name? "=" Module }
+Def::Obj = { name? "=" Obj }
 Def::NamelessSearch = { "search!" '(' num? ')' Term::Prop }
-Def::Search = { obj-name? "=" "search!" '(' num? ')' Term::Prop }
+Def::Search = { name? "=" "search!" '(' num? ')' Term::Prop }
+[TODO] Def::Import = { "import!" '(' url? ')' }
 
 Obj::Disj = { "disj" '(' list (prop-name?) ')' Arg::Rec }
 Obj::Conj = { "conj" Arg::Rec }
+[TODO] Obj::Module = { "module" '{' list (Def) '}' }
 
 Term::Var = { var-name? }
 Term::Cons = { cons-name? Arg }
@@ -2094,7 +2104,7 @@ fn mexp_to_prop_obj <'a> (
         .or (mexp_to_conj_obj (mexp))
 }
 
-fn mexp_to_prop_def <'a> (
+fn mexp_to_obj_def <'a> (
     mexp: &Mexp <'a>,
 ) -> Result <Def, ErrorInCtx> {
     if let Mexp::Infix {
@@ -2107,13 +2117,12 @@ fn mexp_to_prop_def <'a> (
         ..
     } = mexp {
         if prop_name_symbol_p (symbol) {
-            Ok (Def::Prop (
+            Ok (Def::Obj (
                 symbol.to_string (),
                 mexp_to_prop_obj (rhs)?))
         } else {
             ErrorInCtx::new ()
-                .line ("expecting prop name")
-                .line ("which must end with `-t`")
+                .head ("mexp_to_obj_def")
                 .line (&format! ("symbol = {}", symbol))
                 .span (mexp.span ())
                 .note (note_about_grammar ())
@@ -2265,7 +2274,7 @@ fn mexp_to_named_search_def <'a> (
 fn mexp_to_def <'a> (
     mexp: &Mexp <'a>,
 ) -> Result <Def, ErrorInCtx> {
-    mexp_to_prop_def (mexp)
+    mexp_to_obj_def (mexp)
         .or (mexp_to_search_def (mexp))
         .or (mexp_to_named_search_def (mexp))
 }
