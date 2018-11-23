@@ -2,29 +2,30 @@
 
 # Cicada Language // 蟬語
 
-aims :
+Aims :
 - intuitive to formalize mathematics theories
+- approachable for both mathematicians and programmers
 
-features :
+Features :
 - dependently-typed
 - logic programming interface
 - with inheriting and subtype
 - uses M-expression as meta syntax
 
-contains :
+Contains :
 - [cicada](cicada/README.md) -- the implementation
 - [cic](cic/README.md) -- command line interface
 - [cicada-notebook](cicada-notebook/README.md) -- interactive UI
 
 ## This Repo Also Contains ...
 
-language implementation practice :
+Language implementation practice :
 - [jojo](jojo/README.md) -- a dynamic language uses S-expression as meta syntax
 - [wissen](wissen/README.md) -- an un-typed logic programming language
 - [eopl](eopl/README.md) -- << Essentials of Programming Languages >>
 - [kanren](kanren/README.md) -- Jason's microkanren and its Yoneda embedding version
 
-useful libraries and tools :
+Useful libraries and tools :
 - [error-report](error-report/README.md) -- error report in context -- for parser and compiler
 - [lexing](lexing/README.md) -- zero copy lexer
 - [mexp](mexp/README.md) -- M-expression parser and command line tools
