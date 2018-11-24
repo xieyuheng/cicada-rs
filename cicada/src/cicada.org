@@ -3,22 +3,29 @@
 
 * [todo]
 
-  - ImportPath
+*** logic programing
 
-  - loader as callback -- for wasm module
+    - experiment with logic programing
+      module system and subtype might need structural typing
 
-  - as object, use `.` for names in module
-    Term::Dot = { Term '.' name? }
+*** interface
 
-  - respect global variable in Term
+    - assert! {} -- $assert-res-t & $assert-res-c
 
-  - assert! {} -- $assert-res-t & $assert-res-c
+    - query! {} -- $query-res-t & $query-res-c
 
-  - query! {} -- $query-res-t & $query-res-c
+    - interface for checking hand written proofs
 
-  - interface for checking hand written proofs
+*** module system
 
-  - Module::type_check
+    - ImportPath
+
+    - loader as callback -- for wasm module
+
+    - as object, use `.` for names in module
+      Term::Dot = { Term '.' name? }
+
+    - respect global variable in Term
 
 * [note]
 
@@ -1806,12 +1813,40 @@
     }
     #+end_src
 
+*** Module::prop_check
+
+    #+begin_src rust
+    impl Module {
+        pub fn prop_check (&self) -> Result <(), ErrorInCtx> {
+            for name in self.obj_dic.keys () {
+                if prop_name_symbol_p (name) {
+                    let span = Span {
+                        hi: 0,
+                        lo: 0,
+                    };
+                    let arg = Arg::Rec (Vec::new ());
+                    let prop_term = Term::Prop (
+                        span, name.to_string (), arg);
+                    let mut proving = self.proving (&prop_term)?;
+                    if let None = proving.next_qed () {
+                        return ErrorInCtx::new ()
+                            .head ("Module::prop_check")
+                            .line (&format! ("fail on prop : {}", name))
+                            .wrap_in_err ()
+                    }
+                }
+            }
+            Ok (())
+        }
+    }
+    #+end_src
+
 *** Module::run
 
     #+begin_src rust
     impl Module {
-        pub fn run <'a> (
-            &'a mut self,
+        pub fn run (
+            &mut self,
             input: &str,
         ) -> Result <(), ErrorInCtx> {
             let syntax_table = SyntaxTable::default ();
@@ -1820,7 +1855,7 @@
             for (index, def) in def_vec.iter () .enumerate () {
                 self.exe_def (index, def)?;
             }
-            Ok (())
+            self.prop_check ()
         }
     }
     #+end_src

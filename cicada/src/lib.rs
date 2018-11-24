@@ -1385,8 +1385,32 @@ impl Module {
 }
 
 impl Module {
-    pub fn run <'a> (
-        &'a mut self,
+    pub fn prop_check (&self) -> Result <(), ErrorInCtx> {
+        for name in self.obj_dic.keys () {
+            if prop_name_symbol_p (name) {
+                let span = Span {
+                    hi: 0,
+                    lo: 0,
+                };
+                let arg = Arg::Rec (Vec::new ());
+                let prop_term = Term::Prop (
+                    span, name.to_string (), arg);
+                let mut proving = self.proving (&prop_term)?;
+                if let None = proving.next_qed () {
+                    return ErrorInCtx::new ()
+                        .head ("Module::prop_check")
+                        .line (&format! ("fail on prop : {}", name))
+                        .wrap_in_err ()
+                }
+            }
+        }
+        Ok (())
+    }
+}
+
+impl Module {
+    pub fn run (
+        &mut self,
         input: &str,
     ) -> Result <(), ErrorInCtx> {
         let syntax_table = SyntaxTable::default ();
@@ -1395,7 +1419,7 @@ impl Module {
         for (index, def) in def_vec.iter () .enumerate () {
             self.exe_def (index, def)?;
         }
-        Ok (())
+        self.prop_check ()
     }
 }
 
