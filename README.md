@@ -17,6 +17,10 @@ Contains :
 - [cic](cic/README.md) -- command line interface
 - [cicada-notebook](cicada-notebook/README.md) -- interactive UI
 
+## Docs
+
+- [typed logic programming](docs/typed-logic-programming.org)
+
 ## This Repo Also Contains ...
 
 Language implementation practice :
