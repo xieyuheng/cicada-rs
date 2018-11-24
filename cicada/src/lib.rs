@@ -1355,6 +1355,12 @@ impl Module {
             ) => {
                 self.define (name, obj)
             }
+            Def::Import (
+                name, url
+            ) => {
+                println! ("import! {} {}", name, url);
+                Ok (())
+            }
             Def::NamelessSearch (
                 counter, prop_term
             ) => {
@@ -1544,6 +1550,7 @@ fn value_dic_to_tv_vec (
 #[derive (PartialEq, Eq)]
 pub enum Def {
     Obj (String, Obj),
+    Import (String, String),
     NamelessSearch (usize, Term),
     Search (String, usize, Term),
 }
@@ -1673,7 +1680,7 @@ const GRAMMAR: &'static str = r#"
 Def::Obj = { name? "=" Obj }
 Def::NamelessSearch = { "search!" '(' num? ')' Term::Prop }
 Def::Search = { name? "=" "search!" '(' num? ')' Term::Prop }
-[TODO] Def::Import = { "import!" '(' url? ')' }
+Def::Import = { name? "=" "import!" '(' url? ')' }
 
 Obj::Disj = { "disj" '(' list (prop-name?) ')' Arg::Rec }
 Obj::Conj = { "conj" Arg::Rec }
@@ -2137,7 +2144,7 @@ fn mexp_to_obj_def <'a> (
     }
 }
 
-fn mexp_to_search_def <'a> (
+fn mexp_to_nameless_search_def <'a> (
     mexp: &Mexp <'a>,
 ) -> Result <Def, ErrorInCtx> {
     if let Mexp::Apply {
@@ -2200,7 +2207,7 @@ fn mexp_to_search_def <'a> (
 }
 
 
-fn mexp_to_named_search_def <'a> (
+fn mexp_to_search_def <'a> (
     mexp: &Mexp <'a>,
 ) -> Result <Def, ErrorInCtx> {
     if let Mexp::Infix {
@@ -2271,12 +2278,57 @@ fn mexp_to_named_search_def <'a> (
     }
 }
 
+fn mexp_to_import_def <'a> (
+    mexp: &Mexp <'a>,
+) -> Result <Def, ErrorInCtx> {
+    if let Mexp::Infix {
+        op: "=",
+        lhs: box Mexp::Sym {
+            symbol: name,
+            ..
+        },
+        rhs: box Mexp::Apply {
+            head: box Mexp::Sym {
+                symbol: "import!",
+                ..
+            },
+            arg: MexpArg::Tuple {
+                body,
+                ..
+            },
+            ..
+        },
+        ..
+    } = mexp {
+        if let [
+            Mexp::Str { string, .. }
+        ] = &body [..] {
+            Ok (Def::Import (
+                name.to_string (),
+                string.to_string ()))
+        } else {
+            ErrorInCtx::new ()
+                .line ("fail to parse `import!`'s arg")
+                .span (mexp.span ())
+                .note (note_about_grammar ())
+                .wrap_in_err ()
+        }
+    } else {
+        ErrorInCtx::new ()
+            .head ("syntex error")
+            .span (mexp.span ())
+            .note (note_about_grammar ())
+            .wrap_in_err ()
+    }
+}
+
 fn mexp_to_def <'a> (
     mexp: &Mexp <'a>,
 ) -> Result <Def, ErrorInCtx> {
     mexp_to_obj_def (mexp)
+        .or (mexp_to_nameless_search_def (mexp))
         .or (mexp_to_search_def (mexp))
-        .or (mexp_to_named_search_def (mexp))
+        .or (mexp_to_import_def (mexp))
 }
 
 fn mexp_vec_to_prop_name_vec <'a> (

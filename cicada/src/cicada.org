@@ -3,11 +3,9 @@
 
 * [todo]
 
-  - Def::Import -- local path only for now
+  - handle Def::Import
 
   - loader as callback -- for wasm module
-
-  - import! () -- $module-t & $module-c
 
   - as object, use `.` for names in module
     Term::Dot = { Term '.' name? }
@@ -1778,6 +1776,12 @@
                 ) => {
                     self.define (name, obj)
                 }
+                Def::Import (
+                    name, url
+                ) => {
+                    println! ("import! {} {}", name, url);
+                    Ok (())
+                }
                 Def::NamelessSearch (
                     counter, prop_term
                 ) => {
@@ -2011,6 +2015,7 @@
     #[derive (PartialEq, Eq)]
     pub enum Def {
         Obj (String, Obj),
+        Import (String, String),
         NamelessSearch (usize, Term),
         Search (String, usize, Term),
     }
@@ -2186,7 +2191,7 @@
     Def::Obj = { name? "=" Obj }
     Def::NamelessSearch = { "search!" '(' num? ')' Term::Prop }
     Def::Search = { name? "=" "search!" '(' num? ')' Term::Prop }
-    [TODO] Def::Import = { "import!" '(' url? ')' }
+    Def::Import = { name? "=" "import!" '(' url? ')' }
 
     Obj::Disj = { "disj" '(' list (prop-name?) ')' Arg::Rec }
     Obj::Conj = { "conj" Arg::Rec }
@@ -2741,10 +2746,10 @@
     }
     #+end_src
 
-*** mexp_to_search_def
+*** mexp_to_nameless_search_def
 
     #+begin_src rust
-    fn mexp_to_search_def <'a> (
+    fn mexp_to_nameless_search_def <'a> (
         mexp: &Mexp <'a>,
     ) -> Result <Def, ErrorInCtx> {
         if let Mexp::Apply {
@@ -2808,10 +2813,10 @@
 
     #+end_src
 
-*** mexp_to_named_search_def
+*** mexp_to_search_def
 
     #+begin_src rust
-    fn mexp_to_named_search_def <'a> (
+    fn mexp_to_search_def <'a> (
         mexp: &Mexp <'a>,
     ) -> Result <Def, ErrorInCtx> {
         if let Mexp::Infix {
@@ -2883,6 +2888,54 @@
     }
     #+end_src
 
+*** mexp_to_import_def
+
+    #+begin_src rust
+    fn mexp_to_import_def <'a> (
+        mexp: &Mexp <'a>,
+    ) -> Result <Def, ErrorInCtx> {
+        if let Mexp::Infix {
+            op: "=",
+            lhs: box Mexp::Sym {
+                symbol: name,
+                ..
+            },
+            rhs: box Mexp::Apply {
+                head: box Mexp::Sym {
+                    symbol: "import!",
+                    ..
+                },
+                arg: MexpArg::Tuple {
+                    body,
+                    ..
+                },
+                ..
+            },
+            ..
+        } = mexp {
+            if let [
+                Mexp::Str { string, .. }
+            ] = &body [..] {
+                Ok (Def::Import (
+                    name.to_string (),
+                    string.to_string ()))
+            } else {
+                ErrorInCtx::new ()
+                    .line ("fail to parse `import!`'s arg")
+                    .span (mexp.span ())
+                    .note (note_about_grammar ())
+                    .wrap_in_err ()
+            }
+        } else {
+            ErrorInCtx::new ()
+                .head ("syntex error")
+                .span (mexp.span ())
+                .note (note_about_grammar ())
+                .wrap_in_err ()
+        }
+    }
+    #+end_src
+
 *** mexp_to_def
 
     #+begin_src rust
@@ -2890,8 +2943,9 @@
         mexp: &Mexp <'a>,
     ) -> Result <Def, ErrorInCtx> {
         mexp_to_obj_def (mexp)
+            .or (mexp_to_nameless_search_def (mexp))
             .or (mexp_to_search_def (mexp))
-            .or (mexp_to_named_search_def (mexp))
+            .or (mexp_to_import_def (mexp))
     }
     #+end_src
 
