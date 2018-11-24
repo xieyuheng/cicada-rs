@@ -19,7 +19,7 @@ Contains :
 
 ## Docs
 
-- [typed logic programming](docs/typed-logic-programming/README.md)
+- [typed logic programming](docs/typed-logic-programming)
 - (todo) [dependable prover]
 - (todo) [the little cicada]
 
