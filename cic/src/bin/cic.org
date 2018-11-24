@@ -39,32 +39,29 @@
           .version (cmd::crate_version! ())
           .setting (cmd::AppSettings::ArgRequiredElseHelp)
           .arg (cmd::Arg::with_name ("FILE")
-                .help ("paths to `.cic` files")
-                .multiple (true))
+                .help ("path to `.cic` file"))
           .get_matches ();
       let mut module = Module::new ();
-      if let Some (paths) = matches.values_of ("FILE") {
-          for path_str in paths {
-              let path = Path::new (path_str);
-              if path.is_file () {
-                  let input = fs::read_to_string (path) .unwrap ();
-                  match module.run (&input) {
-                      Ok (()) => {
-                          println! ("{}", module.report_qeds ());
-                      }
-                      Err (error) => {
-                          let ctx = ErrorCtx::new ()
-                              .source (path_str)
-                              .body (&input);
-                          error.print (ctx);
-                          std::process::exit (1);
-                      }
+      if let Some (path_str) = matches.value_of ("FILE") {
+          let path = Path::new (path_str);
+          if path.is_file () {
+              let input = fs::read_to_string (path) .unwrap ();
+              match module.run (&input) {
+                  Ok (()) => {
+                      println! ("{}", module.report_qeds ());
                   }
-              } else {
-                  eprintln! ("- input path is not to a file");
-                  eprintln! ("  path = {:?}", path);
-                  std::process::exit (1);
+                  Err (error) => {
+                      let ctx = ErrorCtx::new ()
+                          .source (path_str)
+                          .body (&input);
+                      error.print (ctx);
+                      std::process::exit (1);
+                  }
               }
+          } else {
+              eprintln! ("- input path is not to a file");
+              eprintln! ("  path = {:?}", path);
+              std::process::exit (1);
           }
       }
   }
