@@ -21,7 +21,7 @@ pub fn run (input: &str) -> String {
     let mut module = Module::new ();
     match module.run (input) {
         Ok (()) => {
-            module.report_qeds ()
+            module.report ()
         }
         Err (error) => {
             error.report (ErrorCtx::new ()

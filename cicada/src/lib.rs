@@ -1240,6 +1240,7 @@ pub enum Obj {
     Conj (Vec <Binding>),
     Module (Module),
     SearchRes (SearchRes),
+    QueryRes (QueryRes),
 }
 
 impl ToString for Obj {
@@ -1270,6 +1271,9 @@ impl ToString for Obj {
                 module.to_string ()
             }
             Obj::SearchRes (res) => {
+                res.to_string ()
+            }
+            Obj::QueryRes (res) => {
                 res.to_string ()
             }
         }
@@ -1304,6 +1308,38 @@ impl ToString for SearchRes {
                 panic! ("SearchRes::to_string")
             }
         }
+    }
+}
+
+#[derive (Clone)]
+#[derive (Debug)]
+#[derive (PartialEq, Eq)]
+pub struct QueryRes {
+    subst_vec: Vec <Subst>,
+}
+
+impl ToString for QueryRes {
+    fn to_string (&self) -> String {
+        let mut s = String::new ();
+        if self.subst_vec.len () == 0 {
+            s += "$query-res-c {}\n";
+        } else {
+            s += "$query-res-c {\n";
+            for subst in &self.subst_vec {
+                s += &subst.to_string ();
+            }
+            s += "}\n";
+        }
+        s
+        // match Mexp::prettify (&s) {
+        //     Ok (output) => output,
+        //     Err (error) => {
+        //         let ctx = ErrorCtx::new ()
+        //             .body (&s);
+        //         error.print (ctx);
+        //         panic! ("Query::to_string")
+        //     }
+        // }
     }
 }
 
@@ -1360,6 +1396,15 @@ impl Module {
                 let module = Module::load (url)?;
                 self.define (name, &Obj::Module (module))
             }
+            Def::Search (
+                name, counter, prop_term
+            ) => {
+                let mut proving = self.proving (prop_term);
+                let qed_vec = proving.take_qed (*counter);
+                self.define (name, &Obj::SearchRes (SearchRes {
+                    qed_vec
+                }))
+            }
             Def::NamelessSearch (
                 counter, prop_term
             ) => {
@@ -1371,13 +1416,24 @@ impl Module {
                     qed_vec
                 }))
             }
-            Def::Search (
+            Def::Query (
                 name, counter, prop_term
             ) => {
                 let mut proving = self.proving (prop_term);
-                let qed_vec = proving.take_qed (*counter);
-                self.define (name, &Obj::SearchRes (SearchRes {
-                    qed_vec
+                let subst_vec = proving.take_subst (*counter);
+                self.define (name, &Obj::QueryRes (QueryRes {
+                    subst_vec
+                }))
+            }
+            Def::NamelessQuery (
+                counter, prop_term
+            ) => {
+                let mut proving = self.proving (prop_term);
+                let name = "#".to_string () +
+                    &index.to_string ();
+                let subst_vec = proving.take_subst (*counter);
+                self.define (&name, &Obj::QueryRes (QueryRes {
+                    subst_vec
                 }))
             }
         }
@@ -1452,14 +1508,23 @@ impl ToString for Module {
 }
 
 impl Module {
-    pub fn report_qeds (&self) -> String {
+    pub fn report (&self) -> String {
         let mut s = String::new ();
         for (name, obj) in self.obj_dic.iter () {
-            if let Obj::SearchRes (_) = obj {
-                s += name;
-                s += " = ";
-                s += &obj.to_string ();
-                s += "\n";
+            match obj {
+                Obj::SearchRes (_) => {
+                    s += name;
+                    s += " = ";
+                    s += &obj.to_string ();
+                    s += "\n";
+                }
+                Obj::QueryRes (_) => {
+                    s += name;
+                    s += " = ";
+                    s += &obj.to_string ();
+                    s += "\n";
+                }
+                _ => {}
             }
         }
         s
@@ -1599,6 +1664,8 @@ pub enum Def {
     Import (String, String),
     Search (String, usize, Term),
     NamelessSearch (usize, Term),
+    Query (String, usize, Term),
+    NamelessQuery (usize, Term),
 }
 
 impl Module {
@@ -1674,6 +1741,18 @@ impl <'a> Proving <'a> {
     }
 }
 
+impl <'a> Proving <'a> {
+    pub fn take_subst (&mut self, n: usize) -> Vec <Subst> {
+        let mut vec = Vec::new ();
+        for _ in 0..n {
+            if let Some (qed) = self.next_qed () {
+                vec.push (qed.subst)
+            }
+        }
+        vec
+    }
+}
+
 #[derive (Clone)]
 #[derive (Debug)]
 #[derive (PartialEq, Eq)]
@@ -1733,8 +1812,10 @@ impl ToString for Qed {
 const GRAMMAR: &'static str = r#"
 Def::Obj = { name? "=" Obj }
 Def::Import = { name? "=" "import!" '(' url? ')' }
-Def::NamelessSearch = { "search!" '(' num? ')' Term::Prop }
 Def::Search = { name? "=" "search!" '(' num? ')' Term::Prop }
+Def::NamelessSearch = { "search!" '(' num? ')' Term::Prop }
+Def::Query = { name? "=" "query!" '(' num? ')' Term::Prop }
+Def::NamelessQuery = { "query!" '(' num? ')' Term::Prop }
 
 Obj::Disj = { "disj" '(' list (prop-name?) ')' Arg::Rec }
 Obj::Conj = { "conj" Arg::Rec }
@@ -2198,69 +2279,6 @@ fn mexp_to_obj_def <'a> (
     }
 }
 
-fn mexp_to_nameless_search_def <'a> (
-    mexp: &Mexp <'a>,
-) -> Result <Def, ErrorInCtx> {
-    if let Mexp::Apply {
-        head: box Mexp::Apply {
-            head: box Mexp::Sym {
-                symbol: "search!",
-                ..
-            },
-            arg: MexpArg::Tuple {
-                body: body1,
-                ..
-            },
-            ..
-        },
-        arg: MexpArg::Block {
-            body: body2,
-            ..
-        },
-        ..
-    } = mexp {
-        if let [
-            Mexp::Sym { symbol, .. }
-        ] = &body1 [..] {
-            let result = symbol.parse::<usize> ();
-            if result.is_err () {
-                return ErrorInCtx::new ()
-                    .line ("fail to parse usize num in `search!`")
-                    .line (&format! ("symbol = {}", symbol))
-                    .span (mexp.span ())
-                    .note (note_about_grammar ())
-                    .wrap_in_err ();
-            }
-            if let [
-                prop_mexp
-            ] = &body2 [..] {
-                Ok (Def::NamelessSearch (
-                    result.unwrap (),
-                    mexp_to_prop_term (prop_mexp)?))
-            } else {
-                ErrorInCtx::new ()
-                    .line ("fail to parse `search!`'s body arg")
-                    .span (mexp.span ())
-                    .note (note_about_grammar ())
-                    .wrap_in_err ()
-            }
-        } else {
-            ErrorInCtx::new ()
-                .line ("fail to parse `search!`'s first arg")
-                .span (mexp.span ())
-                .note (note_about_grammar ())
-                .wrap_in_err ()
-        }
-    } else {
-        ErrorInCtx::new ()
-            .head ("syntex error")
-            .span (mexp.span ())
-            .note (note_about_grammar ())
-            .wrap_in_err ()
-    }
-}
-
-
 fn mexp_to_search_def <'a> (
     mexp: &Mexp <'a>,
 ) -> Result <Def, ErrorInCtx> {
@@ -2332,6 +2350,203 @@ fn mexp_to_search_def <'a> (
     }
 }
 
+fn mexp_to_nameless_search_def <'a> (
+    mexp: &Mexp <'a>,
+) -> Result <Def, ErrorInCtx> {
+    if let Mexp::Apply {
+        head: box Mexp::Apply {
+            head: box Mexp::Sym {
+                symbol: "search!",
+                ..
+            },
+            arg: MexpArg::Tuple {
+                body: body1,
+                ..
+            },
+            ..
+        },
+        arg: MexpArg::Block {
+            body: body2,
+            ..
+        },
+        ..
+    } = mexp {
+        if let [
+            Mexp::Sym { symbol, .. }
+        ] = &body1 [..] {
+            let result = symbol.parse::<usize> ();
+            if result.is_err () {
+                return ErrorInCtx::new ()
+                    .line ("fail to parse usize num in `search!`")
+                    .line (&format! ("symbol = {}", symbol))
+                    .span (mexp.span ())
+                    .note (note_about_grammar ())
+                    .wrap_in_err ();
+            }
+            if let [
+                prop_mexp
+            ] = &body2 [..] {
+                Ok (Def::NamelessSearch (
+                    result.unwrap (),
+                    mexp_to_prop_term (prop_mexp)?))
+            } else {
+                ErrorInCtx::new ()
+                    .line ("fail to parse `search!`'s body arg")
+                    .span (mexp.span ())
+                    .note (note_about_grammar ())
+                    .wrap_in_err ()
+            }
+        } else {
+            ErrorInCtx::new ()
+                .line ("fail to parse `search!`'s first arg")
+                .span (mexp.span ())
+                .note (note_about_grammar ())
+                .wrap_in_err ()
+        }
+    } else {
+        ErrorInCtx::new ()
+            .head ("syntex error")
+            .span (mexp.span ())
+            .note (note_about_grammar ())
+            .wrap_in_err ()
+    }
+}
+
+
+fn mexp_to_query_def <'a> (
+    mexp: &Mexp <'a>,
+) -> Result <Def, ErrorInCtx> {
+    if let Mexp::Infix {
+        op: "=",
+        lhs: box Mexp::Sym {
+            symbol: name,
+            ..
+        },
+        rhs: box Mexp::Apply {
+            head: box Mexp::Apply {
+                head: box Mexp::Sym {
+                    symbol: "query!",
+                    ..
+                },
+                arg: MexpArg::Tuple {
+                    body: body1,
+                    ..
+                },
+                ..
+            },
+            arg: MexpArg::Block {
+                body: body2,
+                ..
+            },
+            ..
+        },
+        ..
+    } = mexp {
+        if let [
+            Mexp::Sym { symbol, .. }
+        ] = &body1 [..] {
+            let result = symbol.parse::<usize> ();
+            if result.is_err () {
+                return ErrorInCtx::new ()
+                    .line ("fail to parse usize num in `query!`")
+                    .line (&format! ("symbol = {}", symbol))
+                    .span (mexp.span ())
+                    .note (note_about_grammar ())
+                    .wrap_in_err ();
+            }
+            if let [
+                prop_mexp
+            ] = &body2 [..] {
+                Ok (Def::Query (
+                    name.to_string (),
+                    result.unwrap (),
+                    mexp_to_prop_term (prop_mexp)?))
+            } else {
+                ErrorInCtx::new ()
+                    .line ("fail to parse `query!`'s body arg")
+                    .span (mexp.span ())
+                    .note (note_about_grammar ())
+                    .wrap_in_err ()
+            }
+        } else {
+            ErrorInCtx::new ()
+                .line ("fail to parse `query!`'s first arg")
+                .span (mexp.span ())
+                .note (note_about_grammar ())
+                .wrap_in_err ()
+        }
+    } else {
+        ErrorInCtx::new ()
+            .head ("syntex error")
+            .span (mexp.span ())
+            .note (note_about_grammar ())
+            .wrap_in_err ()
+    }
+}
+
+fn mexp_to_nameless_query_def <'a> (
+    mexp: &Mexp <'a>,
+) -> Result <Def, ErrorInCtx> {
+    if let Mexp::Apply {
+        head: box Mexp::Apply {
+            head: box Mexp::Sym {
+                symbol: "query!",
+                ..
+            },
+            arg: MexpArg::Tuple {
+                body: body1,
+                ..
+            },
+            ..
+        },
+        arg: MexpArg::Block {
+            body: body2,
+            ..
+        },
+        ..
+    } = mexp {
+        if let [
+            Mexp::Sym { symbol, .. }
+        ] = &body1 [..] {
+            let result = symbol.parse::<usize> ();
+            if result.is_err () {
+                return ErrorInCtx::new ()
+                    .line ("fail to parse usize num in `query!`")
+                    .line (&format! ("symbol = {}", symbol))
+                    .span (mexp.span ())
+                    .note (note_about_grammar ())
+                    .wrap_in_err ();
+            }
+            if let [
+                prop_mexp
+            ] = &body2 [..] {
+                Ok (Def::NamelessQuery (
+                    result.unwrap (),
+                    mexp_to_prop_term (prop_mexp)?))
+            } else {
+                ErrorInCtx::new ()
+                    .line ("fail to parse `query!`'s body arg")
+                    .span (mexp.span ())
+                    .note (note_about_grammar ())
+                    .wrap_in_err ()
+            }
+        } else {
+            ErrorInCtx::new ()
+                .line ("fail to parse `query!`'s first arg")
+                .span (mexp.span ())
+                .note (note_about_grammar ())
+                .wrap_in_err ()
+        }
+    } else {
+        ErrorInCtx::new ()
+            .head ("syntex error")
+            .span (mexp.span ())
+            .note (note_about_grammar ())
+            .wrap_in_err ()
+    }
+}
+
+
 fn mexp_to_import_def <'a> (
     mexp: &Mexp <'a>,
 ) -> Result <Def, ErrorInCtx> {
@@ -2380,9 +2595,11 @@ fn mexp_to_def <'a> (
     mexp: &Mexp <'a>,
 ) -> Result <Def, ErrorInCtx> {
     mexp_to_obj_def (mexp)
-        .or (mexp_to_nameless_search_def (mexp))
-        .or (mexp_to_search_def (mexp))
         .or (mexp_to_import_def (mexp))
+        .or (mexp_to_search_def (mexp))
+        .or (mexp_to_nameless_search_def (mexp))
+        .or (mexp_to_query_def (mexp))
+        .or (mexp_to_nameless_query_def (mexp))
 }
 
 fn mexp_vec_to_prop_name_vec <'a> (
@@ -2473,7 +2690,7 @@ fn test_module_output () {
     let ctx = ErrorCtx::new () .body (input);
     match module.run (input) {
         Ok (()) => {
-            println! ("{}", module.report_qeds ());
+            println! ("{}", module.report ());
         }
         Err (error) => {
             error.print (ctx.clone ());
