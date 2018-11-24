@@ -1236,7 +1236,6 @@ impl Subst {
 #[derive (Debug)]
 #[derive (PartialEq, Eq)]
 pub enum Obj {
-    // ImportPath
     Disj (Vec <String>, Vec <Binding>),
     Conj (Vec <Binding>),
     Module (Module),
@@ -1358,8 +1357,8 @@ impl Module {
             Def::Import (
                 name, url
             ) => {
-                println! ("import! {} {}", name, url);
-                Ok (())
+                let module = Module::load (url)?;
+                self.define (name, &Obj::Module (module))
             }
             Def::NamelessSearch (
                 counter, prop_term
@@ -1397,6 +1396,28 @@ impl Module {
             self.exe_def (index, def)?;
         }
         Ok (())
+    }
+}
+
+use std::path::Path;
+use std::fs;
+
+impl Module {
+    pub fn load (
+        url: &str,
+    ) -> Result <Module, ErrorInCtx> {
+        let path = Path::new (url);
+        let mut module = Module::new ();
+        if path.is_file () {
+            let input = fs::read_to_string (path) .unwrap ();
+            module.run (&input)?;
+            Ok (module)
+        } else {
+            ErrorInCtx::new ()
+                .head ("Module::load")
+                .line (&format! ("url = {}", url))
+                .wrap_in_err ()
+        }
     }
 }
 
@@ -1451,7 +1472,8 @@ impl Module {
                     .head ("Module::get_prop")
                     .line ("name is not bound to Disj or Conj")
                     .line (&format! ("name = {}", name))
-                    .wrap_in_err ()            }
+                    .wrap_in_err ()
+            }
             None => {
                 ErrorInCtx::new ()
                     .head ("Module::get_prop")
@@ -1551,8 +1573,8 @@ fn value_dic_to_tv_vec (
 pub enum Def {
     Obj (String, Obj),
     Import (String, String),
-    NamelessSearch (usize, Term),
     Search (String, usize, Term),
+    NamelessSearch (usize, Term),
 }
 
 impl Module {
@@ -1678,9 +1700,9 @@ impl ToString for Qed {
 
 const GRAMMAR: &'static str = r#"
 Def::Obj = { name? "=" Obj }
+Def::Import = { name? "=" "import!" '(' url? ')' }
 Def::NamelessSearch = { "search!" '(' num? ')' Term::Prop }
 Def::Search = { name? "=" "search!" '(' num? ')' Term::Prop }
-Def::Import = { name? "=" "import!" '(' url? ')' }
 
 Obj::Disj = { "disj" '(' list (prop-name?) ')' Arg::Rec }
 Obj::Conj = { "conj" Arg::Rec }
