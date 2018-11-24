@@ -72,14 +72,11 @@ where T : ToString {
     s
 }
 
-fn add_tag (tag: &str, input: String) -> String {
-    let start = tag;
-    let end = &tag[1 .. tag.len () - 1];
-    let end = format! ("</{}>", end);
+fn format_mexp_block (head: &str, input: String) -> String {
     if input.is_empty () {
-        format! ("{}{}\n", start, end)
+        format! ("{} {{}}", head)
     } else {
-        format! ("{}\n{}{}\n", start, input, end)
+        format! ("{} {{ {} }}", head, input)
     }
 }
 
@@ -846,7 +843,7 @@ impl ToString for Subst {
                 }
             }
         }
-        add_tag ("<subst>", s)
+        format_mexp_block ("$raw-subst-c", s)
     }
 }
 
@@ -1315,6 +1312,7 @@ impl ToString for SearchRes {
 #[derive (Debug)]
 #[derive (PartialEq, Eq)]
 pub struct QueryRes {
+    var_vec: Vec <Var>,
     subst_vec: Vec <Subst>,
 }
 
@@ -1326,21 +1324,35 @@ impl ToString for QueryRes {
         } else {
             s += "$query-res-c {\n";
             for subst in &self.subst_vec {
-                s += &subst.to_string ();
+                s += &report_subst (&self.var_vec, subst);
             }
             s += "}\n";
         }
-        s
-        // match Mexp::prettify (&s) {
-        //     Ok (output) => output,
-        //     Err (error) => {
-        //         let ctx = ErrorCtx::new ()
-        //             .body (&s);
-        //         error.print (ctx);
-        //         panic! ("Query::to_string")
-        //     }
-        // }
+        match Mexp::prettify (&s) {
+            Ok (output) => output,
+            Err (error) => {
+                let ctx = ErrorCtx::new ()
+                    .body (&s);
+                error.print (ctx);
+                panic! ("Query::to_string")
+            }
+        }
     }
+}
+
+fn report_subst (
+    var_vec: &Vec <Var>,
+    subst: &Subst,
+) -> String {
+    let mut s = String::new ();
+    for var in var_vec {
+        let value = Value::Var (var.clone ());
+        s += &var.name;
+        s += " = ";
+        s += &subst.reify (&value) .to_string ();
+        s += "\n";
+    }
+    format_mexp_block ("$subst-c", s)
 }
 
 #[derive (Clone)]
@@ -1399,42 +1411,80 @@ impl Module {
             Def::Search (
                 name, counter, prop_term
             ) => {
-                let mut proving = self.proving (prop_term);
-                let qed_vec = proving.take_qed (*counter);
-                self.define (name, &Obj::SearchRes (SearchRes {
-                    qed_vec
-                }))
+                if let Ok ((
+                    value, subst
+                )) = new_value (self, prop_term) {
+                    let mut proving = self.proving (
+                        &value, &subst);
+                    let qed_vec = proving.take_qed (*counter);
+                    self.define (
+                        name,
+                        &Obj::SearchRes (SearchRes {
+                            qed_vec
+                        }))
+                } else {
+                    Ok (())
+                }
             }
             Def::NamelessSearch (
                 counter, prop_term
             ) => {
-                let mut proving = self.proving (prop_term);
-                let name = "#".to_string () +
-                    &index.to_string ();
-                let qed_vec = proving.take_qed (*counter);
-                self.define (&name, &Obj::SearchRes (SearchRes {
-                    qed_vec
-                }))
+                if let Ok ((
+                    value, subst
+                )) = new_value (self, prop_term) {
+                    let mut proving = self.proving (
+                        &value, &subst);
+                    let name = "#".to_string () +
+                        &index.to_string ();
+                    let qed_vec = proving.take_qed (*counter);
+                    self.define (
+                        &name,
+                        &Obj::SearchRes (SearchRes {
+                            qed_vec
+                        }))
+                } else {
+                    Ok (())
+                }
             }
             Def::Query (
                 name, counter, prop_term
             ) => {
-                let mut proving = self.proving (prop_term);
-                let subst_vec = proving.take_subst (*counter);
-                self.define (name, &Obj::QueryRes (QueryRes {
-                    subst_vec
-                }))
+                if let Ok ((
+                    value, subst, var_vec
+                )) = new_value_and_var_vec (self, prop_term) {
+                    let mut proving = self.proving (
+                        &value, &subst);
+                    let subst_vec = proving.take_subst (*counter);
+                    self.define (
+                        name,
+                        &Obj::QueryRes (QueryRes {
+                            var_vec,
+                            subst_vec,
+                        }))
+                } else {
+                    Ok (())
+                }
             }
             Def::NamelessQuery (
                 counter, prop_term
             ) => {
-                let mut proving = self.proving (prop_term);
-                let name = "#".to_string () +
-                    &index.to_string ();
-                let subst_vec = proving.take_subst (*counter);
-                self.define (&name, &Obj::QueryRes (QueryRes {
-                    subst_vec
-                }))
+                if let Ok ((
+                    value, subst, var_vec
+                )) = new_value_and_var_vec (self, prop_term) {
+                    let mut proving = self.proving (
+                        &value, &subst);
+                    let name = "#".to_string () +
+                        &index.to_string ();
+                    let subst_vec = proving.take_subst (*counter);
+                    self.define (
+                        &name,
+                        &Obj::QueryRes (QueryRes {
+                            var_vec,
+                            subst_vec,
+                        }))
+                } else {
+                    Ok (())
+                }
             }
         }
     }
@@ -1451,7 +1501,8 @@ impl Module {
                 let arg = Arg::Rec (Vec::new ());
                 let prop_term = Term::Prop (
                     span, name.to_string (), arg);
-                let mut proving = self.proving (&prop_term);
+                let (value, subst) = new_value (self, &prop_term)?;
+                let mut proving = self.proving (&value, &subst);
                 if let None = proving.next_qed () {
                     return ErrorInCtx::new ()
                         .head ("Module::prop_check")
@@ -1503,7 +1554,9 @@ impl Module {
 
 impl ToString for Module {
     fn to_string (&self) -> String {
-        add_tag ("<module>", dic_to_lines (&self.obj_dic))
+        format_mexp_block (
+            "$module-c",
+            dic_to_lines (&self.obj_dic))
     }
 }
 
@@ -1624,12 +1677,85 @@ fn new_value (
     let mut body = Dic::new ();
     let mut var_dic = Dic::new ();
     let value = term.value (
-            module,
-            &mut subst,
-            &mut body,
-            &mut var_dic,
-            None)?;
+        module,
+        &mut subst,
+        &mut body,
+        &mut var_dic,
+        None)?;
     Ok ((value, subst))
+}
+
+fn new_value_and_var_vec (
+    module: &Module,
+    term: &Term,
+) -> Result <(Value, Subst, Vec <Var>), ErrorInCtx> {
+    let mut subst = Subst::new ();
+    let mut body = Dic::new ();
+    let mut var_dic = Dic::new ();
+    let mut var_name_vec = Vec::new ();
+    collect_var_name_vec_from_term (
+        &mut var_name_vec, term);
+    let mut var_vec = Vec::new ();
+    for var_name in var_name_vec {
+        let var = Var::new (&var_name);
+        var_dic.ins (&var_name, Some (Value::Var (var.clone ())));
+        var_vec.push (var);
+    }
+    let value = term.value (
+        module,
+        &mut subst,
+        &mut body,
+        &mut var_dic,
+        None)?;
+    Ok ((value, subst, var_vec))
+}
+
+fn collect_var_name_vec_from_term (
+    var_name_vec: &mut Vec <String>,
+    term: &Term,
+) {
+    match term {
+        Term::Var (_span, name) => {
+            if ! var_name_vec.contains (name) {
+                var_name_vec.push (name.to_string ());
+            }
+        }
+        Term::Cons (_span, _name, arg) => {
+            collect_var_name_vec_from_arg (
+                var_name_vec, arg);
+        }
+        Term::Prop (_span, _name, arg) => {
+            collect_var_name_vec_from_arg (
+                var_name_vec, arg);
+        }
+        Term::FieldRef (_span, _name) => {}
+        Term::TypeOfType (_span) => {}
+    }
+}
+
+fn collect_var_name_vec_from_arg (
+    var_name_vec: &mut Vec <String>,
+    arg: &Arg,
+) {
+    match arg {
+        Arg::Vec (term_vec) => {
+            for term in term_vec {
+                collect_var_name_vec_from_term (
+                    var_name_vec, term);
+            }
+        }
+        Arg::Rec (binding_vec) => {
+            for binding in binding_vec {
+                match binding {
+                    Binding::EqualTo (_name, term) |
+                    Binding::Inhabit (_name, term) => {
+                        collect_var_name_vec_from_term (
+                            var_name_vec, term);
+                    }
+                }
+            }
+        }
+    }
 }
 
 fn value_dic_to_tv_vec (
@@ -1671,29 +1797,20 @@ pub enum Def {
 impl Module {
     pub fn proving <'a> (
         &'a self,
-        prop_term: &Term,
+        value: &Value,
+        subst: &Subst,
     ) -> Proving <'a> {
-        match new_value (self, prop_term) {
-            Ok ((value, subst)) => {
-                let mut tv_queue = VecDeque::new ();
-                let root_tv = new_tv ("root", &value);
-                tv_queue.push_back (root_tv.clone ());
-                let deduction = Deduction {
-                    subst: subst,
-                    root: Value::TypedVar (root_tv),
-                    tv_queue,
-                };
-                Proving {
-                    module: self,
-                    deduction_queue: vec! [deduction] .into (),
-                }
-            }
-            Err (_error) => {
-                Proving {
-                    module: self,
-                    deduction_queue: VecDeque::new (),
-                }
-            }
+        let mut tv_queue = VecDeque::new ();
+        let root_tv = new_tv ("root", value);
+        tv_queue.push_back (root_tv.clone ());
+        let deduction = Deduction {
+            subst: subst.clone (),
+            root: Value::TypedVar (root_tv),
+            tv_queue,
+        };
+        Proving {
+            module: self,
+            deduction_queue: vec! [deduction] .into (),
         }
     }
 }
