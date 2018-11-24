@@ -17,6 +17,12 @@ Contains :
 - [cic](cic/README.md) -- command line interface
 - [cicada-notebook](cicada-notebook/README.md) -- interactive UI
 
+## Docs
+
+- [typed logic programming](docs/typed-logic-programming/README.md)
+- (todo) [dependable prover]
+- (todo) [the little cicada]
+
 ## This Repo Also Contains ...
 
 Language implementation practice :
@@ -29,7 +35,7 @@ Useful libraries and tools :
 - [error-report](error-report/README.md) -- error report in context -- for parser and compiler
 - [lexing](lexing/README.md) -- zero copy lexer
 - [mexp](mexp/README.md) -- M-expression parser and command line tools
-- [parsing] (todo) -- a parser generator with type system -- specifies `.gr` and `.tr` formats
+- (todo) [parsing] -- a parser generator with type system -- specifies `.gr` and `.tr` formats
 
 ## Contributing
 
