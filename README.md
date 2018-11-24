@@ -9,17 +9,13 @@ Aims :
 Features :
 - dependently-typed
 - logic programming interface
-- with inheriting and subtype
+- with nominal subtyping and inheriting
 - uses M-expression as meta syntax
 
 Contains :
 - [cicada](cicada/README.md) -- the implementation
 - [cic](cic/README.md) -- command line interface
 - [cicada-notebook](cicada-notebook/README.md) -- interactive UI
-
-## Docs
-
-- [typed logic programming](docs/typed-logic-programming.org)
 
 ## This Repo Also Contains ...
 

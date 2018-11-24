@@ -1363,7 +1363,7 @@ impl Module {
             Def::NamelessSearch (
                 counter, prop_term
             ) => {
-                let mut proving = self.proving (prop_term)?;
+                let mut proving = self.proving (prop_term);
                 let name = "#".to_string () +
                     &index.to_string ();
                 let qed_vec = proving.take_qed (*counter);
@@ -1374,7 +1374,7 @@ impl Module {
             Def::Search (
                 name, counter, prop_term
             ) => {
-                let mut proving = self.proving (prop_term)?;
+                let mut proving = self.proving (prop_term);
                 let qed_vec = proving.take_qed (*counter);
                 self.define (name, &Obj::SearchRes (SearchRes {
                     qed_vec
@@ -1395,7 +1395,7 @@ impl Module {
                 let arg = Arg::Rec (Vec::new ());
                 let prop_term = Term::Prop (
                     span, name.to_string (), arg);
-                let mut proving = self.proving (&prop_term)?;
+                let mut proving = self.proving (&prop_term);
                 if let None = proving.next_qed () {
                     return ErrorInCtx::new ()
                         .head ("Module::prop_check")
@@ -1605,21 +1605,29 @@ impl Module {
     pub fn proving <'a> (
         &'a self,
         prop_term: &Term,
-    ) -> Result <Proving <'a>, ErrorInCtx> {
-        let (value, subst) = new_value (
-            self, prop_term)?;
-        let mut tv_queue = VecDeque::new ();
-        let root_tv = new_tv ("root", &value);
-        tv_queue.push_back (root_tv.clone ());
-        let deduction = Deduction {
-            subst: subst,
-            root: Value::TypedVar (root_tv),
-            tv_queue,
-        };
-        Ok (Proving {
-            module: self,
-            deduction_queue: vec! [deduction] .into (),
-        })
+    ) -> Proving <'a> {
+        match new_value (self, prop_term) {
+            Ok ((value, subst)) => {
+                let mut tv_queue = VecDeque::new ();
+                let root_tv = new_tv ("root", &value);
+                tv_queue.push_back (root_tv.clone ());
+                let deduction = Deduction {
+                    subst: subst,
+                    root: Value::TypedVar (root_tv),
+                    tv_queue,
+                };
+                Proving {
+                    module: self,
+                    deduction_queue: vec! [deduction] .into (),
+                }
+            }
+            Err (_error) => {
+                Proving {
+                    module: self,
+                    deduction_queue: VecDeque::new (),
+                }
+            }
+        }
     }
 }
 

@@ -1,0 +1,49 @@
+// We are organising a party.
+// We need to decide whether a pair of people will dance together.
+// The single rule for dancing together is that
+// the pair will consist of a male and a female.
+
+// We begin by define two `male-t` and `female-t` as two types
+// and add some subtypes for each of them
+
+male-t = disj (
+    bertram-t
+    percival-t
+) {}
+
+bertram-t = conj {}
+percival-t = conj {}
+
+female-t = disj (
+    lucinda-t
+    camilla-t
+) {}
+
+lucinda-t = conj {}
+camilla-t = conj {}
+
+// Next, the rule for a pair
+// to construct an element of type `pair-t`
+//   we need a male of type `male-t`
+//   and a female of type `female-t`
+
+pair-t = conj {
+    male : male-t
+    female : female-t
+}
+
+search! (4) {
+    pair-t (:m :f)
+}
+
+search! (1) {
+    pair-t (bertram-c lucinda-c)
+}
+
+search! (1) {
+    pair-t (lucinda-c bertram-c)
+}
+
+search! (1) {
+    pair-t (:x :x)
+}
