@@ -32,6 +32,13 @@ pair-t = conj {
     female : female-t
 }
 
+// There are three interface commands
+//   `search!` -- theorem proving
+//   `query!` -- logic programming
+//   `assert!` & `assert-not!` -- testing
+
+// `search!` -- to search data of given type
+
 search! (4) {
     pair-t (:m :f)
 }
@@ -40,14 +47,33 @@ search! (1) {
     pair-t (bertram-c lucinda-c)
 }
 
-search! (1) {
-    pair-t (lucinda-c bertram-c)
-}
-
-search! (1) {
-    pair-t (:x :x)
-}
+// `query!` -- to find solutions (substitutions)
+//   of given proposition
 
 query! (4) {
     pair-t (:m :f)
+}
+
+query! (2) {
+    pair-t (bertram-c :f)
+}
+
+// `assert!` -- to assert that
+//     there is at least one data of given type
+//     there is at least one substitution of given proposition
+
+assert! {
+    pair-t (bertram-c :f)
+}
+
+// `assert-not!` -- to assert that
+//   there are no data of given type
+//   there are no substitution of given proposition
+
+assert-not! {
+    pair-t (lucinda-c bertram-c)
+}
+
+assert-not! {
+    pair-t (:x :x)
 }
