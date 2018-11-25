@@ -32,7 +32,7 @@ fn main () {
             let input = fs::read_to_string (path) .unwrap ();
             match module.run (&input) {
                 Ok (()) => {
-                    println! ("{}", module.report ());
+                    print! ("{}", module.report ());
                 }
                 Err (error) => {
                     let ctx = ErrorCtx::new ()
