@@ -14,8 +14,9 @@ Features :
 
 Contains :
 - [cicada](cicada/README.md) -- the implementation
-- [cic](cic/README.md) -- command line interface
+- [cicada-server](cicada-server/README.md) -- language server and relational database
 - [cicada-notebook](cicada-notebook/README.md) -- interactive UI
+- [cic](cic/README.md) -- command line interface
 
 ## Docs
 
