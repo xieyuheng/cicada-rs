@@ -1486,6 +1486,50 @@ impl Module {
                     Ok (())
                 }
             }
+            Def::Assert (
+                prop_term
+            ) => {
+                if let Ok ((
+                    value, subst
+                )) = new_value (self, prop_term) {
+                    let mut proving = self.proving (
+                        &value, &subst);
+                    if let None = proving.next_qed () {
+                        ErrorInCtx::new ()
+                            .head ("assert! fail")
+                            .span (prop_term.span ())
+                            .wrap_in_err ()
+                    } else {
+                        Ok (())
+                    }
+                } else {
+                    ErrorInCtx::new ()
+                        .head ("assert! fail")
+                        .line ("can not get value from term")
+                        .span (prop_term.span ())
+                        .wrap_in_err ()
+                }
+            }
+            Def::AssertNot (
+                prop_term
+            ) => {
+                if let Ok ((
+                    value, subst
+                )) = new_value (self, prop_term) {
+                    let mut proving = self.proving (
+                        &value, &subst);
+                    if let Some (_) = proving.next_qed () {
+                        ErrorInCtx::new ()
+                            .head ("assert-not! fail")
+                            .span (prop_term.span ())
+                            .wrap_in_err ()
+                    } else {
+                        Ok (())
+                    }
+                } else {
+                    Ok (())
+                }
+            }
         }
     }
 }
@@ -1792,6 +1836,8 @@ pub enum Def {
     NamelessSearch (usize, Term),
     Query (String, usize, Term),
     NamelessQuery (usize, Term),
+    Assert (Term),
+    AssertNot (Term),
 }
 
 impl Module {
@@ -1933,6 +1979,8 @@ Def::Search = { name? "=" "search!" '(' num? ')' Term::Prop }
 Def::NamelessSearch = { "search!" '(' num? ')' Term::Prop }
 Def::Query = { name? "=" "query!" '(' num? ')' Term::Prop }
 Def::NamelessQuery = { "query!" '(' num? ')' Term::Prop }
+Def::Assert = { "assert!" Term::Prop }
+Def::AssertNot = { "assert-not!" Term::Prop }
 
 Obj::Disj = { "disj" '(' list (prop-name?) ')' Arg::Rec }
 Obj::Conj = { "conj" Arg::Rec }
@@ -2708,6 +2756,76 @@ fn mexp_to_import_def <'a> (
     }
 }
 
+fn mexp_to_assert_def <'a> (
+    mexp: &Mexp <'a>,
+) -> Result <Def, ErrorInCtx> {
+    if let Mexp::Apply {
+        head: box Mexp::Sym {
+            symbol: "assert!",
+            ..
+        },
+        arg: MexpArg::Block {
+            body,
+            ..
+        },
+        ..
+    } = mexp {
+        if let [
+            prop_mexp
+        ] = &body [..] {
+            Ok (Def::Assert (
+                mexp_to_prop_term (prop_mexp)?))
+        } else {
+            ErrorInCtx::new ()
+                .line ("fail to parse `assert!`'s body arg")
+                .span (mexp.span ())
+                .note (note_about_grammar ())
+                .wrap_in_err ()
+        }
+    } else {
+        ErrorInCtx::new ()
+            .head ("syntex error")
+            .span (mexp.span ())
+            .note (note_about_grammar ())
+            .wrap_in_err ()
+    }
+}
+
+fn mexp_to_assert_not_def <'a> (
+    mexp: &Mexp <'a>,
+) -> Result <Def, ErrorInCtx> {
+    if let Mexp::Apply {
+        head: box Mexp::Sym {
+            symbol: "assert-not!",
+            ..
+        },
+        arg: MexpArg::Block {
+            body,
+            ..
+        },
+        ..
+    } = mexp {
+        if let [
+            prop_mexp
+        ] = &body [..] {
+            Ok (Def::AssertNot (
+                mexp_to_prop_term (prop_mexp)?))
+        } else {
+            ErrorInCtx::new ()
+                .line ("fail to parse `assert!`'s body arg")
+                .span (mexp.span ())
+                .note (note_about_grammar ())
+                .wrap_in_err ()
+        }
+    } else {
+        ErrorInCtx::new ()
+            .head ("syntex error")
+            .span (mexp.span ())
+            .note (note_about_grammar ())
+            .wrap_in_err ()
+    }
+}
+
 fn mexp_to_def <'a> (
     mexp: &Mexp <'a>,
 ) -> Result <Def, ErrorInCtx> {
@@ -2717,6 +2835,8 @@ fn mexp_to_def <'a> (
         .or (mexp_to_nameless_search_def (mexp))
         .or (mexp_to_query_def (mexp))
         .or (mexp_to_nameless_query_def (mexp))
+        .or (mexp_to_assert_def (mexp))
+        .or (mexp_to_assert_not_def (mexp))
 }
 
 fn mexp_vec_to_prop_name_vec <'a> (
