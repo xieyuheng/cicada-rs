@@ -1,0 +1,80 @@
+// We are still organising a party.
+// We need to decide whether a pair of people
+// will drink the same drink.
+// The database begins with the predicate `drinks-t`
+
+person-t = disj (
+    john-t
+    mary-t
+    susan-t
+    fred-t
+) {}
+
+john-t = conj {}
+mary-t = conj {}
+susan-t = conj {}
+fred-t = conj {}
+
+alcohol-t = disj (
+    martini-t
+    gin-t
+    vodka-t
+) {}
+
+martini-t = conj {}
+gin-t = conj {}
+vodka-t = conj {}
+
+drinks-t = disj (
+    1-drinks-t
+    2-drinks-t
+    3-drinks-t
+    4-drinks-t
+    5-drinks-t
+) {
+    person : person-t
+    alcohol : alcohol-t
+}
+
+1-drinks-t = conj {
+    person : person-t
+    alcohol : alcohol-t
+    person = john-c
+    alcohol = martini-c
+}
+2-drinks-t = conj {
+    person : person-t
+    alcohol : alcohol-t
+    person = mary-c
+    alcohol = gin-c
+}
+3-drinks-t = conj {
+    person : person-t
+    alcohol : alcohol-t
+    person = susan-c
+    alcohol = vodka-c
+}
+4-drinks-t = conj {
+    person : person-t
+    alcohol : alcohol-t
+    person = john-c
+    alcohol = gin-c
+}
+5-drinks-t = conj {
+    person : person-t
+    alcohol : alcohol-t
+    person = fred-c
+    alcohol = gin-c
+}
+
+both-drink-t = conj {
+    x : person-t
+    y : person-t
+    alcohol : alcohol-t
+    x-drinks : drinks-t (x alcohol)
+    y-drinks : drinks-t (y alcohol)
+}
+
+search! (100) {
+    both-drink-t
+}
