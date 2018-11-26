@@ -1530,6 +1530,9 @@ impl Module {
                     Ok (())
                 }
             }
+            Def::Note => {
+                Ok (())
+            }
         }
     }
 }
@@ -1838,6 +1841,7 @@ pub enum Def {
     NamelessQuery (usize, Term),
     Assert (Term),
     AssertNot (Term),
+    Note,
 }
 
 impl Module {
@@ -1981,6 +1985,7 @@ Def::Query = { name? "=" "query!" '(' num? ')' Term::Prop }
 Def::NamelessQuery = { "query!" '(' num? ')' Term::Prop }
 Def::Assert = { "assert!" Term::Prop }
 Def::AssertNot = { "assert-not!" Term::Prop }
+Def::Note = { "note!" '{' list (mexp) '}' }
 
 Obj::Disj = { "disj" '(' list (prop-name?) ')' Arg::Rec }
 Obj::Conj = { "conj" Arg::Rec }
@@ -2826,6 +2831,29 @@ fn mexp_to_assert_not_def <'a> (
     }
 }
 
+fn mexp_to_note_def <'a> (
+    mexp: &Mexp <'a>,
+) -> Result <Def, ErrorInCtx> {
+    if let Mexp::Apply {
+        head: box Mexp::Sym {
+            symbol: "note",
+            ..
+        },
+        arg: MexpArg::Block {
+            ..
+        },
+        ..
+    } = mexp {
+        Ok (Def::Note)
+    } else {
+        ErrorInCtx::new ()
+            .head ("syntex error")
+            .span (mexp.span ())
+            .note (note_about_grammar ())
+            .wrap_in_err ()
+    }
+}
+
 fn mexp_to_def <'a> (
     mexp: &Mexp <'a>,
 ) -> Result <Def, ErrorInCtx> {
@@ -2837,6 +2865,7 @@ fn mexp_to_def <'a> (
         .or (mexp_to_nameless_query_def (mexp))
         .or (mexp_to_assert_def (mexp))
         .or (mexp_to_assert_not_def (mexp))
+        .or (mexp_to_note_def (mexp))
 }
 
 fn mexp_vec_to_prop_name_vec <'a> (

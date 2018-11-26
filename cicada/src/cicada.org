@@ -1957,6 +1957,9 @@
                         Ok (())
                     }
                 }
+                Def::Note => {
+                    Ok (())
+                }
             }
         }
     }
@@ -2329,6 +2332,7 @@
         NamelessQuery (usize, Term),
         Assert (Term),
         AssertNot (Term),
+        Note,
     }
     #+end_src
 
@@ -2522,6 +2526,7 @@
     Def::NamelessQuery = { "query!" '(' num? ')' Term::Prop }
     Def::Assert = { "assert!" Term::Prop }
     Def::AssertNot = { "assert-not!" Term::Prop }
+    Def::Note = { "note!" '{' list (mexp) '}' }
 
     Obj::Disj = { "disj" '(' list (prop-name?) ')' Arg::Rec }
     Obj::Conj = { "conj" Arg::Rec }
@@ -3486,6 +3491,33 @@
     }
     #+end_src
 
+*** mexp_to_note_def
+
+    #+begin_src rust
+    fn mexp_to_note_def <'a> (
+        mexp: &Mexp <'a>,
+    ) -> Result <Def, ErrorInCtx> {
+        if let Mexp::Apply {
+            head: box Mexp::Sym {
+                symbol: "note",
+                ..
+            },
+            arg: MexpArg::Block {
+                ..
+            },
+            ..
+        } = mexp {
+            Ok (Def::Note)
+        } else {
+            ErrorInCtx::new ()
+                .head ("syntex error")
+                .span (mexp.span ())
+                .note (note_about_grammar ())
+                .wrap_in_err ()
+        }
+    }
+    #+end_src
+
 *** mexp_to_def
 
     #+begin_src rust
@@ -3500,6 +3532,7 @@
             .or (mexp_to_nameless_query_def (mexp))
             .or (mexp_to_assert_def (mexp))
             .or (mexp_to_assert_not_def (mexp))
+            .or (mexp_to_note_def (mexp))
     }
     #+end_src
 
