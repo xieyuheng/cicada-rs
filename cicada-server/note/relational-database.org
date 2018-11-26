@@ -1,0 +1,145 @@
+#+title: relational database
+
+* type as database schema
+
+  - x -
+    since we are using record-type as the main type in cicada
+    we can design a relational database for it
+
+    a table is a set of data of certain type
+    to simplify the design
+    I let each type name a table
+
+  - k -
+    suppose we have a type and its corresponding table
+    the type predicates a set -- which might be infinite
+    the table predicates a finite subset of the set of the type
+
+    sometimes we need to use this subset as constraint
+    how do we address this problem ?
+
+  - x -
+    maybe we can not simply view type as name of table
+    maybe instead of `-t` we should also introduce `-s` for subset
+    this give us a way to explicitly use a subset as constraint
+
+  - k -
+    suppose we do so, but since we are using
+    nominal typing instead of structural typing
+    subsets of types are all disjoint
+
+  - x -
+    this will not limits our query
+    because we can define new types and query over them
+    let us do some semantic test
+
+* CRUD example
+
+  #+begin_src cicada
+  country-t = conj {
+      country-code : string-t
+      country-name : string-t
+  }
+
+  insert! (country-s) (country-code country-name) [
+      ("us" "United States")
+      ("mx" "Mexico")
+      ("au" "Australia")
+      ("gb" "United Kingdom")
+      ("de" "Germany")
+      ("ll" "Loompaland")
+      ("cn" "China")
+  ]
+
+  select! (country-s .*) {}
+
+  delete! (country-s) {
+      country-code = "ll"
+  }
+
+  city-t = conj {
+      city-name : string-t
+      postal-code : string-t
+      ref (country-code) (country-s)
+  }
+
+  insert! (city-s) (*) [
+      ("YinChuan" "666666" "cn")
+      ("Portland" "87200" "us")
+  ]
+
+  update! (city-s) {
+      postal-code = "97205"
+  } {
+      city-name = "Portland"
+  }
+
+  select! (city-s .* country-s .country-name) {
+      join (country-code) [city-s country-s]
+  }
+
+  venue-t = conj {
+      venue-id : id-t
+      venue-name : string-t
+      ref (postal-code) (city-s)
+      ref (country-code) (country-s)
+  }
+
+  insert! (venue-s) (*) [
+      (id-t:new () "Crystal Ballroom" "97205" "us")
+      (id-t:new () "Voodoo Donuts" "97205" "us")
+  ]
+
+  select! (venue-s .venue-name city-s .city-name) {
+      join (postal-code) [venue-s city-s]
+      join (country-code) [venue-s city-s]
+  }
+
+  event-t = conj {
+      event-id : id-t
+      title : string-t
+      start : time-t
+      end : time-t
+      ref (venue-id) (venue-s)
+  }
+
+  insert! (event-s) (*) [
+      (id-t:new () "Cicada Club"  "2012-02-15" "2012-02-15" 2)
+  ]
+
+  select! (country-s .country-name) {
+      event-s .title = "Cicada Club"
+      join (venue-id) [event-s venue-s]
+      join (country-code) [venue-s country-s]
+  }
+  #+end_src
+
+* structural typing
+
+  - x -
+    it seems we must view elements of sets by structural typing
+    it would be not accept-able
+    if we have to introduce a new type name for just one query
+
+* primitive types
+
+  - x -
+    note that, to use cicada as a database
+    we need some primitive types
+    such as `string-t` and `number-t`
+
+  - k -
+    they must be introduced in cicada in a logic program-able way
+
+* database query
+
+  - x -
+    how to view database query as query in logic programming ?
+
+* relational algebra
+
+  - selection
+  - projection
+  - cartesian product (also called the cross product or cross join)
+  - set union
+  - set difference
