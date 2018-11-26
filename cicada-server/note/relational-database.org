@@ -41,15 +41,15 @@
       country-name : string-t
   }
 
-  insert! (country-s) (country-code country-name) [
-      ("us" "United States")
-      ("mx" "Mexico")
-      ("au" "Australia")
-      ("gb" "United Kingdom")
-      ("de" "Germany")
-      ("ll" "Loompaland")
-      ("cn" "China")
-  ]
+  insert! (country-s) (country-code country-name) {
+      ["us" "United States"]
+      ["mx" "Mexico"]
+      ["au" "Australia"]
+      ["gb" "United Kingdom"]
+      ["de" "Germany"]
+      ["ll" "Loompaland"]
+      ["cn" "China"]
+  }
 
   select! (country-s .*) {}
 
@@ -63,10 +63,10 @@
       ref (country-code) (country-s)
   }
 
-  insert! (city-s) (*) [
-      ("YinChuan" "666666" "cn")
-      ("Portland" "87200" "us")
-  ]
+  insert! (city-s) (*) {
+      ["YinChuan" "666666" "cn"]
+      ["Portland" "87200" "us"]
+  }
 
   update! (city-s) {
       postal-code = "97205"
@@ -75,7 +75,7 @@
   }
 
   select! (city-s .* country-s .country-name) {
-      join (country-code) [city-s country-s]
+      join (country-code) (city-s country-s)
   }
 
   venue-t = conj {
@@ -85,14 +85,14 @@
       ref (country-code) (country-s)
   }
 
-  insert! (venue-s) (*) [
-      (id-t:new () "Crystal Ballroom" "97205" "us")
-      (id-t:new () "Voodoo Donuts" "97205" "us")
-  ]
+  insert! (venue-s) (*) {
+      [id-t:new () "Crystal Ballroom" "97205" "us"]
+      [id-t:new () "Voodoo Donuts" "97205" "us"]
+  }
 
   select! (venue-s .venue-name city-s .city-name) {
-      join (postal-code) [venue-s city-s]
-      join (country-code) [venue-s city-s]
+      join (postal-code) (venue-s city-s)
+      join (country-code) (venue-s city-s)
   }
 
   event-t = conj {
@@ -103,14 +103,14 @@
       ref (venue-id) (venue-s)
   }
 
-  insert! (event-s) (*) [
-      (id-t:new () "Cicada Club"  "2012-02-15" "2012-02-15" 2)
-  ]
+  insert! (event-s) (*) {
+      [id-t:new () "Cicada Club"  "2012-02-15" "2012-02-15" 2]
+  }
 
   select! (country-s .country-name) {
       event-s .title = "Cicada Club"
-      join (venue-id) [event-s venue-s]
-      join (country-code) [venue-s country-s]
+      join (venue-id) (event-s venue-s)
+      join (country-code) (venue-s country-s)
   }
   #+end_src
 

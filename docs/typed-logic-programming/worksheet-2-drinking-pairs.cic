@@ -78,3 +78,53 @@ both-drink-t = conj {
 search! (100) {
     both-drink-t
 }
+
+note {
+    // relational database approach
+
+    person-t = conj {
+        name : string-t
+    }
+
+    insert! (person-s) (name) {
+        ["john"]
+        ["mary"]
+        ["susan"]
+        ["fred"]
+    }
+
+    alcohol-t = conj {
+        name : string-t
+    }
+
+    insert! (alcohol-s) (name) {
+        ["martini"]
+        ["gin"]
+        ["vodka"]
+    }
+
+    drinks-t = conj {
+        person : person-t
+        alcohol : alcohol-t
+    }
+
+    insert! (drinks-s) (person alcohol) {
+        [person-c ("john")  alcohol-c ("martini")]
+        [person-c ("mary")  alcohol-c ("gin")]
+        [person-c ("susan") alcohol-c ("vodka")]
+        [person-c ("john")  alcohol-c ("gin")]
+        [person-c ("fred")  alcohol-c ("gin")]
+    }
+
+    both-drink-t = conj {
+        x : person-s
+        y : person-s
+        alcohol : alcohol-s
+        x-drinks : drinks-s (x alcohol)
+        y-drinks : drinks-s (y alcohol)
+    }
+
+    search! (100) {
+        both-drink-t
+    }
+}
