@@ -1,0 +1,91 @@
+// The easiest thing to do with a list is to determine
+// whether a given term is an element of the list.
+
+list-t = disj (
+    null-t
+    cons-t
+) {
+    t : type
+}
+
+null-t = conj {
+    t : type
+}
+
+cons-t = conj {
+    t : type
+    car : t
+    cdr : list-t (t)
+}
+
+member-t = disj (
+    car-member-t
+    cdr-member-t
+) {
+    t : type
+    x : t
+    list : list-t (t)
+}
+
+car-member-t = conj {
+    t : type
+    x : t
+    list : list-t (t)
+    list = cons-c {
+        car = x
+    }
+}
+
+cdr-member-t = conj {
+    t : type
+    x : t
+    list : list-t (t)
+    list = cons-c {
+        cdr = :cdr
+    }
+    rest : member-t (t x :cdr)
+}
+
+// let's define some `person-t` to test `member-t`
+
+person-t = disj (
+    john-t
+    mary-t
+    susan-t
+    fred-t
+) {}
+
+john-t = conj {}
+mary-t = conj {}
+susan-t = conj {}
+fred-t = conj {}
+
+// test
+
+query! (3) {
+    member-t (person-t john-c :list)
+}
+
+assert! {
+    member-t (person-t john-c cons-c (john-c null-c))
+}
+
+assert-not! {
+    member-t (person-t john-c cons-c (mary-c null-c))
+}
+
+query! (10) {
+    member-t (person-t :p1 cons-c (:p2 null-c))
+}
+
+query! (10) {
+    member-t (
+        person-t :p1
+        cons-c (
+            mary-c
+            cons-c (
+                john-c
+                cons-c (
+                    fred-c
+                    null-c))))
+}
