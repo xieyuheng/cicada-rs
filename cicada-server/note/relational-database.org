@@ -33,7 +33,7 @@
     because we can define new types and query over them
     let us do some semantic test
 
-* CRUD example
+* [example] CRUD 
 
   #+begin_src cicada
   country-t = conj {
@@ -114,6 +114,56 @@
   }
   #+end_src
 
+* [example] drinking-pairs 
+
+  #+begin_src cicada
+  person-t = conj {
+      name : string-t
+  }
+
+  insert! (person-s) (name) {
+      ["john"]
+      ["mary"]
+      ["susan"]
+      ["fred"]
+  }
+
+  alcohol-t = conj {
+      name : string-t
+  }
+
+  insert! (alcohol-s) (name) {
+      ["martini"]
+      ["gin"]
+      ["vodka"]
+  }
+
+  drinks-t = conj {
+      person : person-s
+      alcohol : alcohol-s
+  }
+
+  insert! (drinks-s) (person alcohol) {
+      [person-c ("john")  alcohol-c ("martini")]
+      [person-c ("mary")  alcohol-c ("gin")]
+      [person-c ("susan") alcohol-c ("vodka")]
+      [person-c ("john")  alcohol-c ("gin")]
+      [person-c ("fred")  alcohol-c ("gin")]
+  }
+
+  both-drink-t = conj {
+      x : person-s
+      y : person-s
+      alcohol : alcohol-s
+      x-drinks : drinks-s (x alcohol)
+      y-drinks : drinks-s (y alcohol)
+  }
+
+  search! (100) {
+      both-drink-t
+  }
+  #+end_src
+
 * structural typing
 
   - x -
@@ -139,8 +189,16 @@
 
 * relational algebra
 
-  - selection
-  - projection
-  - cartesian product (also called the cross product or cross join)
-  - set union
-  - set difference
+  - composition of functions
+    is a special case of composition of relations
+
+  - conj is relation composition
+
+  - beginning with Augustus De Morgan,
+    the traditional form of reasoning with by syllogism
+    has been subsumed by relational logical expressions
+    and their composition.
+
+* [todo] de morgan
+
+  - ><
