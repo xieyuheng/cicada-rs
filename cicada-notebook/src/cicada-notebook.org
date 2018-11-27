@@ -24,24 +24,57 @@
     };
     use cicada::{
         Module,
-        // WissenOutput,
+        report_obj_dic,
     };
     use wasm_bindgen::prelude::*;
     #+end_src
 
-* run
+* CicadaModule
 
   #+begin_src rust
   #[wasm_bindgen]
-  pub fn run (input: &str) -> String {
-      let mut module = Module::new ();
-      match module.run (input) {
-          Ok (()) => {
-              module.report ()
-          }
-          Err (error) => {
-              error.report (ErrorCtx::new ()
-                            .body (&input))
+  pub struct CicadaModule {
+      module: Module
+  }
+  #+end_src
+
+* CicadaModule::clone
+
+  #+begin_src rust
+  #[wasm_bindgen]
+  impl CicadaModule {
+      pub fn clone (&self) -> Self {
+          CicadaModule { module: self.module.clone () }
+      }
+  }
+  #+end_src
+
+* CicadaModule::new
+
+  #+begin_src rust
+  #[wasm_bindgen]
+  impl CicadaModule {
+      pub fn new () -> CicadaModule {
+          let module = Module::new ();
+          CicadaModule { module }
+      }
+  }
+  #+end_src
+
+* CicadaModule::run
+
+  #+begin_src rust
+  #[wasm_bindgen]
+  impl CicadaModule {
+      pub fn run (&mut self, input: &str) -> String {
+          match self.module.run (input) {
+              Ok (obj_dic) => {
+                  report_obj_dic (&obj_dic)
+              }
+              Err (error) => {
+                  error.report (ErrorCtx::new ()
+                                .body (&input))
+              }
           }
       }
   }

@@ -1395,18 +1395,21 @@ impl Module {
         &'a mut self,
         index: usize,
         def: &Def,
-    ) -> Result <(), ErrorInCtx> {
+    ) -> Result <Option <(String, Obj)>, ErrorInCtx> {
         match def {
             Def::Obj (
                 name, obj
             ) => {
-                self.define (name, obj)
+                self.define (name, obj)?;
+                Ok (Some ((name.to_string (), obj.clone ())))
             }
             Def::Import (
                 name, url
             ) => {
                 let module = Module::load (url)?;
-                self.define (name, &Obj::Module (module))
+                let obj = Obj::Module (module);
+                self.define (name, &obj)?;
+                Ok (Some ((name.to_string (), obj)))
             }
             Def::Search (
                 name, counter, prop_term
@@ -1417,33 +1420,41 @@ impl Module {
                     let mut proving = self.proving (
                         &value, &subst);
                     let qed_vec = proving.take_qed (*counter);
-                    self.define (
-                        name,
-                        &Obj::SearchRes (SearchRes {
-                            qed_vec
-                        }))
+                    let obj = Obj::SearchRes (SearchRes {
+                        qed_vec
+                    });
+                    self.define (name, &obj)?;
+                    Ok (Some ((name.to_string (), obj)))
                 } else {
-                    Ok (())
+                    let obj = Obj::SearchRes (SearchRes {
+                        qed_vec: Vec::new (),
+                    });
+                    self.define (name, &obj)?;
+                    Ok (Some ((name.to_string (), obj)))
                 }
             }
             Def::NamelessSearch (
                 counter, prop_term
             ) => {
+                let name = "#".to_string () +
+                    &index.to_string ();
                 if let Ok ((
                     value, subst
                 )) = new_value (self, prop_term) {
                     let mut proving = self.proving (
                         &value, &subst);
-                    let name = "#".to_string () +
-                        &index.to_string ();
                     let qed_vec = proving.take_qed (*counter);
-                    self.define (
-                        &name,
-                        &Obj::SearchRes (SearchRes {
-                            qed_vec
-                        }))
+                    let obj = Obj::SearchRes (SearchRes {
+                        qed_vec,
+                    });
+                    self.define (&name, &obj)?;
+                    Ok (Some ((name.to_string (), obj)))
                 } else {
-                    Ok (())
+                    let obj = Obj::SearchRes (SearchRes {
+                        qed_vec: Vec::new (),
+                    });
+                    self.define (&name, &obj)?;
+                    Ok (Some ((name.to_string (), obj)))
                 }
             }
             Def::Query (
@@ -1455,35 +1466,45 @@ impl Module {
                     let mut proving = self.proving (
                         &value, &subst);
                     let subst_vec = proving.take_subst (*counter);
-                    self.define (
-                        name,
-                        &Obj::QueryRes (QueryRes {
-                            var_vec,
-                            subst_vec,
-                        }))
+                    let obj = Obj::QueryRes (QueryRes {
+                        var_vec,
+                        subst_vec,
+                    });
+                    self.define (name, &obj)?;
+                    Ok (Some ((name.to_string (), obj)))
                 } else {
-                    Ok (())
+                    let obj = Obj::QueryRes (QueryRes {
+                        var_vec: Vec::new (),
+                        subst_vec: Vec::new (),
+                    });
+                    self.define (name, &obj)?;
+                    Ok (Some ((name.to_string (), obj)))
                 }
             }
             Def::NamelessQuery (
                 counter, prop_term
             ) => {
+                let name = "#".to_string () +
+                    &index.to_string ();
                 if let Ok ((
                     value, subst, var_vec
                 )) = new_value_and_var_vec (self, prop_term) {
                     let mut proving = self.proving (
                         &value, &subst);
-                    let name = "#".to_string () +
-                        &index.to_string ();
                     let subst_vec = proving.take_subst (*counter);
-                    self.define (
-                        &name,
-                        &Obj::QueryRes (QueryRes {
-                            var_vec,
-                            subst_vec,
-                        }))
+                    let obj = Obj::QueryRes (QueryRes {
+                        var_vec,
+                        subst_vec,
+                    });
+                    self.define (&name, &obj)?;
+                    Ok (Some ((name, obj)))
                 } else {
-                    Ok (())
+                    let obj = Obj::QueryRes (QueryRes {
+                        var_vec: Vec::new (),
+                        subst_vec: Vec::new (),
+                    });
+                    self.define (&name, &obj)?;
+                    Ok (Some ((name, obj)))
                 }
             }
             Def::Assert (
@@ -1500,7 +1521,7 @@ impl Module {
                             .span (prop_term.span ())
                             .wrap_in_err ()
                     } else {
-                        Ok (())
+                        Ok (None)
                     }
                 } else {
                     ErrorInCtx::new ()
@@ -1524,14 +1545,14 @@ impl Module {
                             .span (prop_term.span ())
                             .wrap_in_err ()
                     } else {
-                        Ok (())
+                        Ok (None)
                     }
                 } else {
-                    Ok (())
+                    Ok (None)
                 }
             }
             Def::Note => {
-                Ok (())
+                Ok (None)
             }
         }
     }
@@ -1566,14 +1587,21 @@ impl Module {
     pub fn run (
         &mut self,
         input: &str,
-    ) -> Result <(), ErrorInCtx> {
+    ) -> Result <Dic <Obj>, ErrorInCtx> {
         let syntax_table = SyntaxTable::default ();
         let mexp_vec = syntax_table.parse (input)?;
         let def_vec = mexp_vec_to_def_vec (&mexp_vec)?;
+        let len = self.obj_dic.len ();
+        let mut obj_dic = Dic::new ();
         for (index, def) in def_vec.iter () .enumerate () {
-            self.exe_def (index, def)?;
+            if let Some ((
+                name, obj
+            )) = self.exe_def (len + index, def)? {
+                obj_dic.ins (&name, Some (obj));
+            }
         }
-        self.prop_check ()
+        self.prop_check ()?;
+        Ok (obj_dic)
     }
 }
 
@@ -1607,27 +1635,31 @@ impl ToString for Module {
     }
 }
 
+pub fn report_obj_dic (obj_dic: &Dic <Obj>) -> String {
+    let mut s = String::new ();
+    for (name, obj) in obj_dic.iter () {
+        match obj {
+            Obj::SearchRes (_) => {
+                s += name;
+                s += " = ";
+                s += &obj.to_string ();
+                s += "\n";
+            }
+            Obj::QueryRes (_) => {
+                s += name;
+                s += " = ";
+                s += &obj.to_string ();
+                s += "\n";
+            }
+            _ => {}
+        }
+    }
+    s
+}
+
 impl Module {
     pub fn report (&self) -> String {
-        let mut s = String::new ();
-        for (name, obj) in self.obj_dic.iter () {
-            match obj {
-                Obj::SearchRes (_) => {
-                    s += name;
-                    s += " = ";
-                    s += &obj.to_string ();
-                    s += "\n";
-                }
-                Obj::QueryRes (_) => {
-                    s += name;
-                    s += " = ";
-                    s += &obj.to_string ();
-                    s += "\n";
-                }
-                _ => {}
-            }
-        }
-        s
+        report_obj_dic (&self.obj_dic)
     }
 }
 
@@ -2924,7 +2956,7 @@ fn test_module_get_prop () {
     let input = PRELUDE;
     let ctx = ErrorCtx::new () .body (input);
     match module.run (input) {
-        Ok (()) => {}
+        Ok (_obj_dic) => {}
         Err (error) => {
             error.print (ctx.clone ());
         }
@@ -2955,7 +2987,7 @@ fn test_module_output () {
     let input = PRELUDE;
     let ctx = ErrorCtx::new () .body (input);
     match module.run (input) {
-        Ok (()) => {
+        Ok (_obj_dic) => {
             println! ("{}", module.report ());
         }
         Err (error) => {

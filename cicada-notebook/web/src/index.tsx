@@ -1,4 +1,5 @@
-const nb = import ("../wasm_modules/cicada_notebook");
+const cicada = import ("../wasm_modules/cicada_notebook");
+
 import * as React from "react";
 import * as ReactDOM from "react-dom";
 import { useState } from "react";
@@ -35,7 +36,6 @@ let OutputBuffer = (props: {
 let Note = (props: {
     headline: string
     focus_p: boolean
-    nb: any
     input: string
     output: string
     onChange: (event: any) => void
@@ -50,7 +50,11 @@ let Note = (props: {
         <div className = "Note">
             <hr />
             <h3>{props.headline}</h3>
-            {/* - focus_p: {props.focus_p.toString ()} */}
+            {/*
+                // ><><><
+                - focus_p: {props.focus_p.toString ()}
+                this is not effective
+              */}
             <InputBuffer
                 focus_p = {props.focus_p}
                 value = {props.input}
@@ -71,8 +75,10 @@ const WELCOME_MESSAGE = `\
 `;
 
 let Root = (props: {
-    nb: any
+    cicada: any
 }) => {
+    let [module, setModule] = useState (
+        props.cicada.CicadaModule.new ());
     let [noteList, setNoteList] = useState ([
         { input: WELCOME_MESSAGE, output: "" },
     ]);
@@ -81,19 +87,27 @@ let Root = (props: {
 
     let onKeyDown = (index: number) => (event: any) => {
         if (event.key == "Enter" && event.ctrlKey) {
+            let module = props.cicada.CicadaModule.new ();
             let length = noteList.length;
             let list = noteList.slice (0, length);
-            let input = list [index] .input;
-            list [index] .output = props.nb.run (input);
+            list.forEach ((note, i) => {
+                if (i <= index) {
+                    list [index] .output = module.run (note.input);
+                }
+            });
             setNoteList (list);
         }
         if (event.key == "Enter" && event.altKey) {
+            let module = props.cicada.CicadaModule.new ();
             let length = noteList.length;
             setCurrent (index + 1);
             let list = noteList.slice (0, index + 1);
             let succ = noteList.slice (index + 1, length);
-            let input = list [index] .input;
-            list [index] .output = props.nb.run (input);
+            list.forEach ((note, i) => {
+                if (i <= index) {
+                    list [index] .output = module.run (note.input);
+                }
+            });
             list.push ({ input: "", output: "" });
             setNoteList (list.concat (succ));
         }
@@ -111,7 +125,6 @@ let Root = (props: {
             <Note
                 headline = {"#" + (index + 1) .toString ()}
                 focus_p = {index == current}
-                nb = {props.nb}
                 input = {io.input}
                 output = {io.output}
                 onChange = {onChange (index)}
@@ -125,8 +138,8 @@ let Root = (props: {
     </>
 };
 
-nb.then (nb => {
+cicada.then (cicada => {
     ReactDOM.render (
-        <Root nb = {nb} />,
+        <Root cicada = {cicada} />,
         document.getElementById ("root"));
 });
