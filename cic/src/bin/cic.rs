@@ -15,6 +15,7 @@ use error_report::{
 };
 use cicada::{
     Module,
+    report_obj_dic,
 };
 
 fn main () {
@@ -31,8 +32,8 @@ fn main () {
         if path.is_file () {
             let input = fs::read_to_string (path) .unwrap ();
             match module.run (&input) {
-                Ok (()) => {
-                    print! ("{}", module.report ());
+                Ok (obj_dic) => {
+                    print! ("{}", report_obj_dic (&obj_dic));
                 }
                 Err (error) => {
                     let ctx = ErrorCtx::new ()
