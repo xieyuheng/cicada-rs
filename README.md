@@ -47,7 +47,7 @@ Useful libraries and tools :
 We enforce C4 as collaboration protocol :
 - [The C4 RFC](https://rfc.zeromq.org/spec:42/C4)
 - [Style Guide](STYLE-GUIDE.md)
-- CI -- [![Build Status](https://travis-ci.com/xieyuheng/cicada.svg?branch=master)](https://travis-ci.com/xieyuheng/cicada)
+- CI [![Build Status](https://travis-ci.com/xieyuheng/cicada.svg?branch=master)](https://travis-ci.com/xieyuheng/cicada)
 
 ## Code Of Conduct
 
