@@ -18,13 +18,13 @@ Features :
 
 Contains :
 - [cicada](cicada/README.md) -- the implementation
-- [cicada-server](cicada-server/README.md) -- language server and relational database
+- (todo) [cicada-db] -- language server and relational database
 - [cicada-notebook](cicada-notebook/README.md) -- interactive UI -- [demo](https://xieyuheng.github.io/demo/cicada-notebook)
 - [cic](cic/README.md) -- command line interface
 
 ## Docs
 
-- [typed logic programming](docs/typed-logic-programming)
+- [relational programming](docs/relational-programming)
 - (todo) [dependable prover]
 - (todo) [the little cicada]
 
