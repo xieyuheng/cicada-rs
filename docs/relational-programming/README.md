@@ -1,6 +1,6 @@
-# typed logic programming
+# relational programming
 
-This directory contains logic programming examples  
+This directory contains relational programming examples  
 taken from classical logic programming textbooks.
 
 Including :
