@@ -26,6 +26,7 @@ Contains :
 
 On command line :
 - `cargo +nightly install cic --git https://github.com/xieyuheng/cicada`
+- `cic <FILE>`
 
 On line notebook -- empowered by rust wasm target :
 - [cicada-notebook demo](https://xieyuheng.github.io/demo/cicada-notebook)
