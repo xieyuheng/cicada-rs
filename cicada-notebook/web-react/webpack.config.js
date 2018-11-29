@@ -3,10 +3,10 @@ const HtmlWebpackPlugin = require ("html-webpack-plugin");
 const webpack = require ("webpack");
 
 module.exports = {
-    entry: "./src/index.ts",
+    entry: "./src/index.tsx",
     mode: "development",
     resolve: {
-        extensions: [ ".ts", ".js", ".json", ".wasm" ],
+        extensions: [ ".ts", ".tsx", ".js", ".json", ".wasm" ],
     },
     module: {
         rules: [
@@ -16,6 +16,10 @@ module.exports = {
             { test: /\.wasm$/, type: "webassembly/experimental" },
             { enforce: "pre", test: /\.js$/, loader: "source-map-loader" },
         ]
+    },
+    externals: {
+        "react": "React",
+        "react-dom": "ReactDOM",
     },
     plugins: [
         new HtmlWebpackPlugin({

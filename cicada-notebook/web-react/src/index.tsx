@@ -41,27 +41,23 @@ let Note = (props: {
     onChange: (event: any) => void
     onKeyDown: (event: any) => void
 }) => {
-    let out = <></>;
+    let outputBuffer = <></>;
     if (props.output != "") {
-        out = <OutputBuffer value = {props.output} />;
+        outputBuffer = <OutputBuffer value = {props.output} />;
     }
-
+    let inputBuffer =
+        <InputBuffer
+            focus_p = {props.focus_p}
+            value = {props.input}
+            onChange = {props.onChange}
+            onKeyDown = {props.onKeyDown}
+        />;
     return <>
         <div className = "Note">
             <hr />
             <h3>{props.headline}</h3>
-            {/*
-                // ><><><
-                - focus_p: {props.focus_p.toString ()}
-                this is not effective
-              */}
-            <InputBuffer
-                focus_p = {props.focus_p}
-                value = {props.input}
-                onChange = {props.onChange}
-                onKeyDown = {props.onKeyDown}
-            />
-            {out}
+            {inputBuffer}
+            {outputBuffer}
             <hr />
         </div>
     </>

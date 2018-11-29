@@ -15,6 +15,13 @@ update () {
     npm install
 }
 
+dist () {
+    rm dist/*
+    cp node_modules/react/umd/react.development.js dist
+    cp node_modules/react-dom/umd/react-dom.development.js dist
+    npx webpack
+}
+
 main () {
     for TASK in $@
     do
