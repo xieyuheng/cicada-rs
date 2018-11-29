@@ -19,8 +19,16 @@ Features :
 Contains :
 - [cicada](cicada/README.md) -- the implementation
 - (todo) [cicada-db] -- language server and relational database
-- [cicada-notebook](cicada-notebook/README.md) -- interactive UI -- [demo](https://xieyuheng.github.io/demo/cicada-notebook)
+- [cicada-notebook](cicada-notebook/README.md) -- interactive UI
 - [cic](cic/README.md) -- command line interface
+
+## Getting Start
+
+On command line :
+- `cargo +nightly install cic --git https://github.com/xieyuheng/cicada`
+
+On line notebook -- empowered by rust wasm target :
+- [cicada-notebook demo](https://xieyuheng.github.io/demo/cicada-notebook)
 
 ## Docs
 
