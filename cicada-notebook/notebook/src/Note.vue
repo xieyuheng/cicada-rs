@@ -1,17 +1,20 @@
 <template>
     <div class="Note">
-        <hr />
         <h3>{{ headline }}</h3>
+        <button @click="focus">focus</button>
         <textarea
+            v-model="state.input"
+            ref="input_buffer"
             class="InputBuffer"
-            v-bind:value="input"
-            v-on:keydown="onkeydown">
-        </textarea>
+            @input="$emit ('input_change', state.input)"
+            @keydown.ctrl.enter="$emit ('run')"
+            @keydown.alt.enter="$emit ('next')"
+        />
         <textarea
             class="OutputBuffer"
             v-if="output"
-            v-bind:value="output">
-        </textarea>
+            :value="output"
+        />
         <hr />
     </div>
 </template>
@@ -22,12 +25,19 @@
  export default {
      props: [
          "headline",
-         "focus_p",
          "input",
          "output",
      ],
+     data: function () {
+         return {
+             state: {
+                 input: this.input,
+             }
+         }
+     },
      methods: {
-         onkeydown (event) {
+         focus () {
+             this.$refs.input_buffer.focus ();
          }
      },
  }
@@ -69,7 +79,7 @@
  .OutputBuffer {
      font-size: 1em;
      border: 0px;
-     border-left: 4px solid #aae;
+     border-left: 4px solid #8cf;
      width: 97vw;
      height: 40vh;
  }

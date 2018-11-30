@@ -8,6 +8,13 @@
  import Vue from "vue";
  import NoteBook from "./NoteBook.vue";
 
+ const WELCOME_MESSAGE = `\
+// welcome to cicada-notebook ^-^/
+// - short keys :
+//   ctrl + enter -- run
+//   alt  + enter -- next
+`;
+
  export default {
      components: {
          NoteBook,
@@ -15,8 +22,7 @@
      data: function () {
          return {
              init_note_list: [
-                 { headline: "#1", input: "asd", output: "sad" },
-                 { headline: "#2", input: "asd", output: "sad" },
+                 { input: WELCOME_MESSAGE },
              ]
          }
      },
@@ -31,6 +37,5 @@
          "sans-serif";
      -webkit-font-smoothing: antialiased;
      -moz-osx-font-smoothing: grayscale;
-     /* text-align: center; */
  }
 </style>
