@@ -1,20 +1,25 @@
 <template>
     <div class="Note">
-        <h3>{{ headline }}</h3>
-        <button @click="focus">focus</button>
+        <h3>{{ headline }}
+            <button class="button-run"
+                    @click="$emit ('run', state.index)">
+                RUN
+            </button>
+            <button class="button-new"
+                    @click="$emit ('new', state.index)">
+                NEW
+            </button>
+        </h3>
         <textarea
             v-model="state.input"
-            ref="input_buffer"
-            class="InputBuffer"
+            ref="input"
+            class="input"
             @input="$emit ('input_change', state.input)"
-            @keydown.ctrl.enter="$emit ('run')"
-            @keydown.alt.enter="$emit ('next')"
+            @keydown.ctrl.enter="$emit ('run', state.index)"
+            @keydown.alt.enter="$emit ('new', state.index)"
+            @focus="$emit ('focus', state.index)"
         />
-        <textarea
-            class="OutputBuffer"
-            v-if="output"
-            :value="output"
-        />
+        <pre class="output" v-if="output">{{ output }}</pre>
         <hr />
     </div>
 </template>
@@ -24,6 +29,7 @@
 
  export default {
      props: [
+         "index",
          "headline",
          "input",
          "output",
@@ -32,12 +38,13 @@
          return {
              state: {
                  input: this.input,
+                 index: this.index,
              }
          }
      },
      methods: {
          focus () {
-             this.$refs.input_buffer.focus ();
+             this.$refs.input.focus ();
          }
      },
  }
@@ -68,7 +75,7 @@
      color: #888;
  }
 
- .InputBuffer {
+ .input {
      font-size: 1em;
      border: 0px;
      border-left: 4px solid #aaa;
@@ -76,11 +83,23 @@
      height: 40vh;
  }
 
- .OutputBuffer {
+ .output {
      font-size: 1em;
      border: 0px;
      border-left: 4px solid #8cf;
      width: 97vw;
-     height: 40vh;
+ }
+
+ .button-run {
+     font-size: 1em;
+     border: 0px;
+     border-left: 3px solid #8cf;
+
+ }
+
+ .button-new {
+     font-size: 1em;
+     border: 0px;
+     border-left: 3px solid #aaa;
  }
 </style>

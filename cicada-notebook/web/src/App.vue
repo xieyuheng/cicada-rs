@@ -22,7 +22,7 @@
      data: function () {
          return {
              init_note_list: [
-                 { input: WELCOME_MESSAGE },
+                 { id: 0, input: WELCOME_MESSAGE },
              ]
          }
      },
