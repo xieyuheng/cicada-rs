@@ -79,6 +79,8 @@
          }
      },
      updated: function () {
+         // we can not just index the array of components
+         //   because it is not ordered by index
          for (let note of this.$refs.note_list) {
              if (note.index == this.state.focus) {
                  note.focus ();
