@@ -11,8 +11,8 @@
  const WELCOME_MESSAGE = `\
 // welcome to cicada-notebook ^-^/
 // - short keys :
-//   ctrl + enter -- run
-//   alt  + enter -- next
+//   ctrl + enter -- RUN
+//   alt  + enter -- NEW
 `;
 
  export default {
