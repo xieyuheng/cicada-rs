@@ -2096,14 +2096,22 @@ impl Deduction {
 
 impl ToString for Deduction {
     fn to_string (&self) -> String {
-        let mut vec: Vec <TypedVar> = Vec::new ();
+        let mut tv_vec: Vec <TypedVar> = Vec::new ();
+        let mut reified_tv_vec: Vec <Value> = Vec::new ();
         for tv in &self.tv_queue {
-            vec.push (tv.clone ())
+            tv_vec.push (tv.clone ());
+            reified_tv_vec.push (
+                self.subst.reify (&Value::TypedVar (
+                    tv.clone ())));
         }
         format! (
-            "$deduction-c {{ root = {} tv-queue = [ {} ] }}",
+            "$deduction-c {{
+                 root = {}
+                 tv-queue = [ {} ]
+                 reified-tv-queue = [ {} ] }}",
             self.subst.reify (&self.root) .to_string (),
-            vec_to_string (&vec, " "))
+            vec_to_string (&tv_vec, " "),
+            vec_to_string (&reified_tv_vec, " "))
 
     }
 }
