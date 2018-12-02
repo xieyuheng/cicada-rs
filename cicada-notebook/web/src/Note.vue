@@ -93,13 +93,13 @@
  .button-run {
      font-size: 1em;
      border: 0px;
-     border-left: 3px solid #8cf;
+     border-right: 3px solid #8cf;
 
  }
 
  .button-new {
      font-size: 1em;
      border: 0px;
-     border-left: 3px solid #aaa;
+     border-right: 3px solid #aaa;
  }
 </style>

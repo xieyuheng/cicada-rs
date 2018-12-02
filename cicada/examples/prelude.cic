@@ -18,6 +18,100 @@ succ-t = conj {
     prev : nat-t
 }
 
+nat-add-t = disj (
+    zero-add-t
+    succ-add-t
+) {
+    a : nat-t
+    b : nat-t
+    c : nat-t
+}
+
+zero-add-t = conj {
+    a : nat-t
+    b : nat-t
+    c : nat-t
+    a = zero-c
+    c = b
+}
+
+succ-add-t = conj {
+    a : nat-t
+    b : nat-t
+    c : nat-t
+    a = succ-c (:a)
+    c = succ-c (:c)
+    prev : nat-add-t (:a b :c)
+}
+
+assert! {
+    nat-add-t (zero-c zero-c zero-c)
+}
+
+assert! {
+    nat-add-t (zero-c succ-c (zero-c) succ-c (zero-c))
+}
+
+assert! {
+    nat-add-t (succ-c (zero-c) zero-c succ-c (zero-c))
+}
+
+// query! (10) {
+//     nat-add-t (
+//         zero-c
+//         :zero
+//         zero-c)
+// }
+
+// query! (10) {
+//     nat-add-t (
+//         :zero
+//         zero-c
+//         zero-c)
+// }
+
+// query! (10) {
+//     nat-add-t (
+//         zero-c
+//         zero-c
+//         :zero)
+// }
+
+// query! (10) {
+//     nat-add-t (
+//         :x
+//         succ-c (zero-c)
+//         succ-c (succ-c (succ-c (zero-c))))
+// }
+
+search! (1) {
+    nat-add-t (
+        succ-c (zero-c)
+        :x
+        succ-c (succ-c (succ-c (succ-c (zero-c)))))
+}
+
+step! (1) {
+    nat-add-t (
+        succ-c (zero-c)
+        :x
+        succ-c (succ-c (succ-c (succ-c (zero-c)))))
+}
+
+// query! (10) {
+//     nat-add-t (
+//         succ-c (zero-c)
+//         succ-c (:x)
+//         succ-c (succ-c (succ-c (zero-c))))
+// }
+
+// query! (10) {
+//     nat-add-t (
+//         :y
+//         succ-c (:x)
+//         succ-c (succ-c (succ-c (zero-c))))
+// }
+
 nat-even-t = disj (
     zero-even-t
     even-plus-two-even-t
@@ -34,6 +128,18 @@ even-plus-two-even-t = conj {
     nat : nat-t
     prev : nat-even-t (:m)
     nat = succ-c (succ-c (:m))
+}
+
+assert! {
+    nat-even-t (zero-c)
+}
+
+assert! {
+    nat-even-t (succ-c (succ-c (zero-c)))
+}
+
+assert-not! {
+    nat-even-t (succ-c (zero-c))
 }
 
 list-t = disj (
@@ -75,6 +181,48 @@ succ-length-t = conj {
     list = cons-c { t = :t, car = :x, cdr = :cdr }
     length = succ-c (:n)
 }
+
+assert! {
+    list-length-t (
+        null-c
+        zero-c)
+}
+
+assert! {
+    list-length-t {
+        list = cons-c (nat-t zero-c null-c)
+        length = succ-c (zero-c)
+    }
+}
+
+assert! {
+    list-length-t {
+        list = cons-c (nat-t zero-c cons-c (zero-c null-c))
+        length = succ-c (succ-c (zero-c))
+    }
+}
+
+assert-not! {
+    list-length-t {
+        list = cons-c (nat-t zero-c null-c)
+        length = succ-c (succ-c (zero-c))
+    }
+}
+
+assert! {
+    list-length-t {
+        list = cons-c (nat-t zero-c cons-c (zero-c null-c))
+        length = :n
+    }
+}
+
+assert! {
+    list-length-t {
+        list = :l
+        length = :n
+    }
+}
+
 
 list-append-t = disj (
     zero-append-t
@@ -124,71 +272,18 @@ cons-vect-t = conj {
     length = succ-c (:n)
 }
 
-assert! {
-    bool-t
-}
+// search! (2) {
+//     bool-t
+// }
 
-assert! {
-    nat-t
-}
+// search! (3) {
+//     nat-t
+// }
 
-assert! {
-    list-t (nat-t)
-}
+// search! (3) {
+//     list-t (nat-t)
+// }
 
-assert! {
-    list-t (list-t (nat-t))
-}
-
-assert! {
-    nat-even-t (zero-c)
-}
-
-assert! {
-    nat-even-t (succ-c (succ-c (zero-c)))
-}
-
-assert-not! {
-    nat-even-t (succ-c (zero-c))
-}
-
-assert! {
-    list-length-t (
-        null-c
-        zero-c)
-}
-
-assert! {
-    list-length-t {
-        list = cons-c (nat-t zero-c null-c)
-        length = succ-c (zero-c)
-    }
-}
-
-assert! {
-    list-length-t {
-        list = cons-c (nat-t zero-c cons-c (zero-c null-c))
-        length = succ-c (succ-c (zero-c))
-    }
-}
-
-assert-not! {
-    list-length-t {
-        list = cons-c (nat-t zero-c null-c)
-        length = succ-c (succ-c (zero-c))
-    }
-}
-
-assert! {
-    list-length-t {
-        list = cons-c (nat-t zero-c cons-c (zero-c null-c))
-        length = :n
-    }
-}
-
-assert! {
-    list-length-t {
-        list = :l
-        length = :n
-    }
-}
+// search! (3) {
+//     list-t (list-t (nat-t))
+// }

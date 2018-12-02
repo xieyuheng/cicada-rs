@@ -1238,6 +1238,7 @@ pub enum Obj {
     Module (Module),
     SearchRes (SearchRes),
     QueryRes (QueryRes),
+    StepRes (StepRes),
 }
 
 impl ToString for Obj {
@@ -1271,6 +1272,9 @@ impl ToString for Obj {
                 res.to_string ()
             }
             Obj::QueryRes (res) => {
+                res.to_string ()
+            }
+            Obj::StepRes (res) => {
                 res.to_string ()
             }
         }
@@ -1334,7 +1338,43 @@ impl ToString for QueryRes {
                 let ctx = ErrorCtx::new ()
                     .body (&s);
                 error.print (ctx);
-                panic! ("Query::to_string")
+                panic! ("QueryRes::to_string")
+            }
+        }
+    }
+}
+
+#[derive (Clone)]
+#[derive (Debug)]
+#[derive (PartialEq, Eq)]
+pub struct StepRes {
+    step: Option <DeductionStep>,
+    deduction_queue: VecDeque <Deduction>,
+}
+
+impl ToString for StepRes {
+    fn to_string (&self) -> String {
+        let mut s = String::new ();
+        s += "$step-res-c {\n";
+        if let Some (step) = &self.step {
+            s += "step = ";
+            s += &step.to_string ();
+        }
+        let mut vec: Vec <Deduction> = Vec::new ();
+        for x in &self.deduction_queue {
+            vec.push (x.clone ());
+        }
+        s += &format! (
+            "queue = [ {} ]",
+            &vec_to_string (&vec, " "));
+        s += "}\n";
+        match Mexp::prettify (&s) {
+            Ok (output) => output,
+            Err (error) => {
+                let ctx = ErrorCtx::new ()
+                    .body (&s);
+                error.print (ctx);
+                panic! ("StepRes::to_string")
             }
         }
     }
@@ -1400,20 +1440,23 @@ impl Module {
             Def::Obj (
                 name, obj
             ) => {
-                self.define (name, obj)?;
-                Ok (Some ((name.to_string (), obj.clone ())))
+                let name = name.to_string ();
+                self.define (&name, obj)?;
+                Ok (Some ((name, obj.clone ())))
             }
             Def::Import (
                 name, url
             ) => {
+                let name = name.to_string ();
                 let module = Module::load (url)?;
                 let obj = Obj::Module (module);
-                self.define (name, &obj)?;
-                Ok (Some ((name.to_string (), obj)))
+                self.define (&name, &obj)?;
+                Ok (Some ((name, obj)))
             }
             Def::Search (
                 name, counter, prop_term
             ) => {
+                let name = name.to_string ();
                 if let Ok ((
                     value, subst
                 )) = new_value (self, prop_term) {
@@ -1423,14 +1466,14 @@ impl Module {
                     let obj = Obj::SearchRes (SearchRes {
                         qed_vec
                     });
-                    self.define (name, &obj)?;
-                    Ok (Some ((name.to_string (), obj)))
+                    self.define (&name, &obj)?;
+                    Ok (Some ((name, obj)))
                 } else {
                     let obj = Obj::SearchRes (SearchRes {
                         qed_vec: Vec::new (),
                     });
-                    self.define (name, &obj)?;
-                    Ok (Some ((name.to_string (), obj)))
+                    self.define (&name, &obj)?;
+                    Ok (Some ((name, obj)))
                 }
             }
             Def::NamelessSearch (
@@ -1448,18 +1491,19 @@ impl Module {
                         qed_vec,
                     });
                     self.define (&name, &obj)?;
-                    Ok (Some ((name.to_string (), obj)))
+                    Ok (Some ((name, obj)))
                 } else {
                     let obj = Obj::SearchRes (SearchRes {
                         qed_vec: Vec::new (),
                     });
                     self.define (&name, &obj)?;
-                    Ok (Some ((name.to_string (), obj)))
+                    Ok (Some ((name, obj)))
                 }
             }
             Def::Query (
                 name, counter, prop_term
             ) => {
+                let name = name.to_string ();
                 if let Ok ((
                     value, subst, var_vec
                 )) = new_value_and_var_vec (self, prop_term) {
@@ -1470,15 +1514,15 @@ impl Module {
                         var_vec,
                         subst_vec,
                     });
-                    self.define (name, &obj)?;
-                    Ok (Some ((name.to_string (), obj)))
+                    self.define (&name, &obj)?;
+                    Ok (Some ((name, obj)))
                 } else {
                     let obj = Obj::QueryRes (QueryRes {
                         var_vec: Vec::new (),
                         subst_vec: Vec::new (),
                     });
-                    self.define (name, &obj)?;
-                    Ok (Some ((name.to_string (), obj)))
+                    self.define (&name, &obj)?;
+                    Ok (Some ((name, obj)))
                 }
             }
             Def::NamelessQuery (
@@ -1553,6 +1597,25 @@ impl Module {
             }
             Def::Note => {
                 Ok (None)
+            }
+            Def::Step (counter, prop_term) => {
+                let name = "#".to_string () +
+                    &index.to_string ();
+                if let Ok ((
+                    value, subst
+                )) = new_value (self, prop_term) {
+                    let mut proving = self.proving (
+                        &value, &subst);
+                    let step = proving.step_many (*counter);
+                    let obj = Obj::StepRes (StepRes {
+                        step,
+                        deduction_queue: proving.deduction_queue,
+                    });
+                    self.define (&name, &obj)?;
+                    Ok (Some ((name, obj)))
+                } else {
+                    Ok (None)
+                }
             }
         }
     }
@@ -1646,6 +1709,12 @@ pub fn report_obj_dic (obj_dic: &Dic <Obj>) -> String {
                 s += "\n";
             }
             Obj::QueryRes (_) => {
+                s += name;
+                s += " = ";
+                s += &obj.to_string ();
+                s += "\n";
+            }
+            Obj::StepRes (_) => {
                 s += name;
                 s += " = ";
                 s += &obj.to_string ();
@@ -1874,6 +1943,8 @@ pub enum Def {
     Assert (Term),
     AssertNot (Term),
     Note,
+    Step (usize, Term),
+    // StepBetween (usize, usize, Term),
 }
 
 impl Module {
@@ -1903,6 +1974,43 @@ impl Module {
 pub struct Proving <'a> {
     module: &'a Module,
     deduction_queue: VecDeque <Deduction>,
+}
+
+impl <'a> Proving <'a> {
+    pub fn step (&mut self) -> Option <DeductionStep> {
+        if let Some (
+            mut deduction
+        ) = self.deduction_queue.pop_front () {
+            let deduction_step = deduction.step (self.module);
+            match deduction_step.clone () {
+                DeductionStep::Qed (_qed) => {}
+                DeductionStep::More (deduction_queue) => {
+                    for deduction in deduction_queue {
+                        //// about searching
+                        // push back  |   depth first
+                        // push front | breadth first
+                        self.deduction_queue.push_back (deduction);
+                    }
+                }
+            }
+            Some (deduction_step)
+        } else {
+            None
+        }
+    }
+}
+
+impl <'a> Proving <'a> {
+    pub fn step_many (
+        &mut self,
+        mut counter: usize,
+    ) -> Option <DeductionStep> {
+        while counter > 0 {
+            self.step ();
+            counter -= 1;
+        }
+        self.step ()
+    }
 }
 
 impl <'a> Proving <'a> {
@@ -1986,12 +2094,47 @@ impl Deduction {
     }
 }
 
+impl ToString for Deduction {
+    fn to_string (&self) -> String {
+        let mut vec: Vec <TypedVar> = Vec::new ();
+        for tv in &self.tv_queue {
+            vec.push (tv.clone ())
+        }
+        format! (
+            "$deduction-c {{ root = {} tv-queue = [ {} ] }}",
+            self.subst.reify (&self.root) .to_string (),
+            vec_to_string (&vec, " "))
+
+    }
+}
+
 #[derive (Clone)]
 #[derive (Debug)]
 #[derive (PartialEq, Eq)]
 pub enum DeductionStep {
     Qed (Qed),
     More (VecDeque <Deduction>),
+}
+
+impl ToString for DeductionStep {
+    fn to_string (&self) -> String {
+        match self {
+            DeductionStep::Qed (qed) => {
+                format! (
+                    "$deduction-step:qed-c {{ root = {} }}",
+                    qed.to_string ())
+            }
+            DeductionStep::More (queue) => {
+                let mut vec: Vec <Deduction> = Vec::new ();
+                for x in queue {
+                    vec.push (x.clone ());
+                }
+                format! (
+                    "$deduction-step:queue-c {{ queue = [ {} ] }}",
+                    vec_to_string (&vec, " "))
+            }
+        }
+    }
 }
 
 #[derive (Clone)]
@@ -2011,13 +2154,15 @@ impl ToString for Qed {
 const GRAMMAR: &'static str = r#"
 Def::Obj = { name? "=" Obj }
 Def::Import = { name? "=" "import!" '(' url? ')' }
-Def::Search = { name? "=" "search!" '(' num? ')' Term::Prop }
-Def::NamelessSearch = { "search!" '(' num? ')' Term::Prop }
-Def::Query = { name? "=" "query!" '(' num? ')' Term::Prop }
-Def::NamelessQuery = { "query!" '(' num? ')' Term::Prop }
+Def::Search = { name? "=" "search!" '(' nat-num? ')' Term::Prop }
+Def::NamelessSearch = { "search!" '(' nat-num? ')' Term::Prop }
+Def::Query = { name? "=" "query!" '(' nat-num? ')' Term::Prop }
+Def::NamelessQuery = { "query!" '(' nat-num? ')' Term::Prop }
 Def::Assert = { "assert!" Term::Prop }
 Def::AssertNot = { "assert-not!" Term::Prop }
 Def::Note = { "note!" '{' list (mexp) '}' }
+Def::Step = { "step!" (nat-num?) Term::Prop }
+Def::StepBetween = { "step-between!" (nat-num? nat-num?) Term::Prop }
 
 Obj::Disj = { "disj" '(' list (prop-name?) ')' Arg::Rec }
 Obj::Conj = { "conj" Arg::Rec }
@@ -2886,6 +3031,69 @@ fn mexp_to_note_def <'a> (
     }
 }
 
+fn mexp_to_step_def <'a> (
+    mexp: &Mexp <'a>,
+) -> Result <Def, ErrorInCtx> {
+    if let Mexp::Apply {
+        head: box Mexp::Apply {
+            head: box Mexp::Sym {
+                symbol: "step!",
+                ..
+            },
+            arg: MexpArg::Tuple {
+                body: body1,
+                ..
+            },
+            ..
+        },
+        arg: MexpArg::Block {
+            body: body2,
+            ..
+        },
+        ..
+    } = mexp {
+        if let [
+            Mexp::Sym { symbol, .. }
+        ] = &body1 [..] {
+            let result = symbol.parse::<usize> ();
+            if result.is_err () {
+                return ErrorInCtx::new ()
+                    .line ("fail to parse usize num in `step!`")
+                    .line (&format! ("symbol = {}", symbol))
+                    .span (mexp.span ())
+                    .note (note_about_grammar ())
+                    .wrap_in_err ();
+            }
+            if let [
+                prop_mexp
+            ] = &body2 [..] {
+                Ok (Def::Step (
+                    result.unwrap (),
+                    mexp_to_prop_term (prop_mexp)?))
+            } else {
+                ErrorInCtx::new ()
+                    .line ("fail to parse `step!`'s body arg")
+                    .span (mexp.span ())
+                    .note (note_about_grammar ())
+                    .wrap_in_err ()
+            }
+        } else {
+            ErrorInCtx::new ()
+                .line ("fail to parse `step!`'s first arg")
+                .span (mexp.span ())
+                .note (note_about_grammar ())
+                .wrap_in_err ()
+        }
+    } else {
+        ErrorInCtx::new ()
+            .head ("syntex error")
+            .span (mexp.span ())
+            .note (note_about_grammar ())
+            .wrap_in_err ()
+    }
+}
+
+
 fn mexp_to_def <'a> (
     mexp: &Mexp <'a>,
 ) -> Result <Def, ErrorInCtx> {
@@ -2898,6 +3106,7 @@ fn mexp_to_def <'a> (
         .or (mexp_to_assert_def (mexp))
         .or (mexp_to_assert_not_def (mexp))
         .or (mexp_to_note_def (mexp))
+        .or (mexp_to_step_def (mexp))
 }
 
 fn mexp_vec_to_prop_name_vec <'a> (
