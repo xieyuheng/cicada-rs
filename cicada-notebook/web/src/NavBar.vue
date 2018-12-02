@@ -2,7 +2,6 @@
     <div class="NavBar">
         <a v-for="head in heads"
            :href="head.id">
-            <!-- <div>{{ head.line }}</div> -->
             <p>{{ head.line }}</p>
         </a>
     </div>
@@ -24,7 +23,6 @@
      left: 0;
      top: 0;
      bottom: 0;
-     /* overflow-x: auto; */
      overflow-y: auto;
      border: 0px;
      font-size: 0.875em;

@@ -50,7 +50,7 @@
              state: {
                  note_list: this.note_list,
                  focus: 0,
-                 counter: 1,
+                 counter: this.note_list.length,
                  toc_p: false,
                  nop: "",
              }
@@ -95,12 +95,14 @@
              // we need should not update page here
              //   because after updated
              ///  the focus will be set to state.focus
+             this.set_focus (index);
              let note = this.state.note_list [index];
              note.headline = headline;
          },
          enter_headline (index) {
              // note that, after updated
              ///  the focus will be set to state.focus
+             this.set_focus (index);
              let note = this.state.note_list [index];
              Vue.set (this.state.note_list, index, note);
              // can not even use `this.$forceUpdate ()` here

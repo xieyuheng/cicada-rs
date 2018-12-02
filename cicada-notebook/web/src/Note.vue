@@ -1,5 +1,5 @@
 <template>
-    <div class="Note">
+    <div>
         <p>
             <input class="headline"
                    type="text"
@@ -88,9 +88,5 @@
  .headline {
      font-size: 1em;
      border: 0px;
- }
-
- hr {
-     color: black;
  }
 </style>
