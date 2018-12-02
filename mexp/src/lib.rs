@@ -362,7 +362,16 @@ impl <'a> Mexp <'a> {
                          arg.to_string_indent (level))
             }
             Mexp::Array { body, .. } => {
-                format! ("[{}]", mexp_vec_to_string (&body))
+                if body.is_empty () {
+                    format! ("[]")
+                } else {
+                    format! (
+                        "[\n{}\n{}]",
+                        mexp_vec_to_string_indent (
+                            &body,
+                            level + 1),
+                        indent (level))
+                }
             }
             Mexp::Arrow { ante, ret, .. } => {
                 format! ("-- {} -> {}",
