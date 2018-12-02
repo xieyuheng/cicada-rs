@@ -2078,7 +2078,7 @@ impl Deduction {
             let mut deduction_queue = VecDeque::new ();
             for (tv_vec, new_subst) in tv_matrix {
                 let mut deduction = self.clone ();
-                deduction.subst = new_subst;                   
+                deduction.subst = new_subst;
                 //// about searching again
                 // we have two level of searching
                 // we need to use breadth first again
@@ -2087,7 +2087,7 @@ impl Deduction {
                 }
                 // for tv in tv_vec.into_iter () .rev () {
                 //     deduction.tv_queue.push_front (tv);
-                // }                    
+                // }
                 deduction_queue.push_back (deduction)
             }
             DeductionStep::More (deduction_queue)

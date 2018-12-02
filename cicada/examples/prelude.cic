@@ -90,7 +90,7 @@ assert! {
 //         :x
 //         succ-c (succ-c (succ-c (succ-c (zero-c)))))
 // }
-//  
+//
 // step! (1) {
 //     nat-add-t (
 //         succ-c (zero-c)
@@ -98,21 +98,13 @@ assert! {
 //         succ-c (succ-c (succ-c (succ-c (zero-c)))))
 // }
 
-search! (3) {
-    nat-add-t (
-        succ-c (zero-c)
-        :x
-        succ-c (succ-c (succ-c (succ-c (zero-c)))))
-}
-
-// [bug]
-// search! (2) {
+// search! (3) {
 //     nat-add-t (
 //         succ-c (zero-c)
 //         :x
 //         succ-c (succ-c (succ-c (succ-c (zero-c)))))
 // }
-
+//
 // query! (10) {
 //     nat-add-t (
 //         succ-c (zero-c)
@@ -120,12 +112,12 @@ search! (3) {
 //         succ-c (succ-c (succ-c (zero-c))))
 // }
 
-// query! (10) {
-//     nat-add-t (
-//         :y
-//         succ-c (:x)
-//         succ-c (succ-c (succ-c (zero-c))))
-// }
+query! (10) {
+    nat-add-t (
+        :y
+        :x
+        succ-c (succ-c (succ-c (zero-c))))
+}
 
 nat-even-t = disj (
     zero-even-t
