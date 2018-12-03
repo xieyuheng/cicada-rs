@@ -4,6 +4,7 @@
         <div class="content">
             <MenuBar
                 @toc="toggle_toc"
+                @load="load ($event)"
             />
             <Note
                 v-for="(note, index) in state.note_list"
@@ -32,13 +33,23 @@
  import MenuBar from "./MenuBar.vue";
  const cicada = import ("../wasm_modules/cicada_notebook");
 
+ const WELCOME_MESSAGE = `\
+// welcome to cicada-notebook ^-^/
+// - short keys :
+//   ctrl + enter -- RUN
+//   alt  + enter -- NEW
+ `;
+
+ const init_note_list = [
+     { id: 0, input: WELCOME_MESSAGE },
+ ];
+
  export default {
      components: {
          Note,
          NavBar,
          MenuBar,
      },
-     props: [ "note_list" ],
      // note_t: {
      //     id: "number",
      //     headline: "string",
@@ -48,12 +59,11 @@
      data () {
          return {
              state: {
-                 note_list: this.note_list,
+                 note_list: init_note_list,
                  focus: 0,
-                 counter: this.note_list.length,
+                 counter: init_note_list.length,
                  toc_p: false,
-                 nop: "",
-             }
+             },
          }
      },
      computed: {
@@ -143,6 +153,13 @@
              } else {
                  this.state.toc_p = true;
              }
+         },
+         load (code) {
+             let list = [
+                 { id: this.new_id (), input: code },
+             ];
+             this.state.note_list = list;
+             this.state.focus = 0;
          },
      },
      updated () {

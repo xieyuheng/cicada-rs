@@ -19,6 +19,7 @@
         </p>
         <textarea
             class="input"
+            spellcheck="false"
             wrap="off"
             rows="18"
             ref="input"
