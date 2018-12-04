@@ -17,6 +17,11 @@
                 @click="$emit ('save')">
             SAVE
         </button>
+        <button class="button">
+            <a href="about.html">
+                ABOUT
+            </a>
+        </button>
     </div>
 </template>
 
@@ -54,5 +59,10 @@
      border: 0px;
      border-right: 2px solid;
      background-color: white;
+ }
+
+ a {
+     text-decoration: none;
+     color: black;
  }
 </style>

@@ -1,5 +1,6 @@
 <template>
-    <div :class="{ toc: state.toc_p }">
+    <div class="NoteBook"
+         :class="{ toc: state.toc_p }">
         <NavBar :heads="heads" />
         <div class="content">
             <MenuBar
@@ -34,15 +35,8 @@
  import MenuBar from "./MenuBar.vue";
  const cicada = import ("../wasm_modules/cicada_notebook");
 
- const WELCOME_MESSAGE = `\
-// welcome to cicada-notebook ^-^/
-// - short keys :
-//   ctrl + enter -- RUN
-//   alt  + enter -- NEW
-`;
-
  const init_note_list = [
-     { id: 0, input: WELCOME_MESSAGE },
+     { id: 0 },
  ];
 
  export default {
@@ -185,6 +179,11 @@
 </script>
 
 <style scoped>
+ NoteBook {
+     color: black;
+     background-color: white;
+ }
+
  .content {
      margin-left: 0%;
      transition: margin-left .5s ease .2s;
