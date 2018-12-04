@@ -5,6 +5,7 @@
             <MenuBar
                 @toc="toggle_toc"
                 @load="load ($event)"
+                @save="save"
             />
             <Note
                 v-for="(note, index) in state.note_list"
@@ -160,6 +161,12 @@
              ];
              this.state.note_list = list;
              this.state.focus = 0;
+         },
+         save () {
+             // [TODO]
+             let blob = new File (["testing"], {type: "text/plain"});
+             let url = URL.createObjectURL (blob);
+             window.open (url);
          },
      },
      updated () {

@@ -2,7 +2,7 @@
     <div class="MenuBar">
         <button class="button"
                 @click="$emit ('toc')">
-            @
+            #
         </button>
         <button class="button"
                 @click="click_load">
@@ -10,7 +10,7 @@
         </button>
         <input ref="load"
                type=file
-               accept=".cic"
+               accept=".cic,.txt"
                style="display: none"
                @change="load_file ($event)" />
         <button class="button"

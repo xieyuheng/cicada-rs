@@ -29,11 +29,9 @@
             @keydown.alt.enter="$emit ('new', state.index)"
             @focus="$emit ('focus', state.index)"
         />
-        <transition name="fade">
-            <pre
-                class="output"
-                v-if="output">{{ output }}</pre>
-        </transition>
+        <pre
+            class="output"
+            v-if="output">{{ output }}</pre>
         <hr />
     </div>
 </template>
@@ -91,16 +89,5 @@
  .headline {
      font-size: 1em;
      border: 0px;
- }
-
- .fade-enter-active {
-     transition: opacity .3s;
- }
- .fade-leave-active {
-     transition: opacity .1s;
- }
- .fade-enter,
- .fade-leave-to {
-     opacity: 0;
  }
 </style>
