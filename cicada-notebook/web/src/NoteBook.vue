@@ -38,7 +38,7 @@
 // - short keys :
 //   ctrl + enter -- RUN
 //   alt  + enter -- NEW
- `;
+`;
 
  const init_note_list = [
      { id: 0, input: WELCOME_MESSAGE },
@@ -180,17 +180,21 @@
 <style scoped>
  .content {
      margin-left: 0%;
+     transition: margin-left .5s ease .2s;
  }
 
  .NavBar {
      width: 0%;
+     transition: width .5s ease .2s;
  }
 
  .toc .content {
      margin-left: 18%;
+     transition: margin-left .5s ease .2s;
  }
 
  .toc .NavBar {
      width: 18%;
+     transition: width .5s ease .2s;
  }
 </style>

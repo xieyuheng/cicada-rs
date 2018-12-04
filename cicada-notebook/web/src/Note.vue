@@ -29,9 +29,11 @@
             @keydown.alt.enter="$emit ('new', state.index)"
             @focus="$emit ('focus', state.index)"
         />
-        <pre
-            class="output"
-            v-if="output">{{ output }}</pre>
+        <transition name="fade">
+            <pre
+                class="output"
+                v-if="output">{{ output }}</pre>
+        </transition>
         <hr />
     </div>
 </template>
@@ -67,14 +69,14 @@
  .input {
      font-size: 1em;
      border: 0px;
-     border-left: 3px solid;
+     border-left: 2px solid;
      width: 97%;
  }
 
  .output {
      font-size: 1em;
      border: 0px;
-     border-left: 3px solid;
+     border-left: 2px solid;
      overflow-x: auto;
  }
 
@@ -89,5 +91,16 @@
  .headline {
      font-size: 1em;
      border: 0px;
+ }
+
+ .fade-enter-active {
+     transition: opacity .3s;
+ }
+ .fade-leave-active {
+     transition: opacity .1s;
+ }
+ .fade-enter,
+ .fade-leave-to {
+     opacity: 0;
  }
 </style>
