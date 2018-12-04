@@ -3143,9 +3143,6 @@ fn mexp_vec_to_def_vec <'a> (
     Ok (vec)
 }
 
-const PRELUDE: &'static str =
-    include_str! ("../examples/prelude.cic");
-
 #[test]
 fn test_unify () {
     let u = Value::Var (Var::new ("u"));
@@ -3173,10 +3170,61 @@ fn test_unify () {
     assert_eq! (subst.len (), 2);
 }
 
+const NAT_EXAMPLE: &'static str = r#"
+nat-t = disj (
+    zero-t
+    succ-t
+) {}
+
+zero-t = conj {}
+
+succ-t = conj {
+    prev : nat-t
+}
+
+nat-add-t = disj (
+    zero-add-t
+    succ-add-t
+) {
+    a : nat-t
+    b : nat-t
+    c : nat-t
+}
+
+zero-add-t = conj {
+    a : nat-t
+    b : nat-t
+    c : nat-t
+    a = zero-c
+    c = b
+}
+
+succ-add-t = conj {
+    a : nat-t
+    b : nat-t
+    c : nat-t
+    a = succ-c (:a)
+    c = succ-c (:c)
+    prev : nat-add-t (:a b :c)
+}
+
+assert! {
+    nat-add-t (zero-c zero-c zero-c)
+}
+
+assert! {
+    nat-add-t (zero-c succ-c (zero-c) succ-c (zero-c))
+}
+
+assert! {
+    nat-add-t (succ-c (zero-c) zero-c succ-c (zero-c))
+}
+"#;
+
 #[test]
 fn test_module_get_prop () {
     let mut module = Module::new ();
-    let input = PRELUDE;
+    let input = NAT_EXAMPLE;
     let ctx = ErrorCtx::new () .body (input);
     match module.run (input) {
         Ok (_obj_dic) => {}
@@ -3207,7 +3255,7 @@ fn test_module_get_prop () {
 #[test]
 fn test_module_output () {
     let mut module = Module::new ();
-    let input = PRELUDE;
+    let input = NAT_EXAMPLE;
     let ctx = ErrorCtx::new () .body (input);
     match module.run (input) {
         Ok (_obj_dic) => {

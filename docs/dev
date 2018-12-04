@@ -1,0 +1,21 @@
+#!/usr/bin/env bash
+
+t () {
+    for FILE in $(find | grep "\.cic")
+    do
+        echo "// > $FILE"
+        if ! cic $FILE
+        then
+            exit 1
+        fi
+    done
+}
+
+main () {
+    for TASK in $@
+    do
+        $TASK
+    done
+}
+
+main $@

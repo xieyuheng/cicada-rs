@@ -3856,15 +3856,6 @@
     }
     #+end_src
 
-* prelude
-
-*** PRELUDE
-
-    #+begin_src rust
-    const PRELUDE: &'static str =
-        include_str! ("../examples/prelude.cic");
-    #+end_src
-
 * test
 
 *** test_unify
@@ -3898,13 +3889,68 @@
     }
     #+end_src
 
+*** NAT_EXAMPLE
+
+    #+begin_src rust
+    const NAT_EXAMPLE: &'static str = r#"
+    nat-t = disj (
+        zero-t
+        succ-t
+    ) {}
+
+    zero-t = conj {}
+
+    succ-t = conj {
+        prev : nat-t
+    }
+
+    nat-add-t = disj (
+        zero-add-t
+        succ-add-t
+    ) {
+        a : nat-t
+        b : nat-t
+        c : nat-t
+    }
+
+    zero-add-t = conj {
+        a : nat-t
+        b : nat-t
+        c : nat-t
+        a = zero-c
+        c = b
+    }
+
+    succ-add-t = conj {
+        a : nat-t
+        b : nat-t
+        c : nat-t
+        a = succ-c (:a)
+        c = succ-c (:c)
+        prev : nat-add-t (:a b :c)
+    }
+
+    assert! {
+        nat-add-t (zero-c zero-c zero-c)
+    }
+
+    assert! {
+        nat-add-t (zero-c succ-c (zero-c) succ-c (zero-c))
+    }
+
+    assert! {
+        nat-add-t (succ-c (zero-c) zero-c succ-c (zero-c))
+    }
+    "#;
+    #+end_src
+
 *** test_module_get_prop
 
     #+begin_src rust
     #[test]
     fn test_module_get_prop () {
         let mut module = Module::new ();
-        let input = PRELUDE;
+        let input = NAT_EXAMPLE;
         let ctx = ErrorCtx::new () .body (input);
         match module.run (input) {
             Ok (_obj_dic) => {}
@@ -3939,7 +3985,7 @@
     #[test]
     fn test_module_output () {
         let mut module = Module::new ();
-        let input = PRELUDE;
+        let input = NAT_EXAMPLE;
         let ctx = ErrorCtx::new () .body (input);
         match module.run (input) {
             Ok (_obj_dic) => {
