@@ -157,10 +157,7 @@
              this.state.focus = 0;
          },
          save () {
-             // [TODO]
-             let blob = new File (["testing"], {type: "text/plain"});
-             let url = URL.createObjectURL (blob);
-             window.open (url);
+             // [TODO];
          },
      },
      updated () {
