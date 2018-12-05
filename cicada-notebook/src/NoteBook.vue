@@ -33,7 +33,9 @@
  import Note from "./Note.vue";
  import NavBar from "./NavBar.vue";
  import MenuBar from "./MenuBar.vue";
- const cicada = import ("../wasm_modules/cicada_notebook");
+
+ import saveAs from "file-saver";
+ const cicada = import ("cicada-wasm");
 
  const init_note_list = [
      { id: 0 },
@@ -157,7 +159,10 @@
              this.state.focus = 0;
          },
          save () {
-             // [TODO];
+             let blob = new Blob (
+                 [ "testing" ],
+                 { type: "text/plain;charset=utf-8" });
+             saveAs (blob, "kkk.cic")
          },
      },
      updated () {

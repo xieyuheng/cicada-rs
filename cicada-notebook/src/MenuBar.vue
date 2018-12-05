@@ -13,12 +13,16 @@
                accept=".cic,.txt"
                style="display: none"
                @change="load_file ($event)" />
-        <a href="save.html">
-            <button class="button"
-                    @click="$emit ('save')">
-                SAVE
-            </button>
-        </a>
+        <!-- <a href="save.html">
+             <button class="button"
+             @click="$emit ('save')">
+             SAVE
+             </button>
+             </a> -->
+        <button class="button"
+                @click="$emit ('save')">
+            SAVE
+        </button>
         <button class="button">
             <a href="about.html">
                 ABOUT

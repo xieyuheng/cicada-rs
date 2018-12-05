@@ -18,6 +18,7 @@ Features :
 
 Contains :
 - [cicada](cicada/README.md) -- the implementation
+- [cicada-wasm](cicada-wasm/README.md) -- cicada wasm interface
 - (todo) [cicada-db] -- language server and relational database
 - [cicada-notebook](cicada-notebook/README.md) -- interactive UI
 - [cic](cic/README.md) -- command line interface
