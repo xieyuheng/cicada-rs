@@ -1,3 +1,5 @@
+//// member-t
+
 // The easiest thing to do with a list is to determine
 // whether a given term is an element of the list.
 
@@ -46,6 +48,8 @@ cdr-member-t = conj {
     rest : member-t (t x :cdr)
 }
 
+//// person-t
+
 // let's define some `person-t` to test `member-t`
 
 person-t = disj (
@@ -60,11 +64,7 @@ mary-t = conj {}
 susan-t = conj {}
 fred-t = conj {}
 
-// test
-
-query! (3) {
-    member-t (person-t john-c :list)
-}
+//// test
 
 assert! {
     member-t (person-t john-c cons-c (john-c null-c))
@@ -72,6 +72,12 @@ assert! {
 
 assert-not! {
     member-t (person-t john-c cons-c (mary-c null-c))
+}
+
+//// example
+
+query! (3) {
+    member-t (person-t john-c :list)
 }
 
 query! (10) {

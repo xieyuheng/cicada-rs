@@ -20,7 +20,6 @@ Contains :
 - [cicada](cicada/README.md) -- the implementation
 - [cicada-wasm](cicada-wasm/README.md) -- cicada wasm interface
 - (todo) [cicada-db] -- language server and relational database
-- [cicada-notebook](cicada-notebook/README.md) -- interactive UI
 - [cic](cic/README.md) -- command line interface
 
 ## Getting Start
@@ -30,7 +29,7 @@ On command line :
 - `cic <FILE>`
 
 On line notebook -- empowered by rust wasm target :
-- [cicada-notebook demo](https://xieyuheng.github.io/demo/cicada-notebook)
+- [cicada-notebook](https://github.com/xieyuheng/cicada-notebook) -- interactive UI
 
 ## Docs
 
