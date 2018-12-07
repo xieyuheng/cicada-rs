@@ -1,4 +1,5 @@
-// We are organising a party.
+//// We are organising a party
+
 // We need to decide whether a pair of people will dance together.
 // The single rule for dancing together is that
 // the pair will consist of a male and a female.
@@ -22,7 +23,8 @@ female-t = disj (
 lucinda-t = conj {}
 camilla-t = conj {}
 
-// Next, the rule for a pair
+//// the rule of `pair-t`
+
 // to construct an element of type `pair-t`
 //   we need a male of type `male-t`
 //   and a female of type `female-t`
@@ -32,12 +34,9 @@ pair-t = conj {
     female : female-t
 }
 
-// There are three interface commands
-//   `search!` -- theorem proving
-//   `query!` -- logic programming
-//   `assert!` & `assert-not!` -- testing
+//// search! -- theorem proving
 
-// `search!` -- to search data of given type
+// to search data of given type
 
 search! (4) {
     pair-t (:m :f)
@@ -47,8 +46,10 @@ search! (1) {
     pair-t (bertram-c lucinda-c)
 }
 
-// `query!` -- to find solutions (substitutions)
-//   of given proposition
+//// query! -- logic programming
+
+// to find solutions (substitutions)
+// of given proposition
 
 query! (4) {
     pair-t (:m :f)
@@ -58,15 +59,17 @@ query! (2) {
     pair-t (bertram-c :f)
 }
 
-// `assert!` -- to assert that
-//     there is at least one data of given type
-//     there is at least one substitution of given proposition
+//// assert! & assert-not! -- testing
+
+// assert! -- to assert that
+//   there is at least one data of given type
+//   there is at least one substitution of given proposition
 
 assert! {
     pair-t (bertram-c :f)
 }
 
-// `assert-not!` -- to assert that
+// assert-not! -- to assert that
 //   there are no data of given type
 //   there are no substitution of given proposition
 
