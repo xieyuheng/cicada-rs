@@ -1,0 +1,156 @@
+#+title: database
+
+* [todo]
+
+  - x -
+    we need two things to make cicada a database
+    1. some primitive types such as `$set-t` `$ref-t`
+    2. ser/de to disk
+
+* CRUD
+
+  #+begin_src cicada
+  country-t = conj {
+      country-code : $string-t
+      country-name : $string-t
+  }
+
+  countries : $set-t (country-t)
+
+  countries.insert! {
+      country-c ("us" "United States")
+      country-c ("mx" "Mexico")
+      country-c ("au" "Australia")
+      country-c ("gb" "United Kingdom")
+      country-c ("de" "Germany")
+      country-c ("cn" "China")
+  }
+
+  countries.delete! {
+      country-code = "au"
+  }
+
+  city-t = conj {
+      city-name : $string-t
+      postal-code : $string-t
+      country : country-t
+  }
+
+  cities : $set-t (city-t)
+
+  cities.insert! {
+      city-c (
+          "YinChuan"
+          "666666"
+          countries.select-unique! { country-code = "cn" })
+      city-c (
+          "Portland"
+          "87200"
+          countries.select-unique! { country-code = "us" })
+  }
+
+  cities.select-ref! {
+      postal-code = "97205"
+  } .update! {
+      city-name = "Portland"
+  }
+
+  venue-t = conj {
+      venue-name : $string-t
+      postal-code : $string-t
+      country-code : $string-t
+  }
+
+  venues : $set-t (venue-t)
+
+  venues.insert! {
+      venue-c ("Crystal Ballroom" "97205" "us")
+      venue-c ("Voodoo Donuts" "97205" "us")
+  }
+
+  query-all! {
+      venue in venues.select! { postal-code = :x country-code = :y }
+      city  in cities.select! { postal-code = :x country-code = :y }
+  } .view! {
+      venue-name in venue
+      city-name in city
+  }
+
+  event-t = conj {
+      title : $string-t
+      start : $time-t
+      end : $time-t
+      venue : venue-t
+  }
+
+  events : $set-t (event-t)
+
+  events.insert! {
+      event-c (
+          "Cicada Club"
+          "2012-02-15"
+          "2012-02-15"
+          venues.select-unique! { venue-name = "Voodoo Donuts" })
+  }
+
+  query-all! {
+      event in events.select! { title = "Cicada Club" }
+      country in countries.select! {
+          country-code = event.venue.country-code
+      }
+  } .view! {
+      country-name in country
+  }
+  #+end_src
+
+* drinking-pairs
+
+  #+begin_src cicada
+  person-t = conj {
+      name : $string-t
+  }
+
+  persons : $set-t (person-t)
+
+  persons.insert! {
+      person-c ("john")
+      person-c ("mary")
+      person-c ("susan")
+      person-c ("fred")
+  }
+
+  alcohol-t = conj {
+      name : $string-t
+  }
+
+  alcohol-store : alcohol-t
+
+  alcohol-store.insert! {
+      alcohol-c ("martini")
+      alcohol-c ("gin")
+      alcohol-c ("vodka")
+  }
+
+  drinks-t = conj {
+      person : person-s
+      alcohol : alcohol-s
+  }
+
+  drinks : drinks-t
+
+  drinks.insert! {
+      drinks-c (person-c ("john")  alcohol-c ("martini"))
+      drinks-c (person-c ("mary")  alcohol-c ("gin"))
+      drinks-c (person-c ("susan") alcohol-c ("vodka"))
+      drinks-c (person-c ("john")  alcohol-c ("gin"))
+      drinks-c (person-c ("fred")  alcohol-c ("gin"))
+  }
+
+  query-all! {
+      x in persons
+      y in persons
+      alcohol in alcohol-store
+      x-drinks in drinks.select! (x alcohol)
+      y-drinks in drinks.select! (y alcohol)
+  }
+  #+end_src
