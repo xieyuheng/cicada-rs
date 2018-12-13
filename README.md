@@ -31,6 +31,8 @@ On command line :
 On line notebook -- empowered by rust wasm target :
 - [cicada-notebook](https://github.com/xieyuheng/cicada-notebook) -- interactive UI
 
+Examples : [cicada/examples](cicada/examples)
+
 ## This Repo Also Contains ...
 
 Language implementation practice :
