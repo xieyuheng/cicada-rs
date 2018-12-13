@@ -31,12 +31,6 @@ On command line :
 On line notebook -- empowered by rust wasm target :
 - [cicada-notebook](https://github.com/xieyuheng/cicada-notebook) -- interactive UI
 
-## Docs
-
-- [relational programming](docs/relational-programming)
-- (todo) [dependable prover]
-- (todo) [the little cicada]
-
 ## This Repo Also Contains ...
 
 Language implementation practice :
