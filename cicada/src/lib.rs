@@ -2025,8 +2025,8 @@ impl <'a> Proving <'a> {
                 DeductionStep::More (deduction_queue) => {
                     for deduction in deduction_queue {
                         //// about searching
-                        // push back  |   depth first
-                        // push front | breadth first
+                        // push front |   depth first
+                        // push back  | breadth first
                         self.deduction_queue.push_back (deduction);
                     }
                 }

@@ -844,8 +844,8 @@ impl <'a> Proving <'a> {
                 ProofStep::More (proof_queue) => {
                     for proof in proof_queue {
                         //// about searching
-                        // push back  |   depth first
-                        // push front | breadth first
+                        // push front |   depth first
+                        // push back  | breadth first
                         self.proof_queue.push_back (proof);
                     }
                 }
