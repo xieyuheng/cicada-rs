@@ -1,0 +1,25 @@
+* about build.rs
+
+  - can not use the following build script
+
+  #+begin_src rust
+  use std::io;
+
+  fn main () -> io::Result <()> {
+      tangle::tangle_all_before_build ()
+  }
+  #+end_src
+
+  - error report
+
+  #+begin_src sh
+  error: failed to run custom build command for `cicada-wasm v0.1.0 (/home/xyh/cicada/cicada-wasm)`
+  process didn't exit successfully: `/home/xyh/cicada/target/debug/build/cicada-wasm-b3b0bf00969a2e63/build-script-build` (exit code: 1)
+  --- stdout
+  - tangle_all_before_build
+    current_dir : "/home/xyh/cicada/cicada-wasm"
+  - org_tangle : "/home/xyh/cicada/cicada-wasm/./src/cicada-notebook.org" => "/home/xyh/cicada/cicada-wasm/./src/lib.rs"
+
+  --- stderr
+  Error: Custom { kind: InvalidData, error: StringError("stream did not contain valid UTF-8") }
+  #+end_src

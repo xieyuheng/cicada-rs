@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 
 build () {
+    tangle src
     rm -rf wasm-module
     mkdir wasm-module
     cargo build --target wasm32-unknown-unknown
@@ -8,6 +9,7 @@ build () {
 }
 
 release () {
+    tangle src
     rm -rf wasm-module
     mkdir wasm-module
     cargo build --release --target wasm32-unknown-unknown
