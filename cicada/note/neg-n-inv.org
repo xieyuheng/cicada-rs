@@ -1,43 +1,46 @@
 #+title: negation and invariant
 
-* [note]
+* invariant
 
-*** ><
+  - an invariant is a classification
 
-    - note that
-      invariant is used to prove negation
-      and invariant is just a predicate-like function
-      which classify domain by range
-      - a predicate classify domain by the range bool-t
+  - an invariant is a function classifies domain by range
 
-*** ><
+  - a function is an invariant classifies domain by range
 
-    - 類型是用來做否定的
-      當兩個數據的類型不同時
-      我們就能否定很多不良行爲
+  - invariants are used to prove "not equal"
+    - 函數的單隻性的意義就在於此
 
-      不變量也是用來做否定的
-      兩者之間有什麼關係 ?
+  - a predicate classifies domain by the range bool-t
 
-    - 一個數據的類型是唯一的
-      那麼如何將多種不變量用於同種數據 ?
-      - 用關於這個數據的 judgment ?
-        還是用子類型關係 ?
+* type == classification == invariant
 
-    - 函數的單隻性就是說
-      每個函數都可以被當作不變量來使用
+  - value -> type 這個映射
+    是以 type 來分類 value
+    [類型當然是用來做分類的]
 
-* ><
+  - 利用類型檢查
+    我們可以保證沒有不良的函數複合
+    類型檢查的意義超越了 單純的證明 "not equal"
+
+  - "not equal" => "can not unify" => "can not compose"
+
+  - 數據的類型不一定是唯一的
+    因爲一個空間可能有多種不變量
+
+* negation
+
+  - [古典邏輯中的]否定可否被看成是不充分的分類
+    畢竟分類都是肯定的[具有構造性的]
+
+  - 對於 type 是可以做否定的
+    注意
+    type-constructor 作用於具體的元素
+    所得到的是這個 type-constructor 所蘊含的所有元素的集合的子集
+
+* predicate
 
   #+begin_src cicada
-  (+proof __
-    : (-> n : nat-t
-       -- (| n is-even-t
-             n is-odd-t)))
-
-  (+proof __
-    : (-> [m n] : nat-t
-       -- (| m n eqv-t
-             m n lt-t
-             m n gt-t)))
+  -- n : nat-t -> | ([is-even-t (n) is-odd-t (n)])
+  -- [m n] : nat-t -> | ([eqv-t (m n) lt-t (m n) gt-t (m n)])
   #+end_src
