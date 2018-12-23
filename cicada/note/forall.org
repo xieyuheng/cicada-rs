@@ -1,0 +1,41 @@
+#+title: forall
+
+* the algebra of relation
+
+  - my aim of studying the algebra of relation
+    is to see
+
+    - can we capture the meaning of "for all"
+      in pure logic programming language
+      without function-type
+
+  - 只要問
+    (1) 函數作爲特殊的關係有什麼特殊性
+    (2) 這些特殊性能否在 logic programming 中被表達出來
+
+    - 函數作爲特殊的關係的特殊性有兩點
+      1. 函數是單射 -- 函數作爲不變量 可以用來證明 "not equal"
+      2. 反函數是滿射 -- 函數可以捕捉 "forall"
+
+    - ><><><
+      這兩個性質可否在 logic programming 中被表達出來呢
+
+    - 從 relation 的角度看
+      定義 function 的方式保證了 關係的這兩點特殊性
+
+      - 一般的
+        可能有別的特殊的定義關係的方法
+        能用來保證關係的其他特殊性
+
+* [note]
+
+  - x -
+    我们並不需要表達出來 function-type 的性質
+    而是需要處理 forall 的語義
+    處理方式就是 展開 disj
+    比如 forall n : nat-t
+    被展開成 n : zero-t 和 n : succ-t
+    如果我需要 n : nat-t 那么 n 可以是 zero-t 也可以是 succ-t
+    搜索的时候 只要找到一个就可以了
+    forall n : nat-t 就是要求搜索的时候
+    既要找到 n : zero-t 也要找到 n : succ-t
