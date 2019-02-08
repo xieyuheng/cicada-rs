@@ -968,42 +968,42 @@
       #+begin_src cicada
       category-ttt.opposite : category-ttt
       category-ttt.opposite = category-ccc {
-        object-tt = self.object-tt
+        object-tt = this.object-tt
 
         arrow-tt : (object-tt object-tt)
           -> type-tt
-        arrow-tt (a b) = self.arrow-tt (b a)
+        arrow-tt (a b) = this.arrow-tt (b a)
 
-        arrow-eqv-tt : (self.arrow-tt (b a) self.arrow-tt (b a))
+        arrow-eqv-tt : (this.arrow-tt (b a) this.arrow-tt (b a))
           -> type-tt
-        arrow-eqv-tt = self.arrow-eqv-tt
+        arrow-eqv-tt = this.arrow-eqv-tt
 
         identity : (a :: object-tt)
           -> arrow-tt (a a)
-        identity = self.identity
+        identity = this.identity
 
-        compose : (self.arrow-tt (b a) self.arrow-tt (c b))
-          -> self.arrow-tt (c a)
-        compose (f g) = self.compose (g f)
+        compose : (this.arrow-tt (b a) this.arrow-tt (c b))
+          -> this.arrow-tt (c a)
+        compose (f g) = this.compose (g f)
 
-        identity-neutral-left : (f : self.arrow-tt (b a))
-          -> arrow-eqv-tt (f self.compose (f identity))
-        identity-neutral-left = self.identity-neutral-right
+        identity-neutral-left : (f : this.arrow-tt (b a))
+          -> arrow-eqv-tt (f this.compose (f identity))
+        identity-neutral-left = this.identity-neutral-right
 
-        identity-neutral-right : (f : self.arrow-tt (b a))
-          -> arrow-eqv-tt (f self.compose (identity f))
-        identity-neutral-right = self.identity-neutral-left
+        identity-neutral-right : (f : this.arrow-tt (b a))
+          -> arrow-eqv-tt (f this.compose (identity f))
+        identity-neutral-right = this.identity-neutral-left
 
         compose-associative : (
-          f : self.arrow-tt (b a)
-          g : self.arrow-tt (c b)
-          h : self.arrow-tt (d c)
+          f : this.arrow-tt (b a)
+          g : this.arrow-tt (c b)
+          h : this.arrow-tt (d c)
         ) -> arrow-eqv-tt (
-          self.compose (self.compose (h g) f)
-          self.compose (h self.compose (g f)))
+          this.compose (this.compose (h g) f)
+          this.compose (h this.compose (g f)))
         compose-associative (f g h) = {
-          self.arrow-eqv-relation.pre-symmetric (
-            self.compose-associative (h g f))
+          this.arrow-eqv-relation.pre-symmetric (
+            this.compose-associative (h g f))
         }
       }
       #+end_src
