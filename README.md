@@ -6,6 +6,8 @@
 
 # Cicada Language // 蟬語
 
+New repo of this project : https://github.com/xieyuheng/cicada
+
 Aims :
 - intuitive to formalize mathematics theories
 - approachable for both mathematicians and programmers
