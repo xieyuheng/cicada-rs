@@ -1,4 +1,4 @@
-#![feature (uniform_paths)]
+
 #![feature (box_patterns)]
 #![feature (box_syntax)]
 

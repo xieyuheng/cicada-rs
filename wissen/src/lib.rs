@@ -1,4 +1,3 @@
-#![feature (uniform_paths)]
 #![feature (bind_by_move_pattern_guards)]
 #![feature (box_patterns)]
 #![feature (box_syntax)]

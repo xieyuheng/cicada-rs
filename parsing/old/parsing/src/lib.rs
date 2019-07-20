@@ -1,4 +1,4 @@
-#![feature (uniform_paths)]
+
 
 #![allow (unused_parens)]
 #![allow (dead_code)]
