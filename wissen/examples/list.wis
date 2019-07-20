@@ -1,30 +1,30 @@
 list-append-t = disj (
-    zero-append-t
-    succ-append-t
+  zero-append-t
+  succ-append-t
 )
 
 zero-append-t = conj (null-c succ succ) {}
 
 succ-append-t = conj (
-    cons-c (car cdr)
-    succ
-    cons-c (car o-cdr)
+  cons-c (car cdr)
+  succ
+  cons-c (car o-cdr)
 ) {
-    list-append-t (cdr succ o-cdr)
+  list-append-t (cdr succ o-cdr)
 }
 
 query (10) {
-    list-append-t (x y cons-c (null-c cons-c (null-c cons-c (null-c))))
+  list-append-t (x y cons-c (null-c cons-c (null-c cons-c (null-c))))
 }
 
 prove (30) {
-    list-append-t (x y z)
+  list-append-t (x y z)
 }
 
 prove (30) {
-    zero-append-t (x y z)
+  zero-append-t (x y z)
 }
 
 prove (30) {
-    succ-append-t (x y z)
+  succ-append-t (x y z)
 }
