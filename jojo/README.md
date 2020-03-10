@@ -2,10 +2,10 @@
 
 ------
 
-> DIO: ZA WARUDO is full of languages without good type system, we don't need anymore!
-> JOJO: Just one more!
-> DIO: Do you care about HUMANITY! JOJO?
-> JOJO: I REJECT MY HUMANITY, DIO!
+> DIO: ZA WARUDO is full of languages without good type system, we don't need anymore! <br>
+> JOJO: Just one more! <br>
+> DIO: Do you care about HUMANITY! JOJO? <br>
+> JOJO: I REJECT MY HUMANITY, DIO! <br>
 
 ------
 
