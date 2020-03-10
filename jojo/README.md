@@ -2,10 +2,10 @@
 
 ------
 
-> DIO: ZA WARUDO is full of languages without good type system, we don't need anymore!  
-> JOJO: Just one more!  
-> DIO: Do you care about HUMANITY! JOJO?  
-> JOJO: I REJECT MY HUMANITY, DIO!  
+> DIO: ZA WARUDO is full of languages without good type system, we don't need anymore!
+> JOJO: Just one more!
+> DIO: Do you care about HUMANITY! JOJO?
+> JOJO: I REJECT MY HUMANITY, DIO!
 
 ------
 
@@ -24,6 +24,8 @@ See [jojo-history](http://github.com/xieyuheng/jojo-history) for history of this
 - 🚧 forth like threading macro
   - `drop dup over tuck swap`
     - Oh tis so bizarre ~
+
+![all-jojos](https://github.com/xieyuheng/image-link/raw/master/jojo/all-jojos-1.jpg)
 
 ## Getting start
 
