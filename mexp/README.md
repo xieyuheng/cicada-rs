@@ -140,4 +140,4 @@ list:cons (t) = { t list (t) }
 
 With *nightly* rust toolchain :
 
-`cargo install mexp-cli --git https://github.com/xieyuheng/cicada`
+`cargo install mexp-cli --git https://github.com/xieyuheng/cicada-rs`

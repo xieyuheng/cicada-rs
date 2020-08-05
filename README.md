@@ -21,7 +21,7 @@ Contains :
 ## Getting Start
 
 On command line :
-- `cargo +nightly install cic --git https://github.com/xieyuheng/cicada`
+- `cargo +nightly install cic --git https://github.com/xieyuheng/cicada-rs`
 - `cic <FILE>`
 
 On line notebook -- empowered by rust wasm target :

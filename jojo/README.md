@@ -31,7 +31,7 @@ See [jojo-history](http://github.com/xieyuheng/jojo-history) for history of this
 
 With *nightly* rust toolchain :
 
-`cargo install jo --git https://github.com/xieyuheng/cicada`
+`cargo install jo --git https://github.com/xieyuheng/cicada-rs`
 
 ## Examples
 
